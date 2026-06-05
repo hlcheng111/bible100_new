@@ -1,0 +1,61 @@
+---
+description: Git commit/push 半自動流程：使用者明確授權後才提交，推送前檢查、列清單、禁止大檔與 force push
+alwaysApply: true
+---
+
+# Bible100 · Git 提交與推送（半自動、保留把關）
+
+## 觸發條件（缺一不可）
+
+**只有**使用者明確說出下列意圖之一，才可執行 `git commit` / `git push`：
+
+- 「提交」「commit」「push」「同步到 GitHub」「推上去」
+- 「改完提交並 push」「測試通過後 push」
+
+任務完成後可**提醒**使用者可用上述指令，但**不得**在未授權時自動 commit 或 push。
+
+## 推送前必做（按改動範圍取最小集合）
+
+1. `git status` — 列出將納入的檔案路徑（讓使用者可一眼把關）。
+2. **禁止納入**（即使出現在 working tree）：
+   - `data/`、`archive/`、`backups/`
+   - `*.db`、`*.zip`、`*.mp4`、`*.pdf`、`*.mht`
+   - `.env`、`*credentials*`、含 API key 的設定
+3. 只 `git add` **本次任務相關**檔案；避免無關的 `git add .`，除非使用者明確說「全部提交」。
+4. 依改動執行**最窄**測試：
+   - 導覽/help/tools 連結 → `python scripts/check_phase_tool_and_nav_links.py`
+   - `index_v5` / 殼 → `python tests/test_index_v5_shell.py`
+   - 其他模組 → 該次任務已跑過的檢查即可；測試失敗則**不 push**，回報錯誤。
+5. 單檔 > 95 MB 不得進 commit（GitHub 上限 100 MB）。
+
+## Commit 訊息格式
+
+```
+<模組>: <簡述改動目的>
+```
+
+範例：`church_ministry: 更新 CRM 旅程導覽連結`、`bible_study: 修復綜合解讀載入路徑`
+
+## Push 規則
+
+- 目標分支：`main` → `origin`（`https://github.com/hlcheng111/bible100_new`）
+- **禁止** `git push --force` 到 `main`
+- **禁止** `--no-verify` / 跳過 hooks
+- Push 前用一句話摘要：改了什麼、測試結果、排除了哪些路徑
+- Push 後回報 commit hash 與 GitHub 連結
+
+## 使用者快捷指令（可直接複製）
+
+```
+測試通過後，只提交本次 church_ministry 改動，commit 並 push 到 main。
+```
+
+```
+列出將提交的檔案，確認沒有 data/ 和大檔後再 push。
+```
+
+## 資料與 GitHub 分工
+
+- **GitHub**：程式碼、HTML、JS、設定、文件（無 `data/` 聖經庫）
+- **本機**：`data/` 與大型參考檔；備份用 `run_backup_data.bat` / `scripts/backup_data.ps1`
+- 換機 `git clone` 後需自行還原本機 `data/`，屬預期行為
