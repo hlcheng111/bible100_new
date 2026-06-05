@@ -1,0 +1,2219 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會友事工完整系統 - Church Ministry · Member Integrated | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="../../css/module_onboarding.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f0f2f5; color: #333; font-size: 12px; }
+        
+        /* 顶部导航栏 */
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header-nav { margin-bottom: 8px; }
+        .header-nav a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 12px; }
+        .header-nav a:hover { text-decoration: underline; }
+        .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+        .header-actions { display: flex; gap: 10px; }
+        .header-actions .btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 500; transition: all 0.3s; }
+        .header-actions .btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        
+        /* 標籤頁 */
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; transition: all 0.3s; }
+        .tab.active { background: white; color: #667eea; font-weight: 600; }
+        .tab:hover:not(.active) { background: rgba(255,255,255,0.3); }
+        
+        /* 容器 */
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* 统计卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid; }
+        .stat-card.blue { border-color: #3498db; }
+        .stat-card.green { border-color: #27ae60; }
+        .stat-card.orange { border-color: #e67e22; }
+        .stat-card.red { border-color: #e74c3c; }
+        .stat-card.purple { border-color: #9b59b6; }
+        .stat-card.teal { border-color: #1abc9c; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
+        .stat-label { font-size: 10px; color: #7f8c8d; }
+        
+        /* 卡片 */
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #2c3e50; border-left: 4px solid #667eea; padding-left: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        
+        /* 按钮 */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #e67e22; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-info { background: #3498db; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        
+        /* 表格 */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        table tr:hover { background: #f8f9fa; }
+        
+        /* 表单 */
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        
+        /* 模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #7f8c8d; }
+        
+        /* 标签 */
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; margin-right: 5px; }
+        .tag.active { background: #d4edda; color: #155724; }
+        .tag.inactive { background: #f8d7da; color: #721c24; }
+        .tag.baptized { background: #cce5ff; color: #004085; }
+        
+        /* 搜索框 */
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
+        
+        /* 三栏布局（用于关联页面） */
+        .three-col-nav { display: grid; grid-template-columns: 1fr 320px 1fr; gap: 15px; margin-bottom: 10px; font-size: 10px; color: #475569; line-height: 1.45; align-items: stretch; }
+        .three-col-nav .tcn-cell { padding: 10px 12px; border-radius: 8px; border-left: 4px solid; background: #f8fafc; }
+        .three-col-nav .tcn-cell strong { display: block; font-size: 11px; margin-bottom: 4px; color: #1e293b; }
+        .three-col-nav .tcn-a { border-color: #0284c7; background: #e0f2fe; }
+        .three-col-nav .tcn-b { border-color: #7c3aed; background: #ede9fe; }
+        .three-col-nav .tcn-c { border-color: #16a34a; background: #dcfce7; }
+        @media (max-width: 1100px) {
+            .three-col-nav { grid-template-columns: 1fr; }
+        }
+        .three-col { display: grid; grid-template-columns: 1fr 320px 1fr; gap: 15px; height: calc(100vh - 280px); }
+        @media (max-width: 1100px) {
+            .three-col { grid-template-columns: 1fr; height: auto; min-height: 400px; }
+        }
+        .panel { background: white; border-radius: 8px; padding: 15px; overflow-y: auto; position: relative; }
+        .panel-left { border-top: 3px solid #0ea5e9; }
+        .panel-right { border-top: 3px solid #22c55e; }
+        .panel-center { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-top: 3px solid #a78bfa; }
+        .panel-header { font-weight: 600; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); }
+        .panel:not(.panel-center) .panel-header { border-bottom-color: #e2e8f0; color: #1e293b; }
+        .three-col-tip { font-size: 10px; color: #64748b; margin-bottom: 10px; padding: 8px 10px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; }
+        .list-item { padding: 10px; margin-bottom: 8px; background: #f8f9fa; border-radius: 4px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s; }
+        .list-item:hover { background: #e9ecef; }
+        .list-item.selected { background: #e3f2fd; border-left-color: #2196f3; }
+        .list-item.linked { border-left-color: #27ae60; background: #d5f4e6; }
+        .list-item-title { font-weight: 600; font-size: 11px; margin-bottom: 3px; }
+        .list-item-meta { font-size: 9px; color: #7f8c8d; }
+        
+        /* 进度条 */
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+        
+        /* 消息提示 */
+        .message { position: fixed; top: 80px; right: 20px; padding: 12px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1001; animation: slideIn 0.3s; font-size: 12px; }
+        .message.success { background: #27ae60; color: white; }
+        .message.error { background: #e74c3c; color: white; }
+        @keyframes slideIn { from { transform: translateX(300px); } to { transform: translateX(0); } }
+        
+        /* 空状态 */
+        .empty-state { text-align: center; padding: 60px 20px; color: #95a5a6; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
+        .empty-state-text { font-size: 14px; }
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .filter-bar .form-group { margin-bottom: 0; min-width: 120px; }
+        .filter-bar .form-label { font-size: 10px; }
+        th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+        th.sortable:hover { background: #e2e8f0; }
+        .sort-ind { font-size: 9px; color: #94a3b8; margin-left: 2px; }
+        .module-links { font-size: 11px; line-height: 1.6; margin-top: 12px; padding: 12px; background: #f1f5f9; border-radius: 8px; border-left: 3px solid #667eea; }
+        .module-links a { color: #4f46e5; }
+        .batch-table-wrap { overflow: auto; margin-top: 10px; max-height: 280px; }
+        .growth-detail { margin-top: 14px; padding: 14px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
+        <div class="header-nav"><a href="../../dashboard.html">⛪ 教會事工中心</a></div>
+        <h1>👥 會友事工完整系統</h1>
+        <details style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,0.15);border-radius:8px;font-size:11px;">
+            <summary style="cursor:pointer;font-weight:600;">📋 功能與使用說明</summary>
+            <div style="margin-top:8px;opacity:0.95;">
+                <div style="font-weight:600;margin-bottom:4px;">此頁是為誰而設？</div>
+                <p style="margin:0 0 10px;">為牧者、行政同工，管理會友檔案、小組歸屬與事工參與。</p>
+                <div style="font-weight:600;margin-bottom:4px;">有什麼功能？</div>
+                <ul style="margin:0 0 10px;padding-left:18px;line-height:1.5;">
+                    <li><b>總覽</b>：總會友、新增、受浸、出席率、活躍、小組數</li>
+                    <li><b>會友檔案</b>：新增／編輯會友、匯出</li>
+                    <li><b>小組歸屬</b>、<b>事工參與</b>、<b>成長追蹤</b>、<b>資料分析</b></li>
+                    <li>資料來自「載入 500 人」或手動新增；與儀表板、探訪、C 模組連動</li>
+                </ul>
+                <div style="font-weight:600;margin-bottom:4px;">如何入手？</div>
+                <ol style="margin:0;padding-left:18px;line-height:1.5;">
+                    <li>先至「載入 500 人」頁面匯入會友（若尚無資料）</li>
+                    <li>切換至「會友檔案」→ 新增或編輯會友</li>
+                    <li>於「小組歸屬」「事工參與」指派會友至小組與事工</li>
+                </ol>
+                <div style="font-weight:600;margin-top:12px;margin-bottom:4px;">與探訪關懷系統的關係？</div>
+                <p style="margin:0;line-height:1.55;">本系統提供<strong>全教會會友名單、分區、小組、事工參與與成長記錄</strong>。<a href="../support/visitation.html" style="color:#e0e7ff;font-weight:600;">探訪關懷管理</a>會依這裡的小組／分區與會友主檔，計算<strong>分區覆蓋率</strong>與安排<strong>探訪對象</strong>（正式部署時兩邊應讀寫同一後端或同步之 <code style="font-size:10px;">churchMasterDatabase</code>）。</p>
+            </div>
+        </details>
+        <div class="module-mini-flow" style="background:rgba(255,255,255,0.2);color:#fff;">
+            <strong>🧭 入門怎麼做？</strong>
+            <div class="mf-row">
+                <span>① <a href="../../load_central_member_seed.html" target="_blank">載入試用資料</a></span>
+                <span>→</span>
+                <span>② 點「會友檔案」新增／編輯</span>
+                <span>→</span>
+                <span>③ 「小組歸屬」配對</span>
+                <span>→</span>
+                <span>④ 「資料分析」看圖表</span>
+            </div>
+        </div>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 總覽</button>
+            <button class="tab" onclick="switchTab('members')">👥 會友檔案</button>
+            <button class="tab" onclick="switchTab('groups')">🏠 小組歸屬</button>
+            <button class="tab" onclick="switchTab('ministry')">🎯 事工參與</button>
+            <button class="tab" onclick="switchTab('growth')">📚 成長追蹤</button>
+            <button class="tab" onclick="switchTab('analysis')">📊 資料分析</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 標籤頁1：總覽 -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="page-guide" style="font-size:11px;color:#475569;margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;line-height:1.55;">
+                <strong>本頁用途：</strong>一眼掌握會友數、趨勢與本週生日等儀表資訊。<br>
+                <strong>適合誰用：</strong>牧者、行政同工、關心整體狀況的同工。<br>
+                <strong>如何開始：</strong>若尚無資料，先到「載入試用資料」或「會友檔案」建立名單。<br>
+                <strong>下一步：</strong>小組與分區資料會給 <a href="../support/visitation.html" style="color:#4f46e5;">探訪關懷系統</a> 算覆蓋率與排程（正式環境需資料同步）。<br>
+                <em>權限與名單可見範圍由後端與帳號角色決定；本頁為本機示範。</em>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card blue"><div class="stat-num" id="stat-total">0</div><div class="stat-label">總會友</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-new">0</div><div class="stat-label">本月新增</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-baptized">0</div><div class="stat-label">已受浸</div></div>
+                <div class="stat-card red"><div class="stat-num" id="stat-attendance">0%</div><div class="stat-label">出席率</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-active">0</div><div class="stat-label">活躍會友</div></div>
+                <div class="stat-card teal"><div class="stat-num" id="stat-groups">0</div><div class="stat-label">小組數</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 年齡分佈</div><canvas id="ageChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 會友增長趨勢</div><canvas id="growthChart"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎂 本週生日</div>
+                <div id="birthdayList"></div>
+            </div>
+        </div>
+        
+        <!-- 標籤頁2：會友檔案 -->
+        <div id="tab-members" class="tab-content">
+            <div class="page-guide" style="font-size:11px;color:#475569;margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;line-height:1.55;">
+                <strong>本頁用途：</strong>新增／編輯／搜尋會友主檔，並匯出匯入。<br>
+                <strong>適合誰用：</strong>牧者、行政、資料維護同工。<br>
+                <strong>如何開始：</strong>用搜尋找名單，或按「新增會友」；敏感欄位正式環境由後端決定誰可見。<br>
+                <em>本頁不會實作真實 RBAC；僅示範欄位與流程。</em>
+            </div>
+            <div class="card">
+                <div class="card-title">👥 會友檔案管理</div>
+                <p style="font-size:10px;color:#64748b;margin:0 0 10px;line-height:1.45;">篩選與狀態定義（在會／待轉／轉會／已離開）與「📊 資料分析」共用；日後探訪報表亦請沿用同一套。</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                    <div class="search-box" style="flex: 1; min-width: 200px; margin: 0;">
+                        <input type="text" id="memberSearch" placeholder="🔍 關鍵字（姓名/電話/郵箱）" oninput="filterMembers()">
+                    </div>
+                    <button class="btn btn-primary" onclick="showAddMemberModal()">➕ 新增會友</button>
+                    <button class="btn btn-success" onclick="exportMembers()">📤 匯出資料</button>
+                    <button class="btn btn-info" onclick="importMembers()">📥 匯入資料</button>
+                </div>
+                <div class="filter-bar">
+                    <div class="form-group">
+                        <label class="form-label">性別</label>
+                        <select id="memberFilterGender" class="form-select" onchange="filterMembers()" style="min-width:100px;">
+                            <option value="">全部</option>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">受浸</label>
+                        <select id="memberFilterBaptized" class="form-select" onchange="filterMembers()" style="min-width:100px;">
+                            <option value="">全部</option>
+                            <option value="yes">已受浸</option>
+                            <option value="no">未受浸</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">會友狀態</label>
+                        <select id="memberFilterStatus" class="form-select" onchange="filterMembers()" style="min-width:120px;">
+                            <option value="">全部</option>
+                            <option value="in_communion">在會</option>
+                            <option value="pending_transfer">待轉</option>
+                            <option value="transferred">轉會</option>
+                            <option value="left">已離開</option>
+                        </select>
+                    </div>
+                </div>
+                <table id="membersTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="name" onclick="toggleMemberSort('name')">姓名<span class="sort-ind" id="sort-ind-name"></span></th>
+                            <th class="sortable" data-sort="gender" onclick="toggleMemberSort('gender')">性別<span class="sort-ind" id="sort-ind-gender"></span></th>
+                            <th class="sortable" data-sort="age" onclick="toggleMemberSort('age')">年齡<span class="sort-ind" id="sort-ind-age"></span></th>
+                            <th>電話</th>
+                            <th>郵箱</th>
+                            <th class="sortable" data-sort="baptized" onclick="toggleMemberSort('baptized')">受浸<span class="sort-ind" id="sort-ind-baptized"></span></th>
+                            <th class="sortable" data-sort="membershipDate" onclick="toggleMemberSort('membershipDate')">入會日期<span class="sort-ind" id="sort-ind-membershipDate"></span></th>
+                            <th class="sortable" data-sort="status" onclick="toggleMemberSort('status')">狀態<span class="sort-ind" id="sort-ind-status"></span></th>
+                            <th class="sortable" data-sort="spiritualStage" onclick="toggleMemberSort('spiritualStage')">屬靈階段<span class="sort-ind" id="sort-ind-spiritualStage"></span></th>
+                            <th class="sortable" data-sort="firstVisitDate" onclick="toggleMemberSort('firstVisitDate')">初來日期<span class="sort-ind" id="sort-ind-firstVisitDate"></span></th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 標籤頁3：小组归属 -->
+        <div id="tab-groups" class="tab-content">
+            <div class="page-guide" style="font-size:11px;color:#475569;margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;line-height:1.55;">
+                <strong>【本頁用途】</strong>為會友安排或調整<strong>小組歸屬</strong>。<br>
+                <strong>【適合誰用】</strong>區牧、小組長、牧者。<br>
+                <strong>【如何開始】</strong>① 搜尋或從列表選一位會友 → ② 查看／選取目標小組 → ③ 用「✅ 加入小組」「❌ 移除小組」「🤖 智能推薦」調整。<br>
+                <em>探訪分區與小組名稱宜與 <a href="../support/visitation.html" style="color:#4f46e5;">探訪系統</a> 一致。誰能改動他人小組，由後端授權。</em>
+            </div>
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="stat-card blue"><div class="stat-num" id="stat-total-groups">0</div><div class="stat-label">小組總數</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-members-in-groups">0</div><div class="stat-label">已分配會友</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-coverage">0%</div><div class="stat-label">覆盖率</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-avg-size">0</div><div class="stat-label">平均规模</div></div>
+            </div>
+            <p class="three-col-tip"><strong>三欄怎麼用？</strong>照 <strong>① → ② → ③</strong>：先點左邊一位會友 → 再點右邊一個小組 → 最後在中間按「加入小組」。隨時可用搜尋縮小列表。</p>
+            <div class="three-col-nav" aria-hidden="true">
+                <div class="tcn-cell tcn-a"><strong>① 左欄：選「誰」</strong>點一筆會友，列會反白／標示為已選。</div>
+                <div class="tcn-cell tcn-b"><strong>② 中欄：做「動作」</strong>加入或移除；智能推薦僅供參考。</div>
+                <div class="tcn-cell tcn-c"><strong>③ 右欄：選「哪一組」</strong>點一筆小組，再回中欄按鈕確認。</div>
+            </div>
+            <div class="three-col">
+                <div class="panel panel-left">
+                    <div class="panel-header">① 會友列表（點選）</div>
+                    <div class="search-box"><input type="text" id="groupMemberSearch" placeholder="🔍 搜尋會友" onkeyup="filterGroupMembers()"></div>
+                    <div id="groupMembersList"></div>
+                </div>
+                <div class="panel panel-center">
+                    <div class="panel-header">② 關聯動作</div>
+                    <div id="groupLinkingInfo" style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 11px;">
+                        <p>👈 左欄先選會友</p>
+                        <p>👉 右欄再選小組</p>
+                        <p>🔗 然後按下方按鈕</p>
+                    </div>
+                    <div id="groupSelectedInfo" style="display: none;"></div>
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                        <button type="button" class="btn btn-success" title="將目前選取的會友加入目前選取的小組" onclick="linkMemberToGroup()" style="width: 100%;">✅ 加入小組</button>
+                        <button type="button" class="btn btn-danger" title="將此會友自目前小組移除" onclick="unlinkMemberFromGroup()" style="width: 100%;">❌ 移除小組</button>
+                        <button type="button" class="btn btn-info" title="依示範規則建議一個小組，仍需您手動確認" onclick="recommendGroup()" style="width: 100%;">🤖 智能推荐</button>
+                        <p style="font-size:9px;color:rgba(255,255,255,0.85);line-height:1.4;margin:0;">根據分區、年齡、現有參與情況推薦 1 個小組，仍需<strong>小組長最後確認</strong>。</p>
+                    </div>
+                </div>
+                <div class="panel panel-right">
+                    <div class="panel-header">③ 小組列表（點選）</div>
+                    <div class="search-box"><input type="text" id="groupSearch" placeholder="🔍 搜尋小組" onkeyup="filterGroups()"></div>
+                    <div id="groupsList"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 標籤頁4：事工参与 -->
+        <div id="tab-ministry" class="tab-content">
+            <div class="page-guide" style="font-size:11px;color:#475569;margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;line-height:1.55;">
+                <strong>【本頁用途】</strong>依恩賜／意向，為會友配對<strong>事工崗位</strong>。<br>
+                <strong>【適合誰用】</strong>牧者、事工統籌。<br>
+                <strong>【如何開始】</strong>① 選一事工（例：敬拜、招待）→ ② 用下方「批量配對」看建議表，或依三欄單筆分配 → ③ 按「分配崗位」後在「已分配名單」確認。<br>
+                <em>匹配分數為示範邏輯。按鈕應產出可操作的列表（見下方區塊）。</em>
+            </div>
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="stat-card blue"><div class="stat-num" id="stat-total-ministries">0</div><div class="stat-label">事工崗位</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-assigned">0</div><div class="stat-label">已分配</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-vacant">0</div><div class="stat-label">空缺崗位</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-serving">0</div><div class="stat-label">服事人数</div></div>
+            </div>
+            <p class="three-col-tip"><strong>三欄怎麼用？</strong>① 左欄選會友 → ③ 右欄選事工崗位 → ② 中欄先按「計算匹配度」看分數，滿意再「分配崗位」。批量配對為示範用，請仍人工覆核。</p>
+            <div class="three-col-nav" aria-hidden="true">
+                <div class="tcn-cell tcn-a"><strong>① 左欄：選會友</strong>可看恩賜／技能摘要（示範）。</div>
+                <div class="tcn-cell tcn-b"><strong>② 中欄：算分與指派</strong>匹配度為示範公式，非保證錄取。</div>
+                <div class="tcn-cell tcn-c"><strong>③ 右欄：選崗位</strong>點崗位後再回中欄操作。</div>
+            </div>
+            <div class="three-col">
+                <div class="panel panel-left">
+                    <div class="panel-header">① 會友列表（恩賜／技能）</div>
+                    <div class="search-box"><input type="text" id="ministryMemberSearch" placeholder="🔍 搜尋會友" onkeyup="filterMinistryMembers()"></div>
+                    <div id="ministryMembersList"></div>
+                </div>
+                <div class="panel panel-center">
+                    <div class="panel-header">② 配對與分配</div>
+                    <div id="matchScore" style="display: none; text-align: center; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 15px;">
+                        <div style="font-size: 40px; font-weight: bold; margin-bottom: 5px;" id="scoreValue">0</div>
+                        <div style="font-size: 12px;">匹配度得分</div>
+                    </div>
+                    <div id="matchDetails" style="display: none; background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 11px;">
+                        <h4 style="margin-bottom: 8px;">配对分析</h4>
+                        <div id="matchReasons"></div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button type="button" class="btn btn-warning" title="依目前選取的會友與崗位計算示範分數" onclick="calculateMatch()" style="width: 100%;">🎯 计算匹配度</button>
+                        <button type="button" class="btn btn-success" title="將會友指派到目前選取的崗位" onclick="assignMinistry()" style="width: 100%;">✅ 分配崗位</button>
+                        <button type="button" class="btn btn-info" title="批次示範配對，請事工部覆核結果" onclick="autoMatchAll()" style="width: 100%;">🤖 批量配对</button>
+                    </div>
+                </div>
+                <div class="panel panel-right">
+                    <div class="panel-header">③ 事工崗位列表</div>
+                    <div class="search-box"><input type="text" id="ministrySearch" placeholder="🔍 搜尋崗位" onkeyup="filterMinistries()"></div>
+                    <div id="ministriesList"></div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:15px;">
+                <div class="card-title">📋 配對結果與已分配名單（按了就有表）</div>
+                <p style="font-size:10px;color:#64748b;margin:0 0 10px;">先選<strong>事工崗位</strong>（與右欄點選會同步），再按「批量配對」產生建議表；「分配崗位」後立即更新下方已分配表，可複製或匯出。</p>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;">
+                    <div class="form-group" style="margin:0;min-width:200px;">
+                        <label class="form-label">事工／崗位</label>
+                        <select id="ministryBatchSelect" class="form-select" onchange="onMinistryBatchSelectChange()"></select>
+                    </div>
+                    <button type="button" class="btn btn-info" onclick="runBatchMatch()">🤖 批量配對（產生建議表）</button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="assignCheckedBatch()">✅ 將勾選者加入此崗位</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="exportMinistryAssignedCsv()">⬇ 匯出已分配 CSV</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="copyMinistryAssignedText()">📋 複製已分配</button>
+                </div>
+                <div id="batchMatchResults" class="batch-table-wrap"></div>
+                <div class="card-title" style="margin-top:16px;font-size:14px;">此崗位 · 已分配名單</div>
+                <div id="ministryAssignedPanel" class="batch-table-wrap"></div>
+            </div>
+        </div>
+        
+        <!-- 標籤頁5：成长追踪 -->
+        <div id="tab-growth" class="tab-content">
+            <div class="page-guide" style="font-size:11px;color:#475569;margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;line-height:1.55;">
+                <strong>【本頁用途】</strong>集中查看<strong>單一會友</strong>的靈命與參與（課程、培訓、主日出席等）。<br>
+                <strong>【適合誰用】</strong>牧者、輔導（一般會友正式環境僅能看自己的簡化版）。<br>
+                <strong>【如何開始】</strong>① 下方選會友或輸入姓名 → ② 按「載入」→ ③ 檢視小組／事工／培訓／出席，必要時新增培訓紀錄。<br>
+                <em>歷史紀錄與隱私欄位之存取由後端控制。</em>
+            </div>
+            <div class="card" style="margin-bottom:15px;">
+                <div class="card-title">🔎 單人成長視圖</div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+                    <div class="form-group" style="margin:0;min-width:220px;flex:1;">
+                        <label class="form-label">搜尋會友姓名</label>
+                        <input type="text" id="growthMemberSearchInput" class="form-input" placeholder="輸入姓名關鍵字…" list="growthMemberDatalist">
+                        <datalist id="growthMemberDatalist"></datalist>
+                    </div>
+                    <div class="form-group" style="margin:0;min-width:200px;">
+                        <label class="form-label">或選擇會友</label>
+                        <select id="growthMemberSelect" class="form-select"></select>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="applyGrowthMemberView()">載入</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearGrowthMemberView()">清除選定</button>
+                </div>
+                <div id="growthMemberDetailPanel" class="growth-detail" style="display:none; margin-top:12px;"></div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">📚 培訓記錄</div>
+                    <button class="btn btn-primary btn-sm" onclick="showAddTrainingModal()">➕ 新增培訓記錄</button>
+                    <table id="trainingsTable" style="margin-top: 15px;">
+                        <thead><tr><th>会友</th><th>课程</th><th>完成日期</th><th>讲师</th><th>成绩</th><th>操作</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="card">
+                    <div class="card-title">✝️ 主日出席追踪</div>
+                    <p style="font-size:10px;color:#64748b;margin:0 0 10px;line-height:1.45;">出席資料<strong>來自主日敬拜／主日學登記系統</strong>（示範為本頁產生之測試紀錄）；本頁僅做彙總顯示。正式環境權限由後端決定。</p>
+                    <button class="btn btn-primary btn-sm" onclick="recordAttendance()">➕ 记录出席</button>
+                    <div id="attendanceSummary" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📈 灵命成长曲线</div>
+                <canvas id="growthCurveChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- 標籤頁6：数据分析 -->
+        <div id="tab-analysis" class="tab-content">
+            <div class="page-guide" style="font-size:11px;color:#475569;margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;line-height:1.55;">
+                <strong>本頁用途：</strong>圖表化呈現會友構成、參與度、奉獻等（示範資料）。<br>
+                <strong>適合誰用：</strong>牧者、行政、策略會議預備。<br>
+                <strong>如何開始：</strong>先有足夠會友資料後檢視圖表；指標要「真」需資料模型齊全並由後端統一計算。<br>
+                <em>本頁圖表為前端彙總示範，非審計級報表。</em>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">👥 會友構成分析</div><canvas id="compositionChart"></canvas></div>
+                <div class="card"><div class="card-title">📊 參與度分析</div><canvas id="participationChart"></canvas></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">💰 奉献趋势</div><canvas id="donationChart"></canvas></div>
+                <div class="card"><div class="card-title">⚠️ 流失预警</div><div id="churnWarning"></div></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script src="../../../js/cloud_config.js"></script>
+    <script src="../../../js/cloud_api.js"></script>
+    <script src="../../../js/church_crm_constants.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
+    <script>
+        // ========================================
+        // 核心数据结构（父子数据库设计）
+        // 正規化欄位見 ChurchDataBridge + docs/MEMBER_DATA_MODEL.md
+        // ========================================
+        let data = {
+            // 父表：会友基本档案
+            members: [],
+            
+            // 子表1：小组归属（多对多）
+            groupMemberships: [],
+            
+            // 子表2：事工参与（多对多）
+            ministryAssignments: [],
+            
+            // 子表3：培訓記錄（一对多）
+            trainings: [],
+            
+            // 子表4：主日出席（一对多）
+            attendance: [],
+            
+            // 子表5：奉献记录（一对多）
+            donations: [],
+            
+            // 辅助数据
+            groups: [],        // 小組列表
+            ministries: []     // 事工崗位列表
+        };
+        
+        let charts = {};
+        let selectedMember = null;
+        let selectedGroup = null;
+        let selectedMinistry = null;
+
+        const MEMBER_STATUS_LABELS = {
+            in_communion: '在會',
+            pending_transfer: '待轉',
+            transferred: '轉會',
+            left: '已離開'
+        };
+
+        let memberSortKey = 'name';
+        let memberSortDir = 'asc';
+        let growthViewMemberId = null;
+
+        function normalizeMemberStatus(s) {
+            if (s === 'active') return 'in_communion';
+            if (s === 'inactive') return 'left';
+            if (MEMBER_STATUS_LABELS[s]) return s;
+            return 'in_communion';
+        }
+
+        function migrateMemberRecords() {
+            if (!data.members) return;
+            data.members.forEach(function (m) {
+                m.status = normalizeMemberStatus(m.status);
+                if (m.zone === undefined) m.zone = '';
+                if (m.schoolName === undefined) m.schoolName = '';
+                if (m.schoolClass === undefined) m.schoolClass = '';
+                if (m.ministryIntent === undefined) m.ministryIntent = '';
+                var stage = getMemberSpiritualStageId(m);
+                m.spiritual_journey_stage = stage;
+                m.spiritual_stage = stage;
+                if (m.first_visit_date === undefined && m.firstVisitDate) m.first_visit_date = m.firstVisitDate;
+                if (m.firstVisitDate === undefined && m.first_visit_date) m.firstVisitDate = m.first_visit_date;
+                if (m.first_visit_date === undefined) m.first_visit_date = '';
+                if (m.firstVisitDate === undefined) m.firstVisitDate = m.first_visit_date;
+            });
+        }
+
+        function statusLabel(key) {
+            return MEMBER_STATUS_LABELS[key] || key || '—';
+        }
+
+        function getMemberSpiritualStageId(m) {
+            if (!m) return 'growing';
+            if (m.spiritual_journey_stage) return m.spiritual_journey_stage;
+            if (window.ChurchCrmConstants) return ChurchCrmConstants.normalizeSpiritualStage(m.spiritual_stage);
+            return 'growing';
+        }
+
+        function spiritualStageLabel(stageId) {
+            if (window.ChurchCrmConstants && ChurchCrmConstants.stageLabel) {
+                return ChurchCrmConstants.stageLabel(stageId, 'zh');
+            }
+            return stageId || '—';
+        }
+
+        function getMemberFirstVisitDate(m) {
+            if (!m) return '';
+            return m.first_visit_date || m.firstVisitDate || '';
+        }
+
+        function buildSpiritualStageSelectHtml(selectId, currentId) {
+            var stages = (window.ChurchCrmConstants && ChurchCrmConstants.SPIRITUAL_JOURNEY_STAGES) || [];
+            var html = '<select id="' + selectId + '" class="form-select">';
+            stages.forEach(function (s) {
+                html += '<option value="' + s.id + '"' + (s.id === currentId ? ' selected' : '') + '>' + s.label_zh + '</option>';
+            });
+            if (!stages.length) {
+                html += '<option value="growing"' + (currentId === 'growing' ? ' selected' : '') + '>成長</option>';
+            }
+            html += '</select>';
+            return html;
+        }
+
+        function applyMemberCrmFieldsFromForm(member, stageSelectId, visitDateInputId) {
+            var stageEl = document.getElementById(stageSelectId);
+            var visitEl = document.getElementById(visitDateInputId);
+            var stage = stageEl ? stageEl.value : 'growing';
+            var visit = visitEl ? (visitEl.value || '').trim() : '';
+            member.spiritual_journey_stage = stage;
+            member.spiritual_stage = stage;
+            member.first_visit_date = visit;
+            member.firstVisitDate = visit;
+            return member;
+        }
+
+        function getMemberZoneHint(m) {
+            if (m.zone) return m.zone;
+            var gids = data.groupMemberships.filter(function (gm) { return gm.memberId === m.id; }).map(function (gm) { return gm.groupId; });
+            var labels = [];
+            gids.forEach(function (gid) {
+                var g = data.groups.find(function (x) { return x.id === gid; });
+                if (!g) return;
+                var map = { youth: '青年', family: '家庭', workplace: '職場', senior: '長者' };
+                labels.push(map[g.category] || g.location || g.name);
+            });
+            if (!labels.length) return '—';
+            return [...new Set(labels)].slice(0, 2).join('、');
+        }
+
+        function computeMatchScore(member, ministry) {
+            var score = 50;
+            var gifts = (member.gifts || '').split(/[,，、]/).map(function (s) { return s.trim(); }).filter(Boolean);
+            var requirements = (ministry.requirements || '').split(/[,，、]/).map(function (s) { return s.trim(); }).filter(Boolean);
+            requirements.forEach(function (req) {
+                if (gifts.some(function (g) { return g.indexOf(req) >= 0 || req.indexOf(g) >= 0; })) score += 20;
+            });
+            if (member.age >= 25 && member.age <= 50) score += 10;
+            if (member.baptized) score += 10;
+            return Math.min(score, 100);
+        }
+        
+        // ========================================
+        // 初始化
+        // ========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            const cfg = typeof CHURCH_CLOUD_CONFIG !== 'undefined' ? CHURCH_CLOUD_CONFIG : {};
+            const useApi = cfg.USE_API === true && cfg.API_BASE_URL && String(cfg.API_BASE_URL).trim();
+            const runInit = () => {
+                loadData();
+                migrateMemberRecords();
+                if (data.members.length === 0) {
+                    loadDemo(); // 自动载入示例数据
+                }
+                migrateMemberRecords();
+                fillGrowthMemberControls();
+                renderAll();
+                applyRouteParams();
+            };
+            const kick = function () {
+                if (useApi && typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.hydrateFromApi) {
+                    ChurchDataBridge.hydrateFromApi().then(runInit).catch(function (e) {
+                        console.warn('[member-integrated] hydrateFromApi failed, using local', e);
+                        runInit();
+                    });
+                } else {
+                    runInit();
+                }
+            };
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.whenReady) {
+                ChurchDataBridge.whenReady({ timeoutMs: 8000 }).then(kick).catch(kick);
+            } else {
+                kick();
+            }
+        });
+        
+        // ========================================
+        // 数据管理
+        // ========================================
+        function loadData() {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.getMemberSystemData) {
+                var fromBridge = ChurchDataBridge.getMemberSystemData();
+                if (fromBridge && fromBridge.members && fromBridge.members.length > 0) {
+                    data = fromBridge;
+                    console.log('✅ 已載入（bridge 正規化）:', data.members.length, '位會友');
+                    return;
+                }
+            }
+            const saved = localStorage.getItem('memberSystemData');
+            if (saved) {
+                try {
+                    data = JSON.parse(saved);
+                    if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.saveMemberSystemData) {
+                        try {
+                            ChurchDataBridge.saveMemberSystemData(data);
+                            data = ChurchDataBridge.getMemberSystemData();
+                            console.log('✅ 已自本機遷移寫回 Bridge:', data.members.length, '位會友');
+                        } catch (merr) {
+                            console.warn('遷移寫回 Bridge 失敗', merr);
+                        }
+                    }
+                    console.log('✅ 已加载数据:', data.members.length, '个会友');
+                } catch (e) {
+                    console.error('❌ 数据加载失败:', e);
+                }
+            }
+        }
+
+        function fillGrowthMemberControls() {
+            var sel = document.getElementById('growthMemberSelect');
+            var dl = document.getElementById('growthMemberDatalist');
+            if (!sel || !dl) return;
+            sel.innerHTML = '<option value="">— 請選擇 —</option>' + data.members.map(function (m) {
+                return '<option value="' + m.id + '">' + m.name + '</option>';
+            }).join('');
+            dl.innerHTML = data.members.map(function (m) {
+                return '<option value="' + m.name + '">';
+            }).join('');
+        }
+
+        function setUrlHash(tabName, memberId) {
+            var parts = ['tab=' + encodeURIComponent(tabName)];
+            if (memberId != null && !isNaN(memberId)) parts.push('memberId=' + encodeURIComponent(String(memberId)));
+            if (history.replaceState) {
+                history.replaceState(null, '', '#' + parts.join('&'));
+            } else {
+                location.hash = '#' + parts.join('&');
+            }
+        }
+
+        function gotoMemberTab(tab, memberId) {
+            closeModal();
+            growthViewMemberId = memberId;
+            selectedMember = data.members.find(function (m) { return m.id === memberId; }) || null;
+            switchTab(tab, { skipUrl: true });
+            setUrlHash(tab, memberId);
+            if (tab === 'growth') {
+                var gs = document.getElementById('growthMemberSelect');
+                if (gs) gs.value = String(memberId);
+                renderGrowthMemberDetailPanel();
+            }
+            if (tab === 'ministry') renderMinistryTab();
+            if (tab === 'groups') renderGroupsTab();
+        }
+
+        function applyRouteParams() {
+            var hadParams = (location.hash && location.hash.length > 1) || (location.search && location.search.length > 1);
+            var tab = 'overview';
+            var memberId = null;
+            try {
+                var q = new URLSearchParams(location.search.slice(1));
+                if (q.get('tab')) tab = q.get('tab');
+                if (q.get('memberId')) memberId = parseInt(q.get('memberId'), 10);
+            } catch (e) {}
+            if (location.hash && location.hash.length > 1) {
+                location.hash.slice(1).split('&').forEach(function (pair) {
+                    var kv = pair.split('=');
+                    var k = decodeURIComponent(kv[0] || '');
+                    var v = decodeURIComponent(kv[1] || '');
+                    if (k === 'tab') tab = v;
+                    if (k === 'memberId') memberId = parseInt(v, 10);
+                });
+            }
+            var valid = ['overview', 'members', 'groups', 'ministry', 'growth', 'analysis'];
+            if (valid.indexOf(tab) < 0) tab = 'overview';
+            if (memberId != null && !isNaN(memberId) && data.members.some(function (m) { return m.id === memberId; })) {
+                growthViewMemberId = memberId;
+                selectedMember = data.members.find(function (m) { return m.id === memberId; }) || null;
+            }
+            switchTab(tab, { skipUrl: true });
+            if (memberId != null && !isNaN(memberId) && data.members.some(function (m) { return m.id === memberId; })) {
+                if (tab === 'growth') {
+                    var gs = document.getElementById('growthMemberSelect');
+                    if (gs) gs.value = String(memberId);
+                    renderGrowthMemberDetailPanel();
+                }
+                if (tab === 'ministry') renderMinistryTab();
+                if (tab === 'groups') renderGroupsTab();
+            }
+            if (hadParams) setUrlHash(tab, memberId != null && !isNaN(memberId) ? memberId : null);
+        }
+        
+        function saveData() {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.saveMemberSystemData) {
+                try {
+                    ChurchDataBridge.saveMemberSystemData(data);
+                    data = ChurchDataBridge.getMemberSystemData();
+                    console.log('💾 已保存（bridge → memberSystemData + churchMasterDatabase）');
+                    return true;
+                } catch (e) {
+                    console.error('❌ bridge 保存失败:', e);
+                    showMessage('数据保存失败！', 'error');
+                    return false;
+                }
+            }
+            try {
+                localStorage.setItem('memberSystemData', JSON.stringify(data));
+                console.log('💾 数据已保存');
+                return true;
+            } catch (e) {
+                console.error('❌ 数据保存失败:', e);
+                showMessage('数据保存失败！', 'error');
+                return false;
+            }
+        }
+        
+        function loadDemo() {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.isProductionMode && ChurchDataBridge.isProductionMode()) {
+                showMessage('正式環境禁止載入示範資料', 'error');
+                return;
+            }
+            // 生成示例会友数据
+            const names = ['张三', '李四', '王五', '赵六', '陈七', '刘八', '黄九', '周十', '吴十一', '郑十二', '孙十三', '杨十四', '朱十五'];
+            const gifts = ['教导', '讲道', '音乐', '辅导', '管理', '服务', '传福音'];
+            
+            data.members = names.map((name, i) => ({
+                id: i + 1,
+                memberId: i + 1,
+                name: name,
+                gender: i % 2 === 0 ? '男' : '女',
+                age: 25 + (i * 3),
+                phone: `138${String(i).padStart(8, '0')}`,
+                email: `${name}@church.org`,
+                baptized: i < 10,
+                membershipDate: `202${Math.floor(i/5)}-0${(i % 12) + 1}-15`,
+                status: i < 11 ? 'in_communion' : 'left',
+                gifts: gifts[i % gifts.length],
+                skills: '音乐,教导'.split(',')[i % 2],
+                birthday: `${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
+                zone: ['東區', '西區', '南區'][i % 3],
+                schoolName: i % 4 === 0 ? '示範主日學' : '',
+                schoolClass: i % 4 === 0 ? '大班' : '',
+                ministryIntent: i % 3 === 0 ? '願意招待、音樂' : ''
+            }));
+            
+            // 生成小組數据
+            data.groups = [
+                { id: 1, groupId: 1, name: '青年小组A', category: 'youth', leader: '张三', capacity: 15, location: '教会' },
+                { id: 2, groupId: 2, name: '夫妇小组B', category: 'family', leader: '李四', capacity: 12, location: '家庭' },
+                { id: 3, groupId: 3, name: '职场小组C', category: 'workplace', leader: '王五', capacity: 10, location: '办公室' },
+                { id: 4, groupId: 4, name: '长者小组D', category: 'senior', leader: '赵六', capacity: 15, location: '教会' }
+            ];
+            
+            // 生成事工崗位数据
+            data.ministries = [
+                { id: 1, ministryId: 1, name: '敬拜主领', category: 'worship', requirements: '音乐,领导力', needPeople: 3 },
+                { id: 2, ministryId: 2, name: '主日学教师', category: 'education', requirements: '教导,耐心', needPeople: 5 },
+                { id: 3, ministryId: 3, name: '招待同工', category: 'hospitality', requirements: '服务,热情', needPeople: 8 },
+                { id: 4, ministryId: 4, name: '音控同工', category: 'media', requirements: '技术,细心', needPeople: 4 },
+                { id: 5, ministryId: 5, name: '辅导员', category: 'counseling', requirements: '辅导,倾听', needPeople: 3 }
+            ];
+            
+            // 生成小组归属数据（部分会友）
+            for (let i = 0; i < 8; i++) {
+                data.groupMemberships.push({
+                    id: i + 1,
+                    memberId: i + 1,
+                    groupId: (i % 4) + 1,
+                    role: i === 0 ? 'leader' : 'member',
+                    joinDate: '2024-01-15'
+                });
+            }
+            
+            // 生成事工分配数据（部分会友）
+            for (let i = 0; i < 6; i++) {
+                data.ministryAssignments.push({
+                    id: i + 1,
+                    memberId: i + 1,
+                    ministryId: (i % 5) + 1,
+                    position: '同工',
+                    startDate: '2024-06-01',
+                    performance: ['优秀', '良好', '合格'][i % 3]
+                });
+            }
+            
+            // 生成培訓記錄
+            const courses = ['门徒培训', '领袖培训', '福音布道', '婚姻辅导', '青少年事工'];
+            for (let i = 0; i < 10; i++) {
+                data.trainings.push({
+                    id: i + 1,
+                    memberId: (i % 13) + 1,
+                    courseName: courses[i % 5],
+                    completedDate: `2024-${String((i % 12) + 1).padStart(2, '0')}-15`,
+                    instructor: '李牧师',
+                    grade: ['A', 'B', 'A', 'B', 'A'][i % 5]
+                });
+            }
+            
+            // 生成主日出席记录（最近4周）
+            const today = new Date();
+            for (let week = 0; week < 4; week++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - (week * 7));
+                for (let i = 0; i < 10; i++) {
+                    data.attendance.push({
+                        id: week * 10 + i + 1,
+                        memberId: i + 1,
+                        date: date.toISOString().split('T')[0],
+                        service: '主日崇拜',
+                        present: Math.random() > 0.2
+                    });
+                }
+            }
+            
+            saveData();
+            renderAll();
+            showMessage('✅ 示例数据已载入！包含13个会友、4个小组、5个事工崗位', 'success');
+        }
+        
+        // ========================================
+        // 標籤頁切换
+        // ========================================
+        function switchTab(tabName, opts) {
+            opts = opts || {};
+            var order = ['overview', 'members', 'groups', 'ministry', 'growth', 'analysis'];
+            document.querySelectorAll('.tabs .tab').forEach(function (t) { t.classList.remove('active'); });
+            document.querySelectorAll('.tab-content').forEach(function (tc) { tc.classList.remove('active'); });
+            var idx = order.indexOf(tabName);
+            var tabBtns = document.querySelectorAll('.tabs .tab');
+            if (idx >= 0 && tabBtns[idx]) tabBtns[idx].classList.add('active');
+            var panel = document.getElementById('tab-' + tabName);
+            if (panel) panel.classList.add('active');
+
+            if (tabName === 'overview') renderOverview();
+            if (tabName === 'members') renderMembers();
+            if (tabName === 'groups') renderGroupsTab();
+            if (tabName === 'ministry') renderMinistryTab();
+            if (tabName === 'growth') {
+                fillGrowthMemberControls();
+                renderGrowthTab();
+            }
+            if (tabName === 'analysis') renderAnalysisTab();
+
+            if (!opts.skipUrl) {
+                var mid = null;
+                if (tabName === 'growth' && growthViewMemberId) mid = growthViewMemberId;
+                setUrlHash(tabName, mid);
+            }
+        }
+        
+        // ========================================
+        // 渲染所有
+        // ========================================
+        function renderAll() {
+            renderOverview();
+            renderMembers();
+        }
+        
+        // ========================================
+        // 標籤頁1：總覽
+        // ========================================
+        function renderOverview() {
+            // 更新统计卡片
+            document.getElementById('stat-total').textContent = data.members.length;
+            
+            const thisMonth = new Date().getMonth();
+            const newMembers = data.members.filter(m => {
+                const joinMonth = new Date(m.membershipDate).getMonth();
+                return joinMonth === thisMonth;
+            }).length;
+            document.getElementById('stat-new').textContent = newMembers;
+            
+            const baptized = data.members.filter(m => m.baptized).length;
+            document.getElementById('stat-baptized').textContent = baptized;
+            
+            const recentAttendance = data.attendance.filter(a => a.present).length;
+            const totalRecords = data.attendance.length;
+            const attendanceRate = totalRecords > 0 ? Math.round((recentAttendance / totalRecords) * 100) : 0;
+            document.getElementById('stat-attendance').textContent = attendanceRate + '%';
+            
+            const activeMembers = data.members.filter(m => m.status === 'in_communion').length;
+            document.getElementById('stat-active').textContent = activeMembers;
+            
+            document.getElementById('stat-groups').textContent = data.groups.length;
+            
+            // 年齡分佈饼图
+            const ageGroups = {'18-30岁': 0, '31-50岁': 0, '51-65岁': 0, '66岁以上': 0};
+            data.members.forEach(m => {
+                if (m.age <= 30) ageGroups['18-30岁']++;
+                else if (m.age <= 50) ageGroups['31-50岁']++;
+                else if (m.age <= 65) ageGroups['51-65岁']++;
+                else ageGroups['66岁以上']++;
+            });
+            
+            const ageCtx = document.getElementById('ageChart');
+            if (charts.ageChart) charts.ageChart.destroy();
+            charts.ageChart = new Chart(ageCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(ageGroups),
+                    datasets: [{
+                        data: Object.values(ageGroups),
+                        backgroundColor: ['#3498db', '#e74c3c', '#f39c12', '#9b59b6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+            
+            // 會友增長趨勢折线图
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
+            const growthData = months.map((m, i) => {
+                return data.members.filter(member => {
+                    const joinMonth = new Date(member.membershipDate).getMonth();
+                    return joinMonth <= i;
+                }).length;
+            });
+            
+            const growthCtx = document.getElementById('growthChart');
+            if (charts.growthChart) charts.growthChart.destroy();
+            charts.growthChart = new Chart(growthCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '会友总数',
+                        data: growthData,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102,126,234,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+            
+            // 本週生日
+            renderBirthdays();
+        }
+        
+        function renderBirthdays() {
+            const today = new Date();
+            const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+            const currentDay = today.getDate();
+            
+            const birthdays = data.members.filter(m => {
+                if (!m.birthday) return false;
+                const [month, day] = m.birthday.split('-');
+                const birthdayDate = parseInt(day);
+                return month === currentMonth && Math.abs(birthdayDate - currentDay) <= 3;
+            });
+            
+            const html = birthdays.length > 0 
+                ? birthdays.map(m => `<div class="list-item">
+                        <div class="list-item-title">🎂 ${m.name}</div>
+                        <div class="list-item-meta">生日：${m.birthday} | ${m.phone}</div>
+                    </div>`).join('')
+                : '<div class="empty-state"><div class="empty-state-icon">🎂</div><div class="empty-state-text">本週暫無會友生日</div></div>';
+            
+            document.getElementById('birthdayList').innerHTML = html;
+        }
+        
+        // ========================================
+        // 標籤頁2：會友檔案
+        // ========================================
+        function toggleMemberSort(key) {
+            if (memberSortKey === key) {
+                memberSortDir = memberSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                memberSortKey = key;
+                memberSortDir = 'asc';
+            }
+            renderMembers();
+        }
+
+        function getFilteredSortedMembers() {
+            var searchTerm = (document.getElementById('memberSearch')?.value || '').toLowerCase();
+            var genderF = document.getElementById('memberFilterGender')?.value || '';
+            var baptF = document.getElementById('memberFilterBaptized')?.value || '';
+            var statusF = document.getElementById('memberFilterStatus')?.value || '';
+
+            var list = data.members.filter(function (m) {
+                if (searchTerm) {
+                    var ok = (m.name || '').toLowerCase().includes(searchTerm) ||
+                        (m.phone || '').includes(searchTerm) ||
+                        (m.email || '').toLowerCase().includes(searchTerm);
+                    if (!ok) return false;
+                }
+                if (genderF && m.gender !== genderF) return false;
+                if (baptF === 'yes' && !m.baptized) return false;
+                if (baptF === 'no' && m.baptized) return false;
+                if (statusF && (m.status || 'in_communion') !== statusF) return false;
+                return true;
+            });
+
+            list.sort(function (a, b) {
+                var va, vb;
+                if (memberSortKey === 'name') { va = a.name; vb = b.name; }
+                else if (memberSortKey === 'gender') { va = a.gender; vb = b.gender; }
+                else if (memberSortKey === 'age') { va = a.age; vb = b.age; }
+                else if (memberSortKey === 'baptized') { va = a.baptized ? 1 : 0; vb = b.baptized ? 1 : 0; }
+                else if (memberSortKey === 'membershipDate') { va = a.membershipDate || ''; vb = b.membershipDate || ''; }
+                else if (memberSortKey === 'status') { va = a.status || ''; vb = b.status || ''; }
+                else if (memberSortKey === 'spiritualStage') { va = getMemberSpiritualStageId(a); vb = getMemberSpiritualStageId(b); }
+                else if (memberSortKey === 'firstVisitDate') { va = getMemberFirstVisitDate(a); vb = getMemberFirstVisitDate(b); }
+                else { va = a.name; vb = b.name; }
+                var cmp = 0;
+                if (typeof va === 'number' && typeof vb === 'number') cmp = va - vb;
+                else cmp = String(va).localeCompare(String(vb), 'zh-Hant');
+                return memberSortDir === 'asc' ? cmp : -cmp;
+            });
+            return list;
+        }
+
+        function renderMembers() {
+            var list = getFilteredSortedMembers();
+            ['name', 'gender', 'age', 'baptized', 'membershipDate', 'status', 'spiritualStage', 'firstVisitDate'].forEach(function (k) {
+                var el = document.getElementById('sort-ind-' + k);
+                if (el) el.textContent = memberSortKey === k ? (memberSortDir === 'asc' ? '▲' : '▼') : '';
+            });
+            var tbody = document.querySelector('#membersTable tbody');
+            tbody.innerHTML = list.map(function (m) {
+                var st = m.status || 'in_communion';
+                var tagClass = st === 'in_communion' ? 'active' : 'inactive';
+                return `
+                <tr>
+                    <td>${m.name}</td>
+                    <td>${m.gender}</td>
+                    <td>${m.age}</td>
+                    <td>${m.phone}</td>
+                    <td>${m.email || '-'}</td>
+                    <td><span class="tag ${m.baptized ? 'baptized' : ''}">${m.baptized ? '已受浸' : '未受浸'}</span></td>
+                    <td>${m.membershipDate}</td>
+                    <td><span class="tag ${tagClass}">${statusLabel(st)}</span></td>
+                    <td>${spiritualStageLabel(getMemberSpiritualStageId(m))}</td>
+                    <td>${getMemberFirstVisitDate(m) || '—'}</td>
+                    <td>
+                        <button class="btn btn-info btn-sm" onclick="editMember(${m.id})">編輯</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteMember(${m.id})">刪除</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function filterMembers() {
+            renderMembers();
+        }
+        
+        function showAddMemberModal() {
+            showModal('➕ 新增會友', `
+                <div class="form-group">
+                    <label class="form-label">姓名 *</label>
+                    <input type="text" id="memberName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">性別 *</label>
+                    <select id="memberGender" class="form-select">
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">年齡 *</label>
+                    <input type="number" id="memberAge" class="form-input" value="30">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">電話 *</label>
+                    <input type="tel" id="memberPhone" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">郵箱</label>
+                    <input type="email" id="memberEmail" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">是否受浸</label>
+                    <select id="memberBaptized" class="form-select">
+                        <option value="true">是</option>
+                        <option value="false">否</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">入會日期 *</label>
+                    <input type="date" id="membershipDate" class="form-input" value="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">會友狀態</label>
+                    <select id="memberStatus" class="form-select">
+                        <option value="in_communion">在會</option>
+                        <option value="pending_transfer">待轉</option>
+                        <option value="transferred">轉會</option>
+                        <option value="left">已離開</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">屬靈旅程階段（CRM）</label>
+                    ${buildSpiritualStageSelectHtml('memberSpiritualStage', 'growing')}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">初來教會日期</label>
+                    <input type="date" id="memberFirstVisitDate" class="form-input" value="">
+                    <p style="font-size:10px;color:#64748b;margin:4px 0 0;line-height:1.4;">儀表板新人 SLA 與探訪提醒依此欄位計算。</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">恩賜／事奉意向</label>
+                    <input type="text" id="memberGifts" class="form-input" placeholder="例：教導、音樂">
+                    <p style="font-size:10px;color:#64748b;margin:4px 0 0; line-height:1.4;">未來用於「🎯 事工參與」崗位配對與排班建議（示範）。</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">事奉意向（補充）</label>
+                    <input type="text" id="memberMinistryIntent" class="form-input" placeholder="例：願意招待">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">所屬學校／班別（選填）</label>
+                    <input type="text" id="memberSchoolName" class="form-input" placeholder="主日學校名">
+                    <input type="text" id="memberSchoolClass" class="form-input" placeholder="班別" style="margin-top:6px;">
+                    <p style="font-size:10px;color:#64748b;margin:4px 0 0; line-height:1.4;">預留給教育／主日學系統（出席、學費等）；正式環境由後端決定欄位。</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">分區／備註（選填）</label>
+                    <input type="text" id="memberZone" class="form-input" placeholder="與探訪分區對齊時填寫">
+                </div>
+                <button class="btn btn-primary" onclick="saveMember()">保存</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+
+        function saveMember() {
+            const nextId = data.members.length > 0 ? Math.max(...data.members.map(m => m.id)) + 1 : 1;
+            const newMember = {
+                id: nextId,
+                memberId: nextId,
+                name: document.getElementById('memberName').value.trim(),
+                gender: document.getElementById('memberGender').value,
+                age: parseInt(document.getElementById('memberAge').value, 10),
+                phone: document.getElementById('memberPhone').value.trim(),
+                email: document.getElementById('memberEmail').value.trim(),
+                baptized: document.getElementById('memberBaptized').value === 'true',
+                membershipDate: document.getElementById('membershipDate').value,
+                status: document.getElementById('memberStatus').value,
+                gifts: document.getElementById('memberGifts').value.trim(),
+                ministryIntent: document.getElementById('memberMinistryIntent').value.trim(),
+                schoolName: document.getElementById('memberSchoolName').value.trim(),
+                schoolClass: document.getElementById('memberSchoolClass').value.trim(),
+                zone: document.getElementById('memberZone').value.trim()
+            };
+
+            if (!newMember.name || !newMember.phone) {
+                showMessage('請填寫姓名與電話', 'error');
+                return;
+            }
+
+            applyMemberCrmFieldsFromForm(newMember, 'memberSpiritualStage', 'memberFirstVisitDate');
+
+            data.members.push(newMember);
+            saveData();
+            migrateMemberRecords();
+            fillGrowthMemberControls();
+            renderMembers();
+            renderOverview();
+            closeModal();
+            showMessage('✅ 會友已新增', 'success');
+        }
+
+        function editMember(id) {
+            const m = data.members.find(x => x.id === id);
+            if (!m) return;
+            const mid = m.id;
+            const stageId = getMemberSpiritualStageId(m);
+            const firstVisit = getMemberFirstVisitDate(m);
+            const linkVis = '../support/visitation_index.html?memberId=' + mid;
+            const link360 = 'member-360-timeline.html?memberId=' + mid;
+            showModal('編輯會友 · ' + m.name, `
+                <div class="form-group"><label class="form-label">姓名 *</label><input type="text" id="editMemberName" class="form-input" value="${(m.name || '').replace(/"/g, '&quot;')}"></div>
+                <div class="form-group"><label class="form-label">性別</label>
+                    <select id="editMemberGender" class="form-select"><option value="男">男</option><option value="女">女</option></select></div>
+                <div class="form-group"><label class="form-label">年齡</label><input type="number" id="editMemberAge" class="form-input" value="${m.age}"></div>
+                <div class="form-group"><label class="form-label">電話 *</label><input type="tel" id="editMemberPhone" class="form-input" value="${(m.phone || '').replace(/"/g, '&quot;')}"></div>
+                <div class="form-group"><label class="form-label">郵箱</label><input type="email" id="editMemberEmail" class="form-input" value="${(m.email || '').replace(/"/g, '&quot;')}"></div>
+                <div class="form-group"><label class="form-label">受浸</label>
+                    <select id="editMemberBaptized" class="form-select"><option value="true">是</option><option value="false">否</option></select></div>
+                <div class="form-group"><label class="form-label">入會日期</label><input type="date" id="editMembershipDate" class="form-input" value="${m.membershipDate || ''}"></div>
+                <div class="form-group"><label class="form-label">會友狀態</label>
+                    <select id="editMemberStatus" class="form-select">
+                        <option value="in_communion">在會</option>
+                        <option value="pending_transfer">待轉</option>
+                        <option value="transferred">轉會</option>
+                        <option value="left">已離開</option>
+                    </select></div>
+                <div class="form-group"><label class="form-label">屬靈旅程階段（CRM）</label>
+                    ${buildSpiritualStageSelectHtml('editMemberSpiritualStage', stageId)}</div>
+                <div class="form-group"><label class="form-label">初來教會日期</label>
+                    <input type="date" id="editMemberFirstVisitDate" class="form-input" value="${firstVisit}"></div>
+                <div class="form-group"><label class="form-label">恩賜／事奉意向</label><input type="text" id="editMemberGifts" class="form-input" value="${(m.gifts || '').replace(/"/g, '&quot;')}"></div>
+                <div class="form-group"><label class="form-label">事奉意向（補充）</label><input type="text" id="editMemberMinistryIntent" class="form-input" value="${(m.ministryIntent || '').replace(/"/g, '&quot;')}"></div>
+                <div class="form-group"><label class="form-label">學校／班別</label>
+                    <input type="text" id="editSchoolName" class="form-input" value="${(m.schoolName || '').replace(/"/g, '&quot;')}" placeholder="主日學">
+                    <input type="text" id="editSchoolClass" class="form-input" value="${(m.schoolClass || '').replace(/"/g, '&quot;')}" placeholder="班別" style="margin-top:6px;"></div>
+                <div class="form-group"><label class="form-label">分區</label><input type="text" id="editMemberZone" class="form-input" value="${(m.zone || '').replace(/"/g, '&quot;')}"></div>
+                <div class="module-links">
+                    <strong>關聯模組</strong>（同一會友在不同功能中的資料）
+                    <ul style="margin:8px 0 0;padding-left:18px;">
+                        <li><a href="${link360}" target="contentFrame">會眾 360 時間軸</a></li>
+                        <li><a href="${linkVis}" target="contentFrame">探訪工作桌</a>（帶會友 id）</li>
+                        <li><a href="#" onclick="gotoMemberTab('ministry', ${mid}); return false;">事工參與</a>（本頁）</li>
+                        <li><a href="#" onclick="gotoMemberTab('growth', ${mid}); return false;">成長追蹤</a>（本頁）</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary" onclick="updateMember(${mid})">儲存</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+            document.getElementById('editMemberGender').value = m.gender;
+            document.getElementById('editMemberBaptized').value = m.baptized ? 'true' : 'false';
+            document.getElementById('editMemberStatus').value = m.status || 'in_communion';
+        }
+
+        function updateMember(id) {
+            const m = data.members.find(x => x.id === id);
+            if (!m) return;
+            m.name = document.getElementById('editMemberName').value.trim();
+            m.gender = document.getElementById('editMemberGender').value;
+            m.age = parseInt(document.getElementById('editMemberAge').value, 10) || 0;
+            m.phone = document.getElementById('editMemberPhone').value.trim();
+            m.email = document.getElementById('editMemberEmail').value.trim();
+            m.baptized = document.getElementById('editMemberBaptized').value === 'true';
+            m.membershipDate = document.getElementById('editMembershipDate').value;
+            m.status = document.getElementById('editMemberStatus').value;
+            m.gifts = document.getElementById('editMemberGifts').value.trim();
+            m.ministryIntent = document.getElementById('editMemberMinistryIntent').value.trim();
+            m.schoolName = document.getElementById('editSchoolName').value.trim();
+            m.schoolClass = document.getElementById('editSchoolClass').value.trim();
+            m.zone = document.getElementById('editMemberZone').value.trim();
+            applyMemberCrmFieldsFromForm(m, 'editMemberSpiritualStage', 'editMemberFirstVisitDate');
+            saveData();
+            migrateMemberRecords();
+            fillGrowthMemberControls();
+            renderMembers();
+            renderOverview();
+            closeModal();
+            showMessage('✅ 已更新', 'success');
+        }
+        
+        function deleteMember(id) {
+            if (!confirm('確定刪除此會友？\n\n注意：将同时删除相关的小组、事工、培訓記錄')) return;
+
+            if (growthViewMemberId === id) {
+                growthViewMemberId = null;
+                var gp = document.getElementById('growthMemberDetailPanel');
+                if (gp) { gp.style.display = 'none'; gp.innerHTML = ''; }
+            }
+
+            data.members = data.members.filter(m => m.id !== id);
+            data.groupMemberships = data.groupMemberships.filter(gm => gm.memberId !== id);
+            data.ministryAssignments = data.ministryAssignments.filter(ma => ma.memberId !== id);
+            data.trainings = data.trainings.filter(t => t.memberId !== id);
+            data.attendance = data.attendance.filter(a => a.memberId !== id);
+            
+            saveData();
+            renderMembers();
+            renderOverview();
+            showMessage('✅ 会友已删除', 'success');
+        }
+        
+        function exportMembers() {
+            var bundle;
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.exportMemberSystemBundle) {
+                bundle = ChurchDataBridge.exportMemberSystemBundle();
+            } else {
+                bundle = {
+                    schema_version: 1,
+                    export_kind: 'memberSystemData',
+                    exported_at: new Date().toISOString(),
+                    data: data,
+                    meta: { member_count: (data.members || []).length }
+                };
+            }
+            const dataStr = JSON.stringify(bundle, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'memberSystemData_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showMessage('✅ 已匯出（含 schema_version，符合 MEMBER_DATA_MODEL）', 'success');
+        }
+        
+        function importMembers() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json,.json';
+            input.onchange = function (e) {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function (ev) {
+                    try {
+                        const bundle = JSON.parse(ev.target.result);
+                        const merge = confirm('合併匯入？\n\n確定＝以檔案覆寫同 id 會友並保留其他欄位合併\n取消＝整包取代目前 memberSystemData');
+                        if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.importMemberSystemBundle) {
+                            ChurchDataBridge.importMemberSystemBundle(bundle, { merge: merge });
+                            data = ChurchDataBridge.getMemberSystemData();
+                        } else {
+                            const payload = bundle.data && bundle.data.members ? bundle.data : bundle;
+                            if (!payload.members) throw new Error('缺少 members');
+                            data = merge ? Object.assign({}, data, payload) : payload;
+                            saveData();
+                        }
+                        migrateMemberRecords();
+                        fillGrowthMemberControls();
+                        renderMembers();
+                        renderOverview();
+                        showMessage('✅ 已匯入 ' + (data.members || []).length + ' 位會友', 'success');
+                    } catch (err) {
+                        showMessage('匯入失敗：' + (err.message || err), 'error');
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            };
+            input.click();
+        }
+        
+        // ========================================
+        // 標籤頁3：小组归属
+        // ========================================
+        function renderGroupsTab() {
+            updateGroupStats();
+            renderGroupMembers();
+            renderGroupsList();
+        }
+        
+        function updateGroupStats() {
+            document.getElementById('stat-total-groups').textContent = data.groups.length;
+            
+            const uniqueMembers = [...new Set(data.groupMemberships.map(gm => gm.memberId))];
+            document.getElementById('stat-members-in-groups').textContent = uniqueMembers.length;
+            
+            const coverage = data.members.length > 0 ? Math.round((uniqueMembers.length / data.members.length) * 100) : 0;
+            document.getElementById('stat-coverage').textContent = coverage + '%';
+            
+            const avgSize = data.groups.length > 0 ? Math.round(uniqueMembers.length / data.groups.length) : 0;
+            document.getElementById('stat-avg-size').textContent = avgSize;
+        }
+        
+        function renderGroupMembers() {
+            const searchTerm = (document.getElementById('groupMemberSearch')?.value || '').toLowerCase();
+            const filtered = data.members.filter(m => m.name.toLowerCase().includes(searchTerm));
+
+            const html = filtered.map(m => {
+                const inGroups = data.groupMemberships.filter(gm => gm.memberId === m.id);
+                const isLinked = inGroups.length > 0;
+                const minCount = data.ministryAssignments.filter(ma => ma.memberId === m.id).length;
+                const zone = getMemberZoneHint(m);
+                return `<div class="list-item ${selectedMember?.id === m.id ? 'selected' : ''} ${isLinked ? 'linked' : ''}" data-member-id="${m.id}" onclick="selectMemberForGroup(${m.id})">
+                    <div class="list-item-title">${m.name} ${isLinked ? '✓' : ''}</div>
+                    <div class="list-item-meta">分區：${zone}｜小組數：${inGroups.length}｜事工：${minCount ? '有' + minCount + '筆' : '無'}</div>
+                    <div class="list-item-meta">${m.age}歲 · ${m.gender}</div>
+                </div>`;
+            }).join('');
+
+            document.getElementById('groupMembersList').innerHTML = html || '<div class="empty-state-text">暫無會友</div>';
+        }
+        
+        function renderGroupsList() {
+            const searchTerm = (document.getElementById('groupSearch')?.value || '').toLowerCase();
+            const filtered = data.groups.filter(g => g.name.toLowerCase().includes(searchTerm));
+            
+            const html = filtered.map(g => {
+                const memberCount = data.groupMemberships.filter(gm => gm.groupId === g.id).length;
+                return `<div class="list-item ${selectedGroup?.id === g.id ? 'selected' : ''}" data-group-id="${g.id}" data-zone-id="${g.zoneId != null ? g.zoneId : ''}" onclick="selectGroup(${g.id})">
+                    <div class="list-item-title">${g.name}</div>
+                    <div class="list-item-meta">${memberCount}/${g.capacity}人 | ${g.leader} | ${g.location}</div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('groupsList').innerHTML = html || '<div class="empty-state-text">暫無小組</div>';
+        }
+        
+        function selectMemberForGroup(id) {
+            selectedMember = data.members.find(m => m.id === id);
+            renderGroupMembers();
+            updateGroupLinkingInfo();
+        }
+        
+        function selectGroup(id) {
+            selectedGroup = data.groups.find(g => g.id === id);
+            renderGroupsList();
+            updateGroupLinkingInfo();
+        }
+        
+        function updateGroupLinkingInfo() {
+            const info = document.getElementById('groupSelectedInfo');
+            if (!selectedMember && !selectedGroup) {
+                info.style.display = 'none';
+                return;
+            }
+            
+            info.style.display = 'block';
+            info.innerHTML = `
+                <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; font-size: 11px;">
+                    ${selectedMember ? `<p><strong>会友:</strong> ${selectedMember.name} (${selectedMember.age}岁)</p>` : ''}
+                    ${selectedGroup ? `<p><strong>小组:</strong> ${selectedGroup.name}</p>` : ''}
+                </div>
+            `;
+        }
+        
+        /**
+         * 以小組／會友 ID 建立歸屬（與 churchMasterDatabase.group_members 對齊；不依賴姓名）
+         * 無參數時沿用左／右欄選取（UI 流程）
+         */
+        function linkMemberToGroup(memberId, groupId) {
+            if (memberId != null && groupId != null) {
+                return linkMemberToGroupByIds(memberId, groupId);
+            }
+            if (!selectedMember || !selectedGroup) {
+                showMessage('请先选择会友和小组', 'error');
+                return;
+            }
+            linkMemberToGroupByIds(selectedMember.id, selectedGroup.id);
+        }
+
+        function linkMemberToGroupByIds(memberId, groupId) {
+            var mem = data.members.find(function (m) { return m.id === memberId || m.memberId === memberId; });
+            var grp = data.groups.find(function (g) { return g.id === groupId || g.groupId === groupId; });
+            if (!mem || !grp) {
+                showMessage('找不到會友或小組（請確認 id）', 'error');
+                return;
+            }
+            var exists = data.groupMemberships.find(function (gm) {
+                return gm.memberId === mem.id && gm.groupId === grp.id;
+            });
+            if (exists) {
+                showMessage('该会友已在此小组中', 'error');
+                return;
+            }
+            data.groupMemberships.push({
+                id: data.groupMemberships.length > 1 ? Math.max.apply(null, data.groupMemberships.map(function (x) { return x.id; })) + 1 : 1,
+                memberId: mem.id,
+                groupId: grp.id,
+                role: 'member',
+                joinDate: new Date().toISOString().split('T')[0]
+            });
+            saveData();
+            selectedMember = mem;
+            selectedGroup = grp;
+            renderGroupsTab();
+            showMessage('✅ ' + mem.name + ' 已加入 ' + grp.name, 'success');
+        }
+        
+        function unlinkMemberFromGroup() {
+            if (!selectedMember || !selectedGroup) {
+                showMessage('请先选择会友和小组', 'error');
+                return;
+            }
+            
+            data.groupMemberships = data.groupMemberships.filter(gm => 
+                !(gm.memberId === selectedMember.id && gm.groupId === selectedGroup.id)
+            );
+            
+            saveData();
+            renderGroupsTab();
+            showMessage(`✅ ${selectedMember.name} 已移出 ${selectedGroup.name}`, 'success');
+        }
+        
+        function recommendGroup() {
+            if (!selectedMember) {
+                showMessage('请先选择一个会友', 'error');
+                return;
+            }
+            
+            // 简单智能推荐逻辑：根据年龄推荐小组
+            let recommendedGroup = null;
+            if (selectedMember.age <= 30) {
+                recommendedGroup = data.groups.find(g => g.category === 'youth');
+            } else if (selectedMember.age >= 60) {
+                recommendedGroup = data.groups.find(g => g.category === 'senior');
+            } else {
+                recommendedGroup = data.groups.find(g => g.category === 'family');
+            }
+            
+            if (recommendedGroup) {
+                selectedGroup = recommendedGroup;
+                renderGroupsList();
+                showMessage(`🤖 为 ${selectedMember.name} 推荐：${recommendedGroup.name}`, 'success');
+            } else {
+                showMessage('暫無合適的小組推薦', 'info');
+            }
+        }
+        
+        function filterGroupMembers() {
+            renderGroupMembers();
+        }
+        
+        function filterGroups() {
+            renderGroupsList();
+        }
+        
+        // ========================================
+        // 標籤頁4：事工参与
+        // ========================================
+        function renderMinistryTab() {
+            updateMinistryStats();
+            renderMinistryMembers();
+            renderMinistriesList();
+            populateMinistryBatchSelect();
+            renderMinistryAssignedPanel();
+        }
+
+        function populateMinistryBatchSelect() {
+            var sel = document.getElementById('ministryBatchSelect');
+            if (!sel || !data.ministries.length) return;
+            sel.innerHTML = data.ministries.map(function (m) {
+                return '<option value="' + m.id + '">' + m.name + '</option>';
+            }).join('');
+            if (selectedMinistry) sel.value = String(selectedMinistry.id);
+            else {
+                sel.value = String(data.ministries[0].id);
+                selectedMinistry = data.ministries[0];
+            }
+        }
+
+        function onMinistryBatchSelectChange() {
+            var sel = document.getElementById('ministryBatchSelect');
+            if (!sel) return;
+            selectedMinistry = data.ministries.find(function (m) { return m.id === parseInt(sel.value, 10); });
+            renderMinistriesList();
+            renderMinistryAssignedPanel();
+        }
+
+        function renderMinistryAssignedPanel() {
+            var wrap = document.getElementById('ministryAssignedPanel');
+            if (!wrap) return;
+            var mid = selectedMinistry ? selectedMinistry.id : null;
+            if (!mid) {
+                wrap.innerHTML = '<p style="font-size:11px;color:#94a3b8;">請選擇事工崗位</p>';
+                return;
+            }
+            var rows = data.ministryAssignments.filter(function (ma) { return ma.ministryId === mid; });
+            if (!rows.length) {
+                wrap.innerHTML = '<p style="font-size:11px;color:#94a3b8;">此崗位尚無人員</p>';
+                return;
+            }
+            var html = '<table><thead><tr><th>姓名</th><th>恩賜摘要</th><th>匹配度</th><th>開始日期</th></tr></thead><tbody>';
+            rows.forEach(function (ma) {
+                var mem = data.members.find(function (m) { return m.id === ma.memberId; });
+                html += '<tr><td>' + (mem ? mem.name : '—') + '</td><td>' + (mem ? (mem.gifts || '—') : '—') + '</td><td>' + (ma.matchScore != null ? ma.matchScore + '%' : '—') + '</td><td>' + (ma.startDate || '—') + '</td></tr>';
+            });
+            html += '</tbody></table>';
+            wrap.innerHTML = html;
+        }
+
+        function exportMinistryAssignedCsv() {
+            if (!selectedMinistry) {
+                showMessage('請先選擇崗位', 'error');
+                return;
+            }
+            var rows = data.ministryAssignments.filter(function (ma) { return ma.ministryId === selectedMinistry.id; });
+            var csv = 'name,gifts,matchScore,startDate\n' + rows.map(function (ma) {
+                var mem = data.members.find(function (m) { return m.id === ma.memberId; });
+                return [mem ? mem.name : '', '"' + String(mem && mem.gifts ? mem.gifts : '').replace(/"/g, '""') + '"', ma.matchScore != null ? ma.matchScore : '', ma.startDate || ''].join(',');
+            }).join('\n');
+            var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'ministry_' + selectedMinistry.name + '_assigned.csv';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        function copyMinistryAssignedText() {
+            if (!selectedMinistry) {
+                showMessage('請先選擇崗位', 'error');
+                return;
+            }
+            var rows = data.ministryAssignments.filter(function (ma) { return ma.ministryId === selectedMinistry.id; });
+            var lines = rows.map(function (ma) {
+                var mem = data.members.find(function (m) { return m.id === ma.memberId; });
+                return (mem ? mem.name : '—') + '\t' + (mem ? (mem.gifts || '') : '') + '\t' + (ma.matchScore != null ? ma.matchScore + '%' : '');
+            });
+            var text = '【' + selectedMinistry.name + '】已分配\n' + lines.join('\n');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () { showMessage('已複製到剪貼簿', 'success'); });
+            } else {
+                showMessage(text, 'info');
+            }
+        }
+
+        function runBatchMatch() {
+            var sel = document.getElementById('ministryBatchSelect');
+            if (!sel || !data.ministries.length) return;
+            var ministry = data.ministries.find(function (m) { return m.id === parseInt(sel.value, 10); });
+            if (!ministry) return;
+            selectedMinistry = ministry;
+            renderMinistriesList();
+
+            var suggestions = data.members.map(function (m) {
+                var assigned = data.ministryAssignments.some(function (ma) { return ma.memberId === m.id && ma.ministryId === ministry.id; });
+                var score = computeMatchScore(m, ministry);
+                var load = data.ministryAssignments.filter(function (ma) { return ma.memberId === m.id; }).length;
+                return { member: m, score: score, assigned: assigned, load: load };
+            }).filter(function (x) { return !x.assigned; })
+                .sort(function (a, b) { return b.score - a.score; })
+                .slice(0, 30);
+
+            var el = document.getElementById('batchMatchResults');
+            if (!el) return;
+            if (!suggestions.length) {
+                el.innerHTML = '<p style="font-size:11px;color:#94a3b8;">所有人員已分配至此崗位，或無資料</p>';
+                return;
+            }
+            var html = '<table><thead><tr><th>加入</th><th>姓名</th><th>恩賜</th><th>目前事工負擔</th><th>匹配度</th></tr></thead><tbody>';
+            suggestions.forEach(function (s, idx) {
+                html += '<tr><td><input type="checkbox" class="batch-chk" data-mid="' + s.member.id + '" id="chk_' + idx + '"></td><td>' + s.member.name + '</td><td>' + (s.member.gifts || '—') + '</td><td>' + s.load + ' 崗</td><td><strong>' + s.score + '%</strong></td></tr>';
+            });
+            html += '</tbody></table>';
+            el.innerHTML = html;
+            showMessage('已產生建議表（最多 30 筆）', 'success');
+        }
+
+        function assignCheckedBatch() {
+            var sel = document.getElementById('ministryBatchSelect');
+            if (!sel || !selectedMinistry) {
+                selectedMinistry = data.ministries.find(function (m) { return m.id === parseInt(sel.value, 10); });
+            }
+            if (!selectedMinistry) {
+                showMessage('請選擇崗位', 'error');
+                return;
+            }
+            var checks = document.querySelectorAll('#batchMatchResults .batch-chk:checked');
+            if (!checks.length) {
+                showMessage('請先勾選名單', 'error');
+                return;
+            }
+            var added = 0;
+            checks.forEach(function (chk) {
+                var mid = parseInt(chk.getAttribute('data-mid'), 10);
+                var exists = data.ministryAssignments.find(function (ma) { return ma.memberId === mid && ma.ministryId === selectedMinistry.id; });
+                if (exists) return;
+                var mem = data.members.find(function (m) { return m.id === mid; });
+                var score = mem ? computeMatchScore(mem, selectedMinistry) : 0;
+                data.ministryAssignments.push({
+                    id: (data.ministryAssignments.length ? Math.max.apply(null, data.ministryAssignments.map(function (x) { return x.id; })) : 0) + 1,
+                    memberId: mid,
+                    ministryId: selectedMinistry.id,
+                    position: '同工',
+                    startDate: new Date().toISOString().split('T')[0],
+                    performance: '良好',
+                    matchScore: score
+                });
+                added++;
+            });
+            saveData();
+            renderMinistryTab();
+            showMessage('已加入 ' + added + ' 人', 'success');
+        }
+        
+        function updateMinistryStats() {
+            document.getElementById('stat-total-ministries').textContent = data.ministries.length;
+            document.getElementById('stat-assigned').textContent = data.ministryAssignments.length;
+            document.getElementById('stat-vacant').textContent = Math.max(0, data.ministries.reduce((sum, m) => sum + m.needPeople, 0) - data.ministryAssignments.length);
+            
+            const uniqueServing = [...new Set(data.ministryAssignments.map(ma => ma.memberId))];
+            document.getElementById('stat-serving').textContent = uniqueServing.length;
+        }
+        
+        function renderMinistryMembers() {
+            const searchTerm = (document.getElementById('ministryMemberSearch')?.value || '').toLowerCase();
+            const filtered = data.members.filter(m => m.name.toLowerCase().includes(searchTerm));
+            
+            const html = filtered.map(m => {
+                const assignments = data.ministryAssignments.filter(ma => ma.memberId === m.id);
+                const isServing = assignments.length > 0;
+                return `<div class="list-item ${selectedMember?.id === m.id ? 'selected' : ''} ${isServing ? 'linked' : ''}" onclick="selectMemberForMinistry(${m.id})">
+                    <div class="list-item-title">${m.name} ${isServing ? '✓' : ''}</div>
+                    <div class="list-item-meta">恩赐：${m.gifts || '-'} | 服事：${assignments.length}个岗位</div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('ministryMembersList').innerHTML = html || '<div class="empty-state-text">暫無會友</div>';
+        }
+        
+        function renderMinistriesList() {
+            const searchTerm = (document.getElementById('ministrySearch')?.value || '').toLowerCase();
+            const filtered = data.ministries.filter(m => m.name.toLowerCase().includes(searchTerm));
+            
+            const html = filtered.map(m => {
+                const assigned = data.ministryAssignments.filter(ma => ma.ministryId === m.id).length;
+                return `<div class="list-item ${selectedMinistry?.id === m.id ? 'selected' : ''}" onclick="selectMinistry(${m.id})">
+                    <div class="list-item-title">${m.name}</div>
+                    <div class="list-item-meta">${assigned}/${m.needPeople}人 | 要求：${m.requirements}</div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('ministriesList').innerHTML = html || '<div class="empty-state-text">暫無崗位</div>';
+        }
+        
+        function selectMemberForMinistry(id) {
+            selectedMember = data.members.find(m => m.id === id);
+            renderMinistryMembers();
+            if (selectedMinistry) calculateMatch();
+        }
+        
+        function selectMinistry(id) {
+            selectedMinistry = data.ministries.find(m => m.id === id);
+            renderMinistriesList();
+            var bs = document.getElementById('ministryBatchSelect');
+            if (bs && selectedMinistry) bs.value = String(selectedMinistry.id);
+            renderMinistryAssignedPanel();
+            if (selectedMember) calculateMatch();
+        }
+
+        function calculateMatch() {
+            if (!selectedMember || !selectedMinistry) {
+                showMessage('請先選擇會友與崗位', 'error');
+                return;
+            }
+
+            var score = computeMatchScore(selectedMember, selectedMinistry);
+
+            document.getElementById('scoreValue').textContent = score;
+            document.getElementById('matchScore').style.display = 'block';
+
+            var reasons = `
+                <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                    <span>示範加權</span><span>${score} 分</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                    <span>恩賜與崗位要求</span><span>已比對</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                    <span>年齡／受浸</span><span>已計入</span>
+                </div>
+            `;
+
+            document.getElementById('matchReasons').innerHTML = reasons;
+            document.getElementById('matchDetails').style.display = 'block';
+
+            if (score >= 80) showMessage('匹配度：' + score + ' 分（示範）', 'success');
+            else if (score >= 60) showMessage('匹配度：' + score + ' 分（示範）', 'success');
+            else showMessage('匹配度：' + score + ' 分（示範）', 'error');
+        }
+        
+        function assignMinistry() {
+            if (!selectedMember || !selectedMinistry) {
+                showMessage('请先选择会友和岗位', 'error');
+                return;
+            }
+            
+            const exists = data.ministryAssignments.find(ma => 
+                ma.memberId === selectedMember.id && ma.ministryId === selectedMinistry.id
+            );
+            
+            if (exists) {
+                showMessage('该会友已分配此岗位', 'error');
+                return;
+            }
+            
+            var scoreEl = document.getElementById('scoreValue');
+            var score = scoreEl && scoreEl.textContent ? parseInt(scoreEl.textContent, 10) : NaN;
+            if (isNaN(score)) score = computeMatchScore(selectedMember, selectedMinistry);
+
+            data.ministryAssignments.push({
+                id: (data.ministryAssignments.length ? Math.max.apply(null, data.ministryAssignments.map(function (x) { return x.id; })) : 0) + 1,
+                memberId: selectedMember.id,
+                ministryId: selectedMinistry.id,
+                position: '同工',
+                startDate: new Date().toISOString().split('T')[0],
+                performance: '良好',
+                matchScore: score
+            });
+            
+            saveData();
+            renderMinistryTab();
+            showMessage(`✅ ${selectedMember.name} 已分配到 ${selectedMinistry.name}（匹配度：${score}分）`, 'success');
+        }
+        
+        function autoMatchAll() {
+            runBatchMatch();
+        }
+        
+        function filterMinistryMembers() {
+            renderMinistryMembers();
+        }
+        
+        function filterMinistries() {
+            renderMinistriesList();
+        }
+        
+        // ========================================
+        // 標籤頁5：成长追踪
+        // ========================================
+        function renderGrowthTab() {
+            fillGrowthMemberControls();
+            if (growthViewMemberId) renderGrowthMemberDetailPanel();
+            renderTrainings();
+            renderAttendanceSummary();
+            renderGrowthCurve();
+        }
+
+        function applyGrowthMemberView() {
+            var sel = document.getElementById('growthMemberSelect');
+            var inp = document.getElementById('growthMemberSearchInput');
+            var id = null;
+            if (sel && sel.value) id = parseInt(sel.value, 10);
+            if (!id && inp && inp.value.trim()) {
+                var term = inp.value.trim().toLowerCase();
+                var found = data.members.find(function (x) { return (x.name || '').toLowerCase().indexOf(term) >= 0; });
+                if (found) id = found.id;
+            }
+            if (!id) {
+                showMessage('請從下拉選擇會友，或輸入正確姓名關鍵字', 'error');
+                return;
+            }
+            growthViewMemberId = id;
+            if (sel) sel.value = String(id);
+            setUrlHash('growth', id);
+            renderGrowthMemberDetailPanel();
+            renderTrainings();
+            renderAttendanceSummary();
+            renderGrowthCurve();
+        }
+
+        function clearGrowthMemberView() {
+            growthViewMemberId = null;
+            var panel = document.getElementById('growthMemberDetailPanel');
+            if (panel) {
+                panel.style.display = 'none';
+                panel.innerHTML = '';
+            }
+            var inp = document.getElementById('growthMemberSearchInput');
+            if (inp) inp.value = '';
+            setUrlHash('growth', null);
+            renderTrainings();
+            renderAttendanceSummary();
+            renderGrowthCurve();
+        }
+
+        function renderGrowthMemberDetailPanel() {
+            var panel = document.getElementById('growthMemberDetailPanel');
+            if (!panel || !growthViewMemberId) {
+                if (panel) panel.style.display = 'none';
+                return;
+            }
+            var m = data.members.find(function (x) { return x.id === growthViewMemberId; });
+            if (!m) return;
+            var gms = data.groupMemberships.filter(function (gm) { return gm.memberId === m.id; }).map(function (gm) {
+                var g = data.groups.find(function (x) { return x.id === gm.groupId; });
+                return g ? g.name : '';
+            }).filter(Boolean);
+            var mas = data.ministryAssignments.filter(function (ma) { return ma.memberId === m.id; }).map(function (ma) {
+                var mi = data.ministries.find(function (x) { return x.id === ma.ministryId; });
+                return mi ? mi.name : '';
+            }).filter(Boolean);
+            panel.style.display = 'block';
+            panel.innerHTML =
+                '<p style="font-size:11px;margin:0 0 6px;"><strong>' + m.name + '</strong>（會友 id：' + m.id + '）</p>' +
+                '<p style="font-size:10px;margin:0 0 6px;"><strong>小組</strong>（🏠）：' + (gms.length ? gms.join('、') : '—') + '</p>' +
+                '<p style="font-size:10px;margin:0 0 6px;"><strong>事工崗位</strong>（🎯）：' + (mas.length ? mas.join('、') : '—') + '</p>' +
+                '<p style="font-size:10px;color:#64748b;margin:0;">培訓課程見下表；主日出席見右欄。正式環境權限由後端決定。</p>';
+        }
+
+        function renderTrainings() {
+            var list = data.trainings;
+            if (growthViewMemberId) {
+                list = data.trainings.filter(function (t) { return t.memberId === growthViewMemberId; });
+            }
+            const tbody = document.querySelector('#trainingsTable tbody');
+            tbody.innerHTML = list.map(t => {
+                const member = data.members.find(m => m.id === t.memberId);
+                return `<tr>
+                    <td>${member?.name || '未知'}</td>
+                    <td>${t.courseName}</td>
+                    <td>${t.completedDate}</td>
+                    <td>${t.instructor}</td>
+                    <td><span class="tag ${t.grade === 'A' ? 'active' : ''}">${t.grade}</span></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteTraining(${t.id})">刪除</button></td>
+                </tr>`;
+            }).join('') || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">暫無紀錄</td></tr>';
+        }
+        
+        function showAddTrainingModal() {
+            showModal('➕ 新增培訓記錄', `
+                <div class="form-group">
+                    <label class="form-label">会友</label>
+                    <select id="trainingMemberId" class="form-select">
+                        ${data.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">课程名称</label>
+                    <input type="text" id="courseName" class="form-input" placeholder="例如：门徒培训">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">完成日期</label>
+                    <input type="date" id="completedDate" class="form-input" value="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">讲师</label>
+                    <input type="text" id="instructor" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">成绩</label>
+                    <select id="grade" class="form-select">
+                        <option value="A">A - 优秀</option>
+                        <option value="B">B - 良好</option>
+                        <option value="C">C - 合格</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="saveTraining()">保存</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function saveTraining() {
+            data.trainings.push({
+                id: data.trainings.length + 1,
+                memberId: parseInt(document.getElementById('trainingMemberId').value),
+                courseName: document.getElementById('courseName').value,
+                completedDate: document.getElementById('completedDate').value,
+                instructor: document.getElementById('instructor').value,
+                grade: document.getElementById('grade').value
+            });
+            
+            saveData();
+            renderGrowthTab();
+            closeModal();
+            showMessage('✅ 培訓記錄已添加', 'success');
+        }
+        
+        function deleteTraining(id) {
+            if (!confirm('确定删除此培訓記錄？')) return;
+            data.trainings = data.trainings.filter(t => t.id !== id);
+            saveData();
+            renderGrowthTab();
+            showMessage('✅ 培訓記錄已删除', 'success');
+        }
+        
+        function renderAttendanceSummary() {
+            const recentWeeks = 4;
+            if (growthViewMemberId) {
+                const m = data.members.find(x => x.id === growthViewMemberId);
+                if (!m) {
+                    document.getElementById('attendanceSummary').innerHTML = '';
+                    return;
+                }
+                const records = data.attendance.filter(a => a.memberId === m.id);
+                const recent = records.slice(-12);
+                const present = recent.filter(r => r.present).length;
+                const rate = recent.length > 0 ? Math.round((present / recent.length) * 100) : 0;
+                document.getElementById('attendanceSummary').innerHTML = `
+                    <div class="list-item">
+                        <div class="list-item-title">${m.name} · 主日出席摘要</div>
+                        <div class="list-item-meta">最近 ${recent.length} 筆紀錄：出席 ${present} 次（${rate}%）</div>
+                        <div class="progress-bar"><div class="progress-fill" style="width: ${rate}%"></div></div>
+                    </div>`;
+                return;
+            }
+            const summary = data.members.slice(0, 5).map(m => {
+                const records = data.attendance.filter(a => a.memberId === m.id).slice(0, recentWeeks);
+                const present = records.filter(r => r.present).length;
+                const rate = records.length > 0 ? Math.round((present / records.length) * 100) : 0;
+                return `<div class="list-item">
+                    <div class="list-item-title">${m.name}</div>
+                    <div class="list-item-meta">最近${recentWeeks}周：${present}/${records.length}次 (${rate}%)</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${rate}%"></div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            document.getElementById('attendanceSummary').innerHTML = summary;
+        }
+        
+        function recordAttendance() {
+            showMessage('📝 记录出席功能开发中...', 'info');
+        }
+        
+        function renderGrowthCurve() {
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
+            const trainingData = months.map((m, i) => {
+                return data.trainings.filter(t => {
+                    if (growthViewMemberId && t.memberId !== growthViewMemberId) return false;
+                    return new Date(t.completedDate).getMonth() <= i;
+                }).length;
+            });
+            
+            const ctx = document.getElementById('growthCurveChart');
+            if (charts.growthCurve) charts.growthCurve.destroy();
+            charts.growthCurve = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '累计培训人次',
+                        data: trainingData,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102,126,234,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+        
+        // ========================================
+        // 標籤頁6：数据分析
+        // ========================================
+        function renderAnalysisTab() {
+            // 會友構成分析（性别 + 受浸状态）
+            const maleCount = data.members.filter(m => m.gender === '男').length;
+            const femaleCount = data.members.filter(m => m.gender === '女').length;
+            
+            const ctx1 = document.getElementById('compositionChart');
+            if (charts.composition) charts.composition.destroy();
+            charts.composition = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['男性', '女性'],
+                    datasets: [{
+                        data: [maleCount, femaleCount],
+                        backgroundColor: ['#3498db', '#e74c3c']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+            
+            // 參與度分析
+            const inGroups = [...new Set(data.groupMemberships.map(gm => gm.memberId))].length;
+            const inMinistry = [...new Set(data.ministryAssignments.map(ma => ma.memberId))].length;
+            const noParticipation = data.members.length - inGroups - inMinistry;
+            
+            const ctx2 = document.getElementById('participationChart');
+            if (charts.participation) charts.participation.destroy();
+            charts.participation = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['小组参与', '事工参与', '未参与'],
+                    datasets: [{
+                        label: '人数',
+                        data: [inGroups, inMinistry, noParticipation],
+                        backgroundColor: ['#27ae60', '#f39c12', '#95a5a6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // 奉献趋势（示例数据）
+            const ctx3 = document.getElementById('donationChart');
+            if (charts.donation) charts.donation.destroy();
+            charts.donation = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    datasets: [{
+                        label: '奉献总额',
+                        data: [15000, 18000, 16000, 20000, 19000, 22000],
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39,174,96,0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // 流失预警
+            renderChurnWarning();
+        }
+        
+        function renderChurnWarning() {
+            const recentWeeks = 4;
+            const churnMembers = data.members.filter(m => {
+                const attendances = data.attendance.filter(a => a.memberId === m.id).slice(0, recentWeeks);
+                const presentCount = attendances.filter(a => a.present).length;
+                return presentCount === 0 && attendances.length > 0;
+            });
+            
+            const html = churnMembers.length > 0
+                ? '<div style="color: #e74c3c; font-weight: bold; margin-bottom: 10px;">⚠️ 以下会友最近4周未出席，需要关怀：</div>' +
+                  churnMembers.map(m => `<div class="list-item" style="border-left-color: #e74c3c;">
+                    <div class="list-item-title">${m.name}</div>
+                    <div class="list-item-meta">${m.phone} | 建议：安排探访或电话关怀</div>
+                  </div>`).join('')
+                : '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">暫無流失風險會友</div></div>';
+            
+            document.getElementById('churnWarning').innerHTML = html;
+        }
+        
+        // ========================================
+        // 工具函数
+        // ========================================
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `
+                <div class="modal-header">${title}</div>
+                ${content}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        function showMessage(text, type = 'success') {
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            document.body.appendChild(msg);
+            
+            setTimeout(() => {
+                msg.remove();
+            }, 3000);
+        }
+        
+        // 点击模态框外部关闭
+        window.onclick = (e) => {
+            if (e.target.id === 'modal') closeModal();
+        };
+    </script>
+</body>
+</html>
+

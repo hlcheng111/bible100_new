@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>財務事工完整系統 - Finance Ministry · Finance Integrated | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="../../css/module_onboarding.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f0f2f5; color: #333; font-size: 12px; }
+        
+        /* 顶部导航栏 */
+        .header { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; padding: 15px 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header-nav { margin-bottom: 8px; }
+        .header-nav a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 12px; }
+        .header-nav a:hover { text-decoration: underline; }
+        .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+        
+        /* 标签页 */
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; transition: all 0.3s; }
+        .tab.active { background: white; color: #9b59b6; font-weight: 600; }
+        .tab:hover:not(.active) { background: rgba(255,255,255,0.3); }
+        
+        /* 容器 */
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* 统计卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid; }
+        .stat-card.purple { border-color: #9b59b6; }
+        .stat-card.green { border-color: #27ae60; }
+        .stat-card.red { border-color: #e74c3c; }
+        .stat-card.blue { border-color: #3498db; }
+        .stat-card.orange { border-color: #e67e22; }
+        .stat-card.teal { border-color: #1abc9c; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
+        .stat-label { font-size: 10px; color: #7f8c8d; }
+        .stat-num.positive { color: #27ae60; }
+        .stat-num.negative { color: #e74c3c; }
+        
+        /* 卡片 */
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #2c3e50; border-left: 4px solid #9b59b6; padding-left: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        
+        /* 按钮 */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #e67e22; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-info { background: #3498db; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        
+        /* 表格 */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        table tr:hover { background: #f8f9fa; }
+        
+        /* 表单 */
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        
+        /* 模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #7f8c8d; }
+        
+        /* 标签 */
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; margin-right: 5px; }
+        .tag.income { background: #d4edda; color: #155724; }
+        .tag.expense { background: #f8d7da; color: #721c24; }
+        .tag.tithe { background: #cce5ff; color: #004085; }
+        .tag.offering { background: #fff3cd; color: #856404; }
+        .tag.approved { background: #d4edda; color: #155724; }
+        .tag.pending { background: #fff3cd; color: #856404; }
+        
+        /* 预算卡片 */
+        .budget-card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 15px; }
+        .budget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .budget-name { font-weight: 600; font-size: 14px; }
+        .budget-amount { font-size: 18px; font-weight: bold; }
+        .budget-progress { margin-top: 10px; }
+        
+        /* 进度条 */
+        .progress-bar { width: 100%; height: 10px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #9b59b6 0%, #8e44ad 100%); }
+        .progress-fill.warning { background: linear-gradient(90deg, #e67e22 0%, #d35400 100%); }
+        .progress-fill.danger { background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%); }
+        
+        /* 列表项 */
+        .list-item { padding: 10px; margin-bottom: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid transparent; }
+        .list-item.income { border-left-color: #27ae60; }
+        .list-item.expense { border-left-color: #e74c3c; }
+        .list-item-title { font-weight: 600; font-size: 11px; margin-bottom: 3px; }
+        .list-item-meta { font-size: 9px; color: #7f8c8d; }
+        .list-item-amount { font-weight: bold; font-size: 13px; }
+        
+        /* 消息提示 */
+        .message { position: fixed; top: 80px; right: 20px; padding: 12px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1001; animation: slideIn 0.3s; font-size: 12px; }
+        .message.success { background: #27ae60; color: white; }
+        .message.error { background: #e74c3c; color: white; }
+        .message.info { background: #3498db; color: white; }
+        @keyframes slideIn { from { transform: translateX(300px); } to { transform: translateX(0); } }
+        
+        /* 搜索框 */
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
+        
+        /* 空状态 */
+        .empty-state { text-align: center; padding: 60px 20px; color: #95a5a6; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
+        .empty-state-text { font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
+        <div class="header-nav"><a href="../../dashboard.html">⛪ 教會事工中心</a></div>
+        <h1>💰 財務事工完整系統</h1>
+        <details style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,0.15);border-radius:8px;font-size:11px;">
+            <summary style="cursor:pointer;font-weight:600;">📋 功能與使用說明</summary>
+            <div style="margin-top:8px;opacity:0.95;">
+                <div style="font-weight:600;margin-bottom:4px;">此頁是為誰而設？</div>
+                <p style="margin:0 0 10px;">為財務同工、司庫，管理奉獻、支出、預算與報表。</p>
+                <div style="font-weight:600;margin-bottom:4px;">有什麼功能？</div>
+                <ul style="margin:0 0 10px;padding-left:18px;line-height:1.5;">
+                    <li><b>總覽</b>：本月收支、結餘、年度預算與執行率</li>
+                    <li><b>收支管理</b>：新增／編輯收入與支出交易</li>
+                    <li><b>預算規劃</b>、<b>預算執行</b>、<b>趨勢分析</b></li>
+                    <li><b>報表匯出</b>：CSV/JSON；捐款人可匯至 C 模組</li>
+                </ul>
+                <div style="font-weight:600;margin-bottom:4px;">典型情境</div>
+                <p style="margin:0 0 10px;font-style:italic;">例：主日後登錄奉獻收入；月底前檢視預算執行率；年底匯出報表供長執查核。</p>
+                <div style="font-weight:600;margin-bottom:4px;">如何入手？</div>
+                <ol style="margin:0;padding-left:18px;line-height:1.5;">
+                    <li>切換至「收支管理」→ 新增收入（奉獻）或支出</li>
+                    <li>於「預算規劃」設定年度預算類別與金額</li>
+                    <li>在「報表匯出」下載 CSV/JSON；至 C 模組可從財務匯入捐款人</li>
+                </ol>
+            </div>
+        </details>
+        <div class="module-mini-flow">
+            <strong>🧭 入門怎麼做？</strong>
+            <div class="mf-row">
+                <span>① 「收支管理」新增奉獻／支出</span>
+                <span>→</span>
+                <span>② 「預算規劃」設年度預算</span>
+                <span>→</span>
+                <span>③ 「預算執行」看執行率</span>
+                <span>→</span>
+                <span>④ 「報表匯出」下載</span>
+            </div>
+        </div>
+        <div class="tabs">
+            <button class="tab active" data-tab="overview" onclick="switchTab('overview')">📊 總覽</button>
+            <button class="tab" data-tab="transactions" onclick="switchTab('transactions')">💵 收支管理</button>
+            <button class="tab" data-tab="budget" onclick="switchTab('budget')">📋 預算規劃</button>
+            <button class="tab" data-tab="execution" onclick="switchTab('execution')">📊 預算執行</button>
+            <button class="tab" data-tab="trends" onclick="switchTab('trends')">📈 趨勢分析</button>
+            <button class="tab" data-tab="reports" onclick="switchTab('reports')">📄 報表匯出</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 标签页1：总览 -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="card" style="border-left:4px solid #2563eb;">
+                <div class="card-title">🧪 財務資料診斷（Bridge Contract）</div>
+                <div id="financeDiagnosticSummary" style="font-size:12px;color:#334155;margin-bottom:10px;"></div>
+                <div style="font-size:12px;font-weight:600;color:#475569;margin-bottom:6px;">最近 5 筆 Audit Trail</div>
+                <div id="financeAuditTrail"></div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card green"><div class="stat-num positive" id="stat-income">¥0</div><div class="stat-label">本月收入</div></div>
+                <div class="stat-card red"><div class="stat-num negative" id="stat-expense">¥0</div><div class="stat-label">本月支出</div></div>
+                <div class="stat-card blue"><div class="stat-num" id="stat-balance">¥0</div><div class="stat-label">本月結餘</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-year-budget">¥0</div><div class="stat-label">年度預算</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-year-actual">¥0</div><div class="stat-label">年度實際</div></div>
+                <div class="stat-card teal"><div class="stat-num" id="stat-execution">0%</div><div class="stat-label">執行率</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 收支结构</div><canvas id="structureChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 月度现金流</div><canvas id="cashflowChart"></canvas></div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">💰 最近交易</div>
+                    <div id="recentTransactions"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">⚠️ 预算预警</div>
+                    <div id="budgetWarning"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 标签页2：收支管理 -->
+        <div id="tab-transactions" class="tab-content">
+            <div class="card">
+                <div class="card-title">💵 收支記錄管理</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="search-box" style="flex: 1; margin: 0 10px 0 0;">
+                        <input type="text" id="transactionSearch" placeholder="🔍 搜尋交易（描述/类别）" onkeyup="filterTransactions()">
+                    </div>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#334155;margin-right:8px;">
+                        <input type="checkbox" id="showDeletedTransactions" onchange="onToggleShowDeleted()">
+                        顯示已作廢交易
+                    </label>
+                    <button class="btn btn-success" onclick="showAddIncomeModal()">➕ 收入</button>
+                    <button class="btn btn-danger" onclick="showAddExpenseModal()">➕ 支出</button>
+                    <button class="btn btn-info" onclick="exportTransactions()">📤 导出</button>
+                </div>
+                <table id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>类型</th>
+                            <th>类别</th>
+                            <th>金额</th>
+                            <th>描述</th>
+                            <th>奉献者/经手人</th>
+                            <th>审批</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 标签页3：預算規劃 -->
+        <div id="tab-budget" class="tab-content">
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="stat-card purple"><div class="stat-num" id="stat-total-budget">¥0</div><div class="stat-label">年度总预算</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-budget-categories">0</div><div class="stat-label">预算类别</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-used">¥0</div><div class="stat-label">已使用</div></div>
+                <div class="stat-card blue"><div class="stat-num" id="stat-remaining">¥0</div><div class="stat-label">剩余</div></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📋 年度預算规划</div>
+                <button class="btn btn-primary" onclick="showAddBudgetModal()">➕ 新增预算类别</button>
+                <button class="btn btn-info" onclick="exportBudget()">📤 导出预算</button>
+                <div id="budgetsList"></div>
+            </div>
+        </div>
+        
+        <!-- 标签页4：預算執行 -->
+        <div id="tab-execution" class="tab-content">
+            <div class="card">
+                <div class="card-title">📊 預算執行情况（实际 vs 预算）</div>
+                <canvas id="executionChart"></canvas>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">✅ 执行良好</div>
+                    <div id="goodExecution"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">⚠️ 需要关注</div>
+                    <div id="needAttention"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 标签页5：趨勢分析 -->
+        <div id="tab-trends" class="tab-content">
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📈 收入趋势</div><canvas id="incomeTrendChart"></canvas></div>
+                <div class="card"><div class="card-title">📉 支出趋势</div><canvas id="expenseTrendChart"></canvas></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">💰 奉献分析</div><canvas id="donationChart"></canvas></div>
+                <div class="card"><div class="card-title">📊 支出分类占比</div><canvas id="expenseCategoryChart"></canvas></div>
+            </div>
+        </div>
+        
+        <!-- 标签页6：报表导出 -->
+        <div id="tab-reports" class="tab-content">
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-title">📅 月度报表</div>
+                    <button class="btn btn-primary btn-sm" onclick="generateMonthlyReport()">生成月报</button>
+                    <div style="margin-top: 15px; font-size: 11px; color: #7f8c8d;">
+                        <p>✅ 收支明细</p>
+                        <p>✅ 預算執行</p>
+                        <p>✅ 奉献统计</p>
+                        <p>✅ 趨勢分析</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📊 季度报表</div>
+                    <button class="btn btn-success btn-sm" onclick="generateQuarterlyReport()">生成季报</button>
+                    <div style="margin-top: 15px; font-size: 11px; color: #7f8c8d;">
+                        <p>✅ 季度对比</p>
+                        <p>✅ 预算完成度</p>
+                        <p>✅ 支出分析</p>
+                        <p>✅ 改进建议</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📈 年度报表</div>
+                    <button class="btn btn-warning btn-sm" onclick="generateAnnualReport()">生成年报</button>
+                    <div style="margin-top: 15px; font-size: 11px; color: #7f8c8d;">
+                        <p>✅ 全年总结</p>
+                        <p>✅ 财务健康度</p>
+                        <p>✅ 趋势预测</p>
+                        <p>✅ 下年规划</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📄 导出格式</div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-success" onclick="exportExcel()">📊 Excel格式</button>
+                    <button class="btn btn-danger" onclick="exportPDF()">📄 PDF格式</button>
+                    <button class="btn btn-info" onclick="exportJSON()">💾 JSON格式</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script src="../../../js/cloud_config.js"></script>
+    <script src="../../../js/cloud_api.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
+    <script>
+        // ========================================
+        // 核心数据结构（父子数据库设计）
+        // 存檔經 ChurchDataBridge 同步 churchMasterDatabase.financeModule
+        // ========================================
+        let data = {
+            // 父表：预算
+            budgets: [],
+            
+            // 子表1：收支记录（关联预算类别）
+            transactions: [],
+            
+            // 子表2：奉献记录（关联会友memberId）
+            donations: [],
+            
+            // 子表3：审批记录
+            approvals: []
+        };
+        
+        let charts = {};
+        let showDeletedTransactions = false;
+        
+        // ========================================
+        // 初始化
+        // ========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.whenReady) {
+                try {
+                    await ChurchDataBridge.whenReady({ timeoutMs: 8000 });
+                } catch (e) {
+                    console.warn('[finance-integrated] whenReady', e && e.message ? e.message : e);
+                }
+            }
+            await loadDataAsync();
+            if (data.budgets.length === 0) {
+                if (confirm('👋 欢迎使用财务事工系统！\n\n是否载入示例数据进行体验？')) {
+                    loadDemo();
+                }
+            }
+            renderAll();
+            const hash = (location.hash || '').replace(/^#/, '');
+            const validTabs = ['overview','transactions','budget','execution','trends','reports'];
+            if (hash && validTabs.includes(hash)) switchTab(hash);
+        });
+        
+        // ========================================
+        // 数据管理
+        // ========================================
+        function loadData() {
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getFinanceData) {
+                showMessage('Bridge 不可用，已拒絕直接讀取財務資料', 'error');
+                return;
+            }
+            try {
+                const fin = ChurchDataBridge.getFinanceData() || {};
+                data.transactions = Array.isArray(fin.transactions) ? fin.transactions : [];
+                data.budgets = Array.isArray(fin.budgets) ? fin.budgets : [];
+                data.approvals = Array.isArray(fin.approvals) ? fin.approvals : [];
+                console.log('✅ 已通过 Bridge 加载财务数据:', data.transactions.length, '笔交易');
+            } catch (e) {
+                console.error('❌ Bridge 数据加载失败:', e);
+                showMessage(`資料讀取失敗：${e.message || '未知錯誤'}`, 'error');
+            }
+        }
+
+        async function loadDataAsync() {
+            if (typeof ChurchDataBridge === 'undefined') {
+                loadData();
+                return;
+            }
+            if (ChurchDataBridge.getFinanceDataAsync) {
+                try {
+                    const fin = await ChurchDataBridge.getFinanceDataAsync();
+                    data.transactions = Array.isArray(fin.transactions) ? fin.transactions : [];
+                    data.budgets = Array.isArray(fin.budgets) ? fin.budgets : [];
+                    data.approvals = Array.isArray(fin.approvals) ? fin.approvals : [];
+                    return;
+                } catch (e) {
+                    console.warn('loadDataAsync fallback to sync loadData:', e);
+                }
+            }
+            loadData();
+        }
+        
+        function saveData() {
+            try {
+                if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.saveFinanceSystemData) {
+                    throw new Error('Bridge 不可用，拒絕直接寫入');
+                }
+                ChurchDataBridge.saveFinanceSystemData(data);
+                console.log('💾 已保存（bridge → financeSystemData + churchMasterDatabase.financeModule）');
+                return true;
+            } catch (e) {
+                console.error('❌ 数据保存失败:', e);
+                showMessage('数据保存失败！', 'error');
+                return false;
+            }
+        }
+        
+        function loadDemo() {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.isProductionMode && ChurchDataBridge.isProductionMode()) {
+                throw new Error('PROD 環境禁止載入財務 demo 資料');
+            }
+            // 生成预算数据
+            data.budgets = [
+                {id: 1, year: 2025, category: '人事费用', budgetAmount: 500000, responsible: '财务组', description: '牧师、传道、同工薪资'},
+                {id: 2, year: 2025, category: '设施维护', budgetAmount: 200000, responsible: '总务组', description: '水电、维修、清洁'},
+                {id: 3, year: 2025, category: '事工支出', budgetAmount: 150000, responsible: '事工组', description: '各类事工活动费用'},
+                {id: 4, year: 2025, category: '宣教奉献', budgetAmount: 100000, responsible: '宣教组', description: '支持宣教士和宣教工作'},
+                {id: 5, year: 2025, category: '主日学', budgetAmount: 50000, responsible: '教育组', description: '教材、教具、活动'},
+                {id: 6, year: 2025, category: '其他支出', budgetAmount: 50000, responsible: '财务组', description: '杂项支出'}
+            ];
+            
+            // 生成收支记录
+            for (let month = 1; month <= 6; month++) {
+                // 收入
+                for (let i = 0; i < 15; i++) {
+                    data.transactions.push({
+                        id: data.transactions.length + 1,
+                        type: 'income',
+                        category: ['tithe', 'offering', 'donation'][i % 3],
+                        categoryName: ['十一奉献', '感恩奉献', '特别奉献'][i % 3],
+                        amount: Math.floor(Math.random() * 5000) + 1000,
+                        date: `2024-${String(month).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')}`,
+                        description: ['主日奉献', '感恩奉献', '宣教奉献'][i % 3],
+                        handler: '财务组',
+                        memberId: i % 3 === 0 ? i + 1 : null,  // 👈 部分关联会友
+                        status: 'approved'
+                    });
+                }
+                
+                // 支出
+                const expenses = [
+                    {category: '人事费用', amount: 40000, desc: '牧师薪资'},
+                    {category: '设施维护', amount: 15000, desc: '水电费'},
+                    {category: '事工支出', amount: 12000, desc: '主日学材料'},
+                    {category: '宣教奉献', amount: 8000, desc: '支持宣教士'}
+                ];
+                
+                expenses.forEach((exp, i) => {
+                    data.transactions.push({
+                        id: data.transactions.length + 1,
+                        type: 'expense',
+                        category: exp.category,
+                        categoryName: exp.category,
+                        amount: exp.amount,
+                        date: `2024-${String(month).padStart(2, '0')}-0${(i + 5)}`,
+                        description: exp.desc,
+                        handler: '财务组',
+                        approvedBy: '长老会',
+                        status: 'approved'
+                    });
+                });
+            }
+            data._is_demo = true;
+            data._seedGeneratedAt = new Date().toISOString();
+            
+            saveData();
+            renderAll();
+            showMessage('✅ 示例数据已载入！包含6个预算类别、120+笔交易记录', 'success');
+        }
+        
+        // ========================================
+        // 标签页切换
+        // ========================================
+        function switchTab(tabName, fromEvent) {
+            const validTabs = ['overview','transactions','budget','execution','trends','reports'];
+            if (!validTabs.includes(tabName)) return;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            const btn = document.querySelector('.tab[data-tab="' + tabName + '"]');
+            if (btn) btn.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+            if (typeof history !== 'undefined' && history.replaceState) history.replaceState(null, '', (location.pathname || '') + (location.search || '') + '#' + tabName);
+            
+            if (tabName === 'overview') renderOverview();
+            if (tabName === 'transactions') renderTransactionsTab();
+            if (tabName === 'budget') renderBudgetTab();
+            if (tabName === 'execution') renderExecutionTab();
+            if (tabName === 'trends') renderTrendsTab();
+            if (tabName === 'reports') renderReportsTab();
+        }
+        
+        // ========================================
+        // 渲染所有
+        // ========================================
+        function renderAll() {
+            renderOverview();
+        }
+        
+        // ========================================
+        // 标签页1：总览
+        // ========================================
+        function renderOverview() {
+            const thisMonth = new Date().getMonth() + 1;
+            const monthStr = `2024-${String(thisMonth).padStart(2, '0')}`;
+            
+            const monthIncome = data.transactions
+                .filter(t => t.type === 'income' && t.date.startsWith(monthStr))
+                .reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('stat-income').textContent = '¥' + monthIncome.toLocaleString();
+            
+            const monthExpense = data.transactions
+                .filter(t => t.type === 'expense' && t.date.startsWith(monthStr))
+                .reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('stat-expense').textContent = '¥' + monthExpense.toLocaleString();
+            
+            const balance = monthIncome - monthExpense;
+            const balanceEl = document.getElementById('stat-balance');
+            balanceEl.textContent = '¥' + balance.toLocaleString();
+            balanceEl.className = balance >= 0 ? 'stat-num positive' : 'stat-num negative';
+            
+            const yearBudget = data.budgets.reduce((sum, b) => sum + b.budgetAmount, 0);
+            document.getElementById('stat-year-budget').textContent = '¥' + yearBudget.toLocaleString();
+            
+            const yearExpense = data.transactions
+                .filter(t => t.type === 'expense' && t.date.startsWith('2024'))
+                .reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('stat-year-actual').textContent = '¥' + yearExpense.toLocaleString();
+            
+            const execution = yearBudget > 0 ? Math.round((yearExpense / yearBudget) * 100) : 0;
+            document.getElementById('stat-execution').textContent = execution + '%';
+            
+            // 收支结构饼图
+            const incomeByCategory = {};
+            data.transactions.filter(t => t.type === 'income').forEach(t => {
+                if (!incomeByCategory[t.categoryName]) incomeByCategory[t.categoryName] = 0;
+                incomeByCategory[t.categoryName] += t.amount;
+            });
+            
+            const structureCtx = document.getElementById('structureChart');
+            if (charts.structure) charts.structure.destroy();
+            charts.structure = new Chart(structureCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(incomeByCategory),
+                    datasets: [{
+                        data: Object.values(incomeByCategory),
+                        backgroundColor: ['#27ae60', '#3498db', '#f39c12']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            
+            // 月度现金流折线图
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
+            const incomeData = months.map((m, i) => {
+                const monthStr = `2024-${String(i + 1).padStart(2, '0')}`;
+                return data.transactions
+                    .filter(t => t.type === 'income' && t.date.startsWith(monthStr))
+                    .reduce((sum, t) => sum + t.amount, 0);
+            });
+            const expenseData = months.map((m, i) => {
+                const monthStr = `2024-${String(i + 1).padStart(2, '0')}`;
+                return data.transactions
+                    .filter(t => t.type === 'expense' && t.date.startsWith(monthStr))
+                    .reduce((sum, t) => sum + t.amount, 0);
+            });
+            
+            const cashflowCtx = document.getElementById('cashflowChart');
+            if (charts.cashflow) charts.cashflow.destroy();
+            charts.cashflow = new Chart(cashflowCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '收入',
+                        data: incomeData,
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39,174,96,0.1)',
+                        fill: true
+                    }, {
+                        label: '支出',
+                        data: expenseData,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231,76,60,0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            renderRecentTransactions();
+            renderBudgetWarning();
+            renderFinanceDiagnostics();
+        }
+
+        function renderFinanceDiagnostics() {
+            const summaryEl = document.getElementById('financeDiagnosticSummary');
+            const auditEl = document.getElementById('financeAuditTrail');
+            if (!summaryEl || !auditEl) return;
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getFinanceDiagnostics) {
+                summaryEl.textContent = 'Bridge 不可用，無法顯示財務診斷';
+                auditEl.innerHTML = '<div class="empty-state-text">暫無審計資料</div>';
+                return;
+            }
+            try {
+                const diag = ChurchDataBridge.getFinanceDiagnostics();
+                const statusText = diag.status === 'healthy' ? '健康' : (diag.status === 'empty' ? '空資料' : '降級');
+                summaryEl.innerHTML = `狀態：<strong>${statusText}</strong> ｜ 交易總數：${diag.total_transactions} ｜ 診斷跳過：${diag.skipped_invalid} ｜ 來源：${diag.source} ｜ 產生時間：${diag.generated_at}`;
+                const recent = Array.isArray(diag.recent_audit) ? diag.recent_audit : [];
+                auditEl.innerHTML = recent.length
+                    ? recent.map(a => `<div class="list-item"><div class="list-item-title">${a.action}</div><div class="list-item-meta">${a.timestamp} ｜ operator=${a.operator || '-'} ｜ txn=${(a.payload && a.payload.txn_id) || '-'}</div></div>`).join('')
+                    : '<div class="empty-state-text">暫無審計軌跡</div>';
+            } catch (e) {
+                summaryEl.textContent = `財務診斷失敗：${e.message || '未知錯誤'}`;
+                auditEl.innerHTML = '<div class="empty-state-text">暫無審計資料</div>';
+            }
+        }
+        
+        function renderRecentTransactions() {
+            const recent = data.transactions
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
+            
+            const html = recent.map(t => `
+                <div class="list-item ${t.type}">
+                    <div class="list-item-title">
+                        ${t.type === 'income' ? '💰' : '💸'} ${t.description}
+                        <span class="list-item-amount" style="color: ${t.type === 'income' ? '#27ae60' : '#e74c3c'}; float: right;">
+                            ${t.type === 'income' ? '+' : '-'}¥${t.amount.toLocaleString()}
+                        </span>
+                    </div>
+                    <div class="list-item-meta">${t.date} | ${t.categoryName} | ${t.handler}</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('recentTransactions').innerHTML = html || '<div class="empty-state-text">暫無交易</div>';
+        }
+        
+        function renderBudgetWarning() {
+            const warnings = data.budgets.filter(b => {
+                const used = data.transactions
+                    .filter(t => t.type === 'expense' && t.category === b.category)
+                    .reduce((sum, t) => sum + t.amount, 0);
+                const rate = (used / b.budgetAmount) * 100;
+                return rate >= 90;
+            });
+            
+            const html = warnings.length > 0
+                ? '<div style="color: #e74c3c; font-weight: bold; margin-bottom: 10px;">⚠️ 以下预算类别即将超支：</div>' +
+                  warnings.map(b => {
+                    const used = data.transactions
+                        .filter(t => t.type === 'expense' && t.category === b.category)
+                        .reduce((sum, t) => sum + t.amount, 0);
+                    const rate = Math.round((used / b.budgetAmount) * 100);
+                    return `<div class="list-item" style="border-left-color: #e74c3c;">
+                        <div class="list-item-title">${b.category}</div>
+                        <div class="list-item-meta">已用：¥${used.toLocaleString()} / ¥${b.budgetAmount.toLocaleString()} (${rate}%)</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill danger" style="width: ${rate}%"></div>
+                        </div>
+                    </div>`;
+                  }).join('')
+                : '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">所有預算執行正常</div></div>';
+            
+            document.getElementById('budgetWarning').innerHTML = html;
+        }
+        
+        // ========================================
+        // 标签页2：收支管理
+        // ========================================
+        function renderTransactionsTab() {
+            const includeDeleted = !!document.getElementById('showDeletedTransactions')?.checked;
+            showDeletedTransactions = includeDeleted;
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.getFinanceData) {
+                try {
+                    const fin = ChurchDataBridge.getFinanceData({ include_deleted: includeDeleted }) || {};
+                    data.transactions = Array.isArray(fin.transactions) ? fin.transactions : [];
+                } catch (e) {
+                    showMessage(`讀取交易失敗：${e.message || '未知錯誤'}`, 'error');
+                }
+            }
+            const searchTerm = (document.getElementById('transactionSearch')?.value || '').toLowerCase();
+            const filtered = data.transactions.filter(t => 
+                t.description.toLowerCase().includes(searchTerm) ||
+                t.categoryName.toLowerCase().includes(searchTerm)
+            );
+            
+            const tbody = document.querySelector('#transactionsTable tbody');
+            tbody.innerHTML = filtered.slice(0, 50).map(t => `
+                <tr style="${t.is_deleted ? 'opacity:0.72;background:#fff7ed;' : ''}">
+                    <td>${t.date}</td>
+                    <td><span class="tag ${t.type}">${t.type === 'income' ? '收入' : '支出'}</span></td>
+                    <td><span class="tag ${t.category === '十一奉献' ? 'tithe' : 'offering'}">${t.categoryName}</span></td>
+                    <td style="font-weight: bold; color: ${t.type === 'income' ? '#27ae60' : '#e74c3c'};">
+                        ${t.type === 'income' ? '+' : '-'}¥${t.amount.toLocaleString()}
+                    </td>
+                    <td>${t.description}</td>
+                    <td>${t.handler || '-'}</td>
+                    <td><span class="tag ${t.status}">${t.is_deleted ? '已作廢' : (t.status === 'approved' ? '已审批' : '待审批')}</span></td>
+                    <td>
+                        ${t.is_deleted
+                            ? `<span style="font-size:11px;color:#9a3412;">作廢原因：${t.delete_reason || '未填寫'}<br>作廢人：${t.deleted_by || '-'}<br>作廢時間：${t.deleted_at || '-'}</span>`
+                            : `<button class="btn btn-danger btn-sm" onclick="deleteTransaction('${t.txn_id || ''}')">作废</button>`}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function onToggleShowDeleted() {
+            renderTransactionsTab();
+        }
+        
+        function filterTransactions() {
+            renderTransactionsTab();
+        }
+        
+        function showAddIncomeModal() {
+            showModal('➕ 新增收入', `
+                <div class="form-group">
+                    <label class="form-label">日期 *</label>
+                    <input type="date" id="incomeDate" class="form-input" value="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">类别 *</label>
+                    <select id="incomeCategory" class="form-select">
+                        <option value="tithe">十一奉献</option>
+                        <option value="offering">感恩奉献</option>
+                        <option value="donation">特别奉献</option>
+                        <option value="other">其他收入</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">金额 *</label>
+                    <input type="number" id="incomeAmount" class="form-input" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">描述</label>
+                    <input type="text" id="incomeDesc" class="form-input" placeholder="例如：主日奉献">
+                </div>
+                <button class="btn btn-primary" onclick="saveIncome()">保存</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function saveIncome() {
+            const category = document.getElementById('incomeCategory').value;
+            const categoryNames = {tithe: '十一奉献', offering: '感恩奉献', donation: '特别奉献', other: '其他收入'};
+            
+            const newTransaction = {
+                id: data.transactions.length + 1,
+                type: 'income',
+                category: category,
+                categoryName: categoryNames[category],
+                amount: parseFloat(document.getElementById('incomeAmount').value),
+                date: document.getElementById('incomeDate').value,
+                description: document.getElementById('incomeDesc').value || categoryNames[category],
+                handler: '财务组',
+                status: 'approved'
+            };
+            
+            if (!newTransaction.amount || newTransaction.amount <= 0) {
+                showMessage('请填写有效金额！', 'error');
+                return;
+            }
+            
+            try {
+                if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.saveFinanceTransaction) {
+                    throw new Error('Bridge 交易 API 不可用');
+                }
+                const savedTx = ChurchDataBridge.saveFinanceTransaction(newTransaction, {
+                    operator_id: 'finance_module_ui',
+                    timestamp: new Date().toISOString()
+                });
+                data.transactions.push(savedTx);
+            } catch (e) {
+                showMessage(`交易保存失敗：${e.message || '未知錯誤'}`, 'error');
+                return;
+            }
+            renderTransactionsTab();
+            renderOverview();
+            closeModal();
+            showMessage('✅ 收入记录已添加', 'success');
+        }
+        
+        function showAddExpenseModal() {
+            showModal('➕ 新增支出', `
+                <div class="form-group">
+                    <label class="form-label">日期 *</label>
+                    <input type="date" id="expenseDate" class="form-input" value="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">预算类别 *</label>
+                    <select id="expenseCategory" class="form-select">
+                        ${data.budgets.map(b => `<option value="${b.category}">${b.category}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">金额 *</label>
+                    <input type="number" id="expenseAmount" class="form-input" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">描述</label>
+                    <input type="text" id="expenseDesc" class="form-input" placeholder="例如：水电费">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">经手人</label>
+                    <input type="text" id="expenseHandler" class="form-input" value="财务组">
+                </div>
+                <button class="btn btn-primary" onclick="saveExpense()">保存</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function saveExpense() {
+            const category = document.getElementById('expenseCategory').value;
+            
+            const newTransaction = {
+                id: data.transactions.length + 1,
+                type: 'expense',
+                category: category,
+                categoryName: category,
+                amount: parseFloat(document.getElementById('expenseAmount').value),
+                date: document.getElementById('expenseDate').value,
+                description: document.getElementById('expenseDesc').value || category,
+                handler: document.getElementById('expenseHandler').value,
+                status: 'approved'
+            };
+            
+            if (!newTransaction.amount || newTransaction.amount <= 0) {
+                showMessage('请填写有效金额！', 'error');
+                return;
+            }
+            
+            try {
+                if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.saveFinanceTransaction) {
+                    throw new Error('Bridge 交易 API 不可用');
+                }
+                const savedTx = ChurchDataBridge.saveFinanceTransaction(newTransaction, {
+                    operator_id: 'finance_module_ui',
+                    timestamp: new Date().toISOString()
+                });
+                data.transactions.push(savedTx);
+            } catch (e) {
+                showMessage(`交易保存失敗：${e.message || '未知錯誤'}`, 'error');
+                return;
+            }
+            renderTransactionsTab();
+            renderOverview();
+            closeModal();
+            showMessage('✅ 支出记录已添加', 'success');
+        }
+        
+        function deleteTransaction(txnId) {
+            if (!txnId) {
+                showMessage('缺少交易流水號（txn_id），無法作廢', 'error');
+                return;
+            }
+            const reason = prompt('请输入作废原因（將記入審計軌跡）:', '录入错误冲销');
+            if (!reason) return;
+            try {
+                if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.softDeleteFinanceTransaction) {
+                    throw new Error('Bridge 作廢 API 不可用');
+                }
+                const ok = ChurchDataBridge.softDeleteFinanceTransaction(txnId, reason, {
+                    operator_id: 'finance_module_ui',
+                    timestamp: new Date().toISOString()
+                });
+                if (!ok) throw new Error('找不到指定交易');
+                loadData();
+            } catch (e) {
+                showMessage(`作廢失敗：${e.message || '未知錯誤'}`, 'error');
+                return;
+            }
+            renderTransactionsTab();
+            renderOverview();
+            showMessage('✅ 交易已作廢（append-only）', 'success');
+        }
+        
+        function exportTransactions() {
+            const dataStr = JSON.stringify(data.transactions, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `交易记录_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showMessage('✅ 交易记录已导出', 'success');
+        }
+        
+        // ========================================
+        // 标签页3：預算規劃
+        // ========================================
+        function renderBudgetTab() {
+            const totalBudget = data.budgets.reduce((sum, b) => sum + b.budgetAmount, 0);
+            document.getElementById('stat-total-budget').textContent = '¥' + totalBudget.toLocaleString();
+            document.getElementById('stat-budget-categories').textContent = data.budgets.length;
+            
+            const totalUsed = data.transactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('stat-used').textContent = '¥' + totalUsed.toLocaleString();
+            document.getElementById('stat-remaining').textContent = '¥' + (totalBudget - totalUsed).toLocaleString();
+            
+            const html = data.budgets.map(b => {
+                const used = data.transactions
+                    .filter(t => t.type === 'expense' && t.category === b.category)
+                    .reduce((sum, t) => sum + t.amount, 0);
+                const rate = Math.round((used / b.budgetAmount) * 100);
+                const status = rate >= 90 ? 'danger' : rate >= 70 ? 'warning' : '';
+                
+                return `<div class="budget-card">
+                    <div class="budget-header">
+                        <div class="budget-name">${b.category}</div>
+                        <div class="budget-amount">¥${b.budgetAmount.toLocaleString()}</div>
+                    </div>
+                    <div style="font-size: 11px; color: #7f8c8d; margin-bottom: 8px;">
+                        负责人：${b.responsible} | ${b.description}
+                    </div>
+                    <div class="budget-progress">
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px;">
+                            <span>已使用：¥${used.toLocaleString()}</span>
+                            <span style="font-weight: bold; color: ${status === 'danger' ? '#e74c3c' : status === 'warning' ? '#e67e22' : '#27ae60'};">${rate}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${status}" style="width: ${rate}%"></div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button class="btn btn-info btn-sm" onclick="viewBudget(${b.id})">查看详情</button>
+                        <button class="btn btn-warning btn-sm" onclick="editBudget(${b.id})">编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteBudget(${b.id})">删除</button>
+                    </div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('budgetsList').innerHTML = html || '<div class="empty-state-text">暫無預算</div>';
+        }
+        
+        function showAddBudgetModal() {
+            showMessage('➕ 新增预算类别功能开发中...', 'info');
+        }
+        
+        function viewBudget(id) {
+            const budget = data.budgets.find(b => b.id === id);
+            showMessage(`查看预算：${budget.category}`, 'info');
+        }
+        
+        function editBudget(id) {
+            showMessage('编辑预算功能开发中...', 'info');
+        }
+        
+        function deleteBudget(id) {
+            if (!confirm('确定删除此预算类别？')) return;
+            data.budgets = data.budgets.filter(b => b.id !== id);
+            saveData();
+            renderBudgetTab();
+            showMessage('✅ 预算类别已删除', 'success');
+        }
+        
+        function exportBudget() {
+            const dataStr = JSON.stringify(data.budgets, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `預算規劃_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showMessage('✅ 预算已导出', 'success');
+        }
+        
+        // ========================================
+        // 标签页4：預算執行
+        // ========================================
+        function renderExecutionTab() {
+            const budgetData = data.budgets.map(b => b.budgetAmount);
+            const actualData = data.budgets.map(b => {
+                return data.transactions
+                    .filter(t => t.type === 'expense' && t.category === b.category)
+                    .reduce((sum, t) => sum + t.amount, 0);
+            });
+            
+            const ctx = document.getElementById('executionChart');
+            if (charts.execution) charts.execution.destroy();
+            charts.execution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.budgets.map(b => b.category),
+                    datasets: [{
+                        label: '预算',
+                        data: budgetData,
+                        backgroundColor: '#9b59b6'
+                    }, {
+                        label: '实际',
+                        data: actualData,
+                        backgroundColor: '#3498db'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            renderGoodExecution();
+            renderNeedAttention();
+        }
+        
+        function renderGoodExecution() {
+            const good = data.budgets.filter(b => {
+                const used = data.transactions
+                    .filter(t => t.type === 'expense' && t.category === b.category)
+                    .reduce((sum, t) => sum + t.amount, 0);
+                const rate = (used / b.budgetAmount) * 100;
+                return rate < 70;
+            });
+            
+            const html = good.map(b => {
+                const used = data.transactions
+                    .filter(t => t.type === 'expense' && t.category === b.category)
+                    .reduce((sum, t) => sum + t.amount, 0);
+                const rate = Math.round((used / b.budgetAmount) * 100);
+                return `<div class="list-item" style="border-left-color: #27ae60;">
+                    <div class="list-item-title">✅ ${b.category}</div>
+                    <div class="list-item-meta">執行率：${rate}% | 剩余：¥${(b.budgetAmount - used).toLocaleString()}</div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('goodExecution').innerHTML = html || '<div class="empty-state-text">暫無資料</div>';
+        }
+        
+        function renderNeedAttention() {
+            const attention = data.budgets.filter(b => {
+                const used = data.transactions
+                    .filter(t => t.type === 'expense' && t.category === b.category)
+                    .reduce((sum, t) => sum + t.amount, 0);
+                const rate = (used / b.budgetAmount) * 100;
+                return rate >= 70;
+            });
+            
+            const html = attention.map(b => {
+                const used = data.transactions
+                    .filter(t => t.type === 'expense' && t.category === b.category)
+                    .reduce((sum, t) => sum + t.amount, 0);
+                const rate = Math.round((used / b.budgetAmount) * 100);
+                return `<div class="list-item" style="border-left-color: ${rate >= 90 ? '#e74c3c' : '#e67e22'};">
+                    <div class="list-item-title">⚠️ ${b.category}</div>
+                    <div class="list-item-meta">執行率：${rate}% | 剩余：¥${(b.budgetAmount - used).toLocaleString()}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${rate >= 90 ? 'danger' : 'warning'}" style="width: ${rate}%"></div>
+                    </div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('needAttention').innerHTML = html || '<div class="empty-state-text">暫無需要關注的項目</div>';
+        }
+        
+        // ========================================
+        // 标签页5：趨勢分析
+        // ========================================
+        function renderTrendsTab() {
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
+            
+            // 收入趋势
+            const incomeData = months.map((m, i) => {
+                const monthStr = `2024-${String(i + 1).padStart(2, '0')}`;
+                return data.transactions
+                    .filter(t => t.type === 'income' && t.date.startsWith(monthStr))
+                    .reduce((sum, t) => sum + t.amount, 0);
+            });
+            
+            const ctx1 = document.getElementById('incomeTrendChart');
+            if (charts.incomeTrend) charts.incomeTrend.destroy();
+            charts.incomeTrend = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '收入',
+                        data: incomeData,
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39,174,96,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // 支出趋势
+            const expenseData = months.map((m, i) => {
+                const monthStr = `2024-${String(i + 1).padStart(2, '0')}`;
+                return data.transactions
+                    .filter(t => t.type === 'expense' && t.date.startsWith(monthStr))
+                    .reduce((sum, t) => sum + t.amount, 0);
+            });
+            
+            const ctx2 = document.getElementById('expenseTrendChart');
+            if (charts.expenseTrend) charts.expenseTrend.destroy();
+            charts.expenseTrend = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '支出',
+                        data: expenseData,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231,76,60,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // 奉献分析
+            const donationByType = {十一奉献: 0, 感恩奉献: 0, 特别奉献: 0};
+            data.transactions.filter(t => t.type === 'income').forEach(t => {
+                if (donationByType[t.categoryName] !== undefined) {
+                    donationByType[t.categoryName] += t.amount;
+                }
+            });
+            
+            const ctx3 = document.getElementById('donationChart');
+            if (charts.donation) charts.donation.destroy();
+            charts.donation = new Chart(ctx3, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(donationByType),
+                    datasets: [{
+                        data: Object.values(donationByType),
+                        backgroundColor: ['#3498db', '#27ae60', '#f39c12']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            
+            // 支出分类占比
+            const expenseByCategory = {};
+            data.transactions.filter(t => t.type === 'expense').forEach(t => {
+                if (!expenseByCategory[t.categoryName]) expenseByCategory[t.categoryName] = 0;
+                expenseByCategory[t.categoryName] += t.amount;
+            });
+            
+            const ctx4 = document.getElementById('expenseCategoryChart');
+            if (charts.expenseCategory) charts.expenseCategory.destroy();
+            charts.expenseCategory = new Chart(ctx4, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(expenseByCategory),
+                    datasets: [{
+                        data: Object.values(expenseByCategory),
+                        backgroundColor: ['#e74c3c', '#e67e22', '#f39c12', '#3498db', '#9b59b6', '#27ae60']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+        
+        // ========================================
+        // 标签页6：报表导出
+        // ========================================
+        function renderReportsTab() {
+            // 静态页面，无需渲染
+        }
+        
+        function generateMonthlyReport() {
+            showMessage('📊 正在生成月度报表...', 'info');
+            setTimeout(() => {
+                showMessage('✅ 月度报表生成完成！（演示模式）', 'success');
+            }, 1500);
+        }
+        
+        function generateQuarterlyReport() {
+            showMessage('📊 正在生成季度报表...', 'info');
+            setTimeout(() => {
+                showMessage('✅ 季度报表生成完成！（演示模式）', 'success');
+            }, 1500);
+        }
+        
+        function generateAnnualReport() {
+            showMessage('📊 正在生成年度报表...', 'info');
+            setTimeout(() => {
+                showMessage('✅ 年度报表生成完成！（演示模式）', 'success');
+            }, 1500);
+        }
+        
+        function exportExcel() {
+            showMessage('📊 Excel导出功能开发中...', 'info');
+        }
+        
+        function exportPDF() {
+            showMessage('📄 PDF导出功能开发中...', 'info');
+        }
+        
+        function exportJSON() {
+            const dataStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `财务完整数据_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showMessage('✅ JSON数据已导出', 'success');
+        }
+        
+        // ========================================
+        // 工具函数
+        // ========================================
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `
+                <div class="modal-header">${title}</div>
+                ${content}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        function showMessage(text, type = 'success') {
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            document.body.appendChild(msg);
+            
+            setTimeout(() => {
+                msg.remove();
+            }, 3000);
+        }
+        
+        window.onclick = (e) => {
+            if (e.target.id === 'modal') closeModal();
+        };
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

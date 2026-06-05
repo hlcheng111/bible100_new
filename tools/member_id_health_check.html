@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>跨模組 member_id 健康檢查</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "Noto Sans TC", sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+      font-size: 13px;
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 18px; }
+    h1 { margin: 0 0 6px; font-size: 1.35rem; color: #1d4ed8; }
+    .sub { margin: 0 0 14px; color: #64748b; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    button {
+      border: 1px solid #2563eb; background: #2563eb; color: #fff; border-radius: 8px;
+      padding: 8px 12px; cursor: pointer; font-size: 12px;
+    }
+    button.secondary { background: #fff; color: #2563eb; }
+    .meta {
+      background: #fff; border: 1px solid #dbeafe; border-radius: 10px; padding: 10px 12px;
+      margin-bottom: 12px; color: #1e3a8a;
+    }
+    .card {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; margin-bottom: 12px;
+    }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; font-size: 12px; }
+    .ok { color: #15803d; font-weight: 700; }
+    .warn { color: #b45309; font-weight: 700; }
+    .bad { color: #b91c1c; font-weight: 700; }
+    code { background: #eff6ff; padding: 1px 5px; border-radius: 4px; }
+    .small { color: #64748b; font-size: 12px; }
+    .mono { font-family: Consolas, "Courier New", monospace; }
+    .list { margin: 0; padding-left: 18px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>跨模組 `member_id` 健康檢查</h1>
+    <p class="sub">Read-only 檢視本機 localStorage：快速看哪個模組缺口最大。</p>
+
+    <div class="toolbar">
+      <button id="btnRefresh" type="button">重新檢查</button>
+      <button id="btnExport" type="button" class="secondary">匯出 JSON 報告</button>
+    </div>
+
+    <div class="meta" id="metaBox">尚未檢查。</div>
+
+    <div class="card">
+      <h3>Storage Key 狀態</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Storage Key</th>
+            <th>存在</th>
+            <th>資料型態</th>
+            <th>粗估筆數</th>
+            <th>備註</th>
+          </tr>
+        </thead>
+        <tbody id="keyStatusBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>member_id 覆蓋率（按資料表）</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>資料來源 / 表</th>
+            <th>總筆數</th>
+            <th>有 member_id</th>
+            <th>覆蓋率</th>
+            <th>缺失筆數</th>
+            <th>缺失樣例 ID（最多 5 筆）</th>
+          </tr>
+        </thead>
+        <tbody id="coverageBody"></tbody>
+      </table>
+      <p class="small" style="margin-top:8px;">註：若表本質為聚合資料（非人員列），member_id 可能本來就不適用。</p>
+    </div>
+
+    <div class="card">
+      <h3>優先修補建議（自動判斷）</h3>
+      <ul class="list" id="recommendations"></ul>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var latestReport = null;
+
+      function parseJSON(raw) {
+        try {
+          return JSON.parse(raw);
+        } catch (err) {
+          return null;
+        }
+      }
+
+      function getByPath(obj, path) {
+        if (!obj || !path) return null;
+        var parts = path.split('.');
+        var cur = obj;
+        for (var i = 0; i < parts.length; i++) {
+          if (cur == null) return null;
+          cur = cur[parts[i]];
+        }
+        return cur;
+      }
+
+      function tableRows(sourceObj, path) {
+        var val = getByPath(sourceObj, path);
+        return Array.isArray(val) ? val : [];
+      }
+
+      function pickSampleId(row) {
+        if (!row || typeof row !== 'object') return '(unknown)';
+        return row.member_id || row.memberId || row.personId || row.id || row.studentId || row.teacherId || '(unknown)';
+      }
+
+      function ratioClass(ratio) {
+        if (ratio >= 95) return 'ok';
+        if (ratio >= 60) return 'warn';
+        return 'bad';
+      }
+
+      function buildInspectPlan() {
+        return [
+          {
+            key: 'churchMasterDatabase',
+            note: 'Church canonical DB',
+            tables: [
+              'members',
+              'worship.teamMembers',
+              'fellowship.groupMembers',
+              'volunteer.volunteers',
+              'volunteer.assignments',
+              'education.students',
+              'education.teachers',
+              'finance.incomes',
+              'library.borrowers'
+            ]
+          },
+          {
+            key: 'schoolMasterDatabase',
+            note: 'School canonical DB',
+            tables: ['students', 'teachers']
+          },
+          {
+            key: 'smart_ministry_gift_profiles',
+            note: 'Smart Ministry gift profile array',
+            tables: ['(root)']
+          },
+          {
+            key: 'bible100_smart_ministry_main',
+            note: 'Smart Ministry canonical root',
+            tables: ['talents', 'profiles', 'assessments']
+          },
+          {
+            key: 'memberSystemData',
+            note: 'Legacy core-linking key',
+            tables: ['members', 'groupMemberships']
+          }
+        ];
+      }
+
+      function inspect() {
+        var plan = buildInspectPlan();
+        var keyRows = [];
+        var coverageRows = [];
+
+        plan.forEach(function (item) {
+          var raw = localStorage.getItem(item.key);
+          var parsed = raw ? parseJSON(raw) : null;
+          var exists = raw != null;
+          var typeName = !exists ? '-' : (Array.isArray(parsed) ? 'array' : typeof parsed);
+          var roughCount = '-';
+          if (Array.isArray(parsed)) roughCount = parsed.length;
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) roughCount = Object.keys(parsed).length;
+
+          keyRows.push({
+            key: item.key,
+            exists: exists,
+            typeName: typeName,
+            roughCount: roughCount,
+            note: item.note + (parsed === null && exists ? '（JSON parse failed）' : '')
+          });
+
+          if (!exists || parsed == null) return;
+
+          item.tables.forEach(function (tablePath) {
+            var rows;
+            if (Array.isArray(parsed) && tablePath === '(root)') {
+              rows = parsed;
+            } else {
+              rows = tableRows(parsed, tablePath);
+            }
+            if (!Array.isArray(rows) || rows.length === 0) {
+              coverageRows.push({
+                source: item.key + ' / ' + tablePath,
+                total: 0,
+                hasMemberId: 0,
+                ratio: 0,
+                missing: 0,
+                samples: []
+              });
+              return;
+            }
+
+            var withMemberId = rows.filter(function (r) {
+              return r && typeof r === 'object' && r.member_id != null && String(r.member_id).trim() !== '';
+            });
+            var missing = rows.filter(function (r) {
+              return !(r && typeof r === 'object' && r.member_id != null && String(r.member_id).trim() !== '');
+            });
+
+            coverageRows.push({
+              source: item.key + ' / ' + tablePath,
+              total: rows.length,
+              hasMemberId: withMemberId.length,
+              ratio: rows.length ? (withMemberId.length / rows.length * 100) : 0,
+              missing: missing.length,
+              samples: missing.slice(0, 5).map(pickSampleId)
+            });
+          });
+        });
+
+        coverageRows.sort(function (a, b) {
+          if (a.total === 0 && b.total === 0) return a.source.localeCompare(b.source);
+          if (a.total === 0) return 1;
+          if (b.total === 0) return -1;
+          return a.ratio - b.ratio;
+        });
+
+        return {
+          generatedAt: new Date().toISOString(),
+          keyRows: keyRows,
+          coverageRows: coverageRows
+        };
+      }
+
+      function render(report) {
+        latestReport = report;
+        document.getElementById('metaBox').innerHTML =
+          '最後檢查時間：<code class="mono">' + report.generatedAt + '</code>';
+
+        var keyBody = document.getElementById('keyStatusBody');
+        keyBody.innerHTML = report.keyRows.map(function (row) {
+          return '<tr>' +
+            '<td><code>' + row.key + '</code></td>' +
+            '<td>' + (row.exists ? '<span class="ok">Yes</span>' : '<span class="bad">No</span>') + '</td>' +
+            '<td class="mono">' + row.typeName + '</td>' +
+            '<td>' + row.roughCount + '</td>' +
+            '<td>' + row.note + '</td>' +
+          '</tr>';
+        }).join('');
+
+        var coverageBody = document.getElementById('coverageBody');
+        coverageBody.innerHTML = report.coverageRows.map(function (row) {
+          var ratio = row.total ? row.ratio.toFixed(1) : '0.0';
+          return '<tr>' +
+            '<td><code>' + row.source + '</code></td>' +
+            '<td>' + row.total + '</td>' +
+            '<td>' + row.hasMemberId + '</td>' +
+            '<td><span class="' + ratioClass(row.ratio) + '">' + ratio + '%</span></td>' +
+            '<td>' + row.missing + '</td>' +
+            '<td class="mono">' + (row.samples.length ? row.samples.join(', ') : '-') + '</td>' +
+          '</tr>';
+        }).join('');
+
+        var rec = document.getElementById('recommendations');
+        var topGaps = report.coverageRows.filter(function (r) { return r.total > 0; }).slice(0, 3);
+        var items = [];
+        topGaps.forEach(function (row, idx) {
+          if (row.ratio >= 95) return;
+          items.push(
+            '<li>Top ' + (idx + 1) + ' 缺口：<code>' + row.source + '</code>，覆蓋率 <strong>' +
+            row.ratio.toFixed(1) + '%</strong>，建議先補 migration + insert/update adapter。</li>'
+          );
+        });
+        if (!items.length) {
+          items.push('<li>目前主要表的 `member_id` 覆蓋率已高，建議下一步做跨模組一致性驗證（member_id 是否可追溯同一人）。</li>');
+        }
+        rec.innerHTML = items.join('');
+      }
+
+      function exportReport() {
+        if (!latestReport) return;
+        var blob = new Blob([JSON.stringify(latestReport, null, 2)], { type: 'application/json' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'member-id-health-check-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      }
+
+      document.getElementById('btnRefresh').addEventListener('click', function () {
+        render(inspect());
+      });
+      document.getElementById('btnExport').addEventListener('click', exportReport);
+
+      render(inspect());
+    })();
+  </script>
+</body>
+</html>

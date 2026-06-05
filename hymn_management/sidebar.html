@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>聖詩管理 - 側邊欄</title>
+  <style type="text/css">
+    body {
+      margin: 0;
+      padding: 10px;
+      font-family: "Microsoft YaHei", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #eef6ff;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .section {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .section h3 {
+      margin: 0 0 10px 0;
+      color: #0b5fa5;
+      font-size: 13px;
+      border-bottom: 2px solid #2aa5ff;
+      padding-bottom: 5px;
+    }
+
+    .hymnal-selector select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 11px;
+      background: white;
+    }
+
+    .category-filter {
+      font-size: 11px;
+    }
+
+    .category-filter label {
+      display: block;
+      margin: 5px 0;
+      cursor: pointer;
+      padding: 3px;
+      border-radius: 3px;
+      transition: background 0.2s;
+    }
+
+    .category-filter label:hover {
+      background: #f0f8ff;
+    }
+
+    .category-filter input[type="checkbox"] {
+      margin-right: 6px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+
+    .search-box button {
+      width: 100%;
+      padding: 8px;
+      background: #2aa5ff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .search-box button:hover {
+      background: #1e8ce6;
+    }
+
+    .stats {
+      font-size: 10px;
+      color: #666;
+      text-align: center;
+      padding: 5px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+
+    .quick-links {
+      font-size: 10px;
+    }
+
+    .quick-links a {
+      display: block;
+      padding: 5px 8px;
+      margin: 2px 0;
+      background: #f8f9fa;
+      color: #0b5fa5;
+      text-decoration: none;
+      border-radius: 3px;
+      transition: background 0.2s;
+    }
+
+    .quick-links a:hover {
+      background: #e3f2fd;
+    }
+
+    .symbol-legend {
+      font-size: 10px;
+      color: #666;
+    }
+
+    .symbol-legend .symbol {
+      font-weight: bold;
+      margin-right: 3px;
+    }
+    .section h3 { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  </style>
+  <link rel="stylesheet" href="../css/sidebar_construction_markers.css">
+</head>
+<body>
+  <div class="section">
+    <h3>📚 詩集選擇</h3>
+    <div class="hymnal-selector">
+      <select id="hymnalSelect" onchange="switchHymnal()">
+        <option value="all">全部詩集 (5本)</option>
+        <option value="century_praise">世紀頌讚 (573首)</option>
+        <option value="universal_praise">普頌新 (1122首)</option>
+        <option value="lord_new_songs">頌主新歌</option>
+        <option value="new_hymnal">新編讚美詩</option>
+        <option value="hymns_faith">Hymns of the Faith</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>🏷️ 分類篩選</h3>
+    <div class="category-filter">
+      <label><input type="checkbox" value="world_famous" onchange="filterByCategory()"> <span class="symbol">▲</span> 世界250名聖詩</label>
+      <label><input type="checkbox" value="chinese" onchange="filterByCategory()"> <span class="symbol">●</span> 華人詩歌</label>
+      <label><input type="checkbox" value="worship" onchange="filterByCategory()"> <span class="symbol">◆</span> 敬拜短歌</label>
+      <label><input type="checkbox" value="ethnic" onchange="filterByCategory()"> <span class="symbol">★</span> 民族聖詩</label>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>🔍 快速搜索</h3>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="輸入編號、標題或作者..." onkeyup="searchHymns()">
+      <button onclick="performSearch()">搜索</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>📊 統計與捷徑</h3>
+    <div class="stats">
+      <div>總數: <span id="totalCount">0</span></div>
+      <div>顯示: <span id="displayCount">0</span></div>
+      <div>當前: <span id="currentHymnal">全部詩集</span></div>
+    </div>
+        <div class="quick-links" style="margin-top:10px;padding-top:8px;border-top:1px solid #e0e0e0;">
+      <a href="dashboard.html" target="contentFrame">📋 儀表板</a>
+      <a href="hymn/hymn_main_index.html" target="contentFrame">🎵 詩歌主控台</a>
+      <a href="hymn/default.htm" target="contentFrame">📑 詩歌總索引</a>
+      <a href="hymn/index_hymn_web/hymn_English_Title.htm" target="contentFrame">🔤 英文標題索引</a>
+      <a href="javascript:showAllHymnals()">📚 顯示全部</a>
+      <a href="javascript:clearFilters()">🔄 清除篩選</a>
+      <a href="javascript:exportData()">💾 導出數據</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>📖 符號說明</h3>
+    <div class="symbol-legend">
+      <div><span class="symbol">▲</span> 世界250名聖詩</div>
+      <div><span class="symbol">●</span> 華人詩歌</div>
+      <div><span class="symbol">◆</span> 敬拜短歌</div>
+      <div><span class="symbol">★</span> 民族聖詩</div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    let currentFilters = {
+      hymnal: 'all',
+      categories: [],
+      search: ''
+    };
+
+    function switchHymnal() {
+      const select = document.getElementById('hymnalSelect');
+      currentFilters.hymnal = select.value;
+      updateCurrentHymnal();
+      sendFilterUpdate();
+    }
+
+    function filterByCategory() {
+      const checkboxes = document.querySelectorAll('.category-filter input[type="checkbox"]');
+      currentFilters.categories = Array.from(checkboxes)
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+      sendFilterUpdate();
+    }
+
+    function searchHymns() {
+      const input = document.getElementById('searchInput');
+      currentFilters.search = input.value;
+      sendFilterUpdate();
+    }
+
+    function performSearch() {
+      searchHymns();
+    }
+
+    function updateCurrentHymnal() {
+      const select = document.getElementById('hymnalSelect');
+      const selectedOption = select.options[select.selectedIndex];
+      document.getElementById('currentHymnal').textContent = selectedOption.text;
+    }
+
+    function sendFilterUpdate() {
+      // 發送消息到父框架
+      if (window.parent) {
+        window.parent.postMessage({
+          type: 'hymnFilter',
+          filters: currentFilters
+        }, '*');
+      }
+    }
+
+    function showAllHymnals() {
+      document.getElementById('hymnalSelect').value = 'all';
+      switchHymnal();
+    }
+
+    function clearFilters() {
+      // 清除分類篩選
+      const checkboxes = document.querySelectorAll('.category-filter input[type="checkbox"]');
+      checkboxes.forEach(cb => cb.checked = false);
+      
+      // 清除搜索
+      document.getElementById('searchInput').value = '';
+      
+      // 重置篩選
+      currentFilters = {
+        hymnal: 'all',
+        categories: [],
+        search: ''
+      };
+      
+      updateCurrentHymnal();
+      sendFilterUpdate();
+    }
+
+    function exportData() {
+      // 發送導出消息
+      if (window.parent) {
+        window.parent.postMessage({
+          type: 'exportHymnData'
+        }, '*');
+      }
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      updateCurrentHymnal();
+      console.log('🎵 聖詩側邊欄初始化完成');
+    });
+  </script>
+  <script src="../js/sidebar_construction_markers.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+

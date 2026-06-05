@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Query Model</title>
+  <link rel="stylesheet" href="../church_ministry/assets/css/tailwind.min.css">
+</head>
+<body class="bg-gray-50">
+  <div class="max-w-5xl mx-auto p-6">
+    <a href="dashboard.html" class="text-sm text-blue-700">返回 Church Planning Dashboard</a>
+    <h1 class="text-2xl font-bold mt-3 mb-2">Dashboard Query Model（讀模型）</h1>
+    <p class="text-sm text-gray-600 mb-4">KPI 與決策數據由讀模型提供，不直接掃各模組交易資料。</p>
+    <div class="bg-white border rounded-xl p-4 mb-4">
+      <button id="btnRefresh" class="px-4 py-2 bg-blue-600 text-white rounded text-sm">重新計算讀模型</button>
+      <span id="status" class="ml-3 text-sm text-gray-600"></span>
+    </div>
+    <pre id="json" class="bg-white border rounded-xl p-4 text-xs overflow-auto"></pre>
+  </div>
+
+  <script src="../js/persistence_provider.js"></script>
+  <script src="../js/church_data_bridge.js"></script>
+  <script>
+    function refresh() {
+      if (!window.ChurchDataBridge || typeof window.ChurchDataBridge.getDashboardQueryModel !== 'function') {
+        document.getElementById('status').textContent = 'Bridge 未就緒';
+        return;
+      }
+      var model = window.ChurchDataBridge.getDashboardQueryModel();
+      document.getElementById('json').textContent = JSON.stringify(model, null, 2);
+      document.getElementById('status').textContent = '更新時間：' + new Date().toLocaleString('zh-TW');
+    }
+    document.getElementById('btnRefresh').addEventListener('click', refresh);
+    refresh();
+  </script>
+</body>
+</html>
+

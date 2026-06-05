@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>图书管理系统 · Library Management | Church Ministry</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+.header { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 15px 20px; }
+.tabs { display: flex; gap: 5px; margin-top: 10px; }
+.tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
+.tab.active { background: white; color: #3498db; font-weight: 600; }
+.container { max-width: 1800px; margin: 0 auto; padding: 15px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 15px; }
+.stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #3498db; }
+.stat-num { font-size: 28px; font-weight: bold; }
+.btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; background: #3498db; color: white; margin: 5px; }
+.btn-sm { padding: 6px 12px; font-size: 11px; }
+table { width: 100%; border-collapse: collapse; }
+table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+table th { background: #f8f9fa; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+.modal.active { display: flex; }
+.modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; position: relative; }
+.modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+.form-input, .form-select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }</style></head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+<div class="header">
+    <h1>📚 图书管理系统</h1>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('overview')">📊 总览</button>
+        <button class="tab" onclick="switchTab('books')">📚 图书</button>
+        <button class="tab" onclick="switchTab('borrow')">📋 借阅</button>
+        <button class="tab" onclick="switchTab('stats')">📈 统计</button>
+            </div>
+        </div>
+<div class="container">
+    <div id="tab-overview" class="tab-content active">
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-num" id="s1">0</div><div style="font-size:10px;color:#7f8c8d;margin-top:5px;">藏书总数</div></div>
+            <div class="stat-card"><div class="stat-num" id="s2">0</div><div style="font-size:10px;color:#7f8c8d;margin-top:5px;">在架</div></div>
+            <div class="stat-card"><div class="stat-num" id="s3">0</div><div style="font-size:10px;color:#7f8c8d;margin-top:5px;">已借出</div></div>
+            <div class="stat-card"><div class="stat-num" id="s4">0</div><div style="font-size:10px;color:#7f8c8d;margin-top:5px;">本月借阅</div></div>
+            <div class="stat-card"><div class="stat-num" id="s5">0</div><div style="font-size:10px;color:#7f8c8d;margin-top:5px;">读者数</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+            <div class="card"><h3 style="margin-bottom:15px;">📊 图书分类</h3><canvas id="categoryChart"></canvas></div>
+            <div class="card"><h3 style="margin-bottom:15px;">📈 借阅趋势</h3><canvas id="borrowTrendChart"></canvas></div>
+        </div>
+    </div>
+    <div id="tab-books" class="tab-content">
+        <div class="card">
+            <h3 style="margin-bottom:15px;">📚 图书管理</h3>
+            <button class="btn" onclick="showAddBookModal()">➕ 新增图书</button>
+            <button class="btn" style="background:#27ae60;" onclick="exportBooks()">📤 导出</button>
+            <input type="text" id="searchBook" placeholder="🔍 搜索..." class="form-input" style="max-width:300px;margin:10px 0;" onkeyup="renderBooks()">
+            <table id="booksTable"><thead><tr><th>书名</th><th>作者</th><th>分类</th><th>ISBN</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+    <div id="tab-borrow" class="tab-content">
+        <div class="card">
+            <h3 style="margin-bottom:15px;">📋 借阅管理</h3>
+            <button class="btn" onclick="showBorrowBookModal()">➕ 登记借阅</button>
+            <table id="borrowTable"><thead><tr><th>书名</th><th>借阅人</th><th>借出日期</th><th>应还日期</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+    <div id="tab-stats" class="tab-content">
+        <div class="card">
+            <h3>📈 借阅统计</h3>
+            <canvas id="statsChart"></canvas>
+        </div>
+    </div>
+</div>
+<div id="modal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+    <script>
+let data = { books: [], borrows: [] };
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('libraryData');
+    if (saved) data = JSON.parse(saved);
+    if (data.books.length === 0) {
+        data.books = [
+            {id:1,title:'系統神學',author:'巴刻',category:'神学',isbn:'978-1234567890',status:'在架'},
+            {id:2,title:'認識聖經',author:'斯托得',category:'神学',isbn:'978-1234567891',status:'在架'},
+            {id:3,title:'每日經歷神',author:'亨利·布克比',category:'灵修',isbn:'978-1234567892',status:'已借出'},
+            {id:4,title:'新編讚美詩',author:'教會',category:'教育',isbn:'978-1234567893',status:'在架'},
+            {id:5,title:'屬靈操練禮讚',author:'傅士德',category:'灵修',isbn:'978-1234567894',status:'在架'}
+        ];
+        data.borrows = [
+            {id:1,book:'每日經歷神',borrower:'王弟兄',borrowDate:'2025-10-01',dueDate:'2025-10-15',status:'借阅中'}
+        ];
+        localStorage.setItem('libraryData', JSON.stringify(data));
+    }
+    renderAll();
+});
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+}
+function renderAll() {
+    renderBooks();
+    renderBorrows();
+    document.getElementById('s1').textContent = data.books.length;
+    document.getElementById('s2').textContent = data.books.filter(b=>b.status==='在架').length;
+    document.getElementById('s3').textContent = data.books.filter(b=>b.status==='已借出').length;
+    document.getElementById('s4').textContent = data.borrows.filter(b=>new Date(b.borrowDate).getMonth()===new Date().getMonth()).length;
+    document.getElementById('s5').textContent = new Set(data.borrows.map(b=>b.borrower)).size;
+}
+function renderBooks() {
+    const search = document.getElementById('searchBook')?.value.toLowerCase() || '';
+    const filtered = data.books.filter(b => b.title.toLowerCase().includes(search));
+    document.querySelector('#booksTable tbody').innerHTML = filtered.map(b => `<tr><td>${b.title}</td><td>${b.author}</td><td>${b.category}</td><td>${b.isbn}</td><td>${b.status}</td><td><button class="btn btn-sm" onclick="delBook(${b.id})">删除</button></td></tr>`).join('');
+}
+function renderBorrows() {
+    document.querySelector('#borrowTable tbody').innerHTML = data.borrows.map(b => `<tr><td>${b.book}</td><td>${b.borrower}</td><td>${b.borrowDate}</td><td>${b.dueDate}</td><td>${b.status}</td><td><button class="btn btn-sm" onclick="returnBook(${b.id})">归还</button></td></tr>`).join('');
+}
+function showModal(title, content) {
+    document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;margin-bottom:20px;">${title}</div>${content}`;
+    document.getElementById('modal').classList.add('active');
+}
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+        function showAddBookModal() {
+    showModal('➕ 新增图书', `<div class="form-group"><label>书名</label><input id="btitle" class="form-input"></div><div class="form-group"><label>作者</label><input id="bauthor" class="form-input"></div><div class="form-group"><label>分类</label><select id="bcat" class="form-select"><option>神学</option><option>灵修</option><option>传记</option><option>教育</option></select></div><div class="form-group"><label>ISBN</label><input id="bisbn" class="form-input"></div><button class="btn" onclick="addBook()">确定</button>`);
+}
+function addBook() {
+    data.books.push({id:Date.now(),title:document.getElementById('btitle').value,author:document.getElementById('bauthor').value,category:document.getElementById('bcat').value,isbn:document.getElementById('bisbn').value,status:'在架'});
+    localStorage.setItem('libraryData', JSON.stringify(data));
+    renderAll();
+    closeModal();
+    alert('✅ 已添加！');
+}
+function delBook(id) {
+    if (confirm('删除？')) {
+        data.books = data.books.filter(b => b.id !== id);
+        localStorage.setItem('libraryData', JSON.stringify(data));
+        renderAll();
+    }
+}
+function showBorrowBookModal() { alert('功能：登记借阅'); }
+function returnBook(id) {
+    const borrow = data.borrows.find(b => b.id === id);
+    if (borrow) {
+        borrow.status = '已归还';
+        const book = data.books.find(b => b.title === borrow.book);
+        if (book) book.status = '在架';
+        localStorage.setItem('libraryData', JSON.stringify(data));
+        renderAll();
+        alert('✅ 已归还！');
+    }
+}
+function exportBooks() {
+    const csv = '书名,作者,分类,ISBN,状态\n' + data.books.map(b=>`${b.title},${b.author},${b.category},${b.isbn},${b.status}`).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
+    a.download = '图书清单.csv';
+    a.click();
+    alert('✅ 已导出！');
+        }
+    </script>
+</body>
+</html>

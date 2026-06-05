@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員統計 · Member Statistics | Church Ministry</title>
+    <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="../../assets/js/chart.min.js"></script>
+</head>
+<body class="bg-gray-50 cm-research-page">
+    <nav class="cm-back-bar" aria-label="區域導覽">
+      <a class="cm-back-bar__link" href="../../dashboard.html">⛪ 返回教會事工</a>
+      <span class="cm-back-bar__muted">研究與統計 · 會員統計</span>
+    </nav>
+    <p class="cm-data-banner" role="status"><strong>資料來源：</strong><span id="cm-data-source-line">讀取中…</span></p>
+    <div class="cm-kpi-row" aria-label="即時匯總（Bridge）">
+      <span class="cm-kpi-pill">會友 <b id="cm-kpi-members">—</b></span>
+      <span class="cm-kpi-pill">小組 <b id="cm-kpi-groups">—</b></span>
+      <span class="cm-kpi-pill">探訪任務 <b id="cm-kpi-missions">—</b></span>
+      <span class="cm-kpi-pill">財務結餘 <b id="cm-kpi-finance-balance">—</b></span>
+    </div>
+    <div class="container mx-auto px-6 py-8">
+        <!-- 頁面標題 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">會員統計分析</h1>
+            <p class="text-gray-600">深入了解教會會員結構與成長趨勢</p>
+            <details class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg" style="border-left:4px solid #4338ca;">
+                <summary class="cursor-pointer font-semibold text-amber-800">📋 功能與使用說明</summary>
+                <div class="mt-2 text-sm text-gray-700">
+                    <div style="font-weight:600;margin-bottom:4px;">此頁是為誰而設？</div>
+                    <p style="margin:0 0 10px;">為牧者、長執、事工負責人，檢視會眾結構與成長趨勢。</p>
+                    <div style="font-weight:600;margin-bottom:4px;">有什麼功能？</div>
+                    <ul style="margin:0 0 10px;padding-left:18px;line-height:1.5;">
+                        <li><b>統計概覽</b>：總會員數、活躍率、本月新增、參與度</li>
+                        <li><b>年齡與性別分布</b>圖表、詳細統計表格</li>
+                        <li><b>匯出報表</b>：下載 CSV</li>
+                        <li>數字來自 memberSystemData 或 churchMasterDatabase（匯入 500 人後）</li>
+                    </ul>
+                    <div style="font-weight:600;margin-bottom:4px;">如何入手？</div>
+                    <ol style="margin:0;padding-left:18px;line-height:1.5;">
+                        <li>先至「載入 500 人」或會友事工頁面匯入資料（若尚無資料）</li>
+                        <li>本頁會自動讀取並更新統計與圖表</li>
+                        <li>點「匯出報表」下載 CSV</li>
+                    </ol>
+                </div>
+            </details>
+        </div>
+
+        <!-- 統計概覽卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-blue-500 p-3 rounded-lg">
+                        <i class="fas fa-users text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">總會員數</p>
+                        <p class="text-2xl font-bold text-gray-900" id="statTotal">1,234</p>
+                        <p class="text-sm text-green-600">+12% 本月</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-green-500 p-3 rounded-lg">
+                        <i class="fas fa-user-plus text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">活躍會員</p>
+                        <p class="text-2xl font-bold text-gray-900" id="statActive">987</p>
+                        <p class="text-sm text-green-600" id="statActiveRate">80% 活躍率</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-purple-500 p-3 rounded-lg">
+                        <i class="fas fa-calendar-check text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">本月新增</p>
+                        <p class="text-2xl font-bold text-gray-900">45</p>
+                        <p class="text-sm text-blue-600">+8 本週</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-orange-500 p-3 rounded-lg">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">平均參與度</p>
+                        <p class="text-2xl font-bold text-gray-900">78%</p>
+                        <p class="text-sm text-orange-600">+5% 上月</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 圖表區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- 年齡分布圖 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">年齡分布</h3>
+                <canvas id="ageChart" width="400" height="300"></canvas>
+            </div>
+
+            <!-- 性別分布圖 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">性別分布</h3>
+                <canvas id="genderChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- 詳細統計表格 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">詳細統計數據</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">統計項目</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">數值</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">變化</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">趨勢</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">青年會員 (18-35歲)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" id="statYouth">456</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+23</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <i class="fas fa-arrow-up text-green-500"></i>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">中年會員 (36-55歲)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" id="statMid">389</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+15</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <i class="fas fa-arrow-up text-green-500"></i>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">資深會員 (55歲以上)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" id="statSenior">289</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">+7</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <i class="fas fa-arrow-up text-blue-500"></i>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">新會員 (入會1年內)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" id="statNew">156</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+34</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <i class="fas fa-arrow-up text-green-500"></i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 快速操作按鈕 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">快速操作</h3>
+            <div class="flex flex-wrap gap-4">
+                <button onclick="exportMemberStatsCSV()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-download mr-2"></i>匯出報表
+                </button>
+                <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-chart-bar mr-2"></i>生成圖表
+                </button>
+                <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-print mr-2"></i>列印統計
+                </button>
+                <button class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors">
+                    <i class="fas fa-share mr-2"></i>分享數據
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../../js/church_data_bridge.js"></script>
+    <script src="../../js/cm_research_snapshot.js"></script>
+    <script>
+        var memberStats = { ageData: [156,300,245,144,189,100], genderData: [567,667] };
+        var ageChartInstance = null;
+        var genderChartInstance = null;
+        (function() {
+            var members = [];
+            try {
+                if (window.ChurchDataBridge) {
+                    members = window.ChurchDataBridge.getMembers() || [];
+                }
+                if (members.length === 0) {
+                    var ms = localStorage.getItem('memberSystemData');
+                    if (ms) { var d = JSON.parse(ms); members = d.members || []; }
+                }
+                if (members.length === 0) {
+                    var cm = localStorage.getItem('churchMasterDatabase');
+                    if (cm) { var c = JSON.parse(cm); members = c.members || []; }
+                }
+            } catch(e) {}
+            var ageBins = [0,0,0,0,0,0], male = 0, female = 0, active = 0, youth = 0, mid = 0, senior = 0, newMember = 0;
+            var oneYearAgo = new Date(new Date().getFullYear()-1, new Date().getMonth(), new Date().getDate());
+            if (members.length > 0) {
+                members.forEach(function(m) {
+                    var age = parseInt(m.age) || 30;
+                    if (age >= 18 && age <= 25) ageBins[0]++;
+                    else if (age <= 35) ageBins[1]++;
+                    else if (age <= 45) ageBins[2]++;
+                    else if (age <= 55) ageBins[3]++;
+                    else if (age <= 65) ageBins[4]++;
+                    else ageBins[5]++;
+                    if ((m.gender || '').indexOf('男') >= 0) male++; else female++;
+                    if (m.status === 'active' || !m.status) active++;
+                    if (age >= 18 && age <= 35) youth++;
+                    else if (age <= 55) mid++;
+                    else senior++;
+                    var md = m.membershipDate || m.joinDate || '';
+                    if (md && new Date(md) >= oneYearAgo) newMember++;
+                });
+                memberStats = { ageData: ageBins, genderData: [male, female] };
+                var el;
+                if (el = document.getElementById('statTotal')) el.textContent = members.length.toLocaleString();
+                if (el = document.getElementById('statActive')) el.textContent = active.toLocaleString();
+                if (el = document.getElementById('statActiveRate')) el.textContent = (members.length ? Math.round(100*active/members.length) : 0) + '% 活躍率';
+                if (el = document.getElementById('statYouth')) el.textContent = youth;
+                if (el = document.getElementById('statMid')) el.textContent = mid;
+                if (el = document.getElementById('statSenior')) el.textContent = senior;
+                if (el = document.getElementById('statNew')) el.textContent = newMember;
+            }
+            if (window.CMResearchSnapshot) {
+                CMResearchSnapshot.initPage();
+            }
+        })();
+        // 年齡分布圖表
+        const ageCtx = document.getElementById('ageChart').getContext('2d');
+        ageChartInstance = new Chart(ageCtx, {
+            type: 'bar',
+            data: {
+                labels: ['18-25歲', '26-35歲', '36-45歲', '46-55歲', '56-65歲', '65歲以上'],
+                datasets: [{
+                    label: '會員數量',
+                    data: memberStats.ageData,
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(236, 72, 153, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(139, 92, 246, 1)',
+                        'rgba(236, 72, 153, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '人';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 性別分布圖表
+        const genderCtx = document.getElementById('genderChart').getContext('2d');
+        genderChartInstance = new Chart(genderCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['男性', '女性'],
+                datasets: [{
+                    data: memberStats.genderData,
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(236, 72, 153, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(236, 72, 153, 1)'
+                    ],
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        function exportMemberStatsCSV() {
+            var members = [];
+            try {
+                var ms = localStorage.getItem('memberSystemData');
+                if (ms) { var d = JSON.parse(ms); members = d.members || []; }
+                if (members.length === 0) {
+                    var cm = localStorage.getItem('churchMasterDatabase');
+                    if (cm) { var c = JSON.parse(cm); members = c.members || []; }
+                }
+            } catch(e) {}
+            var rows = [['統計項目','數值']];
+            rows.push(['總會員數', (document.getElementById('statTotal')?.textContent || '0').replace(/,/g,'')]);
+            rows.push(['活躍會員', (document.getElementById('statActive')?.textContent || '0').replace(/,/g,'')]);
+            rows.push(['青年會員(18-35)', document.getElementById('statYouth')?.textContent || '0']);
+            rows.push(['中年會員(36-55)', document.getElementById('statMid')?.textContent || '0']);
+            rows.push(['資深會員(55+)', document.getElementById('statSenior')?.textContent || '0']);
+            rows.push(['新會員(1年內)', document.getElementById('statNew')?.textContent || '0']);
+            var csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
+            var a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF' + csv);
+            a.download = '會員統計_' + new Date().toISOString().split('T')[0] + '.csv'; a.click();
+        }
+        document.querySelectorAll('button:not([onclick])').forEach(button => {
+            button.addEventListener('click', function() {
+                if (typeof showComingSoon === 'function') showComingSoon('此功能暫未開放','../../dashboard.html');
+            });
+        });
+    </script>
+    <script src="../../../js/coming-soon.js"></script>
+</body>
+</html>

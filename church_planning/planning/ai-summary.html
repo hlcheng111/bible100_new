@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Step 3 · 智慧整理</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <script src="assets/shell.js"></script>
+  <div class="planning-wrap">
+    <div class="step-head-mini">
+      <h2>Step 3 · 智慧整理</h2>
+      <a class="step-head-back" href="index.html">← 流程總覽</a>
+    </div>
+    <div class="report-dest-strip">
+      <span class="report-dest-icon" aria-hidden="true">📊</span>
+      <span>重點條列會出現在戰情總覽與 SWOT 旁；亦可進第二階段策略。</span>
+    </div>
+
+    <div class="section" style="margin-bottom:14px;">
+      <h2 class="fill-zone-title" style="margin:0 0 8px;font-size:1rem;">證據強度（H1）</h2>
+      <p class="fill-zone-hint" style="margin:0 0 10px;">條列整理會依此加上前綴，提醒會議中何者仍屬假設、何者已核對。</p>
+      <label for="evidence-level">整理結果定位</label>
+      <select id="evidence-level" style="width:100%;max-width:420px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;">
+        <option value="hypothesis">假設／待驗證（預設）</option>
+        <option value="verified">已於會議／同工流程核對</option>
+        <option value="demo">示範／本機占位（非真實結論）</option>
+      </select>
+    </div>
+
+    <div class="fill-zone">
+      <h2 class="fill-zone-title">貼上問卷匯出文字</h2>
+      <p class="fill-zone-hint">從試算表複製整段；按鈕為本機示範整理（非雲端 AI）。</p>
+      <p style="margin:0 0 10px;">
+        <button type="button" class="btn-big secondary" id="btn-import-spiritual" style="display:inline-block;width:auto;max-width:none;padding:10px 16px;font-size:0.9rem;">從屬靈自評帶入草稿（H2）</button>
+        <span class="fill-zone-hint" style="display:inline-block;margin-left:8px;">讀取 <code>church_planning_spiritual_survey_v1</code> 摘要一行。</span>
+      </p>
+      <label for="raw-text">回覆內容</label>
+      <textarea id="raw-text" placeholder="在此貼上…"></textarea>
+    </div>
+
+    <button type="button" class="btn-big" id="btn-summarize">送到智慧整理（示範）</button>
+
+    <div class="section" style="margin-top:18px;">
+      <h2 class="fill-zone-title" style="margin:0 0 8px;font-size:1rem;">跟進約定（H3）</h2>
+      <p class="fill-zone-hint" style="margin:0 0 10px;">寫給同工會／牧長：誰在何時以何方式跟進本頁整理結論。</p>
+      <label for="accountability-note">約定文字</label>
+      <textarea id="accountability-note" rows="3" placeholder="例：由○○牧師於下次同工會（日期）帶領核對；秘書將條列轉貼至議程。"></textarea>
+      <button type="button" class="btn-big secondary" id="btn-copy-accountability" style="margin-top:10px;">複製跟進約定</button>
+    </div>
+
+    <div id="result" class="result-box" role="region" aria-live="polite">
+      <strong>整理重點（示範）</strong>
+      <ul id="result-list"></ul>
+    </div>
+
+    <div class="phase-note">
+      <strong>接下來：</strong><a href="strategy.html">第二階段</a> · <a href="../dashboard.html">戰情總覽</a>
+    </div>
+
+    <p class="nav-back"><a href="index.html">流程總覽</a> · <a href="survey.html">Step 2</a></p>
+  </div>
+
+  <script src="assets/pipeline.js"></script>
+  <script src="assets/planning.js"></script>
+  <script>
+(function () {
+  var P = window.LongTermPipeline;
+  var sum = P.loadSummary();
+  if (sum.rawText) document.getElementById("raw-text").value = sum.rawText;
+  if (sum.summaryBullets && sum.summaryBullets.length) {
+    var list = document.getElementById("result-list");
+    list.innerHTML = "";
+    sum.summaryBullets.forEach(function (line) {
+      var li = document.createElement("li");
+      li.textContent = line;
+      list.appendChild(li);
+    });
+    document.getElementById("result").classList.add("visible");
+  }
+  document.getElementById("raw-text").addEventListener("change", function () {
+    sum.rawText = this.value;
+    P.saveSummary(sum);
+  });
+
+  var evSel = document.getElementById("evidence-level");
+  if (evSel) {
+    evSel.value = sum.evidenceLevel || "hypothesis";
+    evSel.addEventListener("change", function () {
+      var s = P.loadSummary();
+      s.evidenceLevel = this.value;
+      P.saveSummary(s);
+    });
+  }
+
+  var accTa = document.getElementById("accountability-note");
+  if (accTa) {
+    accTa.value = sum.accountabilityNote || "";
+    accTa.addEventListener("change", function () {
+      var s = P.loadSummary();
+      s.accountabilityNote = this.value;
+      P.saveSummary(s);
+    });
+  }
+
+  document.getElementById("btn-copy-accountability").addEventListener("click", function () {
+    var s = P.loadSummary();
+    var t = (s.accountabilityNote || "").trim();
+    if (!t) {
+      alert("請先填寫跟進約定文字。");
+      return;
+    }
+    var block =
+      "【智慧整理 · 跟進約定】\n" +
+      t +
+      "\n（證據強度：" +
+      (s.evidenceLevel === "verified" ? "已核對" : s.evidenceLevel === "demo" ? "示範" : "假設／待驗證") +
+      "）";
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(block).then(function () {
+        alert("已複製到剪貼簿。");
+      });
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = block;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      alert("已複製到剪貼簿。");
+    }
+  });
+
+  document.getElementById("btn-import-spiritual").addEventListener("click", function () {
+    var raw = localStorage.getItem("church_planning_spiritual_survey_v1");
+    var snippet = "";
+    try {
+      var j = raw ? JSON.parse(raw) : null;
+      if (j && j.lastResult && j.lastResult.path) {
+        var sc = j.lastResult.scores || [];
+        snippet =
+          "【屬靈自評摘要（本機）】路徑參考：" +
+          j.lastResult.path +
+          "；四向度（上／內／旁／外）：" +
+          sc.map(function (x) {
+            return Number(x).toFixed(1);
+          }).join("、") +
+          (j.lastResult.sparsePreview ? "（含稀疏預覽，待完成全卷）" : "") +
+          "。";
+      } else if (j && j.answers && Object.keys(j.answers).length) {
+        snippet =
+          "【屬靈自評】本機已儲存作答 " +
+          Object.keys(j.answers).length +
+          " 題（未完成或僅草稿），詳見 church_planning/spiritual_app/index.html。";
+      }
+    } catch (e) {}
+    if (!snippet) {
+      alert("找不到屬靈自評本機草稿。請先在「屬靈生命自我審查」頁作答或產生報告。");
+      return;
+    }
+    var ta = document.getElementById("raw-text");
+    var cur = (ta.value || "").trim();
+    ta.value = cur ? cur + "\n\n" + snippet : snippet;
+    var s = P.loadSummary();
+    s.rawText = ta.value;
+    P.saveSummary(s);
+  });
+})();
+  </script>
+</body>
+</html>

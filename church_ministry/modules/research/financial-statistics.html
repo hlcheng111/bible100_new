@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>財務統計 · Financial Statistics | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="../../assets/js/chart.min.js"></script>
+</head>
+<body class="bg-gray-50 cm-research-page">
+    <nav class="cm-back-bar" aria-label="區域導覽">
+      <a class="cm-back-bar__link" href="../../dashboard.html">⛪ 返回教會事工</a>
+      <span class="cm-back-bar__muted">研究與統計</span>
+    </nav>
+    <p class="cm-data-banner" role="status"><strong>資料來源：</strong><span id="cm-data-source-line">讀取中…</span></p>
+    <div class="cm-kpi-row" aria-label="即時匯總（ChurchDataBridge）">
+      <span class="cm-kpi-pill">會友 <b id="cm-kpi-members">—</b></span>
+      <span class="cm-kpi-pill">小組 <b id="cm-kpi-groups">—</b></span>
+      <span class="cm-kpi-pill">探訪任務 <b id="cm-kpi-missions">—</b></span>
+      <span class="cm-kpi-pill">志工指派 <b id="cm-kpi-volunteers">—</b></span>
+      <span class="cm-kpi-pill">財務結餘 <b id="cm-kpi-finance-balance">—</b></span>
+    </div>
+    <div class="container mx-auto px-6 py-8">
+        <!-- 頁面標題 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">財務統計分析</h1>
+            <p class="text-gray-600">全面掌握教會財務狀況與收支趨勢</p>
+        </div>
+
+        <!-- 財務概覽卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-green-500 p-3 rounded-lg">
+                        <i class="fas fa-dollar-sign text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">本月收入</p>
+                        <p class="text-2xl font-bold text-gray-900">$45,678</p>
+                        <p class="text-sm text-green-600">+8.5% 較上月</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-red-500 p-3 rounded-lg">
+                        <i class="fas fa-credit-card text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">本月支出</p>
+                        <p class="text-2xl font-bold text-gray-900">$32,456</p>
+                        <p class="text-sm text-red-600">+3.2% 較上月</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-blue-500 p-3 rounded-lg">
+                        <i class="fas fa-piggy-bank text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">結餘</p>
+                        <p class="text-2xl font-bold text-gray-900">$13,222</p>
+                        <p class="text-sm text-blue-600">+15.8% 較上月</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-purple-500 p-3 rounded-lg">
+                        <i class="fas fa-chart-pie text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">預算執行率</p>
+                        <p class="text-2xl font-bold text-gray-900">92%</p>
+                        <p class="text-sm text-purple-600">+2% 較上月</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 圖表區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- 收入來源分布 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">收入來源分布</h3>
+                <canvas id="incomeSourceChart" width="400" height="300"></canvas>
+            </div>
+
+            <!-- 支出分類分布 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">支出分類分布</h3>
+                <canvas id="expenseCategoryChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- 財務趨勢圖 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">財務趨勢分析</h3>
+            <canvas id="financialTrendChart" width="800" height="300"></canvas>
+        </div>
+
+        <!-- 收入來源詳情 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">收入來源詳情</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <i class="fas fa-hand-holding-usd text-green-600 text-3xl mb-3"></i>
+                    <h4 class="font-semibold text-gray-900 mb-2">奉獻收入</h4>
+                    <p class="text-2xl font-bold text-green-600">$28,450</p>
+                    <p class="text-sm text-gray-600">佔總收入 62.3%</p>
+                    <p class="text-sm text-green-600">+12% 較上月</p>
+                </div>
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <i class="fas fa-calendar-check text-blue-600 text-3xl mb-3"></i>
+                    <h4 class="font-semibold text-gray-900 mb-2">活動收入</h4>
+                    <p class="text-2xl font-bold text-blue-600">$12,800</p>
+                    <p class="text-sm text-gray-600">佔總收入 28.0%</p>
+                    <p class="text-sm text-blue-600">+5% 較上月</p>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <i class="fas fa-gift text-purple-600 text-3xl mb-3"></i>
+                    <h4 class="font-semibold text-gray-900 mb-2">其他收入</h4>
+                    <p class="text-2xl font-bold text-purple-600">$4,428</p>
+                    <p class="text-sm text-gray-600">佔總收入 9.7%</p>
+                    <p class="text-sm text-purple-600">+3% 較上月</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 支出分類詳情 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">支出分類詳情</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">支出類別</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">金額</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">佔比</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">較上月</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">預算執行</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">人事費用</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$15,200</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">46.8%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+2.1%</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">95%</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">設施維護</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$8,500</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">26.2%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">+5.3%</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">88%</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">事工活動</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$6,200</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">19.1%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+1.8%</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">92%</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">行政費用</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$2,556</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">7.9%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">+0.5%</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">98%</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 快速操作按鈕 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">快速操作</h3>
+            <div class="flex flex-wrap gap-4">
+                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-download mr-2"></i>匯出財務報表
+                </button>
+                <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-chart-bar mr-2"></i>生成預算分析
+                </button>
+                <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-calculator mr-2"></i>預算規劃
+                </button>
+                <button class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors">
+                    <i class="fas fa-print mr-2"></i>列印財務報表
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 收入來源分布圖表
+        const incomeSourceCtx = document.getElementById('incomeSourceChart').getContext('2d');
+        new Chart(incomeSourceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['奉獻收入', '活動收入', '其他收入'],
+                datasets: [{
+                    data: [28450, 12800, 4428],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(139, 92, 246, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(139, 92, 246, 1)'
+                    ],
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // 支出分類分布圖表
+        const expenseCategoryCtx = document.getElementById('expenseCategoryChart').getContext('2d');
+        new Chart(expenseCategoryCtx, {
+            type: 'bar',
+            data: {
+                labels: ['人事費用', '設施維護', '事工活動', '行政費用'],
+                datasets: [{
+                    label: '支出金額',
+                    data: [15200, 8500, 6200, 2556],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(139, 92, 246, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(139, 92, 246, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 財務趨勢圖表
+        const financialTrendCtx = document.getElementById('financialTrendChart').getContext('2d');
+        new Chart(financialTrendCtx, {
+            type: 'line',
+            data: {
+                labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                datasets: [{
+                    label: '收入',
+                    data: [42000, 43500, 41800, 45678, 44200, 45678],
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4
+                }, {
+                    label: '支出',
+                    data: [38000, 39500, 37800, 32456, 35600, 32456],
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 快速操作按鈕功能
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function() {
+                const action = this.textContent.trim();
+                showComingSoon('此功能暫未開放','../../dashboard.html');
+            });
+        });
+    </script>
+    <script src="../../../js/coming-soon.js"></script>
+
+<script src="../../../js/church_data_bridge.js"></script>
+<script src="../../js/cm_research_snapshot.js"></script>
+<script>document.addEventListener("DOMContentLoaded",function(){if(window.CMResearchSnapshot)CMResearchSnapshot.initPage();});</script>
+
+</body>
+</html>

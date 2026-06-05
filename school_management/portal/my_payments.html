@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的繳費 - 學員入口</title>
+    <base target="_parent">
+    <style>
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f6f7fb; margin: 0; padding: 20px; font-size: 14px; }
+        .back { margin-bottom: 16px; }
+        .back a { color: #0b5fa5; text-decoration: none; }
+        .header { background: linear-gradient(135deg, #0b5fa5 0%, #2aa5ff 100%); color: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat { padding: 16px 24px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .stat.pending { border-left: 4px solid #f59e0b; }
+        .stat.paid { border-left: 4px solid #10b981; }
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f6f7fb; color: #0b5fa5; }
+        .empty { padding: 40px; text-align: center; color: #9ca3af; }
+    </style>
+</head>
+<body>
+    <div class="back"><a href="index.html">← 返回學員入口</a></div>
+    <div class="header">
+        <h2>💰 我的繳費</h2>
+        <p id="studentInfo">請從學員入口選擇學員</p>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div id="paymentList"></div>
+    <script src="../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const params = new URLSearchParams(location.search);
+            const studentId = parseInt(params.get('studentId'), 10);
+            if (!studentId || !window.schoolDB) {
+                document.getElementById('paymentList').innerHTML = '<p class="empty">請先從學員入口選擇學員，或載入示範資料。</p>';
+                return;
+            }
+            const db = window.schoolDB.data;
+            const student = (db.students || []).find(s => s.id === studentId);
+            if (student) document.getElementById('studentInfo').textContent = student.name + ' 的繳費記錄';
+            const payments = (db.finance && db.finance.payments) || [];
+            const mine = payments.filter(p => p.studentId === studentId);
+            const pending = mine.filter(p => p.status === 'pending');
+            const paid = mine.filter(p => p.status === 'paid');
+            const pendingSum = pending.reduce((s, p) => s + (p.amount || 0), 0);
+            const paidSum = paid.reduce((s, p) => s + (p.amount || 0), 0);
+            document.getElementById('stats').innerHTML = `
+                <div class="stat pending">待繳：${pending.length} 筆 · ¥${pendingSum.toLocaleString()}</div>
+                <div class="stat paid">已繳：${paid.length} 筆 · ¥${paidSum.toLocaleString()}</div>
+            `;
+            const rows = mine.slice(-20).reverse().map(p => 
+                `<tr><td>${p.paymentDate || '—'}</td><td>¥${(p.amount || 0).toLocaleString()}</td><td>${p.semester || '—'}</td><td><span style="color:${p.status==='paid'?'#10b981':'#f59e0b'}">${p.status==='paid'?'已繳':'待繳'}</span></td></tr>`
+            ).join('');
+            document.getElementById('paymentList').innerHTML = rows
+                ? `<table><thead><tr><th>日期</th><th>金額</th><th>學期</th><th>狀態</th></tr></thead><tbody>${rows}</tbody></table>`
+                : '<p class="empty">尚無繳費記錄</p>';
+        })();
+    </script>
+</body>
+</html>

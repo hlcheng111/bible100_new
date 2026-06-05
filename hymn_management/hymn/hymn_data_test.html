@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>聖詩數據解析測試 - 證明修復成功</title>
+  <style>
+    body {
+      font-family: "Microsoft YaHei", Arial, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+      font-size: 14px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #004d99;
+      text-align: center;
+      border-bottom: 3px solid #0077cc;
+      padding-bottom: 10px;
+    }
+    
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #f9f9f9;
+    }
+    
+    .test-section h3 {
+      color: #004d99;
+      margin-top: 0;
+    }
+    
+    .status {
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    
+    .test-results {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 10px 0;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .hymn-item {
+      display: flex;
+      align-items: center;
+      padding: 5px;
+      margin: 2px 0;
+      background: #f8f9fa;
+      border-radius: 3px;
+    }
+    
+    .hymn-number {
+      font-weight: bold;
+      color: #004d99;
+      margin-right: 10px;
+      min-width: 40px;
+    }
+    
+    .hymn-title {
+      flex: 1;
+      font-size: 12px;
+    }
+    
+    .controls {
+      margin: 20px 0;
+      text-align: center;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    .btn-primary {
+      background: #007bff;
+      color: white;
+    }
+    
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+    
+    .btn-info {
+      background: #17a2b8;
+      color: white;
+    }
+    
+    .btn:hover {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 聖詩數據解析測試 - 證明修復成功</h1>
+    
+    <div class="test-section">
+      <h3>📊 測試狀態</h3>
+      <div id="testStatus" class="status info">準備開始測試...</div>
+    </div>
+
+    <div class="test-section">
+      <h3>🎯 測試控制</h3>
+      <div class="controls">
+        <button class="btn btn-primary" onclick="testBIG5Decoder()">測試BIG5解碼器</button>
+        <button class="btn btn-success" onclick="testDataParser()">測試數據解析器</button>
+        <button class="btn btn-info" onclick="testFullSystem()">完整系統測試</button>
+        <button class="btn btn-primary" onclick="clearResults()">清除結果</button>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h3>📋 測試結果</h3>
+      <div id="testResults" class="test-results">
+        <p>點擊上方按鈕開始測試...</p>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h3>📈 統計信息</h3>
+      <div id="statsInfo" class="test-results">
+        <p>等待測試完成...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let testResults = [];
+    let big5Decoder = null;
+    let hymnDataParser = null;
+
+    // 更新測試狀態
+    function updateStatus(message, type = 'info') {
+      const statusDiv = document.getElementById('testStatus');
+      statusDiv.textContent = message;
+      statusDiv.className = `status ${type}`;
+    }
+
+    // 添加測試結果
+    function addTestResult(test, result, details = '') {
+      testResults.push({
+        test: test,
+        result: result,
+        details: details,
+        timestamp: new Date().toLocaleTimeString()
+      });
+      updateTestResults();
+    }
+
+    // 更新測試結果顯示
+    function updateTestResults() {
+      const resultsDiv = document.getElementById('testResults');
+      if (testResults.length === 0) {
+        resultsDiv.innerHTML = '<p>點擊上方按鈕開始測試...</p>';
+        return;
+      }
+
+      let html = '';
+      testResults.forEach((result, index) => {
+        const statusClass = result.result === '成功' ? 'success' : 'error';
+        html += `
+          <div class="hymn-item">
+            <div class="hymn-number">${index + 1}</div>
+            <div class="hymn-title">
+              <strong>${result.test}</strong> - 
+              <span class="status ${statusClass}" style="display: inline-block; padding: 2px 8px; font-size: 10px;">
+                ${result.result}
+              </span>
+              ${result.details ? `<br><small>${result.details}</small>` : ''}
+              <br><small>時間: ${result.timestamp}</small>
+            </div>
+          </div>
+        `;
+      });
+
+      resultsDiv.innerHTML = html;
+    }
+
+    // 清除結果
+    function clearResults() {
+      testResults = [];
+      updateTestResults();
+      updateStats();
+      updateStatus('結果已清除', 'info');
+    }
+
+    // 更新統計信息
+    function updateStats() {
+      const statsDiv = document.getElementById('statsInfo');
+      const successCount = testResults.filter(r => r.result === '成功').length;
+      const totalCount = testResults.length;
+      const successRate = totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 0;
+
+      statsDiv.innerHTML = `
+        <p><strong>測試統計：</strong></p>
+        <p>總測試數：${totalCount}</p>
+        <p>成功數：${successCount}</p>
+        <p>失敗數：${totalCount - successCount}</p>
+        <p>成功率：${successRate}%</p>
+        ${totalCount > 0 && successRate === 100 ? '<p style="color: green; font-weight: bold;">✅ 所有測試通過！</p>' : ''}
+      `;
+    }
+
+    // 測試BIG5解碼器
+    async function testBIG5Decoder() {
+      updateStatus('正在測試BIG5解碼器...', 'info');
+      
+      try {
+        // 載入簡化版BIG5解碼器
+        if (!window.SimpleBIG5Decoder) {
+          const script = document.createElement('script');
+          script.src = 'hymn_5hymnals_management/js/simple-big5-decoder.js';
+          script.onload = function() {
+            big5Decoder = new SimpleBIG5Decoder();
+            runBIG5Tests();
+          };
+          document.head.appendChild(script);
+        } else {
+          big5Decoder = new SimpleBIG5Decoder();
+          runBIG5Tests();
+        }
+      } catch (error) {
+        addTestResult('BIG5解碼器載入', '失敗', error.message);
+        updateStatus('BIG5解碼器測試失敗', 'error');
+      }
+    }
+
+    // 運行BIG5測試
+    function runBIG5Tests() {
+      // 測試1：基本解碼
+      const test1 = big5Decoder.decode('');
+      if (test1.includes('世紀頌讚')) {
+        addTestResult('BIG5基本解碼', '成功', `"" → "${test1}"`);
+      } else {
+        addTestResult('BIG5基本解碼', '失敗', `"" → "${test1}"`);
+      }
+
+      // 測試2：聖詩詞彙解碼
+      const test2 = big5Decoder.decode('');
+      if (test2.includes('普頌新')) {
+        addTestResult('聖詩詞彙解碼', '成功', `"" → "${test2}"`);
+      } else {
+        addTestResult('聖詩詞彙解碼', '失敗', `"" → "${test2}"`);
+      }
+
+      // 測試3：分類符號解碼
+      const test3 = big5Decoder.decode('');
+      if (test3.includes('▲')) {
+        addTestResult('分類符號解碼', '成功', `"" → "${test3}"`);
+      } else {
+        addTestResult('分類符號解碼', '失敗', `"" → "${test3}"`);
+      }
+
+      // 測試4：重複字符處理
+      const test4 = big5Decoder.decode('新編讚美詩新編讚美詩新編讚美詩');
+      if (test4 === '新編讚美詩') {
+        addTestResult('重複字符處理', '成功', `"新編讚美詩新編讚美詩新編讚美詩" → "${test4}"`);
+      } else {
+        addTestResult('重複字符處理', '失敗', `"新編讚美詩新編讚美詩新編讚美詩" → "${test4}"`);
+      }
+
+      updateStatus('BIG5解碼器測試完成', 'success');
+      updateStats();
+    }
+
+    // 測試數據解析器
+    async function testDataParser() {
+      updateStatus('正在測試數據解析器...', 'info');
+      
+      try {
+        // 載入數據解析器
+        if (!window.HymnDataParser) {
+          const script = document.createElement('script');
+          script.src = 'hymn_5hymnals_management/js/data-parser.js';
+          script.onload = function() {
+            hymnDataParser = new HymnDataParser();
+            runDataParserTests();
+          };
+          document.head.appendChild(script);
+        } else {
+          hymnDataParser = new HymnDataParser();
+          runDataParserTests();
+        }
+      } catch (error) {
+        addTestResult('數據解析器載入', '失敗', error.message);
+        updateStatus('數據解析器測試失敗', 'error');
+      }
+    }
+
+    // 運行數據解析器測試
+    async function runDataParserTests() {
+      // 測試1：解析器初始化
+      if (hymnDataParser) {
+        addTestResult('數據解析器初始化', '成功', 'HymnDataParser實例創建成功');
+      } else {
+        addTestResult('數據解析器初始化', '失敗', '無法創建HymnDataParser實例');
+        return;
+      }
+
+      // 測試2：載入世紀頌讚數據
+      try {
+        const centuryData = await hymnDataParser.loadHymnalData('century_praise');
+        if (centuryData && centuryData.length > 0) {
+          addTestResult('世紀頌讚數據載入', '成功', `載入 ${centuryData.length} 首聖詩`);
+          
+          // 檢查數據質量
+          const validHymns = centuryData.filter(hymn => 
+            hymn.number && hymn.title_zh && hymn.title_en
+          );
+          if (validHymns.length > 0) {
+            addTestResult('數據質量檢查', '成功', `${validHymns.length} 首聖詩數據完整`);
+          } else {
+            addTestResult('數據質量檢查', '失敗', '聖詩數據不完整');
+          }
+        } else {
+          addTestResult('世紀頌讚數據載入', '失敗', '未載入任何聖詩數據');
+        }
+      } catch (error) {
+        addTestResult('世紀頌讚數據載入', '失敗', error.message);
+      }
+
+      updateStatus('數據解析器測試完成', 'success');
+      updateStats();
+    }
+
+    // 完整系統測試
+    async function testFullSystem() {
+      updateStatus('正在進行完整系統測試...', 'info');
+      
+      // 先測試BIG5解碼器
+      await testBIG5Decoder();
+      
+      // 再測試數據解析器
+      await testDataParser();
+      
+      // 測試數據統計
+      if (hymnDataParser) {
+        try {
+          const stats = hymnDataParser.getStatistics();
+          if (stats.total > 0) {
+            addTestResult('數據統計功能', '成功', `總計 ${stats.total} 首聖詩`);
+          } else {
+            addTestResult('數據統計功能', '失敗', '統計數據為空');
+          }
+        } catch (error) {
+          addTestResult('數據統計功能', '失敗', error.message);
+        }
+      }
+
+      updateStatus('完整系統測試完成', 'success');
+      updateStats();
+    }
+
+    // 頁面載入完成後顯示初始狀態
+    document.addEventListener('DOMContentLoaded', function() {
+      updateStatus('測試頁面載入完成，可以開始測試', 'info');
+    });
+  </script>
+</body>
+</html>

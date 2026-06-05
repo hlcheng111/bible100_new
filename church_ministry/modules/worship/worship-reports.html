@@ -1,0 +1,828 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>崇拜禮儀報表 · Worship Reports | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <link href="../../assets/css/fontawesome.min.css" rel="stylesheet">
+    <script src="../../assets/js/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">崇拜禮儀統計報表</h1>
+        <details class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-gray-700">
+            <summary class="cursor-pointer font-semibold text-gray-900">📋 本頁角色</summary>
+            <p class="mt-2 leading-relaxed">依日期區間產生<strong>圖表與摘要</strong>（資料來自本頁腳本與 localStorage；與 <a href="worship-management.html" class="text-blue-700 underline">崇拜禮儀管理</a> 之場次可互相參照）。與 <a href="attendance-management.html" class="text-blue-700 underline">出席管理</a> 並讀時，請留意兩者是否同一資料來源。</p>
+        </details>
+        
+        <!-- 報表類型選擇 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('overview')">
+                <div class="text-4xl text-blue-600 mb-2">
+                    <i class="fas fa-church"></i>
+                </div>
+                <h3 class="text-lg font-semibold">總覽報表</h3>
+                <p class="text-sm text-gray-600">整體崇拜概況</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('services')">
+                <div class="text-4xl text-green-600 mb-2">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h3 class="text-lg font-semibold">崇拜分析</h3>
+                <p class="text-sm text-gray-600">崇拜服務統計</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('participants')">
+                <div class="text-4xl text-purple-600 mb-2">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="text-lg font-semibold">參與者分析</h3>
+                <p class="text-sm text-gray-600">參與者統計</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('performance')">
+                <div class="text-4xl text-orange-600 mb-2">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h3 class="text-lg font-semibold">績效分析</h3>
+                <p class="text-sm text-gray-600">服務績效評估</p>
+            </div>
+        </div>
+
+        <!-- 報表參數設置 -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="px-6 py-4 border-b">
+                <h3 class="text-lg font-semibold">報表參數設置</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
+                        <input type="date" id="startDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
+                        <input type="date" id="endDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">報表類型</label>
+                        <select id="reportType" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="overview">總覽報表</option>
+                            <option value="services">崇拜分析</option>
+                            <option value="participants">參與者分析</option>
+                            <option value="performance">績效分析</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">分析維度</label>
+                        <select id="analysisDimension" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="general">一般分析</option>
+                            <option value="detailed">詳細分析</option>
+                            <option value="comparison">對比分析</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-6 flex space-x-3">
+                    <button onclick="generateReport()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-chart-bar mr-2"></i>生成報表
+                    </button>
+                    <button onclick="exportReport()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>匯出報表
+                    </button>
+                    <button onclick="printReport()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-print mr-2"></i>列印報表
+                    </button>
+                    <button onclick="showAdvancedAnalysis()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-chart-line mr-2"></i>進階分析
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 報表內容顯示 -->
+        <div id="reportContent" class="space-y-8">
+            <!-- 報表將在這裡動態生成 -->
+        </div>
+
+        <!-- 進階分析模態框 -->
+        <div id="advancedAnalysisModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+            <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-4/5 lg:w-3/4 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">進階分析</h3>
+                        <button onclick="closeAdvancedAnalysisModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-3">崇拜參與趨勢</h4>
+                            <canvas id="participationTrendChart" width="400" height="300"></canvas>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-3">服務類型分布</h4>
+                            <canvas id="serviceTypeChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-gray-900 mb-3">服務者排名</h4>
+                        <div id="serviceProviderRanking" class="space-y-2">
+                            <!-- 服務者排名將在這裡動態生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 註冊 Chart.js 插件
+        Chart.register(ChartDataLabels);
+
+        // 數據存儲
+        let worshipServices = [];
+        let serviceParticipants = [];
+        let serviceProviders = [];
+
+        // 頁面載入
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setDefaultDates();
+            generateReport('overview'); // 自動生成總覽報表
+        });
+
+        // 載入數據
+        function loadData() {
+            worshipServices = JSON.parse(localStorage.getItem('worshipServices')) || [];
+            serviceParticipants = JSON.parse(localStorage.getItem('serviceParticipants')) || [];
+            serviceProviders = JSON.parse(localStorage.getItem('serviceProviders')) || [];
+            
+            // 如果沒有數據，載入示例數據
+            if (worshipServices.length === 0) {
+                loadSampleData();
+            }
+        }
+
+        // 載入示例數據
+        function loadSampleData() {
+            const sampleServices = [
+                {
+                    id: 1,
+                    title: '主日崇拜',
+                    date: '2024-01-21',
+                    type: 'regular',
+                    attendees: 120,
+                    leader: '張牧師',
+                    notes: '主日崇拜服務'
+                },
+                {
+                    id: 2,
+                    title: '週三禱告會',
+                    date: '2024-01-17',
+                    type: 'prayer',
+                    attendees: 45,
+                    leader: '李姊妹',
+                    notes: '週三禱告會'
+                }
+            ];
+
+            const sampleParticipants = [
+                { id: 1, serviceId: 1, memberId: 1, role: 'worshipper', notes: '參與崇拜' },
+                { id: 2, serviceId: 1, memberId: 2, role: 'worshipper', notes: '參與崇拜' }
+            ];
+
+            const sampleProviders = [
+                { id: 1, name: '張牧師', role: 'preacher', experience: 10, status: 'active' },
+                { id: 2, name: '李姊妹', role: 'worship_leader', experience: 5, status: 'active' }
+            ];
+
+            localStorage.setItem('worshipServices', JSON.stringify(sampleServices));
+            localStorage.setItem('serviceParticipants', JSON.stringify(sampleParticipants));
+            localStorage.setItem('serviceProviders', JSON.stringify(sampleProviders));
+            
+            worshipServices = sampleServices;
+            serviceParticipants = sampleParticipants;
+            serviceProviders = sampleProviders;
+        }
+
+        // 設置默認日期
+        function setDefaultDates() {
+            const today = new Date();
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+            document.getElementById('startDate').value = startOfMonth.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endOfMonth.toISOString().split('T')[0];
+        }
+
+        // 生成報表
+        function generateReport(type = null) {
+            const reportType = type || document.getElementById('reportType').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const analysisDimension = document.getElementById('analysisDimension').value;
+
+            if (!startDate || !endDate) {
+                alert('請選擇開始和結束日期');
+                return;
+            }
+
+            const reportData = analyzeData(startDate, endDate, reportType);
+            displayReport(reportData, reportType, analysisDimension);
+        }
+
+        // 分析數據
+        function analyzeData(startDate, endDate, reportType) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            const filteredServices = worshipServices.filter(service => {
+                const serviceDate = new Date(service.date);
+                return serviceDate >= start && serviceDate <= end;
+            });
+
+            const totalServices = filteredServices.length;
+            const totalAttendees = filteredServices.reduce((sum, service) => sum + service.attendees, 0);
+            const avgAttendees = totalServices > 0 ? Math.round(totalAttendees / totalServices) : 0;
+
+            // 服務類型統計
+            const serviceTypeStats = {};
+            filteredServices.forEach(service => {
+                serviceTypeStats[service.type] = (serviceTypeStats[service.type] || 0) + 1;
+            });
+
+            // 服務者統計
+            const leaderStats = {};
+            filteredServices.forEach(service => {
+                leaderStats[service.leader] = (leaderStats[service.leader] || 0) + 1;
+            });
+
+            // 參與趨勢
+            const participationTrend = generateParticipationTrend(start, end, filteredServices);
+
+            return {
+                totalServices,
+                totalAttendees,
+                avgAttendees,
+                serviceTypeStats,
+                leaderStats,
+                participationTrend,
+                filteredServices,
+                startDate,
+                endDate
+            };
+        }
+
+        // 生成參與趨勢數據
+        function generateParticipationTrend(start, end, services) {
+            const trendData = [];
+            const current = new Date(start);
+            
+            while (current <= end) {
+                const dateStr = current.toISOString().split('T')[0];
+                const dayServices = services.filter(service => service.date === dateStr).length;
+                const dayAttendees = services.filter(service => service.date === dateStr)
+                    .reduce((sum, service) => sum + service.attendees, 0);
+                
+                trendData.push({
+                    date: dateStr,
+                    services: dayServices,
+                    attendees: dayAttendees
+                });
+                
+                current.setDate(current.getDate() + 1);
+            }
+            
+            return trendData;
+        }
+
+        // 顯示報表
+        function displayReport(data, reportType, analysisDimension) {
+            const reportContent = document.getElementById('reportContent');
+            const reportTitle = getReportTitle(reportType, data.startDate, data.endDate);
+            
+            let content = `
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-900">${reportTitle}</h3>
+                        <p class="text-sm text-gray-600">報表期間：${data.startDate} 至 ${data.endDate}</p>
+                    </div>
+                    <div class="p-6">
+                        <!-- 關鍵指標 -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                                <div class="text-3xl font-bold text-blue-600">${data.totalServices}</div>
+                                <div class="text-sm text-gray-600">總服務數</div>
+                            </div>
+                            <div class="text-center p-4 bg-green-50 rounded-lg">
+                                <div class="text-3xl font-bold text-green-600">${data.totalAttendees}</div>
+                                <div class="text-sm text-gray-600">總參與人數</div>
+                            </div>
+                            <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                                <div class="text-3xl font-bold text-yellow-600">${data.avgAttendees}</div>
+                                <div class="text-sm text-gray-600">平均參與人數</div>
+                            </div>
+                            <div class="text-center p-4 bg-purple-50 rounded-lg">
+                                <div class="text-3xl font-bold text-purple-600">${data.totalServices > 0 ? Math.round((data.totalServices / 4) * 100) : 0}%</div>
+                                <div class="text-sm text-gray-600">服務頻率</div>
+                            </div>
+                        </div>
+
+                        <!-- 圖表區域 -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-gray-900 mb-3">服務類型分布</h4>
+                                <canvas id="serviceTypeChart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="text-center text-gray-600">參與趨勢圖</h4>
+                                <canvas id="trendChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+            `;
+
+            // 根據報表類型添加不同內容
+            if (reportType === 'services') {
+                content += generateServicesAnalysis(data);
+            } else if (reportType === 'participants') {
+                content += generateParticipantsAnalysis(data);
+            } else if (reportType === 'performance') {
+                content += generatePerformanceAnalysis(data);
+            } else {
+                content += generateOverviewAnalysis(data);
+            }
+
+            content += `
+                        <!-- 服務列表 -->
+                        <div class="mt-8">
+                            <h4 class="font-semibold text-gray-900 mb-3">崇拜服務列表</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">服務名稱</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">日期</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">類型</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">參與人數</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">主領者</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${data.filteredServices.map(service => `
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${service.title}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${service.date}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${getServiceTypeName(service.type)}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${service.attendees}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${service.leader}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            reportContent.innerHTML = content;
+            
+            // 渲染圖表
+            renderCharts(data);
+        }
+
+        // 生成服務分析
+        function generateServicesAnalysis(data) {
+            return `
+                <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-blue-900 mb-3">服務分析詳情</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${Object.entries(data.serviceTypeStats).map(([type, count]) => `
+                            <div class="flex justify-between items-center p-3 bg-white rounded">
+                                <span class="text-sm font-medium text-gray-700">${getServiceTypeName(type)}</span>
+                                <span class="font-semibold text-blue-600">${count} 次</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成參與者分析
+        function generateParticipantsAnalysis(data) {
+            return `
+                <div class="bg-green-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-green-900 mb-3">參與者分析詳情</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">總參與人數</div>
+                            <div class="text-sm text-gray-600">${data.totalAttendees} 人</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">平均參與人數</div>
+                            <div class="text-sm text-gray-600">${data.avgAttendees} 人/次</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">服務次數</div>
+                            <div class="text-sm text-gray-600">${data.totalServices} 次</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成績效分析
+        function generatePerformanceAnalysis(data) {
+            return `
+                <div class="bg-purple-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-purple-900 mb-3">績效分析詳情</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${Object.entries(data.leaderStats).map(([leader, count]) => `
+                            <div class="flex justify-between items-center p-3 bg-white rounded">
+                                <span class="text-sm font-medium text-gray-700">${leader}</span>
+                                <span class="font-semibold text-purple-600">${count} 次服務</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成總覽分析
+        function generateOverviewAnalysis(data) {
+            return `
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">綜合分析</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">主要服務類型</div>
+                            <div class="text-sm text-gray-600">${getMainServiceType(data.serviceTypeStats)}</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">最活躍主領者</div>
+                            <div class="text-sm text-gray-600">${getMostActiveLeader(data.leaderStats)}</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">參與度</div>
+                            <div class="text-sm text-gray-600">${data.avgAttendees > 50 ? '高' : data.avgAttendees > 30 ? '中' : '低'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 獲取主要服務類型
+        function getMainServiceType(serviceTypeStats) {
+            if (Object.keys(serviceTypeStats).length === 0) return '無數據';
+            const maxType = Object.entries(serviceTypeStats).reduce((a, b) => a[1] > b[1] ? a : b);
+            return `${getServiceTypeName(maxType[0])} (${maxType[1]}次)`;
+        }
+
+        // 獲取最活躍主領者
+        function getMostActiveLeader(leaderStats) {
+            if (Object.keys(leaderStats).length === 0) return '無數據';
+            const maxLeader = Object.entries(leaderStats).reduce((a, b) => a[1] > b[1] ? a : b);
+            return `${maxLeader[0]} (${maxLeader[1]}次)`;
+        }
+
+        // 獲取服務類型名稱
+        function getServiceTypeName(type) {
+            const typeNames = {
+                'regular': '主日崇拜',
+                'prayer': '禱告會',
+                'special': '特別聚會',
+                'youth': '青年聚會'
+            };
+            return typeNames[type] || type;
+        }
+
+        // 渲染圖表
+        function renderCharts(data) {
+            // 服務類型圖
+            renderServiceTypeChart(data.serviceTypeStats);
+            
+            // 趨勢圖
+            renderTrendChart(data.participationTrend);
+        }
+
+        // 渲染服務類型圖
+        function renderServiceTypeChart(serviceTypeStats) {
+            const ctx = document.getElementById('serviceTypeChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(serviceTypeStats).map(type => getServiceTypeName(type)),
+                    datasets: [{
+                        data: Object.values(serviceTypeStats),
+                        backgroundColor: [
+                            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染趨勢圖
+        function renderTrendChart(trendData) {
+            const ctx = document.getElementById('trendChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: trendData.map(item => item.date),
+                    datasets: [
+                        {
+                            label: '參與人數',
+                            data: trendData.map(item => item.attendees),
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 獲取報表標題
+        function getReportTitle(type, startDate, endDate) {
+            switch(type) {
+                case 'overview':
+                    return `崇拜禮儀總覽報表`;
+                case 'services':
+                    return `崇拜服務分析報表`;
+                case 'participants':
+                    return `參與者分析報表`;
+                case 'performance':
+                    return `服務績效分析報表`;
+                default:
+                    return '崇拜禮儀報表';
+            }
+        }
+
+        // 顯示進階分析
+        function showAdvancedAnalysis() {
+            document.getElementById('advancedAnalysisModal').classList.remove('hidden');
+            generateAdvancedAnalysis();
+        }
+
+        // 關閉進階分析模態框
+        function closeAdvancedAnalysisModal() {
+            document.getElementById('advancedAnalysisModal').classList.add('hidden');
+        }
+
+        // 生成進階分析
+        function generateAdvancedAnalysis() {
+            // 服務者排名分析
+            const providerRanking = analyzeProviderRanking();
+            displayProviderRanking(providerRanking);
+            
+            // 渲染進階圖表
+            renderAdvancedCharts();
+        }
+
+        // 分析服務者排名
+        function analyzeProviderRanking() {
+            const ranking = serviceProviders.map(provider => {
+                const services = worshipServices.filter(service => service.leader === provider.name);
+                const totalAttendees = services.reduce((sum, service) => sum + service.attendees, 0);
+                
+                return {
+                    name: provider.name,
+                    role: provider.role,
+                    serviceCount: services.length,
+                    totalAttendees: totalAttendees,
+                    avgAttendees: services.length > 0 ? Math.round(totalAttendees / services.length) : 0,
+                    score: (services.length * 0.4) + (totalAttendees * 0.3) + (provider.experience * 0.3)
+                };
+            });
+            
+            return ranking.sort((a, b) => b.score - a.score);
+        }
+
+        // 顯示服務者排名
+        function displayProviderRanking(providerRanking) {
+            const container = document.getElementById('serviceProviderRanking');
+            
+            container.innerHTML = providerRanking.map((provider, index) => `
+                <div class="flex justify-between items-center p-3 bg-white rounded border-l-4 ${
+                    index === 0 ? 'border-l-yellow-400' : 
+                    index === 1 ? 'border-l-gray-400' : 
+                    index === 2 ? 'border-l-orange-400' : 'border-l-blue-400'
+                }">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-lg font-bold text-gray-600">${index + 1}</span>
+                        <span class="font-medium text-gray-900">${provider.name}</span>
+                        <span class="text-sm text-gray-500">${provider.role}</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-600">綜合評分: ${Math.round(provider.score)}</div>
+                        <div class="text-xs text-gray-500">${provider.serviceCount}次服務, ${provider.avgAttendees}人/次</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染進階圖表
+        function renderAdvancedCharts() {
+            // 參與趨勢圖
+            renderParticipationTrendChart();
+            
+            // 服務類型圖
+            renderServiceTypeAdvancedChart();
+        }
+
+        // 渲染參與趨勢圖
+        function renderParticipationTrendChart() {
+            const ctx = document.getElementById('participationTrendChart');
+            if (!ctx) return;
+
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            const trendData = generateParticipationTrend(start, end, worshipServices);
+            const labels = trendData.map(item => item.date);
+            const data = trendData.map(item => item.attendees);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '參與人數',
+                        data: data,
+                        backgroundColor: '#3B82F6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染服務類型進階圖
+        function renderServiceTypeAdvancedChart() {
+            const ctx = document.getElementById('serviceTypeChart');
+            if (!ctx) return;
+
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            const filteredServices = worshipServices.filter(service => {
+                const serviceDate = new Date(service.date);
+                return serviceDate >= start && serviceDate <= end;
+            });
+
+            const serviceTypeStats = {};
+            filteredServices.forEach(service => {
+                serviceTypeStats[service.type] = (serviceTypeStats[service.type] || 0) + 1;
+            });
+
+            new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: Object.keys(serviceTypeStats).map(type => getServiceTypeName(type)),
+                    datasets: [{
+                        data: Object.values(serviceTypeStats),
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    }
+                }
+            });
+        }
+
+        // 匯出報表
+        function exportReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent.innerHTML.trim()) {
+                alert('請先生成報表');
+                return;
+            }
+
+            const reportData = generateReportData();
+            const csvContent = generateCSV(reportData);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `崇拜禮儀報表_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 生成報表數據
+        function generateReportData() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const reportType = document.getElementById('reportType').value;
+            
+            return analyzeData(startDate, endDate, reportType);
+        }
+
+        // 生成CSV
+        function generateCSV(data) {
+            const headers = ['服務名稱', '日期', '類型', '參與人數', '主領者', '備註'];
+            const rows = data.filteredServices.map(service => [
+                service.title,
+                service.date,
+                getServiceTypeName(service.type),
+                service.attendees,
+                service.leader,
+                service.notes || ''
+            ]);
+
+            return [headers, ...rows].map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('
+');
+        }
+
+        // 列印報表
+        function printReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent.innerHTML.trim()) {
+                alert('請先生成報表');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>崇拜禮儀報表</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            table { border-collapse: collapse; width: 100%; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                            .chart-container { margin: 20px 0; }
+                        </style>
+                    </head>
+                    <body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>                        ${reportContent.innerHTML}
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    </script>
+</body>
+</html>

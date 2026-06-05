@@ -1,0 +1,42 @@
+---
+description: Bible100 V2.2 預設 v2 — Sheets SSOT + Apps Script API 契約（課程、報名、導覽、日誌、KPI）
+globs: bible100_new/**/*
+alwaysApply: true
+---
+
+# Cursor 指揮令 v2（Sheets SSOT + API 契約）
+
+啟用本規則時，視為 **v2 模式**：營運資料以 Google Sheets 為 SSOT；API 與欄位以 B‑C 契約為準。
+
+## 模式：Google Sheets 為 SSOT
+
+- 所有營運資料（課程、報名、導覽、工具列、日誌、KPI）以 Sheets 為唯一真相來源。
+- 表名凍結：`courses`、`registrations`、`navigation_map`、`qna_sources`、`qna_items`、`bible_versions`、`hymns`、`playlists`、`playlist_items`、`ai_tools_config`、`planning_kpi`、`planning_swot`、`planning_smart`、`planning_pdca`、`planning_health`、`ministry_logs`、`members`。
+
+## API 契約
+
+- Apps Script Web App 使用 `action` 分派。
+- JSON 信封：`{ ok, action, data, meta, error }`。
+- `format=html` 僅限 `getQnaList`（其他 action 預設 JSON）。
+- 所有欄位名以 B‑C 契約為準，不得擅自改名。
+
+## 表頭即契約
+
+- 第一列為表頭；以表頭動態對應欄位，避免硬編碼欄位索引。
+- 缺欄＝錯誤＝寫入 `ministry_logs`（建議 `module=schema` 或等價欄位）。
+
+## PII / NotebookLM
+
+- Member、Registration、Smart Ministry raw 不得進 NotebookLM。
+- NotebookLM 只吃白名單（課程、Q&A、詩歌、譯本、規劃摘要等）。
+
+## 禁止的行為
+
+- 禁止硬編碼導覽（應由 `navigation_map` 驅動）。
+- 禁止硬編碼 AI 工具列（應由 `ai_tools_config` 驅動）。
+- 禁止在 v2 營運路徑將 localStorage raw 當成 canonical。
+- 禁止將 PII 暴露在公開 API。
+
+## 目標
+
+讓 Cursor 成為「欄位契約守門人」，確保所有 API 與資料層一致。

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Church Center 主題設定 · Theme Settings | Church Ministry</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: #f5f6fa; padding: 20px; font-size: 12px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .header h1 { font-size: 20px; }
+        .card { background: white; border-radius: 8px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #333; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; color: #555; }
+        input[type="color"] { width: 60px; height: 36px; border: none; border-radius: 6px; cursor: pointer; }
+        .color-row { display: flex; align-items: center; gap: 12px; }
+        .color-row span { font-size: 11px; color: #666; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; background: #667eea; color: white; }
+        .btn:hover { opacity: 0.9; }
+        .preview { margin-top: 20px; padding: 20px; border-radius: 8px; background: var(--preview-bg, #f8f9fa); }
+        .preview-header { padding: 16px; border-radius: 8px; color: white; margin-bottom: 12px; }
+        .preview-card { background: white; padding: 16px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div class="header">
+        <h1>🎨 Church Center 主題設定</h1>
+        <p style="margin-top:8px;opacity:0.95;">自訂會眾入口的主色與強調色</p>
+    </div>
+    <div class="card">
+        <div class="card-title">主題色彩</div>
+        <div class="form-group">
+            <label class="form-label">主色 Primary</label>
+            <div class="color-row">
+                <input type="color" id="primaryColor" value="#00cec9">
+                <span id="primaryHex">#00cec9</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">強調色 Accent</label>
+            <div class="color-row">
+                <input type="color" id="accentColor" value="#00b4b0">
+                <span id="accentHex">#00b4b0</span>
+            </div>
+        </div>
+        <button class="btn" onclick="saveTheme()">儲存主題</button>
+        <button class="btn" style="background:#95a5a6;margin-left:8px;" onclick="resetTheme()">還原預設</button>
+    </div>
+    <div class="card">
+        <div class="card-title">預覽</div>
+        <div id="preview" class="preview">
+            <div id="previewHeader" class="preview-header">會眾入口 Church Center</div>
+            <div id="previewCard" class="preview-card">奉獻、活動、小組、研讀</div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'churchCenterTheme';
+        const DEFAULT = { primaryColor: '#00cec9', accentColor: '#00b4b0' };
+
+        function loadTheme() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                const t = raw ? JSON.parse(raw) : DEFAULT;
+                document.getElementById('primaryColor').value = t.primaryColor || DEFAULT.primaryColor;
+                document.getElementById('accentColor').value = t.accentColor || DEFAULT.accentColor;
+                updatePreview();
+            } catch (e) {}
+        }
+
+        function updateHex() {
+            document.getElementById('primaryHex').textContent = document.getElementById('primaryColor').value;
+            document.getElementById('accentHex').textContent = document.getElementById('accentColor').value;
+        }
+
+        function updatePreview() {
+            const primary = document.getElementById('primaryColor').value;
+            const accent = document.getElementById('accentColor').value;
+            const header = document.getElementById('previewHeader');
+            const card = document.getElementById('previewCard');
+            if (header) {
+                header.style.background = `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)`;
+            }
+            if (card) {
+                card.style.borderLeftColor = primary;
+            }
+        }
+
+        function saveTheme() {
+            const theme = {
+                primaryColor: document.getElementById('primaryColor').value,
+                accentColor: document.getElementById('accentColor').value
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(theme));
+            alert('主題已儲存！請重新整理會眾入口頁面以套用。');
+        }
+
+        function resetTheme() {
+            document.getElementById('primaryColor').value = DEFAULT.primaryColor;
+            document.getElementById('accentColor').value = DEFAULT.accentColor;
+            localStorage.removeItem(STORAGE_KEY);
+            updatePreview();
+            updateHex();
+            alert('已還原預設主題');
+        }
+
+        document.getElementById('primaryColor').addEventListener('input', function() {
+            updateHex();
+            updatePreview();
+        });
+        document.getElementById('accentColor').addEventListener('input', function() {
+            updateHex();
+            updatePreview();
+        });
+
+        loadTheme();
+        updateHex();
+    </script>
+</body>
+</html>

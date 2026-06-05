@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>教會版 SMART｜事工計畫牧養式規劃 2026</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="js/church_toolkit.js"></script>
+  <script src="js/scaling_adapter.js"></script>
+  <script src="js/eighty_twenty_engine.js"></script>
+  <script src="js/strategy_logic.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap');
+    html { font-size: 106.25%; }
+    body { font-family: 'Noto Sans TC', sans-serif; background: #fdf2f8; scroll-behavior: smooth; }
+    .q-row { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid #e2e8f0; gap: 0.5rem; }
+    .q-text { flex: 1; font-size: 0.9rem; padding-right: 0.75rem; }
+    .btn-score { width: 2.1rem; height: 2.1rem; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 800; font-size: 0.75rem; transition: 0.15s; }
+    .btn-active { background: #e11d48 !important; color: #fff !important; border-color: #e11d48 !important; }
+    .tab-btn { padding: 0.7rem 1rem; font-weight: 800; cursor: pointer; border-bottom: 4px solid transparent; font-size: 0.85rem; white-space: nowrap; }
+    .tab-active { border-bottom-color: #e11d48; color: #9f1239; background: #fff; border-radius: 12px 12px 0 0; }
+    .diag-line { border-left: 4px solid #e11d48; padding-left: 0.75rem; margin-bottom: 0.65rem; font-size: 0.9rem; }
+    .step-guide { border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem 1.15rem; margin-bottom: 1.25rem; background: linear-gradient(180deg, #fafbff 0%, #fff 100%); font-size: 0.88rem; }
+    .step-guide h3 { font-weight: 800; color: #312e81; font-size: 0.82rem; margin-bottom: 0.35rem; }
+    .disclaimer-box { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 0.75rem; padding: 0.9rem 1rem; font-size: 0.85rem; color: #78350f; margin-bottom: 1rem; }
+    .plan-card { border: 1px solid #fecdd3; border-radius: 1rem; padding: 1rem 1.25rem; margin-bottom: 1.5rem; background: #fff; }
+    @media print { .no-print { display: none !important; } }
+  </style>
+</head>
+<body class="text-slate-800">
+<div id="app" class="min-h-screen pb-16">
+  <nav class="bg-rose-950 p-4 text-white sticky top-0 z-50 shadow-md no-print">
+    <div class="max-w-5xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <h1 class="font-black text-sm md:text-base tracking-tight">教會版 SMART <span class="text-rose-300">2026</span></h1>
+      <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
+        <a href="index_plan.html" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-full text-white no-underline">主索引</a>
+        <a href="cta-os-tool-report.html?tool=smart" class="bg-indigo-700 hover:bg-indigo-600 px-3 py-1.5 rounded-full text-white no-underline">CTA-OS 統一報告</a>
+        <button type="button" @click="resetAll" class="bg-rose-800 hover:bg-rose-700 px-3 py-1.5 rounded-full">重設</button>
+        <span v-if="planStep < 3" class="bg-rose-600 px-3 py-1 rounded-full">步驟 {{ planStep + 1 }} / 4</span>
+        <span v-else class="bg-emerald-700 px-3 py-1 rounded-full">報告 · 3 Tab</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-5xl mx-auto p-4 md:py-8">
+    <p class="no-print text-sm font-bold text-rose-900 mb-4 border-l-4 border-rose-500 pl-3 bg-rose-50 rounded-r-lg py-2">
+      <strong>首屏一句話：</strong>本頁<strong>只</strong>幫團隊把負擔寫成<strong>可守住的 SMART 目標</strong>。<strong>不做</strong>人事 KPI 考核；牧養聲明與長說明見下方摺疊與步驟。
+    </p>
+    <!-- Step 0: 背景 -->
+    <div v-if="planStep === 0" class="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-rose-100">
+      <div class="disclaimer-box">
+        <strong>牧養聲明：</strong>本工具協助把負擔化為<strong>可守住的 SMART 目標</strong>，<strong>不是</strong> KPI 考核。分數僅供同工對話與禱告辨認。資料存本機 <code class="text-amber-900">chp2026-smart-v1</code>（版本 2 結構），不上傳伺服器。
+      </div>
+      <p class="text-xs text-slate-500 mb-4">欄位可先空白往下一步；先看流程再回頭補填。</p>
+      <div class="step-guide">
+        <h3>這一步在做什麼？</h3>
+        <p class="text-slate-700 mb-2">收集教會情境，讓後續各事工計畫的 SMART 有「根」，而不是通用模板。</p>
+        <h3>填完之後你會得到什麼？</h3>
+        <p class="text-slate-700 mb-2">報告封面與匯出 JSON；可供 AI 跟進 Tab 複製使用。</p>
+        <h3>會出現在報告哪裡？</h3>
+        <p class="text-slate-700">封面、牧養摘要背景、匯出給外部工具的 <code>context</code>。</p>
+      </div>
+      <h2 class="text-xl font-black mb-4 border-b pb-3 text-rose-700">教會背景與本季情境</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div><label class="font-bold text-sm">教會名稱</label><input v-model="context.church_name" type="text" class="w-full border rounded-xl p-2 mt-1" placeholder="可空" /></div>
+        <div><label class="font-bold text-sm">本季／節期標籤</label><input v-model="context.season_label" type="text" class="w-full border rounded-xl p-2 mt-1" placeholder="例：2026 第二季、聖誕節期" /></div>
+        <div><label class="font-bold text-sm">規模感</label>
+          <select v-model="context.size" class="w-full border rounded-xl p-2 mt-1">
+            <option value="micro">微型</option>
+            <option value="small">小型</option>
+            <option value="medium">中型</option>
+            <option value="large">大型</option>
+          </select>
+        </div>
+        <div><label class="font-bold text-sm">主要族群／對象</label><input v-model="context.main_groups" type="text" class="w-full border rounded-xl p-2 mt-1" placeholder="例：年輕家庭、長輩" /></div>
+        <div class="md:col-span-2"><label class="font-bold text-sm">健康診斷</label>
+          <select v-model="context.has_health_check" class="w-full border rounded-xl p-2 mt-1">
+            <option value="recent">6 個月內做過</option>
+            <option value="old">較久前做過</option>
+            <option value="none">尚未／無</option>
+          </select>
+        </div>
+      </div>
+      <button type="button" @click="goStep(1)" class="w-full py-4 bg-rose-600 text-white rounded-xl font-black text-lg shadow-lg hover:bg-rose-700">下一步：事工計畫列表</button>
+    </div>
+
+    <!-- Step 1: 模式 + 計畫 -->
+    <div v-else-if="planStep === 1" class="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-rose-100">
+      <div class="step-guide">
+        <h3>這一步在做什麼？</h3>
+        <p class="text-slate-700">新增 1～10 個「候選事工／計畫」，每個之後會各填一組 SMART（含牧養關顧）。單一焦點時可只留一筆。</p>
+      </div>
+      <div class="mb-6">
+        <span class="font-bold text-slate-800 mr-4">模式</span>
+        <label class="mr-4"><input type="radio" v-model="mode" value="single" class="mr-1" /> 單一計畫（深度梳理）</label>
+        <label><input type="radio" v-model="mode" value="multi" class="mr-1" /> 多計畫比較（排序與取捨）</label>
+      </div>
+      <div v-for="(p, idx) in plans" :key="p.id" class="plan-card">
+        <div class="flex justify-between items-start gap-2 mb-2">
+          <span class="text-sm font-black text-rose-800">計畫 {{ idx + 1 }}</span>
+          <button v-if="plans.length > 1" type="button" @click="removePlan(idx)" class="text-xs font-bold text-rose-600">移除</button>
+        </div>
+        <label class="font-bold text-sm">名稱</label>
+        <input v-model="p.name" type="text" class="w-full border rounded-xl p-2 mb-2 mt-1" placeholder="例：探訪未出席會友、青少年門訓重整" />
+        <label class="font-bold text-sm">初步想法（白話）</label>
+        <textarea v-model="p.raw_description" rows="3" class="w-full border rounded-xl p-2 mt-1 text-sm" placeholder="例：我們想開始關心久未聚會的會友…"></textarea>
+      </div>
+      <button v-if="plans.length < 10" type="button" @click="addPlan" class="mb-6 text-sm font-bold text-rose-700">＋ 新增計畫</button>
+      <p v-if="planListError" class="text-rose-600 text-sm font-bold mb-4">{{ planListError }}</p>
+      <div class="flex gap-3">
+        <button type="button" @click="goStep(0)" class="flex-1 py-3 rounded-xl border-2 border-slate-200 font-bold">上一步</button>
+        <button type="button" @click="goStep2" class="flex-1 py-3 rounded-xl bg-rose-600 text-white font-black">下一步：SMART 自評與補充</button>
+      </div>
+    </div>
+
+    <!-- Step 2: 每計畫 Likert + 文字 -->
+    <div v-else-if="planStep === 2" class="space-y-6">
+      <div class="step-guide bg-white rounded-2xl p-4 border border-rose-100">
+        <h3>這一步在做什麼？</h3>
+        <p class="text-slate-700 text-sm">針對<strong>每個事工</strong>，用 1–5 自評六個向度（S/M/A/R/T/Care），再補文字細節。分數由你們團隊填寫，作為對話與排序參考。</p>
+      </div>
+      <div v-for="(p, idx) in plans" :key="'detail'+p.id" class="bg-white rounded-3xl p-5 md:p-7 shadow-lg border border-rose-100">
+        <h2 class="text-lg font-black text-rose-900 mb-1">{{ p.name || ('計畫 ' + (idx+1)) }}</h2>
+        <p class="text-xs text-slate-500 mb-4 whitespace-pre-wrap">{{ p.raw_description || '（未填寫初步想法）' }}</p>
+
+        <h3 class="text-sm font-black text-slate-800 mb-2">自評 1＝弱 · 5＝強</h3>
+        <div class="space-y-0 mb-4">
+          <div v-for="row in scoreRows" :key="row.key" class="q-row">
+            <div class="q-text">
+              <span class="font-bold text-slate-800">{{ row.cn }}</span>
+              <span class="block text-[10px] text-slate-400 mt-0.5">{{ row.en }}</span>
+            </div>
+            <div class="flex gap-1 shrink-0">
+              <button v-for="n in 5" :key="row.key+n" type="button" @click="p.scores[row.key] = n" :class="['btn-score', p.scores[row.key] === n ? 'btn-active' : 'bg-white text-slate-400']">{{ n }}</button>
+            </div>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="text-sm font-bold text-slate-700">策略加權（對應 SWOT 重大機會／威脅，可選）</label>
+          <select v-model.number="p.scores.Strategic_bonus" class="w-full max-w-xs border rounded-xl p-2 mt-1 text-sm">
+            <option :value="null">未選</option>
+            <option :value="-1">-1 較不重要</option>
+            <option :value="0">0 中性</option>
+            <option :value="1">+1 重要</option>
+            <option :value="2">+2 極重要</option>
+          </select>
+        </div>
+
+        <div class="mb-4 p-3 rounded-xl border border-indigo-100 bg-indigo-50/40">
+          <label class="text-sm font-bold text-indigo-900">從策略帶入（健康診斷 + SWOT 優先防守／突破）</label>
+          <select v-model="p.strategyBridgeKey" @change="onStrategyBridgeChange(p)" class="w-full border rounded-lg p-2 mt-1 text-sm">
+            <option value="">— 請選擇 —</option>
+            <option v-for="opt in strategyBridgeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+          <p v-if="!strategyBridgeOptions.length" class="text-[11px] text-slate-500 mt-2">
+            尚無建議：請先完成健康診斷（寫入 chp2026-health-result），並建議完成 SWOT 以利對齊優先維度。
+          </p>
+          <p v-if="measurableHintForPlan(p)" class="text-xs text-slate-800 mt-2 font-medium leading-relaxed">{{ measurableHintForPlan(p) }}</p>
+        </div>
+
+        <h3 class="text-sm font-black text-slate-800 mb-2 mt-6">文字補充（可空）</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          <div><label class="font-bold text-rose-800">S｜具體對象是誰？</label><input v-model="p.smart_answers.S_specific_group" class="w-full border rounded-lg p-2 mt-1" /></div>
+          <div><label class="font-bold text-rose-800">S｜盼望看見的改變？</label><input v-model="p.smart_answers.S_specific_change" class="w-full border rounded-lg p-2 mt-1" /></div>
+          <div class="md:col-span-2"><label class="font-bold text-rose-800">M｜可觀察的溫和指標</label><input v-model="p.smart_answers.M_observable_signs" class="w-full border rounded-lg p-2 mt-1" /></div>
+          <div><label class="font-bold text-rose-800">M｜多久內看見跡象？</label><input v-model="p.smart_answers.M_time_frame" class="w-full border rounded-lg p-2 mt-1" /></div>
+          <div><label class="font-bold text-rose-800">A｜可動員人手／時間</label><input v-model="p.smart_answers.A_people_resources" class="w-full border rounded-lg p-2 mt-1" /></div>
+          <div><label class="font-bold text-rose-800">A｜其他資源（財務、場地…）</label><input v-model="p.smart_answers.A_other_resources" class="w-full border rounded-lg p-2 mt-1" /></div>
+          <div v-if="riHintForPlan(p).matched" class="md:col-span-2 text-[11px] text-slate-600">
+            80/20 Target_RI（依計畫名稱對應事工列）：<strong>{{ riHintForPlan(p).ri != null ? riHintForPlan(p).ri.toFixed(2) : '—' }}</strong>
+            <span v-if="!riHintForPlan(p).rowName" class="text-slate-400">（未對應到具名事工列時僅供參考）</span>
+          </div>
+          <div v-if="riHintForPlan(p).matched && riHintForPlan(p).isLow" class="md:col-span-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg p-2 leading-relaxed">
+            溫馨提示：此計畫對應的 RI 偏低（紅區），請在「達成性（Attainable）」詳述人力、時間、財務與退路，必要時縮小試行範圍。
+          </div>
+          <div><label class="font-bold text-rose-800">R｜與異象／季節的關係</label><input v-model="p.smart_answers.R_vision_alignment" class="w-full border rounded-lg p-2 mt-1" /></div>
+          <div><label class="font-bold text-rose-800">R｜回應會眾處境</label><input v-model="p.smart_answers.R_congregation_realities" class="w-full border rounded-lg p-2 mt-1" /></div>
+          <div><label class="font-bold text-rose-800">T｜試行期間</label><input v-model="p.smart_answers.T_initial_period" class="w-full border rounded-lg p-2 mt-1" placeholder="例：2026/5–7" /></div>
+          <div><label class="font-bold text-rose-800">T｜頻率與節奏</label><input v-model="p.smart_answers.T_rhythm" class="w-full border rounded-lg p-2 mt-1" /></div>
+          <div><label class="font-bold text-indigo-900">Care｜對同工／會眾壓力估計</label><input v-model="p.smart_answers.Care_pastoral_cost" class="w-full border rounded-lg p-2 mt-1" /></div>
+          <div><label class="font-bold text-indigo-900">Care｜風險與注意</label><input v-model="p.smart_answers.Care_risks" class="w-full border rounded-lg p-2 mt-1" /></div>
+          <div class="md:col-span-2">
+            <label class="font-bold text-indigo-900">指派同工（選填）</label>
+            <select v-model="p.assignee_id" @change="onAssigneeChange(p)" class="w-full border rounded-lg p-2 mt-1">
+              <option value="">未指派</option>
+              <option v-for="m in memberOptions" :key="'m'+m.id" :value="m.id">{{ m.name }}（{{ m.id }}）</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <p v-if="scoreError" class="text-rose-600 text-sm font-bold">{{ scoreError }}</p>
+      <div class="flex gap-3 no-print">
+        <button type="button" @click="goStep(1)" class="flex-1 py-3 rounded-xl border-2 border-slate-200 font-bold">上一步</button>
+        <button type="button" @click="finishToReport" class="flex-1 py-3 rounded-xl bg-rose-600 text-white font-black">產生報告</button>
+      </div>
+    </div>
+
+    <!-- Step 3: 報告 -->
+    <div id="smart-report-root" v-else-if="planStep === 3" class="animate-fadeIn">
+      <div class="flex space-x-1 border-b mb-6 no-print overflow-x-auto bg-white rounded-t-xl px-2">
+        <button type="button" @click="activeTab = 'report'" :class="['tab-btn', activeTab === 'report' ? 'tab-active' : 'text-slate-400']">📊 規劃報告</button>
+        <button type="button" @click="activeTab = 'standard'" :class="['tab-btn', activeTab === 'standard' ? 'tab-active' : 'text-slate-400']">📖 教導原則</button>
+        <button type="button" @click="activeTab = 'ai'" :class="['tab-btn', activeTab === 'ai' ? 'tab-active' : 'text-slate-400']">🤖 AI／JSON</button>
+      </div>
+
+      <div v-show="activeTab === 'report'" id="smart-report-print" class="bg-white rounded-2xl p-6 md:p-10 shadow-xl border border-rose-100">
+        <div class="border-b-4 border-rose-700 pb-6 mb-8">
+          <h1 class="text-3xl font-black text-slate-900">{{ context.church_name || '教會名稱' }}</h1>
+          <p class="text-rose-700 font-black mt-2">教會 SMART 事工規劃報告</p>
+          <p class="text-xs text-slate-500 mt-2">{{ generatedAt }} · 模式：{{ mode === 'single' ? '單一計畫' : '多計畫比較' }}</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4 text-xs bg-slate-50 p-4 rounded-xl border">
+            <div><b>本季／節期：</b>{{ context.season_label || '—' }}</div>
+            <div><b>規模：</b>{{ sizeLabel }}</div>
+            <div><b>族群：</b>{{ context.main_groups || '—' }}</div>
+            <div><b>健康診斷：</b>{{ healthCheckLabel }}</div>
+          </div>
+        </div>
+
+        <section class="mb-8 border border-rose-100 rounded-2xl p-5 bg-rose-50/50">
+          <h2 class="text-lg font-black text-rose-900 mb-3">牧養摘要</h2>
+          <p class="text-sm whitespace-pre-wrap text-slate-800">{{ pastoralSummary }}</p>
+        </section>
+
+        <section class="mb-8 border border-indigo-100 rounded-2xl p-5 bg-indigo-50/50">
+          <h2 class="text-lg font-black text-indigo-900 mb-3">四句式牧養辨認</h2>
+          <div class="text-sm space-y-2">
+            <div class="diag-line"><strong>現況：</strong>{{ fourDiag.current }}</div>
+            <div class="diag-line"><strong>風險：</strong>{{ fourDiag.risk }}</div>
+            <div class="diag-line"><strong>根因／張力：</strong>{{ fourDiag.root }}</div>
+            <div class="diag-line"><strong>下一步：</strong>{{ fourDiag.next }}</div>
+          </div>
+        </section>
+
+        <section class="mb-8">
+          <h2 class="text-lg font-black text-slate-900 mb-2">整體診斷分數（僅供對話）</h2>
+          <p class="text-xs text-slate-500 mb-3">由各計畫自評聚合：對齊度、負載成本、可行性（0–100）。</p>
+          <div class="grid grid-cols-3 gap-3 text-center">
+            <div class="rounded-xl border p-3 bg-slate-50"><div class="text-2xl font-black text-indigo-700">{{ agg.alignmentScore != null ? agg.alignmentScore : '—' }}</div><div class="text-xs text-slate-600">對齊綜合</div></div>
+            <div class="rounded-xl border p-3 bg-slate-50"><div class="text-2xl font-black text-amber-700">{{ agg.loadCostScore != null ? agg.loadCostScore : '—' }}</div><div class="text-xs text-slate-600">負載成本（高＝壓力大）</div></div>
+            <div class="rounded-xl border p-3 bg-slate-50"><div class="text-2xl font-black text-emerald-700">{{ agg.feasibilityScore != null ? agg.feasibilityScore : '—' }}</div><div class="text-xs text-slate-600">可行性</div></div>
+          </div>
+        </section>
+
+        <section class="mb-8 h-64">
+          <h2 class="text-lg font-black text-slate-900 mb-2">各計畫 · 六向度自評（柱狀）</h2>
+          <canvas id="smartPlansBarChart"></canvas>
+        </section>
+
+        <section v-if="mode === 'multi' && rankedPlans.length" class="mb-8">
+          <h2 class="text-xl font-black text-slate-900 border-l-8 border-amber-500 pl-3 mb-4">優先序參考（綜合自評）</h2>
+          <p class="text-xs text-slate-500 mb-3">權重概念：清晰與貼合（S+M+R+T）約 60%，可行與健康（A+Care）約 40%，策略加權小幅影響。非命令。</p>
+          <ol class="list-decimal ml-5 space-y-3 text-sm">
+            <li v-for="(rp, i) in rankedPlans.slice(0, 5)" :key="rp.plan.id">
+              <strong>{{ rp.plan.name || '未命名' }}</strong> — 綜合參考 {{ rp.composite.toFixed(1) }}
+              <span class="block text-slate-600 mt-1">{{ rp.hint }}</span>
+            </li>
+          </ol>
+        </section>
+
+        <section class="mb-8">
+          <h2 class="text-xl font-black text-slate-900 border-l-8 border-rose-600 pl-3 mb-4">各計畫 SMART 摘要</h2>
+          <div v-for="(p, idx) in plans" :key="'sum'+p.id" class="mb-6 border rounded-2xl p-4 bg-slate-50/80">
+            <h3 class="font-black text-rose-900">{{ idx + 1 }}. {{ p.name || '未命名' }}</h3>
+            <p class="text-xs text-slate-600 mb-2">負責同工：{{ p.assignee_name || '未指派' }}<span v-if="p.assignee_id">（{{ p.assignee_id }}）</span></p>
+            <p class="text-xs text-slate-600 mb-2">自評：S {{ p.scores.S_clarity ?? '—' }} · M {{ p.scores.M_measurability ?? '—' }} · A {{ p.scores.A_feasibility ?? '—' }} · R {{ p.scores.R_relevance ?? '—' }} · T {{ p.scores.T_time_fit ?? '—' }} · Care {{ p.scores.Care_health ?? '—' }}</p>
+            <table class="w-full text-sm border-collapse">
+              <tbody>
+                <tr class="border-b"><td class="py-1 font-bold text-violet-800 w-24">S</td><td>{{ smartLine(p, 'S') }}</td></tr>
+                <tr class="border-b"><td class="py-1 font-bold text-violet-800">M</td><td>{{ smartLine(p, 'M') }}</td></tr>
+                <tr class="border-b"><td class="py-1 font-bold text-violet-800">A</td><td>{{ smartLine(p, 'A') }}</td></tr>
+                <tr class="border-b"><td class="py-1 font-bold text-violet-800">R</td><td>{{ smartLine(p, 'R') }}</td></tr>
+                <tr class="border-b"><td class="py-1 font-bold text-violet-800">T</td><td>{{ smartLine(p, 'T') }}</td></tr>
+                <tr><td class="py-1 font-bold text-indigo-900">Care</td><td>{{ smartLine(p, 'Care') }}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="text-xs text-slate-500 border-t pt-4">
+          <p>本報告由本機規則與你們填寫之自評生成；若使用 AI 跟進 Tab，複製到外部工具時請勿含個資與真實姓名。</p>
+        </section>
+      </div>
+
+      <div v-show="activeTab === 'standard'" class="bg-white rounded-3xl p-8 shadow-xl border border-rose-100">
+        <h2 class="text-xl font-black mb-4 border-b-4 border-emerald-500 pb-2">📖 教導原則：四套工具</h2>
+        <ul class="list-decimal ml-5 space-y-2 text-sm text-slate-800 mb-6">
+          <li><strong>健康診斷：</strong>{{ suiteTeach.health }}</li>
+          <li><strong>SWOT：</strong>{{ suiteTeach.swot }}</li>
+          <li><strong>SMART（本頁）：</strong>{{ suiteTeach.smart }}</li>
+          <li><strong>PDCA：</strong>{{ suiteTeach.pdca }}</li>
+        </ul>
+        <h3 class="font-black text-rose-900 mb-2">SMART 在本頁的意義</h3>
+        <p class="text-sm text-slate-700 leading-relaxed">每個<strong>事工計畫</strong>各填一組 S–T 與 Care：S/M 重具體與溫和記號；A 重資源與可執行；R 重與異象／季節／會眾處境；T 重試行與節奏；Care 重對人的壓力與風險。排序與分數僅幫助禱告辨認。</p>
+      </div>
+
+      <div v-show="activeTab === 'ai'" class="bg-white rounded-3xl p-8 shadow-xl border border-rose-100 space-y-4">
+        <h2 class="text-xl font-black border-b-4 border-indigo-500 pb-2">🤖 匯出 JSON（給提示詞／外部 AI）</h2>
+        <p class="text-sm text-slate-600">請複製下方 JSON，搭配你的 System Prompt 使用；資料不會自動上傳。</p>
+        <textarea readonly class="w-full border rounded-xl p-3 text-xs font-mono h-64 select-all bg-slate-50">{{ exportJsonPretty }}</textarea>
+        <div class="disclaimer-box text-xs">
+          <strong>隱私：</strong>內容僅在瀏覽器內；貼到第三方即離開本機。
+        </div>
+      </div>
+
+      <div class="no-print mt-8 flex flex-col sm:flex-row gap-3">
+        <button type="button" @click="goStep(2)" class="flex-1 py-3 rounded-xl border-2 border-slate-200 font-bold">返回修改</button>
+        <button type="button" @click="downloadPdf" class="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-black">下載 PDF</button>
+        <button type="button" @click="shareWa" class="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-black">分享到 WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+function healthDimensionInternalBridge(d) {
+  if (!d) return null;
+  var ns = Number(d.normalizedScore);
+  if (isFinite(ns)) return Math.min(5, Math.max(1, ns));
+  var SA = typeof window !== 'undefined' ? window.ScalingAdapter : null;
+  var sc = Number(d.score);
+  var mx = Number(d.max) || 65;
+  if (SA && typeof SA.toInternalScale === 'function' && mx >= 60 && isFinite(sc)) {
+    var v = SA.toInternalScale(sc, SA.TOOL.NCD_DIM_65);
+    return v != null && isFinite(v) ? Math.min(5, Math.max(1, v)) : null;
+  }
+  if (isFinite(sc) && mx > 0) return Math.min(5, Math.max(1, (sc / mx) * 5));
+  return null;
+}
+
+function loadSwotDimensionsForSmart() {
+  try {
+    var raw = localStorage.getItem('chp2026-swot-v1');
+    if (!raw) return null;
+    var sw = JSON.parse(raw);
+    if (sw && sw.version === 1 && Array.isArray(sw.dimensions) && sw.dimensions.length === 8) return sw.dimensions;
+  } catch (e) {}
+  return null;
+}
+
+function buildStrategyBridgeOptions() {
+  var health = ChurchToolkit.loadHealthResult();
+  var opts = [];
+  if (!health || !Array.isArray(health.dimensions)) return opts;
+  var swotDims = loadSwotDimensionsForSmart();
+  var swotById = {};
+  if (swotDims) {
+    swotDims.forEach(function (d) {
+      if (d && d.id) swotById[d.id] = d;
+    });
+  }
+  function addDefense(w, n, strictSwot) {
+    var d = swotById[w.id];
+    if (strictSwot) {
+      if (!d || n == null) return;
+      if (!(n < 3.0 && ((d.tClarity || 0) <= 2 || (d.wClarity || 0) <= 2))) return;
+    } else {
+      if (n == null || !(n < 3.5)) return;
+    }
+    opts.push({
+      value: (strictSwot ? 'def-s-' : 'def-f-') + w.id,
+      label: '[優先防守] ' + w.name + ' · 內部 ' + n.toFixed(2) + '/5',
+      kind: 'defense',
+      dimId: w.id,
+      dimName: w.name,
+      internalN: n,
+      specificDraft:
+        '本季以「' +
+        w.name +
+        '」為防守主線：在有限人力下先對齊節奏與界線，把威脅具體寫成「會傷害哪些關係／事工」，並指定責任崗位與檢核日；避免在未止血前擴張新線。'
+    });
+  }
+  function addBreak(s, n, strictSwot) {
+    var d = swotById[s.id];
+    if (strictSwot) {
+      if (!d || n == null) return;
+      if (!(n > 4.0 && ((d.oClarity || 0) >= 3 || (d.sClarity || 0) >= 3))) return;
+    } else {
+      if (n == null || !(n > 3.8)) return;
+    }
+    opts.push({
+      value: (strictSwot ? 'brk-s-' : 'brk-f-') + s.id,
+      label: '[優先突破] ' + s.name + ' · 內部 ' + n.toFixed(2) + '/5',
+      kind: 'break',
+      dimId: s.id,
+      dimName: s.name,
+      internalN: n,
+      specificDraft:
+        '本季以「' +
+        s.name +
+        '」為突破主線：把已具體的機會與強項對齊事工設計，集中資源只做 1–2 件可驗證的嘗試，並預留檢核與調整空間。'
+    });
+  }
+  var rankedWeak = health.dimensions
+    .slice()
+    .map(function (dim) {
+      return { d: dim, n: healthDimensionInternalBridge(dim) };
+    })
+    .filter(function (x) {
+      return x.n != null && isFinite(x.n);
+    })
+    .sort(function (a, b) {
+      return a.n - b.n;
+    });
+  var rankedStrong = rankedWeak
+    .slice()
+    .sort(function (a, b) {
+      return b.n - a.n;
+    });
+  var weakTop = rankedWeak.slice(0, 3).map(function (x) {
+    return x.d;
+  });
+  var strongTop = rankedStrong.slice(0, 3).map(function (x) {
+    return x.d;
+  });
+  var strict = !!swotDims;
+  weakTop.forEach(function (w) {
+    addDefense(w, healthDimensionInternalBridge(w), strict);
+  });
+  strongTop.forEach(function (s) {
+    addBreak(s, healthDimensionInternalBridge(s), strict);
+  });
+  if (!opts.length) {
+    weakTop.forEach(function (w) {
+      addDefense(w, healthDimensionInternalBridge(w), false);
+    });
+    strongTop.forEach(function (s) {
+      addBreak(s, healthDimensionInternalBridge(s), false);
+    });
+  }
+  return opts;
+}
+
+function load8020FormForSmart() {
+  try {
+    var k =
+      (ChurchToolkit.STORAGE_KEYS && ChurchToolkit.STORAGE_KEYS.EIGHTY_TWENTY) || 'chp2026-8020-v1';
+    var raw = localStorage.getItem(k);
+    if (!raw) return null;
+    var o = JSON.parse(raw);
+    if (o && o.version === 2 && o.form) return o.form;
+  } catch (e) {}
+  return null;
+}
+
+function find8020RowByPlanName(form, planName) {
+  var t = String(planName || '')
+    .trim()
+    .toLowerCase();
+  if (!t || !form || !Array.isArray(form.ministryRows)) return null;
+  var rows = form.ministryRows;
+  for (var i = 0; i < rows.length; i++) {
+    var n = String(rows[i].name || '')
+      .trim()
+      .toLowerCase();
+    if (!n) continue;
+    if (n === t || n.indexOf(t) >= 0 || t.indexOf(n) >= 0) return rows[i];
+  }
+  return null;
+}
+
+function emptySmartAnswers() {
+  return {
+    S_specific_group: '',
+    S_specific_change: '',
+    M_observable_signs: '',
+    M_time_frame: '',
+    A_people_resources: '',
+    A_other_resources: '',
+    R_vision_alignment: '',
+    R_congregation_realities: '',
+    T_initial_period: '',
+    T_rhythm: '',
+    Care_pastoral_cost: '',
+    Care_risks: ''
+  };
+}
+
+function emptyScores() {
+  return {
+    S_clarity: null,
+    M_measurability: null,
+    A_feasibility: null,
+    R_relevance: null,
+    T_time_fit: null,
+    Care_health: null,
+    Strategic_bonus: null
+  };
+}
+
+function emptyPlan(id) {
+  return {
+    id: String(id),
+    name: '',
+    raw_description: '',
+    assignee_id: '',
+    assignee_name: '',
+    strategyBridgeKey: '',
+    linkedHealthDimId: null,
+    linkedHealthDimName: '',
+    linkedHealthInternalN: null,
+    smart_answers: emptySmartAnswers(),
+    scores: emptyScores()
+  };
+}
+
+function migrateV1(saved) {
+  var ci = saved.churchInfo || {};
+  var pl = saved.planning || {};
+  var ctx = {
+    church_name: ci.name || '',
+    season_label: '',
+    size: ci.size === '10' ? 'small' : ci.size === '100' ? 'small' : ci.size === '500' ? 'medium' : ci.size === '1000' ? 'large' : 'small',
+    main_groups: ci.composition || '',
+    has_health_check: ci.healthDone === 'yes_recent' ? 'recent' : ci.healthDone === 'yes_old' ? 'old' : 'none'
+  };
+  var p = emptyPlan('1');
+  p.name = pl.ministryFocus || '本季計畫';
+  p.raw_description = pl.idealGoals || pl.outputStep0 || '';
+  return { context: ctx, mode: 'single', plans: [p], nextPlanId: 2 };
+}
+
+createApp({
+  data() {
+    var scoreRows = [
+      { key: 'S_clarity', cn: 'S｜對象與改變是否具體、說得清楚？', en: 'Specific — clarity of who / what change' },
+      { key: 'M_measurability', cn: 'M｜是否有溫和、可觀察的記號？', en: 'Measurable — humane markers' },
+      { key: 'A_feasibility', cn: 'A｜資源與人手是否足以支撐？', en: 'Achievable — resources' },
+      { key: 'R_relevance', cn: 'R｜是否貼合教會異象與本季焦點？', en: 'Relevant — vision & season' },
+      { key: 'T_time_fit', cn: 'T｜時間節奏是否實際、不過度擠？', en: 'Time-bound — rhythm' },
+      { key: 'Care_health', cn: 'Care｜對同工／會眾是否友善、可持續？', en: 'Pastoral load & sustainability' }
+    ];
+    var saved = ChurchToolkit.loadSmartState();
+    var planStep = 0;
+    var activeTab = 'report';
+    var context = {
+      church_name: '',
+      season_label: '',
+      size: 'small',
+      main_groups: '',
+      has_health_check: 'none'
+    };
+    var mode = 'single';
+    var plans = [emptyPlan('1')];
+    var nextPlanId = 2;
+    if (saved && saved.version === 2) {
+      if (saved.context) Object.assign(context, saved.context);
+      if (saved.mode) mode = saved.mode;
+      if (Array.isArray(saved.plans) && saved.plans.length) {
+        plans = saved.plans.map(function (x, i) {
+          return Object.assign(emptyPlan(x.id || String(i + 1)), x, {
+            smart_answers: Object.assign(emptySmartAnswers(), x.smart_answers || {}),
+            scores: Object.assign(emptyScores(), x.scores || {}),
+            strategyBridgeKey: x.strategyBridgeKey || '',
+            linkedHealthDimId: x.linkedHealthDimId != null ? x.linkedHealthDimId : null,
+            linkedHealthDimName: x.linkedHealthDimName || '',
+            linkedHealthInternalN: x.linkedHealthInternalN != null ? x.linkedHealthInternalN : null
+          });
+        });
+      }
+      if (typeof saved.nextPlanId === 'number') nextPlanId = saved.nextPlanId;
+      if (typeof saved.planStep === 'number') planStep = saved.planStep;
+      if (saved.activeTab) activeTab = saved.activeTab;
+    } else if (saved && saved.version === 1) {
+      var m = migrateV1(saved);
+      context = m.context;
+      mode = m.mode;
+      plans = m.plans;
+      nextPlanId = m.nextPlanId;
+    }
+    var hp = ChurchToolkit.loadHealthProfile && ChurchToolkit.loadHealthProfile();
+    if (hp && !context.church_name && hp.name) context.church_name = hp.name;
+    return {
+      planStep: planStep,
+      activeTab: activeTab,
+      context: context,
+      mode: mode,
+      plans: plans,
+      nextPlanId: nextPlanId,
+      memberOptions: [],
+      scoreRows: scoreRows,
+      planListError: '',
+      scoreError: '',
+      generatedAt: '',
+      today: new Date().toLocaleDateString('zh-TW')
+    };
+  },
+  mounted() {
+    this.loadMemberOptions();
+    if (this.planStep === 3) {
+      this.touchGeneratedAt();
+      this.$nextTick(this.renderBarChart);
+    }
+  },
+  computed: {
+    sizeLabel() {
+      var m = { micro: '微型', small: '小型', medium: '中型', large: '大型' };
+      return m[this.context.size] || '—';
+    },
+    healthCheckLabel() {
+      var m = { recent: '6 個月內做過', old: '較久前', none: '尚未／無' };
+      return m[this.context.has_health_check] || '—';
+    },
+    suiteTeach() {
+      return ChurchToolkit.TOOL_SUITE_TEACHING;
+    },
+    agg() {
+      return ChurchToolkit.smartAggregateFromPlans(this.plans);
+    },
+    fourDiag() {
+      return ChurchToolkit.fourSentenceSmart({
+        plans: this.plans,
+        alignmentScore: this.agg.alignmentScore,
+        loadCostScore: this.agg.loadCostScore,
+        feasibilityScore: this.agg.feasibilityScore
+      });
+    },
+    pastoralSummary() {
+      var parts = [];
+      parts.push('本季／節期：' + (this.context.season_label || '（未填）'));
+      parts.push('模式：' + (this.mode === 'single' ? '單一計畫深度梳理' : '多計畫比較取捨'));
+      parts.push('整體自評聚合 — 對齊 ' + (this.agg.alignmentScore != null ? this.agg.alignmentScore : '—') + '、負載成本 ' + (this.agg.loadCostScore != null ? this.agg.loadCostScore : '—') + '、可行性 ' + (this.agg.feasibilityScore != null ? this.agg.feasibilityScore : '—') + '。');
+      parts.push('建議：先讀四句式與各計畫摘要，再在禱告中決定本季 1～2 條主線。');
+      return parts.join('\n\n');
+    },
+    exportPayload() {
+      return {
+        context: {
+          church_name: this.context.church_name || null,
+          season_label: this.context.season_label || null,
+          size: this.context.size || null,
+          main_groups: this.context.main_groups || null,
+          has_health_check: this.context.has_health_check || null
+        },
+        mode: this.mode,
+        plans: this.plans.map(function (p) {
+          return {
+            id: p.id,
+            name: p.name,
+            raw_description: p.raw_description,
+            assignee_id: p.assignee_id || null,
+            assignee_name: p.assignee_name || null,
+            strategyBridgeKey: p.strategyBridgeKey || null,
+            linkedHealthDimId: p.linkedHealthDimId || null,
+            linkedHealthDimName: p.linkedHealthDimName || null,
+            linkedHealthInternalN: p.linkedHealthInternalN != null ? p.linkedHealthInternalN : null,
+            smart_answers: p.smart_answers,
+            scores: p.scores
+          };
+        })
+      };
+    },
+    exportJsonPretty() {
+      return JSON.stringify(this.exportPayload, null, 2);
+    },
+    strategyBridgeOptions() {
+      return buildStrategyBridgeOptions();
+    },
+    rankedPlans() {
+      var self = this;
+      return this.plans
+        .map(function (p) {
+          var s = p.scores || {};
+          function n(k) {
+            var v = Number(s[k]);
+            return Number.isFinite(v) && v >= 1 && v <= 5 ? v : null;
+          }
+          var smrt = [n('S_clarity'), n('M_measurability'), n('R_relevance'), n('T_time_fit')].filter(function (x) {
+            return x != null;
+          });
+          var ac = [n('A_feasibility'), n('Care_health')].filter(function (x) {
+            return x != null;
+          });
+          var clarityAvg = smrt.length ? smrt.reduce(function (a, b) { return a + b; }, 0) / smrt.length : 0;
+          var execAvg = ac.length ? ac.reduce(function (a, b) { return a + b; }, 0) / ac.length : 0;
+          var bonus = Number(s.Strategic_bonus);
+          if (!Number.isFinite(bonus)) bonus = 0;
+          var composite = 0.6 * (clarityAvg / 5) * 100 + 0.4 * (execAvg / 5) * 100 + bonus * 3;
+          var hint = '';
+          if (n('Care_health') != null && n('Care_health') <= 2) hint += 'Care 偏低：宜縮小範圍或縮短試行。';
+          if (n('A_feasibility') != null && n('A_feasibility') <= 2) hint += (hint ? ' ' : '') + '可行性偏低：先補資源或簡化目標。';
+          if (!hint) hint = '可與團隊討論是否作為本季主線之一。';
+          return { plan: p, composite: composite, hint: hint };
+        })
+        .sort(function (a, b) {
+          return b.composite - a.composite;
+        });
+    }
+  },
+  methods: {
+    loadMemberOptions() {
+      try {
+        var raw = localStorage.getItem('memberSystemData');
+        var data = raw ? JSON.parse(raw) : null;
+        var list = data && Array.isArray(data.members) ? data.members : [];
+        this.memberOptions = list.slice(0, 500).map(function (m) {
+          var mid = m.memberId != null ? m.memberId : m.id;
+          return { id: String(mid), name: String(m.name || ('member-' + mid)) };
+        });
+      } catch (e) {
+        this.memberOptions = [];
+      }
+    },
+    onAssigneeChange(plan) {
+      var pid = String((plan && plan.assignee_id) || '');
+      if (!pid) {
+        plan.assignee_name = '';
+      } else {
+        var m = this.memberOptions.find(function (x) { return String(x.id) === pid; });
+        plan.assignee_name = m ? m.name : '';
+      }
+      this.persist();
+    },
+    onStrategyBridgeChange(plan) {
+      var key = plan.strategyBridgeKey;
+      if (!key) {
+        plan.linkedHealthDimId = null;
+        plan.linkedHealthDimName = '';
+        plan.linkedHealthInternalN = null;
+        this.persist();
+        return;
+      }
+      var opt = this.strategyBridgeOptions.find(function (o) {
+        return o.value === key;
+      });
+      if (!opt) {
+        this.persist();
+        return;
+      }
+      plan.linkedHealthDimId = opt.dimId;
+      plan.linkedHealthDimName = opt.dimName;
+      plan.linkedHealthInternalN = opt.internalN;
+      plan.smart_answers.S_specific_group = '教會八維：' + opt.dimName + '（' + (opt.kind === 'defense' ? '優先防守' : '優先突破') + '）';
+      plan.smart_answers.S_specific_change = opt.specificDraft;
+      this.persist();
+    },
+    measurableHintForPlan(p) {
+      var n = p.linkedHealthInternalN;
+      if (n == null || !isFinite(Number(n))) return '';
+      var nn = Number(n);
+      var y = Number(Math.min(5, nn + 0.5).toFixed(2));
+      if (y <= nn) y = Number(Math.min(5, nn + 0.1).toFixed(2));
+      var label = p.linkedHealthDimName || '此維度';
+      return (
+        '量化對齊：目前「' +
+        label +
+        '」內部標度為 ' +
+        nn.toFixed(2) +
+        '，本計畫在「可衡量」是否希望提升至 ' +
+        y.toFixed(2) +
+        '？（與團隊約定溫和、可觀察的記號即可）'
+      );
+    },
+    riHintForPlan(p) {
+      var form = load8020FormForSmart();
+      var row = find8020RowByPlanName(form, p.name);
+      if (!row || !window.StrategyLogic || typeof StrategyLogic.calculateMinistryHealth !== 'function') {
+        return { matched: false, ri: null, isLow: false, rowName: '' };
+      }
+      var h = ChurchToolkit.loadHealthResult();
+      var m = StrategyLogic.calculateMinistryHealth(row, { healthResult: h }, {});
+      var ri = m.riScore;
+      var th = StrategyLogic.RI_PRUNE_THRESHOLD != null ? StrategyLogic.RI_PRUNE_THRESHOLD : 0.5;
+      return {
+        matched: true,
+        ri: ri,
+        isLow: Number(ri) < th,
+        rowName: String(row.name || '').trim()
+      };
+    },
+    touchGeneratedAt() {
+      this.generatedAt = new Date().toLocaleString('zh-TW');
+    },
+    persist() {
+      ChurchToolkit.saveSmartState({
+        version: 2,
+        planStep: this.planStep,
+        activeTab: this.activeTab,
+        context: this.context,
+        mode: this.mode,
+        plans: this.plans,
+        nextPlanId: this.nextPlanId
+      });
+    },
+    goStep(n) {
+      this.planStep = n;
+      this.persist();
+      window.scrollTo(0, 0);
+    },
+    addPlan() {
+      this.plans.push(emptyPlan(String(this.nextPlanId++)));
+      this.persist();
+    },
+    removePlan(i) {
+      if (this.plans.length <= 1) return;
+      this.plans.splice(i, 1);
+      this.persist();
+    },
+    goStep2() {
+      this.planListError = '';
+      var valid = this.plans.some(function (p) {
+        return String(p.name || '').trim().length > 0;
+      });
+      if (!valid) {
+        this.planListError = '請至少為一個計畫填寫「名稱」。';
+        return;
+      }
+      this.goStep(2);
+    },
+    finishToReport() {
+      this.scoreError = '';
+      var incomplete = false;
+      this.plans.forEach(function (p) {
+        var s = p.scores || {};
+        ['S_clarity', 'M_measurability', 'A_feasibility', 'R_relevance', 'T_time_fit', 'Care_health'].forEach(function (k) {
+          if (s[k] == null || s[k] === '') incomplete = true;
+        });
+      });
+      if (incomplete) {
+        this.scoreError = '請為每個計畫的六項自評各選 1–5 分（完整填寫有助報告與匯出）。';
+        return;
+      }
+      this.planStep = 3;
+      this.activeTab = 'report';
+      this.touchGeneratedAt();
+      this.persist();
+      this.$nextTick(this.renderBarChart);
+      var el = document.getElementById('smart-report-root');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    renderBarChart() {
+      var self = this;
+      this.$nextTick(function () {
+        if (!window.ChurchToolkit || !document.getElementById('smartPlansBarChart')) return;
+        var labels = ['S', 'M', 'A', 'R', 'T', 'Care'];
+        var keys = ['S_clarity', 'M_measurability', 'A_feasibility', 'R_relevance', 'T_time_fit', 'Care_health'];
+        var datasets = self.plans.map(function (p, i) {
+          var hue = 350 + i * 37;
+          return {
+            label: (p.name || '計畫 ' + (i + 1)).slice(0, 16),
+            data: keys.map(function (k) {
+              var v = p.scores && p.scores[k];
+              return Number.isFinite(Number(v)) ? Number(v) : 0;
+            }),
+            backgroundColor: 'hsla(' + hue + ', 70%, 55%, 0.65)',
+            borderRadius: 4
+          };
+        });
+        ChurchToolkit.renderBarChart('smartPlansBarChart', {
+          data: { labels: labels, datasets: datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { beginAtZero: true, max: 5, ticks: { stepSize: 1 } }
+            },
+            plugins: { legend: { position: 'bottom' } }
+          },
+          yMax: 5
+        });
+      });
+    },
+    smartLine(p, letter) {
+      var a = p.smart_answers || {};
+      if (letter === 'S')
+        return [a.S_specific_group, a.S_specific_change].filter(Boolean).join('；') || '（未填）';
+      if (letter === 'M')
+        return [a.M_observable_signs, a.M_time_frame].filter(Boolean).join('；') || '（未填）';
+      if (letter === 'A')
+        return [a.A_people_resources, a.A_other_resources].filter(Boolean).join('；') || '（未填）';
+      if (letter === 'R')
+        return [a.R_vision_alignment, a.R_congregation_realities].filter(Boolean).join('；') || '（未填）';
+      if (letter === 'T')
+        return [a.T_initial_period, a.T_rhythm].filter(Boolean).join('；') || '（未填）';
+      return [a.Care_pastoral_cost, a.Care_risks].filter(Boolean).join('；') || '（未填）';
+    },
+    resetAll() {
+      if (!confirm('確定清除本機 SMART 資料並重設？')) return;
+      try {
+        localStorage.removeItem(ChurchToolkit.STORAGE_KEYS.SMART);
+      } catch (e) {}
+      window.location.reload();
+    },
+    downloadPdf() {
+      this.activeTab = 'report';
+      var self = this;
+      this.$nextTick(function () {
+        ChurchToolkit.downloadPdf('smart-report-print', (self.context.church_name || 'church') + '_SMART_2026.pdf');
+      });
+    },
+    shareWa() {
+      var fd = this.fourDiag;
+      var t = [
+        '【教會 SMART】' + (this.context.church_name || ''),
+        '模式：' + (this.mode === 'single' ? '單一' : '多計畫'),
+        '下一步：' + fd.next.slice(0, 220)
+      ].join('\n');
+      ChurchToolkit.shareWhatsApp('【教會 SMART 摘要】', [t]);
+    }
+  },
+  watch: {
+    planStep: function (v) {
+      this.persist();
+      if (v === 3) {
+        this.touchGeneratedAt();
+        this.$nextTick(this.renderBarChart);
+      }
+    },
+    activeTab: function (v) {
+      this.persist();
+      if (v === 'report' && this.planStep === 3) this.$nextTick(this.renderBarChart);
+    },
+    context: { handler: function () { this.persist(); }, deep: true },
+    mode: function () { this.persist(); },
+    plans: { handler: function () { this.persist(); }, deep: true }
+  }
+}).mount('#app');
+</script>
+<script src="js/cta_os_runtime.js"></script>
+<script src="js/cta_os_bridge.js"></script>
+<script>
+  CTAOSBridge.initPage({
+    toolId: 'smart',
+    reportAnchor: '#app .max-w-5xl',
+    watchStorage: ['chp2026-smart-v1'],
+    pollMs: 5000,
+    fab: true
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>雲端同步監控台 · Mock Cloud | Church Ministry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --md-sys-color-surface: #fafafa;
+      --md-sys-color-surface-container: #ffffff;
+      --md-sys-color-background: #f3f4f6;
+      --md-sys-color-on-surface: #1c1b1f;
+      --md-sys-color-on-surface-variant: #49454f;
+      --md-sys-color-primary: #1976d2;
+      --md-sys-color-primary-container: #e3f2fd;
+      --md-sys-color-outline: #cac4d0;
+      --md-sys-elevation-1: 0 1px 2px rgba(0,0,0,.08), 0 1px 3px 1px rgba(0,0,0,.12);
+      --md-sys-elevation-2: 0 1px 2px rgba(0,0,0,.08), 0 2px 6px 2px rgba(0,0,0,.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Roboto, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: var(--md-sys-color-background);
+      color: var(--md-sys-color-on-surface);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    .app-bar {
+      background: var(--md-sys-color-surface-container);
+      box-shadow: var(--md-sys-elevation-1);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .app-bar h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+    .app-bar a {
+      color: var(--md-sys-color-primary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 13px;
+    }
+    .app-bar a:hover { text-decoration: underline; }
+    main { max-width: 1120px; margin: 0 auto; padding: 24px; }
+
+    .sync-strip {
+      background: var(--md-sys-color-primary-container);
+      color: #0d47a1;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      border-bottom: 1px solid #90caf9;
+    }
+    .sync-strip[hidden] { display: none !important; }
+    .sync-strip .sync-bar-wrap {
+      flex: 1;
+      max-width: 360px;
+      height: 4px;
+      background: rgba(25, 118, 210, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .sync-strip .sync-bar-indet {
+      height: 100%;
+      width: 35%;
+      background: var(--md-sys-color-primary);
+      border-radius: 2px;
+      animation: indet 1.1s ease-in-out infinite;
+    }
+    @keyframes indet {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(320%); }
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 960px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 720px) { .stats { grid-template-columns: 1fr; } }
+    .stat-card {
+      background: var(--md-sys-color-surface-container);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--md-sys-elevation-1);
+    }
+    .stat-card .label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface-variant);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .stat-card .value {
+      font-size: 1.75rem;
+      font-weight: 400;
+      color: var(--md-sys-color-on-surface);
+    }
+    .stat-card .value.sm { font-size: 1rem; font-weight: 400; word-break: break-all; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--md-sys-color-surface-container);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--md-sys-elevation-1);
+    }
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface);
+    }
+    .card .desc {
+      margin: 0 0 16px;
+      font-size: 13px;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      min-width: 200px;
+      accent-color: var(--md-sys-color-primary);
+    }
+    .slider-val {
+      min-width: 72px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+      color: var(--md-sys-color-primary);
+    }
+
+    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .md-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      background: var(--md-sys-color-primary);
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,.2);
+      transition: box-shadow 0.2s, opacity 0.2s;
+    }
+    .md-btn:hover { box-shadow: var(--md-sys-elevation-2); }
+    .md-btn:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+    .md-btn.is-success {
+      background: #2e7d32;
+      color: #fff;
+    }
+    .md-btn.is-success .m-spinner {
+      display: none;
+    }
+    .md-btn.secondary {
+      background: #e7e0ec;
+      color: #1d192b;
+    }
+    .md-btn .btn-wait { display: none; align-items: center; }
+    .md-btn.is-loading .btn-wait { display: inline-flex; }
+    .md-btn.is-loading .btn-label { opacity: 0.85; }
+
+    .m-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.5);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: mspin 0.65s linear infinite;
+    }
+    .md-btn.secondary .m-spinner {
+      border-color: rgba(0,0,0,0.12);
+      border-top-color: var(--md-sys-color-primary);
+    }
+    @keyframes mspin { to { transform: rotate(360deg); } }
+
+    .log-card h2 { margin-bottom: 8px; }
+    .log-toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+    .log-window {
+      background: #eceff1;
+      border: 1px solid var(--md-sys-color-outline);
+      border-radius: 8px;
+      height: 320px;
+      overflow-y: auto;
+      font-family: "Roboto Mono", ui-monospace, monospace;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .log-line {
+      display: grid;
+      grid-template-columns: 168px 88px 1fr 72px 80px;
+      gap: 8px;
+      padding: 8px 12px;
+      border-bottom: 1px solid #cfd8dc;
+      align-items: baseline;
+    }
+    .log-line:nth-child(odd) { background: #f5f5f5; }
+    .log-line .t { color: #546e7a; }
+    .log-line .op { font-weight: 600; color: #37474f; }
+    .log-line .key { color: #455a64; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-line .ms {
+      font-weight: 700;
+      color: #2e7d32;
+      text-align: right;
+    }
+    .log-line .bytes {
+      font-weight: 600;
+      color: #1565c0;
+      text-align: right;
+    }
+    .log-line--tx {
+      grid-template-columns: 1fr;
+      background: #e8eaf6 !important;
+      border-left: 4px solid #3949ab;
+      font-weight: 500;
+      color: #1a237e;
+    }
+    .log-line--tx.fail {
+      border-left-color: #c62828;
+      background: #ffebee !important;
+      color: #b71c1c;
+    }
+    .log-line--tx .tx-meta {
+      font-size: 10px;
+      color: #5c6bc0;
+      margin-top: 4px;
+      font-weight: 400;
+    }
+    .log-line--tx.fail .tx-meta { color: #c62828; }
+
+    .ssot-panel {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid var(--md-sys-color-outline);
+      background: #fafafa;
+    }
+    .ssot-panel.ok {
+      background: #e8f5e9;
+      border-color: #81c784;
+      color: #1b5e20;
+    }
+    .ssot-panel.err {
+      background: #ffebee;
+      border-color: #e57373;
+      color: #b71c1c;
+    }
+    .ssot-panel.wait {
+      background: #fff8e1;
+      border-color: #ffd54f;
+      color: #e65100;
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .switch-row label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface);
+    }
+    .switch-row input[type="checkbox"] {
+      width: 40px;
+      height: 22px;
+      accent-color: var(--md-sys-color-primary);
+      cursor: pointer;
+    }
+
+    @media (max-width: 720px) {
+      .log-line {
+        grid-template-columns: 1fr;
+        gap: 2px;
+      }
+      .log-line .ms, .log-line .bytes { text-align: left; }
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      background: #e8f5e9;
+      color: #1b5e20;
+      margin-bottom: 16px;
+    }
+    code { font-size: 12px; background: #eee; padding: 1px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <header class="app-bar">
+    <h1>雲端同步監控台</h1>
+    <a href="dashboard.html">返回儀表板</a>
+  </header>
+
+  <div id="syncStrip" class="sync-strip" hidden>
+    <span class="m-spinner" style="border-color: rgba(13,71,161,.25); border-top-color: #0d47a1;"></span>
+    <span>正在與 Mock 雲端同步…</span>
+    <div class="sync-bar-wrap"><div class="sync-bar-indet"></div></div>
+  </div>
+
+  <main>
+    <div class="pill" id="providerPill">Provider: …</div>
+    <p class="desc" style="margin:0 0 20px;color:#49454f;font-size:13px;">
+      淺色 Material 示範：<strong>讀取</strong>仍為逐筆 <code>church-mock-cloud-sync</code>；
+      <strong>寫入會友欄位</strong>改以 <code>church-mock-cloud-transaction</code> 合併 3 次往返為一筆交易日誌。
+      可開啟<strong>樂觀更新</strong>對照「UI 先動、雲端後到」與傳統等 Promise 再更新。
+    </p>
+
+    <section class="stats">
+      <div class="stat-card">
+        <div class="label">會友總數（Bridge 讀取）</div>
+        <div class="value" id="statMembers">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">上次同步／鮮度</div>
+        <div class="value sm" id="statLastSync">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">平均模擬延遲（實測）</div>
+        <div class="value" id="statAvgMs">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">演示 · UI 回饋序號</div>
+        <div class="value" id="statDemoTick">0</div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-bottom:24px;">
+      <h2>模擬網速（延遲毫秒）</h2>
+      <p class="desc">0 ms ≈ 極快；2000 ms ≈ 極差網路。調整後下一次 async 讀寫即生效。</p>
+      <div class="slider-row">
+        <input type="range" id="latencySlider" min="0" max="2000" value="550" step="10" />
+        <span class="slider-val"><span id="latencyVal">550</span> ms</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <div class="card">
+        <h2>資料來源</h2>
+        <p id="hintLine" class="desc" style="margin:0;">—</p>
+      </div>
+      <div class="card">
+        <h2>讀取會友主檔</h2>
+        <p class="desc">呼叫 <code>getMemberSystemDataAsync()</code>，觀察延遲與日誌。</p>
+        <div class="btn-row">
+          <button type="button" class="md-btn" id="btnRead">
+            <span class="btn-label">執行 async 讀取</span>
+            <span class="btn-wait" aria-hidden="true"><span class="m-spinner"></span></span>
+          </button>
+        </div>
+        <p id="readMs" style="margin:12px 0 0;font-size:12px;color:#49454f;">端到端耗時：—（含 Mock 讀取延遲）</p>
+      </div>
+      <div class="card">
+        <h2>寫入示範</h2>
+        <p class="desc">對會友 <code>id=1</code> 寫入 <code>cloud_mock_note</code>（需已有種子資料）。按鈕會顯示階段 <code>(1/3)…(3/3)</code>，完成後短暫顯示「已存入雲端」。</p>
+        <div class="switch-row">
+          <label>
+            <input type="checkbox" id="optOptimistic" />
+            樂觀更新（演示）：點擊後先更新「演示序號／鮮度」，雲端延遲在背景執行
+          </label>
+        </div>
+        <div class="btn-row" style="margin-top:12px;">
+          <button type="button" class="md-btn" id="btnWrite">
+            <span class="btn-wait" aria-hidden="true"><span class="m-spinner"></span></span>
+            <span class="btn-label">執行 async 寫入</span>
+          </button>
+        </div>
+        <p id="writeMs" style="margin:12px 0 0;font-size:12px;color:#49454f;">端到端耗時：—（含寫入 memberSystemData 與 churchMasterDatabase 之 Mock 延遲）</p>
+      </div>
+      <div class="card log-card">
+        <h2>同步日誌</h2>
+        <p class="desc" style="margin-top:0;">
+          讀取：<code>church-mock-cloud-sync</code>（逐筆）·
+          寫入：<code>church-mock-cloud-transaction</code>（業務交易合併）
+        </p>
+        <div class="log-toolbar">
+          <button type="button" class="md-btn secondary" id="btnClear">清除日誌</button>
+        </div>
+        <div class="log-window" id="logWindow" aria-live="polite"></div>
+        <div id="ssotPanel" class="ssot-panel" role="status">最終一致性：尚未執行寫入驗證</div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/cloud_config.js"></script>
+  <script>
+    window.CHURCH_CLOUD_CONFIG.USE_MOCK_CLOUD = true;
+    window.CHURCH_CLOUD_CONFIG.MOCK_CLOUD_LATENCY_MS = 550;
+  </script>
+  <script src="../js/church_mock_cloud_provider.js"></script>
+  <script src="../js/church_data_bridge.js"></script>
+  <script>
+    (function () {
+      var logWindow = document.getElementById('logWindow');
+      var syncStrip = document.getElementById('syncStrip');
+      var ssotPanel = document.getElementById('ssotPanel');
+      var syncDepth = 0;
+      var latencySamples = [];
+      var maxSamples = 20;
+      var demoTick = 0;
+      var writeBtnTimer = null;
+
+      function setGlobalSyncing(on) {
+        if (on) {
+          syncDepth++;
+          syncStrip.hidden = false;
+        } else {
+          syncDepth = Math.max(0, syncDepth - 1);
+          syncStrip.hidden = syncDepth === 0;
+        }
+      }
+
+      function setBtnLoading(btn, loading) {
+        if (!btn) return;
+        btn.disabled = !!loading;
+        btn.classList.toggle('is-loading', !!loading);
+      }
+
+      function setWriteBtnPhase(btn, phase, total) {
+        if (!btn) return;
+        var lab = btn.querySelector('.btn-label');
+        if (!lab) return;
+        if (phase == null) {
+          lab.textContent = '執行 async 寫入';
+          return;
+        }
+        lab.textContent = '同步中… (' + phase + '/' + total + ')';
+      }
+
+      function showWriteSuccess(btn) {
+        if (!btn) return;
+        if (writeBtnTimer) clearTimeout(writeBtnTimer);
+        setBtnLoading(btn, false);
+        btn.classList.add('is-success');
+        var lab = btn.querySelector('.btn-label');
+        if (lab) lab.textContent = '已存入雲端';
+        writeBtnTimer = setTimeout(function () {
+          btn.classList.remove('is-success');
+          setWriteBtnPhase(btn, null, 3);
+          writeBtnTimer = null;
+        }, 2600);
+      }
+
+      function setSsotPanel(mode, text) {
+        if (!ssotPanel) return;
+        ssotPanel.classList.remove('ok', 'err', 'wait');
+        if (mode) ssotPanel.classList.add(mode);
+        ssotPanel.textContent = text;
+      }
+
+      function appendLogRow(d) {
+        if (!logWindow) return;
+        var row = document.createElement('div');
+        row.className = 'log-line';
+        row.innerHTML =
+          '<span class="t">' + (d.t || '').replace('T', ' ').slice(0, 23) + '</span>' +
+          '<span class="op">' + escapeHtml(d.op || '') + '</span>' +
+          '<span class="key" title="' + escapeHtml(d.key || '') + '">' + escapeHtml(d.key || '') + '</span>' +
+          '<span class="ms">' + (d.actualLatencyMs != null ? d.actualLatencyMs + ' ms' : '—') + '</span>' +
+          '<span class="bytes">' + formatBytes(d.bytesApprox) + '</span>';
+        logWindow.insertBefore(row, logWindow.firstChild);
+        trimLog();
+      }
+
+      function appendTxLog(d) {
+        if (!logWindow) return;
+        var row = document.createElement('div');
+        row.className = 'log-line log-line--tx' + (d.success === false ? ' fail' : '');
+        var head = '[交易 #' + d.transactionId + '] ' + (d.success ? '成功' : '失敗') +
+          ' — 共耗時 ' + (d.totalLatencyMs != null ? d.totalLatencyMs : '—') + ' ms（' +
+          (d.roundTrips != null ? d.roundTrips : 0) + ' 次雲端往返）';
+        var meta = '雲端 sleep 加總 ' + (d.sumCloudLatencyMs != null ? d.sumCloudLatencyMs : '—') + ' ms · payload 約 ' +
+          formatBytes(d.bytesApproxTotal) + ' · ' + (d.t || '').replace('T', ' ').slice(0, 19);
+        row.innerHTML = '<div>' + escapeHtml(head) + '</div><div class="tx-meta">' + escapeHtml(meta) + '</div>';
+        logWindow.insertBefore(row, logWindow.firstChild);
+        trimLog();
+      }
+
+      function trimLog() {
+        while (logWindow.children.length > 200) {
+          logWindow.removeChild(logWindow.lastChild);
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function formatBytes(n) {
+        if (n == null || n === 0) return '—';
+        if (n < 1024) return n + ' B';
+        return (n / 1024).toFixed(1) + ' KB';
+      }
+
+      function updateAvgLatency(ms) {
+        if (typeof ms !== 'number' || isNaN(ms)) return;
+        latencySamples.push(ms);
+        if (latencySamples.length > maxSamples) latencySamples.shift();
+        var sum = latencySamples.reduce(function (a, b) { return a + b; }, 0);
+        var avg = Math.round(sum / latencySamples.length);
+        document.getElementById('statAvgMs').textContent = avg + ' ms';
+      }
+
+      function bumpDemoTick() {
+        demoTick++;
+        document.getElementById('statDemoTick').textContent = String(demoTick);
+      }
+
+      function applyOptimisticUiPulse() {
+        var now = new Date();
+        var ts = now.toLocaleTimeString('zh-Hant', { hour12: false });
+        document.getElementById('statLastSync').textContent = '樂觀 · ' + ts;
+        bumpDemoTick();
+      }
+
+      function refreshMembersStat() {
+        try {
+          var ms = ChurchDataBridge.getMemberSystemData();
+          document.getElementById('statMembers').textContent = String((ms.members || []).length);
+        } catch (e) {}
+      }
+
+      document.getElementById('providerPill').textContent =
+        'Provider: ' + (ChurchDataBridge.getPersistenceInfo && ChurchDataBridge.getPersistenceInfo().provider_name || '?');
+
+      document.getElementById('hintLine').textContent = ChurchDataBridge.getDataSourceHint();
+
+      var slider = document.getElementById('latencySlider');
+      var latencyVal = document.getElementById('latencyVal');
+      function syncSliderUi() {
+        var v = parseInt(slider.value, 10);
+        latencyVal.textContent = String(v);
+        window.CHURCH_CLOUD_CONFIG.MOCK_CLOUD_LATENCY_MS = v;
+        document.getElementById('hintLine').textContent = ChurchDataBridge.getDataSourceHint();
+      }
+      slider.addEventListener('input', syncSliderUi);
+      syncSliderUi();
+
+      document.addEventListener('church-mock-cloud-sync', function (ev) {
+        var d = ev.detail || {};
+        appendLogRow(d);
+        document.getElementById('statLastSync').textContent = (d.t || '').replace('T', ' ').slice(0, 19);
+        updateAvgLatency(d.actualLatencyMs);
+      });
+
+      document.addEventListener('church-mock-cloud-transaction', function (ev) {
+        var d = ev.detail || {};
+        appendTxLog(d);
+        document.getElementById('statLastSync').textContent = (d.t || '').replace('T', ' ').slice(0, 19);
+        if (d.roundTrips && d.sumCloudLatencyMs != null) {
+          updateAvgLatency(d.sumCloudLatencyMs / d.roundTrips);
+        } else if (d.totalLatencyMs != null) {
+          updateAvgLatency(d.totalLatencyMs);
+        }
+      });
+
+      document.getElementById('btnClear').onclick = function () {
+        if (logWindow) logWindow.innerHTML = '';
+      };
+
+      document.getElementById('btnRead').onclick = async function () {
+        var btn = this;
+        setBtnLoading(btn, true);
+        setGlobalSyncing(true);
+        var t0 = performance.now();
+        try {
+          await ChurchDataBridge.whenReady({ timeoutMs: 12000 });
+          var ms = await ChurchDataBridge.getMemberSystemDataAsync();
+          var n = (ms.members || []).length;
+          document.getElementById('statMembers').textContent = String(n);
+          document.getElementById('readMs').textContent =
+            '端到端耗時：' + Math.round(performance.now() - t0) + ' ms（含 Mock 隊列延遲）';
+        } catch (e) {
+          appendLogRow({ t: new Date().toISOString(), op: 'error', key: String(e && e.message ? e.message : e), actualLatencyMs: null, bytesApprox: 0 });
+        }
+        setGlobalSyncing(false);
+        setBtnLoading(btn, false);
+      };
+
+      document.getElementById('btnWrite').onclick = async function () {
+        var btn = this;
+        var optimistic = document.getElementById('optOptimistic').checked;
+        setBtnLoading(btn, true);
+        setGlobalSyncing(true);
+        setSsotPanel('wait', '最終一致性：雲端寫入進行中…');
+        var t0 = performance.now();
+        var note = 'mock-cloud @ ' + new Date().toISOString();
+        if (optimistic) {
+          applyOptimisticUiPulse();
+        }
+        try {
+          await ChurchDataBridge.whenReady({ timeoutMs: 12000 });
+          await ChurchDataBridge.updateMemberFieldAsync(1, 'cloud_mock_note', note, {
+            transaction: true,
+            onPhase: function (phase, total) {
+              setWriteBtnPhase(btn, phase, total);
+            }
+          });
+          document.getElementById('writeMs').textContent =
+            '端到端耗時：' + Math.round(performance.now() - t0) + ' ms（3 次雲端往返合併為一筆交易）';
+          if (!optimistic) {
+            bumpDemoTick();
+          }
+          refreshMembersStat();
+          var vr = ChurchDataBridge.verifyMemberFieldPersistenceSync(1, 'cloud_mock_note', note);
+          if (vr.ok) {
+            setSsotPanel('ok', 'SSOT 數據驗證成功：getJsonSync(memberSystemData) 與 churchMasterDatabase 欄位與預期一致。');
+          } else {
+            setSsotPanel('err', 'SSOT 驗證失敗：' + (vr.issues && vr.issues.length ? vr.issues.join('；') : '未知'));
+          }
+          var ts = new Date().toLocaleTimeString('zh-Hant', { hour12: false });
+          document.getElementById('statLastSync').textContent =
+            (optimistic ? '樂觀已預覽 → ' : '') + 'SSOT 已驗證 · ' + ts;
+          showWriteSuccess(btn);
+        } catch (e) {
+          setSsotPanel('err', '寫入失敗：' + String(e && e.message ? e.message : e));
+          appendLogRow({
+            t: new Date().toISOString(),
+            op: 'error',
+            key: String(e && e.message ? e.message : e),
+            actualLatencyMs: null,
+            bytesApprox: 0
+          });
+          setBtnLoading(btn, false);
+          setWriteBtnPhase(btn, null, 3);
+        }
+        setGlobalSyncing(false);
+        if (!btn.classList.contains('is-success')) {
+          setBtnLoading(btn, false);
+        }
+      };
+    })();
+  </script>
+</body>
+</html>

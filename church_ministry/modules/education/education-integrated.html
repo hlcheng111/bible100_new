@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教育事工完整系統 - Education Ministry · Education Integrated | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="../../css/module_onboarding.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f0f2f5; color: #333; font-size: 12px; }
+        
+        /* 顶部导航栏 */
+        .header { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; padding: 15px 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header-nav { margin-bottom: 8px; }
+        .header-nav a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 12px; margin-right: 12px; }
+        .header-nav a:hover { text-decoration: underline; }
+        .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+        
+        /* 標籤頁 */
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; transition: all 0.3s; }
+        .tab.active { background: white; color: #e67e22; font-weight: 600; }
+        .tab:hover:not(.active) { background: rgba(255,255,255,0.3); }
+        
+        /* 容器 */
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* 统计卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid; }
+        .stat-card.orange { border-color: #e67e22; }
+        .stat-card.blue { border-color: #3498db; }
+        .stat-card.green { border-color: #27ae60; }
+        .stat-card.purple { border-color: #9b59b6; }
+        .stat-card.red { border-color: #e74c3c; }
+        .stat-card.teal { border-color: #1abc9c; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
+        .stat-label { font-size: 10px; color: #7f8c8d; }
+        
+        /* 卡片 */
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #2c3e50; border-left: 4px solid #e67e22; padding-left: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        
+        /* 按钮 */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #e67e22; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-info { background: #3498db; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        
+        /* 表格 */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        table tr:hover { background: #f8f9fa; }
+        
+        /* 表单 */
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        
+        /* 模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #7f8c8d; }
+        
+        /* 标签 */
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; margin-right: 5px; }
+        .tag.toddler { background: #fff3cd; color: #856404; }
+        .tag.children { background: #d4edda; color: #155724; }
+        .tag.youth { background: #cce5ff; color: #004085; }
+        .tag.adult { background: #f8d7da; color: #721c24; }
+        .tag.active { background: #d4edda; color: #155724; }
+        .tag.completed { background: #d4edda; color: #155724; }
+        .tag.planned { background: #fff3cd; color: #856404; }
+        
+        /* 班級卡片 */
+        .class-card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid; margin-bottom: 15px; }
+        .class-card.toddler { border-color: #f39c12; }
+        .class-card.children { border-color: #27ae60; }
+        .class-card.youth { border-color: #3498db; }
+        .class-card.adult { border-color: #e74c3c; }
+        .class-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .class-name { font-weight: 600; font-size: 14px; }
+        .class-stats { display: flex; gap: 15px; font-size: 11px; color: #7f8c8d; margin-bottom: 10px; }
+        
+        /* 进度条 */
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #e67e22 0%, #d35400 100%); }
+        
+        /* 列表项 */
+        .list-item { padding: 10px; margin-bottom: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid transparent; }
+        .list-item-title { font-weight: 600; font-size: 11px; margin-bottom: 3px; }
+        .list-item-meta { font-size: 9px; color: #7f8c8d; }
+        
+        /* 消息提示 */
+        .message { position: fixed; top: 80px; right: 20px; padding: 12px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1001; animation: slideIn 0.3s; font-size: 12px; }
+        .message.success { background: #27ae60; color: white; }
+        .message.error { background: #e74c3c; color: white; }
+        .message.info { background: #3498db; color: white; }
+        @keyframes slideIn { from { transform: translateX(300px); } to { transform: translateX(0); } }
+        body.cm-saving { pointer-events: none; opacity: 0.92; }
+        
+        /* 搜索框 */
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
+        
+        /* 空状态 */
+        .empty-state { text-align: center; padding: 60px 20px; color: #95a5a6; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
+        .empty-state-text { font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
+        <div class="header-nav"><a href="../../dashboard.html">⛪ 教會事工中心</a><a href="../../activities-overview.html">🎯 A 模組總覽</a></div>
+        <h1>🎓 教育事工完整系统</h1>
+        <details style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,0.15);border-radius:8px;font-size:11px;">
+            <summary style="cursor:pointer;font-weight:600;">📋 功能與使用說明</summary>
+            <div style="margin-top:8px;opacity:0.95;">
+                <div style="font-weight:600;margin-bottom:4px;">此頁是為誰而設？</div>
+                <p style="margin:0 0 10px;">為主日學負責人、教師、教育事工同工，管理班級、課程與學員出席。</p>
+                <div style="font-weight:600;margin-bottom:4px;">有什麼功能？</div>
+                <ul style="margin:0 0 10px;padding-left:18px;line-height:1.5;">
+                    <li><b>總覽</b>：統計與圖表（班級數、學員數、出席率）</li>
+                    <li><b>班級管理</b>：新增／編輯班級、匯出資料</li>
+                    <li><b>教師管理</b>：教師名單、認證、負荷</li>
+                    <li><b>課程規劃</b>、<b>出席追蹤</b>、<b>成長分析</b></li>
+                    <li><b>目標·進度·成果</b>：設定年度目標、記錄成果，數據回傳 A 模組總覽</li>
+                </ul>
+                <div style="font-weight:600;margin-bottom:4px;">如何入手？</div>
+                <ol style="margin:0;padding-left:18px;line-height:1.5;">
+                    <li>切換分頁至「班級管理」→「➕ 新增班級」開始建立班級</li>
+                    <li>在「教師管理」新增教師並指派班級</li>
+                    <li>於「目標·進度·成果」分頁設定年度目標、定期更新進度</li>
+                </ol>
+                <div style="font-weight:600;margin-top:12px;margin-bottom:4px;">與「學校管理」差在哪？</div>
+                <p style="margin:0;line-height:1.55;">本頁資料在 <code>educationSystemData</code>（教會事工內教育模組）。若需<strong>全校學籍、多校區、學費與成績</strong>，請到 <a href="../../../school_management/dashboard.html" target="_blank" rel="noopener" style="color:#4f46e5;">學校管理</a>（<code>schoolMasterDatabase</code>，學生可填 <code>memberId</code> 連結會友）。儀表板會讀學校人數摘要；詳見 <code>church_ministry/docs/CHURCH_MINISTRY_HUB_AUDIT.md</code>。</p>
+                <p class="member-id-principle" style="margin-top:10px;">跨模組原則：教師／學員關聯一律用 <code>memberId</code> 對齊 <code>churchMasterDatabase.members</code>，不另建獨立「姓名主檔」。顯示姓名由 bridge 解析。</p>
+            </div>
+        </details>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 總覽</button>
+            <button class="tab" onclick="switchTab('classes')">📚 班級管理</button>
+            <button class="tab" onclick="switchTab('teachers')">👨‍🏫 教師管理</button>
+            <button class="tab" onclick="switchTab('curriculum')">📖 課程规划</button>
+            <button class="tab" onclick="switchTab('attendance')">📝 出席追踪</button>
+            <button class="tab" onclick="switchTab('analysis')">📊 成长分析</button>
+            <button class="tab" onclick="switchTab('goals')" id="tab-btn-goals">🎯 目標·進度·成果</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 標籤頁1：總覽 -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>一眼看班級數、學員數、出席與圖表趨勢。<br>
+                <strong>適合誰用：</strong>主日學負責人、教育部同工。<br>
+                <strong>如何開始：</strong>① 若名單空，先到 <a href="../../load_central_member_seed.html">載入試用會友</a> ② 「班級管理」建班 ③ 「教師管理」綁定 <code>memberId</code>。<br>
+                <span class="data-source-note">資料來源：ChurchDataBridge（educationSystemData／churchMasterDatabase.education.integrated）；學員家長之 education_history 會同步寫回會友主檔。</span>
+            </div>
+            <div class="module-links">
+                <strong>跨模組快速連結（同一 memberId）</strong>
+                <ul>
+                    <li><a href="../members/member-integrated.html#tab-members">會友檔案</a> — 查學生／教師主檔</li>
+                    <li><a href="../support/visitation.html">探訪關懷</a> — 家庭關懷紀錄</li>
+                    <li><a href="../members/member-integrated.html#tab-growth">成長追蹤</a> — 會友整體成長視圖</li>
+                    <li><a href="../../../school_management/dashboard.html" target="_blank" rel="noopener">學校管理</a> — 學籍／memberId（schoolMasterDatabase）</li>
+                </ul>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card orange"><div class="stat-num" id="stat-classes">0</div><div class="stat-label">班級數</div></div>
+                <div class="stat-card blue"><div class="stat-num" id="stat-students">0</div><div class="stat-label">學員數</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-teachers">0</div><div class="stat-label">教師数</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-lessons">0</div><div class="stat-label">本季課程</div></div>
+                <div class="stat-card red"><div class="stat-num" id="stat-attendance">0%</div><div class="stat-label">出席率</div></div>
+                <div class="stat-card teal"><div class="stat-num" id="stat-satisfaction">0%</div><div class="stat-label">滿意度</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 學員年齡分布</div><canvas id="ageChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 季度出席趨勢</div><canvas id="attendanceChart"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title">🏆 優秀班級 TOP 3</div>
+                <div id="topClasses"></div>
+            </div>
+        </div>
+        
+        <!-- 標籤頁2：班級管理 -->
+        <div id="tab-classes" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>建立與維護班級主檔，作為學員與課程的容器。<br>
+                <strong>適合誰用：</strong>校長、教務。<br>
+                <strong>如何開始：</strong>① 按「新增班級」② 填寫班級名稱與類型 ③ 至「教師管理」指派教師（<code>memberId</code>）。<br>
+                <span class="data-source-note">列表與匯出來自 educationSystemData.classes。</span>
+            </div>
+            <div class="card">
+                <div class="card-title">📚 班級管理</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <button class="btn btn-primary" onclick="showAddClassModal()">➕ 新增班級</button>
+                    <button class="btn btn-info" onclick="exportClasses()">📤 匯出資料</button>
+                </div>
+                <div id="classesList"></div>
+            </div>
+        </div>
+        
+        <!-- 標籤頁3：教師管理 -->
+        <div id="tab-teachers" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>管理教師與會友主檔的關聯（每位教師對應 <code>memberId</code>）。<br>
+                <strong>適合誰用：</strong>教務、人事。<br>
+                <strong>如何開始：</strong>① 「新增教師」並選擇對應會友 ② 「分配班級」 ③ 必要時至 <a href="../members/member-integrated.html#tab-members">會友檔案</a> 核對資料。<br>
+                <span class="data-source-note">教師列使用 memberId；姓名顯示與會友系統一致。</span>
+            </div>
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="stat-card orange"><div class="stat-num" id="stat-total-teachers">0</div><div class="stat-label">教師总数</div></div>
+                <div class="stat-card blue"><div class="stat-num" id="stat-certified">0</div><div class="stat-label">已認證</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-active-teachers">0</div><div class="stat-label">活跃教師</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-avg-load">0</div><div class="stat-label">平均负荷</div></div>
+            </div>
+            <div class="card">
+                <div class="card-title">👨‍🏫 教師列表（关联会友）</div>
+                <button class="btn btn-primary" onclick="showAddTeacherModal()">➕ 新增教師</button>
+                <button class="btn btn-success" onclick="assignTeacher()">🔗 分配班級</button>
+                <table id="teachersTable">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>专长</th>
+                            <th>負責班級</th>
+                            <th>认证</th>
+                            <th>服务年限</th>
+                            <th>评价</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 標籤頁4：課程规划 -->
+        <div id="tab-curriculum" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>排定每週課程、經文與教師；按鈕後下方表格即操作區。<br>
+                <strong>適合誰用：</strong>教務、教師長。<br>
+                <strong>如何開始：</strong>① 「新增課程」② 或「智能排課」產生草稿 ③ 匯出課表核對。<br>
+                <span class="data-source-note">課程資料存於 educationSystemData.curriculum。</span>
+            </div>
+            <div class="card">
+                <div class="card-title">📖 季度課程规划</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <button class="btn btn-primary" onclick="showAddCurriculumModal()">➕ 新增課程</button>
+                    <button class="btn btn-success" onclick="autoScheduleCurriculum()">🤖 智能排課</button>
+                    <button class="btn btn-info" onclick="exportCurriculum()">📤 匯出课表</button>
+                </div>
+                <table id="curriculumTable">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>班級</th>
+                            <th>課程主题</th>
+                            <th>经文</th>
+                            <th>教師</th>
+                            <th>教材</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 標籤頁5：出席追踪 -->
+        <div id="tab-attendance" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>記錄學員出席與缺席警告；學員與家長會友以 <code>memberId</code>／<code>parentMemberId</code> 關聯。<br>
+                <strong>適合誰用：</strong>班導、教師。<br>
+                <strong>如何開始：</strong>① 「記錄出席」② 檢視班級對比圖 ③ 連續缺席者與探訪跟進。<br>
+                <span class="data-source-note">出席紀錄存 educationSystemData.attendance。</span>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">📝 出席记录</div>
+                    <button class="btn btn-primary btn-sm" onclick="recordAttendance()">➕ 記錄出席</button>
+                    <div id="attendanceList" style="margin-top: 15px;"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">⚠️ 連續缺席警报</div>
+                    <div id="absentWarning"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📈 班級出席率对比</div>
+                <canvas id="classAttendanceChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- 標籤頁6：成长分析 -->
+        <div id="tab-analysis" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>以圖表與建議檢視教學成效與改進方向。<br>
+                <strong>適合誰用：</strong>教育部負責人、牧者。<br>
+                <strong>如何開始：</strong>① 確認前幾頁已有資料 ② 檢視圖表 ③ 與 <a href="../members/member-integrated.html#tab-analysis">會友資料分析</a> 交叉閱讀。<br>
+                <span class="data-source-note">分析資料來自本模組匯總；非即時雲端報表時請以標註為準。</span>
+            </div>
+            <div class="module-links">
+                <strong>跨模組快速連結</strong>
+                <ul>
+                    <li><a href="../members/member-integrated.html#tab-analysis">會友 · 資料分析</a></li>
+                    <li><a href="../support/visitation.html">探訪關懷</a></li>
+                    <li><a href="../../../school_management/dashboard.html" target="_blank" rel="noopener">學校管理儀表板</a></li>
+                </ul>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 學員成長曲線</div><canvas id="growthChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 課程完成度</div><canvas id="completionChart"></canvas></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">🎯 教學效果評估</div><canvas id="effectChart"></canvas></div>
+                <div class="card"><div class="card-title">💡 改进建议</div><div id="suggestions"></div></div>
+            </div>
+        </div>
+
+        <!-- 標籤頁7：目標·進度·成果（A 模組） -->
+        <div id="tab-goals" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>集中管理教育事工的年度目標、進度與見證（對齊 A 模組總覽）。<br>
+                <strong>適合誰用：</strong>教育部負責人、核心同工。<br>
+                <strong>如何開始：</strong>① 新增目標 ② 定期更新進度 ③ 成果與見證作為回顧與報告素材。<br>
+                <span class="data-source-note">目標／成果存 church_ministry_a_education 並同步至 churchMasterDatabase.education.aModule。</span>
+            </div>
+            <div class="card">
+                <div class="card-title">🎯 年度／季度目標</div>
+                <p style="font-size:11px;color:#7f8c8d;margin-bottom:12px;">設定教育事工的目標與達成值，追蹤進度並記錄成果與見證。</p>
+                <button class="btn btn-primary" onclick="showAddGoalModal()">➕ 新增目標</button>
+                <div id="goalsList" style="margin-top:15px;"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📋 成果與見證</div>
+                <button class="btn btn-success" onclick="showAddOutcomeModal()">➕ 新增成果／見證</button>
+                <div id="outcomesList" style="margin-top:15px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script src="../../../js/cloud_config.js"></script>
+    <script src="../../../js/cloud_api.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
+    <script>
+        // ========================================
+        // 核心資料结构（父子資料库设计）
+        // 存檔經 ChurchDataBridge → educationSystemData + churchMasterDatabase.education.integrated
+        // ========================================
+        let data = {
+            // 父表：班級
+            classes: [],
+            
+            // 子表1：學員（关联会友的孩子，parentMemberId）
+            students: [],
+            
+            // 子表2：教師（关联会友memberId）
+            teachers: [],
+            
+            // 子表3：課程安排
+            curriculum: [],
+            
+            // 子表4：出席记录
+            attendance: [],
+            
+            // 子表5：成绩评估
+            assessments: []
+        };
+        
+        let charts = {};
+        
+        // ========================================
+        // 初始化
+        // ========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.whenReady) {
+                    await ChurchDataBridge.whenReady({ timeoutMs: 5000 });
+                }
+            } catch (e) {
+                console.warn('[education-integrated] whenReady', e && e.message ? e.message : e);
+            }
+            await loadEducationData();
+            if (data.classes.length === 0) {
+                if (confirm('👋 欢迎使用教育事工系统！\n\n是否載入示例資料进行体验？')) {
+                    await loadDemo();
+                }
+            }
+            renderAll();
+        });
+        
+        // ========================================
+        // 資料管理（僅經 ChurchDataBridge；舊鍵由 Bridge 內一次性遷移）
+        // ========================================
+        async function loadEducationData() {
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getEducationSystemData) {
+                showMessage('ChurchDataBridge 不可用', 'error');
+                return;
+            }
+            try {
+                if (ChurchDataBridge.getEducationSystemDataAsync) {
+                    data = await ChurchDataBridge.getEducationSystemDataAsync();
+                } else {
+                    data = ChurchDataBridge.getEducationSystemData();
+                }
+                if (!data.classes) data.classes = [];
+                if (!data.students) data.students = [];
+                if (!data.teachers) data.teachers = [];
+                if (!data.curriculum) data.curriculum = [];
+                if (!data.attendance) data.attendance = [];
+                if (!data.assessments) data.assessments = [];
+                console.log('✅ 已載入教育資料（Bridge）:', data.classes.length, '個班級');
+            } catch (e) {
+                console.error('❌ 教育資料載入失敗:', e);
+                showMessage('資料載入失敗', 'error');
+            }
+        }
+
+        async function syncParentEducationHistoryFromStudents() {
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getMemberSystemData || !ChurchDataBridge.saveMemberSystemData) return;
+            try {
+                var ms = ChurchDataBridge.getMemberSystemData();
+                var byParent = {};
+                (data.students || []).forEach(function (s) {
+                    var pid = s.parentMemberId;
+                    if (pid == null) return;
+                    var k = String(pid);
+                    if (!byParent[k]) byParent[k] = [];
+                    byParent[k].push({
+                        student_record_id: s.id,
+                        class_id: s.classId,
+                        enroll_date: s.enrollDate || '',
+                        display_name: s.name || ''
+                    });
+                });
+                Object.keys(byParent).forEach(function (k) {
+                    var m = (ms.members || []).find(function (x) {
+                        return String(x.memberId || x.id) === k;
+                    });
+                    if (m) m.education_history = byParent[k];
+                });
+                ChurchDataBridge.saveMemberSystemData(ms);
+                if (typeof ChurchDataBridge.logActivity === 'function' && Object.keys(byParent).length) {
+                    ChurchDataBridge.logActivity('education_education_history_sync', { parentCount: Object.keys(byParent).length }, 'education');
+                }
+            } catch (e) {
+                console.warn('syncParentEducationHistoryFromStudents', e);
+            }
+        }
+        
+        async function saveData() {
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.saveEducationSystemData) {
+                showMessage('ChurchDataBridge 不可用，無法儲存', 'error');
+                return false;
+            }
+            document.body.classList.add('cm-saving');
+            try {
+                if (ChurchDataBridge.saveEducationSystemDataAsync) {
+                    await ChurchDataBridge.saveEducationSystemDataAsync(data);
+                } else {
+                    ChurchDataBridge.saveEducationSystemData(data);
+                }
+                await syncParentEducationHistoryFromStudents();
+                console.log('💾 已儲存（Bridge）');
+                return true;
+            } catch (e) {
+                console.error('❌ bridge 儲存失败:', e);
+                showMessage('資料儲存失败！' + (e.message || ''), 'error');
+                return false;
+            } finally {
+                document.body.classList.remove('cm-saving');
+            }
+        }
+        
+        async function loadDemo() {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.isProductionMode && ChurchDataBridge.isProductionMode()) {
+                showMessage('正式環境禁止載入示範資料', 'error');
+                return;
+            }
+            // 生成班級資料
+            data.classes = [
+                {id: 1, name: '幼幼班', ageRange: '3-5歲', category: 'toddler', teacherId: 1, capacity: 20, location: '一楼教室', schedule: '主日 9:00'},
+                {id: 2, name: '儿童班', ageRange: '6-9歲', category: 'children', teacherId: 2, capacity: 25, location: '二楼教室', schedule: '主日 9:00'},
+                {id: 3, name: '少年班', ageRange: '10-12歲', category: 'youth', teacherId: 3, capacity: 20, location: '三楼教室', schedule: '主日 9:00'},
+                {id: 4, name: '青少年班', ageRange: '13-17歲', category: 'youth', teacherId: 4, capacity: 25, location: '四楼教室', schedule: '主日 11:00'}
+            ];
+            
+            // 生成教師資料（关联会友memberId）
+            data.teachers = [
+                {id: 1, memberId: 1, memberName: '张老师', specialty: '幼儿教育', classId: 1, certified: true, yearsOfService: 3, rating: '優秀'},
+                {id: 2, memberId: 2, memberName: '李老师', specialty: '儿童教学', classId: 2, certified: true, yearsOfService: 5, rating: '優秀'},
+                {id: 3, memberId: 3, memberName: '王老师', specialty: '青少年辅导', classId: 3, certified: true, yearsOfService: 2, rating: '良好'},
+                {id: 4, memberId: 4, memberName: '陈老师', specialty: '圣经教导', classId: 4, certified: false, yearsOfService: 1, rating: '合格'}
+            ];
+            
+            // 生成學員資料（关联会友的孩子）
+            let studentId = 1;
+            data.classes.forEach(cls => {
+                const studentCount = Math.floor(Math.random() * 10) + 10; // 10-19人
+                for (let i = 0; i < studentCount; i++) {
+                    data.students.push({
+                        id: studentId,
+                        name: `學員${studentId}`,
+                        classId: cls.id,
+                        parentMemberId: Math.floor(Math.random() * 20) + 1,  // 👈 关联会友（家长）
+                        age: cls.category === 'toddler' ? 4 : cls.category === 'children' ? 7 : cls.category === 'youth' ? 11 : 15,
+                        enrollDate: '2024-01-15'
+                    });
+                    studentId++;
+                }
+            });
+            
+            // 生成課程安排（本季度12周）
+            for (let week = 0; week < 12; week++) {
+                const date = new Date();
+                date.setDate(date.getDate() - (12 - week) * 7);
+                
+                data.classes.forEach(cls => {
+                    const teacher = data.teachers.find(t => t.classId === cls.id);
+                    data.curriculum.push({
+                        id: data.curriculum.length + 1,
+                        classId: cls.id,
+                        date: date.toISOString().split('T')[0],
+                        topic: ['耶稣爱小孩', '好撒玛利亚人', '大卫与歌利亚', '出埃及记'][week % 4],
+                        scripture: ['马可福音10:13-16', '路加福音10:25-37', '撒母耳记上17章', '出埃及记20章'][week % 4],
+                        teacherId: teacher?.id,
+                        materials: '教師手册+學員作業',
+                        status: week < 10 ? 'completed' : 'planned'
+                    });
+                });
+            }
+            
+            // 生成出席记录
+            data.curriculum.filter(c => c.status === 'completed').forEach(cur => {
+                const classStudents = data.students.filter(s => s.classId === cur.classId);
+                classStudents.forEach(student => {
+                    if (Math.random() > 0.15) {  // 85%出席率
+                        data.attendance.push({
+                            id: data.attendance.length + 1,
+                            studentId: student.id,
+                            curriculumId: cur.id,
+                            classId: cur.classId,
+                            date: cur.date,
+                            present: true
+                        });
+                    }
+                });
+            });
+            
+            await saveData();
+            renderAll();
+            showMessage('✅ 示例資料已載入！包含4個班級、50+學員、48節課程', 'success');
+        }
+        
+        // ========================================
+        // 標籤頁切换
+        // ========================================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            if (tabName === 'overview') renderOverview();
+            if (tabName === 'classes') renderClassesTab();
+            if (tabName === 'teachers') renderTeachersTab();
+            if (tabName === 'curriculum') renderCurriculumTab();
+            if (tabName === 'attendance') renderAttendanceTab();
+            if (tabName === 'analysis') renderAnalysisTab();
+            if (tabName === 'goals') { loadAModuleData(); renderGoalsList(); renderOutcomesList(); }
+        }
+        
+        // ========================================
+        // A 模組：目標·進度·成果（經 Bridge，舊鍵由 Bridge 遷移）
+        // ========================================
+        let aModule = { goals: [], outcomes: [] };
+        function loadAModuleData() {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.getEducationAModuleData) {
+                aModule = ChurchDataBridge.getEducationAModuleData();
+                if (!aModule.goals) aModule.goals = [];
+                if (!aModule.outcomes) aModule.outcomes = [];
+                return;
+            }
+            aModule = { goals: [], outcomes: [] };
+        }
+        function saveAModuleData() {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.saveEducationAModuleData) {
+                try {
+                    ChurchDataBridge.saveEducationAModuleData(aModule);
+                    if (typeof ChurchDataBridge.logActivity === 'function') {
+                        ChurchDataBridge.logActivity('education_amodule_save', { goals: (aModule.goals || []).length, outcomes: (aModule.outcomes || []).length }, 'education');
+                    }
+                    return true;
+                } catch (e) { return false; }
+            }
+            return false;
+        }
+        function renderGoalsList() {
+            const el = document.getElementById('goalsList');
+            if (!el) return;
+            if (aModule.goals.length === 0) {
+                el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎯</div><div class="empty-state-text">暫無目標，點擊「新增目標」開始設定。</div></div>';
+                return;
+            }
+            el.innerHTML = aModule.goals.map(g => {
+                const current = g.currentValue != null ? Number(g.currentValue) : 0;
+                const target = g.targetValue != null ? Number(g.targetValue) : 100;
+                const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+                return `<div class="list-item" style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div class="list-item-title">${g.title || '未命名目標'}</div>
+                        <div class="list-item-meta">${g.period || ''} · 目標：${g.targetValue || '-'} ${g.targetUnit || ''} · 目前：${current}</div>
+                        <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" style="width:${pct}%; height:100%; border-radius:4px;"></div></div>
+                    </div>
+                    <div><button class="btn btn-sm btn-primary" onclick="editGoalProgress(${g.id})">更新進度</button> <button class="btn btn-sm btn-danger" onclick="deleteAModuleGoal(${g.id})">刪除</button></div>
+                </div>`;
+            }).join('');
+        }
+        function renderOutcomesList() {
+            const el = document.getElementById('outcomesList');
+            if (!el) return;
+            if (aModule.outcomes.length === 0) {
+                el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">暫無成果或見證記錄。</div></div>';
+                return;
+            }
+            el.innerHTML = aModule.outcomes.map(o => `
+                <div class="list-item">
+                    <div class="list-item-title">${o.type === '見證' ? '💬' : '📌'} ${o.title || '未命名'}</div>
+                    <div class="list-item-meta">${o.date || ''} ${o.description ? ' · ' + (o.description.substring(0, 60) + (o.description.length > 60 ? '…' : '')) : ''}</div>
+                    <button class="btn btn-sm btn-danger" style="margin-top:6px;" onclick="deleteAModuleOutcome(${o.id})">刪除</button>
+                </div>
+            `).join('');
+        }
+        function showAddGoalModal() {
+            const id = (aModule.goals.length ? Math.max(...aModule.goals.map(g => g.id)) : 0) + 1;
+            showModal('新增目標', `
+                <div class="form-group"><label class="form-label">目標名稱 *</label><input type="text" id="goalTitle" class="form-input" placeholder="例：本年度主日學出席率達 85%"></div>
+                <div class="form-group"><label class="form-label">期別</label><input type="text" id="goalPeriod" class="form-input" placeholder="例：2025 年度 / Q1"></div>
+                <div class="form-group"><label class="form-label">目標數值</label><input type="number" id="goalTarget" class="form-input" placeholder="例：85"></div>
+                <div class="form-group"><label class="form-label">單位</label><input type="text" id="goalUnit" class="form-input" placeholder="例：%、人、場"></div>
+                <div class="form-group"><label class="form-label">目前數值</label><input type="number" id="goalCurrent" class="form-input" placeholder="0"></div>
+                <button class="btn btn-primary" onclick="saveNewGoal(${id})">儲存</button>
+            `);
+        }
+        function saveNewGoal(id) {
+            const title = document.getElementById('goalTitle')?.value?.trim() || '未命名目標';
+            const period = document.getElementById('goalPeriod')?.value?.trim() || '';
+            const targetValue = document.getElementById('goalTarget')?.value;
+            const targetUnit = document.getElementById('goalUnit')?.value?.trim() || '';
+            const currentValue = document.getElementById('goalCurrent')?.value;
+            aModule.goals.push({ id, title, period, targetValue, targetUnit, currentValue: currentValue != null && currentValue !== '' ? currentValue : 0 });
+            saveAModuleData(); closeModal(); renderGoalsList();
+            showMessage('目標已新增', 'success');
+        }
+        function editGoalProgress(id) {
+            const g = aModule.goals.find(x => x.id === id);
+            if (!g) return;
+            const current = prompt('請輸入目前數值', g.currentValue != null ? g.currentValue : '');
+            if (current === null) return;
+            g.currentValue = current;
+            saveAModuleData(); renderGoalsList();
+            showMessage('進度已更新', 'success');
+        }
+        function deleteAModuleGoal(id) {
+            if (!confirm('確定刪除此目標？')) return;
+            aModule.goals = aModule.goals.filter(x => x.id !== id);
+            saveAModuleData(); renderGoalsList();
+            showMessage('已刪除', 'success');
+        }
+        function showAddOutcomeModal() {
+            const id = (aModule.outcomes.length ? Math.max(...aModule.outcomes.map(o => o.id)) : 0) + 1;
+            showModal('新增成果／見證', `
+                <div class="form-group"><label class="form-label">標題 *</label><input type="text" id="outcomeTitle" class="form-input" placeholder="例：暑期兒童營會成果"></div>
+                <div class="form-group"><label class="form-label">類型</label><select id="outcomeType" class="form-select"><option value="成果">成果</option><option value="見證">見證</option><option value="報告">報告</option></select></div>
+                <div class="form-group"><label class="form-label">日期</label><input type="date" id="outcomeDate" class="form-input" value="${new Date().toISOString().split('T')[0]}"></div>
+                <div class="form-group"><label class="form-label">簡述</label><textarea id="outcomeDesc" class="form-textarea" placeholder="簡要描述"></textarea></div>
+                <button class="btn btn-primary" onclick="saveNewOutcome(${id})">儲存</button>
+            `);
+        }
+        function saveNewOutcome(id) {
+            const title = document.getElementById('outcomeTitle')?.value?.trim() || '未命名';
+            const type = document.getElementById('outcomeType')?.value || '成果';
+            const date = document.getElementById('outcomeDate')?.value || new Date().toISOString().split('T')[0];
+            const description = document.getElementById('outcomeDesc')?.value?.trim() || '';
+            aModule.outcomes.push({ id, title, type, date, description });
+            saveAModuleData(); closeModal(); renderOutcomesList();
+            showMessage('已新增', 'success');
+        }
+        function deleteAModuleOutcome(id) {
+            if (!confirm('確定刪除此筆記錄？')) return;
+            aModule.outcomes = aModule.outcomes.filter(x => x.id !== id);
+            saveAModuleData(); renderOutcomesList();
+            showMessage('已刪除', 'success');
+        }
+        
+        // ========================================
+        // 渲染所有
+        // ========================================
+        function renderAll() {
+            renderOverview();
+        }
+        
+        // ========================================
+        // 標籤頁1：總覽
+        // ========================================
+        function renderOverview() {
+            document.getElementById('stat-classes').textContent = data.classes.length;
+            document.getElementById('stat-students').textContent = data.students.length;
+            document.getElementById('stat-teachers').textContent = data.teachers.length;
+            
+            const thisQuarter = Math.floor(new Date().getMonth() / 3);
+            const quarterLessons = data.curriculum.filter(c => {
+                const month = new Date(c.date).getMonth();
+                return Math.floor(month / 3) === thisQuarter;
+            }).length;
+            document.getElementById('stat-lessons').textContent = quarterLessons;
+            
+            const totalRecords = data.attendance.length;
+            const presentRecords = data.attendance.filter(a => a.present).length;
+            const attendanceRate = totalRecords > 0 ? Math.round((presentRecords / totalRecords) * 100) : 0;
+            document.getElementById('stat-attendance').textContent = attendanceRate + '%';
+            
+            document.getElementById('stat-satisfaction').textContent = '88%';  // 示例資料
+            
+            // 學員年齡分布饼图
+            const ageGroups = {'3-5歲': 0, '6-9歲': 0, '10-12歲': 0, '13-17歲': 0};
+            data.students.forEach(s => {
+                if (s.age <= 5) ageGroups['3-5歲']++;
+                else if (s.age <= 9) ageGroups['6-9歲']++;
+                else if (s.age <= 12) ageGroups['10-12歲']++;
+                else ageGroups['13-17歲']++;
+            });
+            
+            const ageCtx = document.getElementById('ageChart');
+            if (charts.age) charts.age.destroy();
+            charts.age = new Chart(ageCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(ageGroups),
+                    datasets: [{
+                        data: Object.values(ageGroups),
+                        backgroundColor: ['#f39c12', '#27ae60', '#3498db', '#e74c3c']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            
+            // 季度出席趨勢折线图
+            const weeks = ['第1周', '第2周', '第3周', '第4周', '第5周', '第6周', '第7周', '第8周'];
+            const attendanceData = weeks.map(() => Math.floor(Math.random() * 10) + 80);
+            
+            const attendCtx = document.getElementById('attendanceChart');
+            if (charts.attendance) charts.attendance.destroy();
+            charts.attendance = new Chart(attendCtx, {
+                type: 'line',
+                data: {
+                    labels: weeks,
+                    datasets: [{
+                        label: '出席率 (%)',
+                        data: attendanceData,
+                        borderColor: '#e67e22',
+                        backgroundColor: 'rgba(230,126,34,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+            
+            // 優秀班級TOP3
+            renderTopClasses();
+        }
+        
+        function renderTopClasses() {
+            const classStats = data.classes.map(cls => {
+                const classAttendance = data.attendance.filter(a => a.classId === cls.id);
+                const rate = classAttendance.length > 0 ? 
+                    Math.round((classAttendance.filter(a => a.present).length / classAttendance.length) * 100) : 0;
+                return {class: cls, rate};
+            }).sort((a, b) => b.rate - a.rate).slice(0, 3);
+            
+            const html = classStats.map((cs, i) => {
+                const teacher = data.teachers.find(t => t.classId === cs.class.id);
+                return `<div class="list-item">
+                    <div class="list-item-title">🏆 ${i + 1}. ${cs.class.name}</div>
+                    <div class="list-item-meta">教師：${teacher?.memberName || '-'} | 出席率：${cs.rate}%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${cs.rate}%"></div>
+                    </div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('topClasses').innerHTML = html || '<div class="empty-state-text">暫無資料</div>';
+        }
+        
+        // ========================================
+        // 標籤頁2：班級管理
+        // ========================================
+        function renderClassesTab() {
+            const html = data.classes.map(cls => {
+                const students = data.students.filter(s => s.classId === cls.id);
+                const teacher = data.teachers.find(t => t.classId === cls.id);
+                const fillRate = Math.round((students.length / cls.capacity) * 100);
+                
+                return `<div class="class-card ${cls.category}">
+                    <div class="class-header">
+                        <div>
+                            <div class="class-name">${cls.name} <span class="tag ${cls.category}">${cls.ageRange}</span></div>
+                            <div class="class-stats">
+                                <span>👨‍🏫 教師：${teacher?.memberName || '待分配'}</span>
+                                <span>👥 學員：${students.length}/${cls.capacity}人</span>
+                                <span>📍 ${cls.location}</span>
+                                <span>⏰ ${cls.schedule}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="tag ${fillRate >= 100 ? 'active' : ''}">${fillRate}%</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${fillRate}%"></div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button class="btn btn-info btn-sm" onclick="viewClass(${cls.id})">查看詳情</button>
+                        <button class="btn btn-warning btn-sm" onclick="editClass(${cls.id})">編輯</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteClass(${cls.id})">刪除</button>
+                    </div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('classesList').innerHTML = html || '<div class="empty-state-text">暫無班級</div>';
+        }
+        
+        function showAddClassModal() {
+            showModal('➕ 新增班級', `
+                <div class="form-group">
+                    <label class="form-label">班級名稱 *</label>
+                    <input type="text" id="className" class="form-input" placeholder="例如：儿童班">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">年龄段 *</label>
+                    <select id="classCategory" class="form-select">
+                        <option value="toddler">幼幼班 (3-5歲)</option>
+                        <option value="children">儿童班 (6-9歲)</option>
+                        <option value="youth">少年班 (10-12歲)</option>
+                        <option value="adult">青少年班 (13-17歲)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">容量</label>
+                    <input type="number" id="capacity" class="form-input" value="25">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">教室</label>
+                    <input type="text" id="location" class="form-input" placeholder="例如：二楼教室">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">時間</label>
+                    <input type="text" id="schedule" class="form-input" placeholder="例如：主日 9:00">
+                </div>
+                <button class="btn btn-primary" onclick="saveClass()">儲存</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function saveClass() {
+            const category = document.getElementById('classCategory').value;
+            const ageRanges = {toddler: '3-5歲', children: '6-9歲', youth: '10-12歲', adult: '13-17歲'};
+            
+            const newClass = {
+                id: data.classes.length + 1,
+                name: document.getElementById('className').value,
+                ageRange: ageRanges[category],
+                category: category,
+                teacherId: null,
+                capacity: parseInt(document.getElementById('capacity').value),
+                location: document.getElementById('location').value,
+                schedule: document.getElementById('schedule').value
+            };
+            
+            if (!newClass.name) {
+                showMessage('請填寫班級名稱！', 'error');
+                return;
+            }
+            
+            data.classes.push(newClass);
+            saveData();
+            renderClassesTab();
+            renderOverview();
+            closeModal();
+            showMessage('✅ 班級已新增', 'success');
+        }
+        
+        function viewClass(id) {
+            const cls = data.classes.find(c => c.id === id);
+            const students = data.students.filter(s => s.classId === id);
+            showMessage(`查看班級：${cls.name}，學員：${students.length}人`, 'info');
+        }
+        
+        function editClass(id) {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+        
+        function deleteClass(id) {
+            if (!confirm('確定刪除此班級？')) return;
+            data.classes = data.classes.filter(c => c.id !== id);
+            data.students = data.students.filter(s => s.classId !== id);
+            data.curriculum = data.curriculum.filter(c => c.classId !== id);
+            saveData();
+            renderClassesTab();
+            renderOverview();
+            showMessage('✅ 班級已刪除', 'success');
+        }
+        
+        function exportClasses() {
+            const dataStr = JSON.stringify({classes: data.classes, students: data.students}, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `班級資料_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showMessage('✅ 資料已匯出', 'success');
+        }
+        
+        // ========================================
+        // 標籤頁3：教師管理
+        // ========================================
+        function renderTeachersTab() {
+            document.getElementById('stat-total-teachers').textContent = data.teachers.length;
+            const certified = data.teachers.filter(t => t.certified).length;
+            document.getElementById('stat-certified').textContent = certified;
+            const active = data.teachers.filter(t => t.classId).length;
+            document.getElementById('stat-active-teachers').textContent = active;
+            document.getElementById('stat-avg-load').textContent = '1.2';  // 示例資料
+            
+            const tbody = document.querySelector('#teachersTable tbody');
+            tbody.innerHTML = data.teachers.map(t => {
+                const cls = data.classes.find(c => c.id === t.classId);
+                return `<tr>
+                    <td>${t.memberName}</td>
+                    <td>${t.specialty}</td>
+                    <td>${cls?.name || '未分配'}</td>
+                    <td><span class="tag ${t.certified ? 'active' : ''}">${t.certified ? '已認證' : '待認證'}</span></td>
+                    <td>${t.yearsOfService}年</td>
+                    <td><span class="tag ${t.rating === '優秀' ? 'active' : ''}">${t.rating}</span></td>
+                    <td>
+                        <button class="btn btn-info btn-sm" onclick="viewTeacher(${t.id})">查看</button>
+                        <button class="btn btn-warning btn-sm" onclick="editTeacher(${t.id})">編輯</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteTeacher(${t.id})">刪除</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        
+        function showAddTeacherModal() {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+        
+        function assignTeacher() {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+        
+        function viewTeacher(id) {
+            const teacher = data.teachers.find(t => t.id === id);
+            showMessage(`查看教師：${teacher.memberName}`, 'info');
+        }
+        
+        function editTeacher(id) {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+        
+        function deleteTeacher(id) {
+            if (!confirm('確定刪除此教師？')) return;
+            data.teachers = data.teachers.filter(t => t.id !== id);
+            saveData();
+            renderTeachersTab();
+            showMessage('✅ 教師已刪除', 'success');
+        }
+        
+        // ========================================
+        // 標籤頁4：課程规划
+        // ========================================
+        function renderCurriculumTab() {
+            const tbody = document.querySelector('#curriculumTable tbody');
+            tbody.innerHTML = data.curriculum.slice(0, 20).map(c => {
+                const cls = data.classes.find(cl => cl.id === c.classId);
+                const teacher = data.teachers.find(t => t.id === c.teacherId);
+                return `<tr>
+                    <td>${c.date}</td>
+                    <td><span class="tag ${cls?.category}">${cls?.name || '-'}</span></td>
+                    <td>${c.topic}</td>
+                    <td>${c.scripture}</td>
+                    <td>${teacher?.memberName || '-'}</td>
+                    <td>${c.materials}</td>
+                    <td><span class="tag ${c.status}">${c.status === 'completed' ? '已完成' : '計劃中'}</span></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteCurriculum(${c.id})">刪除</button></td>
+                </tr>`;
+            }).join('');
+        }
+        
+        function showAddCurriculumModal() {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+        
+        function autoScheduleCurriculum() {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+        
+        function exportCurriculum() {
+            const dataStr = JSON.stringify(data.curriculum, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `課程表_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showMessage('✅ 課程表已匯出', 'success');
+        }
+        
+        function deleteCurriculum(id) {
+            if (!confirm('確定刪除此課程？')) return;
+            data.curriculum = data.curriculum.filter(c => c.id !== id);
+            saveData();
+            renderCurriculumTab();
+            showMessage('✅ 課程已刪除', 'success');
+        }
+        
+        // ========================================
+        // 標籤頁5：出席追踪
+        // ========================================
+        function renderAttendanceTab() {
+            renderAttendanceList();
+            renderAbsentWarning();
+            renderClassAttendanceChart();
+        }
+        
+        function renderAttendanceList() {
+            const recentAttendance = data.students.slice(0, 10).map(s => {
+                const records = data.attendance.filter(a => a.studentId === s.id);
+                const presentCount = records.filter(a => a.present).length;
+                const rate = records.length > 0 ? Math.round((presentCount / records.length) * 100) : 0;
+                return `<div class="list-item">
+                    <div class="list-item-title">${s.name}</div>
+                    <div class="list-item-meta">出席：${presentCount}/${records.length}次 (${rate}%)</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${rate}%"></div>
+                    </div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('attendanceList').innerHTML = recentAttendance || '<div class="empty-state-text">暫無資料</div>';
+        }
+        
+        function renderAbsentWarning() {
+            // 找出連續3次缺席的學員
+            const warnings = [];
+            data.students.forEach(s => {
+                const recentRecords = data.attendance
+                    .filter(a => a.studentId === s.id)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 3);
+                
+                if (recentRecords.length >= 3 && recentRecords.every(r => !r.present)) {
+                    warnings.push(s);
+                }
+            });
+            
+            const html = warnings.length > 0
+                ? '<div style="color: #e74c3c; font-weight: bold; margin-bottom: 10px;">⚠️ 以下學員連續缺席，需要聯繫家長：</div>' +
+                  warnings.map(s => {
+                    const cls = data.classes.find(c => c.id === s.classId);
+                    return `<div class="list-item" style="border-left-color: #e74c3c;">
+                        <div class="list-item-title">${s.name}</div>
+                        <div class="list-item-meta">班級：${cls?.name} | 建议：电话聯繫家長</div>
+                    </div>`;
+                  }).join('')
+                : '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">所有學員出席狀態正常</div></div>';
+            
+            document.getElementById('absentWarning').innerHTML = html;
+        }
+        
+        function renderClassAttendanceChart() {
+            const classRates = data.classes.map(cls => {
+                const classAttendance = data.attendance.filter(a => a.classId === cls.id);
+                const rate = classAttendance.length > 0 ? 
+                    Math.round((classAttendance.filter(a => a.present).length / classAttendance.length) * 100) : 0;
+                return rate;
+            });
+            
+            const ctx = document.getElementById('classAttendanceChart');
+            if (charts.classAttendance) charts.classAttendance.destroy();
+            charts.classAttendance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.classes.map(c => c.name),
+                    datasets: [{
+                        label: '出席率 (%)',
+                        data: classRates,
+                        backgroundColor: '#e67e22'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+        }
+        
+        function recordAttendance() {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+        
+        // ========================================
+        // 標籤頁6：成长分析
+        // ========================================
+        function renderAnalysisTab() {
+            // 學員成長曲線（出席率变化）
+            const weeks = ['第1周', '第2周', '第3周', '第4周', '第5周', '第6周'];
+            const growthData = weeks.map(() => Math.floor(Math.random() * 10) + 80);
+            
+            const ctx1 = document.getElementById('growthChart');
+            if (charts.growth) charts.growth.destroy();
+            charts.growth = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: weeks,
+                    datasets: [{
+                        label: '平均出席率',
+                        data: growthData,
+                        borderColor: '#e67e22',
+                        backgroundColor: 'rgba(230,126,34,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+            
+            // 課程完成度柱状图
+            const completionData = data.classes.map(cls => {
+                const total = data.curriculum.filter(c => c.classId === cls.id).length;
+                const completed = data.curriculum.filter(c => c.classId === cls.id && c.status === 'completed').length;
+                return total > 0 ? Math.round((completed / total) * 100) : 0;
+            });
+            
+            const ctx2 = document.getElementById('completionChart');
+            if (charts.completion) charts.completion.destroy();
+            charts.completion = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: data.classes.map(c => c.name),
+                    datasets: [{
+                        label: '完成度 (%)',
+                        data: completionData,
+                        backgroundColor: '#27ae60'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+            
+            // 教學效果評估雷达图
+            const ctx3 = document.getElementById('effectChart');
+            if (charts.effect) charts.effect.destroy();
+            charts.effect = new Chart(ctx3, {
+                type: 'radar',
+                data: {
+                    labels: ['教學品質', '師資水準', '學員參與', '家長滿意', '設施條件'],
+                    datasets: [{
+                        label: '评估得分',
+                        data: [85, 90, 88, 82, 75],
+                        borderColor: '#e67e22',
+                        backgroundColor: 'rgba(230,126,34,0.2)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+            
+            renderSuggestions();
+        }
+        
+        function renderSuggestions() {
+            const suggestions = [
+                {icon: '📚', text: '建议增加互动教学环节，提升學員參與度', priority: 'high'},
+                {icon: '👨‍🏫', text: '为新教師安排导师，加强培训支持', priority: 'medium'},
+                {icon: '🎨', text: '增加美工材料和教具，丰富教学方式', priority: 'medium'},
+                {icon: '👪', text: '定期组织家长会，增强家校互动', priority: 'low'}
+            ];
+            
+            const html = suggestions.map(s => `
+                <div class="list-item" style="border-left-color: ${s.priority === 'high' ? '#e74c3c' : s.priority === 'medium' ? '#e67e22' : '#27ae60'};">
+                    <div class="list-item-title">${s.icon} ${s.text}</div>
+                    <div class="list-item-meta">优先级：${s.priority === 'high' ? '高' : s.priority === 'medium' ? '中' : '低'}</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('suggestions').innerHTML = html;
+        }
+        
+        // ========================================
+        // 工具函数
+        // ========================================
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `
+                <div class="modal-header">${title}</div>
+                ${content}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        function showMessage(text, type = 'success') {
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            document.body.appendChild(msg);
+            
+            setTimeout(() => {
+                msg.remove();
+            }, 3000);
+        }
+        
+        window.onclick = (e) => {
+            if (e.target.id === 'modal') closeModal();
+        };
+    </script>
+<script src="../../../js/coming-soon.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

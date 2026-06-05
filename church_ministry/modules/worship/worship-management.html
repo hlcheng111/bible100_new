@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>崇拜禮儀管理 · Worship Management | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <link href="../../assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a>
+        <a href="../../people/people_list.html" target="contentFrame" style="font-size:12px;color:#0b5fa5;text-decoration:none;">👥 人員總覽（500 人）</a>
+    </div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">崇拜禮儀管理</h1>
+        <details class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-700">
+            <summary class="cursor-pointer font-semibold text-gray-900">📋 本頁角色（與講台／報表／出席）</summary>
+            <p class="mt-2 leading-relaxed">維護<strong>崇拜場次</strong>（日期、講員、司會、主題、經文）與快速操作；資料鍵 <code class="text-xs bg-white px-1 rounded">worship_management_data</code>（與腳本內同步）。與 <a href="pulpit-ministry.html" class="text-blue-700 underline">講壇事奉</a> 的講台視角互補；統計請至 <a href="worship-reports.html" class="text-blue-700 underline">崇拜統計報表</a>；點名與 <a href="attendance-management.html" class="text-blue-700 underline">出席管理</a> 對照。</p>
+        </details>
+        
+        <!-- 統計概覽 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">本月崇拜</h3>
+                <p class="text-3xl font-bold text-blue-600" id="monthlyWorship">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">進行中</h3>
+                <p class="text-3xl font-bold text-green-600" id="ongoingWorship">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">已安排</h3>
+                <p class="text-3xl font-bold text-purple-600" id="scheduledWorship">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">參與人數</h3>
+                <p class="text-3xl font-bold text-orange-600" id="totalParticipants">0</p>
+            </div>
+        </div>
+
+        <!-- 主要功能區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 崇拜安排 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold">崇拜安排</h3>
+                            <button onclick="showAddWorshipModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                新增崇拜
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="worshipList" class="space-y-4">
+                            <!-- 崇拜列表將在這裡動態生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 側邊欄 -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">快速操作</h4>
+                    <button onclick="showAddSpeakerModal()" class="w-full bg-green-600 text-white py-3 px-4 rounded hover:bg-green-700 mb-3">
+                        安排講員
+                    </button>
+                    <button onclick="showAddServiceModal()" class="w-full bg-purple-600 text-white py-3 px-4 rounded hover:bg-purple-700 mb-3">
+                        安排司會
+                    </button>
+                    <button onclick="exportWorshipData()" class="w-full bg-gray-600 text-white py-3 px-4 rounded hover:bg-gray-700">
+                        匯出數據
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">即將到來的崇拜</h4>
+                    <div id="upcomingWorship">
+                        <!-- 即將到來的崇拜將在這裡動態生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 崇拜安排模態框 -->
+    <div id="worshipModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4" id="worshipModalTitle">新增崇拜安排</h3>
+                <form id="worshipForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">日期</label>
+                        <input type="date" id="worshipDate" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">時間</label>
+                        <input type="time" id="worshipTime" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">講員</label>
+                        <input type="text" id="worshipSpeaker" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">司會</label>
+                        <input type="text" id="worshipServiceLeader" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">主題</label>
+                        <input type="text" id="worshipTheme" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">經文</label>
+                        <input type="text" id="worshipScripture" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">預期參與人數</label>
+                        <input type="number" id="worshipExpectedParticipants" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">備註</label>
+                        <textarea id="worshipNotes" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeWorshipModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">取消</button>
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 禮儀流程模態框 -->
+    <div id="liturgyModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">新增禮儀流程</h3>
+                <form id="liturgyForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">名稱</label>
+                        <input type="text" id="liturgyName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">順序</label>
+                        <input type="number" id="liturgyOrder" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">負責人</label>
+                        <input type="text" id="liturgyResponsible" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">時間</label>
+                        <input type="text" id="liturgyTime" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">備註</label>
+                        <textarea id="liturgyNotes" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeLiturgyModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">取消</button>
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 講員安排模態框 -->
+    <div id="speakerModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">安排講員</h3>
+                <form id="speakerForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">日期</label>
+                        <input type="date" id="speakerDate" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">講員姓名</label>
+                        <input type="text" id="speakerName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">講題</label>
+                        <input type="text" id="speakerTopic" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">經文</label>
+                        <input type="text" id="speakerScripture" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeSpeakerModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">取消</button>
+                        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">安排</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 司會安排模態框 -->
+    <div id="serviceLeaderModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">安排司會</h3>
+                <form id="serviceLeaderForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">日期</label>
+                        <input type="date" id="serviceLeaderDate" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">司會姓名</label>
+                        <input type="text" id="serviceLeaderName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeServiceLeaderModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">取消</button>
+                        <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">安排</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 數據模型
+        let worshipData = [];
+        let liturgyData = [];
+        let editingWorshipId = null;
+        let editingLiturgyId = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setupEventListeners();
+            updateStatistics();
+        });
+
+        // 設置事件監聽器
+        function setupEventListeners() {
+            document.getElementById('worshipForm').addEventListener('submit', handleWorshipSubmit);
+            document.getElementById('liturgyForm').addEventListener('submit', handleLiturgySubmit);
+            document.getElementById('speakerForm').addEventListener('submit', handleSpeakerSubmit);
+            document.getElementById('serviceLeaderForm').addEventListener('submit', handleServiceLeaderSubmit);
+        }
+
+        // 載入數據
+        function loadData() {
+            worshipData = JSON.parse(localStorage.getItem('worshipData') || '[]');
+            liturgyData = JSON.parse(localStorage.getItem('liturgyData') || '[]');
+            if (worshipData.length === 0 && liturgyData.length === 0) loadDemoData();
+            renderWorshipList();
+            renderUpcomingWorship();
+            updateStatistics();
+        }
+
+        // 保存數據
+        function saveData() {
+            localStorage.setItem('worshipData', JSON.stringify(worshipData));
+            localStorage.setItem('liturgyData', JSON.stringify(liturgyData));
+        }
+
+        // 載入測試數據
+        function loadDemoData() {
+            const demoWorship = [
+                {
+                    id: 1,
+                    date: '2024-01-07',
+                    time: '09:30',
+                    speaker: '張牧師',
+                    serviceLeader: '李弟兄',
+                    theme: '新年立志',
+                    scripture: '腓立比書3:13-14',
+                    expectedParticipants: 120,
+                    actualParticipants: 118,
+                    notes: '新年第一場崇拜',
+                    status: '已完成'
+                },
+                {
+                    id: 2,
+                    date: '2024-01-14',
+                    time: '09:30',
+                    speaker: '王傳道',
+                    serviceLeader: '陳姊妹',
+                    theme: '信心與行為',
+                    scripture: '雅各書2:14-26',
+                    expectedParticipants: 120,
+                    actualParticipants: 0,
+                    notes: '',
+                    status: '進行中'
+                },
+                {
+                    id: 3,
+                    date: '2024-01-21',
+                    time: '09:30',
+                    speaker: '劉牧師',
+                    serviceLeader: '黃弟兄',
+                    theme: '愛神愛人',
+                    scripture: '馬太福音22:37-40',
+                    expectedParticipants: 120,
+                    actualParticipants: 0,
+                    notes: '',
+                    status: '已安排'
+                }
+            ];
+
+            const demoLiturgy = [
+                {
+                    id: 1,
+                    name: '開場禱告',
+                    order: 1,
+                    responsible: '司會',
+                    time: '3分鐘',
+                    notes: '為崇拜開始禱告'
+                },
+                {
+                    id: 2,
+                    name: '敬拜讚美',
+                    order: 2,
+                    responsible: '敬拜團',
+                    time: '15分鐘',
+                    notes: '詩歌敬拜'
+                },
+                {
+                    id: 3,
+                    name: '讀經',
+                    order: 3,
+                    responsible: '司會',
+                    time: '2分鐘',
+                    notes: '宣讀當日經文'
+                },
+                {
+                    id: 4,
+                    name: '講道',
+                    order: 4,
+                    responsible: '講員',
+                    time: '30分鐘',
+                    notes: '信息分享'
+                },
+                {
+                    id: 5,
+                    name: '奉獻',
+                    order: 5,
+                    responsible: '司會',
+                    time: '3分鐘',
+                    notes: '奉獻禱告'
+                },
+                {
+                    id: 6,
+                    name: '結束禱告',
+                    order: 6,
+                    responsible: '講員',
+                    time: '2分鐘',
+                    notes: '祝福禱告'
+                }
+            ];
+
+            worshipData = demoWorship;
+            liturgyData = demoLiturgy;
+            saveData();
+            renderWorshipList();
+            renderUpcomingWorship();
+            updateStatistics();
+        }
+
+        // 清除所有數據
+        function clearAllData() {
+            if (confirm('確定要清除所有數據嗎？此操作不可恢復！')) {
+                worshipData = [];
+                liturgyData = [];
+                saveData();
+                loadData();
+                updateStatistics();
+                alert('所有數據已清除！');
+            }
+        }
+
+        // 更新統計數據
+        function updateStatistics() {
+            const now = new Date();
+            const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            
+            const monthlyWorship = worshipData.filter(w => w.date.startsWith(currentMonth)).length;
+            const ongoingWorship = worshipData.filter(w => w.status === '進行中').length;
+            const scheduledWorship = worshipData.filter(w => w.status === '已安排').length;
+            const totalParticipants = worshipData.reduce((sum, w) => sum + (w.actualParticipants || 0), 0);
+
+            document.getElementById('monthlyWorship').textContent = monthlyWorship;
+            document.getElementById('ongoingWorship').textContent = ongoingWorship;
+            document.getElementById('scheduledWorship').textContent = scheduledWorship;
+            document.getElementById('totalParticipants').textContent = totalParticipants;
+        }
+
+        // 渲染崇拜列表
+        function renderWorshipList() {
+            const container = document.getElementById('worshipList');
+            container.innerHTML = '';
+
+            if (worshipData.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">暫無崇拜安排</p>';
+                return;
+            }
+
+            worshipData.forEach(worship => {
+                const item = document.createElement('div');
+                item.className = 'border rounded-lg p-4 bg-white';
+                item.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <h4 class="text-lg font-semibold text-gray-900">${worship.date} ${worship.time}</h4>
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(worship.status)}">
+                                    ${worship.status}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                                <div>
+                                    <span class="font-medium">講員:</span> ${worship.speaker || '未安排'}
+                                </div>
+                                <div>
+                                    <span class="font-medium">司會:</span> ${worship.serviceLeader || '未安排'}
+                                </div>
+                                <div>
+                                    <span class="font-medium">主題:</span> ${worship.theme || '未設定'}
+                                </div>
+                                <div>
+                                    <span class="font-medium">參與人數:</span> ${worship.actualParticipants || worship.expectedParticipants}
+                                </div>
+                            </div>
+                            ${worship.scripture ? `<div class="mt-2 text-sm text-gray-600"><span class="font-medium">經文:</span> ${worship.scripture}</div>` : ''}
+                            ${worship.notes ? `<div class="mt-2 text-sm text-gray-500">${worship.notes}</div>` : ''}
+                        </div>
+                        <div class="flex space-x-2 ml-4">
+                            <button onclick="editWorship(${worship.id})" class="text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-300 rounded hover:bg-blue-50">編輯</button>
+                            <button onclick="deleteWorship(${worship.id})" class="text-red-600 hover:text-red-800 px-3 py-1 border border-red-300 rounded hover:bg-red-50">刪除</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // 渲染即將到來的崇拜
+        function renderUpcomingWorship() {
+            const container = document.getElementById('upcomingWorship');
+            container.innerHTML = '';
+
+            const upcoming = worshipData
+                .filter(w => w.status === '已安排')
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                .slice(0, 5);
+
+            if (upcoming.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500">暫無即將到來的崇拜</p>';
+                return;
+            }
+
+            upcoming.forEach(worship => {
+                const item = document.createElement('div');
+                item.className = 'border-l-4 border-blue-500 pl-3 mb-3';
+                item.innerHTML = `
+                    <h5 class="font-medium text-sm">${worship.date} ${worship.time}</h5>
+                    <p class="text-xs text-gray-600">講員：${worship.speaker || '未安排'}</p>
+                    <p class="text-xs text-gray-600">主題：${worship.theme || '未設定'}</p>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // 獲取狀態顏色
+        function getStatusColor(status) {
+            switch (status) {
+                case '已完成': return 'bg-green-100 text-green-800';
+                case '進行中': return 'bg-blue-100 text-blue-800';
+                case '已安排': return 'bg-yellow-100 text-yellow-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        // 模態框操作
+        function showAddWorshipModal() {
+            editingWorshipId = null;
+            document.getElementById('worshipModalTitle').textContent = '新增崇拜安排';
+            document.getElementById('worshipForm').reset();
+            document.getElementById('worshipModal').classList.remove('hidden');
+        }
+
+        function closeWorshipModal() {
+            document.getElementById('worshipModal').classList.add('hidden');
+        }
+
+        function openAddLiturgyModal() {
+            editingLiturgyId = null;
+            document.getElementById('liturgyForm').reset();
+            document.getElementById('liturgyModal').classList.remove('hidden');
+        }
+
+        function closeLiturgyModal() {
+            document.getElementById('liturgyModal').classList.add('hidden');
+        }
+
+        function showAddSpeakerModal() {
+            document.getElementById('speakerForm').reset();
+            document.getElementById('speakerModal').classList.remove('hidden');
+        }
+
+        function closeSpeakerModal() {
+            document.getElementById('speakerModal').classList.add('hidden');
+        }
+
+        function showAddServiceModal() {
+            document.getElementById('serviceLeaderForm').reset();
+            document.getElementById('serviceLeaderModal').classList.remove('hidden');
+        }
+
+        function closeServiceLeaderModal() {
+            document.getElementById('serviceLeaderModal').classList.add('hidden');
+        }
+
+        // 編輯崇拜
+        function editWorship(id) {
+            const worship = worshipData.find(w => w.id === id);
+            if (!worship) return;
+
+            editingWorshipId = id;
+            document.getElementById('worshipModalTitle').textContent = '編輯崇拜安排';
+            document.getElementById('worshipDate').value = worship.date;
+            document.getElementById('worshipTime').value = worship.time;
+            document.getElementById('worshipSpeaker').value = worship.speaker || '';
+            document.getElementById('worshipServiceLeader').value = worship.serviceLeader || '';
+            document.getElementById('worshipTheme').value = worship.theme || '';
+            document.getElementById('worshipScripture').value = worship.scripture || '';
+            document.getElementById('worshipExpectedParticipants').value = worship.expectedParticipants || '';
+            document.getElementById('worshipNotes').value = worship.notes || '';
+
+            document.getElementById('worshipModal').classList.remove('hidden');
+        }
+
+        // 刪除崇拜
+        function deleteWorship(id) {
+            if (confirm('確定要刪除這個崇拜安排嗎？')) {
+                worshipData = worshipData.filter(w => w.id !== id);
+                saveData();
+                loadData();
+                updateStatistics();
+            }
+        }
+
+        // 處理崇拜表單提交
+        function handleWorshipSubmit(e) {
+            e.preventDefault();
+            
+            const formData = {
+                date: document.getElementById('worshipDate').value,
+                time: document.getElementById('worshipTime').value,
+                speaker: document.getElementById('worshipSpeaker').value,
+                serviceLeader: document.getElementById('worshipServiceLeader').value,
+                theme: document.getElementById('worshipTheme').value,
+                scripture: document.getElementById('worshipScripture').value,
+                expectedParticipants: parseInt(document.getElementById('worshipExpectedParticipants').value) || 0,
+                notes: document.getElementById('worshipNotes').value,
+                status: '已安排',
+                actualParticipants: 0
+            };
+
+            if (editingWorshipId) {
+                // 編輯現有記錄
+                const index = worshipData.findIndex(w => w.id === editingWorshipId);
+                if (index !== -1) {
+                    worshipData[index] = { ...worshipData[index], ...formData };
+                }
+            } else {
+                // 新增記錄
+                formData.id = Date.now();
+                worshipData.push(formData);
+            }
+
+            saveData();
+            loadData();
+            updateStatistics();
+            closeWorshipModal();
+        }
+
+        // 處理禮儀流程表單提交
+        function handleLiturgySubmit(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('liturgyName').value,
+                order: parseInt(document.getElementById('liturgyOrder').value),
+                responsible: document.getElementById('liturgyResponsible').value,
+                time: document.getElementById('liturgyTime').value,
+                notes: document.getElementById('liturgyNotes').value
+            };
+
+            if (editingLiturgyId) {
+                // 編輯現有記錄
+                const index = liturgyData.findIndex(l => l.id === editingLiturgyId);
+                if (index !== -1) {
+                    liturgyData[index] = { ...liturgyData[index], ...formData };
+                }
+            } else {
+                // 新增記錄
+                formData.id = Date.now();
+                liturgyData.push(formData);
+            }
+
+            saveData();
+            loadData();
+            closeLiturgyModal();
+        }
+
+        // 處理講員安排表單提交
+        function handleSpeakerSubmit(e) {
+            e.preventDefault();
+            
+            const date = document.getElementById('speakerDate').value;
+            const existingWorship = worshipData.find(w => w.date === date);
+            
+            if (existingWorship) {
+                // 更新現有崇拜安排
+                existingWorship.speaker = document.getElementById('speakerName').value;
+                existingWorship.theme = document.getElementById('speakerTopic').value;
+                existingWorship.scripture = document.getElementById('speakerScripture').value;
+            } else {
+                // 創建新的崇拜安排
+                const newWorship = {
+                    id: Date.now(),
+                    date: date,
+                    time: '09:30',
+                    speaker: document.getElementById('speakerName').value,
+                    serviceLeader: '',
+                    theme: document.getElementById('speakerTopic').value,
+                    scripture: document.getElementById('speakerScripture').value,
+                    expectedParticipants: 120,
+                    actualParticipants: 0,
+                    notes: '',
+                    status: '已安排'
+                };
+                worshipData.push(newWorship);
+            }
+
+            saveData();
+            loadData();
+            updateStatistics();
+            closeSpeakerModal();
+            alert('講員安排成功！');
+        }
+
+        // 處理司會安排表單提交
+        function handleServiceLeaderSubmit(e) {
+            e.preventDefault();
+            
+            const date = document.getElementById('serviceLeaderDate').value;
+            const existingWorship = worshipData.find(w => w.date === date);
+            
+            if (existingWorship) {
+                // 更新現有崇拜安排
+                existingWorship.serviceLeader = document.getElementById('serviceLeaderName').value;
+            } else {
+                // 創建新的崇拜安排
+                const newWorship = {
+                    id: Date.now(),
+                    date: date,
+                    time: '09:30',
+                    speaker: '',
+                    serviceLeader: document.getElementById('serviceLeaderName').value,
+                    theme: '',
+                    scripture: '',
+                    expectedParticipants: 120,
+                    actualParticipants: 0,
+                    notes: '',
+                    status: '已安排'
+                };
+                worshipData.push(newWorship);
+            }
+
+            saveData();
+            loadData();
+            updateStatistics();
+            closeServiceLeaderModal();
+            alert('司會安排成功！');
+        }
+
+        // 匯出數據
+        function exportWorshipData() {
+            const csvContent = generateWorshipCSV();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `崇拜安排數據_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 生成崇拜CSV
+        function generateWorshipCSV() {
+            const headers = ['日期', '時間', '講員', '司會', '主題', '經文', '預期參與人數', '實際參與人數', '狀態', '備註'];
+            const rows = worshipData.map(w => [
+                w.date,
+                w.time,
+                w.speaker,
+                w.serviceLeader,
+                w.theme,
+                w.scripture,
+                w.expectedParticipants,
+                w.actualParticipants,
+                w.status,
+                w.notes
+            ]);
+            
+            return [headers, ...rows].map(row => row.map(field => `"${field || ''}"`).join(',')).join('
+');
+        }
+    </script>
+</body>
+</html>

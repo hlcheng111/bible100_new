@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教師管理 · Teacher Management</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>👨‍🏫 教師管理 · Teacher Management</h1>
+        <p>主日學教師、培訓講師、靈命培育同工</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <p style="margin-top:8px;"><b>此頁是為誰而設？</b> 主日學負責人、教育事工同工。</p>
+            <p><b>有什麼功能？</b> 教師名單、授課統計、匯出報表。</p>
+            <p><b>如何入手？</b> 資料來自 SchoolMasterDatabase，首次使用請先至儀表板載入示範資料（25 教師）。</p>
+        </details>
+    </div>
+
+    <div class="module-card">
+    <div class="module-card-title">統計</div>
+    <div class="stats-row">
+        <div class="stat-pill"><div class="stat-num" id="statTotal">0</div><div class="stat-label">教師總數</div></div>
+        <div class="stat-pill"><div class="stat-num" id="statActive">0</div><div class="stat-label">在職</div></div>
+        <div class="stat-pill"><div class="stat-num" id="statTeaching">0</div><div class="stat-label">有授課</div></div>
+    </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">👤 教師列表 <button class="module-btn" onclick="exportData()" style="float:right;">📤 匯出 JSON</button></div>
+        <div id="teacherList"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        function loadTeachers() {
+            if (!window.schoolDB) {
+                document.getElementById('teacherList').innerHTML = '<div class="empty-state">請先載入 SchoolMasterDatabase</div>';
+                return;
+            }
+            if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+
+            const db = window.schoolDB.data;
+            const teachers = db.teachers || [];
+            const courses = db.courses || [];
+
+            document.getElementById('statTotal').textContent = teachers.length;
+            document.getElementById('statActive').textContent = teachers.filter(t => t.status === 'active').length;
+            document.getElementById('statTeaching').textContent = teachers.filter(t => courses.some(c => c.teacherId === t.id)).length;
+
+            let html = '';
+            if (teachers.length === 0) {
+                html = '<div class="empty-state">尚無教師，請先至儀表板載入示範資料。</div>';
+            } else {
+                html = '<table><thead><tr><th>工號</th><th>姓名</th><th>科目</th><th>電話</th><th>授課數</th><th>狀態</th></tr></thead><tbody>';
+                teachers.forEach(t => {
+                    const teachCount = courses.filter(c => c.teacherId === t.id).length;
+                    html += '<tr><td>' + (t.teacherNumber || '—') + '</td><td>' + (t.name || '—') + '</td><td>' + (t.subject || '—') + '</td><td>' + (t.phone || '—') + '</td><td>' + teachCount + '</td><td>' + (t.status === 'active' ? '在職' : '離職') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+            }
+            document.getElementById('teacherList').innerHTML = html;
+        }
+
+        function exportData() {
+            if (!window.schoolDB) return alert('無資料可匯出');
+            const data = { generatedAt: new Date().toISOString(), teachers: window.schoolDB.data.teachers || [] };
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+            a.download = 'teachers_' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+        }
+
+        document.addEventListener('DOMContentLoaded', loadTeachers);
+    </script>
+</body>
+</html>

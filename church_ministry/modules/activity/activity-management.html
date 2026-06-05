@@ -1,0 +1,860 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活動管理 · Activity Management | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+    <script src="assets/js/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <!-- 頁面標題 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">活動管理系統</h1>
+            <p class="text-gray-600">管理教會各類活動的規劃、安排與追蹤</p>
+        </div>
+
+        <!-- 統計概覽 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="bg-blue-500 p-3 rounded-lg">
+                        <i class="fas fa-calendar text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">總活動數</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalActivities">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="bg-green-500 p-3 rounded-lg">
+                        <i class="fas fa-users text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">本月參與者</p>
+                        <p class="text-2xl font-bold text-gray-900" id="monthlyParticipants">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="bg-purple-500 p-3 rounded-lg">
+                        <i class="fas fa-clock text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">進行中活動</p>
+                        <p class="text-2xl font-bold text-gray-900" id="ongoingActivities">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="bg-orange-500 p-3 rounded-lg">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">完成率</p>
+                        <p class="text-2xl font-bold text-gray-900" id="completionRate">0%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要功能區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左側：活動列表 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">活動列表</h3>
+                            <button onclick="showAddActivityModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>新增活動
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <!-- 篩選器 -->
+                        <div class="flex flex-wrap gap-4 mb-6">
+                            <select id="statusFilter" class="px-3 py-2 border border-gray-300 rounded-lg" onchange="filterActivities()">
+                                <option value="">所有狀態</option>
+                                <option value="planned">已規劃</option>
+                                <option value="ongoing">進行中</option>
+                                <option value="completed">已完成</option>
+                                <option value="cancelled">已取消</option>
+                            </select>
+                            <select id="typeFilter" class="px-3 py-2 border border-gray-300 rounded-lg" onchange="filterActivities()">
+                                <option value="">所有類型</option>
+                                <option value="worship">崇拜活動</option>
+                                <option value="fellowship">團契活動</option>
+                                <option value="education">教育活動</option>
+                                <option value="outreach">外展活動</option>
+                                <option value="social">社交活動</option>
+                            </select>
+                            <input type="text" id="searchInput" placeholder="搜尋活動..." class="px-3 py-2 border border-gray-300 rounded-lg" onkeyup="searchActivities()">
+                        </div>
+
+                        <!-- 活動表格 -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">活動名稱</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">類型</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">狀態</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">參與者</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activitiesTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- 活動數據將在這裡動態生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：快速操作和統計 -->
+            <div class="space-y-6">
+                <!-- 快速操作 -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">快速操作</h3>
+                    <div class="space-y-3">
+                        <button onclick="showAddActivityModal()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>新增活動
+                        </button>
+                        <button onclick="showParticipantModal()" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-user-plus mr-2"></i>管理參與者
+                        </button>
+                        <button onclick="exportActivities()" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-download mr-2"></i>匯出數據
+                        </button>
+                        <button onclick="showReports()" class="w-full bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors">
+                            <i class="fas fa-chart-bar mr-2"></i>查看報表
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 活動統計圖表 -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">活動統計</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">活動類型分布</h4>
+                            <canvas id="activityTypeChart" width="200" height="200"></canvas>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">月度趨勢</h4>
+                            <canvas id="monthlyTrendChart" width="200" height="150"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯活動模態框 -->
+    <div id="activityModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" id="modalTitle">新增活動</h3>
+                    <button onclick="closeActivityModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="activityForm" class="space-y-4">
+                    <input type="hidden" id="activityId">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">活動名稱 *</label>
+                            <input type="text" id="activityName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">活動類型 *</label>
+                            <select id="activityType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="">請選擇類型</option>
+                                <option value="worship">崇拜活動</option>
+                                <option value="fellowship">團契活動</option>
+                                <option value="education">教育活動</option>
+                                <option value="outreach">外展活動</option>
+                                <option value="social">社交活動</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">開始日期 *</label>
+                            <input type="datetime-local" id="startDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">結束日期 *</label>
+                            <input type="datetime-local" id="endDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">地點</label>
+                            <input type="text" id="location" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">最大參與人數</label>
+                            <input type="number" id="maxParticipants" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">活動描述</label>
+                        <textarea id="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">負責人</label>
+                        <input type="text" id="organizer" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeActivityModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                            取消
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            保存
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 參與者管理模態框 -->
+    <div id="participantModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-4/5 lg:w-3/4 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">參與者管理</h3>
+                    <button onclick="closeParticipantModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 左側：參與者列表 -->
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-3">參與者列表</h4>
+                        <div class="space-y-2 max-h-96 overflow-y-auto">
+                            <div id="participantsList">
+                                <!-- 參與者將在這裡動態生成 -->
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 右側：添加參與者 -->
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-3">添加參與者</h4>
+                        <form id="participantForm" class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+                                <input type="text" id="participantName" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">聯絡電話</label>
+                                <input type="tel" id="participantPhone" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">角色</label>
+                                <select id="participantRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                    <option value="participant">參與者</option>
+                                    <option value="volunteer">志工</option>
+                                    <option value="leader">領導者</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700">
+                                添加參與者
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 註冊 Chart.js 插件
+        Chart.register(ChartDataLabels);
+
+        // 數據存儲
+        let activities = [];
+        let participants = [];
+        let currentActivityId = null;
+
+        // 頁面載入
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            updateStatistics();
+            renderCharts();
+        });
+
+        // 載入數據
+        function loadData() {
+            activities = JSON.parse(localStorage.getItem('activities')) || [];
+            participants = JSON.parse(localStorage.getItem('activityParticipants')) || [];
+            
+            // 如果沒有數據，載入示例數據
+            if (activities.length === 0) {
+                loadSampleData();
+            }
+            
+            renderActivitiesTable();
+        }
+
+        // 載入示例數據
+        function loadSampleData() {
+            const sampleActivities = [
+                {
+                    id: 1,
+                    name: '主日崇拜',
+                    type: 'worship',
+                    startDate: '2024-01-21T09:00',
+                    endDate: '2024-01-21T11:00',
+                    location: '主堂',
+                    maxParticipants: 200,
+                    description: '主日崇拜服務',
+                    organizer: '張牧師',
+                    status: 'completed',
+                    participants: 180
+                },
+                {
+                    id: 2,
+                    name: '青年團契聚會',
+                    type: 'fellowship',
+                    startDate: '2024-01-25T19:00',
+                    endDate: '2024-01-25T21:00',
+                    location: '青年中心',
+                    maxParticipants: 50,
+                    description: '青年團契週五聚會',
+                    organizer: '李姊妹',
+                    status: 'ongoing',
+                    participants: 35
+                },
+                {
+                    id: 3,
+                    name: '聖經研讀班',
+                    type: 'education',
+                    startDate: '2024-01-28T14:00',
+                    endDate: '2024-01-28T16:00',
+                    location: '教育樓',
+                    maxParticipants: 30,
+                    description: '聖經研讀與討論',
+                    organizer: '王老師',
+                    status: 'planned',
+                    participants: 0
+                }
+            ];
+
+            const sampleParticipants = [
+                { id: 1, activityId: 1, name: '張小明', phone: '0912-345-678', role: 'participant' },
+                { id: 2, activityId: 1, name: '李美美', phone: '0923-456-789', role: 'volunteer' },
+                { id: 3, activityId: 2, name: '王大華', phone: '0934-567-890', role: 'leader' }
+            ];
+
+            localStorage.setItem('activities', JSON.stringify(sampleActivities));
+            localStorage.setItem('activityParticipants', JSON.stringify(sampleParticipants));
+            
+            activities = sampleActivities;
+            participants = sampleParticipants;
+        }
+
+        // 更新統計數據
+        function updateStatistics() {
+            const total = activities.length;
+            const ongoing = activities.filter(a => a.status === 'ongoing').length;
+            const completed = activities.filter(a => a.status === 'completed').length;
+            const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+            
+            // 計算本月參與者
+            const currentMonth = new Date().getMonth();
+            const monthlyParticipants = participants.filter(p => {
+                const activity = activities.find(a => a.id === p.activityId);
+                if (activity) {
+                    const activityMonth = new Date(activity.startDate).getMonth();
+                    return activityMonth === currentMonth;
+                }
+                return false;
+            }).length;
+
+            document.getElementById('totalActivities').textContent = total;
+            document.getElementById('ongoingActivities').textContent = ongoing;
+            document.getElementById('completionRate').textContent = completionRate + '%';
+            document.getElementById('monthlyParticipants').textContent = monthlyParticipants;
+        }
+
+        // 渲染活動表格
+        function renderActivitiesTable() {
+            const tbody = document.getElementById('activitiesTableBody');
+            tbody.innerHTML = '';
+
+            activities.forEach(activity => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${activity.name}</div>
+                        <div class="text-sm text-gray-500">${activity.description}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${getTypeBadgeClass(activity.type)}">
+                            ${getTypeName(activity.type)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${formatDate(activity.startDate)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(activity.status)}">
+                            ${getStatusName(activity.status)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${activity.participants || 0} / ${activity.maxParticipants || '不限'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editActivity(${activity.id})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteActivity(${activity.id})" class="text-red-600 hover:text-red-900 mr-3">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button onclick="manageParticipants(${activity.id})" class="text-green-600 hover:text-green-900">
+                            <i class="fas fa-users"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 獲取類型徽章樣式
+        function getTypeBadgeClass(type) {
+            const classes = {
+                'worship': 'bg-purple-100 text-purple-800',
+                'fellowship': 'bg-blue-100 text-blue-800',
+                'education': 'bg-green-100 text-green-800',
+                'outreach': 'bg-orange-100 text-orange-800',
+                'social': 'bg-pink-100 text-pink-800'
+            };
+            return classes[type] || 'bg-gray-100 text-gray-800';
+        }
+
+        // 獲取狀態徽章樣式
+        function getStatusBadgeClass(status) {
+            const classes = {
+                'planned': 'bg-yellow-100 text-yellow-800',
+                'ongoing': 'bg-green-100 text-green-800',
+                'completed': 'bg-blue-100 text-blue-800',
+                'cancelled': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        // 獲取類型名稱
+        function getTypeName(type) {
+            const names = {
+                'worship': '崇拜活動',
+                'fellowship': '團契活動',
+                'education': '教育活動',
+                'outreach': '外展活動',
+                'social': '社交活動'
+            };
+            return names[type] || type;
+        }
+
+        // 獲取狀態名稱
+        function getStatusName(status) {
+            const names = {
+                'planned': '已規劃',
+                'ongoing': '進行中',
+                'completed': '已完成',
+                'cancelled': '已取消'
+            };
+            return names[status] || status;
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-TW') + ' ' + date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // 顯示新增活動模態框
+        function showAddActivityModal() {
+            document.getElementById('modalTitle').textContent = '新增活動';
+            document.getElementById('activityForm').reset();
+            document.getElementById('activityId').value = '';
+            document.getElementById('activityModal').classList.remove('hidden');
+        }
+
+        // 關閉活動模態框
+        function closeActivityModal() {
+            document.getElementById('activityModal').classList.add('hidden');
+        }
+
+        // 編輯活動
+        function editActivity(id) {
+            const activity = activities.find(a => a.id === id);
+            if (activity) {
+                document.getElementById('modalTitle').textContent = '編輯活動';
+                document.getElementById('activityId').value = activity.id;
+                document.getElementById('activityName').value = activity.name;
+                document.getElementById('activityType').value = activity.type;
+                document.getElementById('startDate').value = activity.startDate;
+                document.getElementById('endDate').value = activity.endDate;
+                document.getElementById('location').value = activity.location || '';
+                document.getElementById('maxParticipants').value = activity.maxParticipants || '';
+                document.getElementById('description').value = activity.description || '';
+                document.getElementById('organizer').value = activity.organizer || '';
+                document.getElementById('activityModal').classList.remove('hidden');
+            }
+        }
+
+        // 刪除活動
+        function deleteActivity(id) {
+            if (confirm('確定要刪除這個活動嗎？')) {
+                activities = activities.filter(a => a.id !== id);
+                participants = participants.filter(p => p.activityId !== id);
+                localStorage.setItem('activities', JSON.stringify(activities));
+                localStorage.setItem('activityParticipants', JSON.stringify(participants));
+                renderActivitiesTable();
+                updateStatistics();
+                renderCharts();
+            }
+        }
+
+        // 管理參與者
+        function manageParticipants(activityId) {
+            currentActivityId = activityId;
+            showParticipantModal();
+            renderParticipantsList();
+        }
+
+        // 顯示參與者模態框
+        function showParticipantModal() {
+            document.getElementById('participantModal').classList.remove('hidden');
+        }
+
+        // 關閉參與者模態框
+        function closeParticipantModal() {
+            document.getElementById('participantModal').classList.add('hidden');
+            currentActivityId = null;
+        }
+
+        // 渲染參與者列表
+        function renderParticipantsList() {
+            const container = document.getElementById('participantsList');
+            const activityParticipants = participants.filter(p => p.activityId === currentActivityId);
+            
+            container.innerHTML = activityParticipants.map(p => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <div class="font-medium text-gray-900">${p.name}</div>
+                        <div class="text-sm text-gray-500">${p.phone} • ${getRoleName(p.role)}</div>
+                    </div>
+                    <button onclick="removeParticipant(${p.id})" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // 獲取角色名稱
+        function getRoleName(role) {
+            const names = {
+                'participant': '參與者',
+                'volunteer': '志工',
+                'leader': '領導者'
+            };
+            return names[role] || role;
+        }
+
+        // 移除參與者
+        function removeParticipant(id) {
+            if (confirm('確定要移除這個參與者嗎？')) {
+                participants = participants.filter(p => p.id !== id);
+                localStorage.setItem('activityParticipants', JSON.stringify(participants));
+                renderParticipantsList();
+                updateStatistics();
+            }
+        }
+
+        // 匯出活動數據
+        function exportActivities() {
+            const csvContent = generateCSV();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `活動管理數據_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 生成CSV
+        function generateCSV() {
+            const headers = ['活動名稱', '類型', '開始日期', '結束日期', '地點', '狀態', '參與者數', '負責人'];
+            const rows = activities.map(activity => [
+                activity.name,
+                getTypeName(activity.type),
+                formatDate(activity.startDate),
+                formatDate(activity.endDate),
+                activity.location || '',
+                getStatusName(activity.status),
+                activity.participants || 0,
+                activity.organizer || ''
+            ]);
+
+            return [headers, ...rows].map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('
+');
+        }
+
+        // 顯示報表
+        function showReports() {
+            // 這裡可以跳轉到報表頁面或顯示報表模態框
+            alert('報表功能將在活動報表模組中實現');
+        }
+
+        // 篩選活動
+        function filterActivities() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            
+            let filteredActivities = activities;
+            
+            if (statusFilter) {
+                filteredActivities = filteredActivities.filter(a => a.status === statusFilter);
+            }
+            
+            if (typeFilter) {
+                filteredActivities = filteredActivities.filter(a => a.type === typeFilter);
+            }
+            
+            renderFilteredActivities(filteredActivities);
+        }
+
+        // 搜尋活動
+        function searchActivities() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filteredActivities = activities.filter(activity => 
+                activity.name.toLowerCase().includes(searchTerm) ||
+                activity.description.toLowerCase().includes(searchTerm) ||
+                (activity.organizer && activity.organizer.toLowerCase().includes(searchTerm))
+            );
+            
+            renderFilteredActivities(filteredActivities);
+        }
+
+        // 渲染篩選後的活動
+        function renderFilteredActivities(filteredActivities) {
+            const tbody = document.getElementById('activitiesTableBody');
+            tbody.innerHTML = '';
+
+            filteredActivities.forEach(activity => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${activity.name}</div>
+                        <div class="text-sm text-gray-500">${activity.description}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${getTypeBadgeClass(activity.type)}">
+                            ${getTypeName(activity.type)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${formatDate(activity.startDate)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(activity.status)}">
+                            ${getStatusName(activity.status)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${activity.participants || 0} / ${activity.maxParticipants || '不限'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editActivity(${activity.id})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteActivity(${activity.id})" class="text-red-600 hover:text-red-900 mr-3">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button onclick="manageParticipants(${activity.id})" class="text-green-600 hover:text-green-900">
+                            <i class="fas fa-users"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 渲染圖表
+        function renderCharts() {
+            renderActivityTypeChart();
+            renderMonthlyTrendChart();
+        }
+
+        // 渲染活動類型圖表
+        function renderActivityTypeChart() {
+            const ctx = document.getElementById('activityTypeChart');
+            if (!ctx) return;
+
+            const typeStats = {};
+            activities.forEach(activity => {
+                typeStats[activity.type] = (typeStats[activity.type] || 0) + 1;
+            });
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(typeStats).map(type => getTypeName(type)),
+                    datasets: [{
+                        data: Object.values(typeStats),
+                        backgroundColor: [
+                            '#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染月度趨勢圖表
+        function renderMonthlyTrendChart() {
+            const ctx = document.getElementById('monthlyTrendChart');
+            if (!ctx) return;
+
+            const monthlyData = {};
+            activities.forEach(activity => {
+                const month = new Date(activity.startDate).getMonth();
+                monthlyData[month] = (monthlyData[month] || 0) + 1;
+            });
+
+            const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            const data = monthNames.map((_, index) => monthlyData[index] || 0);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: monthNames,
+                    datasets: [{
+                        label: '活動數量',
+                        data: data,
+                        backgroundColor: '#3B82F6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 表單提交處理
+        document.getElementById('activityForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const activityId = document.getElementById('activityId').value;
+            
+            if (activityId) {
+                // 編輯現有活動
+                const index = activities.findIndex(a => a.id == activityId);
+                if (index !== -1) {
+                    activities[index] = {
+                        ...activities[index],
+                        name: document.getElementById('activityName').value,
+                        type: document.getElementById('activityType').value,
+                        startDate: document.getElementById('startDate').value,
+                        endDate: document.getElementById('endDate').value,
+                        location: document.getElementById('location').value,
+                        maxParticipants: document.getElementById('maxParticipants').value || null,
+                        description: document.getElementById('description').value,
+                        organizer: document.getElementById('organizer').value
+                    };
+                }
+            } else {
+                // 新增活動
+                const newActivity = {
+                    id: Date.now(),
+                    name: document.getElementById('activityName').value,
+                    type: document.getElementById('activityType').value,
+                    startDate: document.getElementById('startDate').value,
+                    endDate: document.getElementById('endDate').value,
+                    location: document.getElementById('location').value,
+                    maxParticipants: document.getElementById('maxParticipants').value || null,
+                    description: document.getElementById('description').value,
+                    organizer: document.getElementById('organizer').value,
+                    status: 'planned',
+                    participants: 0
+                };
+                activities.push(newActivity);
+            }
+            
+            localStorage.setItem('activities', JSON.stringify(activities));
+            closeActivityModal();
+            renderActivitiesTable();
+            updateStatistics();
+            renderCharts();
+        });
+
+        // 參與者表單提交處理
+        document.getElementById('participantForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!currentActivityId) return;
+            
+            const newParticipant = {
+                id: Date.now(),
+                activityId: currentActivityId,
+                name: document.getElementById('participantName').value,
+                phone: document.getElementById('participantPhone').value,
+                role: document.getElementById('participantRole').value
+            };
+            
+            participants.push(newParticipant);
+            localStorage.setItem('activityParticipants', JSON.stringify(participants));
+            
+            // 更新活動參與者數量
+            const activity = activities.find(a => a.id == currentActivityId);
+            if (activity) {
+                activity.participants = (activity.participants || 0) + 1;
+                localStorage.setItem('activities', JSON.stringify(activities));
+            }
+            
+            this.reset();
+            renderParticipantsList();
+            updateStatistics();
+            renderCharts();
+        });
+    </script>
+</body>
+</html>

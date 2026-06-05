@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>載入 A1 試用資料 · 義工排班</title>
+  <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <link rel="stylesheet" href="_shared.css">
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/smart_ministry_canonical_store.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../../js/data_trust_badge.js"></script>
+  <script src="tool.js"></script>
+</head>
+<body class="cm-tool-page">
+  <nav class="cm-back-bar">
+    <a class="cm-back-bar__link" href="index.html">← 義工智能排班</a>
+  </nav>
+  <header class="cm-tool-hero">
+    <h1>📥 一鍵載入 A1 demo 資料</h1>
+    <p>僅寫入本機 localStorage · 不會自動通知會友</p>
+  </header>
+  <main class="cm-tool-main">
+    <section class="cm-card">
+      <ul class="cm-steps" style="margin:0;">
+        <li><strong>3</strong> 位會友（901–903）</li>
+        <li><strong>2</strong> 個志工崗位（守門、週三禱告）</li>
+        <li><strong>2</strong> 筆排班（+7 天、+14 天）</li>
+        <li><strong>2</strong> 筆 CTV 建議（可 promote）</li>
+      </ul>
+      <p style="margin:12px 0 0;">
+        <button type="button" class="cm-btn cm-btn-primary" id="btnLoad">載入 A1 試用資料</button>
+      </p>
+      <pre id="out" class="cm-muted" style="margin-top:12px;font-size:11px;white-space:pre-wrap;background:#f8fafc;padding:10px;border-radius:8px;">待命…</pre>
+      <p style="margin-top:12px;">
+        <a href="dashboard.html" class="cm-btn cm-btn-success" style="text-decoration:none;display:inline-block;">📊 看儀表板</a>
+        <a href="list.html" class="cm-btn cm-btn-secondary" style="text-decoration:none;display:inline-block;margin-left:6px;">📋 排班清單</a>
+        <a href="../../../ai_tools/pages/crm_automation_console.html" target="_parent" class="cm-btn cm-btn-secondary" style="text-decoration:none;display:inline-block;margin-left:6px;">⚙️ 營運自動化</a>
+      </p>
+    </section>
+  </main>
+  <script>
+    document.getElementById('btnLoad').onclick = function () {
+      var out = document.getElementById('out');
+      try {
+        var r = VolunteerShiftTool.loadA1DemoData();
+        var b = VolunteerShiftTool.bridge();
+        var sum = b && b.getVolunteerShiftSummary ? b.getVolunteerShiftSummary(30) : {};
+        out.textContent = JSON.stringify({ load: r, summary: sum }, null, 2);
+      } catch (e) {
+        out.textContent = String(e.message || e);
+      }
+    };
+  </script>
+</body>
+</html>

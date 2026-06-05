@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>English Content Editor | Bible100 Translation System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f6f7fb;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #0b5fa5;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .section {
+      margin: 30px 0;
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 5px;
+      background: #fafafa;
+    }
+
+    .section h2 {
+      color: #333;
+      font-size: 18px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #0b5fa5;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 13px;
+      resize: vertical;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: bold;
+      margin-right: 10px;
+      margin-top: 10px;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: #0b5fa5;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #0a4d8a;
+    }
+
+    .btn-success {
+      background: #00b894;
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      background: #00a085;
+    }
+
+    .status {
+      padding: 10px 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+      display: none;
+    }
+
+    .status.show {
+      display: block;
+    }
+
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #0b5fa5;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="../../index.html" class="back-link">← Back to Home</a>
+    
+    <h1>📝 English Content Editor</h1>
+    <p class="subtitle">Edit English translations and add custom content for the English version</p>
+
+    <div id="status-message" class="status"></div>
+
+    <!-- Sidebar Content Editor -->
+    <div class="section">
+      <h2>Edit Sidebar Content</h2>
+      <p class="help-text">Edit the sidebar navigation text. Changes will override automatic translations.</p>
+      <textarea id="sidebar-content" placeholder="Enter sidebar content here..."></textarea>
+      <button class="btn btn-primary" onclick="saveSidebar()">💾 Save Sidebar</button>
+    </div>
+
+    <!-- Custom Content -->
+    <div class="section">
+      <h2>Add Custom Content</h2>
+      <p class="help-text">Add your own custom content that will appear in addition to translated content.</p>
+      <textarea id="custom-content" placeholder="Add your custom content here..."></textarea>
+      <button class="btn btn-success" onclick="saveCustom()">💾 Save Custom Content</button>
+    </div>
+
+    <!-- Translation Overrides -->
+    <div class="section">
+      <h2>Override Translations</h2>
+      <p class="help-text">Override specific translations. Format: "Chinese text" = "Your English translation"</p>
+      <textarea id="translation-overrides" placeholder='Example:
+"聖經百步四寶" = "Bible 100 Steps Four Treasures"
+"舊約歷史一百步" = "Old Testament History 100 Steps"'></textarea>
+      <button class="btn btn-primary" onclick="saveOverrides()">💾 Save Overrides</button>
+    </div>
+
+    <!-- Preview -->
+    <div class="section">
+      <h2>Preview</h2>
+      <button class="btn btn-success" onclick="preview()">👁️ Preview Changes</button>
+      <div id="preview-area" style="margin-top: 15px; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 5px; display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    // Load existing content
+    async function loadContent() {
+      try {
+        // Load sidebar content
+        const sidebarResponse = await fetch('local_translations.json');
+        if (sidebarResponse.ok) {
+          const data = await sidebarResponse.json();
+          if (data.sidebar) {
+            document.getElementById('sidebar-content').value = JSON.stringify(data.sidebar, null, 2);
+          }
+          if (data.overrides) {
+            const overridesText = Object.entries(data.overrides)
+              .map(([key, value]) => `"${key}" = "${value}"`)
+              .join('\n');
+            document.getElementById('translation-overrides').value = overridesText;
+          }
+        }
+
+        // Load custom content
+        const customResponse = await fetch('custom_content.json');
+        if (customResponse.ok) {
+          const customData = await customResponse.json();
+          document.getElementById('custom-content').value = JSON.stringify(customData, null, 2);
+        }
+      } catch (error) {
+        console.log('No existing content found, starting fresh');
+      }
+    }
+
+    // Save functions
+    async function saveSidebar() {
+      try {
+        const content = document.getElementById('sidebar-content').value;
+        const data = {
+          sidebar: JSON.parse(content),
+          updated_at: new Date().toISOString()
+        };
+        
+        await saveJSON('local_translations.json', data);
+        showStatus('success', 'Sidebar content saved successfully!');
+      } catch (error) {
+        showStatus('error', 'Error saving sidebar: ' + error.message);
+      }
+    }
+
+    async function saveCustom() {
+      try {
+        const content = document.getElementById('custom-content').value;
+        const data = JSON.parse(content);
+        data.updated_at = new Date().toISOString();
+        
+        await saveJSON('custom_content.json', data);
+        showStatus('success', 'Custom content saved successfully!');
+      } catch (error) {
+        showStatus('error', 'Error saving custom content: ' + error.message);
+      }
+    }
+
+    async function saveOverrides() {
+      try {
+        const overridesText = document.getElementById('translation-overrides').value;
+        const overrides = {};
+        
+        // Parse override format: "key" = "value"
+        const lines = overridesText.split('\n');
+        lines.forEach(line => {
+          const match = line.match(/"([^"]+)"\s*=\s*"([^"]+)"/);
+          if (match) {
+            overrides[match[1]] = match[2];
+          }
+        });
+        
+        const data = {
+          overrides,
+          updated_at: new Date().toISOString()
+        };
+        
+        await saveJSON('local_translations.json', data);
+        showStatus('success', 'Translation overrides saved successfully!');
+      } catch (error) {
+        showStatus('error', 'Error saving overrides: ' + error.message);
+      }
+    }
+
+    // Save JSON helper
+    async function saveJSON(filename, data) {
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Preview
+    function preview() {
+      const previewArea = document.getElementById('preview-area');
+      previewArea.style.display = 'block';
+      
+      const sidebar = document.getElementById('sidebar-content').value;
+      const custom = document.getElementById('custom-content').value;
+      
+      previewArea.innerHTML = `
+        <h3>Sidebar Preview:</h3>
+        <pre>${sidebar || 'No content'}</pre>
+        <h3>Custom Content Preview:</h3>
+        <pre>${custom || 'No content'}</pre>
+      `;
+    }
+
+    // Status message
+    function showStatus(type, message) {
+      const statusDiv = document.getElementById('status-message');
+      statusDiv.className = `status ${type} show`;
+      statusDiv.textContent = message;
+      setTimeout(() => {
+        statusDiv.classList.remove('show');
+      }, 5000);
+    }
+
+    // Load content on page load
+    window.addEventListener('DOMContentLoaded', loadContent);
+  </script>
+</body>
+</html>
+

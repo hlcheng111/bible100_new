@@ -1,0 +1,232 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自動化流程 · Automation Workflow | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">自動化流程管理</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">自動化流程</h3>
+                    <div id="workflowsList" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">流程統計</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">活躍流程</span>
+                            <span class="text-sm font-medium text-gray-900" id="activeWorkflows">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">今日執行</span>
+                            <span class="text-sm font-medium text-gray-900" id="todayExecutions">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">成功率</span>
+                            <span class="text-sm font-medium text-gray-900" id="successRate">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">快速操作</h3>
+                    <div class="space-y-3">
+                        <button onclick="runAllWorkflows()" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700">
+                            <i class="fas fa-play mr-2"></i>執行所有流程
+                        </button>
+                        <button onclick="pauseAllWorkflows()" class="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700">
+                            <i class="fas fa-pause mr-2"></i>暫停所有流程
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../../js/church_data_bridge_phase1.js"></script>
+    <script src="../../../js/persistence_provider.js"></script>
+    <script>
+        let workflows = [];
+        let executionCount = 0;
+        let queueItems = [];
+        let observerEvents = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadWorkflows();
+            updateStats();
+        });
+
+        function loadWorkflows() {
+            const bridge = getBridgeSafe();
+            queueItems = bridge ? bridge.getQueueSnapshot(50) : [];
+            observerEvents = bridge ? bridge.getRecentObserverEvents(50) : [];
+
+            const workflowMap = {};
+            queueItems.forEach(function(item) {
+                const key = item && item.type ? item.type : 'unknown';
+                if (!workflowMap[key]) {
+                    workflowMap[key] = {
+                        id: key,
+                        name: mapWorkflowName(key),
+                        type: mapWorkflowType(key),
+                        status: 'active',
+                        description: mapWorkflowDescription(key),
+                        pending: 0
+                    };
+                }
+                workflowMap[key].pending += 1;
+            });
+
+            if (Object.keys(workflowMap).length === 0) {
+                workflows = [
+                    { id: 'update_member_profile', name: '會員檔案同步', type: 'sync', status: 'active', description: 'Bridge 同步會員資料到後端', pending: 0 },
+                    { id: 'trigger_workflow', name: '事件工作流觸發', type: 'automation', status: 'active', description: 'Bridge 事件觸發與回補流程', pending: 0 }
+                ];
+            } else {
+                workflows = Object.keys(workflowMap).map(function(k) { return workflowMap[k]; });
+            }
+            renderWorkflows();
+        }
+
+        function getBridgeSafe() {
+            try {
+                if (window.ChurchDataBridgePhase1 && typeof window.ChurchDataBridgePhase1.getInstance === 'function') {
+                    return window.ChurchDataBridgePhase1.getInstance();
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        function mapWorkflowName(type) {
+            if (type === 'update_member_profile') return '會員檔案同步';
+            if (type === 'trigger_workflow') return '事件工作流觸發';
+            return '流程：' + String(type);
+        }
+
+        function mapWorkflowType(type) {
+            if (type === 'update_member_profile') return 'sync';
+            if (type === 'trigger_workflow') return 'automation';
+            return 'automation';
+        }
+
+        function mapWorkflowDescription(type) {
+            if (type === 'update_member_profile') return '將會員資料同步到後端或待同步佇列';
+            if (type === 'trigger_workflow') return '觸發事件工作流（例如問卷、訓練完成）';
+            return '流程來源：' + String(type);
+        }
+
+        function renderWorkflows() {
+            const container = document.getElementById('workflowsList');
+            container.innerHTML = workflows.map(workflow => `
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(workflow.status)}">
+                                    ${getStatusName(workflow.status)}
+                                </span>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ${getTypeBadgeClass(workflow.type)}">
+                                    ${getTypeName(workflow.type)}
+                                </span>
+                            </div>
+                            <h4 class="font-semibold text-gray-900">${workflow.name}</h4>
+                            <p class="text-sm text-gray-600">${workflow.description}</p>
+                            <p class="text-xs text-gray-500 mt-1">待處理佇列：${workflow.pending || 0}</p>
+                        </div>
+                        <button onclick="toggleWorkflow('${workflow.id}')" 
+                                class="px-3 py-1 ${workflow.status === 'active' ? 'bg-yellow-600' : 'bg-green-600'} text-white text-xs rounded">
+                            ${workflow.status === 'active' ? '暫停' : '啟動'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getStatusBadgeClass(status) {
+            return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+        }
+
+        function getTypeBadgeClass(type) {
+            const classes = {
+                'reminder': 'bg-blue-100 text-blue-800',
+                'report': 'bg-purple-100 text-purple-800'
+            };
+            return classes[type] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getStatusName(status) {
+            return status === 'active' ? '運行中' : '已暫停';
+        }
+
+        function getTypeName(type) {
+            const names = {
+                'reminder': '提醒通知',
+                'report': '報表生成'
+                , 'sync': '資料同步'
+                , 'automation': '事件自動化'
+            };
+            return names[type] || type;
+        }
+
+        function toggleWorkflow(id) {
+            const workflow = workflows.find(w => w.id === id);
+            if (workflow) {
+                workflow.status = workflow.status === 'active' ? 'inactive' : 'active';
+                renderWorkflows();
+                updateStats();
+            }
+        }
+
+        function runAllWorkflows() {
+            const activeWorkflows = workflows.filter(w => w.status === 'active');
+            if (activeWorkflows.length === 0) {
+                alert('沒有活躍的流程可以執行');
+                return;
+            }
+            const bridge = getBridgeSafe();
+            if (!bridge || typeof bridge.flushQueue !== 'function') {
+                alert('Bridge 尚未啟用，無法執行實際流程。');
+                return;
+            }
+            Promise.resolve(bridge.flushQueue()).then(function(res) {
+                loadWorkflows();
+                executionCount += Number((res && res.processed) || 0);
+                updateStats();
+                const remain = Number((res && res.remain) || 0);
+                alert(`流程執行完成：處理 ${Number((res && res.processed) || 0)} 筆，剩餘 ${remain} 筆。`);
+            }).catch(function(err) {
+                alert('執行失敗：' + (err && err.message ? err.message : err));
+            });
+        }
+
+        function pauseAllWorkflows() {
+            workflows.forEach(w => w.status = 'inactive');
+            renderWorkflows();
+            updateStats();
+            alert('已暫停所有流程');
+        }
+
+        function updateStats() {
+            const activeWorkflows = workflows.filter(w => w.status === 'active').length;
+            const queueTotal = queueItems.length;
+            const successEvents = observerEvents.filter(e => e && e.level === 'success').length;
+            const errorEvents = observerEvents.filter(e => e && e.level === 'error').length;
+            const totalEvents = successEvents + errorEvents;
+            const successRate = totalEvents > 0 ? Math.round((successEvents / totalEvents) * 100) : 100;
+            document.getElementById('activeWorkflows').textContent = activeWorkflows;
+            document.getElementById('todayExecutions').textContent = executionCount + queueTotal;
+            document.getElementById('successRate').textContent = String(successRate) + '%';
+        }
+    </script>
+</body>
+</html>

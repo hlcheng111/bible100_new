@@ -1,0 +1,427 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>团契管理系统 - 专业版 · Fellowship Management | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+        .header { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 15px 20px; }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
+        .tab.active { background: white; color: #3498db; font-weight: 600; }
+        .container { max-width: 1800px; margin: 0 auto; padding: 15px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; border-left: 4px solid #3498db; padding-left: 10px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 15px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #3498db; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; }
+        .stat-label { font-size: 10px; color: #7f8c8d; margin-top: 5px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+        .tag-active { background: #d4edda; color: #155724; }
+        .tag-inactive { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
+        <h1>👥 团契管理系统</h1>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 总览</button>
+            <button class="tab" onclick="switchTab('fellowships')">👥 团契列表</button>
+            <button class="tab" onclick="switchTab('activities')">📅 活动管理</button>
+            <button class="tab" onclick="switchTab('members')">👤 成员管理</button>
+            <button class="tab" onclick="switchTab('attendance')">📋 出席追踪</button>
+            <button class="tab" onclick="switchTab('reports')">📈 统计报表</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="tab-overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-num" id="s1">0</div><div class="stat-label">团契总数</div></div>
+                <div class="stat-card"><div class="stat-num" id="s2">0</div><div class="stat-label">总成员</div></div>
+                <div class="stat-card"><div class="stat-num" id="s3">0</div><div class="stat-label">本月活动</div></div>
+                <div class="stat-card"><div class="stat-num" id="s4">0%</div><div class="stat-label">平均出席率</div></div>
+                <div class="stat-card"><div class="stat-num" id="s5">0</div><div class="stat-label">活跃团契</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 团契规模分布</div><canvas id="sizeChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 活动参与趋势</div><canvas id="trendChart"></canvas></div>
+            </div>
+        </div>
+        
+        <div id="tab-fellowships" class="tab-content">
+            <div class="card">
+                <div class="card-title">👥 团契列表</div>
+                <button class="btn btn-primary" onclick="showAddFellowshipModal()">➕ 新增团契</button>
+                <button class="btn btn-success" onclick="exportFellowships()">📤 导出</button>
+                <table id="fellowshipsTable"><thead><tr><th>团契名称</th><th>负责人</th><th>成员数</th><th>聚会时间</th><th>地点</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table>
+            </div>
+        </div>
+        
+        <div id="tab-activities" class="tab-content">
+            <div class="card">
+                <div class="card-title">📅 活动管理</div>
+                <button class="btn btn-primary" onclick="showAddActivityModal()">➕ 新增活动</button>
+                <button class="btn btn-success" onclick="exportActivities()">📤 导出</button>
+                <table id="activitiesTable"><thead><tr><th>活动名称</th><th>团契</th><th>日期时间</th><th>地点</th><th>预计/实际</th><th>操作</th></tr></thead><tbody></tbody></table>
+            </div>
+        </div>
+        
+        <div id="tab-members" class="tab-content">
+            <div class="card">
+                <div class="card-title">👤 成员管理</div>
+                <button class="btn btn-primary" onclick="showAddMemberModal()">➕ 新增成员</button>
+                <button class="btn btn-success" onclick="exportMembers()">📤 导出</button>
+                <table id="membersTable"><thead><tr><th>姓名</th><th>所属团契</th><th>联系电话</th><th>加入日期</th><th>出席率</th><th>操作</th></tr></thead><tbody></tbody></table>
+            </div>
+        </div>
+        
+        <div id="tab-attendance" class="tab-content">
+            <div class="card">
+                <div class="card-title">📋 出席记录</div>
+                <button class="btn btn-primary" onclick="showAddAttendanceModal()">➕ 记录出席</button>
+                <table id="attendanceTable"><thead><tr><th>日期</th><th>团契</th><th>活动</th><th>出席人数</th><th>出席率</th></tr></thead><tbody></tbody></table>
+            </div>
+        </div>
+        
+        <div id="tab-reports" class="tab-content">
+            <div class="card">
+                <div class="card-title">📈 统计报表</div>
+                <button class="btn btn-primary" onclick="generateReport('month')">📅 月度报表</button>
+                <button class="btn btn-success" onclick="generateReport('quarter')">📊 季度报表</button>
+                <canvas id="reportChart" style="margin-top:20px;"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+    
+    <script>
+        let data = { fellowships: [], activities: [], members: [], attendance: [] };
+        let charts = {};
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('fellowshipData');
+            if (saved) data = JSON.parse(saved);
+            if (data.fellowships.length === 0) loadDemo();
+            else renderAll();
+        });
+        
+        function loadDemo() {
+            data.fellowships = [
+                {id:1, name:'青年团契', leader:'李传道', members:35, time:'周五19:30', location:'副堂', status:'active'},
+                {id:2, name:'夫妇团契', leader:'王长老', members:28, time:'周六15:00', location:'会议室', status:'active'},
+                {id:3, name:'长者团契', leader:'张姊妹', members:42, time:'周三10:00', location:'主堂', status:'active'}
+            ];
+            data.activities = [
+                {id:1, name:'青年敬拜夜', fellowship:'青年团契', datetime:'2025-10-18 19:30', location:'副堂', expected:35, actual:32},
+                {id:2, name:'夫妇退修会', fellowship:'夫妇团契', datetime:'2025-10-25 全天', location:'营地', expected:28, actual:0},
+                {id:3, name:'长者郊游', fellowship:'长者团契', datetime:'2025-11-01 08:00', location:'公园', expected:40, actual:0}
+            ];
+            data.members = [
+                {id:1, name:'小张', fellowship:'青年团契', phone:'0912-111', joinDate:'2024-01-15', attendance:85},
+                {id:2, name:'小李', fellowship:'青年团契', phone:'0912-112', joinDate:'2024-03-20', attendance:78},
+                {id:3, name:'老王', fellowship:'夫妇团契', phone:'0912-113', joinDate:'2023-05-10', attendance:92}
+            ];
+            data.attendance = [
+                {id:1, date:'2025-10-11', fellowship:'青年团契', activity:'周五聚会', count:32, rate:91},
+                {id:2, date:'2025-10-09', fellowship:'长者团契', activity:'周三聚会', count:38, rate:90}
+            ];
+            localStorage.setItem('fellowshipData', JSON.stringify(data));
+            renderAll();
+        }
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+            if (tab === 'overview') renderOverview();
+        }
+        
+        function renderAll() {
+            renderOverview();
+            renderFellowships();
+            renderActivities();
+            renderMembers();
+            renderAttendance();
+        }
+        
+        function renderOverview() {
+            document.getElementById('s1').textContent = data.fellowships.length;
+            document.getElementById('s2').textContent = data.members.length;
+            const thisMonth = new Date().getMonth();
+            document.getElementById('s3').textContent = data.activities.filter(a => new Date(a.datetime).getMonth() === thisMonth).length;
+            const avgAtt = data.members.length > 0 ? Math.round(data.members.reduce((sum,m)=>sum+m.attendance,0)/data.members.length) : 0;
+            document.getElementById('s4').textContent = avgAtt + '%';
+            document.getElementById('s5').textContent = data.fellowships.filter(f=>f.status==='active').length;
+            
+            const ctx1 = document.getElementById('sizeChart');
+            if (charts.sizeChart) charts.sizeChart.destroy();
+            charts.sizeChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: data.fellowships.map(f => f.name),
+                    datasets: [{
+                        label: '成员数',
+                        data: data.fellowships.map(f => f.members),
+                        backgroundColor: 'rgba(52,152,219,0.7)'
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+        
+        function renderFellowships() {
+            document.querySelector('#fellowshipsTable tbody').innerHTML = data.fellowships.map(f => `
+                <tr>
+                    <td>${f.name}</td>
+                    <td>${f.leader}</td>
+                    <td>${f.members}人</td>
+                    <td>${f.time}</td>
+                    <td>${f.location}</td>
+                    <td><span class="tag tag-${f.status}">${f.status==='active'?'活跃':'休眠'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editFellowship(${f.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteFellowship(${f.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderActivities() {
+            document.querySelector('#activitiesTable tbody').innerHTML = data.activities.map(a => `
+                <tr>
+                    <td>${a.name}</td>
+                    <td>${a.fellowship}</td>
+                    <td>${a.datetime}</td>
+                    <td>${a.location}</td>
+                    <td>${a.expected}/${a.actual||'待定'}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteActivity(${a.id})">删除</button></td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderMembers() {
+            document.querySelector('#membersTable tbody').innerHTML = data.members.map(m => `
+                <tr>
+                    <td>${m.name}</td>
+                    <td>${m.fellowship}</td>
+                    <td>${m.phone}</td>
+                    <td>${m.joinDate}</td>
+                    <td>${m.attendance}%</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteMember(${m.id})">删除</button></td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderAttendance() {
+            document.querySelector('#attendanceTable tbody').innerHTML = data.attendance.map(a => `
+                <tr><td>${a.date}</td><td>${a.fellowship}</td><td>${a.activity}</td><td>${a.count}人</td><td>${a.rate}%</td></tr>
+            `).join('');
+        }
+        
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;font-weight:600;margin-bottom:20px;">${title}</div>${content}`;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() { document.getElementById('modal').classList.remove('active'); }
+        
+        function showAddFellowshipModal() {
+            showModal('➕ 新增团契', `
+                <div class="form-group"><label class="form-label">团契名称</label><input type="text" id="fname" class="form-input"></div>
+                <div class="form-group"><label class="form-label">负责人</label><input type="text" id="fleader" class="form-input"></div>
+                <div class="form-group"><label class="form-label">成员数</label><input type="number" id="fmembers" class="form-input" value="20"></div>
+                <div class="form-group"><label class="form-label">聚会时间</label><input type="text" id="ftime" class="form-input" placeholder="例如：周五19:30"></div>
+                <div class="form-group"><label class="form-label">地点</label><input type="text" id="flocation" class="form-input"></div>
+                <button class="btn btn-primary" onclick="addFellowship()">确定</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addFellowship() {
+            const f = {
+                id: Date.now(),
+                name: document.getElementById('fname').value,
+                leader: document.getElementById('fleader').value,
+                members: parseInt(document.getElementById('fmembers').value),
+                time: document.getElementById('ftime').value,
+                location: document.getElementById('flocation').value,
+                status: 'active'
+            };
+            if (!f.name) return alert('请填写团契名称');
+            data.fellowships.push(f);
+            localStorage.setItem('fellowshipData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 已添加！');
+        }
+        
+        function deleteFellowship(id) {
+            if (confirm('确定删除？')) {
+                data.fellowships = data.fellowships.filter(f => f.id !== id);
+                localStorage.setItem('fellowshipData', JSON.stringify(data));
+                renderAll();
+            }
+        }
+        
+        function showAddActivityModal() {
+            showModal('➕ 新增活动', `
+                <div class="form-group"><label class="form-label">活动名称</label><input type="text" id="aname" class="form-input"></div>
+                <div class="form-group"><label class="form-label">团契</label><select id="afellowship" class="form-select">${data.fellowships.map(f=>`<option>${f.name}</option>`).join('')}</select></div>
+                <div class="form-group"><label class="form-label">日期时间</label><input type="datetime-local" id="adatetime" class="form-input"></div>
+                <div class="form-group"><label class="form-label">地点</label><input type="text" id="alocation" class="form-input"></div>
+                <div class="form-group"><label class="form-label">预计人数</label><input type="number" id="aexpected" class="form-input" value="30"></div>
+                <button class="btn btn-primary" onclick="addActivity()">确定</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addActivity() {
+            const a = {
+                id: Date.now(),
+                name: document.getElementById('aname').value,
+                fellowship: document.getElementById('afellowship').value,
+                datetime: document.getElementById('adatetime').value,
+                location: document.getElementById('alocation').value,
+                expected: parseInt(document.getElementById('aexpected').value),
+                actual: 0
+            };
+            if (!a.name) return alert('请填写活动名称');
+            data.activities.push(a);
+            localStorage.setItem('fellowshipData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 已添加！');
+        }
+        
+        function deleteActivity(id) {
+            if (confirm('确定删除？')) {
+                data.activities = data.activities.filter(a => a.id !== id);
+                localStorage.setItem('fellowshipData', JSON.stringify(data));
+                renderAll();
+            }
+        }
+        
+        function showAddMemberModal() {
+            showModal('➕ 新增成员', `
+                <div class="form-group"><label class="form-label">姓名</label><input type="text" id="mname" class="form-input"></div>
+                <div class="form-group"><label class="form-label">团契</label><select id="mfellowship" class="form-select">${data.fellowships.map(f=>`<option>${f.name}</option>`).join('')}</select></div>
+                <div class="form-group"><label class="form-label">电话</label><input type="text" id="mphone" class="form-input"></div>
+                <div class="form-group"><label class="form-label">加入日期</label><input type="date" id="mjoinDate" class="form-input"></div>
+                <button class="btn btn-primary" onclick="addMember()">确定</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addMember() {
+            const m = {
+                id: Date.now(),
+                name: document.getElementById('mname').value,
+                fellowship: document.getElementById('mfellowship').value,
+                phone: document.getElementById('mphone').value,
+                joinDate: document.getElementById('mjoinDate').value,
+                attendance: 80
+            };
+            if (!m.name) return alert('请填写姓名');
+            data.members.push(m);
+            localStorage.setItem('fellowshipData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 已添加！');
+        }
+        
+        function deleteMember(id) {
+            if (confirm('确定删除？')) {
+                data.members = data.members.filter(m => m.id !== id);
+                localStorage.setItem('fellowshipData', JSON.stringify(data));
+                renderAll();
+            }
+        }
+        
+        function showAddAttendanceModal() {
+            showModal('➕ 记录出席', `
+                <div class="form-group"><label class="form-label">日期</label><input type="date" id="attDate" class="form-input"></div>
+                <div class="form-group"><label class="form-label">团契</label><select id="attFellowship" class="form-select">${data.fellowships.map(f=>`<option>${f.name}</option>`).join('')}</select></div>
+                <div class="form-group"><label class="form-label">活动</label><input type="text" id="attActivity" class="form-input"></div>
+                <div class="form-group"><label class="form-label">出席人数</label><input type="number" id="attCount" class="form-input"></div>
+                <button class="btn btn-primary" onclick="addAttendance()">确定</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addAttendance() {
+            const fellowship = data.fellowships.find(f => f.name === document.getElementById('attFellowship').value);
+            const count = parseInt(document.getElementById('attCount').value);
+            const rate = fellowship ? Math.round((count / fellowship.members) * 100) : 0;
+            
+            const att = {
+                id: Date.now(),
+                date: document.getElementById('attDate').value,
+                fellowship: document.getElementById('attFellowship').value,
+                activity: document.getElementById('attActivity').value,
+                count: count,
+                rate: rate
+            };
+            data.attendance.push(att);
+            localStorage.setItem('fellowshipData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 已记录！');
+        }
+        
+        function generateReport(type) {
+            alert(`📊 ${type==='month'?'月度':'季度'}团契报表已生成！`);
+        }
+        
+        function exportFellowships() {
+            const csv = '团契名称,负责人,成员数,聚会时间,地点,状态\n' + 
+                data.fellowships.map(f => `${f.name},${f.leader},${f.members},${f.time},${f.location},${f.status}`).join('\n');
+            download(csv, '团契列表.csv');
+        }
+        
+        function exportActivities() {
+            const csv = '活动名称,团契,日期时间,地点,预计人数,实际人数\n' + 
+                data.activities.map(a => `${a.name},${a.fellowship},${a.datetime},${a.location},${a.expected},${a.actual}`).join('\n');
+            download(csv, '团契活动.csv');
+        }
+        
+        function exportMembers() {
+            const csv = '姓名,团契,电话,加入日期,出席率\n' + 
+                data.members.map(m => `${m.name},${m.fellowship},${m.phone},${m.joinDate},${m.attendance}%`).join('\n');
+            download(csv, '团契成员.csv');
+        }
+        
+        function download(csv, filename) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'}));
+            a.download = filename;
+            a.click();
+            alert('✅ 已导出！');
+        }
+    </script>
+</body>
+</html>

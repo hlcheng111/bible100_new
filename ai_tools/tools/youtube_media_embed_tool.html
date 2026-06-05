@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube媒體嵌入工具 - 快速嵌入與時間戳播放列表</title>
+    <style>
+        body {
+            font-family: Arial, SimSun, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #FF6B6B, #4ECDC4);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .header p {
+            margin: 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .nav {
+            background: #f8f9fa;
+            padding: 15px 30px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .nav a {
+            color: #666;
+            text-decoration: none;
+            margin-right: 20px;
+            font-size: 14px;
+        }
+        .nav a:hover {
+            color: #333;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+        .section h2 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 1.8em;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .input-group {
+            margin: 20px 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        .btn-secondary {
+            background: #2196F3;
+        }
+        .btn-secondary:hover {
+            background: #1976D2;
+        }
+        .btn-danger {
+            background: #f44336;
+        }
+        .btn-danger:hover {
+            background: #da190b;
+        }
+        .btn-warning {
+            background: #ff9800;
+        }
+        .btn-warning:hover {
+            background: #e68900;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 20px;
+            background: #e8f5e8;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            display: none;
+        }
+        .result textarea {
+            width: 100%;
+            height: 120px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .preview {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            display: none;
+        }
+        .timestamp-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+        .timestamp-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        .timestamp-item:hover {
+            background: #f5f5f5;
+        }
+        .timestamp-item:last-child {
+            border-bottom: none;
+        }
+        .timestamp-time {
+            font-weight: bold;
+            color: #333;
+            min-width: 80px;
+            margin-right: 15px;
+        }
+        .timestamp-title {
+            flex: 1;
+            color: #666;
+        }
+        .timestamp-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .player-container {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #000;
+            border-radius: 8px;
+        }
+        .player-container iframe {
+            border-radius: 8px;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+  <script src="../assets/js/lab-frame-nav.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 YouTube媒體嵌入工具</h1>
+            <p>快速嵌入與時間戳播放列表生成器</p>
+        </div>
+        
+        <div class="nav">
+            <a href="../../index.html">← 返回主站（多語）</a>
+            <a href="../../index.html">← 返回中文首頁</a>
+            <a href="../index.html">← 返回 AI 工具目錄</a>
+        </div>
+        
+        <div class="content">
+            <!-- YouTube快速嵌入 -->
+            <div class="section">
+                <h2>🎬 YouTube快速嵌入 YouTube Quick Embed</h2>
+                <div class="input-group">
+                    <label for="youtubeUrl">輸入YouTube視頻鏈接：</label>
+                    <input type="text" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=nI2CWEHustE 或 https://youtu.be/nI2CWEHustE">
+                </div>
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="autoplay"> 自動播放
+                    </label>
+                    <label>
+                        <input type="checkbox" id="responsive" checked> 響應式設計
+                    </label>
+                    <label>
+                        <input type="checkbox" id="controls" checked> 顯示控制欄
+                    </label>
+                </div>
+                <button class="btn" onclick="generateQuickEmbed()">生成嵌入代碼</button>
+                <button class="btn btn-secondary" onclick="previewEmbed()">預覽效果</button>
+                
+                <div id="quickEmbedResult" class="result">
+                    <h3>生成的嵌入代碼：</h3>
+                    <textarea id="quickEmbedCode" readonly></textarea>
+                    <br>
+                    <button class="btn" onclick="copyQuickCode()">📋 複製代碼</button>
+                    <button class="btn btn-warning" onclick="downloadCode()">💾 下載代碼</button>
+                </div>
+                
+                <div id="previewArea" class="preview">
+                    <h3>預覽效果：</h3>
+                    <div id="previewContent"></div>
+                </div>
+            </div>
+            
+            <!-- 時間戳播放列表 -->
+            <div class="section">
+                <h2>⏰ 時間戳播放列表 Timestamp Playlist</h2>
+                <div class="grid">
+                    <div>
+                        <div class="input-group">
+                            <label for="videoId">YouTube視頻ID、鏈接或播放列表：</label>
+                            <input type="text" id="videoId" placeholder="nI2CWEHustE 或完整URL 或播放列表鏈接">
+                        </div>
+                        <button class="btn" onclick="loadSampleTimestamps()">載入示例時間戳</button>
+                        <button class="btn btn-secondary" onclick="showTimestampEditor()">編輯時間戳</button>
+                        <button class="btn btn-warning" onclick="generateTimestampPlaylist()">生成播放列表</button>
+                        <button class="btn btn-danger" onclick="extractFromPlaylist()">從播放列表提取</button>
+                    </div>
+                    <div>
+                        <div class="input-group">
+                            <label for="customTimestamps">自定義時間戳（每行一個，格式：時間 歌曲名）：</label>
+                            <textarea id="customTimestamps" rows="8" placeholder="0:00:00 Amazing Grace
+0:02:12 He Leadeth Me
+0:05:31 Great is Thy Faithfulness
+0:09:05 It is Well
+0:12:30 How Great Thou Art
+0:16:45 Blessed Assurance"></textarea>
+                        </div>
+                        <button class="btn" onclick="saveCustomTimestamps()">保存時間戳</button>
+                        <button class="btn btn-danger" onclick="clearTimestamps()">清除時間戳</button>
+                    </div>
+                </div>
+                
+                <div id="timestampResult" class="result">
+                    <h3>時間戳播放列表：</h3>
+                    <div id="timestampList" class="timestamp-list"></div>
+                    <br>
+                    <button class="btn" onclick="copyTimestampCode()">📋 複製播放列表代碼</button>
+                    <button class="btn btn-warning" onclick="downloadTimestampCode()">💾 下載播放列表</button>
+                </div>
+                
+                <div id="playerArea" class="player-container" style="display: none;">
+                    <h3 style="color: white; margin-bottom: 15px;">🎵 內嵌播放器</h3>
+                    <iframe id="mainPlayer" width="560" height="315" src="" frameborder="0" allowfullscreen></iframe>
+                    <p id="playerMessage" style="color: #ccc; margin-top: 10px;">點擊上方時間戳播放按鈕，播放器將在此處顯示</p>
+                </div>
+            </div>
+            
+            <!-- 使用說明 -->
+            <div class="section">
+                <h2>💡 使用說明 Usage Instructions</h2>
+                <div class="grid">
+                    <div>
+                        <h3>🎬 快速嵌入功能</h3>
+                        <ol>
+                            <li>在"YouTube視頻鏈接"框中輸入完整的YouTube URL</li>
+                            <li>選擇需要的選項（自動播放、響應式設計、控制欄）</li>
+                            <li>點擊"生成嵌入代碼"按鈕</li>
+                            <li>複製生成的代碼到您的網頁中</li>
+                        </ol>
+                    </div>
+                    <div>
+                        <h3>⏰ 時間戳播放列表功能</h3>
+                        <ol>
+                            <li>輸入YouTube視頻ID或完整URL</li>
+                            <li>使用示例時間戳或自定義時間戳列表</li>
+                            <li>點擊"生成播放列表"按鈕</li>
+                            <li>複製播放列表代碼到您的網頁中</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                    <h3>🔧 實用技巧</h3>
+                    <ul>
+                        <li><strong>響應式設計：</strong> 選擇響應式選項可以讓視頻在不同設備上自動調整大小</li>
+                        <li><strong>時間戳格式：</strong> 使用 HH:MM:SS 格式，例如 0:02:30 表示2分30秒</li>
+                        <li><strong>批量處理：</strong> 可以一次性輸入多個時間戳，每行一個</li>
+                        <li><strong>預覽功能：</strong> 使用預覽功能可以測試嵌入效果</li>
+                        <li><strong>下載功能：</strong> 可以下載生成的代碼文件</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局變量
+        let currentVideoId = '';
+        let customTimestamps = [];
+        
+        // 頁面加載時初始化
+        window.onload = function() {
+            console.log('YouTube媒體嵌入工具已初始化');
+            loadSampleTimestamps();
+        };
+        
+        // 提取YouTube視頻ID
+        function extractVideoId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+        
+        // 生成快速嵌入代碼
+        function generateQuickEmbed() {
+            const url = document.getElementById('youtubeUrl').value;
+            const videoId = extractVideoId(url) || url;
+            
+            if (!videoId) {
+                showStatus('請輸入有效的YouTube鏈接！', 'error');
+                return;
+            }
+            
+            const autoplay = document.getElementById('autoplay').checked ? '&autoplay=1' : '';
+            const controls = document.getElementById('controls').checked ? '' : '&controls=0';
+            const responsive = document.getElementById('responsive').checked;
+            
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0${autoplay}${controls}`;
+            
+            let code;
+            if (responsive) {
+                code = `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
+                        <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" 
+                        src="${embedUrl}" frameborder="0" allowfullscreen></iframe>
+                        </div>`;
+            } else {
+                code = `<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`;
+            }
+            
+            document.getElementById('quickEmbedCode').value = code;
+            document.getElementById('quickEmbedResult').style.display = 'block';
+            showStatus('嵌入代碼已生成！', 'success');
+        }
+        
+        // 預覽嵌入效果
+        function previewEmbed() {
+            const code = document.getElementById('quickEmbedCode').value;
+            if (!code) {
+                showStatus('請先生成嵌入代碼！', 'error');
+                return;
+            }
+            
+            document.getElementById('previewContent').innerHTML = code;
+            document.getElementById('previewArea').style.display = 'block';
+            showStatus('預覽已顯示！', 'info');
+        }
+        
+        // 複製快速嵌入代碼
+        function copyQuickCode() {
+            const code = document.getElementById('quickEmbedCode').value;
+            copyToClipboard(code);
+            showStatus('代碼已複製到剪貼板！', 'success');
+        }
+        
+        // 下載代碼
+        function downloadCode() {
+            const code = document.getElementById('quickEmbedCode').value;
+            const blob = new Blob([code], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'youtube_embed_code.html';
+            a.click();
+            URL.revokeObjectURL(url);
+            showStatus('代碼文件已下載！', 'success');
+        }
+        
+        // 載入示例時間戳
+        function loadSampleTimestamps() {
+            const sampleText = `0:00:00 Amazing Grace
+0:02:12 He Leadeth Me
+0:05:31 Great is Thy Faithfulness
+0:09:05 It is Well
+0:12:30 How Great Thou Art
+0:16:45 Blessed Assurance
+0:20:15 In the Garden
+0:24:30 What a Friend We Have in Jesus
+0:28:45 The Old Rugged Cross
+0:33:20 Just As I Am`;
+            
+            document.getElementById('customTimestamps').value = sampleText;
+            showStatus('示例時間戳已載入！', 'info');
+        }
+        
+        // 顯示時間戳編輯器
+        function showTimestampEditor() {
+            const editor = document.getElementById('customTimestamps');
+            editor.style.display = editor.style.display === 'none' ? 'block' : 'block';
+            editor.focus();
+            showStatus('時間戳編輯器已顯示！', 'info');
+        }
+        
+        // 保存自定義時間戳
+        function saveCustomTimestamps() {
+            const text = document.getElementById('customTimestamps').value;
+            const lines = text.split('
+');
+            
+            customTimestamps = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line) {
+                    const parts = line.split(' ');
+                    if (parts.length >= 2) {
+                        const time = parts[0];
+                        const title = parts.slice(1).join(' ');
+                        
+                        if (isValidTimeFormat(time)) {
+                            customTimestamps.push({ time: time, title: title });
+                        }
+                    }
+                }
+            }
+            
+            if (customTimestamps.length === 0) {
+                showStatus('請輸入有效的時間戳格式！格式：時間 歌曲名', 'error');
+                return;
+            }
+            
+            showStatus(`已保存 ${customTimestamps.length} 首歌曲的時間戳！`, 'success');
+        }
+        
+        // 清除時間戳
+        function clearTimestamps() {
+            customTimestamps = [];
+            document.getElementById('customTimestamps').value = '';
+            document.getElementById('timestampResult').style.display = 'none';
+            showStatus('時間戳已清除！', 'info');
+        }
+        
+        // 驗證時間格式
+        function isValidTimeFormat(time) {
+            const timeRegex = /^(\d{1,2}):(\d{2}):(\d{2})$/;
+            return timeRegex.test(time);
+        }
+        
+        // 生成時間戳播放列表
+        function generateTimestampPlaylist() {
+            const input = document.getElementById('videoId').value;
+            const videoId = extractVideoId(input) || input;
+            
+            if (!videoId) {
+                showStatus('請輸入有效的YouTube視頻ID或鏈接！', 'error');
+                return;
+            }
+            
+            currentVideoId = videoId;
+            
+            // 檢查是否為播放列表鏈接
+            if (input.includes('list=')) {
+                showStatus('檢測到播放列表鏈接！正在嘗試提取播放列表信息...', 'info');
+                extractPlaylistInfo(input);
+                return;
+            }
+            
+            // 使用自定義時間戳或預設時間戳
+            const timestamps = customTimestamps.length > 0 ? customTimestamps : getDefaultTimestamps();
+            
+            generateTimestampHTML(videoId, timestamps);
+            showStatus(`播放列表已生成！包含 ${timestamps.length} 首歌曲`, 'success');
+        }
+        
+        // 提取播放列表信息
+        function extractPlaylistInfo(url) {
+            // 提取播放列表ID
+            const listMatch = url.match(/[?&]list=([^&]+)/);
+            if (!listMatch) {
+                showStatus('無法提取播放列表ID！', 'error');
+                return;
+            }
+            
+            const playlistId = listMatch[1];
+            showStatus(`播放列表ID: ${playlistId}`, 'info');
+            
+            // 由於無法直接獲取播放列表的詳細信息，我們提供一個解決方案
+            showPlaylistSolution(playlistId);
+        }
+        
+        // 顯示播放列表解決方案
+        function showPlaylistSolution(playlistId) {
+            const solution = `
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                    <h4 style="color: #856404; margin: 0 0 10px 0;">🎵 YouTube播放列表解決方案</h4>
+                    <p style="margin: 5px 0; color: #856404;">
+                        <strong>播放列表ID:</strong> ${playlistId}
+                    </p>
+                    <p style="margin: 5px 0; color: #856404;">
+                        <strong>說明:</strong> 由於YouTube API限制，無法直接獲取播放列表中的時間戳信息。
+                    </p>
+                    <p style="margin: 5px 0; color: #856404;">
+                        <strong>解決方案:</strong>
+                    </p>
+                    <ol style="margin: 5px 0; color: #856404;">
+                        <li>手動複製播放列表中的歌曲名稱和時間戳</li>
+                        <li>在下方"自定義時間戳"區域輸入</li>
+                        <li>或者使用YouTube Data API獲取詳細信息</li>
+                    </ol>
+                    <button class="btn btn-warning" onclick="openPlaylistInNewTab('${playlistId}')">在新標籤頁打開播放列表</button>
+                </div>
+            `;
+            
+            document.getElementById('timestampResult').innerHTML = solution;
+            document.getElementById('timestampResult').style.display = 'block';
+        }
+        
+        // 在新標籤頁打開播放列表
+        function openPlaylistInNewTab(playlistId) {
+            const playlistUrl = `https://www.youtube.com/playlist?list=${playlistId}`;
+            window.open(playlistUrl, '_blank');
+            showStatus('播放列表已在新標籤頁打開！', 'info');
+        }
+        
+        // 從播放列表提取歌曲信息
+        function extractFromPlaylist() {
+            const input = document.getElementById('videoId').value;
+            
+            if (!input.includes('list=')) {
+                showStatus('請輸入包含播放列表的YouTube鏈接！', 'error');
+                return;
+            }
+            
+            const listMatch = input.match(/[?&]list=([^&]+)/);
+            if (!listMatch) {
+                showStatus('無法提取播放列表ID！', 'error');
+                return;
+            }
+            
+            const playlistId = listMatch[1];
+            showStatus('正在分析播放列表...', 'info');
+            
+            // 顯示手動提取指南
+            showManualExtractionGuide(playlistId);
+        }
+        
+        // 顯示手動提取指南
+        function showManualExtractionGuide(playlistId) {
+            const guide = `
+                <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 20px; border-radius: 8px; margin: 10px 0;">
+                    <h4 style="color: #1976d2; margin: 0 0 15px 0;">📋 播放列表歌曲提取指南</h4>
+                    
+                    <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <h5 style="color: #333; margin: 0 0 10px 0;">方法一：手動複製（推薦）</h5>
+                        <ol style="margin: 5px 0; color: #555;">
+                            <li>點擊下方按鈕打開播放列表</li>
+                            <li>在播放列表中，複製每首歌曲的標題</li>
+                            <li>記錄每首歌曲的開始時間</li>
+                            <li>將信息粘貼到下方的"自定義時間戳"區域</li>
+                        </ol>
+                        <button class="btn btn-secondary" onclick="openPlaylistInNewTab('${playlistId}')">打開播放列表</button>
+                    </div>
+                    
+                    <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <h5 style="color: #333; margin: 0 0 10px 0;">方法二：使用瀏覽器開發者工具</h5>
+                        <ol style="margin: 5px 0; color: #555;">
+                            <li>打開播放列表頁面</li>
+                            <li>按F12打開開發者工具</li>
+                            <li>在控制台中運行以下代碼：</li>
+                        </ol>
+                        <div style="background: #f5f5f5; padding: 10px; border-radius: 3px; font-family: monospace; font-size: 12px; margin: 10px 0;">
+                            <code>
+                                // 提取播放列表歌曲信息<br>
+                                const songs = [];<br>
+                                document.querySelectorAll('[id="video-title"]').forEach((title, index) => {<br>
+                                &nbsp;&nbsp;const time = document.querySelectorAll('[class="ytd-thumbnail-overlay-time-status-renderer"]')[index];<br>
+                                &nbsp;&nbsp;if (time) {<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;songs.push({<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;time: time.textContent.trim(),<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;title: title.textContent.trim()<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;});<br>
+                                &nbsp;&nbsp;}<br>
+                                });<br>
+                                console.log(songs.map(s => s.time + ' ' + s.title).join('\
+'));
+                            </code>
+                        </div>
+                    </div>
+                    
+                    <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <h5 style="color: #333; margin: 0 0 10px 0;">方法三：使用YouTube Data API</h5>
+                        <p style="margin: 5px 0; color: #555;">
+                            需要申請YouTube Data API密鑰，然後使用以下API端點：
+                        </p>
+                        <div style="background: #f5f5f5; padding: 10px; border-radius: 3px; font-family: monospace; font-size: 12px;">
+                            <code>https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&key=YOUR_API_KEY</code>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('timestampResult').innerHTML = guide;
+            document.getElementById('timestampResult').style.display = 'block';
+        }
+        
+        // 獲取預設時間戳
+        function getDefaultTimestamps() {
+            return [
+                { time: '0:00:00', title: 'Amazing Grace' },
+                { time: '0:02:12', title: 'He Leadeth Me' },
+                { time: '0:05:31', title: 'Great is Thy Faithfulness' },
+                { time: '0:09:05', title: 'It is Well' },
+                { time: '0:12:30', title: 'How Great Thou Art' },
+                { time: '0:16:45', title: 'Blessed Assurance' }
+            ];
+        }
+        
+        // 生成時間戳HTML
+        function generateTimestampHTML(videoId, timestamps) {
+            let html = '';
+            
+            for (let i = 0; i < timestamps.length; i++) {
+                const timestamp = timestamps[i];
+                const seconds = timeToSeconds(timestamp.time);
+                
+                html += `
+                    <div class="timestamp-item">
+                        <div class="timestamp-time">${timestamp.time}</div>
+                        <div class="timestamp-title">${timestamp.title}</div>
+                        <div class="timestamp-buttons">
+                            <button class="btn btn-small" onclick="playInEmbeddedPlayer('${videoId}', ${seconds})">內嵌播放</button>
+                            <button class="btn btn-small btn-secondary" onclick="playInNewWindow('${videoId}', ${seconds})">新窗口</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('timestampList').innerHTML = html;
+            document.getElementById('timestampResult').style.display = 'block';
+            document.getElementById('playerArea').style.display = 'block';
+        }
+        
+        // 時間轉換為秒數
+        function timeToSeconds(timeStr) {
+            const parts = timeStr.split(':');
+            const hours = parseInt(parts[0]) || 0;
+            const minutes = parseInt(parts[1]) || 0;
+            const seconds = parseInt(parts[2]) || 0;
+            return hours * 3600 + minutes * 60 + seconds;
+        }
+        
+        // 內嵌播放器播放
+        function playInEmbeddedPlayer(videoId, seconds) {
+            const player = document.getElementById('mainPlayer');
+            const message = document.getElementById('playerMessage');
+            
+            player.src = `https://www.youtube.com/embed/${videoId}?start=${seconds}&autoplay=1`;
+            player.style.display = 'block';
+            message.style.display = 'none';
+            
+            player.scrollIntoView({ behavior: 'smooth' });
+            showStatus(`正在播放：${seconds}秒處`, 'info');
+        }
+        
+        // 新窗口播放
+        function playInNewWindow(videoId, seconds) {
+            const url = `https://www.youtube.com/watch?v=${videoId}&t=${seconds}s`;
+            window.open(url, '_blank');
+            showStatus('已在新窗口打開視頻！', 'info');
+        }
+        
+        // 複製時間戳播放列表代碼
+        function copyTimestampCode() {
+            const videoId = currentVideoId || document.getElementById('videoId').value;
+            const timestamps = customTimestamps.length > 0 ? customTimestamps : getDefaultTimestamps();
+            
+            let code = `<div style="border:1px solid #ccc; padding:15px; background:white; margin:10px 0; border-radius:8px;">
+`;
+            code += `<h3 style="margin:0 0 15px 0; color:#333;">🎵 時間戳播放列表 (${timestamps.length} 首歌曲)</h3>
+`;
+            
+            for (let i = 0; i < timestamps.length; i++) {
+                const timestamp = timestamps[i];
+                const seconds = timeToSeconds(timestamp.time);
+                code += `<div style="margin:8px 0; padding:8px; border:1px solid #ddd; background:#f9f9f9; border-radius:4px;">
+`;
+                code += `<a href="https://www.youtube.com/watch?v=${videoId}&t=${seconds}s" target="_blank" style="background:#FF5722; color:white; text-decoration:none; padding:4px 8px; border-radius:4px; font-size:12px; margin-right:8px;">播放</a>
+`;
+                code += `<span style="font-weight:bold; color:#333; margin-right:8px;">${timestamp.time}</span>
+`;
+                code += `<span style="color:#666;">${timestamp.title}</span>
+`;
+                code += `</div>
+`;
+            }
+            
+            code += `</div>`;
+            
+            copyToClipboard(code);
+            showStatus('播放列表代碼已複製到剪貼板！', 'success');
+        }
+        
+        // 下載時間戳代碼
+        function downloadTimestampCode() {
+            const videoId = currentVideoId || document.getElementById('videoId').value;
+            const timestamps = customTimestamps.length > 0 ? customTimestamps : getDefaultTimestamps();
+            
+            let code = `<!DOCTYPE html>
+<html>
+<head>
+    <title>YouTube時間戳播放列表</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .playlist { border:1px solid #ccc; padding:15px; background:white; margin:10px 0; border-radius:8px; }
+        .item { margin:8px 0; padding:8px; border:1px solid #ddd; background:#f9f9f9; border-radius:4px; }
+        .play-btn { background:#FF5722; color:white; text-decoration:none; padding:4px 8px; border-radius:4px; font-size:12px; margin-right:8px; }
+        .time { font-weight:bold; color:#333; margin-right:8px; }
+        .title { color:#666; }
+    </style>
+  <script src="../assets/js/lab-frame-nav.js"></script>
+</head>
+<body>
+    <h1>🎵 YouTube時間戳播放列表</h1>
+    <div class="playlist">
+        <h3>播放列表 (${timestamps.length} 首歌曲)</h3>`;
+        
+        for (let i = 0; i < timestamps.length; i++) {
+            const timestamp = timestamps[i];
+            const seconds = timeToSeconds(timestamp.time);
+            code += `
+        <div class="item">
+            <a href="https://www.youtube.com/watch?v=${videoId}&t=${seconds}s" target="_blank" class="play-btn">播放</a>
+            <span class="time">${timestamp.time}</span>
+            <span class="title">${timestamp.title}</span>
+        </div>`;
+        }
+        
+        code += `
+    </div>
+</body>
+</html>`;
+            
+            const blob = new Blob([code], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'youtube_timestamp_playlist.html';
+            a.click();
+            URL.revokeObjectURL(url);
+            showStatus('播放列表文件已下載！', 'success');
+        }
+        
+        // 複製到剪貼板
+        function copyToClipboard(text) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(function() {
+                    console.log('已複製到剪貼板');
+                }).catch(function(err) {
+                    fallbackCopyTextToClipboard(text);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text);
+            }
+        }
+        
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                const successful = document.execCommand('copy');
+                console.log('Fallback: Copying text command was ' + (successful ? 'successful' : 'unsuccessful'));
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            document.body.removeChild(textArea);
+        }
+        
+        // 顯示狀態信息
+        function showStatus(message, type) {
+            // 創建狀態元素
+            const status = document.createElement('div');
+            status.className = `status ${type}`;
+            status.textContent = message;
+            
+            // 插入到頁面頂部
+            const content = document.querySelector('.content');
+            content.insertBefore(status, content.firstChild);
+            
+            // 3秒後自動移除
+            setTimeout(() => {
+                if (status.parentNode) {
+                    status.parentNode.removeChild(status);
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

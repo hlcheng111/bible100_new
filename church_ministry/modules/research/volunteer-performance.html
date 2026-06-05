@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>志工績效評估 · Volunteer Performance | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <script src="../../assets/js/chart.min.js"></script>
+    <link rel="stylesheet" href="../../assets/css/fontawesome.min.css">
+</head>
+<body class="bg-gray-50 cm-research-page">
+    <nav class="cm-back-bar" aria-label="區域導覽">
+      <a class="cm-back-bar__link" href="../../dashboard.html">⛪ 返回教會事工</a>
+      <span class="cm-back-bar__muted">研究與統計</span>
+    </nav>
+    <p class="cm-data-banner" role="status"><strong>資料來源：</strong><span id="cm-data-source-line">讀取中…</span></p>
+    <div class="cm-kpi-row" aria-label="即時匯總（ChurchDataBridge）">
+      <span class="cm-kpi-pill">會友 <b id="cm-kpi-members">—</b></span>
+      <span class="cm-kpi-pill">小組 <b id="cm-kpi-groups">—</b></span>
+      <span class="cm-kpi-pill">探訪任務 <b id="cm-kpi-missions">—</b></span>
+      <span class="cm-kpi-pill">志工指派 <b id="cm-kpi-volunteers">—</b></span>
+      <span class="cm-kpi-pill">財務結餘 <b id="cm-kpi-finance-balance">—</b></span>
+    </div>
+    <div class="container mx-auto px-4 py-6">
+        <!-- 页面标题 -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-hands-helping text-green-600 mr-2"></i>志工績效評估
+            </h1>
+            <p class="text-gray-600">評估志工服務表現，激勵持續成長和貢獻</p>
+        </div>
+
+        <!-- 志工概览卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-full">
+                        <i class="fas fa-users text-green-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">總志工人數</p>
+                        <p class="text-xl font-semibold text-gray-800">68人</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-green-600">↑ 新增5人</span>
+                    <span class="text-xs text-gray-500 ml-1">本月</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-full">
+                        <i class="fas fa-clock text-blue-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">總服務時數</p>
+                        <p class="text-xl font-semibold text-gray-800">1,247小時</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-blue-600">↑ 156小時</span>
+                    <span class="text-xs text-gray-500 ml-1">本月</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-full">
+                        <i class="fas fa-star text-purple-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">平均評分</p>
+                        <p class="text-xl font-semibold text-gray-800">4.6/5.0</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-purple-600">↑ 0.2分</span>
+                    <span class="text-xs text-gray-500 ml-1">較上月</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-orange-100 rounded-full">
+                        <i class="fas fa-trophy text-orange-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">優秀志工</p>
+                        <p class="text-xl font-semibold text-gray-800">12人</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-orange-600">↑ 2人</span>
+                    <span class="text-xs text-gray-500 ml-1">本月</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 績效指标图表 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 志工服务时长分布 -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">志工服務時長分布</h3>
+                <canvas id="volunteerHoursChart" height="300"></canvas>
+            </div>
+
+            <!-- 各事工志工績效对比 -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">各事工志工績效對比</h3>
+                <canvas id="ministryVolunteerChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- 志工績效排名表格 -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">志工績效排名 (前10名)</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">排名</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">志工姓名</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">服務事工</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">服務時數</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">服務次數</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">評分</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">等級</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr class="bg-yellow-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-yellow-500 text-white text-sm font-bold rounded-full">1</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-user text-blue-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">張美玲</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">兒童主日學</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">45小時</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">18次</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4.9/5.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">金牌</span>
+                            </td>
+                        </tr>
+                        <tr class="bg-blue-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-blue-500 text-white text-sm font-bold rounded-full">2</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-user text-blue-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">李志明</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">敬拜讚美</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">42小時</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">16次</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4.8/5.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">金牌</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-gray-500 text-white text-sm font-bold rounded-full">3</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-user text-blue-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">王建國</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">關懷事工</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">38小時</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">15次</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4.7/5.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">銀牌</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-gray-500 text-white text-sm font-bold rounded-full">4</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-user text-blue-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">陳雅芳</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">禱告會</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">35小時</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">14次</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4.6/5.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">銀牌</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-gray-500 text-white text-sm font-bold rounded-full">5</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-user text-blue-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">劉德華</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">聖經學習</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">32小時</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">13次</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4.5/5.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">銀牌</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 技能评估和奖励机制 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 技能评估 -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">志工技能評估</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>溝通能力</span>
+                            <span>4.6/5.0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: 92%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>團隊合作</span>
+                            <span>4.8/5.0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full" style="width: 96%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>專業技能</span>
+                            <span>4.4/5.0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: 88%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>責任心</span>
+                            <span>4.7/5.0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full" style="width: 94%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>創新思維</span>
+                            <span>4.3/5.0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: 86%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 奖励机制 -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">獎勵機制</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center p-3 bg-yellow-50 rounded-lg">
+                        <i class="fas fa-medal text-yellow-600 text-xl mr-3"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">金牌志工</div>
+                            <div class="text-sm text-gray-600">服務時數 ≥ 40小時，評分 ≥ 4.8</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center p-3 bg-blue-50 rounded-lg">
+                        <i class="fas fa-medal text-blue-600 text-xl mr-3"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">銀牌志工</div>
+                            <div class="text-sm text-gray-600">服務時數 ≥ 30小時，評分 ≥ 4.5</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                        <i class="fas fa-medal text-gray-600 text-xl mr-3"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">銅牌志工</div>
+                            <div class="text-sm text-gray-600">服務時數 ≥ 20小時，評分 ≥ 4.0</div>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-600 mt-4">
+                        <p><strong>特殊獎勵：</strong></p>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li>年度最佳志工：獎金 + 證書</li>
+                            <li>創新服務獎：培訓機會</li>
+                            <li>長期服務獎：榮譽會員資格</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 改进建议 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">志工發展建議</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <i class="fas fa-graduation-cap text-blue-600 text-3xl mb-3"></i>
+                    <h4 class="font-semibold text-gray-800 mb-2">技能培訓</h4>
+                    <p class="text-sm text-gray-600">定期舉辦專業技能培訓，提升志工服務質量</p>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <i class="fas fa-users text-green-600 text-3xl mb-3"></i>
+                    <h4 class="font-semibold text-gray-800 mb-2">團隊建設</h4>
+                    <p class="text-sm text-gray-600">加強團隊合作訓練，培養協作精神</p>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <i class="fas fa-lightbulb text-purple-600 text-3xl mb-3"></i>
+                    <h4 class="font-semibold text-gray-800 mb-2">創新激勵</h4>
+                    <p class="text-sm text-gray-600">鼓勵創新思維，建立創新獎勵機制</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 志工服务时长分布图表
+        const volunteerHoursCtx = document.getElementById('volunteerHoursChart').getContext('2d');
+        new Chart(volunteerHoursCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['0-10小時', '11-20小時', '21-30小時', '31-40小時', '40小時以上'],
+                datasets: [{
+                    data: [15, 22, 18, 8, 5],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(168, 85, 247, 0.8)',
+                        'rgba(251, 146, 60, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(59, 130, 246)',
+                        'rgb(34, 197, 94)',
+                        'rgb(168, 85, 247)',
+                        'rgb(251, 146, 60)',
+                        'rgb(239, 68, 68)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+
+        // 各事工志工績效对比图表
+        const ministryVolunteerCtx = document.getElementById('ministryVolunteerChart').getContext('2d');
+        new Chart(ministryVolunteerCtx, {
+            type: 'bar',
+            data: {
+                labels: ['兒童主日學', '敬拜讚美', '關懷事工', '禱告會', '聖經學習'],
+                datasets: [{
+                    label: '志工人數',
+                    data: [12, 8, 15, 10, 6],
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                }, {
+                    label: '平均評分',
+                    data: [4.6, 4.8, 4.5, 4.7, 4.4],
+                    backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                    borderColor: 'rgb(34, 197, 94)',
+                    borderWidth: 1,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        beginAtZero: true,
+                        max: 20
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        beginAtZero: true,
+                        max: 5,
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+    </script>
+
+<script src="../../../js/church_data_bridge.js"></script>
+<script src="../../js/cm_research_snapshot.js"></script>
+<script>document.addEventListener("DOMContentLoaded",function(){if(window.CMResearchSnapshot)CMResearchSnapshot.initPage();});</script>
+
+</body>
+</html>

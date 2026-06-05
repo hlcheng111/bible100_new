@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數據庫轉 JSON 工具 - Bible100</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .result { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .info { border-left-color: #17a2b8; background: #d1ecf1; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #0056b3; }
+        .btn-success { background: #28a745; }
+        pre { white-space: pre-wrap; word-wrap: break-word; max-height: 300px; overflow-y: auto; background: #f1f1f1; padding: 10px; border-radius: 4px; }
+        h1 { color: #333; text-align: center; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; font-weight: bold; }
+        .loading { background: #e3f2fd; color: #1976d2; }
+        .complete { background: #d4edda; color: #155724; }
+        .path-note { font-size: 12px; color: #666; margin: 10px 0; padding: 8px; background: #fff3cd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 數據庫轉 JSON 工具</h1>
+        <p>將 SQLite 聖經/註釋數據庫轉為 JSON，便於靜態網站或備份。Bible100 維護用。</p>
+        <div class="path-note">📁 預設讀取 <code>data/bibles/</code> 或 <code>data/cj/</code>。若無聖經 .db 請先放置於 data/bibles/。</div>
+        <div class="status loading" id="status">準備轉換...</div>
+        <button class="btn" onclick="startConversion()">開始轉換為 JSON</button>
+        <button class="btn btn-success" onclick="downloadJSON()" id="downloadBtn" disabled>下載 JSON</button>
+        <div id="results"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/sql-wasm.js"></script>
+    <script>
+        let jsonData = null;
+        const DATA_BASE = '../../data';
+        const DB_CANDIDATES = [
+            DATA_BASE + '/bibles/信望愛(和合本).db',
+            DATA_BASE + '/bibles/和合本.db',
+            DATA_BASE + '/cj/启导本圣经注释.db'
+        ];
+
+        async function startConversion() {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            let dbPath = null;
+            for (const path of DB_CANDIDATES) {
+                try {
+                    const r = await fetch(path);
+                    if (r.ok) { dbPath = path; break; }
+                } catch (e) {}
+            }
+            if (!dbPath) {
+                status.textContent = '❌ 未找到可用的 .db';
+                addResult('error', '無法載入', '請在 data/bibles/ 或 data/cj/ 放置 .db 並用 HTTP 提供。');
+                return;
+            }
+            try {
+                status.textContent = '步驟1: 載入 SQLite.js...';
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/${file}`
+                });
+                addResult('success', '✅ SQLite.js 載入成功', '');
+                status.textContent = '步驟2: 載入數據庫...';
+                const response = await fetch(dbPath);
+                const arrayBuffer = await response.arrayBuffer();
+                const db = new SQL.Database(new Uint8Array(arrayBuffer));
+                addResult('success', '✅ 數據庫載入成功', `路徑: ${dbPath}，大小: ${(arrayBuffer.byteLength / 1024 / 1024).toFixed(2)} MB`);
+                status.textContent = '步驟3: 分析表並轉換...';
+                const tablesResult = db.exec("SELECT name FROM sqlite_master WHERE type='table';");
+                if (!tablesResult[0] || !tablesResult[0].values.length) {
+                    throw new Error('數據庫中無表');
+                }
+                const tableNames = tablesResult[0].values.map(row => row[0]);
+                addResult('info', '📋 發現表', tableNames.join(', '));
+                let versesTable = null;
+                let tableSchema = null;
+                for (const tableName of tableNames) {
+                    try {
+                        const testQuery = `SELECT * FROM ${tableName} LIMIT 1;`;
+                        const testResult = db.exec(testQuery);
+                        if (testResult.length > 0 && testResult[0].values.length > 0) {
+                            versesTable = tableName;
+                            const schemaResult = db.exec(`PRAGMA table_info(${tableName});`);
+                            tableSchema = schemaResult[0];
+                            addResult('success', `🎯 使用表: ${tableName}`, '');
+                            break;
+                        }
+                    } catch (e) {}
+                }
+                if (!versesTable || !tableSchema) {
+                    throw new Error('未找到可轉換的表');
+                }
+                const columns = tableSchema.columns;
+                const allResult = db.exec(`SELECT * FROM ${versesTable};`);
+                if (!allResult[0] || !allResult[0].values.length) {
+                    throw new Error('表中無數據');
+                }
+                const values = allResult[0].values;
+                const verses = values.map(row => {
+                    const obj = {};
+                    columns.forEach((col, i) => { obj[col] = row[i]; });
+                    return obj;
+                });
+                const baseName = dbPath.split('/').pop().replace('.db', '');
+                jsonData = {
+                    metadata: {
+                        version: baseName,
+                        totalVerses: verses.length,
+                        lastUpdated: new Date().toISOString(),
+                        source: 'SQLite'
+                    },
+                    verses: verses
+                };
+                addResult('info', '📈 總數', verses.length.toLocaleString() + ' 筆');
+                addResult('success', '✅ 轉換完成', '可點「下載 JSON」保存。');
+                status.textContent = '✅ 轉換完成！';
+                status.className = 'status complete';
+                document.getElementById('downloadBtn').disabled = false;
+                db.close();
+            } catch (error) {
+                status.textContent = '❌ 轉換失敗';
+                status.className = 'status failed';
+                addResult('error', '❌ 錯誤', error.message);
+                console.error(error);
+            }
+        }
+
+        function addResult(type, title, content) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<h3>${title}</h3><pre>${content || ''}</pre>`;
+            results.appendChild(div);
+        }
+
+        function downloadJSON() {
+            if (!jsonData) return;
+            const dataStr = JSON.stringify(jsonData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (jsonData.metadata && jsonData.metadata.version) ? jsonData.metadata.version + '.json' : 'bible_export.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

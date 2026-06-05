@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學費管理 - Tuition</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>💰 學費管理 · Tuition</h1>
+        <p>學費繳收、支付方式（現金／轉帳／支付寶／PayMe 等）</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 財務、行政同工。</p>
+            <p><b>有什麼功能？</b> 新增繳費、篩選學期／狀態、匯出 CSV。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">篩選</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+            <div><label class="stat-label">學期</label><br><input id="semester" class="module-input" value="2024-2" placeholder="2024-2" style="width:100px;"></div>
+            <div><label class="stat-label">狀態</label><br><select id="status" class="module-input"><option value="">全部</option><option value="paid">已繳</option><option value="pending">未繳</option></select></div>
+            <button class="module-btn" id="btnApply">套用</button>
+            <button class="module-btn module-btn-secondary" id="btnExport">📤 匯出 CSV</button>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📋 繳費列表</div>
+        <div id="list"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">➕ 新增繳費</div>
+        <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+            <div><label class="stat-label">學員</label><br><select name="studentId" class="module-input" required style="min-width:140px;"></select></div>
+            <div><label class="stat-label">學期</label><br><input name="semester" class="module-input" value="2024-2" style="width:90px;"></div>
+            <div><label class="stat-label">金額</label><br><input name="amount" class="module-input" type="number" value="3000" style="width:90px;"></div>
+            <div><label class="stat-label">支付方式</label><br><select name="paymentMethod" class="module-input"><option value="cash">現金</option><option value="transfer">轉帳</option><option value="alipay">支付寶</option><option value="payme">PayMe</option></select></div>
+            <div><label class="stat-label">狀態</label><br><select name="status" class="module-input"><option value="pending">未繳</option><option value="paid">已繳</option></select></div>
+            <div><br><button type="submit" class="module-btn">儲存</button></div>
+        </form>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+            if (db.ensureSeedFull) db.ensureSeedFull();
+
+            const data = db.data;
+            const payments = (data.finance && data.finance.payments) || [];
+            const students = data.students || [];
+
+            function rows() {
+                const sem = document.getElementById('semester').value.trim();
+                const st = document.getElementById('status').value;
+                return payments.filter(p => (!sem || p.semester === sem) && (!st || p.status === st));
+            }
+
+            function draw() {
+                const a = rows();
+                const body = a.map(p => {
+                    const s = students.find(x => x.id === p.studentId);
+                    return '<tr><td>' + p.id + '</td><td>' + (s ? s.name : p.studentId) + '</td><td>' + (p.semester || '—') + '</td><td>' + (p.amount || 0) + '</td><td>' + (p.paymentMethod || '—') + '</td><td>' + (p.status === 'paid' ? '已繳' : '未繳') + '</td><td>' + (p.paymentDate || '—') + '</td><td><a href="#" onclick="editP(' + p.id + ');return false;">編輯</a> | <a href="#" onclick="delP(' + p.id + ');return false;">刪除</a></td></tr>';
+                }).join('');
+                document.getElementById('list').innerHTML = '<table class="module-table"><thead><tr><th>ID</th><th>學員</th><th>學期</th><th>金額</th><th>支付方式</th><th>狀態</th><th>日期</th><th>操作</th></tr></thead><tbody>' + (body || '<tr><td colspan="8">尚無資料</td></tr>') + '</tbody></table>';
+
+                const sel = document.querySelector('select[name="studentId"]');
+                sel.innerHTML = '<option value="">-- 選擇學員 --</option>' + students.slice(0, 100).map(s => '<option value="' + s.id + '">' + (s.name || s.studentNumber || s.id) + '</option>').join('');
+            }
+
+            document.getElementById('f').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                db.insert('finance.payments', {
+                    studentId: parseInt(fm.get('studentId'), 10),
+                    semester: (fm.get('semester') || '').trim() || '2024-2',
+                    amount: parseInt(fm.get('amount'), 10) || 0,
+                    paymentMethod: fm.get('paymentMethod') || 'cash',
+                    status: fm.get('status') || 'pending',
+                    paymentDate: new Date().toISOString().slice(0, 10)
+                });
+                this.reset();
+                draw();
+            };
+
+            window.editP = function(id) {
+                const p = payments.find(x => x.id === id);
+                if (!p) return;
+                const v = prompt('JSON 編輯（不改 id）', JSON.stringify(p, null, 2));
+                if (!v) return;
+                try {
+                    const o = JSON.parse(v);
+                    delete o.id;
+                    delete o.createdAt;
+                    delete o.updatedAt;
+                    db.update('finance.payments', id, o);
+                    draw();
+                } catch (e) { alert('JSON 無效'); }
+            };
+            window.delP = function(id) {
+                if (confirm('確認刪除？')) { db.delete('finance.payments', id); draw(); }
+            };
+
+            document.getElementById('btnApply').onclick = draw;
+            document.getElementById('btnExport').onclick = function() {
+                const a = rows();
+                const cols = ['id', 'studentId', 'semester', 'amount', 'paymentMethod', 'status', 'paymentDate'];
+                const head = cols.join(',');
+                const body = a.map(r => cols.map(k => '"' + String(r[k] ?? '').replace(/"/g, '""') + '"').join(',')).join('\n');
+                const A = document.createElement('a');
+                A.href = URL.createObjectURL(new Blob(['\ufeff' + head + '\n' + body], { type: 'text/csv;charset=utf-8' }));
+                A.download = 'tuition_' + new Date().toISOString().slice(0, 10) + '.csv';
+                A.click();
+            };
+
+            draw();
+        })();
+    </script>
+</body>
+</html>

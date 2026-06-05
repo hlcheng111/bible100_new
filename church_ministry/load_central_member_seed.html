@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中央會友資料管理 · Load Member Seed Data | Church Ministry</title>
+    <style>
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f6f7fb; padding: 20px; max-width: 980px; margin: 0 auto; font-size: 12px; }
+        h1 { font-size: 18px; color: #333; margin-bottom: 4px; }
+        .card { background: #fff; padding: 16px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; border-left: 4px solid #8e44ad; }
+        .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .toolbar input[type="text"] { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; width: 200px; }
+        .btn { padding: 8px 14px; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        .btn-primary { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: #fff; }
+        .btn-secondary { background: #6c757d; color: #fff; }
+        .btn-success { background: #28a745; color: #fff; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .table-wrap { overflow-x: auto; margin-top: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; }
+        tr:hover { background: #f8f9fa; }
+        .note { font-size: 11px; color: #777; margin-top: 8px; }
+        a { color: #8e44ad; }
+        #result { margin-top: 10px; padding: 10px; border-radius: 6px; font-size: 12px; display: none; }
+        #result.success { background: #d4edda; color: #155724; }
+        #result.info { background: #d1ecf1; color: #0c5460; }
+        #result.error { background: #f8d7da; color: #721c24; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: #fff; padding: 24px; border-radius: 10px; max-width: 480px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal-content h3 { margin: 0 0 16px 0; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: 600; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .modal-actions { margin-top: 16px; display: flex; gap: 8px; }
+        .export-options { margin-top: 8px; }
+        .export-options .btn { margin-right: 6px; margin-bottom: 6px; }
+        input[type="file"] { font-size: 11px; }
+        .field-select-card { background: #f8f9fa; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #eee; }
+        .field-select-card strong { display: block; margin-bottom: 8px; font-size: 12px; }
+        .use-custom-fields-label { display: block; margin-bottom: 8px; font-size: 11px; }
+        .field-checkboxes { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 8px; }
+        .field-checkboxes label { font-weight: normal; font-size: 11px; cursor: pointer; }
+        .field-quick { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn-sm { padding: 4px 10px; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📋 中央會友資料管理</h1>
+        <p>管理 <code>memberSystemData</code> 會友資料，供會友事工、信徒注册、智慧事奉等模組共用。</p>
+        <p id="currentCount" class="note">目前會友筆數：—</p>
+        <label style="font-size:12px;"><input type="checkbox" id="forceOverwrite"> 強制覆寫（載入 200+ 筆試用資料並覆蓋現有資料）</label>
+        <div style="margin-top:12px;">
+            <button class="btn btn-primary" id="btnLoad">📥 載入 200+ 筆（無需網路）</button>
+            <button class="btn btn-success" id="btnLoadPeople" style="margin-left:8px;">📥 從 people.json 匯入 500 人</button>
+            <button class="btn btn-secondary" id="btnCheck">僅檢查筆數</button>
+        </div>
+        <p class="note" style="margin-top:8px;">💡 <b>「載入 200+ 筆」</b>：file:// 與 localhost 皆可用，無需 HTTP 伺服器。<b>「從 people.json 匯入 500 人」</b>：需 HTTP 伺服器（啟動.bat）。</p>
+        <div id="result"></div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin:0 0 10px 0;">🔍 搜尋會友（姓名／電話／郵箱）</h3>
+        <div class="toolbar">
+            <input type="text" id="searchInput" placeholder="輸入姓名、電話或郵箱關鍵字">
+            <button class="btn btn-primary" id="btnSearch">搜尋</button>
+            <button class="btn btn-secondary" id="btnClearSearch">清除</button>
+        </div>
+        <div class="toolbar">
+            <button class="btn btn-success" id="btnAdd">➕ 新增會友</button>
+            <span style="margin-left:8px;">📤 匯出：</span>
+            <div class="export-options">
+                <button class="btn btn-secondary" id="btnExportAllCsv">全部記錄 (CSV)</button>
+                <button class="btn btn-secondary" id="btnExportAllJson">全部記錄 (JSON)</button>
+                <button class="btn btn-secondary" id="btnExportSelectedCsv">選中記錄 (CSV)</button>
+                <button class="btn btn-secondary" id="btnExportSelectedJson">選中記錄 (JSON)</button>
+            </div>
+        </div>
+        <div class="toolbar">
+            <span>📥 匯入資料：</span>
+            <input type="file" id="importFile" accept=".json,.csv" style="max-width:240px;">
+            <button class="btn btn-secondary" id="btnImport">匯入</button>
+            <span class="note">（JSON：含 members 陣列或完整 memberSystemData；CSV：可為本頁匯出格式含 id/關聯欄位，或簡易 姓名,性別,年齡,電話,郵箱）</span>
+        </div>
+        <div class="field-select-card">
+            <strong>📊 匯出／報表自選欄位</strong>
+            <label class="use-custom-fields-label"><input type="checkbox" id="useCustomFields"> 匯出時僅包含以下勾選欄位（不勾則匯出全部欄位）· 勾選時表格欄位會同步顯示</label>
+            <div class="field-checkboxes" id="exportFieldCheckboxes"></div>
+            <div class="field-quick">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnSelectAllFields">全選</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnSelectBasicFields">僅基本</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnSelectRelatedFields">僅關聯</button>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="checkAll" title="全選／取消"></th>
+                        <th>姓名</th>
+                        <th>性別</th>
+                        <th>年齡</th>
+                        <th>電話</th>
+                        <th>郵箱</th>
+                        <th>恩賜／技能</th>
+                        <th>堂會ID</th>
+                        <th>主要小組ID</th>
+                        <th>外部ID</th>
+                    </tr>
+                </thead>
+                <tbody id="memberTableBody"></tbody>
+            </table>
+        </div>
+        <p id="tableSummary" class="note"></p>
+    </div>
+
+    <div class="card">
+        <p class="note">前往：<a href="modules/members/member-integrated.html" target="_blank">👥 會友檔案</a> · <a href="../smart_ministry/talent_acquisition.html" target="_blank">智慧事奉 - 人才吸納中心</a></p>
+    </div>
+
+    <!-- 新增會友 Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h3>➕ 新增會友</h3>
+            <form id="addMemberForm">
+                <div class="form-group">
+                    <label>姓名 *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>性別</label>
+                    <select name="gender">
+                        <option value="">—</option>
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>年齡</label>
+                    <input type="number" name="age" min="1" max="120">
+                </div>
+                <div class="form-group">
+                    <label>電話</label>
+                    <input type="tel" name="phone">
+                </div>
+                <div class="form-group">
+                    <label>郵箱</label>
+                    <input type="email" name="email">
+                </div>
+                <div class="form-group">
+                    <label>恩賜／技能</label>
+                    <input type="text" name="gifts" placeholder="例：教導、音樂">
+                </div>
+                <div class="form-group">
+                    <label>加入日期</label>
+                    <input type="date" name="membershipDate" id="addMembershipDate">
+                </div>
+                <p style="font-size:11px;color:#666;margin:12px 0 0 0;">以下為關聯欄位（可與其他 DB 對應，選填）</p>
+                <div class="form-group">
+                    <label>堂會／機構 ID (churchId / organizationId)</label>
+                    <input type="text" name="churchId" placeholder="所屬堂會或機構主鍵">
+                </div>
+                <div class="form-group">
+                    <label>主要小組 ID (primaryGroupId)</label>
+                    <input type="number" name="primaryGroupId" placeholder="對應本庫 groups[].id" min="0">
+                </div>
+                <div class="form-group">
+                    <label>外部系統 ID (externalId)</label>
+                    <input type="text" name="externalId" placeholder="例：學校 studentId、志工 volunteerId">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">儲存</button>
+                    <button type="button" class="btn btn-secondary" id="btnCloseAdd">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/central_member_db.js"></script>
+    <script>
+        (function () {
+            var searchKeyword = '';
+            var data = null;
+            var EXPORT_FIELDS = [
+                { key: 'id', label: 'id' },
+                { key: 'name', label: '姓名' },
+                { key: 'gender', label: '性別' },
+                { key: 'age', label: '年齡' },
+                { key: 'phone', label: '電話' },
+                { key: 'email', label: '郵箱' },
+                { key: 'gifts', label: '恩賜' },
+                { key: 'skills', label: '技能' },
+                { key: 'membershipDate', label: '加入日期' },
+                { key: 'status', label: '狀態' },
+                { key: 'churchId', label: '堂會ID' },
+                { key: 'organizationId', label: '機構ID' },
+                { key: 'primaryGroupId', label: '主要小組ID' },
+                { key: 'externalId', label: '外部ID' }
+            ];
+            function getSelectedExportKeys() {
+                if (!document.getElementById('useCustomFields').checked) return null;
+                var keys = [];
+                EXPORT_FIELDS.forEach(function (f) {
+                    var cb = document.getElementById('export_' + f.key);
+                    if (cb && cb.checked) keys.push(f.key);
+                });
+                return keys.length ? keys : null;
+            }
+            function buildFieldCheckboxes() {
+                var container = document.getElementById('exportFieldCheckboxes');
+                container.innerHTML = EXPORT_FIELDS.map(function (f) {
+                    return '<label><input type="checkbox" id="export_' + f.key + '" checked> ' + f.label + '</label>';
+                }).join('');
+            }
+            function setExportFieldsFilter(which) {
+                var basic = ['id', 'name', 'gender', 'age', 'phone', 'email', 'gifts', 'skills', 'membershipDate', 'status'];
+                var related = ['churchId', 'organizationId', 'primaryGroupId', 'externalId'];
+                EXPORT_FIELDS.forEach(function (f) {
+                    var cb = document.getElementById('export_' + f.key);
+                    if (!cb) return;
+                    if (which === 'all') cb.checked = true;
+                    else if (which === 'basic') cb.checked = basic.indexOf(f.key) !== -1;
+                    else if (which === 'related') cb.checked = related.indexOf(f.key) !== -1;
+                });
+                renderTable();
+            }
+            function wireFieldChange() {
+                var ucf = document.getElementById('useCustomFields');
+                if (ucf) ucf.onchange = renderTable;
+                EXPORT_FIELDS.forEach(function (f) {
+                    var cb = document.getElementById('export_' + f.key);
+                    if (cb) cb.onchange = renderTable;
+                });
+            }
+
+            function showResult(msg, type) {
+                var el = document.getElementById('result');
+                el.textContent = msg;
+                el.className = type || 'info';
+                el.style.display = 'block';
+            }
+
+            function getData() {
+                data = CentralMemberDB.get();
+                if (!data || !data.members) data = { members: [], groups: [], ministries: [], groupMemberships: [], ministryAssignments: [], trainings: [], attendance: [], donations: [] };
+                return data;
+            }
+
+            function refreshCount() {
+                var n = CentralMemberDB.getMemberCount();
+                document.getElementById('currentCount').textContent = '目前會友筆數：' + n + '（key: ' + CentralMemberDB.STORAGE_KEY + '）';
+            }
+
+            function filterMembers() {
+                var members = (data && data.members) ? data.members : [];
+                if (!searchKeyword) return members;
+                var k = searchKeyword.toLowerCase();
+                return members.filter(function (m) {
+                    return (m.name && m.name.toLowerCase().indexOf(k) !== -1) ||
+                        (m.phone && m.phone.indexOf(k) !== -1) ||
+                        (m.email && m.email.toLowerCase().indexOf(k) !== -1);
+                });
+            }
+
+            var DISPLAY_ORDER = ['id','name','gender','age','phone','email','gifts','skills','membershipDate','status','churchId','organizationId','primaryGroupId','externalId'];
+            function getVisibleColumns() {
+                if (!document.getElementById('useCustomFields').checked) return DISPLAY_ORDER;
+                var keys = [];
+                EXPORT_FIELDS.forEach(function (f) {
+                    var cb = document.getElementById('export_' + f.key);
+                    if (cb && cb.checked) keys.push(f.key);
+                });
+                return keys.length ? keys : DISPLAY_ORDER;
+            }
+            function renderTable() {
+                getData();
+                var list = filterMembers();
+                var cols = getVisibleColumns();
+                var labelMap = {}; EXPORT_FIELDS.forEach(function (f) { labelMap[f.key] = f.label; });
+                var thead = document.querySelector('#memberTableBody').closest('table').querySelector('thead tr');
+                if (thead) {
+                    thead.innerHTML = '<th><input type="checkbox" id="checkAll" title="全選／取消"></th>' + cols.map(function (k) { return '<th>' + (labelMap[k] || k) + '</th>'; }).join('');
+                }
+                var tbody = document.getElementById('memberTableBody');
+                tbody.innerHTML = list.map(function (m) {
+                    var cells = cols.map(function (k) {
+                        var v = m[k];
+                        return '<td>' + (v == null || v === undefined || v === '' ? '—' : String(v)) + '</td>';
+                    });
+                    return '<tr data-id="' + m.id + '"><td><input type="checkbox" class="row-check" value="' + m.id + '"></td>' + cells.join('') + '</tr>';
+                }).join('');
+                document.getElementById('tableSummary').textContent = '共 ' + list.length + ' 筆' + (searchKeyword ? '（已篩選）' : '') + (cols.length < DISPLAY_ORDER.length ? ' · 顯示 ' + cols.length + ' 欄' : '');
+                var checkAll = document.getElementById('checkAll');
+                if (checkAll) { checkAll.checked = false; checkAll.onchange = function () { document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = checkAll.checked; }); }; }
+            }
+
+            function getSelectedIds() {
+                var ids = [];
+                document.querySelectorAll('.row-check:checked').forEach(function (cb) { ids.push(parseInt(cb.value, 10)); });
+                return ids;
+            }
+
+            function getSelectedMembers() {
+                var ids = getSelectedIds();
+                return (data.members || []).filter(function (m) { return ids.indexOf(m.id) !== -1; });
+            }
+
+            function exportCsv(members, selectedKeys) {
+                var keys = selectedKeys && selectedKeys.length ? selectedKeys : ['id','name','gender','age','phone','email','gifts','skills','membershipDate','status','churchId','organizationId','primaryGroupId','externalId'];
+                var labelMap = {};
+                EXPORT_FIELDS.forEach(function (f) { labelMap[f.key] = f.label; });
+                var headers = keys.map(function (k) { return labelMap[k] || k; });
+                var rows = members.map(function (m) {
+                    return keys.map(function (k) {
+                        var v = m[k];
+                        var s = (v == null || v === undefined ? '' : String(v));
+                        if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+                        return s;
+                    }).join(',');
+                });
+                return '\uFEFF' + headers.join(',') + '\n' + rows.join('\n');
+            }
+            function pickMembersForExport(members, selectedKeys) {
+                if (!selectedKeys || !selectedKeys.length) return members;
+                return members.map(function (m) {
+                    var o = {};
+                    selectedKeys.forEach(function (k) { o[k] = m[k]; });
+                    return o;
+                });
+            }
+
+            function downloadBlob(content, filename, mime) {
+                var blob = new Blob([content], { type: mime || 'application/octet-stream' });
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            }
+
+            document.getElementById('btnLoad').onclick = function () {
+                var force = document.getElementById('forceOverwrite').checked;
+                var out = CentralMemberDB.loadSeedIfEmpty({ force: force });
+                showResult(out.message, out.loaded ? 'success' : 'info');
+                refreshCount();
+                getData();
+                renderTable();
+            };
+            document.getElementById('btnLoadPeople').onclick = function () {
+                var btn = document.getElementById('btnLoadPeople');
+                btn.disabled = true;
+                btn.textContent = '匯入中…';
+                CentralMemberDB.loadFromPeopleJson(null, function (res) {
+                    btn.disabled = false;
+                    btn.textContent = '📥 從 people.json 匯入 500 人';
+                    showResult(res.message, res.ok ? 'success' : 'error');
+                    refreshCount();
+                    getData();
+                    renderTable();
+                });
+            };
+            document.getElementById('btnCheck').onclick = function () {
+                refreshCount();
+                showResult('已更新「目前會友筆數」。', 'info');
+            };
+
+            document.getElementById('btnSearch').onclick = function () {
+                searchKeyword = (document.getElementById('searchInput').value || '').trim();
+                renderTable();
+            };
+            document.getElementById('btnClearSearch').onclick = function () {
+                document.getElementById('searchInput').value = '';
+                searchKeyword = '';
+                renderTable();
+            };
+            document.getElementById('searchInput').onkeydown = function (e) {
+                if (e.key === 'Enter') document.getElementById('btnSearch').click();
+            };
+
+            document.getElementById('checkAll').onchange = function () {
+                document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = document.getElementById('checkAll').checked; });
+            };
+
+            document.getElementById('btnExportAllCsv').onclick = function () {
+                getData();
+                var list = data.members || [];
+                if (!list.length) { showResult('尚無會友資料', 'info'); return; }
+                var keys = getSelectedExportKeys();
+                downloadBlob(exportCsv(list, keys), 'member_report_all_' + Date.now() + '.csv', 'text/csv;charset=utf-8');
+                showResult('已匯出全部記錄 CSV（' + list.length + ' 筆）' + (keys ? '，自選 ' + keys.length + ' 欄位' : ''), 'success');
+            };
+            document.getElementById('btnExportAllJson').onclick = function () {
+                getData();
+                var list = data.members || [];
+                if (!list.length) { showResult('尚無會友資料', 'info'); return; }
+                var keys = getSelectedExportKeys();
+                var out = pickMembersForExport(list, keys);
+                downloadBlob(JSON.stringify(out, null, 2), 'member_report_all_' + Date.now() + '.json', 'application/json');
+                showResult('已匯出全部記錄 JSON（' + list.length + ' 筆）' + (keys ? '，自選 ' + keys.length + ' 欄位' : ''), 'success');
+            };
+            document.getElementById('btnExportSelectedCsv').onclick = function () {
+                getData();
+                var list = getSelectedMembers();
+                if (!list.length) { showResult('請先勾選要匯出的會友', 'info'); return; }
+                var keys = getSelectedExportKeys();
+                downloadBlob(exportCsv(list, keys), 'member_report_selected_' + Date.now() + '.csv', 'text/csv;charset=utf-8');
+                showResult('已匯出選中記錄 CSV（' + list.length + ' 筆）' + (keys ? '，自選 ' + keys.length + ' 欄位' : ''), 'success');
+            };
+            document.getElementById('btnExportSelectedJson').onclick = function () {
+                getData();
+                var list = getSelectedMembers();
+                if (!list.length) { showResult('請先勾選要匯出的會友', 'info'); return; }
+                var keys = getSelectedExportKeys();
+                var out = pickMembersForExport(list, keys);
+                downloadBlob(JSON.stringify(out, null, 2), 'member_report_selected_' + Date.now() + '.json', 'application/json');
+                showResult('已匯出選中記錄 JSON（' + list.length + ' 筆）' + (keys ? '，自選 ' + keys.length + ' 欄位' : ''), 'success');
+            };
+            document.getElementById('btnSelectAllFields').onclick = function () { setExportFieldsFilter('all'); };
+            document.getElementById('btnSelectBasicFields').onclick = function () { setExportFieldsFilter('basic'); };
+            document.getElementById('btnSelectRelatedFields').onclick = function () { setExportFieldsFilter('related'); };
+
+            document.getElementById('btnImport').onclick = function () {
+                var fileInput = document.getElementById('importFile');
+                if (!fileInput.files.length) { showResult('請選擇要匯入的檔案', 'info'); return; }
+                var file = fileInput.files[0];
+                var reader = new FileReader();
+                reader.onload = function () {
+                    try {
+                        var text = reader.result;
+                        getData();
+                        if (file.name.toLowerCase().endsWith('.csv')) {
+                            var lines = text.split(/\r?\n/).filter(function (l) { return l.trim(); });
+                            if (lines.length < 2) { showResult('CSV 至少需標題列與一筆資料', 'error'); return; }
+                            var header = lines[0].split(',').map(function (h) { return (h.replace(/^"|"$/g, '')).trim(); });
+                            var hasIdCol = header[0] === 'id';
+                            var nextId = data.members.length ? Math.max.apply(null, data.members.map(function (m) { return m.id; })) + 1 : 1;
+                            for (var i = 1; i < lines.length; i++) {
+                                var parts = lines[i].match(/("([^"]*)")|([^,]+)/g);
+                                if (!parts) continue;
+                                parts = parts.map(function (p) { return (p.charAt(0) === '"' ? p.slice(1, -1).replace(/""/g, '"') : p).trim(); });
+                                var name = hasIdCol ? (parts[1] || '') : (parts[0] || '');
+                                var gender = hasIdCol ? (parts[2] || '') : (parts[1] || '');
+                                var age = hasIdCol ? (parseInt(parts[3], 10) || 0) : (parseInt(parts[2], 10) || 0);
+                                var phone = hasIdCol ? (parts[4] || '') : (parts[3] || '');
+                                var email = hasIdCol ? (parts[5] || '') : (parts[4] || '');
+                                var gifts = hasIdCol ? (parts[6] || '') : (parts[6] || '');
+                                var skills = hasIdCol ? (parts[7] || '') : (parts[7] || '');
+                                var membershipDate = hasIdCol ? (parts[8] || '') : (parts[8] || '');
+                                var status = hasIdCol ? (parts[9] || 'active') : (parts[9] || 'active');
+                                var churchId = hasIdCol ? (parts[10] || '') : (parts[10] || '');
+                                var organizationId = hasIdCol ? (parts[11] || '') : (parts[11] || '');
+                                var primaryGroupId = hasIdCol ? (parts[12] ? parseInt(parts[12], 10) : undefined) : (parts[12] ? parseInt(parts[12], 10) : undefined);
+                                var externalId = hasIdCol ? (parts[13] || '') : (parts[13] || '');
+                                data.members.push({
+                                    id: nextId++,
+                                    name: name,
+                                    gender: gender,
+                                    age: age,
+                                    phone: phone,
+                                    email: email,
+                                    baptized: false,
+                                    membershipDate: membershipDate || new Date().toISOString().slice(0, 10),
+                                    status: status,
+                                    gifts: gifts,
+                                    skills: skills,
+                                    birthday: '',
+                                    churchId: churchId || undefined,
+                                    organizationId: organizationId || undefined,
+                                    primaryGroupId: primaryGroupId,
+                                    externalId: externalId || undefined
+                                });
+                            }
+                        } else {
+                            var json = JSON.parse(text);
+                            var incoming = json.members || (Array.isArray(json) ? json : []);
+                            if (incoming.length) {
+                                var nextId = data.members.length ? Math.max.apply(null, data.members.map(function (m) { return m.id; })) + 1 : 1;
+                                incoming.forEach(function (m) {
+                                    var copy = { id: nextId++, name: m.name, gender: m.gender, age: m.age, phone: m.phone, email: m.email, baptized: m.baptized !== false, membershipDate: m.membershipDate || new Date().toISOString().slice(0, 10), status: m.status || 'active', gifts: m.gifts, skills: m.skills, birthday: m.birthday || '', churchId: m.churchId, organizationId: m.organizationId, primaryGroupId: m.primaryGroupId, externalId: m.externalId };
+                                    data.members.push(copy);
+                                });
+                            }
+                            if (json.groups && json.ministries) {
+                                data.groups = data.groups || [];
+                                data.ministries = data.ministries || [];
+                                if (json.groups.length) data.groups = json.groups;
+                                if (json.ministries.length) data.ministries = json.ministries;
+                            }
+                        }
+                        CentralMemberDB.set(data);
+                        refreshCount();
+                        renderTable();
+                        showResult('匯入完成，目前共 ' + data.members.length + ' 筆會友。', 'success');
+                    } catch (err) {
+                        showResult('匯入失敗：' + err.message, 'error');
+                    }
+                    fileInput.value = '';
+                };
+                reader.readAsText(file, 'UTF-8');
+            };
+
+            document.getElementById('btnAdd').onclick = function () {
+                document.getElementById('addMembershipDate').value = new Date().toISOString().slice(0, 10);
+                document.getElementById('addModal').classList.add('show');
+            };
+            document.getElementById('btnCloseAdd').onclick = function () {
+                document.getElementById('addModal').classList.remove('show');
+            };
+            document.getElementById('addMemberForm').onsubmit = function (e) {
+                e.preventDefault();
+                var form = this;
+                getData();
+                var nextId = data.members.length ? Math.max.apply(null, data.members.map(function (m) { return m.id; })) + 1 : 1;
+                var d = form.membershipDate.value || new Date().toISOString().slice(0, 10);
+                var churchId = (form.churchId && form.churchId.value) ? form.churchId.value.trim() : '';
+                var primaryGroupId = (form.primaryGroupId && form.primaryGroupId.value) ? parseInt(form.primaryGroupId.value, 10) : undefined;
+                var externalId = (form.externalId && form.externalId.value) ? form.externalId.value.trim() : '';
+                data.members.push({
+                    id: nextId,
+                    name: (form.name.value || '').trim(),
+                    gender: form.gender.value || '',
+                    age: parseInt(form.age.value, 10) || 0,
+                    phone: (form.phone.value || '').trim(),
+                    email: (form.email.value || '').trim(),
+                    baptized: false,
+                    membershipDate: d,
+                    status: 'active',
+                    gifts: (form.gifts.value || '').trim(),
+                    skills: '',
+                    birthday: '',
+                    churchId: churchId || undefined,
+                    organizationId: churchId || undefined,
+                    primaryGroupId: primaryGroupId || undefined,
+                    externalId: externalId || undefined
+                });
+                CentralMemberDB.set(data);
+                refreshCount();
+                renderTable();
+                document.getElementById('addModal').classList.remove('show');
+                form.reset();
+                showResult('已新增會友「' + data.members[data.members.length - 1].name + '」。', 'success');
+            };
+
+            refreshCount();
+            getData();
+            renderTable();
+            buildFieldCheckboxes();
+            wireFieldChange();
+        })();
+    </script>
+</body>
+</html>

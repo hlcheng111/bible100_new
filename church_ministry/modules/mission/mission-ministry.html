@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宣教事工 · Mission Ministry | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <link href="../../assets/css/fontawesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/module_onboarding.css">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
+            <div class="flex items-center gap-3">
+                <a href="../../dashboard.html" class="text-gray-600 hover:text-gray-900 text-sm">⛪ 教會事工中心</a>
+                <a href="../../activities-overview.html" class="text-gray-600 hover:text-gray-900 text-sm">🎯 A 模組總覽</a>
+            </div>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">宣教事工</h1>
+        <details class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg" style="border-left:4px solid #4338ca;">
+            <summary class="cursor-pointer font-semibold text-amber-800">📋 功能與使用說明</summary>
+            <div class="mt-2 text-sm text-gray-700">
+                <div style="font-weight:600;margin-bottom:4px;">此頁是為誰而設？</div>
+                <p style="margin:0 0 10px;">為宣教負責人、差傳同工，管理宣教計劃、宣教士與支援記錄。</p>
+                <div style="font-weight:600;margin-bottom:4px;">有什麼功能？</div>
+                <ul style="margin:0 0 10px;padding-left:18px;line-height:1.5;">
+                    <li><b>宣教計劃</b>：新增／編輯計劃、預算、狀態</li>
+                    <li><b>宣教士管理</b>、<b>支援記錄</b>、<b>宣教報告</b></li>
+                    <li><b>匯出數據</b>：下載 JSON</li>
+                    <li><b>年度／季度目標</b>與<b>成果與見證</b>：設定目標、記錄成果，數據回傳 A 模組總覽</li>
+                </ul>
+                <div style="font-weight:600;margin-bottom:4px;">如何入手？</div>
+                <ol style="margin:0;padding-left:18px;line-height:1.5;">
+                    <li>點「新增計劃」建立宣教計劃</li>
+                    <li>於「宣教士管理」新增宣教士；於「支援記錄」記錄奉獻或禱告支援</li>
+                    <li>頁面下方「年度／季度目標」設定目標、「成果與見證」記錄成果</li>
+                </ol>
+                <p class="member-id-principle" style="margin-top:10px;">跨模組原則：宣教士／支援者優先綁定 <code>memberId</code>（會友主檔）；若對象非本會會友可僅填姓名，正式版仍以 memberId 為準。</p>
+            </div>
+        </details>
+
+        <div class="page-guide mb-6">
+            <strong>本頁用途：</strong>管理宣教計劃、與會友主檔關聯的宣教士／支援記錄，以及 A 模組目標。<br>
+            <strong>適合誰用：</strong>宣教委員、差傳同工。<br>
+            <strong>如何開始：</strong>① <a href="../../load_central_member_seed.html" class="text-indigo-600 underline">載入試用會友</a> ②「新增計劃」③ 宣教士／支援可填 memberId 以對齊名單。<br>
+            <span class="data-source-note">資料來源：本頁 localStorage（missionData 等）；正式版改 API，與 churchMasterDatabase 同步。</span>
+        </div>
+        <div class="module-links mb-8">
+            <strong>跨模組快速連結（同一 memberId）</strong>
+            <ul>
+                <li><a href="../members/member-integrated.html#tab-members">會友檔案</a></li>
+                <li><a href="../members/member-integrated.html#tab-ministry">事工參與</a>（短宣／支援崗位）</li>
+                <li><a href="../support/visitation.html">探訪關懷</a></li>
+            </ul>
+        </div>
+        
+        <!-- 統計概覽 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">宣教計劃</h3>
+                <p class="text-3xl font-bold text-blue-600" id="totalMissions">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">進行中</h3>
+                <p class="text-3xl font-bold text-green-600" id="ongoingMissions">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-3xl font-bold text-purple-600" id="totalSupporters">0</p>
+                <h3 class="text-lg font-semibold mb-2">支援者</h3>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">年度預算</h3>
+                <p class="text-3xl font-bold text-orange-600" id="yearlyBudget">$0</p>
+            </div>
+        </div>
+
+        <!-- 主要功能區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 宣教計劃列表 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold">宣教計劃</h3>
+                            <button onclick="showAddMissionModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                新增計劃
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="missionsList" class="space-y-4">
+                            <!-- 宣教計劃列表將在這裡動態生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 側邊欄 -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">快速操作</h4>
+                    <button onclick="showMissionaryModal()" class="w-full bg-green-600 text-white py-3 px-4 rounded hover:bg-green-700 mb-3">
+                        宣教士管理
+                    </button>
+                    <button onclick="showSupportModal()" class="w-full bg-yellow-600 text-white py-3 px-4 rounded hover:bg-yellow-700 mb-3">
+                        支援記錄
+                    </button>
+                    <button onclick="showReportModal()" class="w-full bg-purple-600 text-white py-3 px-4 rounded hover:bg-purple-700 mb-3">
+                        宣教報告
+                    </button>
+                    <button onclick="exportMissionData()" class="w-full bg-gray-600 text-white py-3 px-4 rounded hover:bg-gray-700">
+                        匯出數據
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">最近活動</h4>
+                    <div id="recentActivities">
+                        <!-- 最近活動將在這裡動態生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- A 模組：目標·進度·成果 -->
+        <div id="section-goals" class="mt-8">
+            <div class="page-guide mb-4">
+                <strong>本區用途：</strong>集中年度／季度目標與見證（與其他整合頁 A 模組區塊同構）。<br>
+                <strong>適合誰用：</strong>宣教負責人、牧者。<br>
+                <strong>如何開始：</strong>① 新增目標 ② 定期更新進度 ③ 成果與見證作為報告素材。<br>
+                <span class="data-source-note">存 church_ministry_a_mission（localStorage）。</span>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">🎯 年度／季度目標</h3>
+                <p class="text-sm text-gray-500 mb-4">設定宣教事工的目標與達成值，追蹤進度並記錄成果與見證。</p>
+                <button onclick="showAddGoalModalM()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">➕ 新增目標</button>
+                <div id="goalsListM" class="mt-4 space-y-3"></div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">📋 成果與見證</h3>
+                <button onclick="showAddOutcomeModalM()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">➕ 新增成果／見證</button>
+                <div id="outcomesListM" class="mt-4 space-y-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 簡易 Modal 容器 -->
+    <div id="missionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeMissionModal()">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6" onclick="event.stopPropagation()">
+            <h3 id="missionModalTitle" class="text-lg font-semibold mb-4">新增宣教計劃</h3>
+            <div id="missionModalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // 基本數據結構
+        let missions = [];
+        let missionaries = [];
+        let supports = [];
+        let reports = [];
+
+        // 頁面載入
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            loadDemoData();
+            renderData();
+            loadAModuleDataM();
+            renderGoalsListM();
+            renderOutcomesListM();
+        });
+
+        // 載入數據
+        function loadData() {
+            missions = JSON.parse(localStorage.getItem('missionData')) || [];
+            missionaries = JSON.parse(localStorage.getItem('missionMissionaries')) || [];
+            supports = JSON.parse(localStorage.getItem('missionSupports')) || [];
+            reports = JSON.parse(localStorage.getItem('missionReports')) || [];
+        }
+
+        // 保存數據
+        function saveData() {
+            localStorage.setItem('missionData', JSON.stringify(missions));
+            localStorage.setItem('missionMissionaries', JSON.stringify(missionaries));
+            localStorage.setItem('missionSupports', JSON.stringify(supports));
+            localStorage.setItem('missionReports', JSON.stringify(reports || []));
+        }
+
+        // 載入演示數據
+        function loadDemoData() {
+            if (missions.length === 0) {
+                missions = [
+                    {
+                        id: '1',
+                        title: '東南亞宣教計劃',
+                        description: '支援東南亞地區的宣教工作',
+                        location: '東南亞',
+                        startDate: '2024-01-01',
+                        endDate: '2024-12-31',
+                        status: 'ongoing',
+                        budget: 50000,
+                        notes: '重點支援當地教會建設'
+                    },
+                    {
+                        id: '2',
+                        title: '本地社區宣教',
+                        description: '向本地社區傳福音',
+                        location: '台北市',
+                        startDate: '2024-03-01',
+                        endDate: '2024-08-31',
+                        status: 'planned',
+                        budget: 15000,
+                        notes: '社區關懷和福音佈道'
+                    }
+                ];
+            }
+
+            if (missionaries.length === 0) {
+                missionaries = [
+                    {
+                        id: '1',
+                        memberId: '1',
+                        name: '陳宣教士',
+                        location: '東南亞',
+                        ministry: '教會建設',
+                        status: 'active',
+                        startDate: '2023-06-01',
+                        notes: '專注於當地教會發展（示範：memberId=1 對齊會友主檔）'
+                    }
+                ];
+            }
+
+            if (supports.length === 0) {
+                supports = [
+                    {
+                        id: '1',
+                        missionId: '1',
+                        missionTitle: '東南亞宣教計劃',
+                        supporterName: '張弟兄',
+                        supporterMemberId: '2',
+                        amount: 5000,
+                        date: '2024-01-15',
+                        type: 'financial',
+                        notes: '每月固定奉獻（示範：supporterMemberId 可對齊會友）'
+                    }
+                ];
+            }
+
+            saveData();
+        }
+
+        // 渲染數據
+        function renderData() {
+            renderMissionsList();
+            renderRecentActivities();
+            updateStatistics();
+        }
+
+        // 渲染宣教計劃列表
+        function renderMissionsList() {
+            const container = document.getElementById('missionsList');
+            if (missions.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">暫無宣教計劃</p>';
+                return;
+            }
+
+            container.innerHTML = missions.map(mission => `
+                <div class="border rounded-lg p-4 bg-white">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <h4 class="font-semibold text-lg">${mission.title}</h4>
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(mission.status)}">
+                                    ${getStatusText(mission.status)}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${mission.description}</p>
+                            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                                <div><span class="font-medium">地點:</span> ${mission.location}</div>
+                                <div><span class="font-medium">預算:</span> $${mission.budget.toLocaleString()}</div>
+                                <div><span class="font-medium">開始日期:</span> ${mission.startDate}</div>
+                                <div><span class="font-medium">結束日期:</span> ${mission.endDate}</div>
+                            </div>
+                            ${mission.notes ? `<div class="mt-2 text-sm text-gray-500">備註：${mission.notes}</div>` : ''}
+                        </div>
+                        <div class="flex space-x-2 ml-4">
+                            <button onclick="editMission('${mission.id}')" class="text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-300 rounded hover:bg-blue-50">編輯</button>
+                            <button onclick="deleteMission('${mission.id}')" class="text-red-600 hover:text-red-800 px-3 py-1 border border-red-300 rounded hover:bg-red-50">刪除</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染最近活動
+        function renderRecentActivities() {
+            const container = document.getElementById('recentActivities');
+            if (supports.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">暫無活動記錄</p>';
+                return;
+            }
+
+            const recent = supports
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 3);
+
+            container.innerHTML = recent.map(support => {
+                const mid = support.supporterMemberId ? ` · memberId=${support.supporterMemberId}` : '';
+                const link = support.supporterMemberId ? ` <a href="../members/member-integrated.html#tab-members?memberId=${encodeURIComponent(support.supporterMemberId)}" class="text-indigo-600 text-xs">會友</a>` : '';
+                return `
+                <div class="border-l-4 border-green-500 pl-3 mb-3">
+                    <h5 class="font-medium text-sm">${support.missionTitle}</h5>
+                    <p class="text-xs text-gray-600">${support.supporterName}${mid}${link} — ${support.type === 'financial' ? '財務支援' : '禱告支援'}</p>
+                    <p class="text-xs text-gray-600">${support.date}</p>
+                </div>`;
+            }).join('');
+        }
+
+        // 更新統計
+        function updateStatistics() {
+            document.getElementById('totalMissions').textContent = missions.length;
+            document.getElementById('ongoingMissions').textContent = missions.filter(m => m.status === 'ongoing').length;
+            document.getElementById('totalSupporters').textContent = new Set(supports.map(s => s.supporterName)).size;
+            
+            // 計算年度預算
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const yearlyBudget = missions
+                .filter(m => {
+                    const startYear = new Date(m.startDate).getFullYear();
+                    const endYear = new Date(m.endDate).getFullYear();
+                    return startYear <= currentYear && endYear >= currentYear;
+                })
+                .reduce((sum, m) => sum + m.budget, 0);
+            
+            document.getElementById('yearlyBudget').textContent = `$${yearlyBudget.toLocaleString()}`;
+        }
+
+        // 獲取狀態顏色
+        function getStatusColor(status) {
+            switch (status) {
+                case 'planned': return 'bg-blue-100 text-blue-800';
+                case 'ongoing': return 'bg-green-100 text-green-800';
+                case 'completed': return 'bg-gray-100 text-gray-800';
+                case 'cancelled': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        // 獲取狀態文字
+        function getStatusText(status) {
+            switch (status) {
+                case 'planned': return '計劃中';
+                case 'ongoing': return '進行中';
+                case 'completed': return '已完成';
+                case 'cancelled': return '已取消';
+                default: return '未知';
+            }
+        }
+
+        // 基本功能函數
+        function openMissionModal() {
+            document.getElementById('missionModal').classList.remove('hidden');
+            document.getElementById('missionModal').classList.add('flex');
+        }
+        function closeMissionModal() {
+            document.getElementById('missionModal').classList.add('hidden');
+            document.getElementById('missionModal').classList.remove('flex');
+        }
+
+        function showAddMissionModal() {
+            document.getElementById('missionModalTitle').textContent = '新增宣教計劃';
+            document.getElementById('missionModalBody').innerHTML = `
+                <div class="space-y-3">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">計劃名稱 *</label><input type="text" id="mTitle" class="w-full border rounded px-3 py-2" placeholder="例：東南亞宣教計劃"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">描述</label><textarea id="mDesc" class="w-full border rounded px-3 py-2" rows="2" placeholder="簡述目標與內容"></textarea></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">地點</label><input type="text" id="mLocation" class="w-full border rounded px-3 py-2" placeholder="例：東南亞"></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-sm font-medium text-gray-700 mb-1">開始日期</label><input type="date" id="mStart" class="w-full border rounded px-3 py-2"></div>
+                        <div><label class="block text-sm font-medium text-gray-700 mb-1">結束日期</label><input type="date" id="mEnd" class="w-full border rounded px-3 py-2"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-sm font-medium text-gray-700 mb-1">狀態</label><select id="mStatus" class="w-full border rounded px-3 py-2"><option value="planned">計劃中</option><option value="ongoing">進行中</option><option value="completed">已完成</option><option value="cancelled">已取消</option></select></div>
+                        <div><label class="block text-sm font-medium text-gray-700 mb-1">預算</label><input type="number" id="mBudget" class="w-full border rounded px-3 py-2" placeholder="0"></div>
+                    </div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">備註</label><input type="text" id="mNotes" class="w-full border rounded px-3 py-2" placeholder="選填"></div>
+                    <div class="flex gap-2 pt-2"><button onclick="submitMission(null)" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">儲存</button><button onclick="closeMissionModal()" class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">取消</button></div>
+                </div>`;
+            openMissionModal();
+        }
+
+        function submitMission(editId) {
+            const title = document.getElementById('mTitle').value.trim();
+            if (!title) { alert('請填寫計劃名稱'); return; }
+            const mission = {
+                id: editId || String(Date.now()),
+                title: title,
+                description: document.getElementById('mDesc').value.trim() || '',
+                location: document.getElementById('mLocation').value.trim() || '',
+                startDate: document.getElementById('mStart').value || new Date().toISOString().split('T')[0],
+                endDate: document.getElementById('mEnd').value || new Date().toISOString().split('T')[0],
+                status: document.getElementById('mStatus').value || 'planned',
+                budget: Number(document.getElementById('mBudget').value) || 0,
+                notes: document.getElementById('mNotes').value.trim() || ''
+            };
+            if (editId) {
+                const idx = missions.findIndex(m => m.id === editId);
+                if (idx >= 0) missions[idx] = mission;
+            } else {
+                missions.push(mission);
+            }
+            saveData();
+            renderData();
+            closeMissionModal();
+        }
+
+        function editMission(id) {
+            const m = missions.find(x => x.id === id);
+            if (!m) return;
+            document.getElementById('missionModalTitle').textContent = '編輯宣教計劃';
+            document.getElementById('missionModalBody').innerHTML = `
+                <div class="space-y-3">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">計劃名稱 *</label><input type="text" id="mTitle" class="w-full border rounded px-3 py-2" value="${(m.title || '').replace(/"/g, '&quot;')}"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">描述</label><textarea id="mDesc" class="w-full border rounded px-3 py-2" rows="2">${(m.description || '').replace(/</g, '&lt;')}</textarea></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">地點</label><input type="text" id="mLocation" class="w-full border rounded px-3 py-2" value="${(m.location || '').replace(/"/g, '&quot;')}"></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-sm font-medium text-gray-700 mb-1">開始日期</label><input type="date" id="mStart" class="w-full border rounded px-3 py-2" value="${m.startDate || ''}"></div>
+                        <div><label class="block text-sm font-medium text-gray-700 mb-1">結束日期</label><input type="date" id="mEnd" class="w-full border rounded px-3 py-2" value="${m.endDate || ''}"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-sm font-medium text-gray-700 mb-1">狀態</label><select id="mStatus" class="w-full border rounded px-3 py-2"><option value="planned" ${m.status==='planned'?'selected':''}>計劃中</option><option value="ongoing" ${m.status==='ongoing'?'selected':''}>進行中</option><option value="completed" ${m.status==='completed'?'selected':''}>已完成</option><option value="cancelled" ${m.status==='cancelled'?'selected':''}>已取消</option></select></div>
+                        <div><label class="block text-sm font-medium text-gray-700 mb-1">預算</label><input type="number" id="mBudget" class="w-full border rounded px-3 py-2" value="${m.budget || 0}"></div>
+                    </div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">備註</label><input type="text" id="mNotes" class="w-full border rounded px-3 py-2" value="${(m.notes || '').replace(/"/g, '&quot;')}"></div>
+                    <div class="flex gap-2 pt-2"><button onclick="submitMission('${m.id}')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">儲存</button><button onclick="closeMissionModal()" class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">取消</button></div>
+                </div>`;
+            openMissionModal();
+        }
+
+        function deleteMission(id) {
+            if (confirm('確定要刪除這個宣教計劃嗎？')) {
+                missions = missions.filter(m => m.id !== id);
+                saveData();
+                renderData();
+            }
+        }
+
+        function showMissionaryModal() {
+            document.getElementById('missionModalTitle').textContent = '宣教士管理';
+            const list = missionaries.map(m => {
+                const mid = m.memberId ? ` · memberId=${m.memberId}` : '';
+                const link = m.memberId ? ` <a href="../members/member-integrated.html#tab-members?memberId=${encodeURIComponent(m.memberId)}" class="text-indigo-600 text-xs underline">會友檔案</a>` : '';
+                return `<div class="flex justify-between items-center py-2 border-b"><span>${m.name} - ${m.location} (${m.status})${mid}${link}</span><button onclick="closeMissionModal(); deleteMissionary('${m.id}')" class="text-red-600 text-sm">刪除</button></div>`;
+            }).join('') || '<p class="text-gray-500 text-sm">暫無宣教士</p>';
+            document.getElementById('missionModalBody').innerHTML = `
+                <div class="space-y-3">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">姓名 *</label><input type="text" id="mxName" class="w-full border rounded px-3 py-2"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">會友 memberId（選填，對齊主檔）</label><input type="text" id="mxMemberId" class="w-full border rounded px-3 py-2" placeholder="例：1"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">地點</label><input type="text" id="mxLocation" class="w-full border rounded px-3 py-2"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">事工類型</label><input type="text" id="mxMinistry" class="w-full border rounded px-3 py-2"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">開始日期</label><input type="date" id="mxStart" class="w-full border rounded px-3 py-2"></div>
+                    <div class="flex gap-2"><button onclick="submitMissionary()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">新增宣教士</button><button onclick="closeMissionModal()" class="bg-gray-200 px-4 py-2 rounded">關閉</button></div>
+                    <div class="mt-4 max-h-48 overflow-y-auto">${list}</div>
+                </div>`;
+            openMissionModal();
+        }
+        function submitMissionary() {
+            const name = document.getElementById('mxName').value.trim();
+            if (!name) { alert('請填寫姓名'); return; }
+            const midEl = document.getElementById('mxMemberId');
+            const memberId = midEl && midEl.value.trim() ? midEl.value.trim() : '';
+            missionaries.push({ id: String(Date.now()), memberId: memberId || undefined, name: name, location: document.getElementById('mxLocation').value.trim() || '', ministry: document.getElementById('mxMinistry').value.trim() || '', status: 'active', startDate: document.getElementById('mxStart').value || new Date().toISOString().split('T')[0], notes: '' });
+            saveData();
+            showMissionaryModal();
+        }
+        function deleteMissionary(id) {
+            if (!confirm('確定刪除此宣教士？')) return;
+            missionaries = missionaries.filter(m => m.id !== id);
+            saveData();
+            renderData();
+        }
+
+        function showSupportModal() {
+            const options = missions.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
+            document.getElementById('missionModalTitle').textContent = '新增支援記錄';
+            document.getElementById('missionModalBody').innerHTML = `
+                <div class="space-y-3">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">宣教計劃</label><select id="sMissionId" class="w-full border rounded px-3 py-2">${options || '<option value="">請先新增計劃</option>'}</select></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">支援者姓名 *</label><input type="text" id="sName" class="w-full border rounded px-3 py-2"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">支援者 memberId（選填）</label><input type="text" id="sMemberId" class="w-full border rounded px-3 py-2" placeholder="對齊會友主檔"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">金額</label><input type="number" id="sAmount" class="w-full border rounded px-3 py-2" placeholder="0"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">類型</label><select id="sType" class="w-full border rounded px-3 py-2"><option value="financial">財務支援</option><option value="prayer">禱告支援</option></select></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">日期</label><input type="date" id="sDate" class="w-full border rounded px-3 py-2" value="${new Date().toISOString().split('T')[0]}"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">備註</label><input type="text" id="sNotes" class="w-full border rounded px-3 py-2"></div>
+                    <div class="flex gap-2"><button onclick="submitSupport()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">儲存</button><button onclick="closeMissionModal()" class="bg-gray-200 px-4 py-2 rounded">取消</button></div>
+                </div>`;
+            openMissionModal();
+        }
+        function submitSupport() {
+            const missionId = document.getElementById('sMissionId').value;
+            const mission = missions.find(m => m.id === missionId);
+            const name = document.getElementById('sName').value.trim();
+            if (!name) { alert('請填寫支援者姓名'); return; }
+            const sidEl = document.getElementById('sMemberId');
+            const supporterMemberId = sidEl && sidEl.value.trim() ? sidEl.value.trim() : '';
+            supports.push({
+                id: String(Date.now()),
+                missionId: missionId || '',
+                missionTitle: mission ? mission.title : '',
+                supporterName: name,
+                supporterMemberId: supporterMemberId || undefined,
+                amount: Number(document.getElementById('sAmount').value) || 0,
+                date: document.getElementById('sDate').value || new Date().toISOString().split('T')[0],
+                type: document.getElementById('sType').value || 'financial',
+                notes: document.getElementById('sNotes').value.trim() || ''
+            });
+            saveData();
+            renderData();
+            closeMissionModal();
+        }
+
+        function showReportModal() {
+            document.getElementById('missionModalTitle').textContent = '宣教報告';
+            const list = (reports || []).slice(-5).reverse().map(r => `<div class="py-2 border-b text-sm"><strong>${r.date || ''}</strong><br>${(r.content || '').substring(0, 80)}…</div>`).join('') || '<p class="text-gray-500 text-sm">暫無報告</p>';
+            document.getElementById('missionModalBody').innerHTML = `
+                <div class="space-y-3">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">報告內容</label><textarea id="rContent" class="w-full border rounded px-3 py-2" rows="4" placeholder="簡述進度與見證"></textarea></div>
+                    <div class="flex gap-2"><button onclick="submitReport()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">儲存報告</button><button onclick="closeMissionModal()" class="bg-gray-200 px-4 py-2 rounded">關閉</button></div>
+                    <div class="mt-4 max-h-32 overflow-y-auto">${list}</div>
+                </div>`;
+            openMissionModal();
+        }
+        function submitReport() {
+            const content = document.getElementById('rContent').value.trim();
+            if (!content) { alert('請填寫報告內容'); return; }
+            if (!reports) reports = [];
+            reports.push({ id: String(Date.now()), date: new Date().toISOString().split('T')[0], content: content });
+            saveData();
+            closeMissionModal();
+        }
+
+        function exportMissionData() {
+            const data = { missions: missions, missionaries: missionaries, supports: supports, reports: reports || [], exportDate: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = '宣教事工匯出_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        // A 模組：目標·進度·成果（church_ministry_a_mission）
+        const A_MODULE_KEY_M = 'church_ministry_a_mission';
+        let aModuleM = { goals: [], outcomes: [] };
+        function loadAModuleDataM() {
+            try {
+                const raw = localStorage.getItem(A_MODULE_KEY_M);
+                aModuleM = raw ? JSON.parse(raw) : { goals: [], outcomes: [] };
+                if (!aModuleM.goals) aModuleM.goals = []; if (!aModuleM.outcomes) aModuleM.outcomes = [];
+            } catch (e) { aModuleM = { goals: [], outcomes: [] }; }
+        }
+        function saveAModuleDataM() {
+            try { localStorage.setItem(A_MODULE_KEY_M, JSON.stringify(aModuleM)); return true; } catch (e) { return false; }
+        }
+        function renderGoalsListM() {
+            const el = document.getElementById('goalsListM'); if (!el) return;
+            if (aModuleM.goals.length === 0) { el.innerHTML = '<p class="text-gray-500 py-4">暫無目標，點擊「新增目標」開始設定。</p>'; return; }
+            el.innerHTML = aModuleM.goals.map(g => {
+                const current = g.currentValue != null ? Number(g.currentValue) : 0;
+                const target = g.targetValue != null ? Number(g.targetValue) : 100;
+                const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+                return `<div class="border rounded p-3 flex justify-between items-center"><div><div class="font-medium">${g.title || '未命名目標'}</div><div class="text-sm text-gray-500">${g.period || ''} · 目標：${g.targetValue || '-'} ${g.targetUnit || ''} · 目前：${current}</div><div class="w-full bg-gray-200 rounded h-2 mt-2"><div class="bg-blue-600 h-2 rounded" style="width:${pct}%"></div></div></div><div class="flex gap-2"><button onclick="editGoalProgressM(${g.id})" class="text-blue-600 hover:underline text-sm">更新進度</button><button onclick="deleteAModuleGoalM(${g.id})" class="text-red-600 hover:underline text-sm">刪除</button></div></div>`;
+            }).join('');
+        }
+        function renderOutcomesListM() {
+            const el = document.getElementById('outcomesListM'); if (!el) return;
+            if (aModuleM.outcomes.length === 0) { el.innerHTML = '<p class="text-gray-500 py-4">暫無成果或見證記錄。</p>'; return; }
+            el.innerHTML = aModuleM.outcomes.map(o => `<div class="border rounded p-3"><div class="font-medium">${o.type === '見證' ? '💬' : '📌'} ${o.title || '未命名'}</div><div class="text-sm text-gray-500">${o.date || ''} ${o.description ? ' · ' + (o.description.substring(0, 60) + (o.description.length > 60 ? '…' : '')) : ''}</div><button onclick="deleteAModuleOutcomeM(${o.id})" class="text-red-600 hover:underline text-sm mt-2">刪除</button></div>`).join('');
+        }
+        function showAddGoalModalM() {
+            const title = prompt('目標名稱', '例：本年度短宣參與人數');
+            if (!title) return;
+            const period = prompt('期別（例：2025 年度）', '2025 年度');
+            const targetValue = prompt('目標數值', '20');
+            const targetUnit = prompt('單位（%、人、場）', '人');
+            const currentValue = prompt('目前數值', '0');
+            const id = (aModuleM.goals.length ? Math.max(...aModuleM.goals.map(g => g.id)) : 0) + 1;
+            aModuleM.goals.push({ id, title: title.trim(), period: period || '', targetValue, targetUnit: targetUnit || '', currentValue: currentValue !== null && currentValue !== '' ? currentValue : 0 });
+            saveAModuleDataM(); renderGoalsListM();
+        }
+        function editGoalProgressM(id) {
+            const g = aModuleM.goals.find(x => x.id === id); if (!g) return;
+            const current = prompt('請輸入目前數值', g.currentValue != null ? g.currentValue : ''); if (current === null) return;
+            g.currentValue = current; saveAModuleDataM(); renderGoalsListM();
+        }
+        function deleteAModuleGoalM(id) {
+            if (!confirm('確定刪除此目標？')) return; aModuleM.goals = aModuleM.goals.filter(x => x.id !== id); saveAModuleDataM(); renderGoalsListM();
+        }
+        function showAddOutcomeModalM() {
+            const title = prompt('標題', '例：短宣隊成果分享');
+            if (!title) return;
+            const type = prompt('類型：成果 / 見證 / 報告', '成果');
+            const date = prompt('日期 (YYYY-MM-DD)', new Date().toISOString().split('T')[0]);
+            const description = prompt('簡述', '');
+            const id = (aModuleM.outcomes.length ? Math.max(...aModuleM.outcomes.map(o => o.id)) : 0) + 1;
+            aModuleM.outcomes.push({ id, title: title.trim(), type: type || '成果', date: date || new Date().toISOString().split('T')[0], description: description || '' });
+            saveAModuleDataM(); renderOutcomesListM();
+        }
+        function deleteAModuleOutcomeM(id) {
+            if (!confirm('確定刪除此筆記錄？')) return; aModuleM.outcomes = aModuleM.outcomes.filter(x => x.id !== id); saveAModuleDataM(); renderOutcomesListM();
+        }
+    </script>
+</body>
+</html>

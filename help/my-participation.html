@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>我的參與 - 輕量版</title>
+  <base target="_parent">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; padding: 20px; max-width: 700px; line-height: 1.6; color: #333; background: #f8f9fa; }
+    h1 { font-size: 1.3rem; color: #0b5fa5; margin-bottom: 16px; }
+    .card { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border-left: 4px solid #e67e22; }
+    .card h2 { font-size: 1rem; color: #e67e22; margin-bottom: 12px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 12px; }
+    .form-group select, .form-group input { width: 100%; max-width: 400px; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .note { font-size: 11px; color: #666; margin-top: 8px; background: #fffde7; padding: 10px; border-radius: 6px; }
+    .stat-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+    .stat-item { padding: 10px 16px; background: #e8f5e9; border-radius: 6px; font-size: 13px; }
+    .stat-item strong { color: #2e7d32; }
+    .empty { color: #95a5a6; font-style: italic; }
+    .nav-bar { margin-bottom: 16px; }
+    .nav-bar a { display: inline-block; padding: 8px 14px; background: #e3f2fd; color: #0b5fa5; text-decoration: none; border-radius: 6px; font-size: 12px; margin-right: 8px; }
+    .nav-bar a:hover { background: #0b5fa5; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="nav-bar">
+    <a href="../church_ministry/congregation/index.html" target="contentFrame">← 會眾入口</a>
+    <a href="tools-overview.html" target="contentFrame">功能總覽</a>
+  </div>
+
+  <h1>👤 我的參與（輕量版）</h1>
+
+  <div class="card">
+    <h2>選擇身份</h2>
+    <p style="font-size: 12px; color: #666; margin-bottom: 12px;">請選擇您的身份以檢視個人資料。此為示範用，正式環境需登入與權限機制。</p>
+    <div class="form-group">
+      <label for="memberSelect">我是：</label>
+      <select id="memberSelect">
+        <option value="">— 請選擇 —</option>
+        <option value="guest">訪客模式</option>
+      </select>
+    </div>
+    <div class="note">
+      <strong>說明：</strong>身份選自人員名單。若無資料，請先至教會事工中心 <a href="../church_ministry/load_central_member_seed.html" target="_parent">載入 500 人</a>。資料存於本機，換裝置或瀏覽器會清空。
+    </div>
+  </div>
+
+  <div class="card" id="myStatsCard">
+    <h2>我的概覽</h2>
+    <div id="myStatsContent" class="empty">請先選擇身份</div>
+  </div>
+
+  <div class="card">
+    <h2>讀經進度</h2>
+    <div id="readingProgress" class="empty">選擇身份後顯示 OT100 / NT100 / T4 進度</div>
+  </div>
+
+  <div class="card">
+    <h2>我的收藏</h2>
+    <div id="savedCount">0 篇</div>
+    <p style="font-size: 12px; margin-top: 8px;"><a href="my-saved.html" target="contentFrame">→ 前往已收藏</a></p>
+  </div>
+
+  <div class="card">
+    <h2>報名記錄</h2>
+    <div id="registrationList" class="empty">選擇身份後顯示已報名課程／活動（localStorage）</div>
+  </div>
+
+  <script>
+    (function() {
+      var STORAGE_KEYS = {
+        currentMember: 'myParticipation_currentMember',
+        registrations: 'myParticipation_registrations',
+        readingProgress: 'myParticipation_readingProgress'
+      };
+
+      function loadMemberList(cb) {
+        var list = [];
+        try {
+          var ms = localStorage.getItem('memberSystemData');
+          if (ms) { var d = JSON.parse(ms); list = (d.members || []).map(function(m){ return { id: m.id || m.name, name: m.name }; }); }
+          if (list.length === 0) {
+            var cm = localStorage.getItem('churchMasterDatabase');
+            if (cm) { var c = JSON.parse(cm); list = (c.members || []).map(function(m){ return { id: m.id || m.memberName || m.name, name: m.name || m.memberName }; }); }
+          }
+          if (list.length === 0) {
+            var url = (location.origin && location.origin !== 'file:') ? (location.origin + '/data/people.json') : '../data/people.json';
+            fetch(url).then(function(r){ return r.ok ? r.json() : Promise.reject(); })
+              .then(function(d){ list = (d.people || []).slice(0, 50).map(function(p,i){ return { id: p.id || 'p'+i, name: p.name }; }); cb(list); })
+              .catch(function(){ cb(list); });
+          } else cb(list);
+        } catch(e) { cb(list); }
+      }
+
+      function renderMemberSelect() {
+        var sel = document.getElementById('memberSelect');
+        loadMemberList(function(list) {
+          while (sel.options.length > 2) sel.remove(2);
+          list.forEach(function(m) {
+            var opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.name || m.id;
+            sel.appendChild(opt);
+          });
+          var saved = localStorage.getItem(STORAGE_KEYS.currentMember);
+          if (saved) sel.value = saved;
+          updateUI();
+        });
+      }
+
+      function updateUI() {
+        var memberId = document.getElementById('memberSelect').value;
+        if (memberId) localStorage.setItem(STORAGE_KEYS.currentMember, memberId);
+
+        var savedRaw = localStorage.getItem('global-tools-saved');
+        var savedList = savedRaw ? JSON.parse(savedRaw) : [];
+        document.getElementById('savedCount').textContent = savedList.length + ' 篇';
+        if (document.getElementById('savedCount').classList) document.getElementById('savedCount').classList.remove('empty');
+
+        if (!memberId || memberId === 'guest') {
+          document.getElementById('myStatsContent').innerHTML = '請選擇身份';
+          document.getElementById('myStatsContent').className = 'empty';
+          document.getElementById('readingProgress').innerHTML = '選擇身份後顯示';
+          document.getElementById('readingProgress').className = 'empty';
+          document.getElementById('registrationList').innerHTML = '選擇身份後顯示';
+          document.getElementById('registrationList').className = 'empty';
+          return;
+        }
+
+        var regRaw = localStorage.getItem(STORAGE_KEYS.registrations);
+        var regs = regRaw ? JSON.parse(regRaw) : {};
+        var myRegs = regs[memberId] || [];
+
+        document.getElementById('myStatsContent').innerHTML = '<div class="stat-row"><div class="stat-item">收藏 <strong>' + savedList.length + '</strong> 篇</div><div class="stat-item">報名 <strong>' + myRegs.length + '</strong> 項</div></div>';
+        document.getElementById('myStatsContent').className = '';
+
+        var progressRaw = localStorage.getItem(STORAGE_KEYS.readingProgress);
+        var progress = progressRaw ? JSON.parse(progressRaw) : {};
+        var myProgress = progress[memberId] || { ot100: 0, nt100: 0, t4: 0 };
+        document.getElementById('readingProgress').innerHTML = 'OT100: ' + (myProgress.ot100 || 0) + ' 章 · NT100: ' + (myProgress.nt100 || 0) + ' 章 · T4: ' + (myProgress.t4 || 0) + ' 章';
+        document.getElementById('readingProgress').className = '';
+
+        document.getElementById('registrationList').innerHTML = myRegs.length ? '<ul style="margin:0;padding-left:20px;">' + myRegs.map(function(r){ return '<li>' + (r.name || r.title || '項目') + '</li>'; }).join('') + '</ul>' : '尚無報名記錄';
+        document.getElementById('registrationList').className = '';
+      }
+
+      document.getElementById('memberSelect').addEventListener('change', updateUI);
+      renderMemberSelect();
+    })();
+  </script>
+</body>
+</html>

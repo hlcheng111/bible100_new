@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 助手 · Ai Assistant | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <link href="../../assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">AI 智能助手</h1>
+        <details class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <summary class="cursor-pointer font-semibold text-amber-800">📋 功能說明／計畫願景</summary>
+            <div class="mt-3 text-sm text-gray-700 space-y-2">
+                <p><strong>本頁用途：</strong>在教會事工內進行資料感知問答與快捷分析（目前為規則引擎回覆，非真實 LLM）。</p>
+                <p><strong>適合誰用：</strong>同工熟悉介面；正式 AI 請用 <a href="../../../ai_tools/dashboard.html" target="_blank" class="text-blue-600 underline">AI 工具總台</a>。</p>
+                <p><strong>如何開始：</strong>① 在下方輸入問題 或 點左側快速問題 ② 點「智能分析／推薦」看示範字 ③ 對話歷史存 <code class="bg-white px-1 rounded">aiChatHistory</code>（僅本機瀏覽器）。</p>
+                <p><strong>與主資料庫：</strong>本頁已優先讀取 <code class="bg-white px-1 rounded">church_data_bridge.js</code> 的真實摘要（KPI/會友統計），回覆會附來源標記，便於追溯。</p>
+            </div>
+        </details>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左側：聊天界面 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">智能對話</h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="chatMessages" class="space-y-4 mb-4 h-96 overflow-y-auto">
+                            <!-- 聊天消息將在這裡顯示 -->
+                        </div>
+                        <div class="flex space-x-3">
+                            <input type="text" id="messageInput" placeholder="輸入您的問題..." 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button onclick="sendMessage()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：功能選項 -->
+            <div class="space-y-6">
+                <!-- 快速問題 -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">快速問題</h3>
+                    <div class="space-y-2">
+                        <button onclick="askQuickQuestion('如何管理教會活動？')" 
+                                class="w-full text-left p-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-calendar text-blue-500 mr-2"></i>
+                            如何管理教會活動？
+                        </button>
+                        <button onclick="askQuickQuestion('志工管理的最佳實踐是什麼？')" 
+                                class="w-full text-left p-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-users text-green-500 mr-2"></i>
+                            志工管理的最佳實踐是什麼？
+                        </button>
+                        <button onclick="askQuickQuestion('如何提升團契互動效果？')" 
+                                class="w-full text-left p-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-heart text-red-500 mr-2"></i>
+                            如何提升團契互動效果？
+                        </button>
+                        <button onclick="askQuickQuestion('教會財務管理要注意什麼？')" 
+                                class="w-full text-left p-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-dollar-sign text-yellow-500 mr-2"></i>
+                            教會財務管理要注意什麼？
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AI 功能 -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">AI 功能</h3>
+                    <div class="space-y-3">
+                        <button onclick="showSmartAnalysis()" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700">
+                            <i class="fas fa-brain mr-2"></i>智能分析
+                        </button>
+                        <button onclick="showRecommendation()" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700">
+                            <i class="fas fa-lightbulb mr-2"></i>智能推薦
+                        </button>
+                        <button onclick="showAutomation()" class="w-full bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700">
+                            <i class="fas fa-magic mr-2"></i>自動化流程
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 使用統計 -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">使用統計</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">今日對話</span>
+                            <span class="text-sm font-medium text-gray-900" id="todayChats">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">總對話數</span>
+                            <span class="text-sm font-medium text-gray-900" id="totalChats">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">滿意度</span>
+                            <span class="text-sm font-medium text-gray-900" id="satisfaction">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 智能分析模態框 -->
+    <div id="smartAnalysisModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">智能分析</h3>
+                    <button onclick="closeModal('smartAnalysisModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">分析類型</label>
+                        <select id="analysisType" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="activity">活動分析</option>
+                            <option value="volunteer">志工分析</option>
+                            <option value="member">會員分析</option>
+                            <option value="finance">財務分析</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">分析維度</label>
+                        <select id="analysisDimension" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="trend">趨勢分析</option>
+                            <option value="performance">績效分析</option>
+                            <option value="comparison">對比分析</option>
+                            <option value="prediction">預測分析</option>
+                        </select>
+                    </div>
+                    <button onclick="runAnalysis()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-play mr-2"></i>開始分析
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../../js/persistence_provider.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
+    <script>
+        let chatHistory = [];
+        let chatCount = 0;
+        let liveContext = null;
+
+        function storageGet(key) {
+            try {
+                if (window.PersistenceProvider && typeof window.PersistenceProvider.getInstance === 'function') {
+                    return window.PersistenceProvider.getInstance().getItem(key);
+                }
+            } catch (e) {}
+            return localStorage.getItem(key);
+        }
+
+        function storageSet(key, value) {
+            try {
+                if (window.PersistenceProvider && typeof window.PersistenceProvider.getInstance === 'function') {
+                    window.PersistenceProvider.getInstance().setItem(key, value);
+                    return;
+                }
+            } catch (e) {}
+            localStorage.setItem(key, value);
+        }
+
+        function buildLiveContext() {
+            const out = {
+                ready: false,
+                source: 'fallback',
+                memberCount: 0,
+                groupCount: 0,
+                aiChatEntries: null
+            };
+            try {
+                if (!window.ChurchDataBridge) return out;
+                const bridge = window.ChurchDataBridge;
+                const ms = typeof bridge.getMemberSystemData === 'function' ? bridge.getMemberSystemData() : null;
+                const aiStats = typeof bridge.getAiChatStats === 'function' ? bridge.getAiChatStats() : null;
+                out.ready = true;
+                out.source = 'church_data_bridge';
+                out.memberCount = ms && Array.isArray(ms.members) ? ms.members.length : 0;
+                out.groupCount = ms && Array.isArray(ms.groups) ? ms.groups.length : 0;
+                out.aiChatEntries = aiStats && aiStats.sessionsOrEntries != null ? aiStats.sessionsOrEntries : null;
+                return out;
+            } catch (e) {
+                out.error = String(e && e.message ? e.message : e);
+                return out;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadChatHistory();
+            if (chatHistory.length === 0) addWelcomeMessage();
+            updateStats();
+            renderChat();
+        });
+
+        function addWelcomeMessage() {
+            const welcomeMessage = {
+                type: 'ai',
+                content: '您好！我是教會事工平台的AI助手。我可以幫助您：
+
+• 解答教會管理相關問題
+• 提供智能分析和建議
+• 協助優化工作流程
+• 推薦最佳實踐方案
+
+請告訴我您需要什麼幫助？',
+                timestamp: new Date().toLocaleTimeString('zh-TW')
+            };
+            addMessageToChat(welcomeMessage);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // 添加用戶消息
+            const userMessage = {
+                type: 'user',
+                content: message,
+                timestamp: new Date().toLocaleTimeString('zh-TW')
+            };
+            addMessageToChat(userMessage);
+
+            // 清空輸入框
+            input.value = '';
+
+            // 規則引擎回應（附資料來源）
+            setTimeout(() => {
+                const aiResponse = generateAIResponse(message);
+                addMessageToChat(aiResponse);
+                chatCount++;
+                updateStats();
+            }, 1000);
+        }
+
+        function generateAIResponse(userMessage) {
+            liveContext = buildLiveContext();
+            const baseInfo = liveContext.ready
+                ? `\n\n[資料快照] 會友 ${liveContext.memberCount} 人，小組 ${liveContext.groupCount} 組`
+                : '\n\n[資料快照] bridge 未就緒，先提供通用建議';
+
+            const responses = {
+                '活動': '教會活動管理建議：
+
+1. 建立活動規劃流程
+2. 使用活動管理系統追蹤
+3. 定期評估活動效果
+4. 收集參與者反饋
+5. 優化活動內容和形式' + baseInfo,
+                '志工': '志工管理最佳實踐：
+
+1. 建立志工招募體系
+2. 提供培訓和發展機會
+3. 建立激勵和認可機制
+4. 定期溝通和關懷
+5. 評估志工服務效果' + baseInfo,
+                '團契': '提升團契互動效果：
+
+1. 定期舉辦團契活動
+2. 建立小組討論機制
+3. 鼓勵分享和禱告
+4. 提供關懷和支持
+5. 建立團契文化' + baseInfo,
+                '財務': '教會財務管理注意事項：
+
+1. 建立預算管理制度
+2. 定期財務報告和審計
+3. 建立內部控制機制
+4. 培訓財務管理人員
+5. 遵守相關法規要求' + baseInfo
+            };
+
+            let response = '感謝您的問題！我可以為您提供相關的建議和指導。' + baseInfo;
+            
+            for (const [keyword, answer] of Object.entries(responses)) {
+                if (userMessage.includes(keyword)) {
+                    response = answer;
+                    break;
+                }
+            }
+
+            return {
+                type: 'ai',
+                content: response,
+                timestamp: new Date().toLocaleTimeString('zh-TW'),
+                source: liveContext.ready ? 'church_data_bridge' : 'fallback_rules'
+            };
+        }
+
+        function addMessageToChat(message) {
+            chatHistory.push(message);
+            renderChat();
+            saveChatHistory();
+        }
+
+        function renderChat() {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = chatHistory.map(msg => `
+                <div class="flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}">
+                    <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                        msg.type === 'user' 
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-gray-100 text-gray-900'
+                    }">
+                        <div class="text-sm">${msg.content.replace(/
+/g, '<br>')}</div>
+                        <div class="text-xs mt-1 opacity-70">${msg.timestamp}${msg.source ? ' · ' + msg.source : ''}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function askQuickQuestion(question) {
+            const userMessage = {
+                type: 'user',
+                content: question,
+                timestamp: new Date().toLocaleTimeString('zh-TW')
+            };
+            addMessageToChat(userMessage);
+
+            setTimeout(() => {
+                const aiResponse = generateAIResponse(question);
+                addMessageToChat(aiResponse);
+                chatCount++;
+                updateStats();
+            }, 1000);
+        }
+
+        function showSmartAnalysis() {
+            document.getElementById('smartAnalysisModal').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function runAnalysis() {
+            const analysisType = document.getElementById('analysisType').value;
+            const analysisDimension = document.getElementById('analysisDimension').value;
+            
+            const analysisMessage = {
+                type: 'ai',
+                content: `正在進行${getAnalysisTypeName(analysisType)}的${getAnalysisDimensionName(analysisDimension)}...
+
+分析結果：
+• 數據收集完成
+• 模式識別中
+• 生成分析報告
+• 提供改進建議
+
+分析完成！`,
+                timestamp: new Date().toLocaleTimeString('zh-TW')
+            };
+            
+            addMessageToChat(analysisMessage);
+            closeModal('smartAnalysisModal');
+            chatCount++;
+            updateStats();
+        }
+
+        function getAnalysisTypeName(type) {
+            const names = {
+                'activity': '活動',
+                'volunteer': '志工',
+                'member': '會員',
+                'finance': '財務'
+            };
+            return names[type] || type;
+        }
+
+        function getAnalysisDimensionName(dimension) {
+            const names = {
+                'trend': '趨勢分析',
+                'performance': '績效分析',
+                'comparison': '對比分析',
+                'prediction': '預測分析'
+            };
+            return names[dimension] || dimension;
+        }
+
+        function showRecommendation() {
+            const recommendationMessage = {
+                type: 'ai',
+                content: '基於您的教會數據，我推薦：
+
+1. 增加團契活動頻率
+2. 建立志工培訓計劃
+3. 優化活動管理流程
+4. 加強會員關懷機制
+5. 建立績效評估體系',
+                timestamp: new Date().toLocaleTimeString('zh-TW')
+            };
+            addMessageToChat(recommendationMessage);
+            chatCount++;
+            updateStats();
+        }
+
+        function showAutomation() {
+            const automationMessage = {
+                type: 'ai',
+                content: '自動化流程建議：
+
+1. 活動提醒自動化
+2. 志工服務時數統計
+3. 會員生日提醒
+4. 財務報表生成
+5. 活動報名流程優化',
+                timestamp: new Date().toLocaleTimeString('zh-TW')
+            };
+            addMessageToChat(automationMessage);
+            chatCount++;
+            updateStats();
+        }
+
+        function updateStats() {
+            const today = new Date().toDateString();
+            const todayChats = chatHistory.filter(msg => 
+                new Date().toDateString() === today
+            ).length / 2; // 每次對話包含用戶和AI兩條消息
+            
+            document.getElementById('todayChats').textContent = Math.floor(todayChats);
+            const total = (liveContext && liveContext.aiChatEntries != null) ? liveContext.aiChatEntries : chatCount;
+            document.getElementById('totalChats').textContent = total;
+            document.getElementById('satisfaction').textContent = (liveContext && liveContext.ready) ? '資料感知' : '示範模式';
+        }
+
+        function loadChatHistory() {
+            const saved = storageGet('aiChatHistory');
+            if (saved) {
+                chatHistory = JSON.parse(saved);
+                chatCount = Math.floor(chatHistory.length / 2);
+            }
+            liveContext = buildLiveContext();
+        }
+
+        function saveChatHistory() {
+            storageSet('aiChatHistory', JSON.stringify(chatHistory));
+        }
+
+        // 按Enter鍵發送消息
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

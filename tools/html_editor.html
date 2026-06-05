@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HTML 所見即所得編輯器 — Bible100 全站工具</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; background: #f6f7fb; }
+    .container { display: flex; flex-direction: column; height: 100vh; max-width: 100%; background: #fff; }
+    .header { flex-shrink: 0; background: #0b5fa5; color: #fff; padding: 12px 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+    .header h1 { font-size: 1.2rem; }
+    .header-links { display: flex; gap: 8px; flex-wrap: wrap; }
+    .header-links a { color: #fff; text-decoration: none; padding: 5px 10px; background: rgba(255,255,255,0.2); border-radius: 6px; font-size: 11px; }
+    .header-links a:hover { background: rgba(255,255,255,0.35); }
+    .toolbar { flex-shrink: 0; padding: 8px 16px; background: #eef6ff; border-bottom: 1px solid #2aa5ff; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .toolbar .btn { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .btn-primary { background: #0b5fa5; color: #fff; }
+    .btn-primary:hover { background: #0a4d8a; }
+    .btn-secondary { background: #fff; color: #0b5fa5; border: 1px solid #0b5fa5; }
+    .btn-secondary:hover { background: #e3f2fd; }
+    .btn-active { background: #0b5fa5; color: #fff; border-color: #0b5fa5; }
+    .split-container { flex: 1; display: flex; min-height: 0; overflow: hidden; }
+    .split-left { flex: 1; display: flex; flex-direction: column; min-width: 0; border-right: 2px solid #2aa5ff; }
+    .split-right { flex: 1; display: flex; flex-direction: column; min-width: 0; background: #fafafa; }
+    .panel-header { flex-shrink: 0; padding: 6px 12px; font-size: 12px; font-weight: 600; color: #0b5fa5; background: #e3f2fd; border-bottom: 1px solid #90caf9; }
+    .panel-body { flex: 1; min-height: 0; overflow: auto; padding: 8px; }
+    .editor-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 8px; }
+    .editor-wrap .tox-tinymce { flex: 1; min-height: 200px; border-radius: 6px; }
+    .code-wrap { flex: 1; min-height: 0; display: none; padding: 8px; }
+    .code-wrap.active { display: flex; flex-direction: column; }
+    .code-wrap textarea { flex: 1; width: 100%; min-height: 200px; font-family: Consolas, monospace; font-size: 13px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; resize: none; }
+    .preview-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 8px; }
+    .preview-frame { flex: 1; width: 100%; min-height: 200px; border: 1px solid #ddd; border-radius: 6px; background: #fff; }
+    .status { padding: 6px 14px; margin: 0 16px; border-radius: 6px; font-size: 12px; display: none; }
+    .status.show { display: block; }
+    .status.success { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    .view-toggle { display: flex; gap: 4px; margin-left: auto; }
+    .view-toggle .btn { padding: 4px 10px; font-size: 11px; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📝 HTML 所見即所得編輯器 <small style="font-size: 0.7em; opacity: 0.9;">WYSIWYG</small></h1>
+      <div class="header-links">
+        <a href="../help/edit-website-guide.html" target="_blank">📖 使用指南：如何編修本站網頁</a>
+        <a href="../help/global-tools.htm" target="_blank">工具總覽</a>
+        <a href="../index.html" target="_blank">返回首頁</a>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="view-toggle">
+        <button class="btn btn-primary btn-active" id="btnWysiwyg" onclick="setView('wysiwyg')">所見即所得</button>
+        <button class="btn btn-secondary" id="btnCode" onclick="setView('code')">程式碼</button>
+      </div>
+      <button class="btn btn-primary" onclick="syncPreview()">🔄 同步預覽</button>
+      <button class="btn btn-primary" onclick="downloadHTML()">⬇ 下載 HTML</button>
+      <button class="btn btn-secondary" onclick="loadSample()">載入範例</button>
+      <button class="btn btn-secondary" onclick="clearEditor()">清空</button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div class="split-container">
+      <div class="split-left">
+        <div class="panel-header">編輯區（左）</div>
+        <div class="panel-body">
+          <div class="editor-wrap" id="editorWrap">
+            <textarea id="editor">
+<p>在此輸入或貼上 HTML 內容。可使用上方工具列插入圖片、連結、表格、YouTube 等。</p>
+<p><strong>提示：</strong>插入圖片時請使用相對路徑，如 <code>../languages/images/xxx.jpg</code> 或 <code>../languages/media/images/xxx.jpg</code>。</p>
+<p>插入 YouTube：貼上影片網址後，選「媒體」→「嵌入」→ 貼上 <code>https://www.youtube.com/watch?v=xxxxx</code>。</p>
+            </textarea>
+          </div>
+          <div class="code-wrap" id="codeWrap">
+            <textarea id="codeEditor" placeholder="HTML 程式碼..." oninput="debouncedSync()"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="split-right">
+        <div class="panel-header">即時預覽（右）</div>
+        <div class="panel-body preview-wrap">
+          <iframe id="previewFrame" class="preview-frame" sandbox="allow-same-origin" title="預覽"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var currentView = 'wysiwyg';
+    var syncTimer = null;
+
+    (function() {
+      tinymce.init({
+        selector: '#editor',
+        height: 'calc(100vh - 180px)',
+        language: 'zh_CN',
+        language_url: 'https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/langs/zh_CN.min.js',
+        plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+        toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | outdent indent | numlist bullist | forecolor backcolor | charmap emoticons | link image media table | code fullscreen',
+        content_style: 'body { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 14px; line-height: 1.6; padding: 12px; }',
+        block_formats: '段落=p; 標題 1=h1; 標題 2=h2; 標題 3=h3; 預格式化=pre',
+        font_family_formats: '微軟正黑體=Microsoft JhengHei, sans-serif; 新細明體=PMingLiU, serif; Arial=Arial, sans-serif; Times=Times New Roman, serif',
+        font_size_formats: '12px 14px 16px 18px 24px 36px',
+        image_title: true,
+        automatic_uploads: false,
+        file_picker_types: 'image',
+        file_picker_callback: function(callback, value, meta) {
+          if (meta.filetype === 'image') {
+            var url = prompt('輸入圖片路徑（相對路徑，例：../languages/media/images/photo.jpg）', value || '');
+            if (url) callback(url, { alt: '' });
+          }
+        },
+        media_live_embeds: true,
+        video_template_callback: function(data) {
+          return '<iframe width="560" height="315" src="' + data.source + '" frameborder="0" allowfullscreen></iframe>';
+        },
+        setup: function(ed) {
+          ed.on('change keyup', function() {
+            debouncedSync();
+          });
+          ed.on('init', function() {
+            syncPreview();
+          });
+        }
+      });
+    })();
+
+    function debouncedSync() {
+      if (syncTimer) clearTimeout(syncTimer);
+      syncTimer = setTimeout(syncPreview, 300);
+    }
+
+    function getEditor() {
+      return tinymce.get('editor') || tinymce.editors[0];
+    }
+
+    function getContent() {
+      if (currentView === 'code') {
+        return document.getElementById('codeEditor').value;
+      }
+      var ed = getEditor();
+      return ed ? ed.getContent() : '';
+    }
+
+    function setContent(html) {
+      if (currentView === 'code') {
+        document.getElementById('codeEditor').value = html || '';
+      } else {
+        var ed = getEditor();
+        if (ed) ed.setContent(html || '');
+      }
+      syncPreview();
+    }
+
+    function setView(mode) {
+      currentView = mode;
+      var editorWrap = document.getElementById('editorWrap');
+      var codeWrap = document.getElementById('codeWrap');
+      var btnWysiwyg = document.getElementById('btnWysiwyg');
+      var btnCode = document.getElementById('btnCode');
+      if (!editorWrap || !codeWrap) return;
+
+      var html = getContent();
+
+      if (mode === 'code') {
+        editorWrap.style.display = 'none';
+        codeWrap.classList.add('active');
+        document.getElementById('codeEditor').value = html;
+        btnWysiwyg.classList.remove('btn-active');
+        btnWysiwyg.classList.add('btn-secondary');
+        btnCode.classList.add('btn-active');
+        btnCode.classList.remove('btn-secondary');
+      } else {
+        codeWrap.classList.remove('active');
+        editorWrap.style.display = 'flex';
+        var ed = getEditor();
+        if (ed) ed.setContent(document.getElementById('codeEditor').value);
+        btnCode.classList.remove('btn-active');
+        btnCode.classList.add('btn-secondary');
+        btnWysiwyg.classList.add('btn-active');
+        btnWysiwyg.classList.remove('btn-secondary');
+      }
+      syncPreview();
+    }
+
+    function syncPreview() {
+      var html = getContent();
+      var frame = document.getElementById('previewFrame');
+      if (frame) {
+        frame.srcdoc = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Microsoft JhengHei,sans-serif;padding:16px;line-height:1.6;}</style></head><body>' + (html || '') + '</body></html>';
+      }
+    }
+
+    function showStatus(type, msg) {
+      var el = document.getElementById('status');
+      el.className = 'status ' + type + ' show';
+      el.textContent = msg;
+      setTimeout(function() { el.classList.remove('show'); }, 3000);
+    }
+
+    function downloadHTML() {
+      var html = getContent();
+      var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'content_' + new Date().toISOString().slice(0,10) + '.html';
+      a.click();
+      URL.revokeObjectURL(url);
+      showStatus('success', '已下載 HTML 檔案');
+    }
+
+    function loadSample() {
+      var sample = '<h2>範例內容</h2><p>這是<strong>粗體</strong>與<em>斜體</em>文字。</p><p><a href="https://example.com">連結範例</a></p><p>YouTube 嵌入：</p><p><iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen></iframe></p><p>圖片範例（請改為實際路徑）：</p><p><img src="../languages/images/landing_infographic_flow.png" alt="範例圖" style="max-width:100%;"></p>';
+      setContent(sample);
+      showStatus('success', '已載入範例');
+    }
+
+    function clearEditor() {
+      if (confirm('確定要清空內容？')) setContent('');
+    }
+  </script>
+</body>
+</html>

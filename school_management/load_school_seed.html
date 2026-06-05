@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>載入學校管理示範資料</title>
+    <style>
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f6fb; padding: 24px; max-width: 560px; margin: 0 auto; }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; }
+        h1 { color: #0b5fa5; font-size: 20px; margin-bottom: 12px; }
+        p { color: #4b5563; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+        .btn { display: inline-block; padding: 12px 24px; background: #0b5fa5; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .btn:hover { background: #0a4d8c; }
+        .btn-danger { background: #dc2626; }
+        .btn-danger:hover { background: #b91c1c; }
+        .stats { background: #f9fafb; border-radius: 8px; padding: 16px; margin: 16px 0; font-size: 12px; color: #6b7280; }
+        .success { color: #059669; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div style="background:#e8f4fd;padding:10px 16px;margin:-24px -24px 20px -24px;border-radius:12px 12px 0 0;font-size:12px;">
+        <a href="dashboard.html" target="contentFrame">📊 儀表板</a> ·
+        <a href="portal/index.html" target="contentFrame">📚 學員入口</a>
+    </div>
+    <div class="card">
+        <h1>📚 載入示範資料</h1>
+        <p><b>簡介：</b>首次開啟時會自動載入。若需補齊或重置，可點下方按鈕。</p>
+        <p>示範資料含：200 學生、25 教師、30 課程、20 班級、選課、成績、繳費、公告、排程、12 活動、8 社團、6 競賽，各模組互聯可用。</p>
+        <p><b>注意：</b>若已有資料，「載入」會補齊缺少項目，不會覆蓋既有學生。</p>
+        <div style="background:#f0f9ff;border-left:4px solid #0b5fa5;padding:12px 16px;margin:16px 0;border-radius:0 8px 8px 0;font-size:12px;">
+            <b>✅ 載入後可用功能：</b>
+            <ul style="margin:8px 0 0 16px;line-height:1.8;">
+                <li>📊 儀表板：統計、快速操作、功能說明</li>
+                <li>📚 學員入口：選學員查課程／繳費／成績、選科報名、新生註冊</li>
+                <li>🔄 統一管理：學生選課、教師授課、學生分班</li>
+                <li>👨‍🎓 學生：資料、新增、統計、報表</li>
+                <li>📚 課程：列表、新增、排程、評估、報表</li>
+                <li>👨‍🏫 教師：資料、教學統計</li>
+                <li>🏫 班級：班級資料、科目管理</li>
+                <li>📊 成績：管理、進度、報表</li>
+                <li>💰 財務：學費、收支、報表</li>
+                <li>💬 溝通：家長、公告、內部訊息</li>
+                <li>🎉 活動：活動、競賽、社團</li>
+                <li>⚙️ 系統：資料庫、離線工具</li>
+            </ul>
+        </div>
+        <div class="stats" id="stats">載入本頁後將顯示目前資料筆數。</div>
+        <button class="btn" onclick="loadSeed()">載入示範資料</button>
+        <button class="btn btn-danger" onclick="clearAndReload()" style="margin-left:12px;">清空並重新載入</button>
+        <p style="margin-top:20px;"><a href="dashboard.html" target="contentFrame" style="color:#0b5fa5;">→ 返回儀表板</a></p>
+    </div>
+    <script src="../js/cloud_config.js"></script>
+    <script src="../js/data_trust_badge.js"></script>
+    <script src="js/school-master-database.js"></script>
+    <script>
+        function updateStats() {
+            if (!window.schoolDB) {
+                document.getElementById('stats').innerHTML = 'SchoolMasterDatabase 未載入';
+                return;
+            }
+            const d = window.schoolDB.data;
+            const s = (d.students || []).length;
+            const t = (d.teachers || []).length;
+            const c = (d.courses || []).length;
+            const cl = (d.class && d.class.classes) ? d.class.classes.length : 0;
+            const e = (d.student && d.student.enrollments) ? d.student.enrollments.length : 0;
+            const g = (d.grade && d.grade.grades) ? d.grade.grades.length : 0;
+            const p = (d.finance && d.finance.payments) ? d.finance.payments.length : 0;
+            document.getElementById('stats').innerHTML = '目前：學生 ' + s + '、教師 ' + t + '、課程 ' + c + '、班級 ' + cl + '、選課 ' + e + '、成績 ' + g + '、繳費 ' + p;
+        }
+        function testLocalStorage() {
+            try {
+                var k = '_school_test_';
+                localStorage.setItem(k, '1');
+                localStorage.removeItem(k);
+                return true;
+            } catch (e) { return false; }
+        }
+        function loadSeed() {
+            if (!window.schoolDB) return alert('資料庫未載入');
+            if (!testLocalStorage()) return alert('⚠️ 此環境不支援 localStorage（雲端主機可能阻擋）。\n\n請改用本機開啟：file:///.../bible100_new/ 或更換主機。');
+            try {
+                window.schoolDB.ensureSeedFull();
+                if (window.DataTrustBadge && DataTrustBadge.markSchoolDemoLoaded) DataTrustBadge.markSchoolDemoLoaded();
+                updateStats();
+                alert('示範資料已載入或補齊。請至儀表板查看。');
+            } catch (e) {
+                alert('載入失敗：' + (e.message || e));
+                console.error(e);
+            }
+        }
+        window.onSchoolDBSaveError = function(e) {
+            document.getElementById('stats').innerHTML = '⚠️ localStorage 無法儲存（雲端主機可能阻擋）。錯誤：' + (e.message || e);
+        };
+        function clearAndReload() {
+            if (!confirm('確定要清空所有學校管理資料並重新載入示範資料嗎？此操作無法復原。')) return;
+            localStorage.removeItem('schoolMasterDatabase');
+            alert('已清空。即將重新載入頁面並自動載入示範資料。');
+            location.reload();
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.schoolDB) window.schoolDB.ensureSeedFull();
+            updateStats();
+        });
+    </script>
+</body>
+</html>

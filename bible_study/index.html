@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖經研讀中心 - Bible Study Center</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: #f6f7fb;
+            color: #333;
+            font-size: 12px;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Topbar */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 55px;
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            color: #fff;
+            border-bottom: 3px solid #f39c12;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .topbar-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 55px;
+            padding: 0 15px;
+        }
+
+        .brand {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .brand small {
+            color: #ffeaa7;
+            font-size: 10px;
+            font-weight: normal;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        /* 主布局 */
+        .main-container {
+            display: flex;
+            margin-top: 55px;
+            height: calc(100vh - 55px);
+        }
+
+        .sidebar-container {
+            width: 280px;
+            height: 100%;
+            background: #f8f9fa;
+            border-right: 2px solid #e0e0e0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: width 0.3s ease, min-width 0.3s ease;
+        }
+        .sidebar-container.collapsed {
+            width: 0;
+            min-width: 0;
+            overflow: hidden;
+            border-right: none;
+        }
+        .sidebar-toggle {
+            position: absolute;
+            left: 280px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 48px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 0 6px 6px 0;
+            cursor: pointer;
+            z-index: 100;
+            font-size: 12px;
+            transition: left 0.3s ease, background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar-toggle:hover {
+            background: #d35400;
+            color: white;
+        }
+        .sidebar-container.collapsed + .sidebar-toggle {
+            left: 0;
+        }
+        /* 萬能搜尋列 */
+        .universal-search {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 15px;
+        }
+        .universal-search input {
+            width: 100%;
+            padding: 8px 16px 8px 36px;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+        }
+        .universal-search input::placeholder {
+            color: #999;
+        }
+        .universal-search input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
+        }
+        .search-wrap {
+            position: relative;
+        }
+        .search-wrap::before {
+            content: '🔍';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+        }
+
+        .content-container {
+            flex: 1;
+            height: 100%;
+            background: white;
+            overflow: hidden;
+        }
+
+        #sidebarFrame,
+        #contentFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        /* 移动端响应式 */
+        @media (max-width: 768px) {
+            .sidebar-container {
+                width: 200px;
+            }
+
+            .brand {
+                font-size: 12px;
+            }
+
+            .nav-btn {
+                padding: 5px 8px;
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .sidebar-container {
+                width: 100%;
+                height: 35%;
+                border-right: none;
+                border-bottom: 2px solid #e0e0e0;
+            }
+
+            .content-container {
+                height: 65%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-inner" style="width:100%;display:flex;align-items:center;gap:10px;">
+            <div class="brand" style="flex-shrink:0;">📖 聖經研讀中心 <small>Bible Study Center</small></div>
+            <div class="universal-search">
+                <div class="search-wrap">
+                    <input type="text" id="universalSearchInput" placeholder="搜尋經文或詞彙，例如：愛、創1:1..." 
+                           onkeypress="if(event.key==='Enter'){var q=document.getElementById('universalSearchInput').value.trim();if(q){StudyState.change({searchQuery:q});setContentFrame('search_reader.html?q='+encodeURIComponent(q));}}">
+                </div>
+            </div>
+            <span id="currentPosition" style="font-size:11px;opacity:0.9;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="當前閱讀位置">📖 創世記 第1章</span>
+            <div class="nav-buttons" style="flex-shrink:0;display:flex;gap:6px;">
+                <button type="button" class="nav-btn" onclick="StudyState.change({mode:'read'});setContentFrame('reader.html');" title="單純閱讀">📖 閱讀</button>
+                <button type="button" class="nav-btn" onclick="var s=window.StudyState?StudyState.get():{};if(window.StudyState)StudyState.change({mode:'study'});var u='comprehensive_exegesis_reader.html';if(s.bookName){u+='?book='+encodeURIComponent(s.bookName);if(s.chapter)u+='&chapter='+s.chapter;}setContentFrame(u);" title="釋經參讀 Bible Commentary">🔍 釋經參讀</button>
+                <button type="button" class="nav-btn" onclick="StudyState.change({mode:'compare'});setContentFrame('parallel_mode_v3.html');" title="譯本對照">📑 對照</button>
+                <a href="dashboard.html" target="contentFrame" class="nav-btn">📊 總覽</a>
+                <a href="dashboard.html" target="contentFrame" class="nav-btn">🏠 主頁</a>
+                <a href="../index.html" class="nav-btn" title="返回總站">🏠 總站</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container" style="position:relative;">
+        <div class="sidebar-container" id="sidebarContainer">
+            <iframe id="sidebarFrame" src="sidebar.html?v=3" frameborder="0"></iframe>
+        </div>
+        <button type="button" class="sidebar-toggle" id="sidebarToggle" title="收合/展開側邊欄" aria-label="收合側邊欄">◀</button>
+        <div class="content-container">
+            <iframe id="contentFrame" src="reader.html" frameborder="0" name="contentFrame"></iframe>
+        </div>
+    </div>
+
+    <script src="../js/book-resolver.js"></script>
+    <script src="js/State.js"></script>
+    <script>
+        // F5 還原：切換內容時儲存（sessionStorage + URL），載入時還原
+        function setContentFrame(url) {
+            var f = document.getElementById('contentFrame');
+            if (f && url) {
+                f.src = url;
+                try { sessionStorage.setItem('bible_study_frame', url); } catch (e) {}
+                try {
+                    var u = new URL(location.href);
+                    u.searchParams.set('frame', url.split('?')[0]);
+                    if (url.indexOf('?') > 0) u.searchParams.set('q', (url.match(/[?&]q=([^&]+)/) || [])[1] || '');
+                    history.replaceState({}, '', u.pathname + u.search + u.hash);
+                } catch (e) {}
+            }
+        }
+        (function restoreFrame() {
+            var u = new URL(location.href);
+            var fromUrl = u.searchParams.get('frame') || u.searchParams.get('mode');
+            var initial = 'comprehensive_exegesis_reader.html';
+            if (fromUrl === 'compare' || fromUrl === 'parallel' || fromUrl === 'parallel_mode_v2.html' || fromUrl === 'parallel_mode_v3.html') initial = 'parallel_mode_v3.html';
+            else if (fromUrl === 'study' || fromUrl === 'comprehensive_exegesis_reader.html') initial = 'comprehensive_exegesis_reader.html';
+            else if (fromUrl === 'reader' || fromUrl === 'reader.html') initial = 'reader.html';
+            else if (fromUrl === 'search' || fromUrl === 'search_reader.html') initial = 'search_reader.html' + (u.searchParams.get('q') ? '?q=' + encodeURIComponent(u.searchParams.get('q')) : '');
+            else if (fromUrl) initial = fromUrl.indexOf('.html') >= 0 ? fromUrl : fromUrl + '.html';
+            else {
+                try { initial = sessionStorage.getItem('bible_study_frame') || initial; } catch (e) {}
+            }
+            var f = document.getElementById('contentFrame');
+            if (f && initial) f.src = initial;
+        })();
+
+        // Sidebar 收合切換
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            var c = document.getElementById('sidebarContainer');
+            c.classList.toggle('collapsed');
+            this.textContent = c.classList.contains('collapsed') ? '▶' : '◀';
+        });
+
+        // Deep Linking：頁面載入時解析 URL 參數
+        if (window.StudyState) StudyState.parseFromUrl();
+
+        // contentFrame 載入後：同步 State + 儲存 URL（供 F5 還原）
+        document.getElementById('contentFrame').addEventListener('load', function() {
+            try {
+                var loc = this.contentWindow.location;
+                var h = loc.href || '';
+                var m = h.match(/[?&]book=([^&]+)/);
+                if (m && window.StudyState) StudyState.setBookByName(decodeURIComponent(m[1]));
+                var ch = h.match(/(?:chapter|ch)=(\d+)/);
+                if (ch && window.StudyState) StudyState.change({ chapter: parseInt(ch[1], 10) });
+                var path = loc.pathname || '';
+                var search = loc.search || '';
+                var rel = (path.split('/').filter(Boolean).pop() || '') + search;
+                if (rel) {
+                    try { sessionStorage.setItem('bible_study_frame', rel); } catch (e) {}
+                    try {
+                        var base = rel.split('?')[0];
+                        var u = new URL(location.href);
+                        u.searchParams.set('frame', base);
+                        var qm = rel.match(/[?&]q=([^&]+)/);
+                        if (qm) u.searchParams.set('q', decodeURIComponent(qm[1])); else u.searchParams.delete('q');
+                        history.replaceState({}, '', u.pathname + u.search + u.hash);
+                    } catch (e2) {}
+                }
+            } catch (e) { /* 跨域或未載入時忽略 */ }
+        });
+
+        // 監聽來自 sidebar 的消息（子頁面可發送 syncPosition 聯動）
+        window.addEventListener('message', function(event) {
+            if (event.data.action === 'syncPosition' && window.StudyState) {
+                var s = event.data.state || {};
+                if (s.book || s.chapter || s.verse) StudyState.change(s);
+            }
+            if (event.data.action === 'loadBook') {
+                if (event.data.book && window.StudyState) StudyState.setBookByName(event.data.book);
+                setContentFrame('comprehensive_exegesis_reader.html?book=' + encodeURIComponent(event.data.book || ''));
+            }
+            if (event.data.action === 'loadChapter') {
+                if (event.data.book && window.StudyState) StudyState.setBookByName(event.data.book);
+                if (event.data.chapter && window.StudyState) StudyState.change({ chapter: event.data.chapter });
+                setContentFrame('comprehensive_exegesis_reader.html?book=' + encodeURIComponent(event.data.book || '') + '&chapter=' + (event.data.chapter || 1));
+            }
+        });
+
+        // 全局函數供 sidebar 調用
+        function loadBook(bookName) {
+            if (bookName && window.StudyState) StudyState.setBookByName(bookName);
+            setContentFrame('comprehensive_exegesis_reader.html?book=' + encodeURIComponent(bookName));
+        }
+
+        function loadNavigation(mode) {
+            if (window.StudyState) StudyState.change({ mode: mode === 'reading' ? 'read' : mode === 'parallel' ? 'compare' : mode === 'study' ? 'study' : 'read' });
+            var pages = { 'reading': 'reader.html', 'parallel': 'parallel_mode_v3.html', 'study': 'comprehensive_exegesis_reader.html', 'tools': 'dashboard.html' };
+            if (pages[mode]) setContentFrame(pages[mode]);
+        }
+
+        function loadBibleVersion(version) {
+            console.log('loadBibleVersion 被調用:', version);
+            setContentFrame('unified_bible_reader.html?version=' + encodeURIComponent(version));
+        }
+
+        function loadTool(toolType, toolName) {
+            console.log('loadTool 被調用:', toolType, toolName);
+            var url = 'dashboard.html';
+            if (toolType === 'commentary') url = 'comprehensive_exegesis_reader.html?commentary=' + encodeURIComponent(toolName);
+            else if (toolType === 'dictionary') url = 'dictionary_reader.html';
+            else if (toolType === 'crossref') url = 'crossref_reader.html';
+            else if (toolType === 'original') url = 'original_text_real_integrated.html';
+            else if (toolType === 'timeline') url = 'timeline_viewer.html';
+            setContentFrame(url);
+        }
+
+        // 頁面載入完成
+        console.log('聖經研讀中心 已載入');
+    </script>
+    <script src="../js/shell_contract.js"></script>
+    <script>
+        if (window.B100ShellContract && typeof window.B100ShellContract.validate === 'function') {
+            window.B100ShellContract.validate('bible_study/index.html');
+        }
+    </script>
+    <script src="../js/module_navigation.js"></script>
+  <div id="global-tools-root"></div>
+  <script src="../js/global-tools.js"></script>
+</body>
+</html>
+
+

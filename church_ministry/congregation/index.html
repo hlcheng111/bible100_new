@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>會眾入口 - Church Center</title>
+  <base target="_parent">
+  <script>
+    (function(){
+      try {
+        var t = localStorage.getItem('churchCenterTheme');
+        if (t) {
+          var theme = JSON.parse(t);
+          var primary = theme.primaryColor || '#00cec9';
+          var accent = theme.accentColor || '#00b4b0';
+          var style = document.createElement('style');
+          style.textContent = ':root { --church-primary: ' + primary + '; --church-accent: ' + accent + '; }';
+          document.head.appendChild(style);
+        }
+      } catch(e) {}
+    })();
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      color: #333;
+      font-size: 14px;
+    }
+    .header {
+      text-align: center;
+      padding: 24px 16px;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, var(--church-primary, #00cec9) 0%, var(--church-accent, #00b4b0) 100%);
+      color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,206,201,0.3);
+    }
+    .header h1 { margin: 0 0 8px 0; font-size: 1.5rem; }
+    .header p { margin: 0; opacity: 0.95; font-size: 0.9rem; }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      border-left: 4px solid var(--church-primary, #00cec9);
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+    }
+    .card h3 { margin: 0 0 10px 0; color: var(--church-accent, #00b4b0); font-size: 1rem; }
+    .card p { margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; }
+    .card a.card-link { display: inline-block; margin-top: 10px; color: var(--church-primary, #00cec9); font-size: 0.85rem; }
+    @media (max-width: 600px) {
+      .card-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>會眾入口 Church Center</h1>
+    <p>奉獻、活動、小組、研讀、我的參與</p>
+    <div id="peopleStats" style="margin-top:12px;font-size:0.85rem;opacity:0.95;"></div>
+  </div>
+  <script src="../../js/people_loader.js"></script>
+  <script>
+    (function(){
+      function toDisplayList(raw) {
+        if (!raw || !raw.length) return [];
+        return raw.map(function(p) {
+          var status = p.status || (p.attendance_count > 0 ? 'active' : '');
+          return { name: p.name, gender: p.gender, attendance_count: p.attendance_count || 0, status: status };
+        });
+      }
+      function updateUI(list) {
+        if (!list || list.length === 0) return;
+        var active = list.filter(function(p){ return (p.attendance_count||0) > 0 || p.status === 'active'; }).length;
+        var male = list.filter(function(p){ return p.gender === '男'; }).length;
+        var female = list.filter(function(p){ return p.gender === '女'; }).length;
+        var el = document.getElementById('peopleStats');
+        if (el) el.textContent = '會員 ' + list.length + ' 人 · 男 ' + male + ' 女 ' + female + ' · 活躍 ' + active + ' 人';
+        var cardEl = document.getElementById('peopleCardCount');
+        if (cardEl) cardEl.textContent = '共 ' + list.length + ' 人 · 活躍 ' + active + ' 人';
+        var dashEl = document.getElementById('dashboardHint');
+        if (dashEl) dashEl.textContent = 'SPAC 四維度 · 男 ' + male + ' 女 ' + female;
+      }
+      function tryMemberSystemDataFallback() {
+        try {
+          var raw = localStorage.getItem('memberSystemData');
+          if (!raw) return [];
+          var d = JSON.parse(raw);
+          return (d.members || []).map(function(m){ return { name: m.name, gender: m.gender, attendance_count: 0, status: m.status }; });
+        } catch(e) { return []; }
+      }
+      function tryChurchMasterDatabaseFallback() {
+        try {
+          var raw = localStorage.getItem('churchMasterDatabase');
+          if (!raw) return [];
+          var d = JSON.parse(raw);
+          var members = d.members || [];
+          return members.map(function(m){ return { name: m.name || m.memberName, gender: m.gender, attendance_count: 0, status: m.status || 'active' }; });
+        } catch(e) { return []; }
+      }
+      function showEmptyHint() {
+        var el = document.getElementById('peopleStats');
+        if (el) el.innerHTML = '尚無人員資料 · <a href="../load_central_member_seed.html" target="_parent" style="color:#fff;text-decoration:underline;">請先匯入 500 人</a>';
+        var cardEl = document.getElementById('peopleCardCount');
+        if (cardEl) cardEl.textContent = '尚無資料，請先匯入';
+        var dashEl = document.getElementById('dashboardHint');
+        if (dashEl) dashEl.textContent = '請先匯入會友資料';
+      }
+      function loadAndShow() {
+        var done = function(list) {
+          if (list && list.length > 0) { updateUI(list); return; }
+          var fallback = tryMemberSystemDataFallback();
+          if (fallback.length > 0) { updateUI(fallback); return; }
+          fallback = tryChurchMasterDatabaseFallback();
+          if (fallback.length > 0) { updateUI(fallback); return; }
+          showEmptyHint();
+        };
+        if (typeof peopleDB !== 'undefined') {
+          peopleDB.loadFromFile(function(list){ done(list || peopleDB.list()); });
+        } else {
+          var url = (typeof location !== 'undefined' && location.origin && location.origin !== 'file:') ? (location.origin + '/data/people.json') : '../../data/people.json';
+          fetch(url).then(function(r){ return r.ok ? r.json() : Promise.reject(); }).then(function(d){ done(d.people || []); }).catch(function(){ done(tryMemberSystemDataFallback()); });
+        }
+      }
+      loadAndShow();
+    })();
+  </script>
+  <div class="card-grid">
+    <a href="../people/people_list.html" target="contentFrame" class="card" style="border-left-color:#0b5fa5;">
+      <h3>👥 人員總覽（會員 500 人）</h3>
+      <p>查看完整會員名單、搜尋、個人詳情與 OT100/NT100/T4 進度。</p>
+      <span id="peopleCardCount" style="font-size:0.8rem;color:#0b5fa5;"></span>
+    </a>
+    <a href="../dashboard.html" target="contentFrame" class="card" style="border-left-color:#9b59b6;">
+      <h3>⛪ 教會事工儀表板</h3>
+      <p>SPAC 概覽、男女比例、活躍人數、本週焦點與快速入口。</p>
+      <span id="dashboardHint" style="font-size:0.8rem;color:#9b59b6;"></span>
+    </a>
+    <a href="../../bible_study/dashboard.html" target="contentFrame" class="card">
+      <h3>📖 聖經研讀</h3>
+      <p>精讀、對照、研讀模式，綜合解讀與工具。</p>
+    </a>
+    <a href="../../bible_study/favorites_reader.html" target="contentFrame" class="card">
+      <h3>⭐ 我的收藏</h3>
+      <p>收藏的經文與研讀位置。</p>
+    </a>
+    <a href="../modules/worship/worship-management.html" target="contentFrame" class="card">
+      <h3>🎵 敬拜與服事</h3>
+      <p>崇拜安排、服事排程。</p>
+    </a>
+    <a href="../modules/fellowship/index.html" target="contentFrame" class="card">
+      <h3>👥 小組與團契</h3>
+      <p>小組資訊、活動、團契。</p>
+    </a>
+    <a href="sermon-notes.html" target="contentFrame" class="card">
+      <h3>📝 講道筆記</h3>
+      <p>填空式講道大綱，邊聽邊記。</p>
+    </a>
+    <a href="checkin-pre.html" target="contentFrame" class="card">
+      <h3>📋 兒童預報到</h3>
+      <p>事先選擇要報到的兒童，到場出示預報碼即可快速報到。</p>
+    </a>
+    <a href="../people/people_list.html" target="contentFrame" class="card" style="border-left-color:#e67e22;">
+      <h3>👤 我的參與</h3>
+      <p>個人資料、OT100/NT100/T4 讀經進度。規劃中：奉獻、課程報名、活動報名（對標 School Mgmt、AI 智慧事奉）。</p>
+    </a>
+    <a href="../../nav_hub/index.html" target="contentFrame" class="card">
+      <h3>🗂 目錄搜索</h3>
+      <p>全站導覽與搜尋。</p>
+    </a>
+  </div>
+  <script>
+    (function(){
+      function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+      try {
+        var raw = localStorage.getItem('churchCenterCustomBlocks');
+        var blocks = raw ? JSON.parse(raw) : [];
+        if (blocks.length === 0) return;
+        var container = document.createElement('div');
+        container.className = 'custom-blocks';
+        container.style.cssText = 'max-width:1200px;margin:0 auto 24px auto;';
+        blocks.forEach(function(b){
+          var el = document.createElement('div');
+          el.className = 'custom-block';
+          el.style.cssText = 'background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);border-left:4px solid var(--church-primary,#00cec9);';
+          if (b.type === 'text') {
+            if (b.title) el.innerHTML += '<h3 style="margin:0 0 10px 0;color:var(--church-accent,#00b4b0); font-size:1rem;">' + escapeHtml(b.title) + '</h3>';
+            el.innerHTML += '<div style="font-size:0.9rem;color:#555;line-height:1.6;">' + escapeHtml(b.content || '').replace(/\n/g,'<br>') + '</div>';
+          } else if (b.type === 'image' && b.url) {
+            el.innerHTML = '<img src="' + escapeHtml(b.url) + '" alt="' + escapeHtml(b.alt || '') + '" style="max-width:100%;height:auto;border-radius:8px;">';
+          } else if (b.type === 'link' && b.url) {
+            el.innerHTML = '<a href="' + escapeHtml(b.url) + '" target="contentFrame" style="color:var(--church-primary,#00cec9);font-size:1rem;">' + escapeHtml(b.text || '連結') + '</a>';
+          } else if (b.type === 'activityList' && b.items && b.items.length) {
+            el.innerHTML = '<h3 style="margin:0 0 12px 0;color:var(--church-accent,#00b4b0);font-size:1rem;">活動</h3><ul style="margin:0;padding-left:20px;">' + b.items.map(function(it){
+              return '<li><a href="' + (it.url ? escapeHtml(it.url) : '#') + '" target="contentFrame" style="color:var(--church-primary,#00cec9);">' + escapeHtml(it.name || '活動') + '</a></li>';
+            }).join('') + '</ul>';
+          } else return;
+          container.appendChild(el);
+        });
+        var cardGrid = document.querySelector('.card-grid');
+        if (cardGrid) document.body.insertBefore(container, cardGrid);
+      } catch(e){}
+    })();
+  </script>
+</body>
+</html>

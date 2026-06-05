@@ -1,0 +1,1326 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>時間戳播放列表生成器 - 多平台支持</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .button { background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+    .button:hover { background: #45a049; }
+    .input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+    .result { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; }
+    .timestamp-item { background: white; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #eee; cursor: pointer; }
+    .timestamp-item:hover { background: #f0f0f0; }
+    .play-button { background: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin: 0 5px; }
+    .play-button:hover { background: #1976D2; }
+    
+    /* 移動端適配 */
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      .container { max-width: 100%; }
+      .section { padding: 15px; margin: 10px 0; }
+      
+      /* 指導區域移動端佈局 */
+      .guide-container { 
+        display: block !important; 
+        gap: 15px !important; 
+      }
+      .guide-left, .guide-right { 
+        min-width: 100% !important; 
+        max-width: 100% !important; 
+        margin-bottom: 20px;
+      }
+      
+      /* 按鈕和輸入框移動端適配 */
+      .button { 
+        padding: 8px 16px; 
+        font-size: 9pt; 
+        margin: 3px; 
+      }
+      .input { 
+        padding: 8px; 
+        font-size: 10pt; 
+      }
+      
+      /* 文字大小移動端適配 */
+      h3 { font-size: 14pt; }
+      h4 { font-size: 12pt; }
+      h5 { font-size: 10pt; }
+      
+      /* 下拉選單移動端適配 */
+      select { 
+        padding: 5px; 
+        font-size: 9pt; 
+        min-width: 80px;
+      }
+      
+      /* 功能特色網格移動端適配 */
+      .features-grid { 
+        display: block !important; 
+      }
+      .features-grid > div { 
+        min-width: 100% !important; 
+        margin-bottom: 8px;
+      }
+      
+      /* 點歌方法網格移動端適配 */
+      .methods-grid { 
+        display: block !important; 
+      }
+      .methods-grid > div { 
+        min-width: 100% !important; 
+        margin-bottom: 8px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body { padding: 5px; }
+      .section { padding: 10px; }
+      
+      /* 超小屏幕適配 */
+      .button { 
+        padding: 6px 12px; 
+        font-size: 8pt; 
+      }
+      .input { 
+        padding: 6px; 
+        font-size: 9pt; 
+      }
+      
+      h3 { font-size: 12pt; }
+      h4 { font-size: 10pt; }
+      h5 { font-size: 9pt; }
+      
+      select { 
+        padding: 3px; 
+        font-size: 8pt; 
+        min-width: 70px;
+      }
+    }
+  </style>
+  <script src="../assets/js/lab-frame-nav.js"></script>
+</head>
+<body bgcolor="#FFFFFF" text="#333333">
+
+<center>
+<table width="90%" border="1" cellspacing="0" cellpadding="8">
+  <tr>
+    <td bgcolor="#E8F5E8">
+      <h2>⏰ 時間戳播放列表生成器 Timestamp Playlist Generator</h2>
+      <p style="font-size:10pt; color:#666;">支持 YouTube、Spotify、TikTok、B站 等多平台時間戳播放列表生成</p>
+      
+      <!-- 主要功能區域 - 上部 -->
+      <div style="background:#f0f8ff; padding:20px; border:2px solid #2196F3; margin:10px 0; border-radius:8px;">
+        <h3 style="margin:0 0 15px 0; color:#1976D2;">🎬 YouTube 時間戳播放列表 YouTube Timestamp Playlist</h3>
+        <p style="font-size:10pt; margin:5px 0; color:#666;">輸入YouTube視頻ID或鏈接，創建時間戳播放列表</p>
+        
+        <div style="margin:15px 0;">
+          <input type="text" id="mediaId" placeholder="nI2CWEHustE 或 https://youtu.be/nI2CWEHustE" 
+                 style="width:70%; padding:8px; font-size:10pt; border:1px solid #ccc; margin:0 5px;">
+          <button onclick="loadYouTubeTimestamps()" style="background:#FF0000; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:10pt; margin:5px;">載入時間戳</button>
+          <button onclick="showTimestampEditor()" style="background:#FF9800; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:10pt; margin:5px;">編輯時間戳</button>
+        </div>
+        
+        <div id="timestampEditor" style="margin:10px 0; display:none;">
+          <textarea id="timestampInput" rows="8" style="width:100%; font-family:monospace; font-size:9pt; border:1px solid #ccc;" 
+                    placeholder="0:00:00 Amazing Grace&#10;0:02:12 He Leadeth Me&#10;0:05:31 Great is Thy Faithfulness"></textarea>
+          <br>
+          <button onclick="saveTimestamps()" style="background:#4CAF50; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer; font-size:9pt; margin:5px 0;">保存時間戳</button>
+          <button onclick="loadSampleTimestamps()" style="background:#2196F3; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer; font-size:9pt; margin:5px 0;">載入示例</button>
+        </div>
+        
+        <!-- 生成結果區域 -->
+        <div id="generatedResult" style="margin:10px 0; display:none;">
+          <h4>生成的播放列表：</h4>
+          <div id="playlistDisplay"></div>
+          <button onclick="copyPlaylistCode()" style="background:#4CAF50; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:10pt; margin:5px;">複製播放列表代碼</button>
+          <button onclick="downloadPlaylist()" style="background:#2196F3; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:10pt; margin:5px;">下載播放列表</button>
+        </div>
+      </div>
+      
+      <!-- 教學指導區域 - 下部 -->
+      <div style="background:#e8f5e8; padding:20px; border:2px solid #4CAF50; margin:10px 0; border-radius:8px;">
+        <h3 style="margin:0 0 20px 0; color:#2E7D32; text-align:center;">📋 完整使用指導 Complete Usage Guide</h3>
+        
+        <!-- 測試按鈕 -->
+        <div style="text-align:center; margin:10px 0;">
+          <button onclick="testYouTubeFunction()" style="background:#FF0000; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer; font-size:8pt; margin:2px;">測試YouTube功能</button>
+          <button onclick="testTranslations()" style="background:#9C27B0; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer; font-size:8pt; margin:2px;">測試翻譯功能</button>
+          <button onclick="initializeTranslations()" style="background:#FF5722; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer; font-size:8pt; margin:2px;">重新載入英文</button>
+        </div>
+        
+        <div class="guide-container" style="display:flex; gap:20px; flex-wrap:wrap;">
+          <!-- 左邊6格 - 中文固定 -->
+          <div class="guide-left" style="flex:1; min-width:350px; max-width:500px;">
+            <h4 style="margin:0 0 15px 0; color:#1976D2; text-align:center;">🇨🇳 中文指導 Chinese Guide</h4>
+            
+            <!-- 使用次序 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <h5 style="margin:0 0 10px 0; color:#333;">🎯 使用次序 Usage Steps</h5>
+              <div style="font-size:9pt; line-height:1.6;">
+                <div style="margin:5px 0; padding:5px; background:#f0f8ff; border-left:3px solid #2196F3;"><b>1. 選擇平台</b><br>從下拉菜單選擇您要使用的媒體平台</div>
+                <div style="margin:5px 0; padding:5px; background:#f0f8ff; border-left:3px solid #2196F3;"><b>2. 輸入媒體ID</b><br>輸入視頻/音頻的ID或完整鏈接</div>
+                <div style="margin:5px 0; padding:5px; background:#f0f8ff; border-left:3px solid #2196F3;"><b>3. 編輯時間戳</b><br>點擊"編輯時間戳"按鈕，輸入歌曲時間和標題</div>
+                <div style="margin:5px 0; padding:5px; background:#f0f8ff; border-left:3px solid #2196F3;"><b>4. 生成播放列表</b><br>點擊"生成播放列表"按鈕</div>
+                <div style="margin:5px 0; padding:5px; background:#f0f8ff; border-left:3px solid #2196F3;"><b>5. 複製使用</b><br>複製生成的代碼到您的網頁中</div>
+              </div>
+            </div>
+            
+            <!-- 適用場合 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <h5 style="margin:0 0 10px 0; color:#333;">🎪 適用場合 Suitable Occasions</h5>
+              <div style="font-size:9pt; line-height:1.6;">
+                <div style="margin:5px 0; padding:5px; background:#fff3e0; border-left:3px solid #FF9800;"><b>🎵 讚美詩歌</b><br>教會聚會、主日學、詩班練習</div>
+                <div style="margin:5px 0; padding:5px; background:#fff3e0; border-left:3px solid #FF9800;"><b>📚 聖經學習</b><br>查經班、聖經課程、個人靈修</div>
+                <div style="margin:5px 0; padding:5px; background:#fff3e0; border-left:3px solid #FF9800;"><b>🎓 教學課程</b><br>神學院、主日學教材、線上課程</div>
+                <div style="margin:5px 0; padding:5px; background:#fff3e0; border-left:3px solid #FF9800;"><b>📱 個人使用</b><br>個人靈修、家庭敬拜、小組聚會</div>
+                <div style="margin:5px 0; padding:5px; background:#fff3e0; border-left:3px solid #FF9800;"><b>🌐 網站嵌入</b><br>教會網站、個人博客、教學平台</div>
+              </div>
+            </div>
+            
+            <!-- 點歌方法 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <h5 style="margin:0 0 10px 0; color:#333;">🎤 點歌方法 How to Select Songs</h5>
+              <div class="methods-grid" style="display:flex; flex-wrap:wrap; gap:8px; font-size:9pt;">
+                <div style="flex:1; min-width:180px; padding:6px; background:#f9f9f9; border-radius:3px;">
+                  <b>🖱️ 點擊播放</b><br>直接點擊歌曲名稱或"播放"按鈕
+                </div>
+                <div style="flex:1; min-width:180px; padding:6px; background:#f9f9f9; border-radius:3px;">
+                  <b>⏰ 時間跳轉</b><br>自動跳轉到指定時間點開始播放
+                </div>
+                <div style="flex:1; min-width:180px; padding:6px; background:#f9f9f9; border-radius:3px;">
+                  <b>🔄 連續播放</b><br>可以連續點擊多首歌曲播放
+                </div>
+                <div style="flex:1; min-width:180px; padding:6px; background:#f9f9f9; border-radius:3px;">
+                  <b>📱 移動端</b><br>在手機和平板上同樣可以正常使用
+                </div>
+              </div>
+            </div>
+            
+            <!-- 功能特色 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <h5 style="margin:0 0 10px 0; color:#333;">✨ 功能特色 Key Features</h5>
+              <div class="features-grid" style="display:flex; flex-wrap:wrap; gap:8px; font-size:9pt;">
+                <div style="flex:1; min-width:120px; padding:5px; background:#e8f5e8; border-radius:3px; text-align:center;">
+                  <b>🎵 無限歌曲</b><br>支持1-1000首歌曲
+                </div>
+                <div style="flex:1; min-width:120px; padding:5px; background:#e8f5e8; border-radius:3px; text-align:center;">
+                  <b>⏰ 精確時間</b><br>精確到秒的時間定位
+                </div>
+                <div style="flex:1; min-width:120px; padding:5px; background:#e8f5e8; border-radius:3px; text-align:center;">
+                  <b>🌐 多平台</b><br>支持多個媒體平台
+                </div>
+                <div style="flex:1; min-width:120px; padding:5px; background:#e8f5e8; border-radius:3px; text-align:center;">
+                  <b>📱 響應式</b><br>適配各種設備
+                </div>
+                <div style="flex:1; min-width:120px; padding:5px; background:#e8f5e8; border-radius:3px; text-align:center;">
+                  <b>💾 一鍵複製</b><br>快速複製代碼
+                </div>
+                <div style="flex:1; min-width:120px; padding:5px; background:#e8f5e8; border-radius:3px; text-align:center;">
+                  <b>📥 下載功能</b><br>下載完整播放列表
+                </div>
+              </div>
+            </div>
+            
+            <!-- 實際使用示例 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <h5 style="margin:0 0 10px 0; color:#333;">💡 實際使用示例 Practical Example</h5>
+              <div style="font-size:9pt; line-height:1.6;">
+                <div style="margin:8px 0; padding:8px; background:#f9f9f9; border-radius:3px;">
+                  <b>🎵 讚美詩歌聚會示例</b><br>
+                  <b>場景：</b> 主日崇拜詩歌時間<br>
+                  <b>平台：</b> YouTube<br>
+                  <b>視頻ID：</b> nI2CWEHustE<br>
+                  <b>時間戳：</b> 開場禱告、奇異恩典、你真偉大、主禱文<br>
+                  <b>效果：</b> 會眾可以點擊任意歌曲直接播放
+                </div>
+                <div style="margin:8px 0; padding:8px; background:#f9f9f9; border-radius:3px;">
+                  <b>📚 聖經學習示例</b><br>
+                  <b>場景：</b> 查經班課程<br>
+                  <b>平台：</b> YouTube<br>
+                  <b>視頻ID：</b> ABC123DEF456<br>
+                  <b>時間戳：</b> 課程介紹、經文朗讀、經文解釋、小組討論<br>
+                  <b>效果：</b> 學員可以重複觀看特定段落
+                </div>
+              </div>
+            </div>
+            
+            <!-- 常見問題 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <h5 style="margin:0 0 10px 0; color:#333;">❓ 常見問題 FAQ</h5>
+              <div style="font-size:9pt; line-height:1.6;">
+                <div style="margin:6px 0; padding:6px; background:#f9f9f9; border-radius:3px;">
+                  <b>Q: 如何獲取YouTube視頻ID？</b><br>
+                  A: 從YouTube鏈接中複製，如 https://youtu.be/nI2CWEHustE 中的 nI2CWEHustE
+                </div>
+                <div style="margin:6px 0; padding:6px; background:#f9f9f9; border-radius:3px;">
+                  <b>Q: 時間戳格式有什麼要求？</b><br>
+                  A: 必須使用 HH:MM:SS 格式，如 0:02:12 或 1:05:30
+                </div>
+                <div style="margin:6px 0; padding:6px; background:#f9f9f9; border-radius:3px;">
+                  <b>Q: 可以添加多少首歌曲？</b><br>
+                  A: 理論上無限制，建議不超過1000首以保持性能
+                </div>
+                <div style="margin:6px 0; padding:6px; background:#f9f9f9; border-radius:3px;">
+                  <b>Q: 生成的代碼可以在任何網站使用嗎？</b><br>
+                  A: 是的，生成的HTML代碼可以在任何支持HTML的網站使用
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 右邊6格 - 多語言翻譯 -->
+          <div class="guide-right" style="flex:1; min-width:350px; max-width:500px;">
+            <h4 style="margin:0 0 15px 0; color:#1976D2; text-align:center;">🌍 多語言翻譯 Multi-Language Translation</h4>
+            
+            <!-- 使用次序翻譯 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h5 style="margin:0; color:#333;">🎯 使用次序 Usage Steps</h5>
+                <select onchange="updateTranslation('steps', this.value)" style="padding:3px; font-size:8pt; border:1px solid #ccc;">
+                  <option value="en" selected>English</option>
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="id">Bahasa Indonesia</option>
+                </select>
+              </div>
+              <div id="stepsTranslation" style="font-size:9pt; line-height:1.6;">
+                <!-- 英文翻譯將在這裡顯示 -->
+              </div>
+            </div>
+            
+            <!-- 適用場合翻譯 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h5 style="margin:0; color:#333;">🎪 適用場合 Suitable Occasions</h5>
+                <select onchange="updateTranslation('occasions', this.value)" style="padding:3px; font-size:8pt; border:1px solid #ccc;">
+                  <option value="en" selected>English</option>
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="id">Bahasa Indonesia</option>
+                </select>
+              </div>
+              <div id="occasionsTranslation" style="font-size:9pt; line-height:1.6;">
+                <!-- 英文翻譯將在這裡顯示 -->
+              </div>
+            </div>
+            
+            <!-- 點歌方法翻譯 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h5 style="margin:0; color:#333;">🎤 點歌方法 How to Select Songs</h5>
+                <select onchange="updateTranslation('methods', this.value)" style="padding:3px; font-size:8pt; border:1px solid #ccc;">
+                  <option value="en" selected>English</option>
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="id">Bahasa Indonesia</option>
+                </select>
+              </div>
+              <div id="methodsTranslation" style="font-size:9pt; line-height:1.6;">
+                <!-- 英文翻譯將在這裡顯示 -->
+              </div>
+            </div>
+            
+            <!-- 功能特色翻譯 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h5 style="margin:0; color:#333;">✨ 功能特色 Key Features</h5>
+                <select onchange="updateTranslation('features', this.value)" style="padding:3px; font-size:8pt; border:1px solid #ccc;">
+                  <option value="en" selected>English</option>
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="id">Bahasa Indonesia</option>
+                </select>
+              </div>
+              <div id="featuresTranslation" style="font-size:9pt; line-height:1.6;">
+                <!-- 英文翻譯將在這裡顯示 -->
+              </div>
+            </div>
+            
+            <!-- 實際使用示例翻譯 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h5 style="margin:0; color:#333;">💡 實際使用示例 Practical Example</h5>
+                <select onchange="updateTranslation('examples', this.value)" style="padding:3px; font-size:8pt; border:1px solid #ccc;">
+                  <option value="en" selected>English</option>
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="id">Bahasa Indonesia</option>
+                </select>
+              </div>
+              <div id="examplesTranslation" style="font-size:9pt; line-height:1.6;">
+                <!-- 英文翻譯將在這裡顯示 -->
+              </div>
+            </div>
+            
+            <!-- 常見問題翻譯 -->
+            <div style="background:white; padding:10px; border:1px solid #ddd; border-radius:5px; margin:10px 0;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h5 style="margin:0; color:#333;">❓ 常見問題 FAQ</h5>
+                <select onchange="updateTranslation('faq', this.value)" style="padding:3px; font-size:8pt; border:1px solid #ccc;">
+                  <option value="en" selected>English</option>
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="id">Bahasa Indonesia</option>
+                </select>
+              </div>
+              <div id="faqTranslation" style="font-size:9pt; line-height:1.6;">
+                <!-- 英文翻譯將在這裡顯示 -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 生成結果區域 -->
+      <div id="generatedResult" style="margin:10px 0; display:none;">
+        <h3>生成的播放列表：</h3>
+        <div id="playlistDisplay"></div>
+        <button onclick="copyPlaylistCode()" style="background:#4CAF50; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:10pt; margin:5px;">複製播放列表代碼</button>
+        <button onclick="downloadPlaylist()" style="background:#2196F3; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:10pt; margin:5px;">下載播放列表</button>
+      </div>
+    </td>
+  </tr>
+</table>
+</center>
+
+<script>
+// 全局變量
+var currentPlatform = 'youtube';
+var currentPlaylist = [];
+var currentMediaId = '';
+
+// 平台切換
+function switchPlatform() {
+  currentPlatform = document.getElementById('platformSelect').value;
+  var content = document.getElementById('platformContent');
+  
+  switch(currentPlatform) {
+    case 'youtube':
+      content.innerHTML = getYouTubeInterface();
+      break;
+    case 'spotify':
+      content.innerHTML = getSpotifyInterface();
+      break;
+    case 'tiktok':
+      content.innerHTML = getTikTokInterface();
+      break;
+    case 'bilibili':
+      content.innerHTML = getBilibiliInterface();
+      break;
+  }
+}
+
+// YouTube 界面
+function getYouTubeInterface() {
+  return '<div style="border:1px solid #ccc; padding:15px; background:#f9f9f9; margin:10px 0;">' +
+         '<h3 style="margin:0 0 15px 0; color:#333;">🎬 YouTube 時間戳播放列表</h3>' +
+         '<p style="font-size:10pt; margin:5px 0; color:#666;">輸入YouTube視頻ID或鏈接，創建時間戳播放列表</p>' +
+         '<input type="text" id="mediaId" placeholder="nI2CWEHustE 或 https://youtu.be/nI2CWEHustE" style="width:70%; padding:8px; font-size:10pt; border:1px solid #ccc; margin:5px 0;">' +
+         '<br><br>' +
+         '<button onclick="loadYouTubeTimestamps()" style="background:#FF0000; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:10pt; margin:5px;">載入時間戳</button>' +
+         '<button onclick="showTimestampEditor()" style="background:#FF9800; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:10pt; margin:5px;">編輯時間戳</button>' +
+         '<div id="timestampEditor" style="margin:10px 0; display:none;">' +
+         '<textarea id="timestampInput" rows="10" style="width:100%; font-family:monospace; font-size:9pt; border:1px solid #ccc;" placeholder="0:00:00 Amazing Grace&#10;0:02:12 He Leadeth Me&#10;0:05:31 Great is Thy Faithfulness"></textarea>' +
+         '<br><button onclick="saveTimestamps()" style="background:#4CAF50; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer; font-size:9pt; margin:5px 0;">保存時間戳</button>' +
+         '</div>' +
+         '</div>';
+}
+
+// Spotify 界面
+function getSpotifyInterface() {
+  return '<div style="border:1px solid #ccc; padding:15px; background:#f9f9f9; margin:10px 0;">' +
+         '<h3 style="margin:0 0 15px 0; color:#333;">🎵 Spotify 播放列表</h3>' +
+         '<p style="font-size:10pt; margin:5px 0; color:#666;">輸入Spotify播放列表ID，創建嵌入播放器</p>' +
+         '<input type="text" id="mediaId" placeholder="37i9dQZF1DXcBWIGoYBM5M" style="width:70%; padding:8px; font-size:10pt; border:1px solid #ccc; margin:5px 0;">' +
+         '<br><br>' +
+         '<button onclick="generateSpotifyPlaylist()" style="background:#1DB954; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:10pt; margin:5px;">生成播放列表</button>' +
+         '</div>';
+}
+
+// TikTok 界面
+function getTikTokInterface() {
+  return '<div style="border:1px solid #ccc; padding:15px; background:#f9f9f9; margin:10px 0;">' +
+         '<h3 style="margin:0 0 15px 0; color:#333;">🎭 TikTok 視頻集合</h3>' +
+         '<p style="font-size:10pt; margin:5px 0; color:#666;">輸入TikTok用戶名或視頻ID，創建視頻集合</p>' +
+         '<input type="text" id="mediaId" placeholder="@username 或 video_id" style="width:70%; padding:8px; font-size:10pt; border:1px solid #ccc; margin:5px 0;">' +
+         '<br><br>' +
+         '<button onclick="generateTikTokCollection()" style="background:#000000; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:10pt; margin:5px;">生成視頻集合</button>' +
+         '</div>';
+}
+
+// B站 界面
+function getBilibiliInterface() {
+  return '<div style="border:1px solid #ccc; padding:15px; background:#f9f9f9; margin:10px 0;">' +
+         '<h3 style="margin:0 0 15px 0; color:#333;">📺 B站 視頻集合</h3>' +
+         '<p style="font-size:10pt; margin:5px 0; color:#666;">輸入B站UP主或視頻ID，創建視頻集合</p>' +
+         '<input type="text" id="mediaId" placeholder="UP主ID 或 視頻ID" style="width:70%; padding:8px; font-size:10pt; border:1px solid #ccc; margin:5px 0;">' +
+         '<br><br>' +
+         '<button onclick="generateBilibiliCollection()" style="background:#00A1D6; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:10pt; margin:5px;">生成視頻集合</button>' +
+         '</div>';
+}
+
+// 載入YouTube時間戳
+function loadYouTubeTimestamps() {
+  var mediaId = document.getElementById('mediaId').value;
+  var videoId = extractVideoId(mediaId) || mediaId;
+  
+  console.log('輸入的媒體ID:', mediaId);
+  console.log('提取的視頻ID:', videoId);
+  
+  if (!videoId) {
+    alert('請輸入有效的YouTube視頻ID或鏈接！');
+    return;
+  }
+  
+  currentMediaId = videoId;
+  currentPlatform = 'youtube';
+  
+  // 載入示例時間戳
+  var sampleTimestamps = [
+    { time: '0:00:00', title: 'Amazing Grace' },
+    { time: '0:02:12', title: 'He Leadeth Me' },
+    { time: '0:05:31', title: 'Great is Thy Faithfulness' },
+    { time: '0:09:05', title: 'It is Well' },
+    { time: '0:12:30', title: 'How Great Thou Art' },
+    { time: '0:16:45', title: 'Blessed Assurance' }
+  ];
+  
+  currentPlaylist = sampleTimestamps;
+  console.log('已載入 ' + currentPlaylist.length + ' 首歌曲的時間戳');
+  generatePlaylistDisplay();
+}
+
+// 顯示時間戳編輯器
+function showTimestampEditor() {
+  var editor = document.getElementById('timestampEditor');
+  editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+}
+
+// 保存時間戳
+function saveTimestamps() {
+  var text = document.getElementById('timestampInput').value;
+  var lines = text.split('
+');
+  
+  currentPlaylist = [];
+  
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (line) {
+      var parts = line.split(' ');
+      if (parts.length >= 2) {
+        var time = parts[0];
+        var title = parts.slice(1).join(' ');
+        
+        if (isValidTimeFormat(time)) {
+          currentPlaylist.push({ time: time, title: title });
+        }
+      }
+    }
+  }
+  
+  if (currentPlaylist.length === 0) {
+    alert('請輸入有效的時間戳格式！');
+    return;
+  }
+  
+  alert('已保存 ' + currentPlaylist.length + ' 首歌曲的時間戳！');
+  document.getElementById('timestampEditor').style.display = 'none';
+  generatePlaylistDisplay();
+}
+
+// 載入示例時間戳
+function loadSampleTimestamps() {
+  var sampleText = '0:00:00 Amazing Grace
+' +
+                   '0:02:12 He Leadeth Me
+' +
+                   '0:05:31 Great is Thy Faithfulness
+' +
+                   '0:09:05 It is Well
+' +
+                   '0:12:30 How Great Thou Art
+' +
+                   '0:16:45 Blessed Assurance';
+  
+  document.getElementById('timestampInput').value = sampleText;
+}
+
+// 生成播放列表顯示
+function generatePlaylistDisplay() {
+  if (currentPlaylist.length === 0) {
+    alert('請先載入或創建播放列表！');
+    return;
+  }
+  
+  var html = '<div style="border:1px solid #ccc; padding:15px; background:white; margin:10px 0;">';
+  html += '<h4 style="margin:0 0 15px 0; color:#333;">🎵 ' + currentPlatform.toUpperCase() + ' 播放列表 (' + currentPlaylist.length + ' 首歌曲)</h4>';
+  
+  for (var i = 0; i < currentPlaylist.length; i++) {
+    var item = currentPlaylist[i];
+    var seconds = timeToSeconds(item.time);
+    
+    html += '<div style="margin:5px 0; padding:8px; border:1px solid #ddd; background:#f9f9f9; display:flex; align-items:center;">';
+    html += '<span style="font-weight:bold; color:#333; margin-right:10px; min-width:60px;">' + item.time + '</span>';
+    html += '<span style="flex:1; color:#666;">' + item.title + '</span>';
+    
+    if (currentPlatform === 'youtube') {
+      html += '<button onclick="playYouTubeVideo(' + seconds + ')" style="background:#FF5722; color:white; border:none; padding:3px 8px; border-radius:3px; cursor:pointer; font-size:8pt; margin-left:5px;">播放</button>';
+    }
+    
+    html += '</div>';
+  }
+  
+  html += '</div>';
+  
+  document.getElementById('playlistDisplay').innerHTML = html;
+  document.getElementById('generatedResult').style.display = 'block';
+  
+  console.log('播放列表已生成，包含 ' + currentPlaylist.length + ' 首歌曲');
+}
+
+// 播放YouTube視頻
+function playYouTubeVideo(seconds) {
+  var embedUrl = 'https://www.youtube.com/embed/' + currentMediaId + '?start=' + seconds + '&autoplay=1';
+  var newWindow = window.open('', '_blank', 'width=800,height=600');
+  newWindow.document.write('<html><head><title>YouTube播放器</title>  <script src="../assets/js/lab-frame-nav.js"></script>
+</head><body style="margin:0; padding:10px; background:#000; text-align:center;">');
+  newWindow.document.write('<iframe width="100%" height="500" src="' + embedUrl + '" frameborder="0" allowfullscreen></iframe>');
+  newWindow.document.write('</body></html>');
+  newWindow.document.close();
+}
+
+// 複製播放列表代碼
+function copyPlaylistCode() {
+  var code = generatePlaylistCode();
+  copyToClipboard(code);
+  alert('播放列表代碼已複製到剪貼板！');
+}
+
+// 下載播放列表
+function downloadPlaylist() {
+  var code = generatePlaylistCode();
+  var blob = new Blob([code], { type: 'text/html' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = currentPlatform + '_playlist.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 生成播放列表代碼
+function generatePlaylistCode() {
+  var html = '<!DOCTYPE html><html><head><title>' + currentPlatform.toUpperCase() + ' 播放列表</title>  <script src="../assets/js/lab-frame-nav.js"></script>
+</head><body>';
+  html += '<h2>🎵 ' + currentPlatform.toUpperCase() + ' 播放列表</h2>';
+  
+  for (var i = 0; i < currentPlaylist.length; i++) {
+    var item = currentPlaylist[i];
+    var seconds = timeToSeconds(item.time);
+    
+    html += '<div style="margin:5px 0; padding:8px; border:1px solid #ddd; background:#f9f9f9;">';
+    html += '<span style="font-weight:bold; color:#333; margin-right:10px;">' + item.time + '</span>';
+    html += '<span style="color:#666;">' + item.title + '</span>';
+    
+    if (currentPlatform === 'youtube') {
+      html += '<a href="https://www.youtube.com/watch?v=' + currentMediaId + '&t=' + seconds + 's" target="_blank" style="background:#FF5722; color:white; text-decoration:none; padding:3px 8px; border-radius:3px; margin-left:10px;">播放</a>';
+    }
+    
+    html += '</div>';
+  }
+  
+  html += '</body></html>';
+  return html;
+}
+
+// 工具函數
+function extractVideoId(url) {
+  var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  var match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+function timeToSeconds(timeStr) {
+  var parts = timeStr.split(':');
+  var hours = parseInt(parts[0]) || 0;
+  var minutes = parseInt(parts[1]) || 0;
+  var seconds = parseInt(parts[2]) || 0;
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
+function isValidTimeFormat(time) {
+  var timeRegex = /^(\d{1,2}):(\d{2}):(\d{2})$/;
+  return timeRegex.test(time);
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text);
+  } else {
+    var textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+  }
+}
+
+// 其他平台生成函數（佔位符）
+function generateSpotifyPlaylist() {
+  alert('Spotify播放列表功能正在開發中...');
+}
+
+function generateTikTokCollection() {
+  alert('TikTok視頻集合功能正在開發中...');
+}
+
+function generateBilibiliCollection() {
+  alert('B站視頻集合功能正在開發中...');
+}
+
+// 多語言內容
+var languageContent = {
+  cn: {
+    steps: {
+      title: "🎯 使用次序 Usage Steps",
+      items: [
+        { step: "1. 選擇平台", desc: "從下拉菜單選擇您要使用的媒體平台" },
+        { step: "2. 輸入媒體ID", desc: "輸入視頻/音頻的ID或完整鏈接" },
+        { step: "3. 編輯時間戳", desc: "點擊"編輯時間戳"按鈕，輸入歌曲時間和標題" },
+        { step: "4. 生成播放列表", desc: "點擊"生成播放列表"按鈕" },
+        { step: "5. 複製使用", desc: "複製生成的代碼到您的網頁中" }
+      ]
+    },
+    occasions: {
+      title: "🎪 適用場合 Suitable Occasions",
+      items: [
+        { icon: "🎵", title: "讚美詩歌", desc: "教會聚會、主日學、詩班練習" },
+        { icon: "📚", title: "聖經學習", desc: "查經班、聖經課程、個人靈修" },
+        { icon: "🎓", title: "教學課程", desc: "神學院、主日學教材、線上課程" },
+        { icon: "📱", title: "個人使用", desc: "個人靈修、家庭敬拜、小組聚會" },
+        { icon: "🌐", title: "網站嵌入", desc: "教會網站、個人博客、教學平台" }
+      ]
+    },
+    methods: {
+      title: "🎤 點歌方法 How to Select Songs",
+      items: [
+        { icon: "🖱️", title: "點擊播放", desc: "直接點擊歌曲名稱或"播放"按鈕" },
+        { icon: "⏰", title: "時間跳轉", desc: "自動跳轉到指定時間點開始播放" },
+        { icon: "🔄", title: "連續播放", desc: "可以連續點擊多首歌曲播放" },
+        { icon: "📱", title: "移動端", desc: "在手機和平板上同樣可以正常使用" }
+      ]
+    },
+    features: {
+      title: "✨ 功能特色 Key Features",
+      items: [
+        { icon: "🎵", title: "無限歌曲", desc: "支持1-1000首歌曲" },
+        { icon: "⏰", title: "精確時間", desc: "精確到秒的時間定位" },
+        { icon: "🌐", title: "多平台", desc: "支持多個媒體平台" },
+        { icon: "📱", title: "響應式", desc: "適配各種設備" },
+        { icon: "💾", title: "一鍵複製", desc: "快速複製代碼" },
+        { icon: "📥", title: "下載功能", desc: "下載完整播放列表" }
+      ]
+    },
+    examples: {
+      title: "💡 實際使用示例 Practical Example",
+      items: [
+        {
+          title: "🎵 讚美詩歌聚會示例",
+          scenario: "場景：主日崇拜詩歌時間",
+          platform: "平台：YouTube",
+          videoId: "視頻ID：nI2CWEHustE",
+          timestamps: [
+            "0:00:00 開場禱告",
+            "0:02:12 奇異恩典", 
+            "0:05:31 你真偉大",
+            "0:09:05 主禱文"
+          ],
+          effect: "效果：會眾可以點擊任意歌曲直接播放"
+        },
+        {
+          title: "📚 聖經學習示例",
+          scenario: "場景：查經班課程",
+          platform: "平台：YouTube",
+          videoId: "視頻ID：ABC123DEF456",
+          timestamps: [
+            "0:00:00 課程介紹",
+            "0:05:30 經文朗讀",
+            "0:12:15 經文解釋",
+            "0:25:40 小組討論"
+          ],
+          effect: "效果：學員可以重複觀看特定段落"
+        }
+      ]
+    },
+    faq: {
+      title: "❓ 常見問題 FAQ",
+      items: [
+        {
+          q: "如何獲取YouTube視頻ID？",
+          a: "從YouTube鏈接中複製，如 https://youtu.be/nI2CWEHustE 中的 nI2CWEHustE"
+        },
+        {
+          q: "時間戳格式有什麼要求？",
+          a: "必須使用 HH:MM:SS 格式，如 0:02:12 或 1:05:30"
+        },
+        {
+          q: "可以添加多少首歌曲？",
+          a: "理論上無限制，建議不超過1000首以保持性能"
+        },
+        {
+          q: "生成的代碼可以在任何網站使用嗎？",
+          a: "是的，生成的HTML代碼可以在任何支持HTML的網站使用"
+        }
+      ]
+    }
+  },
+  en: {
+    steps: {
+      title: "🎯 Usage Steps",
+      items: [
+        { step: "1. Select Platform", desc: "Choose your media platform from the dropdown menu" },
+        { step: "2. Enter Media ID", desc: "Input video/audio ID or complete link" },
+        { step: "3. Edit Timestamps", desc: "Click 'Edit Timestamps' button, enter song times and titles" },
+        { step: "4. Generate Playlist", desc: "Click 'Generate Playlist' button" },
+        { step: "5. Copy & Use", desc: "Copy generated code to your webpage" }
+      ]
+    },
+    occasions: {
+      title: "🎪 Suitable Occasions",
+      items: [
+        { icon: "🎵", title: "Worship Songs", desc: "Church services, Sunday school, choir practice" },
+        { icon: "📚", title: "Bible Study", desc: "Bible study groups, courses, personal devotion" },
+        { icon: "🎓", title: "Teaching", desc: "Seminary, Sunday school materials, online courses" },
+        { icon: "📱", title: "Personal Use", desc: "Personal devotion, family worship, small groups" },
+        { icon: "🌐", title: "Website Embed", desc: "Church websites, personal blogs, teaching platforms" }
+      ]
+    },
+    methods: {
+      title: "🎤 How to Select Songs",
+      items: [
+        { icon: "🖱️", title: "Click to Play", desc: "Click directly on song name or 'Play' button" },
+        { icon: "⏰", title: "Time Jump", desc: "Automatically jump to specified time point to start playing" },
+        { icon: "🔄", title: "Continuous Play", desc: "Can click multiple songs to play continuously" },
+        { icon: "📱", title: "Mobile", desc: "Works normally on phones and tablets" }
+      ]
+    },
+    features: {
+      title: "✨ Key Features",
+      items: [
+        { icon: "🎵", title: "Unlimited Songs", desc: "Support 1-1000 songs" },
+        { icon: "⏰", title: "Precise Time", desc: "Second-level time positioning" },
+        { icon: "🌐", title: "Multi-Platform", desc: "Support multiple media platforms" },
+        { icon: "📱", title: "Responsive", desc: "Adapt to various devices" },
+        { icon: "💾", title: "One-Click Copy", desc: "Quick code copying" },
+        { icon: "📥", title: "Download", desc: "Download complete playlist" }
+      ]
+    },
+    examples: {
+      title: "💡 Practical Example",
+      items: [
+        {
+          title: "🎵 Worship Service Example",
+          scenario: "Scene: Sunday worship song time",
+          platform: "Platform: YouTube",
+          videoId: "Video ID: nI2CWEHustE",
+          timestamps: [
+            "0:00:00 Opening Prayer",
+            "0:02:12 Amazing Grace",
+            "0:05:31 How Great Thou Art",
+            "0:09:05 Lord's Prayer"
+          ],
+          effect: "Effect: Congregation can click any song to play directly"
+        },
+        {
+          title: "📚 Bible Study Example",
+          scenario: "Scene: Bible study class",
+          platform: "Platform: YouTube",
+          videoId: "Video ID: ABC123DEF456",
+          timestamps: [
+            "0:00:00 Course Introduction",
+            "0:05:30 Scripture Reading",
+            "0:12:15 Scripture Explanation",
+            "0:25:40 Group Discussion"
+          ],
+          effect: "Effect: Students can rewatch specific sections"
+        }
+      ]
+    },
+    faq: {
+      title: "❓ FAQ",
+      items: [
+        {
+          q: "How to get YouTube video ID?",
+          a: "Copy from YouTube link, like nI2CWEHustE from https://youtu.be/nI2CWEHustE"
+        },
+        {
+          q: "What timestamp format is required?",
+          a: "Must use HH:MM:SS format, like 0:02:12 or 1:05:30"
+        },
+        {
+          q: "How many songs can be added?",
+          a: "Unlimited in theory, recommend not exceeding 1000 for performance"
+        },
+        {
+          q: "Can generated code be used on any website?",
+          a: "Yes, the generated HTML code can be used on any HTML-supported website"
+        }
+      ]
+    }
+  },
+  vi: {
+    steps: {
+      title: "🎯 Các Bước Sử Dụng Usage Steps",
+      items: [
+        { step: "1. Chọn Nền Tảng", desc: "Chọn nền tảng media từ menu thả xuống" },
+        { step: "2. Nhập ID Media", desc: "Nhập ID video/audio hoặc liên kết đầy đủ" },
+        { step: "3. Chỉnh Sửa Timestamp", desc: "Nhấp nút 'Chỉnh Sửa Timestamp', nhập thời gian và tiêu đề bài hát" },
+        { step: "4. Tạo Playlist", desc: "Nhấp nút 'Tạo Playlist'" },
+        { step: "5. Sao Chép & Sử Dụng", desc: "Sao chép mã đã tạo vào trang web của bạn" }
+      ]
+    },
+    occasions: {
+      title: "🎪 Các Trường Hợp Sử Dụng Suitable Occasions",
+      items: [
+        { icon: "🎵", title: "Thánh Ca", desc: "Lễ thờ phượng, trường chủ nhật, tập hợp ca đoàn" },
+        { icon: "📚", title: "Học Kinh Thánh", desc: "Nhóm học Kinh Thánh, khóa học, tĩnh nguyện cá nhân" },
+        { icon: "🎓", title: "Giảng Dạy", desc: "Thần học viện, tài liệu trường chủ nhật, khóa học trực tuyến" },
+        { icon: "📱", title: "Sử Dụng Cá Nhân", desc: "Tĩnh nguyện cá nhân, thờ phượng gia đình, nhóm nhỏ" },
+        { icon: "🌐", title: "Nhúng Website", desc: "Website nhà thờ, blog cá nhân, nền tảng giảng dạy" }
+      ]
+    },
+    methods: {
+      title: "🎤 Cách Chọn Bài Hát How to Select Songs",
+      items: [
+        { icon: "🖱️", title: "Nhấp Để Phát", desc: "Nhấp trực tiếp vào tên bài hát hoặc nút 'Phát'" },
+        { icon: "⏰", title: "Nhảy Thời Gian", desc: "Tự động nhảy đến điểm thời gian được chỉ định để bắt đầu phát" },
+        { icon: "🔄", title: "Phát Liên Tục", desc: "Có thể nhấp nhiều bài hát để phát liên tục" },
+        { icon: "📱", title: "Di Động", desc: "Hoạt động bình thường trên điện thoại và máy tính bảng" }
+      ]
+    },
+    features: {
+      title: "✨ Tính Năng Chính Key Features",
+      items: [
+        { icon: "🎵", title: "Không Giới Hạn Bài Hát", desc: "Hỗ trợ 1-1000 bài hát" },
+        { icon: "⏰", title: "Thời Gian Chính Xác", desc: "Định vị thời gian chính xác đến giây" },
+        { icon: "🌐", title: "Đa Nền Tảng", desc: "Hỗ trợ nhiều nền tảng media" },
+        { icon: "📱", title: "Phản Hồi", desc: "Thích ứng với các thiết bị khác nhau" },
+        { icon: "💾", title: "Sao Chép Một Lần", desc: "Sao chép mã nhanh chóng" },
+        { icon: "📥", title: "Tải Xuống", desc: "Tải xuống playlist hoàn chỉnh" }
+      ]
+    },
+    examples: {
+      title: "💡 Ví Dụ Thực Tế Practical Example",
+      items: [
+        {
+          title: "🎵 Ví Dụ Thánh Ca",
+          scenario: "Tình huống: Thời gian thánh ca chủ nhật",
+          platform: "Nền tảng: YouTube",
+          videoId: "Video ID: nI2CWEHustE",
+          timestamps: [
+            "0:00:00 Lời Cầu Nguyện Mở Đầu",
+            "0:02:12 Ân Điển Lạ Lùng",
+            "0:05:31 Ngài Thật Vĩ Đại",
+            "0:09:05 Lời Cầu Nguyện Chúa"
+          ],
+          effect: "Hiệu quả: Hội chúng có thể nhấp bất kỳ bài hát nào để phát trực tiếp"
+        },
+        {
+          title: "📚 Ví Dụ Học Kinh Thánh",
+          scenario: "Tình huống: Lớp học Kinh Thánh",
+          platform: "Nền tảng: YouTube",
+          videoId: "Video ID: ABC123DEF456",
+          timestamps: [
+            "0:00:00 Giới Thiệu Khóa Học",
+            "0:05:30 Đọc Kinh Thánh",
+            "0:12:15 Giải Thích Kinh Thánh",
+            "0:25:40 Thảo Luận Nhóm"
+          ],
+          effect: "Hiệu quả: Học viên có thể xem lại các phần cụ thể"
+        }
+      ]
+    },
+    faq: {
+      title: "❓ Câu Hỏi Thường Gặp FAQ",
+      items: [
+        {
+          q: "Làm thế nào để lấy YouTube video ID?",
+          a: "Sao chép từ liên kết YouTube, như nI2CWEHustE từ https://youtu.be/nI2CWEHustE"
+        },
+        {
+          q: "Định dạng timestamp có yêu cầu gì?",
+          a: "Phải sử dụng định dạng HH:MM:SS, như 0:02:12 hoặc 1:05:30"
+        },
+        {
+          q: "Có thể thêm bao nhiêu bài hát?",
+          a: "Về lý thuyết không giới hạn, khuyến nghị không vượt quá 1000 để duy trì hiệu suất"
+        },
+        {
+          q: "Mã được tạo có thể sử dụng trên bất kỳ website nào không?",
+          a: "Có, mã HTML được tạo có thể sử dụng trên bất kỳ website nào hỗ trợ HTML"
+        }
+      ]
+    }
+  },
+  id: {
+    steps: {
+      title: "🎯 Langkah Penggunaan Usage Steps",
+      items: [
+        { step: "1. Pilih Platform", desc: "Pilih platform media dari menu dropdown" },
+        { step: "2. Masukkan ID Media", desc: "Masukkan ID video/audio atau link lengkap" },
+        { step: "3. Edit Timestamp", desc: "Klik tombol 'Edit Timestamp', masukkan waktu dan judul lagu" },
+        { step: "4. Buat Playlist", desc: "Klik tombol 'Buat Playlist'" },
+        { step: "5. Salin & Gunakan", desc: "Salin kode yang dibuat ke halaman web Anda" }
+      ]
+    },
+    occasions: {
+      title: "🎪 Kesempatan Penggunaan Suitable Occasions",
+      items: [
+        { icon: "🎵", title: "Lagu Pujian", desc: "Ibadah gereja, sekolah minggu, latihan paduan suara" },
+        { icon: "📚", title: "Belajar Alkitab", desc: "Kelompok belajar Alkitab, kursus, devosi pribadi" },
+        { icon: "🎓", title: "Pengajaran", desc: "Seminari, materi sekolah minggu, kursus online" },
+        { icon: "📱", title: "Penggunaan Pribadi", desc: "Devosi pribadi, ibadah keluarga, kelompok kecil" },
+        { icon: "🌐", title: "Embed Website", desc: "Website gereja, blog pribadi, platform pengajaran" }
+      ]
+    },
+    methods: {
+      title: "🎤 Cara Memilih Lagu How to Select Songs",
+      items: [
+        { icon: "🖱️", title: "Klik untuk Memutar", desc: "Klik langsung pada nama lagu atau tombol 'Putar'" },
+        { icon: "⏰", title: "Lompat Waktu", desc: "Otomatis melompat ke titik waktu yang ditentukan untuk mulai memutar" },
+        { icon: "🔄", title: "Putar Berkelanjutan", desc: "Dapat mengklik beberapa lagu untuk diputar berkelanjutan" },
+        { icon: "📱", title: "Mobile", desc: "Berfungsi normal di ponsel dan tablet" }
+      ]
+    },
+    features: {
+      title: "✨ Fitur Utama Key Features",
+      items: [
+        { icon: "🎵", title: "Lagu Tanpa Batas", desc: "Mendukung 1-1000 lagu" },
+        { icon: "⏰", title: "Waktu Presisi", desc: "Penentuan posisi waktu presisi hingga detik" },
+        { icon: "🌐", title: "Multi-Platform", desc: "Mendukung berbagai platform media" },
+        { icon: "📱", title: "Responsif", desc: "Beradaptasi dengan berbagai perangkat" },
+        { icon: "💾", title: "Salin Satu Klik", desc: "Salin kode dengan cepat" },
+        { icon: "📥", title: "Fitur Unduh", desc: "Unduh playlist lengkap" }
+      ]
+    },
+    examples: {
+      title: "💡 Contoh Praktis Practical Example",
+      items: [
+        {
+          title: "🎵 Contoh Lagu Pujian",
+          scenario: "Skenario: Waktu lagu pujian ibadah minggu",
+          platform: "Platform: YouTube",
+          videoId: "Video ID: nI2CWEHustE",
+          timestamps: [
+            "0:00:00 Doa Pembukaan",
+            "0:02:12 Amazing Grace",
+            "0:05:31 How Great Thou Art",
+            "0:09:05 Doa Bapa Kami"
+          ],
+          effect: "Efek: Jemaat dapat mengklik lagu apa pun untuk diputar langsung"
+        },
+        {
+          title: "📚 Contoh Belajar Alkitab",
+          scenario: "Skenario: Kelas belajar Alkitab",
+          platform: "Platform: YouTube",
+          videoId: "Video ID: ABC123DEF456",
+          timestamps: [
+            "0:00:00 Pengenalan Kursus",
+            "0:05:30 Pembacaan Alkitab",
+            "0:12:15 Penjelasan Alkitab",
+            "0:25:40 Diskusi Kelompok"
+          ],
+          effect: "Efek: Siswa dapat menonton ulang bagian tertentu"
+        }
+      ]
+    },
+    faq: {
+      title: "❓ Pertanyaan Umum FAQ",
+      items: [
+        {
+          q: "Bagaimana cara mendapatkan YouTube video ID?",
+          a: "Salin dari link YouTube, seperti nI2CWEHustE dari https://youtu.be/nI2CWEHustE"
+        },
+        {
+          q: "Apa persyaratan format timestamp?",
+          a: "Harus menggunakan format HH:MM:SS, seperti 0:02:12 atau 1:05:30"
+        },
+        {
+          q: "Berapa banyak lagu yang bisa ditambahkan?",
+          a: "Secara teori tidak terbatas, disarankan tidak melebihi 1000 untuk menjaga performa"
+        },
+        {
+          q: "Apakah kode yang dibuat bisa digunakan di website mana pun?",
+          a: "Ya, kode HTML yang dibuat dapat digunakan di website mana pun yang mendukung HTML"
+        }
+      ]
+    }
+  }
+};
+
+// 語言切換功能
+function switchLanguage() {
+  var lang = document.getElementById('languageSelect').value;
+  var content = languageContent[lang] || languageContent.cn;
+  
+  var guideContent = document.getElementById('guideContent');
+  guideContent.innerHTML = generateGuideContent(content);
+}
+
+// 生成指導內容
+function generateGuideContent(content) {
+  var html = '<div style="display:flex; flex-wrap:wrap; gap:15px; margin:10px 0;">';
+  
+  // 使用次序
+  html += '<div style="flex:1; min-width:300px; background:white; padding:10px; border:1px solid #ddd; border-radius:5px;">';
+  html += '<h4 style="margin:0 0 10px 0; color:#333;">' + content.steps.title + '</h4>';
+  for (var i = 0; i < content.steps.items.length; i++) {
+    var item = content.steps.items[i];
+    html += '<div style="margin:5px 0; padding:5px; background:#f0f8ff; border-left:3px solid #2196F3;">';
+    html += '<b>' + item.step + '</b><br>' + item.desc;
+    html += '</div>';
+  }
+  html += '</div>';
+  
+  // 適用場合
+  html += '<div style="flex:1; min-width:300px; background:white; padding:10px; border:1px solid #ddd; border-radius:5px;">';
+  html += '<h4 style="margin:0 0 10px 0; color:#333;">' + content.occasions.title + '</h4>';
+  for (var i = 0; i < content.occasions.items.length; i++) {
+    var item = content.occasions.items[i];
+    html += '<div style="margin:5px 0; padding:5px; background:#fff3e0; border-left:3px solid #FF9800;">';
+    html += '<b>' + item.icon + ' ' + item.title + '</b><br>' + item.desc;
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '</div>';
+  
+  // 點歌方法
+  html += '<div style="margin:15px 0; background:white; padding:10px; border:1px solid #ddd; border-radius:5px;">';
+  html += '<h4 style="margin:0 0 10px 0; color:#333;">' + content.methods.title + '</h4>';
+  html += '<div style="display:flex; flex-wrap:wrap; gap:10px; font-size:9pt;">';
+  for (var i = 0; i < content.methods.items.length; i++) {
+    var item = content.methods.items[i];
+    html += '<div style="flex:1; min-width:200px; padding:8px; background:#f9f9f9; border-radius:3px;">';
+    html += '<b>' + item.icon + ' ' + item.title + '</b><br>' + item.desc;
+    html += '</div>';
+  }
+  html += '</div></div>';
+  
+  // 功能特色
+  html += '<div style="margin:15px 0; background:white; padding:10px; border:1px solid #ddd; border-radius:5px;">';
+  html += '<h4 style="margin:0 0 10px 0; color:#333;">' + content.features.title + '</h4>';
+  html += '<div style="display:flex; flex-wrap:wrap; gap:10px; font-size:9pt;">';
+  for (var i = 0; i < content.features.items.length; i++) {
+    var item = content.features.items[i];
+    html += '<div style="flex:1; min-width:150px; padding:5px; background:#e8f5e8; border-radius:3px; text-align:center;">';
+    html += '<b>' + item.icon + ' ' + item.title + '</b><br>' + item.desc;
+    html += '</div>';
+  }
+  html += '</div></div>';
+  
+  // 實際使用示例
+  html += '<div style="margin:15px 0; background:white; padding:10px; border:1px solid #ddd; border-radius:5px;">';
+  html += '<h4 style="margin:0 0 10px 0; color:#333;">' + content.examples.title + '</h4>';
+  html += '<div style="display:flex; flex-wrap:wrap; gap:15px; font-size:9pt;">';
+  for (var i = 0; i < content.examples.items.length; i++) {
+    var item = content.examples.items[i];
+    html += '<div style="flex:1; min-width:300px; padding:10px; background:#f9f9f9; border-radius:3px;">';
+    html += '<h5 style="margin:0 0 10px 0; color:#333;">' + item.title + '</h5>';
+    html += '<div style="line-height:1.6;">';
+    html += '<b>' + item.scenario + '</b><br>';
+    html += '<b>' + item.platform + '</b><br>';
+    html += '<b>' + item.videoId + '</b><br>';
+    html += '<b>時間戳：</b><br>';
+    for (var j = 0; j < item.timestamps.length; j++) {
+      html += '• ' + item.timestamps[j] + '<br>';
+    }
+    html += '<b>' + item.effect + '</b>';
+    html += '</div></div>';
+  }
+  html += '</div></div>';
+  
+  // 常見問題
+  html += '<div style="margin:15px 0; background:white; padding:10px; border:1px solid #ddd; border-radius:5px;">';
+  html += '<h4 style="margin:0 0 10px 0; color:#333;">' + content.faq.title + '</h4>';
+  html += '<div style="font-size:9pt; line-height:1.6;">';
+  for (var i = 0; i < content.faq.items.length; i++) {
+    var item = content.faq.items[i];
+    html += '<div style="margin:8px 0; padding:8px; background:#f9f9f9; border-radius:3px;">';
+    html += '<b>Q: ' + item.q + '</b><br>';
+    html += 'A: ' + item.a;
+    html += '</div>';
+  }
+  html += '</div></div>';
+  
+  return html;
+}
+
+// 更新翻譯功能
+function updateTranslation(section, lang) {
+  var content = languageContent[lang] || languageContent.en;
+  var targetElement = document.getElementById(section + 'Translation');
+  
+  if (!targetElement) {
+    console.log('找不到元素: ' + section + 'Translation');
+    return;
+  }
+  
+  console.log('更新翻譯: ' + section + ' -> ' + lang);
+  console.log('內容數據:', content[section]);
+  
+  var html = '';
+  
+  switch(section) {
+    case 'steps':
+      for (var i = 0; i < content.steps.items.length; i++) {
+        var item = content.steps.items[i];
+        html += '<div style="margin:5px 0; padding:5px; background:#f0f8ff; border-left:3px solid #2196F3;">';
+        html += '<b>' + item.step + '</b><br>' + item.desc;
+        html += '</div>';
+      }
+      break;
+      
+    case 'occasions':
+      for (var i = 0; i < content.occasions.items.length; i++) {
+        var item = content.occasions.items[i];
+        html += '<div style="margin:5px 0; padding:5px; background:#fff3e0; border-left:3px solid #FF9800;">';
+        html += '<b>' + item.icon + ' ' + item.title + '</b><br>' + item.desc;
+        html += '</div>';
+      }
+      break;
+      
+    case 'methods':
+      html += '<div style="display:flex; flex-wrap:wrap; gap:8px;">';
+      for (var i = 0; i < content.methods.items.length; i++) {
+        var item = content.methods.items[i];
+        html += '<div style="flex:1; min-width:180px; padding:6px; background:#f9f9f9; border-radius:3px;">';
+        html += '<b>' + item.icon + ' ' + item.title + '</b><br>' + item.desc;
+        html += '</div>';
+      }
+      html += '</div>';
+      break;
+      
+    case 'features':
+      html += '<div style="display:flex; flex-wrap:wrap; gap:8px;">';
+      for (var i = 0; i < content.features.items.length; i++) {
+        var item = content.features.items[i];
+        html += '<div style="flex:1; min-width:120px; padding:5px; background:#e8f5e8; border-radius:3px; text-align:center;">';
+        html += '<b>' + item.icon + ' ' + item.title + '</b><br>' + item.desc;
+        html += '</div>';
+      }
+      html += '</div>';
+      break;
+      
+    case 'examples':
+      for (var i = 0; i < content.examples.items.length; i++) {
+        var item = content.examples.items[i];
+        html += '<div style="margin:8px 0; padding:8px; background:#f9f9f9; border-radius:3px;">';
+        html += '<b>' + item.title + '</b><br>';
+        html += '<b>' + item.scenario + '</b><br>';
+        html += '<b>' + item.platform + '</b><br>';
+        html += '<b>' + item.videoId + '</b><br>';
+        html += '<b>時間戳：</b><br>';
+        for (var j = 0; j < item.timestamps.length; j++) {
+          html += '• ' + item.timestamps[j] + '<br>';
+        }
+        html += '<b>' + item.effect + '</b>';
+        html += '</div>';
+      }
+      break;
+      
+    case 'faq':
+      for (var i = 0; i < content.faq.items.length; i++) {
+        var item = content.faq.items[i];
+        html += '<div style="margin:6px 0; padding:6px; background:#f9f9f9; border-radius:3px;">';
+        html += '<b>Q: ' + item.q + '</b><br>';
+        html += 'A: ' + item.a;
+        html += '</div>';
+      }
+      break;
+  }
+  
+  targetElement.innerHTML = html;
+  console.log('生成的HTML:', html.substring(0, 200) + '...');
+}
+
+// 初始化所有翻譯為英文
+function initializeTranslations() {
+  console.log('開始初始化翻譯...');
+  updateTranslation('steps', 'en');
+  updateTranslation('occasions', 'en');
+  updateTranslation('methods', 'en');
+  updateTranslation('features', 'en');
+  updateTranslation('examples', 'en');
+  updateTranslation('faq', 'en');
+  console.log('翻譯初始化完成');
+}
+
+// 測試YouTube功能
+function testYouTubeFunction() {
+  console.log('開始測試YouTube功能...');
+  
+  // 設置測試視頻ID
+  document.getElementById('mediaId').value = 'nI2CWEHustE';
+  console.log('已設置測試視頻ID: nI2CWEHustE');
+  
+  // 測試載入時間戳
+  loadYouTubeTimestamps();
+  
+  // 測試顯示編輯器
+  setTimeout(function() {
+    showTimestampEditor();
+    console.log('已顯示時間戳編輯器');
+  }, 1000);
+  
+  alert('YouTube功能測試完成，請查看控制台輸出和頁面變化');
+}
+
+// 測試翻譯功能
+function testTranslations() {
+  console.log('開始測試翻譯功能...');
+  
+  // 檢查所有翻譯元素是否存在
+  var sections = ['steps', 'occasions', 'methods', 'features', 'examples', 'faq'];
+  for (var i = 0; i < sections.length; i++) {
+    var element = document.getElementById(sections[i] + 'Translation');
+    if (element) {
+      console.log('✓ 找到元素: ' + sections[i] + 'Translation');
+      // 立即測試該元素的翻譯
+      updateTranslation(sections[i], 'en');
+    } else {
+      console.log('✗ 找不到元素: ' + sections[i] + 'Translation');
+    }
+  }
+  
+  // 測試越南語翻譯
+  setTimeout(function() {
+    updateTranslation('steps', 'vi');
+    console.log('已切換到越南語');
+  }, 500);
+  
+  // 測試印尼語翻譯
+  setTimeout(function() {
+    updateTranslation('steps', 'id');
+    console.log('已切換到印尼語');
+  }, 1500);
+  
+  // 恢復英文
+  setTimeout(function() {
+    updateTranslation('steps', 'en');
+    console.log('已恢復英文');
+  }, 2500);
+  
+  alert('翻譯功能測試完成，請查看控制台輸出和頁面變化');
+}
+
+// 頁面加載時初始化
+window.onload = function() {
+  // 確保所有翻譯元素存在後再初始化
+  setTimeout(function() {
+    initializeTranslations(); // 初始化顯示英文翻譯
+  }, 100);
+};
+</script>
+
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="refresh" content="0;url=spiritual-growth.html">
+<title>靈命成長追蹤 - 已合併 · Spiritual Growth Tracking | Church Ministry</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+.header { background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%); color: white; padding: 15px 20px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 15px; }
+.card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; background: #1abc9c; color: white; margin: 5px; }
+table { width: 100%; border-collapse: collapse; }
+table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+table th { background: #f8f9fa; }</style></head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header"><h1>🌱 灵命成长追踪</h1></div>
+<div class="container">
+    <div class="card"><h3 style="margin-bottom:15px;">📊 成长记录</h3>
+        <button class="btn" onclick="addRecord()">➕ 新增记录</button>
+        <table id="table"><thead><tr><th>姓名</th><th>阶段</th><th>读经</th><th>祷告</th><th>服事</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="card"><h3>📈 成长曲线</h3><canvas id="chart"></canvas></div>
+</div>
+<script>
+let records = [];
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('growthTrackData');
+    if (saved) records = JSON.parse(saved);
+    if (records.length === 0) loadDemo();
+    render();
+});
+function loadDemo() {
+    records = [{id:1,name:'张弟兄',stage:'成长期',bible:80,prayer:75,service:70},{id:2,name:'李姊妹',stage:'初信',bible:60,prayer:65,service:50}];
+    localStorage.setItem('growthTrackData', JSON.stringify(records));
+    render();
+}
+function render() {
+    document.querySelector('#table tbody').innerHTML = records.map(r => `<tr><td>${r.name}</td><td>${r.stage}</td><td>${r.bible}%</td><td>${r.prayer}%</td><td>${r.service}%</td></tr>`).join('');
+    new Chart(document.getElementById('chart'), {
+        type: 'radar',
+        data: {
+            labels: ['读经', '祷告', '服事', '奉献', '团契'],
+            datasets: records.map((r, i) => ({
+                label: r.name,
+                data: [r.bible, r.prayer, r.service, 75, 80],
+                backgroundColor: `rgba(${i*50+100}, ${i*30+126}, 234, 0.2)`,
+                borderColor: `rgba(${i*50+100}, ${i*30+126}, 234, 1)`
+            }))
+        }
+    });
+}
+function addRecord() { alert('功能：新增成长记录'); }
+</script>
+</body>
+</html>
+

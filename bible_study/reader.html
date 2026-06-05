@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖經閱覽器 - Bible100</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f4f6f8; color: #2c3e50; height: 100vh; display: flex; flex-direction: column; }
+        .top-bar { background: #2c3e50; color: #ecf0f1; padding: 8px 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .top-bar select { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .main { flex: 1; display: flex; min-height: 0; }
+        .panel { flex: 1; overflow-y: auto; padding: 16px; border-right: 1px solid #dfe4ea; }
+        .panel:last-child { border-right: none; }
+        .ref-title { font-size: 14px; font-weight: bold; color: #2980b9; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #3498db; }
+        .verse-row { margin-bottom: 8px; line-height: 1.6; }
+        .verse-row .v-num { color: #7f8c8d; font-size: 11px; margin-right: 6px; }
+        .commentary-text { line-height: 1.7; white-space: pre-wrap; margin-top: 8px; }
+        .empty-hint { color: #95a5a6; padding: 24px; text-align: center; }
+        .setup-hint { text-align: left; max-width: 640px; margin: 0 auto; }
+        .setup-hint .hint-title { text-align: center; font-weight: bold; margin-bottom: 12px; color: #2c3e50; font-size: 15px; }
+        .setup-hint .hint-http { color: #2980b9; font-weight: 600; word-break: break-all; }
+        .setup-hint code { background: #eef2f5; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+        .loading { padding: 24px; text-align: center; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <select id="book-select"></select>
+        <input type="number" id="chapter-input" min="1" style="width:60px;padding:4px;">
+        <select id="version-select"></select>
+        <span id="status">載入中...</span>
+    </div>
+    <div class="main">
+        <div class="panel" id="bible-view">
+            <div class="loading">正在載入經文...</div>
+        </div>
+        <div class="panel" id="commentary-view">
+            <div class="loading">正在載入註釋...</div>
+        </div>
+    </div>
+    <script src="js/dev_http_hint.js"></script>
+    <script src="js/BibleEngine.js"></script>
+    <script>
+        const BOOKS = [
+            { id: 1, name: '創世記', chapters: 50 }, { id: 2, name: '出埃及記', chapters: 40 }, { id: 3, name: '利未記', chapters: 27 },
+            { id: 4, name: '民數記', chapters: 36 }, { id: 5, name: '申命記', chapters: 34 }, { id: 6, name: '約書亞記', chapters: 24 },
+            { id: 7, name: '士師記', chapters: 21 }, { id: 8, name: '路得記', chapters: 4 }, { id: 9, name: '撒母耳記上', chapters: 31 },
+            { id: 10, name: '撒母耳記下', chapters: 24 }, { id: 11, name: '列王紀上', chapters: 22 }, { id: 12, name: '列王紀下', chapters: 25 },
+            { id: 13, name: '歷代志上', chapters: 29 }, { id: 14, name: '歷代志下', chapters: 36 }, { id: 15, name: '以斯拉記', chapters: 10 },
+            { id: 16, name: '尼希米記', chapters: 13 }, { id: 17, name: '以斯帖記', chapters: 10 }, { id: 18, name: '約伯記', chapters: 42 },
+            { id: 19, name: '詩篇', chapters: 150 }, { id: 20, name: '箴言', chapters: 31 }, { id: 21, name: '傳道書', chapters: 12 },
+            { id: 22, name: '雅歌', chapters: 8 }, { id: 23, name: '以賽亞書', chapters: 66 }, { id: 24, name: '耶利米書', chapters: 52 },
+            { id: 25, name: '耶利米哀歌', chapters: 5 }, { id: 26, name: '以西結書', chapters: 48 }, { id: 27, name: '但以理書', chapters: 12 },
+            { id: 28, name: '何西阿書', chapters: 14 }, { id: 29, name: '約珥書', chapters: 3 }, { id: 30, name: '阿摩司書', chapters: 9 },
+            { id: 31, name: '俄巴底亞書', chapters: 1 }, { id: 32, name: '約拿書', chapters: 4 }, { id: 33, name: '彌迦書', chapters: 7 },
+            { id: 34, name: '那鴻書', chapters: 3 }, { id: 35, name: '哈巴谷書', chapters: 3 }, { id: 36, name: '西番雅書', chapters: 3 },
+            { id: 37, name: '哈該書', chapters: 2 }, { id: 38, name: '撒迦利亞書', chapters: 14 }, { id: 39, name: '瑪拉基書', chapters: 4 },
+            { id: 40, name: '馬太福音', chapters: 28 }, { id: 41, name: '馬可福音', chapters: 16 }, { id: 42, name: '路加福音', chapters: 24 },
+            { id: 43, name: '約翰福音', chapters: 21 }, { id: 44, name: '使徒行傳', chapters: 28 }, { id: 45, name: '羅馬書', chapters: 16 },
+            { id: 46, name: '哥林多前書', chapters: 16 }, { id: 47, name: '哥林多後書', chapters: 13 }, { id: 48, name: '加拉太書', chapters: 6 },
+            { id: 49, name: '以弗所書', chapters: 6 }, { id: 50, name: '腓立比書', chapters: 4 }, { id: 51, name: '歌羅西書', chapters: 4 },
+            { id: 52, name: '帖撒羅尼迦前書', chapters: 5 }, { id: 53, name: '帖撒羅尼迦後書', chapters: 3 }, { id: 54, name: '提摩太前書', chapters: 6 },
+            { id: 55, name: '提摩太後書', chapters: 4 }, { id: 56, name: '提多書', chapters: 3 }, { id: 57, name: '腓利門書', chapters: 1 },
+            { id: 58, name: '希伯來書', chapters: 13 }, { id: 59, name: '雅各書', chapters: 5 }, { id: 60, name: '彼得前書', chapters: 5 },
+            { id: 61, name: '彼得後書', chapters: 3 }, { id: 62, name: '約翰一書', chapters: 5 }, { id: 63, name: '約翰二書', chapters: 1 },
+            { id: 64, name: '約翰三書', chapters: 1 }, { id: 65, name: '猶大書', chapters: 1 }, { id: 66, name: '啟示錄', chapters: 22 }
+        ];
+
+        let state = { book: 1, chapter: 1, version: 'kjv' };
+
+        function getBook(id) { return BOOKS.find(b => b.id === id) || { name: '書卷' + id, chapters: 1 }; }
+
+        function showReaderSetupHint() {
+            var isFile = typeof bible100IsFileProtocol === 'function' && bible100IsFileProtocol();
+            var urls = typeof bible100SuggestedHttpUrls === 'function' ? bible100SuggestedHttpUrls() : [];
+            var linkHtml = urls.map(function (x) {
+                return '<div style="margin:6px 0;"><a class="hint-http" href="' + x.href + '">' + x.href + '</a> <span style="color:#95a5a6;font-size:11px;">（埠 ' + x.port + '）</span></div>';
+            }).join('');
+            document.getElementById('bible-view').innerHTML =
+                '<div class="empty-hint setup-hint">' +
+                '<div class="hint-title">尚無載入任何聖經／註釋資料</div>' +
+                '<p style="line-height:1.65;margin-bottom:10px;color:#555;">' +
+                '<strong>這不是畫面壞掉，是瀏覽器沒拿到經文檔。</strong>本頁用一般 JSON（不是 SQL）；讀取失敗時就會空白。' +
+                '</p>' +
+                '<p style="line-height:1.65;margin-bottom:10px;color:#555;">' +
+                (isFile
+                    ? (function () {
+                        var isChrome = /Chrome\//.test(navigator.userAgent) && !/Edg\//.test(navigator.userAgent) && !/OPR\//.test(navigator.userAgent);
+                        var chromeNote = isChrome
+                            ? '<strong>您若用 Google Chrome：</strong>在 <code>file://</code> 下 Chrome <strong>會禁止</strong>本頁用 <code>fetch</code> 讀隔壁資料夾的 JSON（安全政策），所以<strong>不是程式壞掉</strong>，換瀏覽器也<strong>無法</strong>在 Chrome 裡繞過。<br>'
+                            : '';
+                        return chromeNote + '<strong>您目前以 <code>file://</code> 開啟。</strong>閱讀器必須讀取 <code>data/bibles/clean/*.json</code>，請在 <strong>bible100_new</strong> 資料夾開終端機執行：<br><code style="display:block;margin:8px 0;padding:8px;background:#f0f4f8;">python -m http.server 8765</code>然後用瀏覽器開：<br><code>http://127.0.0.1:8765/bible_study/reader.html</code>（或點下方「8765」連結）。雲端正式站則用 <code>https://</code> 網址即可。';
+                    })()
+                    : '<strong>您是用網址（http/https）開啟，但仍讀不到檔。</strong>常見原因：<br>① 主機上<strong>沒上傳</strong>整包 <code>data/bibles/clean/</code>（免費空間常略過大檔）；② Linux 主機<strong>區分檔名大小寫</strong>，例如必須是 <code>KJV.json</code>／<code>NIV.json</code>，寫成 <code>kjv.json</code> 會 404。請向空間管理員確認上述路徑可公開下載。') +
+                '</p>' +
+                '<p style="font-size:12px;margin-bottom:6px;color:#444;"><strong>若已開伺服器，可試：</strong></p>' +
+                linkHtml +
+                '<p style="font-size:11px;color:#7f8c8d;margin-top:16px;line-height:1.55;">' +
+                '<strong>選用：</strong>在網址後加 <code>?autoredirect=http</code>，會從 <code>file://</code> <strong>自動改開</strong> <code>http://127.0.0.1:8765</code>＋本頁路徑（須先有程式在 8765 埠服務）。' +
+                '<br><strong>手機：</strong>無法像電腦一樣雙擊整個資料夾的 <code>file://</code> 專案。請用手機瀏覽器開<strong>已上線的 https 網站</strong>；若要讀電腦上的檔，請電腦執行 <code>python -m http.server 8765 --bind 0.0.0.0</code>，手機與電腦連同一 Wi‑Fi，開 <code>http://電腦區網IP:8765/bible_study/reader.html</code>。' +
+                '<br><strong>說明：</strong>瀏覽器無法代您執行 <code>python</code>；產檔請在本機手動貼上指令。' +
+                '</p></div>';
+            document.getElementById('commentary-view').innerHTML =
+                '<div class="empty-hint" style="font-size:12px;">註釋與聖經共用載入條件；資料就緒後會顯示於此。</div>';
+        }
+
+        async function init() {
+            if (typeof bible100MaybeAutoredirectFromFile === 'function') {
+                bible100MaybeAutoredirectFromFile();
+            }
+            document.getElementById('status').textContent = '載入資料中...';
+            await window.initUniversalDataLoader();
+            const bibles = window.BibleEngine.getAvailableBibles();
+            const comms = window.BibleEngine.getAvailableCommentaries();
+            document.getElementById('status').textContent = '已載入 ' + bibles.length + ' 聖經 / ' + comms.length + ' 註釋';
+            if (bibles.length === 0 && comms.length === 0) {
+                showReaderSetupHint();
+                document.getElementById('status').textContent = '資料未載入';
+                return;
+            }
+
+            const params = new URLSearchParams(location.search);
+            state.book = parseInt(params.get('book') || '1', 10) || 1;
+            state.chapter = parseInt(params.get('chapter') || '1', 10) || 1;
+            state.version = params.get('version') || (bibles[0] || 'kjv');
+
+            const bookSel = document.getElementById('book-select');
+            BOOKS.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.name;
+                bookSel.appendChild(opt);
+            });
+            bookSel.value = state.book;
+
+            const chInput = document.getElementById('chapter-input');
+            chInput.value = state.chapter;
+            chInput.min = 1;
+            chInput.max = getBook(state.book).chapters;
+
+            const verSel = document.getElementById('version-select');
+            verSel.innerHTML = '';
+            bibles.forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k;
+                const meta = window.universalDataLoader.databases.bibles[k];
+                opt.textContent = (meta && meta.data && meta.data.version) || meta?.name || k;
+                verSel.appendChild(opt);
+            });
+            verSel.value = state.version;
+
+            bookSel.addEventListener('change', () => {
+                state.book = parseInt(bookSel.value, 10);
+                chInput.max = getBook(state.book).chapters;
+                if (state.chapter > getBook(state.book).chapters) state.chapter = getBook(state.book).chapters;
+                chInput.value = state.chapter;
+                render();
+            });
+            chInput.addEventListener('change', () => {
+                state.chapter = Math.max(1, Math.min(parseInt(chInput.value, 10) || 1, getBook(state.book).chapters));
+                chInput.value = state.chapter;
+                render();
+            });
+            verSel.addEventListener('change', () => {
+                state.version = verSel.value;
+                render();
+            });
+
+            await render();
+        }
+
+        function renderVerse(versionData, book, ch) {
+            const version = versionData.version || '版本';
+            const verses = (versionData.data || []).filter(v => v.b === book && v.c === ch).sort((a, b) => a.v - b.v);
+            let html = '<div class="ref-title">' + version + ' — ' + getBook(book).name + ' 第 ' + ch + ' 章</div>';
+            verses.forEach(v => {
+                html += '<div class="verse-row"><span class="v-num">' + v.v + '</span>';
+                html += '<span class="verse-text">' + (v.t || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span></div>';
+            });
+            return html || '<div class="empty-hint">此章暫無經文。</div>';
+        }
+
+        async function render() {
+            const bibleMeta = window.universalDataLoader.databases.bibles[state.version];
+            if (bibleMeta && bibleMeta.data) {
+                document.getElementById('bible-view').innerHTML = renderVerse(bibleMeta.data, state.book, state.chapter);
+            } else {
+                document.getElementById('bible-view').innerHTML = '<div class="empty-hint">尚未載入此版本。</div>';
+            }
+
+            try {
+                const comms = await window.queryCommentary('comprehensive', state.book, state.chapter);
+                let html = '<div class="ref-title">综合解读 — ' + getBook(state.book).name + ' 第 ' + state.chapter + ' 章</div>';
+                if (comms && comms.length) {
+                    comms.forEach(c => {
+                        html += '<div class="commentary-text">' + (c.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>') + '</div>';
+                    });
+                } else {
+                    html += '<div class="empty-hint">此章暫無註釋。</div>';
+                }
+                document.getElementById('commentary-view').innerHTML = html;
+            } catch (e) {
+                document.getElementById('commentary-view').innerHTML = '<div class="empty-hint">註釋載入失敗。</div>';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

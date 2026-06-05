@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能提醒系統 · Smart Reminders | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <script src="../../assets/js/chart.min.js"></script>
+    <link href="../../assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <div class="flex items-center gap-3 mb-4">
+            <a href="../../dashboard.html" class="text-gray-600 hover:text-gray-900 text-sm">⛪ 教會事工中心</a>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">智能提醒系統</h1>
+        <details class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <summary class="cursor-pointer font-semibold text-blue-900">功能與使用說明</summary>
+            <div class="mt-3 text-sm text-gray-700 space-y-2">
+                <p><b>此頁是為誰而設？</b> 牧者、行政同工、事工領袖，需要按時提醒探訪、活動、崇拜、財務等事項。</p>
+                <p><b>有什麼功能？</b> 新增提醒、今日提醒列表、自動化規則（探訪／活動／財務／崇拜）、時間到時顯示瀏覽器通知或頁內提示。</p>
+                <p><b>如何入手？</b> 點「新增提醒」設定標題、類型、時間；系統每分鐘檢查，時間到會彈出通知。可與探訪、活動、崇拜排班等模組搭配使用。</p>
+            </div>
+        </details>
+        
+        <!-- 快速操作 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <button onclick="showReminderForm()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-plus mr-2"></i>新增提醒
+            </button>
+            <button onclick="showTemplateManager()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                <i class="fas fa-copy mr-2"></i>模板管理
+            </button>
+            <button onclick="showAutomationRules()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                <i class="fas fa-cogs mr-2"></i>自動化規則
+            </button>
+            <button onclick="showNotificationCenter()" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700">
+                <i class="fas fa-bell mr-2"></i>通知中心
+            </button>
+        </div>
+
+        <!-- 提醒概覽 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-blue-600" id="activeReminders">12</div>
+                <div class="text-sm text-gray-600">活躍提醒</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-green-600" id="todayReminders">5</div>
+                <div class="text-sm text-gray-600">今日提醒</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-purple-600" id="automatedTasks">8</div>
+                <div class="text-sm text-gray-600">自動化任務</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-orange-600" id="notificationCount">3</div>
+                <div class="text-sm text-gray-600">未讀通知</div>
+            </div>
+        </div>
+
+        <!-- 今日提醒 -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">今日提醒</h3>
+            <div id="todayReminderList" class="space-y-3">
+                <!-- 動態生成提醒列表 -->
+            </div>
+        </div>
+
+        <!-- 自動化規則 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">探訪提醒規則</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div>
+                            <div class="font-medium">探訪計劃提醒</div>
+                            <div class="text-sm text-gray-600">探訪前1天自動提醒</div>
+                        </div>
+                        <span class="text-green-600 text-sm">已啟用</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div>
+                            <div class="font-medium">跟進提醒</div>
+                            <div class="text-sm text-gray-600">探訪後3天提醒跟進</div>
+                        </div>
+                        <span class="text-green-600 text-sm">已啟用</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div>
+                            <div class="font-medium">定期探訪</div>
+                            <div class="text-sm text-gray-600">每月1號提醒定期探訪</div>
+                        </div>
+                        <span class="text-green-600 text-sm">已啟用</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">活動提醒規則</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div>
+                            <div class="font-medium">活動開始提醒</div>
+                            <div class="text-sm text-gray-600">活動前2小時提醒</div>
+                        </div>
+                        <span class="text-green-600 text-sm">已啟用</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div>
+                            <div class="font-medium">報名截止提醒</div>
+                            <div class="text-sm text-gray-600">報名截止前1天提醒</div>
+                        </div>
+                        <span class="text-green-600 text-sm">已啟用</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div>
+                            <div class="font-medium">活動總結</div>
+                            <div class="text-sm text-gray-600">活動結束後1天提醒總結</div>
+                        </div>
+                        <span class="text-green-600 text-sm">已啟用</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 提醒統計 -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">提醒統計分析</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <canvas id="reminderTypeChart" height="300"></canvas>
+                </div>
+                <div>
+                    <canvas id="reminderTrendChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增提醒表單 -->
+    <div id="reminderModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">新增智能提醒</h3>
+                <form id="reminderForm">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">提醒標題</label>
+                            <input type="text" id="reminderTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="輸入提醒標題">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">提醒類型</label>
+                                <select id="reminderType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                    <option value="">請選擇類型</option>
+                                    <option value="visit">探訪提醒</option>
+                                    <option value="activity">活動提醒</option>
+                                    <option value="finance">財務提醒</option>
+                                    <option value="worship">崇拜提醒</option>
+                                    <option value="custom">自定義提醒</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">提醒時間</label>
+                                <input type="datetime-local" id="reminderTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">提醒內容</label>
+                            <textarea id="reminderContent" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="輸入提醒詳細內容..."></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">重複模式</label>
+                                <select id="repeatMode" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                    <option value="none">不重複</option>
+                                    <option value="daily">每日</option>
+                                    <option value="weekly">每週</option>
+                                    <option value="monthly">每月</option>
+                                    <option value="yearly">每年</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">優先級</label>
+                                <select id="priority" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                    <option value="low">低</option>
+                                    <option value="medium" selected>中</option>
+                                    <option value="high">高</option>
+                                    <option value="urgent">緊急</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">關聯模組</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="mr-2"> 會員管理
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="mr-2"> 探訪事工
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="mr-2"> 活動管理
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="mr-2"> 財務管理
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3 mt-6">
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex-1">保存提醒</button>
+                        <button type="button" onclick="closeReminderModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 flex-1">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let reminders = [];
+        let automationRules = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            renderTodayReminders();
+            setupCharts();
+            updateOverview();
+        });
+
+        function loadData() {
+            reminders = JSON.parse(localStorage.getItem('smartReminders')) || [];
+            automationRules = JSON.parse(localStorage.getItem('automationRules')) || [];
+            
+            if (reminders.length === 0) {
+                loadSampleData();
+            }
+        }
+
+        function loadSampleData() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            
+            const sampleReminders = [
+                {
+                    id: '1',
+                    title: '探訪張三家庭',
+                    type: 'visit',
+                    content: '明天下午2點探訪張三家庭，準備禮物和關懷資料',
+                    time: tomorrow.toISOString(),
+                    repeatMode: 'none',
+                    priority: 'high',
+                    status: 'active'
+                },
+                {
+                    id: '2',
+                    title: '青年團契活動',
+                    type: 'activity',
+                    content: '週六晚上7點青年團契活動，確認場地和設備',
+                    time: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+                    repeatMode: 'weekly',
+                    priority: 'medium',
+                    status: 'active'
+                },
+                {
+                    id: '3',
+                    title: '財務月報',
+                    type: 'finance',
+                    content: '月底財務月報準備，整理收支記錄和預算分析',
+                    time: new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString(),
+                    repeatMode: 'monthly',
+                    priority: 'medium',
+                    status: 'active'
+                }
+            ];
+            
+            reminders = sampleReminders;
+            localStorage.setItem('smartReminders', JSON.stringify(reminders));
+        }
+
+        function updateOverview() {
+            const activeReminders = reminders.filter(r => r.status === 'active').length;
+            const todayReminders = reminders.filter(r => {
+                const reminderDate = new Date(r.time);
+                const today = new Date();
+                return reminderDate.toDateString() === today.toDateString();
+            }).length;
+            
+            document.getElementById('activeReminders').textContent = activeReminders;
+            document.getElementById('todayReminders').textContent = todayReminders;
+            document.getElementById('automatedTasks').textContent = '8';
+            document.getElementById('notificationCount').textContent = '3';
+        }
+
+        function renderTodayReminders() {
+            const today = new Date();
+            const todayReminders = reminders.filter(r => {
+                const reminderDate = new Date(r.time);
+                return reminderDate.toDateString() === today.toDateString();
+            });
+            
+            const container = document.getElementById('todayReminderList');
+            if (todayReminders.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-4">今日暫無提醒</div>';
+                return;
+            }
+            
+            container.innerHTML = todayReminders.map(reminder => `
+                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityClass(reminder.priority)}">
+                                ${getPriorityText(reminder.priority)}
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeClass(reminder.type)}">
+                                ${getTypeText(reminder.type)}
+                            </span>
+                        </div>
+                        <h4 class="font-medium text-gray-900 mt-2">${reminder.title}</h4>
+                        <p class="text-sm text-gray-600 mt-1">${reminder.content}</p>
+                        <div class="text-xs text-gray-500 mt-2">
+                            <i class="fas fa-clock mr-1"></i>${formatTime(reminder.time)}
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="markAsCompleted('${reminder.id}')" class="text-green-600 hover:text-green-800">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button onclick="editReminder('${reminder.id}')" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteReminder('${reminder.id}')" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupCharts() {
+            // 提醒類型分布圖表
+            const ctx1 = document.getElementById('reminderTypeChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['探訪提醒', '活動提醒', '財務提醒', '崇拜提醒', '自定義提醒'],
+                    datasets: [{
+                        data: [35, 25, 20, 15, 5],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(107, 114, 128, 0.8)'
+                        ]
+                    }]
+                },
+                options: { responsive: true }
+            });
+
+            // 提醒趨勢圖表
+            const ctx2 = document.getElementById('reminderTrendChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: ['週一', '週二', '週三', '週四', '週五', '週六', '週日'],
+                    datasets: [{
+                        label: '提醒數量',
+                        data: [8, 12, 15, 10, 18, 22, 16],
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function getPriorityClass(priority) {
+            const classes = {
+                'low': 'bg-gray-100 text-gray-800',
+                'medium': 'bg-blue-100 text-blue-800',
+                'high': 'bg-orange-100 text-orange-800',
+                'urgent': 'bg-red-100 text-red-800'
+            };
+            return classes[priority] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getPriorityText(priority) {
+            const texts = {
+                'low': '低',
+                'medium': '中',
+                'high': '高',
+                'urgent': '緊急'
+            };
+            return texts[priority] || priority;
+        }
+
+        function getTypeClass(type) {
+            const classes = {
+                'visit': 'bg-blue-100 text-blue-800',
+                'activity': 'bg-green-100 text-green-800',
+                'finance': 'bg-purple-100 text-purple-800',
+                'worship': 'bg-yellow-100 text-yellow-800',
+                'custom': 'bg-gray-100 text-gray-800'
+            };
+            return classes[type] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getTypeText(type) {
+            const texts = {
+                'visit': '探訪提醒',
+                'activity': '活動提醒',
+                'finance': '財務提醒',
+                'worship': '崇拜提醒',
+                'custom': '自定義提醒'
+            };
+            return texts[type] || type;
+        }
+
+        function formatTime(timeString) {
+            const date = new Date(timeString);
+            return date.toLocaleString('zh-TW');
+        }
+
+        function showReminderForm() {
+            document.getElementById('reminderModal').classList.remove('hidden');
+            document.getElementById('reminderTime').value = new Date().toISOString().slice(0, 16);
+        }
+
+        function closeReminderModal() {
+            document.getElementById('reminderModal').classList.add('hidden');
+            document.getElementById('reminderForm').reset();
+        }
+
+        function showTemplateManager() {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+
+        function showAutomationRules() {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+
+        function showNotificationCenter() {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+
+        function markAsCompleted(id) {
+            const reminder = reminders.find(r => r.id === id);
+            if (reminder) {
+                reminder.status = 'completed';
+                localStorage.setItem('smartReminders', JSON.stringify(reminders));
+                renderTodayReminders();
+                updateOverview();
+                alert('提醒已標記為完成！');
+            }
+        }
+
+        function editReminder(id) {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+
+        function deleteReminder(id) {
+            if (confirm('確定要刪除此提醒嗎？')) {
+                reminders = reminders.filter(r => r.id !== id);
+                localStorage.setItem('smartReminders', JSON.stringify(reminders));
+                renderTodayReminders();
+                updateOverview();
+                alert('提醒已刪除！');
+            }
+        }
+
+        // 表單提交處理
+        document.getElementById('reminderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newReminder = {
+                id: Date.now().toString(),
+                title: document.getElementById('reminderTitle').value,
+                type: document.getElementById('reminderType').value,
+                content: document.getElementById('reminderContent').value,
+                time: document.getElementById('reminderTime').value,
+                repeatMode: document.getElementById('repeatMode').value,
+                priority: document.getElementById('priority').value,
+                status: 'active'
+            };
+            
+            reminders.push(newReminder);
+            localStorage.setItem('smartReminders', JSON.stringify(reminders));
+            
+            closeReminderModal();
+            renderTodayReminders();
+            updateOverview();
+            
+            alert('提醒已創建！');
+        });
+
+        // 定期檢查提醒（每分鐘）
+        setInterval(() => {
+            const now = new Date();
+            const activeReminders = reminders.filter(r => r.status === 'active');
+            let changed = false;
+            
+            activeReminders.forEach(reminder => {
+                const reminderTime = new Date(reminder.time);
+                const timeDiff = reminderTime - now;
+                // 提醒時間已到（0～10分鐘內，避免漏檢）
+                if (timeDiff <= 0 && timeDiff >= -10 * 60 * 1000 && !reminder.notifiedAt) {
+                    showNotification(reminder);
+                    reminder.notifiedAt = now.toISOString();
+                    changed = true;
+                }
+            });
+            if (changed) localStorage.setItem('smartReminders', JSON.stringify(reminders));
+        }, 60000);
+
+        function showNotification(reminder) {
+            // 檢查瀏覽器是否支持通知
+            if ('Notification' in window) {
+                if (Notification.permission === 'granted') {
+                    new Notification(reminder.title, {
+                        body: reminder.content,
+                        icon: '/favicon.ico'
+                    });
+                } else if (Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            new Notification(reminder.title, {
+                                body: reminder.content,
+                                icon: '/favicon.ico'
+                            });
+                        }
+                    });
+                }
+            }
+            
+            // 頁面內通知
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50';
+            notification.innerHTML = `
+                <h4 class="font-medium">${reminder.title}</h4>
+                <p class="text-sm">${reminder.content}</p>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+    </script>
+<script src="../../../js/coming-soon.js"></script>
+</body>
+</html>

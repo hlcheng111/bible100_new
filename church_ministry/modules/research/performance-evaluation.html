@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>績效評估 · Performance Evaluation | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="../../assets/js/chart.min.js"></script>
+</head>
+<body class="bg-gray-50 cm-research-page">
+    <nav class="cm-back-bar" aria-label="區域導覽">
+      <a class="cm-back-bar__link" href="../../dashboard.html">⛪ 返回教會事工</a>
+      <span class="cm-back-bar__muted">研究與統計</span>
+    </nav>
+    <p class="cm-data-banner" role="status"><strong>資料來源：</strong><span id="cm-data-source-line">讀取中…</span></p>
+    <div class="cm-kpi-row" aria-label="即時匯總（ChurchDataBridge）">
+      <span class="cm-kpi-pill">會友 <b id="cm-kpi-members">—</b></span>
+      <span class="cm-kpi-pill">小組 <b id="cm-kpi-groups">—</b></span>
+      <span class="cm-kpi-pill">探訪任務 <b id="cm-kpi-missions">—</b></span>
+      <span class="cm-kpi-pill">志工指派 <b id="cm-kpi-volunteers">—</b></span>
+      <span class="cm-kpi-pill">財務結餘 <b id="cm-kpi-finance-balance">—</b></span>
+    </div>
+    <div class="container mx-auto px-6 py-8">
+        <!-- 頁面標題 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">績效評估</h1>
+            <p class="text-gray-600">全面評估教會各項事工的執行效果與績效表現</p>
+        </div>
+
+        <!-- 績效概覽卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-green-500 p-3 rounded-lg">
+                        <i class="fas fa-star text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">整體績效</p>
+                        <p class="text-2xl font-bold text-gray-900">A+</p>
+                        <p class="text-sm text-green-600">92.5 分</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-blue-500 p-3 rounded-lg">
+                        <i class="fas fa-tasks text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">目標達成率</p>
+                        <p class="text-2xl font-bold text-gray-900">87%</p>
+                        <p class="text-sm text-blue-600">+5% 較上月</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-purple-500 p-3 rounded-lg">
+                        <i class="fas fa-users text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">參與滿意度</p>
+                        <p class="text-2xl font-bold text-gray-900">4.6/5.0</p>
+                        <p class="text-sm text-purple-600">+0.2 提升</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-orange-500 p-3 rounded-lg">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">效率提升</p>
+                        <p class="text-2xl font-bold text-gray-900">+18%</p>
+                        <p class="text-sm text-orange-600">較去年同期</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 績效評分圖表 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- 各項事工績效評分 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">各項事工績效評分</h3>
+                <canvas id="ministryPerformanceChart" width="400" height="300"></canvas>
+            </div>
+
+            <!-- 績效趨勢分析 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">績效趨勢分析</h3>
+                <canvas id="performanceTrendChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- 事工績效詳情 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">事工績效詳情</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <i class="fas fa-pray text-blue-600 text-3xl mb-3"></i>
+                    <h4 class="font-semibold text-gray-900 mb-2">崇拜事工</h4>
+                    <p class="text-2xl font-bold text-blue-600">A+</p>
+                    <p class="text-sm text-gray-600">95.2 分</p>
+                    <p class="text-sm text-green-600">+2.1 分</p>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <i class="fas fa-hands-helping text-green-600 text-3xl mb-3"></i>
+                    <h4 class="font-semibold text-gray-900 mb-2">關懷事工</h4>
+                    <p class="text-2xl font-bold text-green-600">A</p>
+                    <p class="text-sm text-gray-600">88.7 分</p>
+                    <p class="text-sm text-green-600">+1.8 分</p>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <i class="fas fa-graduation-cap text-purple-600 text-3xl mb-3"></i>
+                    <h4 class="font-semibold text-gray-900 mb-2">教育事工</h4>
+                    <p class="text-2xl font-bold text-purple-600">A-</p>
+                    <p class="text-sm text-gray-600">85.3 分</p>
+                    <p class="text-sm text-blue-600">+0.9 分</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 績效評估表格 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">績效評估詳情</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">事工項目</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">評分</th>
+                            <th class="text-xs font-medium text-gray-500 uppercase tracking-wider">等級</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">目標達成</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">改進建議</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">崇拜事工</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">95.2</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">A+</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">98%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">維持優秀表現</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">關懷事工</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">88.7</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">A</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">92%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">加強志工培訓</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">教育事工</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">85.3</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">A-</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">87%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">優化課程內容</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">青年事工</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">82.1</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">B+</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">84%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">增加互動活動</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">宣教事工</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">78.9</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">B</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">79%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">擴大參與範圍</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 改進建議與行動計劃 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">改進建議與行動計劃</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="p-4 bg-blue-50 rounded-lg">
+                    <h4 class="font-semibold text-gray-900 mb-3 text-blue-800">短期改進 (1-3個月)</h4>
+                    <ul class="text-sm text-gray-700 space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-blue-600 mt-1 mr-2"></i>
+                            <span>加強志工培訓，提升服務品質</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-blue-600 mt-1 mr-2"></i>
+                            <span>優化課程內容，增加互動性</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-blue-600 mt-1 mr-2"></i>
+                            <span>改善青年事工活動設計</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="p-4 bg-green-50 rounded-lg">
+                    <h4 class="font-semibold text-gray-900 mb-3 text-green-800">長期發展 (3-12個月)</h4>
+                    <ul class="text-sm text-gray-700 space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-arrow-up text-green-600 mt-1 mr-2"></i>
+                            <span>建立績效監控體系</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-arrow-up text-green-600 mt-1 mr-2"></i>
+                            <span>擴展宣教事工影響力</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-arrow-up text-green-600 mt-1 mr-2"></i>
+                            <span>提升整體事工效率</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 績效對比分析 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">績效對比分析</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">去年同期</p>
+                    <p class="text-lg font-bold text-gray-900">85.2</p>
+                </div>
+                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-gray-600">上季度</p>
+                    <p class="text-lg font-bold text-blue-900">88.7</p>
+                </div>
+                <div class="text-center p-3 bg-green-50 rounded-lg">
+                    <p class="text-sm text-gray-600">本季度</p>
+                    <p class="text-lg font-bold text-green-900">92.5</p>
+                </div>
+                <div class="text-center p-3 bg-purple-50 rounded-lg">
+                    <p class="text-sm text-gray-600">目標值</p>
+                    <p class="text-lg font-bold text-purple-900">95.0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速操作按鈕 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">快速操作</h3>
+            <div class="flex flex-wrap gap-4">
+                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-download mr-2"></i>匯出績效報告
+                </button>
+                <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-chart-bar mr-2"></i>生成對比分析
+                </button>
+                <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-edit mr-2"></i>設定改進目標
+                </button>
+                <button class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors">
+                    <i class="fas fa-print mr-2"></i>列印評估報告
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 各項事工績效評分圖表
+        const ministryPerformanceCtx = document.getElementById('ministryPerformanceChart').getContext('2d');
+        new Chart(ministryPerformanceCtx, {
+            type: 'radar',
+            data: {
+                labels: ['崇拜事工', '關懷事工', '教育事工', '青年事工', '宣教事工', '行政事工'],
+                datasets: [{
+                    label: '當前績效',
+                    data: [95.2, 88.7, 85.3, 82.1, 78.9, 90.5],
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderWidth: 3,
+                    pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+                }, {
+                    label: '目標績效',
+                    data: [95, 90, 88, 85, 82, 92],
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(16, 185, 129, 1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20
+                        }
+                    }
+                }
+            }
+        });
+
+        // 績效趨勢分析圖表
+        const performanceTrendCtx = document.getElementById('performanceTrendChart').getContext('2d');
+        new Chart(performanceTrendCtx, {
+            type: 'line',
+            data: {
+                labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                datasets: [{
+                    label: '整體績效',
+                    data: [85.2, 86.8, 88.1, 89.5, 91.2, 92.5],
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '分';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 快速操作按鈕功能
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function() {
+                const action = this.textContent.trim();
+                showComingSoon('此功能暫未開放','../../dashboard.html');
+            });
+        });
+    </script>
+    <script src="../../../js/coming-soon.js"></script>
+
+<script src="../../../js/church_data_bridge.js"></script>
+<script src="../../js/cm_research_snapshot.js"></script>
+<script>document.addEventListener("DOMContentLoaded",function(){if(window.CMResearchSnapshot)CMResearchSnapshot.initPage();});</script>
+
+</body>
+</html>

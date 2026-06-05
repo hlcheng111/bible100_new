@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跨文化事工 - Church Ministry · Cross Cultural | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <link rel="stylesheet" href="../../assets/css/fontawesome.min.css">
+    <script src="../../../js/simple_database_system.js"></script>
+    <style>body { font-family: 'Microsoft YaHei', sans-serif; } .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }</style>
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto p-6">
+        <div class="bg-gradient-to-r from-pink-600 to-pink-800 text-white rounded-lg p-6 mb-4">
+            <h1 class="text-3xl font-bold mb-2">🌏 跨文化事工</h1>
+            <p class="text-pink-100">服事不同文化背景的群体</p>
+        </div>
+        <details class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <summary class="cursor-pointer font-semibold text-amber-800">📋 功能說明／計畫願景</summary>
+            <p class="mt-2 text-sm text-gray-700">本頁管理跨文化事工項目（目標族群、服事人數、同工團隊）。資料來源：simple_database_system 或 churchMasterDatabase。今後可：與宣教模組連動、多語言支援、與新媒體事工整合。</p>
+        </details>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg p-6 shadow"><div class="text-gray-500 text-sm mb-1">服事族群</div><div class="text-3xl font-bold text-pink-600" id="totalGroups">0</div></div>
+            <div class="bg-white rounded-lg p-6 shadow"><div class="text-gray-500 text-sm mb-1">活跃项目</div><div class="text-3xl font-bold text-blue-600" id="activeProjects">0</div></div>
+            <div class="bg-white rounded-lg p-6 shadow"><div class="text-gray-500 text-sm mb-1">服事人数</div><div class="text-3xl font-bold text-green-600" id="totalServed">0</div></div>
+            <div class="bg-white rounded-lg p-6 shadow"><div class="text-gray-500 text-sm mb-1">同工团队</div><div class="text-3xl font-bold text-purple-600" id="totalWorkers">0</div></div>
+        </div>
+
+        <div class="card">
+            <div class="flex gap-3 mb-4">
+                <button onclick="showModal()" class="bg-pink-600 text-white px-6 py-2 rounded-lg hover:bg-pink-700"><i class="fas fa-plus mr-2"></i>新增项目</button>
+                <button onclick="loadData()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"><i class="fas fa-sync-alt mr-2"></i>刷新</button>
+            </div>
+            <div id="projectsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+    </div>
+
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
+            <h2 class="text-2xl font-bold mb-4">新增跨文化项目</h2>
+            <form id="form" onsubmit="save(event)">
+                <div class="space-y-4">
+                    <div><label class="block text-sm font-bold mb-1">项目名称 *</label><input type="text" id="name" required class="w-full border rounded px-3 py-2"></div>
+                    <div><label class="block text-sm font-bold mb-1">目标族群 *</label><input type="text" id="targetGroup" required class="w-full border rounded px-3 py-2" placeholder="如：东南亚移工"></div>
+                    <div><label class="block text-sm font-bold mb-1">负责同工</label><input type="text" id="leader" list="leaderList" class="w-full border rounded px-3 py-2" placeholder="可選會友名單或手動輸入"><datalist id="leaderList"></datalist></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-bold mb-1">服事人数</label><input type="number" id="served" value="0" class="w-full border rounded px-3 py-2"></div>
+                        <div><label class="block text-sm font-bold mb-1">团队人数</label><input type="number" id="workers" value="0" class="w-full border rounded px-3 py-2"></div>
+                    </div>
+                    <div><label class="block text-sm font-bold mb-1">项目状态</label>
+                        <select id="status" class="w-full border rounded px-3 py-2">
+                            <option value="active">进行中</option>
+                            <option value="planning">筹备中</option>
+                            <option value="paused">已暂停</option>
+                        </select>
+                    </div>
+                    <div><label class="block text-sm font-bold mb-1">事工描述</label><textarea id="description" rows="2" class="w-full border rounded px-3 py-2"></textarea></div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="bg-pink-600 text-white px-6 py-2 rounded-lg hover:bg-pink-700 flex-1">保存</button>
+                    <button type="button" onclick="closeModal()" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 flex-1">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let projects = [];
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!localStorage.getItem('cross_cultural')) localStorage.setItem('cross_cultural', JSON.stringify([]));
+            projects = JSON.parse(localStorage.getItem('cross_cultural') || '[]');
+            fillLeaderDatalist();
+            if (projects.length === 0) {
+                var ts = Date.now();
+                projects = [
+                    { id: ts, name: '東南亞移工關懷', targetGroup: '東南亞移工', leader: '王牧師', served: '45', workers: '8', status: 'active', description: '每週聚會、語言班、生活關懷' },
+                    { id: ts+1, name: '新住民家庭事工', targetGroup: '新住民家庭', leader: '李姊妹', served: '32', workers: '5', status: 'active', description: '親子活動、文化適應輔導' },
+                    { id: ts+2, name: '國際學生團契', targetGroup: '國際學生', leader: '張弟兄', served: '28', workers: '6', status: 'active', description: '英語聚會、生活陪伴' }
+                ];
+                localStorage.setItem('cross_cultural', JSON.stringify(projects));
+            }
+            loadData();
+        });
+
+        function loadData() {
+            projects = JSON.parse(localStorage.getItem('cross_cultural') || '[]');
+            const groups = [...new Set(projects.map(p => p.targetGroup))];
+            document.getElementById('totalGroups').textContent = groups.length;
+            document.getElementById('activeProjects').textContent = projects.filter(p => p.status === 'active').length;
+            document.getElementById('totalServed').textContent = projects.reduce((sum, p) => sum + (parseInt(p.served) || 0), 0);
+            document.getElementById('totalWorkers').textContent = projects.reduce((sum, p) => sum + (parseInt(p.workers) || 0), 0);
+
+            const container = document.getElementById('projectsList');
+            if (projects.length === 0) {
+                container.innerHTML = '<div class="col-span-2 text-center py-8 text-gray-500"><i class="fas fa-globe-asia text-4xl mb-2"></i><p>暂无跨文化项目</p></div>';
+                return;
+            }
+
+            container.innerHTML = projects.map(p => `
+                <div class="bg-gradient-to-br from-pink-50 to-pink-100 border-2 border-pink-200 rounded-lg p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-lg text-pink-800">${p.name}</h3>
+                            <p class="text-sm text-gray-600">🎯 ${p.targetGroup}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 rounded text-xs font-bold ${p.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${getStatusLabel(p.status)}</span>
+                            <button onclick="deleteProject(${p.id})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm mt-3">
+                        <p><i class="fas fa-user text-pink-600 mr-2"></i>${p.leader || '未分配'}</p>
+                        <p><i class="fas fa-users text-pink-600 mr-2"></i>服事：${p.served || 0}人</p>
+                        <p><i class="fas fa-user-friends text-pink-600 mr-2"></i>团队：${p.workers || 0}人</p>
+                    </div>
+                    ${p.description ? `<p class="text-xs text-gray-600 mt-2">${p.description}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function fillLeaderDatalist() {
+            var members = [];
+            try {
+                var ms = localStorage.getItem('memberSystemData');
+                if (ms) { var d = JSON.parse(ms); members = d.members || []; }
+                if (members.length === 0) {
+                    var cm = localStorage.getItem('churchMasterDatabase');
+                    if (cm) { var c = JSON.parse(cm); members = c.members || []; }
+                }
+            } catch(e) {}
+            var dl = document.getElementById('leaderList');
+            if (dl && members.length > 0) {
+                dl.innerHTML = members.slice(0, 50).map(function(m) { return '<option value="' + (m.name || m.memberName || '') + '">'; }).join('');
+            }
+        }
+        function showModal() { fillLeaderDatalist(); document.getElementById('modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('form').reset(); }
+
+        function save(event) {
+            event.preventDefault();
+            projects.push({
+                id: Date.now(),
+                name: document.getElementById('name').value,
+                targetGroup: document.getElementById('targetGroup').value,
+                leader: document.getElementById('leader').value,
+                served: document.getElementById('served').value,
+                workers: document.getElementById('workers').value,
+                status: document.getElementById('status').value,
+                description: document.getElementById('description').value
+            });
+            localStorage.setItem('cross_cultural', JSON.stringify(projects));
+            closeModal();
+            loadData();
+            alert('✅ 项目已保存！');
+        }
+
+        function deleteProject(id) {
+            if (!confirm('确定删除？')) return;
+            projects = projects.filter(p => p.id !== id);
+            localStorage.setItem('cross_cultural', JSON.stringify(projects));
+            loadData();
+        }
+
+        function getStatusLabel(status) {
+            return { active: '进行中', planning: '筹备中', paused: '已暂停' }[status] || status;
+        }
+    </script>
+</body>
+</html>
+

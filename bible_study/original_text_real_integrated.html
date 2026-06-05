@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原文研究真實版 - 完整數據庫整合</title>
+    <link rel="stylesheet" href="css/bible-reader.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>原文研究真實版 - 完整數據庫整合</h1>
+            <p>整合真實66卷書聖經數據庫 + 原文詞典 + 釋經書 + 串珠參考</p>
+        </div>
+
+        <div class="controls">
+            <select id="versionSelect" class="version-selector">
+                <option value="faith">信望愛(和合本)</option>
+                <option value="kjv">KJV</option>
+                <option value="niv">NIV</option>
+                <option value="luzhen">呂振中</option>
+                <option value="hehe">和合本</option>
+                <option value="xinyi">新譯本</option>
+                <option value="jingwei">京委本</option>
+            </select>
+
+            <select id="bookSelect" class="book-selector">
+                <option value="1">創世記</option>
+            </select>
+
+            <select id="chapterSelect" class="chapter-selector">
+                <option value="1">第1章</option>
+            </select>
+
+            <button id="loadBtn" class="load-btn">載入經文</button>
+        </div>
+
+        <div id="status" class="status info" style="display: none;"></div>
+
+        <div class="main-content">
+            <div class="bible-panel">
+                <h3>聖經經文</h3>
+                <div id="bibleContent" class="bible-content">
+                    <div class="loading">請選擇版本和章節載入經文...</div>
+                </div>
+            </div>
+
+            <div class="study-panel">
+                <h3>研經參考</h3>
+                <div class="tabs">
+                    <div class="tab active" data-tab="strong">Strong編號</div>
+                    <div class="tab" data-tab="dictionary">詞典</div>
+                    <div class="tab" data-tab="commentary">註釋</div>
+                    <div class="tab" data-tab="crossref">串珠</div>
+                    <div class="tab" data-tab="map">地圖</div>
+                </div>
+
+                <div id="strongContent" class="tab-content active">
+                    <div class="loading">點擊經文中的Strong編號查看詳細信息...</div>
+                </div>
+
+                <div id="dictionaryContent" class="tab-content">
+                    <div class="loading">詞典功能開發中...</div>
+                </div>
+
+                <div id="commentaryContent" class="tab-content">
+                    <div class="loading">註釋功能開發中...</div>
+                </div>
+
+                <div id="crossrefContent" class="tab-content">
+                    <div class="loading">串珠功能開發中...</div>
+                </div>
+
+                <div id="mapContent" class="tab-content">
+                    <div class="loading">地圖功能開發中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 載入SQL.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    
+    <!-- 載入模組化JavaScript -->
+    <script src="js/database-loader.js"></script>
+    <script src="js/strong-processor.js"></script>
+    <script src="js/ui-manager.js"></script>
+    
+    <!-- 主初始化腳本 -->
+    <script>
+        // 主初始化函數
+        async function initialize() {
+            try {
+                // 初始化數據庫載入器
+                const dbLoaded = await window.databaseLoader.initialize();
+                if (!dbLoaded) {
+                    throw new Error('數據庫載入失敗');
+                }
+                
+                // 初始化UI管理器
+                window.uiManager.initialize();
+                
+                // 載入默認經文
+                await window.uiManager.loadBibleContent(1, 1);
+                
+                // 顯示成功狀態
+                window.uiManager.showStatus('所有數據庫載入完成！', 'success');
+            } catch (error) {
+                console.error('初始化失敗:', error);
+                window.uiManager.showStatus('初始化失敗: ' + error.message, 'error');
+            }
+        }
+
+        // 頁面載入完成後初始化
+        window.addEventListener('load', initialize);
+    </script>
+</body>
+</html>

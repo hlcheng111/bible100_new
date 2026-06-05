@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精讀聖經 - Bible100</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f0f8f0;
+            color: #333;
+            font-size: 16px;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 頂部狀態欄 - 窄化 */
+        .status-bar {
+            background: #9b59b6;
+            color: white;
+            padding: 4px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            height: 24px;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 第一功能：版本選擇 */
+        .version-nav {
+            background: #9b59b6;
+            color: white;
+            padding: 8px 15px;
+            text-align: center;
+        }
+
+        .version-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+            flex-wrap: wrap;
+        }
+
+        .version-tab {
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .version-tab.active {
+            background: white;
+            color: #9b59b6;
+        }
+
+        /* 第二功能：書卷章節導航 */
+        .book-chapter-nav {
+            background: #8e44ad;
+            color: white;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .book-selector select {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            color: #333;
+            font-size: 12px;
+        }
+
+        .chapter-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-arrow {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 3px;
+        }
+
+        .chapter-number {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        #chapterSelector {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            color: #333;
+            font-size: 12px;
+            min-width: 50px;
+        }
+
+        /* 功能切換 */
+        .function-tabs {
+            display: flex;
+            gap: 15px;
+        }
+
+        .function-tab {
+            padding: 4px 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .function-tab.active {
+            background: white;
+            color: #8e44ad;
+        }
+
+        /* 主內容區 */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f0f8f0;
+            max-height: calc(100vh - 200px);
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .version-selector {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+        }
+
+        .check-number-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* 經文顯示 */
+        .verse-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            line-height: 1.8;
+        }
+
+        .verse-number {
+            color: #27ae60;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .verse-text {
+            color: #333;
+        }
+
+        .strongs-number {
+            color: #e74c3c;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* 詞彙分析 */
+        .word-analysis {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .word-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .word-title {
+            font-weight: bold;
+            color: #856404;
+        }
+
+        .related-verses-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .word-details {
+            color: #856404;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* 底部工具欄 - 窄化 */
+        .bottom-toolbar {
+            background: #9b59b6;
+            color: white;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 50px;
+        }
+
+        .tool-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 3px;
+            border-radius: 3px;
+        }
+
+        .tool-item:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .tool-item.active {
+            background: white;
+            color: #9b59b6;
+        }
+
+        .tool-icon {
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .tool-label {
+            font-size: 9px;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .version-tabs {
+                flex-wrap: wrap;
+                gap: 3px;
+            }
+
+            .version-tab {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="index.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回聖經研讀中心</a></div>
+    <!-- 頂部狀態欄 -->
+    <div class="status-bar">
+        <div class="status-left">
+            <span>11:04</span>
+            <span>📶</span>
+        </div>
+        <div class="status-right">
+            <span>0.28 KB/s</span>
+            <span>📶</span>
+            <span>Vo LTE</span>
+            <span>4G+</span>
+            <span>🔋 90%</span>
+        </div>
+    </div>
+
+    <!-- 第一功能：版本選擇 -->
+    <div class="version-nav">
+        <div class="version-tabs">
+            <span class="version-tab" onclick="switchVersion('compare')">對照</span>
+            <span class="version-tab active" onclick="switchVersion('harmony')">和修</span>
+            <span class="version-tab" onclick="switchVersion('luzhenzhong')">呂振中</span>
+            <span class="version-tab" onclick="switchVersion('niv')">NIV</span>
+            <span class="version-tab" onclick="switchVersion('kjv')">KJV</span>
+            <span class="version-tab" onclick="switchVersion('faith')">信望愛+</span>
+            <span class="version-tab" onclick="addVersion()">+</span>
+        </div>
+    </div>
+
+    <!-- 第二功能：書卷章節導航 -->
+    <div class="book-chapter-nav">
+        <div class="book-selector">
+            <select id="bookSelector">
+                <!-- 舊約 39 卷 -->
+                <optgroup label="舊約">
+                    <option value="1">創世記</option>
+                    <option value="2">出埃及記</option>
+                    <option value="3">利未記</option>
+                    <option value="4">民數記</option>
+                    <option value="5">申命記</option>
+                    <option value="6">約書亞記</option>
+                    <option value="7">士師記</option>
+                    <option value="8">路得記</option>
+                    <option value="9">撒母耳記上</option>
+                    <option value="10">撒母耳記下</option>
+                    <option value="11">列王紀上</option>
+                    <option value="12">列王紀下</option>
+                    <option value="13">歷代志上</option>
+                    <option value="14">歷代志下</option>
+                    <option value="15">以斯拉記</option>
+                    <option value="16">尼希米記</option>
+                    <option value="17">以斯帖記</option>
+                    <option value="18">約伯記</option>
+                    <option value="19">詩篇</option>
+                    <option value="20">箴言</option>
+                    <option value="21">傳道書</option>
+                    <option value="22">雅歌</option>
+                    <option value="23">以賽亞書</option>
+                    <option value="24">耶利米書</option>
+                    <option value="25">耶利米哀歌</option>
+                    <option value="26">以西結書</option>
+                    <option value="27">但以理書</option>
+                    <option value="28">何西阿書</option>
+                    <option value="29">約珥書</option>
+                    <option value="30">阿摩司書</option>
+                    <option value="31">俄巴底亞書</option>
+                    <option value="32">約拿書</option>
+                    <option value="33">彌迦書</option>
+                    <option value="34">那鴻書</option>
+                    <option value="35">哈巴谷書</option>
+                    <option value="36">西番雅書</option>
+                    <option value="37">哈該書</option>
+                    <option value="38">撒迦利亞書</option>
+                    <option value="39">瑪拉基書</option>
+                </optgroup>
+                <!-- 新約 27 卷 -->
+                <optgroup label="新約">
+                    <option value="40">馬太福音</option>
+                    <option value="41">馬可福音</option>
+                    <option value="42">路加福音</option>
+                    <option value="43">約翰福音</option>
+                    <option value="44">使徒行傳</option>
+                    <option value="45">羅馬書</option>
+                    <option value="46">哥林多前書</option>
+                    <option value="47">哥林多後書</option>
+                    <option value="48">加拉太書</option>
+                    <option value="49">以弗所書</option>
+                    <option value="50">腓立比書</option>
+                    <option value="51">歌羅西書</option>
+                    <option value="52">帖撒羅尼迦前書</option>
+                    <option value="53">帖撒羅尼迦後書</option>
+                    <option value="54">提摩太前書</option>
+                    <option value="55">提摩太後書</option>
+                    <option value="56">提多書</option>
+                    <option value="57">腓利門書</option>
+                    <option value="58">希伯來書</option>
+                    <option value="59">雅各書</option>
+                    <option value="60">彼得前書</option>
+                    <option value="61">彼得後書</option>
+                    <option value="62">約翰一書</option>
+                    <option value="63">約翰二書</option>
+                    <option value="64">約翰三書</option>
+                    <option value="65">猶大書</option>
+                    <option value="66" selected>啟示錄</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="chapter-nav">
+            <button class="nav-arrow" onclick="previousChapter()">←</button>
+            <select id="chapterSelector" onchange="changeChapter()">
+                <!-- 章節選項將由JavaScript動態生成 -->
+            </select>
+            <button class="nav-arrow" onclick="nextChapter()">→</button>
+        </div>
+
+        <!-- 功能切換 -->
+        <div class="function-tabs">
+            <span class="function-tab active" onclick="showOriginalDictionary()">原文字典</span>
+            <span class="function-tab" onclick="showWordAnalysis()">字匯分析</span>
+        </div>
+    </div>
+
+    <!-- 主內容區 -->
+    <div class="main-content">
+        <div class="content-header">
+            <select class="version-selector" id="versionSelector">
+                <option value="faith">信望愛(和合本)</option>
+                <option value="cuv">和合本</option>
+                <option value="kjv">KJV</option>
+                <option value="niv">NIV</option>
+            </select>
+            <button class="check-number-btn" onclick="checkNumber()">查編號</button>
+
+            <!-- 搜索輸入框 -->
+            <div style="margin-left: 20px; display: inline-block;">
+                <input type="text" id="searchInput" placeholder="搜索經文..." style="padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px; width: 200px;">
+                <button onclick="performSearch()" style="padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">搜索</button>
+            </div>
+        </div>
+
+        <!-- 經文顯示 -->
+        <div class="verse-container">
+            <div class="verse">
+                <span class="verse-number">8</span>
+                <span class="verse-text">主神說：「我是阿拉法，我是俄梅戛，是今在、昔在、以後永在的全能者。」</span>
+            </div>
+
+            <div class="verse">
+                <span class="verse-number">9</span>
+                <span class="verse-text">我約翰就是你們的弟兄，和你們在耶穌的患難、國度、忍耐裡一同有分，為神的道，並為給耶穌作的見證，曾在那名叫拔摩的海島上。</span>
+            </div>
+
+            <div class="verse">
+                <span class="verse-number">10</span>
+                <span class="verse-text">當主日，我被聖靈感動，聽見在我後面有大聲音如吹號，說：</span>
+            </div>
+
+            <div class="verse">
+                <span class="verse-number">11</span>
+                <span class="verse-text">「你所看見的當寫在書上，達與以弗所、士每拿、別迦摩、推雅推喇、撒狄、非拉鐵非、老底嘉、那七個教會。」</span>
+            </div>
+
+            <div class="verse">
+                <span class="verse-number">12</span>
+                <span class="verse-text">我轉過身來，要看看是誰的聲音在跟我說話。我一轉過來，看見了七個金燈臺；</span>
+            </div>
+        </div>
+
+        <!-- 詞彙分析 -->
+        <div class="word-analysis" id="wordAnalysis" style="display: none;">
+            <div class="word-header">
+                <span class="word-title">2424 Ἰησοῦς</span>
+                <button class="related-verses-btn" onclick="showRelatedVerses()">相關經文</button>
+            </div>
+            <div class="word-details">
+                <p><strong>2424 lesous {ee-ay-sooce'}</strong></p>
+                <p>源自希伯來文 SNH03091; TDNT - 3:284,360; 陽性專有名詞</p>
+                <p>欽定本 - Jesus 972, Jesus (Joshua) 2, Jesus (Justus) 1; 975</p>
+                <p>耶穌 = 「耶和華拯救」</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部工具欄 -->
+    <div class="bottom-toolbar">
+        <div class="tool-item" onclick="showSearch()">
+            <div class="tool-icon">🔍</div>
+            <div class="tool-label">搜索</div>
+        </div>
+        <div class="tool-item" onclick="showNotes()">
+            <div class="tool-icon">📝</div>
+            <div class="tool-label">筆記</div>
+        </div>
+        <div class="tool-item" onclick="showHistory()">
+            <div class="tool-icon">🕒</div>
+            <div class="tool-label">記錄</div>
+        </div>
+        <div class="tool-item" onclick="showFavorites()">
+            <div class="tool-icon">⭐</div>
+            <div class="tool-label">收藏</div>
+        </div>
+        <div class="tool-item active" onclick="showOriginalText()">
+            <div class="tool-icon">🌍</div>
+            <div class="tool-label">原文</div>
+        </div>
+        <div class="tool-item" onclick="showCommentary()">
+            <div class="tool-icon">💬</div>
+            <div class="tool-label">註解</div>
+        </div>
+    </div>
+
+    <!-- JSON搜索引擎 -->
+    <script src="json_search_engine.js"></script>
+    <script src="db.js"></script>
+    <script>
+        let currentBook = '啟示錄';
+        let currentChapter = 1;
+        let currentVersion = 'faith';
+
+        // 初始化
+        function init() {
+            console.log('精讀聖經系統初始化...');
+            updateChapterOptions(); // 初始化章節選項
+            loadBibleContent();
+            setupEventListeners();
+        }
+
+        // 更新章節選項
+        function updateChapterOptions() {
+            const bookId = parseInt(document.getElementById('bookSelector').value);
+            const book = bibleDB.getBookById(bookId);
+            const chapterSelector = document.getElementById('chapterSelector');
+
+            if (book) {
+                // 清空現有選項
+                chapterSelector.innerHTML = '';
+
+                // 生成章節選項
+                for (let i = 1; i <= book.chapters; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i;
+                    if (i === currentChapter) {
+                        option.selected = true;
+                    }
+                    chapterSelector.appendChild(option);
+                }
+            }
+        }
+
+        // 設置事件監聽器
+        function setupEventListeners() {
+            // 版本選擇
+            document.getElementById('versionSelector').addEventListener('change', function() {
+                currentVersion = this.value;
+                loadBibleContent();
+            });
+
+            // 書卷選擇
+            document.getElementById('bookSelector').addEventListener('change', function() {
+                const bookId = parseInt(this.value);
+                const book = bibleDB.getBookById(bookId);
+                if (book) {
+                    currentBook = book.name;
+                    currentChapter = 1;
+                    updateChapterOptions(); // 更新章節選項
+                    loadBibleContent();
+                }
+            });
+
+            // 版本標籤點擊
+            document.querySelectorAll('.version-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.version-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    // 這裡可以切換版本
+                });
+            });
+
+            // 功能切換
+            document.querySelectorAll('.function-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.function-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    // 這裡可以切換功能
+                });
+            });
+
+            // 工具欄點擊
+            document.querySelectorAll('.tool-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.tool-item').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        // 載入聖經內容 - 使用JSON搜索引擎
+        async function loadBibleContent() {
+            try {
+                const bookId = parseInt(document.getElementById('bookSelector').value);
+                console.log('載入聖經內容:', currentBook, currentChapter, currentVersion, 'bookId:', bookId);
+
+                // 使用JSON搜索引擎載入特定章節
+                const verses = await loadChapterVerses(bookId, currentChapter);
+
+                const content = document.querySelector('.verse-container');
+                let html = '';
+
+                verses.forEach(verse => {
+                    html += `
+                        <div class="verse">
+                            <span class="verse-number">${verse.verse}</span>
+                            <span class="verse-text">${verse.text}</span>
+                        </div>
+                    `;
+                });
+
+                content.innerHTML = html;
+
+            } catch (error) {
+                console.error('載入聖經內容失敗:', error);
+                // 顯示錯誤信息
+                const content = document.querySelector('.verse-container');
+                content.innerHTML = '<div class="verse"><span class="verse-text">載入失敗，請重試</span></div>';
+            }
+        }
+
+        // 載入特定章節的經文
+        async function loadChapterVerses(bookId, chapter) {
+            try {
+                // 確保JSON搜索引擎已載入
+                if (!window.jsonSearchEngine) {
+                    console.error('JSON搜索引擎未載入');
+                    return [];
+                }
+
+                // 載入所有數據
+                const allData = await window.jsonSearchEngine.loadBibleData('faith');
+
+                // 過濾出指定書卷和章節的經文
+                const verses = allData.filter(verse =>
+                    verse.book === bookId && verse.chapter === chapter
+                );
+
+                console.log(`載入書卷 ${bookId} 第 ${chapter} 章，找到 ${verses.length} 節經文`);
+                return verses;
+
+            } catch (error) {
+                console.error('載入章節經文失敗:', error);
+                return [];
+            }
+        }
+
+        // 章節導航
+        function previousChapter() {
+            if (currentChapter > 1) {
+                currentChapter--;
+                document.getElementById('chapterSelector').value = currentChapter;
+                loadBibleContent();
+            }
+        }
+
+        function nextChapter() {
+            const bookId = parseInt(document.getElementById('bookSelector').value);
+            const book = bibleDB.getBookById(bookId);
+            if (book && currentChapter < book.chapters) {
+                currentChapter++;
+                document.getElementById('chapterSelector').value = currentChapter;
+                loadBibleContent();
+            }
+        }
+
+        function changeChapter() {
+            const chapterSelect = document.getElementById('chapterSelector');
+            currentChapter = parseInt(chapterSelect.value);
+            loadBibleContent();
+        }
+
+        // 查編號功能
+        function checkNumber() {
+            const wordAnalysis = document.getElementById('wordAnalysis');
+            wordAnalysis.style.display = wordAnalysis.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // 搜索功能 - 使用JSON搜索引擎
+        async function performSearch() {
+            const searchInput = document.getElementById('searchInput');
+            if (!searchInput) {
+                console.error('搜索輸入框未找到');
+                return;
+            }
+
+            const query = searchInput.value.trim();
+            if (!query) {
+                alert('請輸入搜索關鍵詞');
+                return;
+            }
+
+            try {
+                console.log('執行搜索:', query);
+                console.log('JSON搜索引擎狀態:', window.jsonSearchEngine);
+
+                // 檢查JSON搜索引擎是否載入
+                if (!window.jsonSearchEngine) {
+                    console.error('JSON搜索引擎未載入');
+                    alert('搜索引擎未載入，請刷新頁面重試');
+                    return;
+                }
+
+                const results = await window.jsonSearchEngine.searchVerses(query, { limit: 20 });
+                console.log('搜索結果:', results);
+
+                if (results && results.length > 0) {
+                    displaySearchResults(results);
+                } else {
+                    alert('未找到相關經文');
+                }
+            } catch (error) {
+                console.error('搜索失敗:', error);
+                alert('搜索失敗: ' + error.message);
+            }
+        }
+
+        // 顯示搜索結果
+        function displaySearchResults(results) {
+            const container = document.querySelector('.verse-container');
+            let html = '<div class="search-results-header"><h3>🔍 搜索結果 (' + results.length + ' 條)</h3></div>';
+
+            results.forEach(verse => {
+                html += `
+                    <div class="verse search-result-verse" style="margin: 10px 0; padding: 10px; border: 1px solid #eee; border-radius: 4px;">
+                        <div style="font-weight: bold; color: #8e44ad; margin-bottom: 5px;">${verse.bookName} ${verse.chapter}:${verse.verse}</div>
+                        <div class="verse-text">${verse.text}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 添加搜索輸入框到頁面
+        function addSearchInput() {
+            const contentHeader = document.querySelector('.content-header');
+            if (contentHeader && !document.getElementById('searchInput')) {
+                const searchDiv = document.createElement('div');
+                searchDiv.innerHTML = `
+                    <input type="text" id="searchInput" placeholder="搜索經文..." style="padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px; width: 200px;">
+                    <button onclick="performSearch()" style="padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">搜索</button>
+                `;
+                contentHeader.appendChild(searchDiv);
+            }
+        }
+
+        // 相關經文
+        function showRelatedVerses() {
+            alert('相關經文功能');
+        }
+
+        // 工具欄功能
+        function showSearch() {
+            // 顯示搜索界面
+            const container = document.querySelector('.verse-container');
+            container.innerHTML = `
+                <div class="search-container">
+                    <h3>🔍 搜索經文</h3>
+                    <div class="search-input-group">
+                        <input type="text" id="mainSearchInput" placeholder="輸入關鍵詞搜索經文..." style="padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 4px;">
+                        <button onclick="performMainSearch()" style="padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">搜索</button>
+                    </div>
+                    <div id="searchResults" style="margin-top: 20px;"></div>
+                </div>
+            `;
+        }
+
+        // 主搜索功能
+        async function performMainSearch() {
+            const searchInput = document.getElementById('mainSearchInput');
+            if (!searchInput) return;
+
+            const query = searchInput.value.trim();
+            if (!query) {
+                alert('請輸入搜索關鍵詞');
+                return;
+            }
+
+            try {
+                console.log('執行主搜索:', query);
+                const results = await window.jsonSearchEngine.searchVerses(query, { limit: 20 });
+
+                const resultsDiv = document.getElementById('searchResults');
+                if (results && results.length > 0) {
+                    let html = '<div class="search-results-header"><h4>搜索結果 (' + results.length + ' 條)</h4></div>';
+
+                    results.forEach(verse => {
+                        html += `
+                            <div class="search-result-verse" style="margin: 10px 0; padding: 10px; border: 1px solid #eee; border-radius: 4px;">
+                                <div class="verse-reference" style="font-weight: bold; color: #8e44ad;">${verse.bookName} ${verse.chapter}:${verse.verse}</div>
+                                <div class="verse-text" style="margin-top: 5px;">${verse.text}</div>
+                            </div>
+                        `;
+                    });
+
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<div style="color: #e74c3c;">未找到相關經文</div>';
+                }
+            } catch (error) {
+                console.error('搜索失敗:', error);
+                alert('搜索失敗，請重試');
+            }
+        }
+
+        function showNotes() {
+            alert('筆記功能');
+        }
+
+        function showHistory() {
+            alert('記錄功能');
+        }
+
+        // 版本切換功能
+        function switchVersion(version) {
+            console.log('切換版本到:', version);
+            currentVersion = version;
+
+            // 更新按鈕狀態
+            document.querySelectorAll('.version-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 找到對應的按鈕並設為active
+            const versionButtons = document.querySelectorAll('.version-tab');
+            versionButtons.forEach(button => {
+                if (button.textContent.includes(version) ||
+                    (version === 'compare' && button.textContent === '對照') ||
+                    (version === 'harmony' && button.textContent === '和修') ||
+                    (version === 'luzhenzhong' && button.textContent === '呂振中') ||
+                    (version === 'niv' && button.textContent === 'NIV') ||
+                    (version === 'kjv' && button.textContent === 'KJV') ||
+                    (version === 'faith' && button.textContent === '信望愛+')) {
+                    button.classList.add('active');
+                }
+            });
+
+            // 重新載入內容
+            loadBibleContent();
+        }
+
+        function addVersion() {
+            alert('添加版本功能 - 待開發');
+        }
+
+        // 原文字典功能
+        function showOriginalDictionary() {
+            const container = document.querySelector('.verse-container');
+            container.innerHTML = `
+                <div class="dictionary-container">
+                    <h3>📖 原文字典</h3>
+                    <div class="dictionary-search">
+                        <input type="text" id="dictInput" placeholder="輸入希臘文或希伯來文..." style="padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 4px;">
+                        <button onclick="searchDictionary()" style="padding: 10px 20px; background: #8e44ad; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">查詢</button>
+                    </div>
+                    <div id="dictResults" style="margin-top: 20px;">
+                        <div class="dict-entry">
+                            <h4>ἀγάπη (agape)</h4>
+                            <p><strong>詞性：</strong>名詞 (Noun)</p>
+                            <p><strong>含義：</strong>無條件的愛，神的愛</p>
+                            <p><strong>出現次數：</strong>新約中出現116次</p>
+                            <p><strong>經文：</strong>約翰福音 3:16 - "神愛世人"</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 字匯分析功能
+        function showWordAnalysis() {
+            const container = document.querySelector('.verse-container');
+            container.innerHTML = `
+                <div class="word-analysis-container">
+                    <h3>🔍 字匯分析</h3>
+                    <div class="analysis-input">
+                        <input type="text" id="analysisInput" placeholder="輸入要分析的詞彙..." style="padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 4px;">
+                        <button onclick="analyzeWord()" style="padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">分析</button>
+                    </div>
+                    <div id="analysisResults" style="margin-top: 20px;">
+                        <div class="analysis-entry">
+                            <h4>神 (θεός)</h4>
+                            <p><strong>詞根：</strong>θε- (the-)</p>
+                            <p><strong>詞性變化：</strong>主格 θεός, 屬格 θεοῦ, 與格 θεῷ, 受格 θεόν</p>
+                            <p><strong>出現頻率：</strong>新約中出現1,317次</p>
+                            <p><strong>相關詞彙：</strong>θεολογία (神學), θεοφιλής (神所愛的)</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 字典查詢功能
+        function searchDictionary() {
+            const input = document.getElementById('dictInput');
+            if (!input) return;
+
+            const query = input.value.trim();
+            if (!query) {
+                alert('請輸入要查詢的詞彙');
+                return;
+            }
+
+            // 這裡可以添加實際的字典查詢邏輯
+            alert('字典查詢功能：' + query);
+        }
+
+        // 字匯分析功能
+        function analyzeWord() {
+            const input = document.getElementById('analysisInput');
+            if (!input) return;
+
+            const query = input.value.trim();
+            if (!query) {
+                alert('請輸入要分析的詞彙');
+                return;
+            }
+
+            // 這裡可以添加實際的字匯分析邏輯
+            alert('字匯分析功能：' + query);
+        }
+
+        // 底部功能改進
+        function showFavorites() {
+            const container = document.querySelector('.verse-container');
+            container.innerHTML = `
+                <div class="favorites-container">
+                    <h3>⭐ 我的收藏</h3>
+                    <div class="favorite-item">
+                        <span class="verse-ref">約翰福音 3:16</span>
+                        <span class="verse-text">神愛世人，甚至將他的獨生子賜給他們...</span>
+                        <button onclick="removeFavorite(1)">移除</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showOriginalText() {
+            const container = document.querySelector('.verse-container');
+            container.innerHTML = `
+                <div class="original-text-container">
+                    <h3>🌍 原文對照</h3>
+                    <div class="original-verse">
+                        <div class="greek-text">ἀγαπᾷ ὁ θεὸς τὸν κόσμον</div>
+                        <div class="hebrew-text">אֱלֹהִים אֹהֵב אֶת־הָעוֹלָם</div>
+                        <div class="translation">神愛世人</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showCommentary() {
+            const container = document.querySelector('.verse-container');
+            container.innerHTML = `
+                <div class="commentary-container">
+                    <h3>💬 註解</h3>
+                    <div class="commentary-item">
+                        <h4>馬太·亨利註解</h4>
+                        <p>這節經文表達了神對人類的無限慈愛...</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 頁面載入時初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>屬靈恩賜調查 - 智慧事奉中心</title>
+    <style>
+        body {font-family:'Microsoft YaHei',Arial,sans-serif;background:#f6f7fb;color:#333;font-size:12px;margin:0;padding:20px;}
+        .header {background:linear-gradient(135deg,#9b59b6 0%,#8e44ad 100%);color:white;padding:20px;border-radius:8px;margin-bottom:20px;text-align:center;}
+        .header h1 {font-size:24px;margin:0 0 8px 0;}
+        .test-container {background:white;padding:14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);max-width:980px;margin:0 auto;}
+        .progress-bar {background:#e0e0e0;border-radius:10px;height:12px;margin-bottom:12px;overflow:hidden;}
+        .progress-fill {background:linear-gradient(135deg,#9b59b6 0%,#8e44ad 100%);height:100%;width:0%;transition:width 0.3s ease;}
+        .question-card {background:#f8f9fa;padding:10px;border-radius:8px;margin-bottom:10px;border-left:4px solid #9b59b6;}
+        .question-title {font-size:11px;font-weight:bold;margin-bottom:6px;color:#2c3e50;}
+        .question-text {font-size:11px;margin-bottom:8px;color:#555;}
+        .options {display:flex;flex-wrap:wrap;gap:6px;}
+        .option {display:flex;align-items:center;justify-content:center;min-height:24px;min-width:26px;padding:2px 5px;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;transition:all 0.2s;}
+        .option:hover {background:#e3f2fd;border-color:#9b59b6;}
+        .option.selected {background:#e3f2fd;border-color:#9b59b6;}
+        .option input[type="radio"] {margin-right:8px;}
+        .option label {cursor:pointer;flex:1;font-size:11px;white-space:nowrap;}
+        .legend-row {display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:10px;color:#64748b;margin-bottom:6px;}
+        .legend-row .sep {color:#cbd5e1;}
+        .navigation {display:flex;justify-content:space-between;margin-top:20px;}
+        .btn {padding:8px 16px;border:none;border-radius:4px;font-size:11px;cursor:pointer;transition:all 0.3s;}
+        .btn-primary {background:linear-gradient(135deg,#9b59b6 0%,#8e44ad 100%);color:white;}
+        .btn-secondary {background:#6c757d;color:white;}
+        .btn:disabled {opacity:0.5;cursor:not-allowed;}
+        .result-card {background:white;padding:20px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin-top:20px;text-align:center;}
+        .gift-title {font-size:22px;font-weight:bold;color:#9b59b6;margin-bottom:10px;}
+        .back-link {text-align:center;margin-top:20px;}
+        .back-link a {color:#9b59b6;text-decoration:none;font-weight:bold;padding:10px 20px;border:2px solid #9b59b6;border-radius:5px;display:inline-block;}
+        .back-link a:hover {background:#9b59b6;color:white;}
+    </style>
+</head>
+<body>
+    <p style="max-width:800px;margin:0 auto 12px;padding:10px 14px;background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;font-size:11px;color:#78350f;">
+        <strong>試作頁：</strong>正式上線請使用 <a href="spiritual_gifts.html" style="color:#7c3aed;font-weight:bold;">spiritual_gifts.html</a>（儲存鍵相同，可互換）。
+    </p>
+    <div class="header">
+        <h1>🙏 屬靈恩賜調查</h1>
+        <p>聖靈將特別的恩賜分給每一位信徒，為要建造基督的身體（林前12:7）<br>這個測驗幫助您發現神賜給您的恩賜，並找到適合的事奉崗位</p>
+    </div>
+    
+    <div class="test-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div id="questionContainer"></div>
+        
+        <div class="navigation">
+            <button id="prevBtn" class="btn btn-secondary" onclick="previousQuestion()" disabled>上一題</button>
+            <button id="nextBtn" class="btn btn-primary" onclick="nextQuestion()">下一題</button>
+        </div>
+    </div>
+    
+    <div class="back-link">
+        <a href="../smart_ministry/index.html" target="_parent">← 返回智慧事奉中心</a>
+    </div>
+
+    <script>
+        const SURVEY_STORAGE = 'bible100_smart_ministry_';
+        
+        const questions = [
+            // 教導 Teaching
+            {id:1, text:"我在查經或教導時，能清楚說明聖經真理，讓人容易明白。", gift:"teaching"},
+            {id:2, text:"我喜歡準備教材或帶領查經小組。", gift:"teaching"},
+            {id:3, text:"別人常說我的講解很有幫助。", gift:"teaching"},
+            {id:4, text:"我能把複雜的屬靈道理用簡單的話解釋清楚。", gift:"teaching"},
+            {id:5, text:"教導主日學或小組課程讓我很有滿足感。", gift:"teaching"},
+            
+            // 傳福音 Evangelism
+            {id:6, text:"我很自然地與未信主的朋友分享福音。", gift:"evangelism"},
+            {id:7, text:"我喜歡參與佈道或街頭福音活動。", gift:"evangelism"},
+            {id:8, text:"看到人決志信主，我會非常喜樂。", gift:"evangelism"},
+            {id:9, text:"我能用生活見證吸引人認識基督。", gift:"evangelism"},
+            {id:10, text:"我常為失喪的靈魂禱告並主動邀請他們來教會。", gift:"evangelism"},
+            
+            // 勸勉 Exhortation
+            {id:11, text:"我擅長用神的話語鼓勵灰心或軟弱的肢體。", gift:"exhortation"},
+            {id:12, text:"別人常找我談心事，因為我能給予正面建議。", gift:"exhortation"},
+            {id:13, text:"我在小組中喜歡帶領大家彼此建造。", gift:"exhortation"},
+            {id:14, text:"我的話語常使人重新得力、繼續前進。", gift:"exhortation"},
+            {id:15, text:"我享受幫助人建立正確的信仰生活。", gift:"exhortation"},
+            
+            // 憐憫 Mercy
+            {id:16, text:"我很容易感受到別人的痛苦，並想安慰他們。", gift:"mercy"},
+            {id:17, text:"我喜歡探訪醫院、老人院或有需要的人。", gift:"mercy"},
+            {id:18, text:"看到人受苦，我會忍不住想幫助。", gift:"mercy"},
+            {id:19, text:"我願意花時間陪伴哀傷或軟弱的肢體。", gift:"mercy"},
+            {id:20, text:"關懷事工讓我感到這是神呼召我的地方。", gift:"mercy"},
+            
+            // 服事 Serving
+            {id:21, text:"我喜歡在幕後默默幫助教會活動順利進行。", gift:"serving"},
+            {id:22, text:"準備茶水、佈置會場或打掃讓我很有喜樂。", gift:"serving"},
+            {id:23, text:"別人需要實際幫助時，我會立刻動手。", gift:"serving"},
+            {id:24, text:"我享受用實際行動支持事工。", gift:"serving"},
+            {id:25, text:"我認為服事是榮耀神的最好方式。", gift:"serving"},
+            
+            // 治理 Administration
+            {id:26, text:"我很會組織活動、安排時間表與資源。", gift:"administration"},
+            {id:27, text:"教會行政或事工協調工作適合我。", gift:"administration"},
+            {id:28, text:"我喜歡把事情安排得井井有條。", gift:"administration"},
+            {id:29, text:"我能清楚看見事工需要並推動執行。", gift:"administration"},
+            {id:30, text:"行政工作讓我感到這是神給我的恩賜。", gift:"administration"},
+            
+            // 施捨 Giving
+            {id:31, text:"我樂意將金錢、時間或資源奉獻給神的事工。", gift:"giving"},
+            {id:32, text:"看到教會或宣教需要，我會慷慨回應。", gift:"giving"},
+            {id:33, text:"奉獻讓我感到很大的喜樂與自由。", gift:"giving"},
+            {id:34, text:"我相信神會使用我的奉獻成就大事。", gift:"giving"},
+            {id:35, text:"我常為教會財務或資源供應禱告。", gift:"giving"},
+            
+            // 先知 Prophecy
+            {id:36, text:"我在禱告中常領受到神的明確信息。", gift:"prophecy"},
+            {id:37, text:"我敢於用神的話語指出當下的問題。", gift:"prophecy"},
+            {id:38, text:"我的分享常帶出神的提醒或方向。", gift:"prophecy"},
+            {id:39, text:"我能分辨屬靈光景並說出真理。", gift:"prophecy"},
+            {id:40, text:"先知性服事讓我感到與神更親近。", gift:"prophecy"}
+        ];
+
+        let currentQuestion = 0;
+        let answers = {}; // {0:5, 1:4, ...}
+
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            const progressText = document.getElementById('progressText');
+            if (progressText) {
+                progressText.textContent = `${Object.keys(answers).length}`;
+            }
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            const container = document.getElementById('questionContainer');
+            let html = `
+                <div class="question-card">
+                    <div class="legend-row">
+                        <strong>評分說明</strong>
+                        <span><strong>1</strong>=完全不同意</span><span class="sep">|</span>
+                        <span><strong>2~4</strong>=程度漸進</span><span class="sep">|</span>
+                        <span><strong>5</strong>=完全同意</span>
+                        <span style="margin-left:auto;">已完成 <span id="progressText">0</span> / ${questions.length} 題 · 步驟 ${currentQuestion + 1} / ${questions.length}</span>
+                    </div>
+                    <div class="question-title">問題 ${q.id}</div>
+                    <div class="question-text">${q.text}</div>
+                    <div class="options">`;
+            
+            for (let i = 5; i >= 1; i--) {
+                const checked = answers[currentQuestion] === i ? 'checked' : '';
+                const selected = answers[currentQuestion] === i ? 'selected' : '';
+                html += `
+                    <div class="option ${selected}" onclick="selectOption(${i})" title="${i}">
+                        <input type="radio" name="q${q.id}" value="${i}" ${checked}>
+                        <label>${i}</label>
+                    </div>`;
+            }
+            html += `</div></div>`;
+            container.innerHTML = html;
+            updateProgress();
+            updateNavigation();
+        }
+
+        function selectOption(score) {
+            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            answers[currentQuestion] = score;
+            updateNavigation();
+        }
+
+        function updateNavigation() {
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            const hasAnswer = answers[currentQuestion] !== undefined;
+            const nextBtn = document.getElementById('nextBtn');
+            nextBtn.textContent = currentQuestion === questions.length-1 ? (hasAnswer ? '查看結果' : '完成測驗') : '下一題';
+            nextBtn.disabled = !hasAnswer;
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < questions.length-1) {
+                currentQuestion++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+            }
+        }
+
+        function showResults() {
+            const giftScores = {
+                teaching:0, evangelism:0, exhortation:0, mercy:0,
+                serving:0, administration:0, giving:0, prophecy:0
+            };
+            
+            questions.forEach((q, idx) => {
+                if (answers[idx]) giftScores[q.gift] += answers[idx];
+            });
+            
+            // 排序 Top 3
+            const sortedGifts = Object.keys(giftScores).sort((a,b) => giftScores[b] - giftScores[a]).slice(0,3);
+            
+            const giftNames = {
+                teaching:"教導", evangelism:"傳福音", exhortation:"勸勉", mercy:"憐憫",
+                serving:"服事", administration:"治理", giving:"施捨", prophecy:"先知"
+            };
+            
+            const descriptions = {
+                teaching:"能清楚傳遞神話語，讓人明白真理並應用在生活中。",
+                evangelism:"熱心帶領人認識基督，充滿傳福音的熱情。",
+                exhortation:"善於鼓勵、安慰、堅固他人信心。",
+                mercy:"充滿同情心，樂意安慰與幫助有需要的人。",
+                serving:"喜歡在幕後以實際行動支持事工。",
+                administration:"擅長組織、規劃與協調，讓事工有效運行。",
+                giving:"慷慨奉獻金錢、時間與資源給神的事工。",
+                prophecy:"能領受並傳遞神的信息，指出方向與真理。"
+            };
+            
+            const ministrySuggestions = {
+                teaching:"查經帶領、兒童主日學、講道預備",
+                evangelism:"佈道隊、接待新人、短宣",
+                exhortation:"小組帶領、輔導、鼓勵團隊",
+                mercy:"關懷探訪、醫院事工、哀傷輔導",
+                serving:"接待、後勤、活動佈置",
+                administration:"行政協調、事工策劃、財務管理",
+                giving:"奉獻事工、資源供應、助學計劃",
+                prophecy:"禱告事工、先知性分享、屬靈引導"
+            };
+            
+            const cautions = {
+                teaching:"多用愛心與謙卑，避免只注重知識",
+                evangelism:"注意跟進新信徒，避免只播種不栽培",
+                exhortation:"平衡真理與恩典，避免過度樂觀",
+                mercy:"也要設定界限，避免過度承擔他人問題",
+                serving:"學習表達需要，避免默默受委屈",
+                administration:"多與人溝通，避免過度控制",
+                giving:"記得奉獻是給神，不是給人看",
+                prophecy:"需經長老印證，避免主觀判斷"
+            };
+            
+            // 儲存結果
+            try {
+                localStorage.setItem(SURVEY_STORAGE + 'survey_spiritual_gifts', JSON.stringify({
+                    topGifts: sortedGifts,
+                    scores: giftScores,
+                    savedAt: new Date().toISOString()
+                }));
+                const profile = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_profile') || '{}');
+                profile.spiritual_gifts = sortedGifts;
+                localStorage.setItem(SURVEY_STORAGE + 'survey_profile', JSON.stringify(profile));
+            } catch(e) {}
+            
+            let resultHTML = `
+                <div class="result-card">
+                    <div class="gift-title">您的主要屬靈恩賜</div>
+                    <div style="margin:15px 0;font-size:13px;color:#2e7d32;">${sortedGifts.map(g=>giftNames[g]).join('、')}</div>
+            `;
+            
+            sortedGifts.forEach(g => {
+                resultHTML += `
+                    <div style="text-align:left;margin:15px auto;max-width:600px;background:#f8f9fa;padding:12px;border-radius:6px;">
+                        <strong>${giftNames[g]}恩賜：</strong><br>
+                        ${descriptions[g]}<br><br>
+                        <strong>適合事奉崗位：</strong> ${ministrySuggestions[g]}<br>
+                        <strong>注意事項：</strong> ${cautions[g]}
+                    </div>`;
+            });
+            
+            resultHTML += `
+                <p style="font-size:11px;color:#666;margin-top:20px;">結果已儲存，可用於事奉配對。建議與牧者討論並試做確認。</p>
+                <div style="margin-top:20px;">
+                    <button class="btn btn-primary" onclick="location.reload()">重新測驗</button>
+                    <a href="talent_ministry_matching.html" target="_parent" class="btn btn-primary" style="margin-left:10px;text-decoration:none;">查看事奉配對建議</a>
+                </div>
+            `;
+            
+            document.getElementById('questionContainer').innerHTML = resultHTML;
+            document.querySelector('.navigation').style.display = 'none';
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadQuestion();
+        });
+    </script>
+</body>
+</html>

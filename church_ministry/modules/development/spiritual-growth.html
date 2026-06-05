@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灵命成长追踪 - Church Ministry · Spiritual Growth | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <link rel="stylesheet" href="../../assets/css/fontawesome.min.css">
+    <script src="../../assets/js/chart.min.js"></script>
+    <script src="../../../js/simple_database_system.js"></script>
+    <style>
+        body { font-family: 'Microsoft YaHei', sans-serif; }
+        .section-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .growth-card { background: white; border-left: 4px solid #9b59b6; border-radius: 8px; padding: 20px; margin-bottom: 15px; transition: all 0.3s; }
+        .growth-card:hover { box-shadow: 0 4px 12px rgba(155,89,182,0.3); transform: translateX(5px); }
+        .area-tag { display: inline-block; padding: 3px 10px; background: #ecf0f1; border-radius: 12px; font-size: 0.85em; margin: 2px; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto p-6">
+        <div class="bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold mb-2">🌱 灵命成长追踪</h1>
+            <p class="text-purple-100">个人化的属灵成长记录与评估</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <div class="bg-white rounded-lg p-6 shadow">
+                <div class="text-gray-500 text-sm mb-1">追踪人数</div>
+                <div class="text-3xl font-bold text-purple-600" id="totalMembers">0</div>
+            </div>
+            <div class="bg-white rounded-lg p-6 shadow">
+                <div class="text-gray-500 text-sm mb-1">读经计划</div>
+                <div class="text-3xl font-bold text-blue-600" id="bibleReading">0</div>
+            </div>
+            <div class="bg-white rounded-lg p-6 shadow">
+                <div class="text-gray-500 text-sm mb-1">祷告生活</div>
+                <div class="text-3xl font-bold text-green-600" id="prayer">0</div>
+            </div>
+            <div class="bg-white rounded-lg p-6 shadow">
+                <div class="text-gray-500 text-sm mb-1">事奉参与</div>
+                <div class="text-3xl font-bold text-orange-600" id="service">0</div>
+            </div>
+            <div class="bg-white rounded-lg p-6 shadow">
+                <div class="text-gray-500 text-sm mb-1">平均成长</div>
+                <div class="text-3xl font-bold text-red-600" id="avgGrowth">0%</div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="flex gap-3 mb-4">
+                <button onclick="showAddRecordModal()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-plus mr-2"></i>添加记录
+                </button>
+                <button onclick="loadData()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                    <i class="fas fa-sync-alt mr-2"></i>刷新
+                </button>
+                <button onclick="exportData()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700">
+                    <i class="fas fa-download mr-2"></i>导出
+                </button>
+            </div>
+
+            <input type="text" id="searchInput" onkeyup="filterRecords()" placeholder="搜索会友姓名..." class="w-full border rounded px-4 py-2">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="section-card">
+                <h3 class="text-lg font-bold mb-4">成长领域分布</h3>
+                <canvas id="areasChart"></canvas>
+            </div>
+            <div class="section-card">
+                <h3 class="text-lg font-bold mb-4">成长趋势</h3>
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="text-xl font-bold mb-4">📋 成长记录列表</h2>
+            <div id="recordsList">
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-seedling text-4xl mb-2"></i>
+                    <p>暂无成长记录，点击"添加记录"开始追踪</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addRecordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">添加成长记录</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <form id="addRecordForm" onsubmit="saveRecord(event)">
+                <div class="space-y-4">
+                    <div><label class="block text-sm font-bold mb-1">会友姓名 *</label><input type="text" id="memberName" list="memberNameList" required class="w-full border rounded px-3 py-2" placeholder="可選會友名單或手動輸入"><datalist id="memberNameList"></datalist></div>
+                    <div><label class="block text-sm font-bold mb-1">记录日期 *</label><input type="date" id="recordDate" required class="w-full border rounded px-3 py-2"></div>
+                    
+                    <div class="border-t pt-4">
+                        <h3 class="font-bold mb-3">成长领域评分 (1-5分)</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-sm mb-1">读经生活</label><input type="number" id="scoreBible" min="1" max="5" value="3" class="w-full border rounded px-3 py-2"></div>
+                            <div><label class="block text-sm mb-1">祷告生活</label><input type="number" id="scorePrayer" min="1" max="5" value="3" class="w-full border rounded px-3 py-2"></div>
+                            <div><label class="block text-sm mb-1">敬拜参与</label><input type="number" id="scoreWorship" min="1" max="5" value="3" class="w-full border rounded px-3 py-2"></div>
+                            <div><label class="block text-sm mb-1">团契生活</label><input type="number" id="scoreFellowship" min="1" max="5" value="3" class="w-full border rounded px-3 py-2"></div>
+                            <div><label class="block text-sm mb-1">事奉参与</label><input type="number" id="scoreService" min="1" max="5" value="3" class="w-full border rounded px-3 py-2"></div>
+                            <div><label class="block text-sm mb-1">传福音</label><input type="number" id="scoreEvangelize" min="1" max="5" value="3" class="w-full border rounded px-3 py-2"></div>
+                        </div>
+                    </div>
+
+                    <div><label class="block text-sm font-bold mb-1">成长亮点</label><textarea id="recordHighlights" rows="2" class="w-full border rounded px-3 py-2" placeholder="近期的属灵突破..."></textarea></div>
+                    <div><label class="block text-sm font-bold mb-1">成长挑战</label><textarea id="recordChallenges" rows="2" class="w-full border rounded px-3 py-2" placeholder="需要关注的方面..."></textarea></div>
+                    <div><label class="block text-sm font-bold mb-1">辅导建议</label><textarea id="recordAdvice" rows="2" class="w-full border rounded px-3 py-2" placeholder="牧养关怀建议..."></textarea></div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 flex-1">
+                        <i class="fas fa-save mr-2"></i>保存记录
+                    </button>
+                    <button type="button" onclick="closeModal()" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 flex-1">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const db = new SimpleDatabaseSystem();
+        let records = [];
+        let charts = {};
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!localStorage.getItem('spiritual_growth_records')) {
+                localStorage.setItem('spiritual_growth_records', JSON.stringify([]));
+            }
+            records = JSON.parse(localStorage.getItem('spiritual_growth_records') || '[]');
+            if (records.length === 0) {
+                var base = { bible: 4, prayer: 4, worship: 4, fellowship: 3, service: 4, evangelize: 3 };
+                records = [
+                    { id: 1, memberName: '王小明', date: '2025-10-01', scores: base, highlights: '穩定讀經', challenges: '', advice: '', createdAt: new Date().toISOString() },
+                    { id: 2, memberName: '李美華', date: '2025-10-05', scores: { bible: 3, prayer: 5, worship: 4, fellowship: 4, service: 3, evangelize: 4 }, highlights: '禱告生活進步', challenges: '', advice: '', createdAt: new Date().toISOString() },
+                    { id: 3, memberName: '張大偉', date: '2025-10-08', scores: { bible: 4, prayer: 3, worship: 5, fellowship: 3, service: 5, evangelize: 3 }, highlights: '敬拜與事奉積極', challenges: '', advice: '', createdAt: new Date().toISOString() }
+                ];
+                localStorage.setItem('spiritual_growth_records', JSON.stringify(records));
+            }
+            loadData();
+            initializeCharts();
+            fillMemberNameDatalist();
+        });
+
+        function fillMemberNameDatalist() {
+            var members = [];
+            try {
+                var ms = localStorage.getItem('memberSystemData');
+                if (ms) { var d = JSON.parse(ms); members = d.members || []; }
+                if (members.length === 0) {
+                    var cm = localStorage.getItem('churchMasterDatabase');
+                    if (cm) { var c = JSON.parse(cm); members = c.members || []; }
+                }
+            } catch(e) {}
+            var dl = document.getElementById('memberNameList');
+            if (dl && members.length > 0) {
+                dl.innerHTML = members.slice(0, 100).map(function(m) { return '<option value="' + (m.name || m.memberName || '') + '">'; }).join('');
+            }
+        }
+
+        function loadData() {
+            records = JSON.parse(localStorage.getItem('spiritual_growth_records') || '[]');
+            updateStats();
+            displayRecords(records);
+            updateCharts();
+        }
+
+        function updateStats() {
+            const uniqueMembers = [...new Set(records.map(r => r.memberName))];
+            document.getElementById('totalMembers').textContent = uniqueMembers.length;
+            document.getElementById('bibleReading').textContent = records.filter(r => r.scores.bible >= 4).length;
+            document.getElementById('prayer').textContent = records.filter(r => r.scores.prayer >= 4).length;
+            document.getElementById('service').textContent = records.filter(r => r.scores.service >= 4).length;
+            
+            if (records.length > 0) {
+                const avgScore = records.reduce((sum, r) => {
+                    const scores = Object.values(r.scores);
+                    return sum + (scores.reduce((a, b) => a + b, 0) / scores.length);
+                }, 0) / records.length;
+                document.getElementById('avgGrowth').textContent = Math.round(avgScore * 20) + '%';
+            }
+        }
+
+        function displayRecords(recordsList) {
+            const container = document.getElementById('recordsList');
+            
+            if (recordsList.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-seedling text-4xl mb-2"></i><p>暂无成长记录</p></div>';
+                return;
+            }
+
+            container.innerHTML = recordsList.map(record => {
+                const avgScore = Object.values(record.scores).reduce((a, b) => a + b, 0) / Object.values(record.scores).length;
+                return `
+                    <div class="growth-card">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg">${record.memberName}</h3>
+                                <p class="text-sm text-gray-500">${record.date}</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-purple-600">${avgScore.toFixed(1)}/5</div>
+                                <button onclick="deleteRecord(${record.id})" class="text-red-600 hover:text-red-800 text-sm mt-2">
+                                    <i class="fas fa-trash mr-1"></i>删除
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 mb-3">
+                            ${Object.entries(record.scores).map(([area, score]) => `
+                                <span class="area-tag">
+                                    ${getAreaLabel(area)}: ${score}/5
+                                </span>
+                            `).join('')}
+                        </div>
+                        ${record.highlights ? `<p class="text-sm mb-2"><strong>亮点：</strong>${record.highlights}</p>` : ''}
+                        ${record.challenges ? `<p class="text-sm mb-2"><strong>挑战：</strong>${record.challenges}</p>` : ''}
+                        ${record.advice ? `<p class="text-sm text-gray-600"><strong>建议：</strong>${record.advice}</p>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterRecords() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = records.filter(r => r.memberName.toLowerCase().includes(search));
+            displayRecords(filtered);
+        }
+
+        function showAddRecordModal() {
+            fillMemberNameDatalist();
+            document.getElementById('addRecordModal').classList.remove('hidden');
+            document.getElementById('recordDate').valueAsDate = new Date();
+        }
+
+        function closeModal() {
+            document.getElementById('addRecordModal').classList.add('hidden');
+            document.getElementById('addRecordForm').reset();
+        }
+
+        function saveRecord(event) {
+            event.preventDefault();
+
+            const record = {
+                id: Date.now(),
+                memberName: document.getElementById('memberName').value,
+                date: document.getElementById('recordDate').value,
+                scores: {
+                    bible: parseInt(document.getElementById('scoreBible').value),
+                    prayer: parseInt(document.getElementById('scorePrayer').value),
+                    worship: parseInt(document.getElementById('scoreWorship').value),
+                    fellowship: parseInt(document.getElementById('scoreFellowship').value),
+                    service: parseInt(document.getElementById('scoreService').value),
+                    evangelize: parseInt(document.getElementById('scoreEvangelize').value)
+                },
+                highlights: document.getElementById('recordHighlights').value,
+                challenges: document.getElementById('recordChallenges').value,
+                advice: document.getElementById('recordAdvice').value,
+                createdAt: new Date().toISOString()
+            };
+
+            records.push(record);
+            localStorage.setItem('spiritual_growth_records', JSON.stringify(records));
+
+            closeModal();
+            loadData();
+            alert('✅ 成长记录已保存！');
+        }
+
+        function deleteRecord(id) {
+            if (!confirm('确定要删除此记录吗？')) return;
+            records = records.filter(r => r.id !== id);
+            localStorage.setItem('spiritual_growth_records', JSON.stringify(records));
+            loadData();
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(records, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', `spiritual_growth_${new Date().toISOString().split('T')[0]}.json`);
+            linkElement.click();
+        }
+
+        function initializeCharts() {
+            const areasCtx = document.getElementById('areasChart').getContext('2d');
+            charts.areas = new Chart(areasCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['读经', '祷告', '敬拜', '团契', '事奉', '传福音'],
+                    datasets: [{
+                        label: '平均评分',
+                        data: [0, 0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(155, 89, 182, 0.2)',
+                        borderColor: 'rgba(155, 89, 182, 1)',
+                        pointBackgroundColor: 'rgba(155, 89, 182, 1)'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, scales: { r: { beginAtZero: true, max: 5 } } }
+            });
+
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            charts.trend = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '平均成长指数',
+                        data: [],
+                        borderColor: '#9b59b6',
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true, max: 5 } } }
+            });
+        }
+
+        function updateCharts() {
+            if (records.length === 0) return;
+
+            // Areas chart
+            const areaAverages = {
+                bible: 0, prayer: 0, worship: 0, fellowship: 0, service: 0, evangelize: 0
+            };
+            records.forEach(r => {
+                Object.keys(areaAverages).forEach(area => {
+                    areaAverages[area] += r.scores[area];
+                });
+            });
+            Object.keys(areaAverages).forEach(area => {
+                areaAverages[area] = (areaAverages[area] / records.length).toFixed(1);
+            });
+            charts.areas.data.datasets[0].data = Object.values(areaAverages);
+            charts.areas.update();
+
+            // Trend chart
+            const sortedRecords = records.sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-12);
+            charts.trend.data.labels = sortedRecords.map(r => r.date);
+            charts.trend.data.datasets[0].data = sortedRecords.map(r => {
+                const scores = Object.values(r.scores);
+                return (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1);
+            });
+            charts.trend.update();
+        }
+
+        function getAreaLabel(area) {
+            const labels = {
+                bible: '读经', prayer: '祷告', worship: '敬拜',
+                fellowship: '团契', service: '事奉', evangelize: '传福音'
+            };
+            return labels[area] || area;
+        }
+    </script>
+</body>
+</html>
+

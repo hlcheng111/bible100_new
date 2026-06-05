@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>兒童報到 Check-Ins · Check Ins | Church Ministry</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f0f2f5; color: #333; font-size: 12px; }
+        .header { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; padding: 15px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header-nav { margin-bottom: 8px; }
+        .header-nav a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 12px; margin-right: 12px; }
+        .header-nav a:hover { text-decoration: underline; }
+        .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #2c3e50; border-left: 4px solid #00b894; padding-left: 10px; }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-input, .form-select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; }
+        .btn-primary { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        .child-list { max-height: 200px; overflow-y: auto; }
+        .child-item { padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .child-item:hover { background: #e8f8f5; border-color: #00b894; }
+        .child-item.checked-in { background: #d4edda; border-color: #27ae60; }
+        .security-code { font-size: 28px; font-weight: bold; letter-spacing: 8px; color: #00b894; padding: 20px; text-align: center; background: #e8f8f5; border-radius: 8px; margin: 15px 0; }
+        .checkin-result { padding: 20px; background: #d4edda; border-radius: 8px; margin-top: 15px; }
+        .roster-table { width: 100%; border-collapse: collapse; }
+        .roster-table th, .roster-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 11px; }
+        .roster-table th { background: #f8f9fa; font-weight: 600; }
+        details { margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 8px; }
+        @media print {
+            body * { visibility: hidden !important; }
+            #printArea, #printArea * { visibility: visible !important; }
+            #printArea { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; }
+        }
+        .label-sheet { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm; padding: 10mm; }
+        .label-item { border: 1px dashed #ccc; padding: 8mm; text-align: center; font-size: 14px; min-height: 35mm; }
+        .label-name { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+        .label-code { font-size: 24px; letter-spacing: 4px; color: #00b894; font-weight: bold; }
+        .label-class { font-size: 11px; color: #666; margin-top: 4px; }
+        details summary { cursor: pointer; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div class="header">
+        <div class="header-nav"><a href="../../dashboard.html">⛪ 教會事工中心</a></div>
+        <h1>📋 兒童報到 Check-Ins</h1>
+        <details style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,0.15);border-radius:8px;font-size:11px;">
+            <summary style="cursor:pointer;font-weight:600;">📋 功能與使用說明</summary>
+            <div style="margin-top:8px;opacity:0.95;">
+                <p><b>此頁是為誰而設？</b> 兒童事工同工、招待，負責主日學或活動的兒童報到與簽退。</p>
+                <p style="margin-top:4px;"><b>有什麼功能？</b> 選擇活動與班級、搜尋兒童、報到產生安全碼、班級名單、簽退比對安全碼。</p>
+                <p style="margin-top:4px;"><b>典型情境</b> 例：主日 9:00 家長帶孩子報到，同工點選兒童後產生安全碼，家長用手機拍照；簽退時掃碼或輸入安全碼核對。</p>
+                <p style="margin-top:4px;"><b>如何入手？</b> 先載入示範資料，選擇活動與班級，點選兒童完成報到。</p>
+            </div>
+        </details>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-title">1. 選擇活動與班級</div>
+            <div class="form-group">
+                <label class="form-label">活動</label>
+                <select id="eventSelect" class="form-select">
+                    <option value="">-- 請選擇活動 --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">班級／地點</label>
+                <select id="classSelect" class="form-select">
+                    <option value="">-- 請先選擇活動 --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">2. 報到兒童</div>
+            <div class="form-group">
+                <label class="form-label">預報碼（家長事先取得）</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="preCodeInput" class="form-input" placeholder="輸入6位預報碼" maxlength="6" style="max-width:140px;">
+                    <button class="btn btn-primary" onclick="applyPreCode()">快速報到</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">搜尋兒童姓名</label>
+                <input type="text" id="searchChild" class="form-input" placeholder="輸入姓名搜尋...">
+            </div>
+            <div class="child-list" id="childList"></div>
+            <div id="checkinResult" class="checkin-result" style="display:none;">
+                <div style="font-weight:600;margin-bottom:8px;">✅ 報到成功！請家長記下安全碼：</div>
+                <div class="security-code" id="securityCodeDisplay">----</div>
+                <div id="qrContainer" style="text-align:center;margin:12px 0;"></div>
+                <p style="font-size:11px;color:#666;">簽退時請出示此安全碼，或掃描上方 QR Code。</p>
+                <button class="btn btn-primary" style="margin-top:10px;" onclick="printCurrentLabel()">🖨 列印名條</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">3. 今日班級名單（已報到）</div>
+            <button class="btn btn-primary btn-sm" style="margin-bottom:10px;" onclick="printClassLabels()">🖨 列印班級名條</button>
+            <table class="roster-table">
+                <thead><tr><th>兒童姓名</th><th>班級</th><th>安全碼</th><th>報到時間</th><th>簽退</th></tr></thead>
+                <tbody id="rosterBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="printArea" style="display:none;"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script>
+        const STORAGE_KEY = 'checkInsData';
+        let data = { events: [], classes: [], children: [], records: [] };
+        let lastCheckIn = null;
+
+        function loadData() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                data = raw ? JSON.parse(raw) : { events: [], classes: [], children: [], records: [] };
+            } catch (e) { data = { events: [], classes: [], children: [], records: [] }; }
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function loadDemo() {
+            data.events = [
+                { id: 'e1', name: '主日兒童主日學', date: new Date().toISOString().split('T')[0] },
+                { id: 'e2', name: '週三兒童聚會', date: new Date().toISOString().split('T')[0] }
+            ];
+            data.classes = [
+                { id: 'c1', name: '幼幼班 (3-5歲)', eventId: 'e1', location: '一樓' },
+                { id: 'c2', name: '兒童班 (6-9歲)', eventId: 'e1', location: '二樓' },
+                { id: 'c3', name: '少年班 (10-12歲)', eventId: 'e1', location: '三樓' }
+            ];
+            const names = ['小明','小華','小美','小傑','小芳','小偉','小玲','小強','小慧','小宇'];
+            data.children = [];
+            data.classes.forEach((cls, i) => {
+                for (let j = 0; j < 5; j++) {
+                    data.children.push({
+                        id: 'ch' + data.children.length,
+                        name: names[(i * 5 + j) % names.length] + (j + 1),
+                        classId: cls.id,
+                        parentName: '家長' + (i * 5 + j + 1)
+                    });
+                }
+            });
+            data.records = [];
+            saveData();
+            renderEventSelect();
+            alert('示範資料已載入！');
+        }
+
+        function generateSecurityCode() {
+            return String(Math.floor(1000 + Math.random() * 9000));
+        }
+
+        function renderEventSelect() {
+            const sel = document.getElementById('eventSelect');
+            sel.innerHTML = '<option value="">-- 請選擇活動 --</option>' +
+                data.events.map(e => `<option value="${e.id}">${e.name} (${e.date})</option>`).join('');
+            if (data.events.length === 0) {
+                sel.innerHTML += '<option value="_demo">📥 載入示範資料</option>';
+            }
+        }
+
+        function renderClassSelect() {
+            const eventId = document.getElementById('eventSelect').value;
+            const sel = document.getElementById('classSelect');
+            if (!eventId || eventId === '_demo') {
+                sel.innerHTML = '<option value="">-- 請先選擇活動 --</option>';
+                return;
+            }
+            const classes = data.classes.filter(c => c.eventId === eventId);
+            sel.innerHTML = '<option value="">-- 請選擇班級 --</option>' +
+                classes.map(c => `<option value="${c.id}">${c.name} (${c.location})</option>`).join('');
+        }
+
+        function renderChildList() {
+            const classId = document.getElementById('classSelect').value;
+            const term = (document.getElementById('searchChild').value || '').toLowerCase();
+            const container = document.getElementById('childList');
+            const today = new Date().toISOString().split('T')[0];
+
+            if (!classId) {
+                container.innerHTML = '<p style="color:#999;padding:20px;">請先選擇活動與班級</p>';
+                return;
+            }
+
+            let children = data.children.filter(c => c.classId === classId);
+            if (term) children = children.filter(c => (c.name + (c.parentName || '')).toLowerCase().includes(term));
+
+            const recordMap = {};
+            data.records.filter(r => r.date === today && r.checkOutTime == null).forEach(r => { recordMap[r.childId] = r; });
+
+            container.innerHTML = children.length ? children.map(c => {
+                const rec = recordMap[c.id];
+                const checkedIn = !!rec;
+                const esc = (s) => (s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+                return `<div class="child-item ${checkedIn ? 'checked-in' : ''}" data-id="${esc(c.id)}" data-name="${esc(c.name)}">
+                    <span>${esc(c.name)} <small style="color:#666;">(${esc(c.parentName) || '-'})</small></span>
+                    ${checkedIn ? `<span style="color:#27ae60;">已報到 ${rec.securityCode}</span>` : `<button class="btn btn-primary btn-sm" onclick="checkIn('${esc(c.id)}','${esc(c.name)}')">報到</button>`}
+                </div>`;
+            }).join('') : '<p style="color:#999;padding:20px;">無符合的兒童，或請先載入示範資料</p>';
+        }
+
+        function checkIn(childId, childName) {
+            const eventId = document.getElementById('eventSelect').value;
+            const classId = document.getElementById('classSelect').value;
+            if (!eventId || !classId) {
+                alert('請先選擇活動與班級');
+                return;
+            }
+            const today = new Date().toISOString().split('T')[0];
+            const existing = data.records.find(r => r.childId === childId && r.date === today && !r.checkOutTime);
+            if (existing) {
+                alert('此兒童今日已報到');
+                return;
+            }
+            const code = generateSecurityCode();
+            const rec = {
+                id: 'r' + Date.now(),
+                childId, childName, eventId, classId,
+                securityCode: code,
+                date: today,
+                checkInTime: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
+                checkOutTime: null
+            };
+            data.records.push(rec);
+            saveData();
+            const cls = data.classes.find(c => c.id === classId);
+            lastCheckIn = { childName, securityCode: code, className: cls ? cls.name : '-' };
+
+            document.getElementById('securityCodeDisplay').textContent = code;
+            document.getElementById('checkinResult').style.display = 'block';
+            var qrEl = document.getElementById('qrContainer');
+            qrEl.innerHTML = '';
+            if (typeof QRCode !== 'undefined') {
+                QRCode.toDataURL(code, { width: 120, margin: 1 }, function(err, url) {
+                    if (!err && url) {
+                        var img = document.createElement('img');
+                        img.src = url;
+                        img.alt = 'QR ' + code;
+                        qrEl.appendChild(img);
+                    }
+                });
+            }
+            renderChildList();
+            renderRoster();
+        }
+
+        function applyPreCode() {
+            const code = (document.getElementById('preCodeInput').value || '').trim();
+            if (!code) { alert('請輸入預報碼'); return; }
+            let preCodes = [];
+            try { preCodes = JSON.parse(localStorage.getItem('checkInsPreCodes') || '[]'); } catch (e) {}
+            const pre = preCodes.find(p => p.code === code);
+            if (!pre) { alert('預報碼無效或已使用'); return; }
+            const eventId = document.getElementById('eventSelect').value;
+            const classId = document.getElementById('classSelect').value;
+            if (pre.eventId !== eventId || pre.classId !== classId) {
+                alert('請先選擇活動「' + (data.events.find(e=>e.id===pre.eventId)?.name||'') + '」與班級「' + (data.classes.find(c=>c.id===pre.classId)?.name||'') + '」');
+                return;
+            }
+            const today = new Date().toISOString().split('T')[0];
+            pre.children.forEach(ch => {
+                if (data.records.some(r => r.childId === ch.id && r.date === today && !r.checkOutTime)) return;
+                data.records.push({
+                    id: 'r' + Date.now() + Math.random(),
+                    childId: ch.id, childName: ch.name, eventId: pre.eventId, classId: pre.classId,
+                    securityCode: generateSecurityCode(),
+                    date: today,
+                    checkInTime: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
+                    checkOutTime: null
+                });
+            });
+            preCodes = preCodes.filter(p => p.code !== code);
+            localStorage.setItem('checkInsPreCodes', JSON.stringify(preCodes));
+            saveData();
+            document.getElementById('preCodeInput').value = '';
+            renderChildList();
+            renderRoster();
+            alert('已為 ' + pre.children.length + ' 位兒童完成報到！');
+        }
+
+        function checkOut(recordId) {
+            const rec = data.records.find(r => r.id === recordId);
+            if (!rec) return;
+            const code = prompt('請輸入家長的安全碼以確認簽退：');
+            if (code !== rec.securityCode) {
+                alert('安全碼不符，請確認後再試');
+                return;
+            }
+            rec.checkOutTime = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            saveData();
+            renderRoster();
+            renderChildList();
+        }
+
+        function renderRoster() {
+            const today = new Date().toISOString().split('T')[0];
+            const classId = document.getElementById('classSelect').value;
+            let rows = data.records.filter(r => r.date === today && !r.checkOutTime);
+            if (classId) rows = rows.filter(r => r.classId === classId);
+
+            const tbody = document.getElementById('rosterBody');
+            const classMap = {}; data.classes.forEach(c => { classMap[c.id] = c.name; });
+            tbody.innerHTML = rows.length ? rows.map(r => `
+                <tr>
+                    <td>${r.childName}</td>
+                    <td>${classMap[r.classId] || '-'}</td>
+                    <td><strong>${r.securityCode}</strong></td>
+                    <td>${r.checkInTime}</td>
+                    <td><button class="btn btn-success" style="padding:4px 10px;font-size:10px;" onclick="checkOut('${r.id}')">簽退</button></td>
+                </tr>
+            `).join('') : '<tr><td colspan="5" style="text-align:center;color:#999;">今日尚無報到記錄</td></tr>';
+        }
+
+        function buildLabelHtml(items) {
+            return '<div class="label-sheet">' + items.map(it =>
+                '<div class="label-item"><div class="label-name">' + (it.childName || it.name || '') + '</div><div class="label-code">' + (it.securityCode || '') + '</div><div class="label-class">' + (it.className || '') + '</div></div>'
+            ).join('') + '</div>';
+        }
+
+        function printCurrentLabel() {
+            if (!lastCheckIn) { alert('請先完成報到'); return; }
+            const area = document.getElementById('printArea');
+            area.innerHTML = buildLabelHtml([lastCheckIn]);
+            area.style.display = 'block';
+            window.print();
+            area.style.display = 'none';
+        }
+
+        function printClassLabels() {
+            const today = new Date().toISOString().split('T')[0];
+            const classId = document.getElementById('classSelect').value;
+            let rows = data.records.filter(r => r.date === today && !r.checkOutTime);
+            if (classId) rows = rows.filter(r => r.classId === classId);
+            const classMap = {}; data.classes.forEach(c => { classMap[c.id] = c.name; });
+            const items = rows.map(r => ({ childName: r.childName, securityCode: r.securityCode, className: classMap[r.classId] || '-' }));
+            if (items.length === 0) { alert('尚無報到記錄'); return; }
+            const area = document.getElementById('printArea');
+            area.innerHTML = buildLabelHtml(items);
+            area.style.display = 'block';
+            window.print();
+            area.style.display = 'none';
+        }
+
+        document.getElementById('eventSelect').onchange = function() {
+            if (this.value === '_demo') { loadDemo(); return; }
+            renderClassSelect();
+            renderChildList();
+            renderRoster();
+        };
+        document.getElementById('classSelect').onchange = function() {
+            renderChildList();
+            renderRoster();
+        };
+        document.getElementById('searchChild').oninput = renderChildList;
+
+        loadData();
+        renderEventSelect();
+        renderClassSelect();
+        renderChildList();
+        renderRoster();
+    </script>
+</body>
+</html>

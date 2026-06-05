@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>離線工具與多校區／語言設定</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f6f7fb;
+            color: #333;
+            padding: 20px;
+            font-size: 12px;
+        }
+
+        h1, h2, h3 {
+            color: #0b5fa5;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .page-header h1 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 11px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            font-size: 11px;
+            color: #555;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            margin: 6px 0 2px;
+        }
+
+        select, textarea, input[type="text"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        textarea {
+            min-height: 180px;
+            resize: vertical;
+            font-family: Consolas, 'Courier New', monospace;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            background: #0b5fa5;
+            margin: 4px 2px 0 0;
+        }
+
+        .btn.secondary {
+            background: #6c757d;
+        }
+
+        .btn.danger {
+            background: #e74c3c;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .checkbox-row {
+            margin-top: 6px;
+            font-size: 11px;
+        }
+
+        .status {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #16a085;
+        }
+
+        .preview-box {
+            margin-top: 8px;
+            padding: 8px;
+            background: #fdfdfd;
+            border-radius: 4px;
+            border: 1px dashed #ccc;
+            min-height: 80px;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <h1>🧰 離線工具 / 多校區與語言設定</h1>
+        <p>供各語言地區管理員使用：資料匯出／匯入、多校區與預設語言設定、本站內文 HTML 編輯器（可載入與儲存）。</p>
+    </div>
+
+    <!-- 使用指南（從各 landing 頁「使用說明」直連至此） -->
+    <div class="card" id="guide" style="margin-bottom: 20px;">
+        <h2>📖 使用指南</h2>
+        <ul style="margin: 8px 0 0 16px; line-height: 1.8; font-size: 11px; color: #555;">
+            <li><strong>儀表板「關於本校」區</strong>：請在下方「本站內 HTML 編輯器」的<strong>內容代碼</strong>填 <code>dashboard_intro</code>，載入 → 編輯 → 儲存後，回儀表板重新整理即可看到。</li>
+            <li><strong>其他自訂區</strong>：內容代碼可自訂（建議含語言碼，如 <code>school_intro_zh-Hant</code>），同一代碼可隨時載入／儲存／預覽。</li>
+            <li><strong>匯出／匯入</strong>：匯出會下載 JSON 檔；匯入時選檔並可勾選「覆寫現有資料」。</li>
+            <li><strong>預設校區與語言</strong>：選好後按「儲存」即寫入本機，供各模組讀取。</li>
+        </ul>
+    </div>
+
+    <div class="grid">
+        <!-- 區塊 1：離線匯出／匯入 -->
+        <div class="card">
+            <h2>📦 離線資料匯出 / 匯入</h2>
+            <p>
+                從這裡把目前裝置上的 <strong>學校資料 + CoreDirectory</strong> 匯出成一個 JSON 檔，
+                拷貝到另一台電腦，再在那邊匯入。完全不需要伺服器。
+            </p>
+            <button class="btn" id="btnExport">⬇ 匯出全部資料 (JSON)</button>
+
+            <div style="margin-top:10px;">
+                <label for="importFile">匯入 JSON 檔：</label>
+                <input type="file" id="importFile" accept="application/json">
+                <div class="checkbox-row">
+                    <label>
+                        <input type="checkbox" id="chkOverwrite">
+                        匯入時覆寫現有資料（預設為合併）
+                    </label>
+                </div>
+                <button class="btn secondary" id="btnImport">⬆ 開始匯入</button>
+            </div>
+            <div class="status" id="exportImportStatus"></div>
+        </div>
+
+        <!-- 區塊 2：校區與語言設定 -->
+        <div class="card">
+            <h2>🏫 多校區 / 🌐 預設語言</h2>
+            <p>
+                設定本裝置目前使用的 <strong>預設校區 (organization)</strong> 與 <strong>預設語言</strong>。
+                各模組日後可以依此顯示對應語言內容。
+            </p>
+
+            <label for="organizationSelect">預設校區 / 分校：</label>
+            <select id="organizationSelect">
+                <option value="">（尚未載入或未定義）</option>
+            </select>
+
+            <button class="btn" id="btnSaveOrg">💾 儲存預設校區</button>
+
+            <label for="languageSelect" style="margin-top:10px;">預設顯示語言：</label>
+            <select id="languageSelect">
+                <option value="">（尚未載入或未定義）</option>
+            </select>
+
+            <button class="btn" id="btnSaveLang">💾 儲存預設語言</button>
+
+            <div class="status" id="settingsStatus"></div>
+        </div>
+
+        <!-- 區塊 3：內建 HTML Editor（本地化頁面內容）－從 landing 頁「編輯此區」錨點 #editor -->
+        <div class="card" id="editor">
+            <h2>📝 本站內 HTML 編輯器</h2>
+            <p>
+                供各語言地區管理人員，針對本校區／本語言的介紹頁等內容，直接在瀏覽器內編輯 HTML。
+                內容會儲存在 <strong>localStorage</strong>，可隨時載入與回存。
+            </p>
+
+            <label for="editorKey">內容代碼（例如：school_intro_zh-TW）：</label>
+            <input type="text" id="editorKey" placeholder="例如：school_intro_zh-Hant，建議含語言碼">
+
+            <label for="htmlEditor">HTML 內容：</label>
+            <textarea id="htmlEditor" placeholder="在這裡輸入 HTML 內容，例如當地校區介紹、學員說明等..."></textarea>
+
+            <div>
+                <button class="btn" id="btnLoadContent">載入內容</button>
+                <button class="btn" id="btnSaveContent">儲存內容</button>
+                <button class="btn secondary" id="btnPreviewContent">預覽</button>
+                <button class="btn danger" id="btnClearContent">清除此代碼內容</button>
+            </div>
+
+            <div class="preview-box" id="previewBox">
+                （預覽區：點「預覽」後會顯示上方 HTML 的實際效果）
+            </div>
+
+            <div class="status" id="editorStatus"></div>
+        </div>
+    </div>
+
+    <!-- 資料與工具腳本：SchoolMasterDatabase / CoreDirectory / OfflineExporter -->
+    <script src="../../js/school-master-database.js"></script>
+    <script src="../../js/core-directory.js"></script>
+    <script src="../../tools/offline-export.js"></script>
+
+    <script>
+        function ensureReady() {
+            if (!window.schoolDB) {
+                console.warn('SchoolMasterDatabase (schoolDB) 未載入');
+            }
+            if (!window.coreDirectory) {
+                console.warn('CoreDirectory 未載入');
+            }
+            if (!window.OfflineExporter) {
+                console.warn('OfflineExporter 未載入');
+            }
+        }
+
+        function initExportImport() {
+            const btnExport = document.getElementById('btnExport');
+            const btnImport = document.getElementById('btnImport');
+            const fileInput = document.getElementById('importFile');
+            const chkOverwrite = document.getElementById('chkOverwrite');
+            const statusEl = document.getElementById('exportImportStatus');
+
+            btnExport.addEventListener('click', function () {
+                if (!window.OfflineExporter) {
+                    alert('OfflineExporter 未載入，請確認腳本路徑。');
+                    return;
+                }
+                try {
+                    window.OfflineExporter.exportAll();
+                    statusEl.textContent = '✅ 已開始下載匯出檔（請在瀏覽器下載列中查看）。';
+                } catch (e) {
+                    console.error(e);
+                    statusEl.textContent = '❌ 匯出失敗：' + e.message;
+                }
+            });
+
+            btnImport.addEventListener('click', function () {
+                if (!window.OfflineExporter) {
+                    alert('OfflineExporter 未載入，請確認腳本路徑。');
+                    return;
+                }
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    alert('請先選擇要匯入的 JSON 檔。');
+                    return;
+                }
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        window.OfflineExporter.importFromJson(json, { overwrite: chkOverwrite.checked });
+                        statusEl.textContent = '✅ 匯入完成。建議重新整理相關頁面以載入新資料。';
+                    } catch (err) {
+                        console.error(err);
+                        statusEl.textContent = '❌ 匯入失敗：' + err.message;
+                    }
+                };
+                reader.readAsText(file, 'utf-8');
+            });
+        }
+
+        function initOrgAndLanguageSettings() {
+            const orgSelect = document.getElementById('organizationSelect');
+            const langSelect = document.getElementById('languageSelect');
+            const btnSaveOrg = document.getElementById('btnSaveOrg');
+            const btnSaveLang = document.getElementById('btnSaveLang');
+            const statusEl = document.getElementById('settingsStatus');
+
+            function loadOrganizations() {
+                if (!window.schoolDB || !window.schoolDB.getOrganizations) {
+                    orgSelect.innerHTML = '<option value=\"\">（目前尚無組織資料或 API 未提供）</option>';
+                    return;
+                }
+                const list = window.schoolDB.getOrganizations() || [];
+                if (list.length === 0) {
+                    orgSelect.innerHTML = '<option value=\"\">（尚未建立任何組織／校區）</option>';
+                    return;
+                }
+                orgSelect.innerHTML = '';
+                list.forEach(function (org) {
+                    const opt = document.createElement('option');
+                    opt.value = org.id;
+                    opt.textContent = (org.nameZh || org.name || '') +
+                        (org.code ? ' [' + org.code + ']' : '');
+                    orgSelect.appendChild(opt);
+                });
+
+                const current = (window.schoolDB.data && window.schoolDB.data.metadata && window.schoolDB.data.metadata.defaultOrganizationId) || '';
+                if (current) {
+                    orgSelect.value = String(current);
+                }
+            }
+
+            function loadLanguages() {
+                if (!window.schoolDB || !window.schoolDB.getSupportedLanguages) {
+                    langSelect.innerHTML = '<option value=\"\">（語言清單未定義）</option>';
+                    return;
+                }
+                const list = window.schoolDB.getSupportedLanguages() || [];
+                if (list.length === 0) {
+                    langSelect.innerHTML = '<option value=\"\">（語言清單為空）</option>';
+                    return;
+                }
+                langSelect.innerHTML = '';
+                list.forEach(function (lang) {
+                    const opt = document.createElement('option');
+                    opt.value = lang.code;
+                    opt.textContent = lang.name + ' (' + lang.code + ')';
+                    langSelect.appendChild(opt);
+                });
+
+                const current = (window.schoolDB.data && window.schoolDB.data.metadata && window.schoolDB.data.metadata.defaultLanguage) || '';
+                if (current) {
+                    langSelect.value = current;
+                }
+            }
+
+            btnSaveOrg.addEventListener('click', function () {
+                if (!window.schoolDB || !window.schoolDB.setDefaultOrganization) {
+                    alert('SchoolMasterDatabase 未提供 setDefaultOrganization。');
+                    return;
+                }
+                const val = orgSelect.value;
+                if (!val) {
+                    alert('請先選擇一個組織／校區。');
+                    return;
+                }
+                try {
+                    window.schoolDB.setDefaultOrganization(Number(val));
+                    statusEl.textContent = '✅ 已更新預設校區。';
+                } catch (e) {
+                    console.error(e);
+                    statusEl.textContent = '❌ 更新預設校區失敗：' + e.message;
+                }
+            });
+
+            btnSaveLang.addEventListener('click', function () {
+                if (!window.schoolDB || !window.schoolDB.setDefaultLanguage) {
+                    alert('SchoolMasterDatabase 未提供 setDefaultLanguage。');
+                    return;
+                }
+                const val = langSelect.value;
+                if (!val) {
+                    alert('請先選擇一個語言。');
+                    return;
+                }
+                try {
+                    window.schoolDB.setDefaultLanguage(val);
+                    statusEl.textContent = '✅ 已更新預設語言。';
+                } catch (e) {
+                    console.error(e);
+                    statusEl.textContent = '❌ 更新預設語言失敗：' + e.message;
+                }
+            });
+
+            loadOrganizations();
+            loadLanguages();
+        }
+
+        function initHtmlEditor() {
+            const keyInput = document.getElementById('editorKey');
+            const editor = document.getElementById('htmlEditor');
+            const btnLoad = document.getElementById('btnLoadContent');
+            const btnSave = document.getElementById('btnSaveContent');
+            const btnPreview = document.getElementById('btnPreviewContent');
+            const btnClear = document.getElementById('btnClearContent');
+            const previewBox = document.getElementById('previewBox');
+            const statusEl = document.getElementById('editorStatus');
+
+            function getStorageKey() {
+                const base = (keyInput.value || '').trim();
+                if (!base) return null;
+                return 'school_html_editor_' + base;
+            }
+
+            btnLoad.addEventListener('click', function () {
+                const storageKey = getStorageKey();
+                if (!storageKey) {
+                    alert('請先輸入「內容代碼」。建議格式例如：school_intro_zh-Hant。');
+                    return;
+                }
+                const val = localStorage.getItem(storageKey);
+                if (val == null) {
+                    editor.value = '';
+                    statusEl.textContent = 'ℹ 尚未有任何內容，請編輯後按「儲存」。';
+                } else {
+                    editor.value = val;
+                    statusEl.textContent = '✅ 已從 localStorage 載入內容。';
+                }
+            });
+
+            btnSave.addEventListener('click', function () {
+                const storageKey = getStorageKey();
+                if (!storageKey) {
+                    alert('請先輸入「內容代碼」。');
+                    return;
+                }
+                localStorage.setItem(storageKey, editor.value || '');
+                statusEl.textContent = '✅ 已儲存到 localStorage（key: ' + storageKey + '）。';
+            });
+
+            btnPreview.addEventListener('click', function () {
+                previewBox.innerHTML = editor.value || '<span style="color:#999;">（目前沒有內容）</span>';
+            });
+
+            btnClear.addEventListener('click', function () {
+                const storageKey = getStorageKey();
+                if (!storageKey) {
+                    alert('請先輸入「內容代碼」。');
+                    return;
+                }
+                if (confirm('確定要清除此代碼在 localStorage 中的內容嗎？')) {
+                    localStorage.removeItem(storageKey);
+                    statusEl.textContent = '✅ 已自 localStorage 刪除此代碼的內容。';
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            ensureReady();
+            initExportImport();
+            initOrgAndLanguageSettings();
+            initHtmlEditor();
+        });
+    </script>
+</body>
+</html>
+

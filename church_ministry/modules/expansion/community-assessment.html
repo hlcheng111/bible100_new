@@ -1,0 +1,121 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>社区调研 - 雷达图分析 · Community Assessment | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%); padding: 20px; font-size: 11px; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+        .header h1 { font-size: 26px; background: linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .chart-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+        .chart-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; text-align: center; }
+        
+        .survey-list { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); margin-top: 20px; }
+        .survey-item { background: linear-gradient(135deg, #e0f7fa 0%, #e1f5fe 100%); border-left: 4px solid #00C9FF; padding: 15px; border-radius: 8px; margin-bottom: 12px; }
+        
+        .load-btn { display: block; margin: 20px auto; padding: 15px 30px; background: linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%); color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container">
+        <div class="header">
+            <h1>📡 社区需求调研 - 雷达图分析</h1>
+            <p style="color:#7f8c8d;margin-top:10px;">🎯 多维度需求分析 · 优先级评估 · 数据可视化</p>
+        </div>
+        
+        <button class="load-btn" onclick="loadDemo()" id="loadBtn">🎯 载入调研数据（5个社区·8个维度）</button>
+        
+        <div class="content">
+            <div class="chart-card">
+                <div class="chart-title">📊 社区需求雷达图</div>
+                <canvas id="radarChart" width="400" height="400"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">📈 优先级分布</div>
+                <canvas id="barChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+        
+        <div class="survey-list">
+            <h2 style="font-size:20px;font-weight:600;margin-bottom:15px;">📋 调研项目清单</h2>
+            <div id="surveyList"></div>
+        </div>
+    </div>
+    
+    <script>
+        let surveys = [];
+        let radarChart = null;
+        let barChart = null;
+        
+        function loadDemo() {
+            surveys = [
+                {area:'东区', topic:'长者照顾', findings:'65岁以上35%，需日间照顾', priority:'高', score:85},
+                {area:'西区', topic:'青少年课辅', findings:'双薪家庭多，需课后照顾', priority:'中', score:70},
+                {area:'南区', topic:'新移民语言', findings:'新移民需国语/英语培训', priority:'高', score:80},
+                {area:'北区', topic:'失业职训', findings:'失业率高，需职业培训', priority:'中', score:65},
+                {area:'中心', topic:'心理辅导', findings:'心理压力大，需辅导服务', priority:'高', score:90}
+            ];
+            
+            renderCharts();
+            renderList();
+            document.getElementById('loadBtn').style.display = 'none';
+        }
+        
+        function renderCharts() {
+            // Radar Chart
+            const radarCtx = document.getElementById('radarChart');
+            if (radarChart) radarChart.destroy();
+            radarChart = new Chart(radarCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['长者照顾', '青少年课辅', '新移民语言', '失业职训', '心理辅导', '社区活动', '健康医疗', '环境改善'],
+                    datasets: [{
+                        label: '需求程度',
+                        data: [85, 70, 80, 65, 90, 75, 70, 60],
+                        backgroundColor: 'rgba(0, 201, 255, 0.2)',
+                        borderColor: 'rgba(0, 201, 255, 1)',
+                        pointBackgroundColor: 'rgba(0, 201, 255, 1)'
+                    }]
+                },
+                options: { scales: { r: { beginAtZero: true, max: 100 } } }
+            });
+            
+            // Bar Chart
+            const barCtx = document.getElementById('barChart');
+            if (barChart) barChart.destroy();
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: surveys.map(s => s.area),
+                    datasets: [{
+                        label: '需求分数',
+                        data: surveys.map(s => s.score),
+                        backgroundColor: 'rgba(146, 254, 157, 0.7)',
+                        borderColor: 'rgba(0, 201, 255, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true, max: 100 } } }
+            });
+        }
+        
+        function renderList() {
+            document.getElementById('surveyList').innerHTML = surveys.map(s => `
+                <div class="survey-item">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:5px;">${s.area} - ${s.topic}</div>
+                    <div style="font-size:11px;color:#555;margin-bottom:5px;">📋 发现：${s.findings}</div>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <span style="padding:4px 10px;background:${s.priority==='高'?'#ff5252':'#ffa726'};color:white;border-radius:12px;font-size:10px;font-weight:600;">${s.priority}优先级</span>
+                        <span style="font-size:11px;color:#7f8c8d;">需求分数：${s.score}/100</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

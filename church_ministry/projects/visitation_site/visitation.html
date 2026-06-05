@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>探访关怀管理系统 - 完整版</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: #f5f6fa; color: #2c3e50; font-size: 12px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .header-tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
+        .tab.active { background: white; color: #667eea; font-weight: 600; }
+        .container { max-width: 1800px; margin: 0 auto; padding: 15px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #2c3e50; border-left: 4px solid #667eea; padding-left: 10px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 15px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid; }
+        .stat-card.blue { border-color: #3498db; }
+        .stat-card.green { border-color: #27ae60; }
+        .stat-card.orange { border-color: #e67e22; }
+        .stat-card.red { border-color: #e74c3c; }
+        .stat-card.purple { border-color: #9b59b6; }
+        .stat-card.teal { border-color: #1abc9c; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; }
+        .stat-label { font-size: 10px; color: #7f8c8d; margin-top: 5px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #e67e22; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        table tr:hover { background: #f8f9fa; }
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; margin-right: 5px; }
+        .tag.type-regular { background: #d4edda; color: #155724; }
+        .tag.type-crisis { background: #f8d7da; color: #721c24; }
+        .tag.type-newcomer { background: #cce5ff; color: #004085; }
+        .tag.status-planned { background: #fff3cd; color: #856404; }
+        .tag.status-completed { background: #d4edda; color: #155724; }
+        .tag.status-pending { background: #f8d7da; color: #721c24; }
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #7f8c8d; }
+        .plan-item { background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #667eea; }
+        .plan-item h4 { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+        .plan-item p { font-size: 11px; color: #7f8c8d; }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 15px; }
+        .calendar-day { background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px; min-height: 80px; font-size: 10px; }
+        .calendar-day.has-visit { background: #e3f2fd; border-color: #2196f3; }
+        .calendar-date { font-weight: 600; margin-bottom: 5px; }
+        .calendar-event { background: #667eea; color: white; padding: 2px 5px; border-radius: 3px; margin-top: 3px; font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .alert { padding: 12px; border-radius: 6px; margin-bottom: 15px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤝 探访关怀管理系统 - 完整版</h1>
+        <div class="header-tabs">
+            <button class="tab active" onclick="switchTab('dashboard')">📊 总览</button>
+            <button class="tab" onclick="switchTab('strategy')">🎯 战略规划</button>
+            <button class="tab" onclick="switchTab('schedule')">📅 排程</button>
+            <button class="tab" onclick="switchTab('missions')">🚀 出动</button>
+            <button class="tab" onclick="switchTab('reports')">📈 报表</button>
+            <button class="tab" onclick="switchTab('training')">👥 培训</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Dashboard -->
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card blue"><div class="stat-num" id="stat1">0</div><div class="stat-label">探访同工</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat2">0</div><div class="stat-label">已完成</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat3">0</div><div class="stat-label">计划中</div></div>
+                <div class="stat-card red"><div class="stat-num" id="stat4">0</div><div class="stat-label">逾期</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat5">0</div><div class="stat-label">本月</div></div>
+                <div class="stat-card teal"><div class="stat-num" id="stat6">0%</div><div class="stat-label">完成率</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 本周探访</div><table id="weekTable"><thead><tr><th>日期</th><th>类型</th><th>对象</th><th>状态</th></tr></thead><tbody></tbody></table></div>
+                <div class="card"><div class="card-title">🎯 年度目标</div><canvas id="goalChart" width="400" height="200"></canvas></div>
+            </div>
+        </div>
+        
+        <!-- Strategy -->
+        <div id="tab-strategy" class="tab-content">
+            <div class="card">
+                <div class="card-title">🎯 年度战略规划</div>
+                <button class="btn btn-primary" onclick="showAddGoalModal()">➕ 新增年度目标</button>
+                <table id="goalsTable" style="margin-top:15px;">
+                    <thead><tr><th>类别</th><th>目标</th><th>年度指标</th><th>当前进度</th><th>负责人</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-title">🔄 经常性探访</div>
+                    <p style="font-size:11px;color:#7f8c8d;margin-bottom:10px;">定期关怀固定对象（长者、病弱、独居）</p>
+                    <button class="btn btn-success btn-sm" onclick="showAddPlanModal('regular')">新增计划</button>
+                    <div id="regularPlans" style="margin-top:10px;"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🚨 危机性探访</div>
+                    <p style="font-size:11px;color:#7f8c8d;margin-bottom:10px;">紧急关怀（住院、丧亲、家庭危机）</p>
+                    <button class="btn btn-warning btn-sm" onclick="showAddPlanModal('crisis')">新增计划</button>
+                    <div id="crisisPlans" style="margin-top:10px;"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🆕 新人性探访</div>
+                    <p style="font-size:11px;color:#7f8c8d;margin-bottom:10px;">关怀新朋友（新会友、慕道友）</p>
+                    <button class="btn btn-primary btn-sm" onclick="showAddPlanModal('newcomer')">新增计划</button>
+                    <div id="newcomerPlans" style="margin-top:10px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Schedule -->
+        <div id="tab-schedule" class="tab-content">
+            <div class="card">
+                <div class="card-title">📅 分区分组排程</div>
+                <button class="btn btn-primary" onclick="showAddZoneModal()">➕ 新增区域</button>
+                <button class="btn btn-success" onclick="showAddTeamModal()">➕ 新增小组</button>
+                <button class="btn btn-warning" onclick="autoSchedule()">🤖 智能排程</button>
+                <div id="scheduleCalendar" class="calendar"></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">🗺️ 区域</div><table id="zonesTable"><thead><tr><th>区域</th><th>家庭数</th><th>负责小组</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+                <div class="card"><div class="card-title">👥 小组</div><table id="teamsTable"><thead><tr><th>小组</th><th>组长</th><th>成员</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+            </div>
+        </div>
+        
+        <!-- Missions -->
+        <div id="tab-missions" class="tab-content">
+            <div class="card">
+                <div class="card-title">🚀 出动管理</div>
+                <button class="btn btn-primary" onclick="showAddMissionModal()">➕ 新增出动</button>
+                <button class="btn btn-success" onclick="showMobileReportInfo()">📱 手机汇报</button>
+                <table id="missionsTable" style="margin-top:15px;">
+                    <thead><tr><th>日期</th><th>类型</th><th>对象</th><th>小组</th><th>状态</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Reports -->
+        <div id="tab-reports" class="tab-content">
+            <div class="card">
+                <div class="card-title">📈 数据分析</div>
+                <div class="grid-3">
+                    <button class="btn btn-primary" onclick="generateReport('month')">📅 月度报表</button>
+                    <button class="btn btn-success" onclick="generateReport('quarter')">📊 季度报表</button>
+                    <button class="btn btn-warning" onclick="generateReport('year')">📈 年度报表</button>
+                </div>
+                <canvas id="reportChart" width="800" height="300" style="margin-top:20px;"></canvas>
+            </div>
+        </div>
+        
+        <!-- Training -->
+        <div id="tab-training" class="tab-content">
+            <div class="card">
+                <div class="card-title">👥 人材培训</div>
+                <button class="btn btn-primary" onclick="showAddTrainingModal()">➕ 新增培训</button>
+                <table id="trainingsTable" style="margin-top:15px;">
+                    <thead><tr><th>课程</th><th>日期</th><th>学员</th><th>讲师</th><th>状态</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <div class="card-title">🎓 同工资质</div>
+                <table id="workersTable">
+                    <thead><tr><th>姓名</th><th>培训</th><th>探访次数</th><th>等级</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        let data = {
+            goals: [],
+            plans: [],
+            zones: [],
+            teams: [],
+            missions: [],
+            trainings: [],
+            workers: []
+        };
+        let charts = {};
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            if (data.goals.length === 0) {
+                if (confirm('👋 欢迎！是否载入示例数据？')) loadDemo();
+            }
+            renderAll();
+        });
+        
+        function loadData() {
+            const saved = localStorage.getItem('visitationData');
+            if (saved) data = JSON.parse(saved);
+        }
+        
+        function saveData() {
+            localStorage.setItem('visitationData', JSON.stringify(data));
+        }
+        
+        function loadDemo() {
+            data.goals = [
+                {id:1, category:'经常性', target:'长者关怀', annual:200, current:145, responsible:'李长老'},
+                {id:2, category:'危机性', target:'紧急关怀', annual:50, current:32, responsible:'王传道'},
+                {id:3, category:'新人性', target:'新会友', annual:100, current:68, responsible:'张姊妹'}
+            ];
+            data.plans = [
+                {id:1, type:'regular', name:'长者定期探访', desc:'每月探访65岁以上长者', freq:'每月', targets:50},
+                {id:2, type:'crisis', name:'住院紧急关怀', desc:'会友住院24小时内探访', freq:'随时', targets:20},
+                {id:3, type:'newcomer', name:'新会友首访', desc:'新会友1周内首次探访', freq:'每周', targets:30}
+            ];
+            data.zones = [
+                {id:1, name:'东区', families:45, team:'东区小组'},
+                {id:2, name:'西区', families:38, team:'西区小组'},
+                {id:3, name:'南区', families:52, team:'南区小组'}
+            ];
+            data.teams = [
+                {id:1, name:'东区小组', leader:'王弟兄', members:8},
+                {id:2, name:'西区小组', leader:'李姊妹', members:6},
+                {id:3, name:'南区小组', leader:'张长老', members:10}
+            ];
+            for (let i = 0; i < 15; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+                data.missions.push({
+                    id: i + 1,
+                    date: date.toISOString().split('T')[0],
+                    type: ['regular','crisis','newcomer'][i % 3],
+                    target: `对象${i+1}`,
+                    team: ['东区小组','西区小组','南区小组'][i % 3],
+                    status: i < 10 ? 'completed' : 'planned'
+                });
+            }
+            data.trainings = [
+                {id:1, name:'探访技巧', date:'2025-01-15', students:15, trainer:'李牧师', status:'completed'},
+                {id:2, name:'危机关怀', date:'2025-02-20', students:12, trainer:'王传道', status:'planned'}
+            ];
+            data.workers = [
+                {id:1, name:'王弟兄', trainings:3, visits:28, level:'高级'},
+                {id:2, name:'李姊妹', trainings:2, visits:15, level:'中级'},
+                {id:3, name:'张长老', trainings:5, visits:42, level:'资深'}
+            ];
+            saveData();
+            renderAll();
+        }
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+            if (tab === 'dashboard') renderDashboard();
+            if (tab === 'strategy') renderStrategy();
+            if (tab === 'schedule') renderSchedule();
+            if (tab === 'missions') renderMissions();
+            if (tab === 'reports') renderReports();
+            if (tab === 'training') renderTraining();
+        }
+        
+        function renderAll() {
+            renderDashboard();
+            renderStrategy();
+            renderSchedule();
+            renderMissions();
+            renderTraining();
+        }
+        
+        function renderDashboard() {
+            document.getElementById('stat1').textContent = data.workers.length;
+            document.getElementById('stat2').textContent = data.missions.filter(m => m.status === 'completed').length;
+            document.getElementById('stat3').textContent = data.missions.filter(m => m.status === 'planned').length;
+            document.getElementById('stat4').textContent = data.missions.filter(m => m.status === 'overdue').length;
+            const thisMonth = new Date().getMonth();
+            document.getElementById('stat5').textContent = data.missions.filter(m => new Date(m.date).getMonth() === thisMonth).length;
+            const rate = data.missions.length > 0 ? Math.round((data.missions.filter(m => m.status === 'completed').length / data.missions.length) * 100) : 0;
+            document.getElementById('stat6').textContent = rate + '%';
+            
+            const tbody = document.querySelector('#weekTable tbody');
+            const today = new Date();
+            const weekMissions = data.missions.filter(m => {
+                const diff = (new Date(m.date) - today) / (1000*60*60*24);
+                return diff >= 0 && diff <= 7;
+            }).slice(0, 5);
+            tbody.innerHTML = weekMissions.map(m => `
+                <tr>
+                    <td>${m.date}</td>
+                    <td><span class="tag type-${m.type}">${getTypeText(m.type)}</span></td>
+                    <td>${m.target}</td>
+                    <td><span class="tag status-${m.status}">${getStatusText(m.status)}</span></td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" style="text-align:center;color:#7f8c8d;">本周暂无探访</td></tr>';
+            
+            const ctx = document.getElementById('goalChart');
+            if (charts.goalChart) charts.goalChart.destroy();
+            charts.goalChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.goals.map(g => g.target),
+                    datasets: [{
+                        label: '当前',
+                        data: data.goals.map(g => g.current),
+                        backgroundColor: 'rgba(102,126,234,0.7)'
+                    }, {
+                        label: '目标',
+                        data: data.goals.map(g => g.annual),
+                        backgroundColor: 'rgba(118,75,162,0.7)'
+                    }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        }
+        
+        function renderStrategy() {
+            const tbody = document.querySelector('#goalsTable tbody');
+            tbody.innerHTML = data.goals.map(g => `
+                <tr>
+                    <td>${g.category}</td>
+                    <td>${g.target}</td>
+                    <td>${g.annual}次</td>
+                    <td>
+                        <div class="progress-bar"><div class="progress-fill" style="width:${(g.current/g.annual*100)}%"></div></div>
+                        ${g.current}/${g.annual} (${Math.round(g.current/g.annual*100)}%)
+                    </td>
+                    <td>${g.responsible}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editGoal(${g.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteGoal(${g.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" style="text-align:center;color:#7f8c8d;">暂无目标，点击"新增年度目标"</td></tr>';
+            
+            ['regular','crisis','newcomer'].forEach(type => {
+                const plans = data.plans.filter(p => p.type === type);
+                const container = document.getElementById(type + 'Plans');
+                container.innerHTML = plans.map(p => `
+                    <div class="plan-item">
+                        <h4>${p.name}</h4>
+                        <p>${p.desc} · ${p.freq} · 年度${p.targets}次</p>
+                        <button class="btn btn-sm btn-danger" onclick="deletePlan(${p.id})" style="margin-top:5px;">删除</button>
+                    </div>
+                `).join('') || '<p style="font-size:11px;color:#7f8c8d;margin-top:10px;">暂无计划</p>';
+            });
+        }
+        
+        function renderSchedule() {
+            const tbody1 = document.querySelector('#zonesTable tbody');
+            tbody1.innerHTML = data.zones.map(z => `
+                <tr>
+                    <td>${z.name}</td>
+                    <td>${z.families}户</td>
+                    <td>${z.team}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editZone(${z.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteZone(${z.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" style="text-align:center;color:#7f8c8d;">暂无区域</td></tr>';
+            
+            const tbody2 = document.querySelector('#teamsTable tbody');
+            tbody2.innerHTML = data.teams.map(t => `
+                <tr>
+                    <td>${t.name}</td>
+                    <td>${t.leader}</td>
+                    <td>${t.members}人</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editTeam(${t.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteTeam(${t.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" style="text-align:center;color:#7f8c8d;">暂无小组</td></tr>';
+            
+            renderCalendar();
+        }
+        
+        function renderCalendar() {
+            const container = document.getElementById('scheduleCalendar');
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDay = firstDay.getDay();
+            
+            let html = '';
+            ['日','一','二','三','四','五','六'].forEach(day => {
+                html += `<div style="font-weight:600;text-align:center;padding:5px;">${day}</div>`;
+            });
+            
+            for (let i = 0; i < startDay; i++) html += '<div class="calendar-day"></div>';
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const dayMissions = data.missions.filter(m => m.date === dateStr);
+                html += `
+                    <div class="calendar-day ${dayMissions.length > 0 ? 'has-visit' : ''}">
+                        <div class="calendar-date">${day}</div>
+                        ${dayMissions.map(m => `<div class="calendar-event">${m.team}</div>`).join('')}
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+        
+        function renderMissions() {
+            const tbody = document.querySelector('#missionsTable tbody');
+            tbody.innerHTML = data.missions.map(m => `
+                <tr>
+                    <td>${m.date}</td>
+                    <td><span class="tag type-${m.type}">${getTypeText(m.type)}</span></td>
+                    <td>${m.target}</td>
+                    <td>${m.team}</td>
+                    <td><span class="tag status-${m.status}">${getStatusText(m.status)}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="submitReport(${m.id})">汇报</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteMission(${m.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" style="text-align:center;color:#7f8c8d;">暂无出动记录</td></tr>';
+        }
+        
+        function renderReports() {
+            const ctx = document.getElementById('reportChart');
+            if (charts.reportChart) charts.reportChart.destroy();
+            
+            const months = ['1月','2月','3月','4月','5月','6月'];
+            const counts = months.map((m, i) => data.missions.filter(mission => new Date(mission.date).getMonth() === i).length);
+            
+            charts.reportChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '探访次数',
+                        data: counts,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102,126,234,0.1)',
+                        fill: true
+                    }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        }
+        
+        function renderTraining() {
+            const tbody1 = document.querySelector('#trainingsTable tbody');
+            tbody1.innerHTML = data.trainings.map(t => `
+                <tr>
+                    <td>${t.name}</td>
+                    <td>${t.date}</td>
+                    <td>${t.students}人</td>
+                    <td>${t.trainer}</td>
+                    <td><span class="tag status-${t.status}">${t.status==='completed'?'已完成':'计划中'}</span></td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteTraining(${t.id})">删除</button></td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" style="text-align:center;color:#7f8c8d;">暂无培训</td></tr>';
+            
+            const tbody2 = document.querySelector('#workersTable tbody');
+            tbody2.innerHTML = data.workers.map(w => `
+                <tr>
+                    <td>${w.name}</td>
+                    <td>${w.trainings}门</td>
+                    <td>${w.visits}次</td>
+                    <td><span class="tag type-${w.level==='资深'?'regular':'crisis'}">${w.level}</span></td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" style="text-align:center;color:#7f8c8d;">暂无同工</td></tr>';
+        }
+        
+        function getTypeText(type) {
+            return {regular:'经常性', crisis:'危机性', newcomer:'新人性'}[type] || type;
+        }
+        
+        function getStatusText(status) {
+            return {completed:'已完成', planned:'计划中', overdue:'逾期'}[status] || status;
+        }
+        
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `<div class="modal-header">${title}</div>${content}`;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        function showAddGoalModal() {
+            showModal('➕ 新增年度目标', `
+                <div class="form-group"><label class="form-label">目标类别</label><select id="goalCategory" class="form-select"><option>经常性</option><option>危机性</option><option>新人性</option></select></div>
+                <div class="form-group"><label class="form-label">具体目标</label><input type="text" id="goalTarget" class="form-input" placeholder="例如：长者关怀"></div>
+                <div class="form-group"><label class="form-label">年度指标（次数）</label><input type="number" id="goalAnnual" class="form-input" value="100"></div>
+                <div class="form-group"><label class="form-label">当前进度</label><input type="number" id="goalCurrent" class="form-input" value="0"></div>
+                <div class="form-group"><label class="form-label">负责人</label><input type="text" id="goalResponsible" class="form-input" placeholder="例如：李长老"></div>
+                <button class="btn btn-primary" onclick="addGoal()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addGoal() {
+            const goal = {
+                id: Date.now(),
+                category: document.getElementById('goalCategory').value,
+                target: document.getElementById('goalTarget').value,
+                annual: parseInt(document.getElementById('goalAnnual').value),
+                current: parseInt(document.getElementById('goalCurrent').value),
+                responsible: document.getElementById('goalResponsible').value
+            };
+            if (!goal.target) return alert('请填写具体目标');
+            data.goals.push(goal);
+            saveData();
+            renderStrategy();
+            closeModal();
+            alert('✅ 年度目标已添加！');
+        }
+        
+        function deleteGoal(id) {
+            if (confirm('确定删除此目标？')) {
+                data.goals = data.goals.filter(g => g.id !== id);
+                saveData();
+                renderStrategy();
+            }
+        }
+        
+        function showAddPlanModal(type) {
+            showModal(`➕ 新增${getTypeText(type)}探访计划`, `
+                <div class="form-group"><label class="form-label">计划名称</label><input type="text" id="planName" class="form-input" placeholder="例如：长者定期探访"></div>
+                <div class="form-group"><label class="form-label">计划描述</label><textarea id="planDesc" class="form-textarea" placeholder="详细说明探访对象和内容"></textarea></div>
+                <div class="form-group"><label class="form-label">频率</label><select id="planFreq" class="form-select"><option>每周</option><option>每月</option><option>每季</option><option>随时</option></select></div>
+                <div class="form-group"><label class="form-label">年度目标次数</label><input type="number" id="planTargets" class="form-input" value="50"></div>
+                <button class="btn btn-primary" onclick="addPlan('${type}')">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addPlan(type) {
+            const plan = {
+                id: Date.now(),
+                type: type,
+                name: document.getElementById('planName').value,
+                desc: document.getElementById('planDesc').value,
+                freq: document.getElementById('planFreq').value,
+                targets: parseInt(document.getElementById('planTargets').value)
+            };
+            if (!plan.name) return alert('请填写计划名称');
+            data.plans.push(plan);
+            saveData();
+            renderStrategy();
+            closeModal();
+            alert('✅ 探访计划已添加！');
+        }
+        
+        function deletePlan(id) {
+            if (confirm('确定删除此计划？')) {
+                data.plans = data.plans.filter(p => p.id !== id);
+                saveData();
+                renderStrategy();
+            }
+        }
+        
+        function showAddZoneModal() {
+            showModal('➕ 新增区域', `
+                <div class="form-group"><label class="form-label">区域名称</label><input type="text" id="zoneName" class="form-input" placeholder="例如：东区"></div>
+                <div class="form-group"><label class="form-label">家庭数量</label><input type="number" id="zoneFamilies" class="form-input" value="50"></div>
+                <div class="form-group"><label class="form-label">负责小组</label><select id="zoneTeam" class="form-select">${data.teams.map(t => `<option>${t.name}</option>`).join('')}</select></div>
+                <button class="btn btn-primary" onclick="addZone()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addZone() {
+            const zone = {
+                id: Date.now(),
+                name: document.getElementById('zoneName').value,
+                families: parseInt(document.getElementById('zoneFamilies').value),
+                team: document.getElementById('zoneTeam').value
+            };
+            if (!zone.name) return alert('请填写区域名称');
+            data.zones.push(zone);
+            saveData();
+            renderSchedule();
+            closeModal();
+            alert('✅ 区域已添加！');
+        }
+        
+        function deleteZone(id) {
+            if (confirm('确定删除此区域？')) {
+                data.zones = data.zones.filter(z => z.id !== id);
+                saveData();
+                renderSchedule();
+            }
+        }
+        
+        function showAddTeamModal() {
+            showModal('➕ 新增小组', `
+                <div class="form-group"><label class="form-label">小组名称</label><input type="text" id="teamName" class="form-input" placeholder="例如：东区小组"></div>
+                <div class="form-group"><label class="form-label">组长</label><input type="text" id="teamLeader" class="form-input" placeholder="例如：王弟兄"></div>
+                <div class="form-group"><label class="form-label">成员数量</label><input type="number" id="teamMembers" class="form-input" value="8"></div>
+                <button class="btn btn-primary" onclick="addTeam()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addTeam() {
+            const team = {
+                id: Date.now(),
+                name: document.getElementById('teamName').value,
+                leader: document.getElementById('teamLeader').value,
+                members: parseInt(document.getElementById('teamMembers').value)
+            };
+            if (!team.name) return alert('请填写小组名称');
+            data.teams.push(team);
+            saveData();
+            renderSchedule();
+            closeModal();
+            alert('✅ 小组已添加！');
+        }
+        
+        function deleteTeam(id) {
+            if (confirm('确定删除此小组？')) {
+                data.teams = data.teams.filter(t => t.id !== id);
+                saveData();
+                renderSchedule();
+            }
+        }
+        
+        function showAddMissionModal() {
+            showModal('➕ 新增出动计划', `
+                <div class="form-group"><label class="form-label">出动日期</label><input type="date" id="missionDate" class="form-input"></div>
+                <div class="form-group"><label class="form-label">探访类型</label><select id="missionType" class="form-select"><option value="regular">经常性</option><option value="crisis">危机性</option><option value="newcomer">新人性</option></select></div>
+                <div class="form-group"><label class="form-label">探访对象</label><input type="text" id="missionTarget" class="form-input" placeholder="例如：王姊妹"></div>
+                <div class="form-group"><label class="form-label">负责小组</label><select id="missionTeam" class="form-select">${data.teams.map(t => `<option>${t.name}</option>`).join('')}</select></div>
+                <button class="btn btn-primary" onclick="addMission()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addMission() {
+            const mission = {
+                id: Date.now(),
+                date: document.getElementById('missionDate').value,
+                type: document.getElementById('missionType').value,
+                target: document.getElementById('missionTarget').value,
+                team: document.getElementById('missionTeam').value,
+                status: 'planned'
+            };
+            if (!mission.date || !mission.target) return alert('请填写完整信息');
+            data.missions.push(mission);
+            saveData();
+            renderMissions();
+            renderSchedule();
+            closeModal();
+            alert('✅ 出动计划已添加！');
+        }
+        
+        function deleteMission(id) {
+            if (confirm('确定删除此出动记录？')) {
+                data.missions = data.missions.filter(m => m.id !== id);
+                saveData();
+                renderMissions();
+                renderSchedule();
+            }
+        }
+        
+        function submitReport(id) {
+            showModal('📝 提交探访汇报', `
+                <div class="form-group"><label class="form-label">汇报人</label><input type="text" id="reporter" class="form-input" placeholder="您的姓名"></div>
+                <div class="form-group"><label class="form-label">探访内容</label><textarea id="reportContent" class="form-textarea" placeholder="请详细记录探访情况、对象状况、代祷事项等"></textarea></div>
+                <button class="btn btn-success" onclick="saveReport(${id})">提交汇报</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function saveReport(id) {
+            const reporter = document.getElementById('reporter').value;
+            const content = document.getElementById('reportContent').value;
+            if (!reporter || !content) return alert('请填写完整信息');
+            
+            const mission = data.missions.find(m => m.id === id);
+            if (mission) mission.status = 'completed';
+            
+            saveData();
+            renderMissions();
+            renderDashboard();
+            closeModal();
+            alert('✅ 探访汇报已提交！');
+        }
+        
+        function showAddTrainingModal() {
+            showModal('➕ 新增培训课程', `
+                <div class="form-group"><label class="form-label">课程名称</label><input type="text" id="trainingName" class="form-input" placeholder="例如：探访技巧基础"></div>
+                <div class="form-group"><label class="form-label">培训日期</label><input type="date" id="trainingDate" class="form-input"></div>
+                <div class="form-group"><label class="form-label">学员人数</label><input type="number" id="trainingStudents" class="form-input" value="15"></div>
+                <div class="form-group"><label class="form-label">讲师</label><input type="text" id="trainingTrainer" class="form-input" placeholder="例如：李牧师"></div>
+                <button class="btn btn-primary" onclick="addTraining()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addTraining() {
+            const training = {
+                id: Date.now(),
+                name: document.getElementById('trainingName').value,
+                date: document.getElementById('trainingDate').value,
+                students: parseInt(document.getElementById('trainingStudents').value),
+                trainer: document.getElementById('trainingTrainer').value,
+                status: 'planned'
+            };
+            if (!training.name || !training.date) return alert('请填写完整信息');
+            data.trainings.push(training);
+            saveData();
+            renderTraining();
+            closeModal();
+            alert('✅ 培训课程已添加！');
+        }
+        
+        function deleteTraining(id) {
+            if (confirm('确定删除此培训？')) {
+                data.trainings = data.trainings.filter(t => t.id !== id);
+                saveData();
+                renderTraining();
+            }
+        }
+        
+        function autoSchedule() {
+            if (data.zones.length === 0 || data.teams.length === 0) {
+                return alert('⚠️ 请先添加区域和小组！');
+            }
+            if (confirm('🤖 智能排程将根据区域、小组和历史数据自动生成最优排程。\n\n是否继续？')) {
+                const today = new Date();
+                for (let i = 0; i < 4; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() + (i * 7));
+                    data.teams.forEach(team => {
+                        data.missions.push({
+                            id: Date.now() + i * 100 + team.id,
+                            date: date.toISOString().split('T')[0],
+                            type: 'regular',
+                            target: `自动排程-${team.name}`,
+                            team: team.name,
+                            status: 'planned'
+                        });
+                    });
+                }
+                saveData();
+                renderSchedule();
+                renderMissions();
+                alert('✅ 智能排程完成！已生成未来4周的探访计划。');
+            }
+        }
+        
+        function showMobileReportInfo() {
+            showModal('📱 手机汇报入口', `
+                <div class="alert alert-info">
+                    <strong>📱 移动端汇报说明</strong><br><br>
+                    同工可通过以下方式提交探访汇报：<br><br>
+                    <strong>1. 扫描二维码：</strong><br>
+                    <div style="width:200px;height:200px;background:#f8f9fa;margin:15px 0;display:flex;align-items:center;justify-content:center;border-radius:8px;">
+                        <span style="font-size:48px;">📱</span>
+                    </div>
+                    <strong>2. 访问链接：</strong><br>
+                    <input type="text" class="form-input" value="https://church.com/visitation/report" readonly style="margin:10px 0;">
+                    <br><br>
+                    <strong>3. 微信小程序：</strong><br>
+                    搜索"教会探访管理"
+                </div>
+                <button class="btn btn-primary" onclick="closeModal()">知道了</button>
+            `);
+        }
+        
+        function generateReport(period) {
+            const periodText = {month:'月度', quarter:'季度', year:'年度'}[period];
+            alert(`📊 正在生成${periodText}报表...\n\n报表将包含：\n• 探访统计总览\n• 目标完成情况\n• 小组绩效排名\n• 同工服事统计\n• 趋势分析图表\n\n报表生成后可导出为Excel或PDF格式。`);
+        }
+        
+        window.onclick = (e) => {
+            if (e.target.id === 'modal') closeModal();
+        };
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教會 CRM 登入 · Cloud Login</title>
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <style>
+    body { margin: 0; font-family: var(--cm-font, "Microsoft YaHei", sans-serif); background: #f0f4ff; }
+    .wrap { max-width: 420px; margin: 3rem auto; padding: 1.5rem; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    h1 { font-size: 1.1rem; margin: 0 0 1rem; color: #312e81; }
+    label { display: block; font-size: 12px; margin: 10px 0 4px; }
+    input { width: 100%; padding: 8px 10px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; }
+    button { margin-top: 14px; width: 100%; padding: 10px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .hint { font-size: 11px; color: #64748b; margin-top: 12px; line-height: 1.5; }
+    #msg { margin-top: 10px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <nav class="cm-back-bar">
+    <a class="cm-back-bar__link" href="../dashboard.html">⛪ 返回儀表板</a>
+  </nav>
+  <div class="wrap">
+    <h1>教會 CRM 登入（RBAC demo）</h1>
+    <label>帳號</label>
+    <input id="user" value="pastor" autocomplete="username">
+    <label>密碼</label>
+    <input id="pass" type="password" value="demo123" autocomplete="current-password">
+    <button type="button" id="btnLogin">登入</button>
+    <button type="button" id="btnApiLogin" style="margin-top:8px;background:#0f766e;">以本機 API 登入</button>
+    <p class="hint">示範帳號：pastor / admin / leader / volunteer / viewer，密碼皆 <code>demo123</code>。<br>
+      啟用 API：先執行 <code>node scripts/church_api_local_server.js</code>，並在 <code>cloud_config.js</code> 設 <code>USE_API=true</code>、<code>API_BASE_URL=http://127.0.0.1:8787</code>、<code>REQUIRE_AUTH=true</code>。</p>
+    <div id="msg"></div>
+  </div>
+  <script src="../../js/cloud_config.js"></script>
+  <script src="../../js/cloud_api.js"></script>
+  <script src="../../js/church_auth.js"></script>
+  <script>
+    function showMsg(t, ok) {
+      var el = document.getElementById('msg');
+      el.textContent = t;
+      el.style.color = ok ? '#166534' : '#b91c1c';
+    }
+    document.getElementById('btnLogin').onclick = function () {
+      var r = ChurchAuth.loginLocal(document.getElementById('user').value, document.getElementById('pass').value);
+      if (r.ok) {
+        showMsg('已登入：' + r.session.display_name + '（' + r.session.role + '）', true);
+      } else {
+        showMsg(r.error || '登入失敗', false);
+      }
+    };
+    document.getElementById('btnApiLogin').onclick = function () {
+      var cfg = window.CHURCH_CLOUD_CONFIG || {};
+      if (!cfg.USE_API || !cfg.API_BASE_URL) {
+        showMsg('請先在 cloud_config.js 啟用 USE_API 與 API_BASE_URL', false);
+        return;
+      }
+      churchCloudFetch('/api/auth/login', {
+        method: 'POST',
+        body: { username: document.getElementById('user').value, password: document.getElementById('pass').value }
+      }).then(function (data) {
+        var r = ChurchAuth.loginWithApiResponse(data);
+        if (r.ok) showMsg('API 登入成功：' + r.session.role, true);
+        else showMsg(r.error, false);
+      }).catch(function (e) {
+        showMsg(String(e.message || e), false);
+      });
+    };
+  </script>
+</body>
+</html>

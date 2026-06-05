@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生報表 - Student Reports</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>📋 學生報表 · Student Reports</h1>
+        <p>學生總覽、班級分布、匯出</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 主日學負責人、行政同工。</p>
+            <p><b>有什麼功能？</b> 學生總數、班級分布、匯出 CSV。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📊 概覽</div>
+        <div class="stats-row">
+            <div class="stat-pill"><div class="stat-num" id="statTotal">0</div><div class="stat-label">學生總數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statClasses">0</div><div class="stat-label">班級數</div></div>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📋 按班級分布</div>
+        <div id="reportTable"></div>
+        <button class="module-btn" id="exp">📤 匯出分布 CSV</button>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        function load() {
+            if (!window.schoolDB) return;
+            if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+            const s = window.schoolDB.data.students || [];
+            const map = {};
+            s.forEach(x => map[x.class_id || '未分班'] = (map[x.class_id || '未分班'] || 0) + 1);
+            const arr = Object.entries(map).map(([k, v]) => ({ class_id: k, count: v })).sort((a, b) => +a.class_id - +b.class_id);
+
+            document.getElementById('statTotal').textContent = s.length;
+            document.getElementById('statClasses').textContent = arr.length;
+
+            let html = arr.length ? '<table class="module-table"><thead><tr><th>班級</th><th>人數</th></tr></thead><tbody>' + arr.map(x => '<tr><td>' + x.class_id + '</td><td>' + x.count + '</td></tr>').join('') + '</tbody></table>' : '<div class="empty-state">尚無資料</div>';
+            document.getElementById('reportTable').innerHTML = html;
+
+            document.getElementById('exp').onclick = function(e) {
+                e.preventDefault();
+                const head = 'class_id,count', body = arr.map(x => x.class_id + ',' + x.count).join('\n');
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([head + '\n' + body], { type: 'text/csv' }));
+                a.download = 'student_by_class.csv';
+                a.click();
+            };
+        }
+        document.addEventListener('DOMContentLoaded', load);
+    </script>
+</body>
+</html>

@@ -1,0 +1,640 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教育培訓管理 · Education Management | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">教育培訓管理</h1>
+        
+        <!-- 統計概覽 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">總課程數</h3>
+                <p class="text-3xl font-bold text-blue-600" id="totalCourses">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">總學員數</h3>
+                <p class="text-3xl font-bold text-green-600" id="totalStudents">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">進行中課程</h3>
+                <p class="text-3xl font-bold text-purple-600" id="ongoingCourses">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">完成率</h3>
+                <p class="text-3xl font-bold text-orange-600" id="completionRate">0%</p>
+            </div>
+        </div>
+
+        <!-- 主要功能區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 課程管理 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold">課程管理</h3>
+                            <button onclick="showAddCourseModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                新增課程
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="coursesList" class="space-y-4">
+                            <!-- 課程列表將在這裡動態生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 側邊欄 -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">快速操作</h4>
+                    <button onclick="showAddStudentModal()" class="w-full bg-green-600 text-white py-3 px-4 rounded hover:bg-green-700 mb-3">
+                        新增學員
+                    </button>
+                    <button onclick="showTrainingPlanModal()" class="w-full bg-purple-600 text-white py-3 px-4 rounded hover:bg-purple-700 mb-3">
+                        培訓計劃
+                    </button>
+                    <button onclick="exportEducationData()" class="w-full bg-gray-600 text-white py-3 px-4 rounded hover:bg-gray-700">
+                        匯出數據
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">最近課程</h4>
+                    <div id="recentCourses">
+                        <!-- 最近課程將在這裡動態生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 課程模態框 -->
+    <div id="courseModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4" id="courseModalTitle">新增課程</h3>
+                <form id="courseForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">課程標題</label>
+                        <input type="text" id="courseTitle" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">課程描述</label>
+                        <textarea id="courseDescription" rows="3" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">講師</label>
+                        <input type="text" id="courseInstructor" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">時長</label>
+                        <input type="text" id="courseDuration" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">開始日期</label>
+                        <input type="date" id="courseStartDate" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">結束日期</label>
+                        <input type="date" id="courseEndDate" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">最大學員數</label>
+                        <input type="number" id="courseMaxStudents" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">狀態</label>
+                        <select id="courseStatus" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            <option value="planned">計劃中</option>
+                            <option value="ongoing">進行中</option>
+                            <option value="completed">已完成</option>
+                            <option value="cancelled">已取消</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeCourseModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">取消</button>
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 學員模態框 -->
+    <div id="studentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4" id="studentModalTitle">新增學員</h3>
+                <form id="studentForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">姓名</label>
+                        <input type="text" id="studentName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">電子郵件</label>
+                        <input type="email" id="studentEmail" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">電話</label>
+                        <input type="tel" id="studentPhone" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">加入日期</label>
+                        <input type="date" id="studentJoinDate" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">狀態</label>
+                        <select id="studentStatus" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            <option value="active">活躍</option>
+                            <option value="inactive">非活躍</option>
+                            <option value="graduated">已畢業</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeStudentModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">取消</button>
+                        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 培訓計劃模態框 -->
+    <div id="trainingPlanModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">培訓計劃</h3>
+                <form id="trainingPlanForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">計劃名稱</label>
+                        <input type="text" id="planName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">目標學員</label>
+                        <select id="planTarget" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            <option value="newbelievers">新信徒</option>
+                            <option value="leaders">領袖</option>
+                            <option value="youth">青年</option>
+                            <option value="adults">成人</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">計劃時長</label>
+                        <input type="text" id="planDuration" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">開始日期</label>
+                        <input type="date" id="planStartDate" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">備註</label>
+                        <textarea id="planNotes" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeTrainingPlanModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">取消</button>
+                        <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 基本數據結構
+        let courses = [];
+        let students = [];
+        let enrollments = [];
+        let trainingPlans = [];
+        let editingCourseId = null;
+        let editingStudentId = null;
+
+        // 頁面載入
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setupEventListeners();
+            loadDemoData();
+            renderData();
+        });
+
+        // 設置事件監聽器
+        function setupEventListeners() {
+            document.getElementById('courseForm').addEventListener('submit', handleCourseSubmit);
+            document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
+            document.getElementById('trainingPlanForm').addEventListener('submit', handleTrainingPlanSubmit);
+        }
+
+        // 載入數據
+        function loadData() {
+            courses = JSON.parse(localStorage.getItem('educationCourses')) || [];
+            students = JSON.parse(localStorage.getItem('educationStudents')) || [];
+            enrollments = JSON.parse(localStorage.getItem('educationEnrollments')) || [];
+            trainingPlans = JSON.parse(localStorage.getItem('educationTrainingPlans')) || [];
+        }
+
+        // 保存數據
+        function saveData() {
+            localStorage.setItem('educationCourses', JSON.stringify(courses));
+            localStorage.setItem('educationStudents', JSON.stringify(students));
+            localStorage.setItem('educationEnrollments', JSON.stringify(enrollments));
+            localStorage.setItem('educationTrainingPlans', JSON.stringify(trainingPlans));
+        }
+
+        // 載入演示數據
+        function loadDemoData() {
+            if (courses.length === 0) {
+                courses = [
+                    {
+                        id: '1',
+                        title: '聖經基礎課程',
+                        description: '聖經基本知識和教義學習',
+                        instructor: '陳牧師',
+                        duration: '12週',
+                        maxStudents: 30,
+                        status: 'ongoing',
+                        startDate: '2024-01-01',
+                        endDate: '2024-03-25',
+                        currentStudents: 25
+                    },
+                    {
+                        id: '2',
+                        title: '教會歷史',
+                        description: '了解教會發展歷程和重要事件',
+                        instructor: '李牧師',
+                        duration: '8週',
+                        maxStudents: 25,
+                        status: 'planned',
+                        startDate: '2024-04-01',
+                        endDate: '2024-05-27',
+                        currentStudents: 0
+                    },
+                    {
+                        id: '3',
+                        title: '禱告生活',
+                        description: '建立個人禱告生活的實踐課程',
+                        instructor: '王傳道',
+                        duration: '6週',
+                        maxStudents: 20,
+                        status: 'completed',
+                        startDate: '2023-10-01',
+                        endDate: '2023-11-12',
+                        currentStudents: 18
+                    }
+                ];
+            }
+
+            if (students.length === 0) {
+                students = [
+                    {
+                        id: '1',
+                        name: '張弟兄',
+                        email: 'zhang@example.com',
+                        phone: '0912-345-678',
+                        joinDate: '2024-01-01',
+                        status: 'active'
+                    },
+                    {
+                        id: '2',
+                        name: '李姊妹',
+                        email: 'li@example.com',
+                        phone: '0923-456-789',
+                        joinDate: '2024-01-15',
+                        status: 'active'
+                    },
+                    {
+                        id: '3',
+                        name: '王弟兄',
+                        email: 'wang@example.com',
+                        phone: '0934-567-890',
+                        joinDate: '2023-12-01',
+                        status: 'graduated'
+                    }
+                ];
+            }
+
+            if (trainingPlans.length === 0) {
+                trainingPlans = [
+                    {
+                        id: '1',
+                        name: '新信徒成長計劃',
+                        target: 'newbelievers',
+                        duration: '6個月',
+                        startDate: '2024-01-01',
+                        notes: '幫助新信徒建立信仰基礎'
+                    }
+                ];
+            }
+
+            saveData();
+        }
+
+        // 渲染數據
+        function renderData() {
+            renderCoursesList();
+            renderRecentCourses();
+            updateStatistics();
+        }
+
+        // 渲染課程列表
+        function renderCoursesList() {
+            const coursesList = document.getElementById('coursesList');
+            if (courses.length === 0) {
+                coursesList.innerHTML = '<p class="text-gray-500 text-center py-8">暫無課程</p>';
+                return;
+            }
+
+            coursesList.innerHTML = courses.map(course => `
+                <div class="border rounded-lg p-4 bg-white">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <h4 class="font-semibold text-lg">${course.title}</h4>
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(course.status)}">
+                                    ${getStatusText(course.status)}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${course.description}</p>
+                            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                                <div><span class="font-medium">講師:</span> ${course.instructor}</div>
+                                <div><span class="font-medium">時長:</span> ${course.duration}</div>
+                                <div><span class="font-medium">開始:</span> ${course.startDate}</div>
+                                <div><span class="font-medium">結束:</span> ${course.endDate}</div>
+                                <div><span class="font-medium">學員:</span> ${course.currentStudents}/${course.maxStudents}</div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2 ml-4">
+                            <button onclick="editCourse('${course.id}')" class="text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-300 rounded hover:bg-blue-50">編輯</button>
+                            <button onclick="deleteCourse('${course.id}')" class="text-red-600 hover:text-red-800 px-3 py-1 border border-red-300 rounded hover:bg-red-50">刪除</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染最近課程
+        function renderRecentCourses() {
+            const recentDiv = document.getElementById('recentCourses');
+            const recent = courses
+                .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+                .slice(0, 3);
+
+            if (recent.length === 0) {
+                recentDiv.innerHTML = '<p class="text-gray-500 text-sm">暫無課程</p>';
+                return;
+            }
+
+            recentDiv.innerHTML = recent.map(course => `
+                <div class="border-l-4 border-blue-500 pl-3 mb-3">
+                    <h5 class="font-medium text-sm">${course.title}</h5>
+                    <p class="text-xs text-gray-600">${course.startDate} - ${course.endDate}</p>
+                    <p class="text-xs text-gray-600">講師：${course.instructor}</p>
+                </div>
+            `).join('');
+        }
+
+        // 更新統計
+        function updateStatistics() {
+            document.getElementById('totalCourses').textContent = courses.length;
+            document.getElementById('totalStudents').textContent = students.length;
+            document.getElementById('ongoingCourses').textContent = courses.filter(c => c.status === 'ongoing').length;
+            
+            const completedCourses = courses.filter(c => c.status === 'completed').length;
+            const completionRate = courses.length > 0 ? Math.round((completedCourses / courses.length) * 100) : 0;
+            document.getElementById('completionRate').textContent = `${completionRate}%`;
+        }
+
+        // 獲取狀態顏色
+        function getStatusColor(status) {
+            switch (status) {
+                case 'planned': return 'bg-yellow-100 text-yellow-800';
+                case 'ongoing': return 'bg-blue-100 text-blue-800';
+                case 'completed': return 'bg-green-100 text-green-800';
+                case 'cancelled': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        // 獲取狀態文字
+        function getStatusText(status) {
+            switch (status) {
+                case 'planned': return '計劃中';
+                case 'ongoing': return '進行中';
+                case 'completed': return '已完成';
+                case 'cancelled': return '已取消';
+                default: return '未知';
+            }
+        }
+
+        // 課程模態框操作
+        function showAddCourseModal() {
+            editingCourseId = null;
+            document.getElementById('courseModalTitle').textContent = '新增課程';
+            document.getElementById('courseForm').reset();
+            document.getElementById('courseModal').classList.remove('hidden');
+        }
+
+        function closeCourseModal() {
+            document.getElementById('courseModal').classList.add('hidden');
+        }
+
+        function editCourse(id) {
+            const course = courses.find(c => c.id === id);
+            if (!course) return;
+
+            editingCourseId = id;
+            document.getElementById('courseModalTitle').textContent = '編輯課程';
+            document.getElementById('courseTitle').value = course.title;
+            document.getElementById('courseDescription').value = course.description;
+            document.getElementById('courseInstructor').value = course.instructor;
+            document.getElementById('courseDuration').value = course.duration;
+            document.getElementById('courseStartDate').value = course.startDate;
+            document.getElementById('courseEndDate').value = course.endDate;
+            document.getElementById('courseMaxStudents').value = course.maxStudents;
+            document.getElementById('courseStatus').value = course.status;
+
+            document.getElementById('courseModal').classList.remove('hidden');
+        }
+
+        function deleteCourse(id) {
+            if (confirm('確定要刪除這個課程嗎？')) {
+                courses = courses.filter(c => c.id !== id);
+                saveData();
+                renderData();
+            }
+        }
+
+        // 學員模態框操作
+        function showAddStudentModal() {
+            editingStudentId = null;
+            document.getElementById('studentModalTitle').textContent = '新增學員';
+            document.getElementById('studentForm').reset();
+            document.getElementById('studentModal').classList.remove('hidden');
+        }
+
+        function closeStudentModal() {
+            document.getElementById('studentModal').classList.add('hidden');
+        }
+
+        function editStudent(id) {
+            const student = students.find(s => s.id === id);
+            if (!student) return;
+
+            editingStudentId = id;
+            document.getElementById('studentModalTitle').textContent = '編輯學員';
+            document.getElementById('studentName').value = student.name;
+            document.getElementById('studentEmail').value = student.email;
+            document.getElementById('studentPhone').value = student.phone;
+            document.getElementById('studentJoinDate').value = student.joinDate;
+            document.getElementById('studentStatus').value = student.status;
+
+            document.getElementById('studentModal').classList.remove('hidden');
+        }
+
+        function deleteStudent(id) {
+            if (confirm('確定要刪除這個學員嗎？')) {
+                students = students.filter(s => s.id !== id);
+                saveData();
+                renderData();
+            }
+        }
+
+        // 培訓計劃模態框操作
+        function showTrainingPlanModal() {
+            document.getElementById('trainingPlanForm').reset();
+            document.getElementById('trainingPlanModal').classList.remove('hidden');
+        }
+
+        function closeTrainingPlanModal() {
+            document.getElementById('trainingPlanModal').classList.add('hidden');
+        }
+
+        // 處理表單提交
+        function handleCourseSubmit(e) {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('courseTitle').value,
+                description: document.getElementById('courseDescription').value,
+                instructor: document.getElementById('courseInstructor').value,
+                duration: document.getElementById('courseDuration').value,
+                startDate: document.getElementById('courseStartDate').value,
+                endDate: document.getElementById('courseEndDate').value,
+                maxStudents: parseInt(document.getElementById('courseMaxStudents').value),
+                status: document.getElementById('courseStatus').value,
+                currentStudents: 0
+            };
+
+            if (editingCourseId) {
+                // 編輯現有記錄
+                const index = courses.findIndex(c => c.id === editingCourseId);
+                if (index !== -1) {
+                    courses[index] = { ...courses[index], ...formData };
+                }
+            } else {
+                // 新增記錄
+                formData.id = Date.now().toString();
+                courses.push(formData);
+            }
+
+            saveData();
+            renderData();
+            closeCourseModal();
+        }
+
+        function handleStudentSubmit(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('studentName').value,
+                email: document.getElementById('studentEmail').value,
+                phone: document.getElementById('studentPhone').value,
+                joinDate: document.getElementById('studentJoinDate').value,
+                status: document.getElementById('studentStatus').value
+            };
+
+            if (editingStudentId) {
+                // 編輯現有記錄
+                const index = students.findIndex(s => s.id === editingStudentId);
+                if (index !== -1) {
+                    students[index] = { ...students[index], ...formData };
+                }
+            } else {
+                // 新增記錄
+                formData.id = Date.now().toString();
+                students.push(formData);
+            }
+
+            saveData();
+            renderData();
+            closeStudentModal();
+        }
+
+        function handleTrainingPlanSubmit(e) {
+            e.preventDefault();
+            
+            const formData = {
+                id: Date.now().toString(),
+                name: document.getElementById('planName').value,
+                target: document.getElementById('planTarget').value,
+                duration: document.getElementById('planDuration').value,
+                startDate: document.getElementById('planStartDate').value,
+                notes: document.getElementById('planNotes').value
+            };
+
+            trainingPlans.push(formData);
+            saveData();
+            closeTrainingPlanModal();
+            alert('培訓計劃已保存！');
+        }
+
+        // 匯出數據
+        function exportEducationData() {
+            const csvContent = generateEducationCSV();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `教育培訓數據_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 生成教育培訓CSV
+        function generateEducationCSV() {
+            const courseHeaders = ['課程ID', '課程標題', '描述', '講師', '時長', '開始日期', '結束日期', '最大學員數', '狀態', '當前學員數'];
+            const courseRows = courses.map(c => [
+                c.id, c.title, c.description, c.instructor, c.duration, 
+                c.startDate, c.endDate, c.maxStudents, getStatusText(c.status), c.currentStudents
+            ]);
+            
+            const studentHeaders = ['學員ID', '姓名', '電子郵件', '電話', '加入日期', '狀態'];
+            const studentRows = students.map(s => [
+                s.id, s.name, s.email, s.phone, s.joinDate, s.status
+            ]);
+            
+            const allData = [
+                ['=== 課程數據 ==='],
+                courseHeaders,
+                ...courseRows,
+                [''],
+                ['=== 學員數據 ==='],
+                studentHeaders,
+                ...studentRows
+            ];
+            
+            return allData.map(row => row.map(field => `"${field || ''}"`).join(',')).join('
+');
+        }
+    </script>
+</body>
+</html>

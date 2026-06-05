@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RACI 角色反思｜教會規劃</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    /* 對齊戰情 dashboard：內文 13px、輔助 12px、區塊標 1.05rem */
+    .raci-reflect-page { font-size: 13px; line-height: 1.55; color: #1a2a3a; }
+    .raci-reflect-page .step-head-mini { margin-bottom: 10px; }
+    .raci-section-title {
+      margin: 0 0 8px; font-size: 1.05rem; font-weight: 700; color: #0d2137; line-height: 1.35;
+    }
+    .raci-body-text { margin: 0 0 10px; font-size: 13px; color: #334155; line-height: 1.55; }
+    .raci-body-text:last-child { margin-bottom: 0; }
+    .raci-dash-muted { font-size: 12px; color: #5c6478; line-height: 1.5; }
+
+    /* 路線圖（與分頁一一對應，可點選） */
+    .raci-flow-wrap { margin-bottom: 14px; }
+    .raci-flow-tip {
+      margin: 0 0 10px; font-size: 12px; color: var(--muted); line-height: 1.5;
+      padding: 8px 10px; background: #fafcff; border-radius: 8px; border-left: 4px solid var(--accent);
+    }
+    .raci-flow {
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch;
+      margin: 0; padding: 10px; list-style: none;
+      background: #fff; border: 1px solid var(--line); border-radius: 10px;
+    }
+    .raci-flow-step {
+      flex: 1 1 104px; min-width: 92px; margin: 0; padding: 10px 8px; border-radius: 8px;
+      border: 2px solid transparent; cursor: pointer; font: inherit; text-align: center;
+      transition: box-shadow .15s ease, transform .1s ease;
+    }
+    .raci-flow-step:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08); }
+    .raci-flow-step:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .raci-flow-step.is-current {
+      box-shadow: 0 0 0 2px #0b5fa5, 0 6px 16px rgba(11, 95, 165, 0.18);
+      border-color: #0b5fa5;
+    }
+    .raci-flow-num { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.04em; opacity: 0.85; margin-bottom: 2px; }
+    .raci-flow-lbl { display: block; font-size: 13px; font-weight: 800; line-height: 1.25; }
+    .raci-flow-hint { display: block; font-size: 11px; font-weight: 600; color: #475569; margin-top: 4px; line-height: 1.3; }
+    .raci-flow--why { background: linear-gradient(180deg, #e8f4fd 0%, #dbeafe 100%); border-color: #93c5fd; }
+    .raci-flow--pain { background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%); border-color: #fcd34d; }
+    .raci-flow--survey { background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%); border-color: #34d399; }
+    .raci-flow--theology { background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%); border-color: #a78bfa; }
+    .raci-flow--tools { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); border-color: #94a3b8; }
+    .raci-flow-badge { display: inline-block; margin-top: 4px; font-size: 10px; font-weight: 800; color: #047857; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #6ee7b7; }
+
+    /* 分頁列 */
+    .raci-tabstrip {
+      display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; padding: 0;
+      border-bottom: 2px solid var(--line); padding-bottom: 10px;
+    }
+    .raci-tabstrip button {
+      margin: 0; padding: 8px 12px; font-size: 13px; font-weight: 700;
+      border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--muted);
+      cursor: pointer; font-family: inherit; line-height: 1.3;
+    }
+    .raci-tabstrip button:hover { border-color: var(--accent); color: #0f172a; }
+    .raci-tabstrip button.is-active {
+      background: var(--accent); color: #fff !important; border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(11, 95, 165, 0.2);
+    }
+    .raci-tabstrip button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .raci-panel { margin-bottom: 20px; }
+    .raci-panel[hidden] { display: none !important; }
+
+    .raci-10s {
+      border-radius: 12px; padding: 16px 14px; margin-bottom: 18px;
+      background: linear-gradient(125deg, #1e3a5f 0%, #0b5fa5 55%, #1565a8 100%); color: #fff;
+      box-shadow: 0 6px 18px rgba(11, 95, 165, 0.22);
+    }
+    .raci-10s h1 { margin: 0 0 8px; font-size: 1.05rem; line-height: 1.35; font-weight: 800; }
+    .raci-10s-grid { display: grid; gap: 10px; }
+    @media (min-width: 560px) { .raci-10s-grid { grid-template-columns: 1fr 1fr 1fr; } }
+    .raci-10s-card {
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.35); border-radius: 10px; padding: 10px 10px; font-size: 12px; line-height: 1.5;
+    }
+    .raci-10s-card strong { display: block; font-size: 10px; letter-spacing: 0.05em; opacity: 0.95; margin-bottom: 4px; color: #fde68a; }
+
+    .raci-warm {
+      background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 12px 12px; margin-bottom: 14px;
+      font-size: 13px; line-height: 1.6; color: #1a2a3a;
+    }
+    .raci-warm strong { color: #92400e; }
+
+    .raci-privacy {
+      background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 12px 12px; margin-bottom: 14px; font-size: 13px; line-height: 1.55; color: #14532d;
+    }
+    .raci-privacy label { display: flex; gap: 10px; align-items: flex-start; font-weight: 700; cursor: pointer; }
+    .raci-privacy input { width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0; }
+
+    .raci-survey-hot {
+      margin: 0 0 14px; padding: 12px 14px; border-radius: 10px;
+      background: linear-gradient(90deg, #ecfdf5 0%, #f0fdf4 50%, #fff 100%);
+      border: 1px solid #6ee7b7; border-left-width: 4px; border-left-color: #059669;
+      font-size: 13px; line-height: 1.55; color: #14532d;
+    }
+    .raci-survey-hot strong { color: #047857; }
+
+    details.raci-tech { margin: 12px 0 0; font-size: 13px; color: #166534; }
+    details.raci-tech summary { cursor: pointer; font-weight: 700; color: #15803d; }
+
+    .raci-type-grid { display: grid; gap: 12px; grid-template-columns: 1fr; margin: 14px 0 6px; }
+    @media (min-width: 600px) { .raci-type-grid { grid-template-columns: 1fr 1fr; } }
+    .raci-type-card {
+      border-radius: 10px; padding: 14px 12px 12px; border: 2px solid transparent;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    }
+    .raci-type-card .ico { font-size: 1.5rem; line-height: 1; margin-bottom: 6px; }
+    .raci-type-card h3 { margin: 0 0 6px; font-size: 1rem; }
+    .raci-type-card p { margin: 0; font-size: 13px; color: #334155; line-height: 1.55; }
+
+    .raci-t-A { background: #eff6ff; border-color: #2563eb; }
+    .raci-t-B { background: #fff7ed; border-color: #ea580c; }
+    .raci-t-C { background: #fef2f2; border-color: #dc2626; }
+    .raci-t-D { background: #f0fdf4; border-color: #16a34a; }
+
+    .raci-demo-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+    .raci-demo-table th, .raci-demo-table td { border: 1px solid var(--line); padding: 8px 6px; text-align: left; }
+    .raci-demo-table th { background: #e8f4fd; color: #0b5fa5; font-weight: 700; }
+
+    .raci-cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; align-items: center; }
+    .raci-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 14px; font-size: 12px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer;
+      transition: filter .15s ease, transform .1s ease; font-family: inherit;
+    }
+    .raci-btn:active { transform: scale(0.98); }
+    .raci-btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(11, 95, 165, 0.25); }
+    .raci-btn-primary:hover { filter: brightness(1.05); }
+    .raci-btn-secondary { background: #fff; color: var(--accent); border: 2px solid var(--accent) !important; box-shadow: none; }
+    .raci-btn-ghost { background: #f8fafc; color: #334155; border: 1px solid #cbd5e1 !important; box-shadow: none; }
+
+    .raci-fieldset {
+      border: none; border-radius: 10px; padding: 14px 12px 12px; margin-bottom: 14px;
+      border: 1px solid var(--line);
+    }
+    .raci-fieldset legend { font-size: 0.95rem; font-weight: 800; padding: 0 6px; }
+    .raci-fs-A { background: #eff6ff; border-color: #93c5fd !important; }
+    .raci-fs-B { background: #fff7ed; border-color: #fdba74 !important; }
+    .raci-fs-C { background: #fef2f2; border-color: #fca5a5 !important; }
+    .raci-fs-D { background: #f0fdf4; border-color: #86efac !important; }
+
+    .raci-lamp-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 12px; flex-wrap: wrap; }
+    .raci-lamp-label { font-size: 12px; font-weight: 800; color: #475569; }
+    .raci-lamp-dots { display: flex; gap: 6px; }
+    .raci-lamp-dot {
+      width: 16px; height: 16px; border-radius: 50%; background: #e2e8f0; border: 2px solid #cbd5e1;
+    }
+    .raci-lamp-dot.is-on { background: #fbbf24; border-color: #d97706; box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.35); transform: scale(1.05); }
+    .raci-fs-A .raci-lamp-dot.is-on { background: #60a5fa; border-color: #1d4ed8; box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.35); }
+    .raci-fs-B .raci-lamp-dot.is-on { background: #fb923c; border-color: #c2410c; box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.3); }
+    .raci-fs-C .raci-lamp-dot.is-on { background: #f87171; border-color: #b91c1c; box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.3); }
+    .raci-fs-D .raci-lamp-dot.is-on { background: #4ade80; border-color: #15803d; box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.3); }
+
+    .raci-q { margin: 8px 0; font-size: 13px; line-height: 1.55; padding: 8px 10px; background: rgba(255,255,255,0.85); border-radius: 8px; border: 1px solid rgba(148, 163, 184, 0.35); }
+    .raci-q input { width: 20px; height: 20px; margin-right: 10px; vertical-align: middle; }
+    .raci-q label { cursor: pointer; font-weight: 600; }
+
+    .raci-meta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+    .raci-meta-row > div label { display: block; font-weight: 700; margin-bottom: 5px; color: #334155; font-size: 13px; }
+    .raci-meta-row select { min-width: 180px; padding: 10px 8px; font-size: 14px; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+
+    #raci-result { border-radius: 10px; padding: 14px 12px; background: #fff; border: 1px solid var(--line); min-height: 80px; font-size: 13px; line-height: 1.6; margin-top: 14px; }
+    .raci-result-hero { font-size: 1.02rem; font-weight: 800; color: #0b5fa5; margin: 0 0 8px; line-height: 1.35; }
+    .raci-lamp-cards { display: grid; gap: 10px; margin: 12px 0; }
+    @media (min-width: 560px) { .raci-lamp-cards { grid-template-columns: 1fr 1fr; } }
+    .raci-result-card { border-radius: 10px; padding: 12px; font-weight: 700; border: 2px solid #e2e8f0; font-size: 13px; }
+    .raci-result-card.is-lit { border-width: 2px; }
+    .raci-result-card.is-priority { outline: 3px solid #fbbf24; outline-offset: 1px; }
+    .raci-muted { color: var(--muted); font-size: 13px; }
+
+    details.raci-advanced { margin-top: 16px; border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; background: #fafcff; }
+    details.raci-advanced summary { cursor: pointer; font-weight: 800; color: #475569; font-size: 14px; }
+
+    details.raci-axis-tech {
+      margin: 0 0 10px; font-size: 12px; color: #475569; border: 1px dashed #cbd5e1;
+      border-radius: 8px; padding: 6px 10px; background: rgba(255,255,255,0.6);
+    }
+    details.raci-axis-tech summary { cursor: pointer; font-weight: 700; color: #64748b; font-size: 12px; }
+    details.raci-axis-tech p { margin: 8px 0 0; line-height: 1.55; }
+
+    #raci-restore-banner { display: none; margin-bottom: 10px; padding: 10px 12px; border-radius: 10px; background: #fef3c7; border: 1px solid #f59e0b; font-weight: 700; color: #92400e; font-size: 12px; }
+    #raci-restore-banner button { margin-left: 8px; padding: 6px 12px; font-weight: 800; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; }
+
+    .raci-theology-wrap .section h2 { font-size: 1.05rem; }
+    .raci-theology-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .raci-theology-wrap th, .raci-theology-wrap td { border: 1px solid var(--line); padding: 8px; text-align: left; }
+    .raci-theology-wrap thead tr { background: #e8f4fd; }
+
+    .raci-survey-locate {
+      margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; background: #fff;
+      border: 1px solid var(--line); font-size: 13px; line-height: 1.55; color: #1a2a3a;
+    }
+    .raci-survey-locate strong { color: var(--accent); }
+    .raci-survey-before {
+      margin: 0 0 14px; padding: 12px 14px; border-radius: 10px; background: #fafcff;
+      border: 1px solid #c5d9f0; font-size: 13px; line-height: 1.65; color: #334155;
+    }
+    .raci-survey-before ul { margin: 8px 0 0; padding-left: 1.15rem; }
+    .raci-meta-hints {
+      margin: 0 0 16px; padding: 12px 14px; border-radius: 10px; background: #f8fafc;
+      border: 1px solid #e2e8f0; font-size: 12px; line-height: 1.55; color: #475569;
+    }
+    .raci-meta-hints dt { font-weight: 800; color: #334155; margin-top: 8px; }
+    .raci-meta-hints dt:first-child { margin-top: 0; }
+    .raci-meta-hints dd { margin: 4px 0 0; padding: 0; }
+    .raci-theology-lead {
+      margin: 0 0 12px; padding: 10px 12px; border-radius: 10px;
+      background: linear-gradient(90deg, #f5f3ff 0%, #faf5ff 100%);
+      border: 1px solid #ddd6fe; font-size: 12px; line-height: 1.55; color: #4c1d95;
+    }
+
+    .raci-pain-expand { margin-top: 14px; }
+    .raci-pain-expand h3 {
+      margin: 16px 0 6px; font-size: 0.95rem; font-weight: 800; color: #0d2137; border-bottom: 1px solid var(--line); padding-bottom: 4px;
+    }
+    .raci-pain-expand h3:first-child { margin-top: 0; }
+    .raci-pain-map {
+      margin: 12px 0; padding: 10px 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; line-height: 1.5;
+    }
+    .raci-pain-map strong { color: #0b5fa5; }
+    .raci-survey-phase {
+      margin: 0 0 14px; padding: 12px 14px; border-radius: 10px; background: #fffbeb;
+      border: 1px solid #fcd34d; font-size: 13px; line-height: 1.6; color: #78350f;
+    }
+    .raci-survey-phase ul { margin: 8px 0 0; padding-left: 1.15rem; }
+    .raci-result-preface {
+      margin: 0 0 10px; padding: 10px 12px; border-radius: 8px; background: #f0fdf4;
+      border: 1px solid #86efac; font-size: 13px; line-height: 1.55; color: #14532d;
+    }
+  </style>
+</head>
+<body>
+  <script src="assets/shell.js"></script>
+  <div class="planning-wrap raci-reflect-page">
+    <div class="step-head-mini">
+      <h2>RACI 角色反思</h2>
+      <a class="step-head-back" href="index.html">← 流程總覽</a>
+    </div>
+
+    <div id="raci-restore-banner" role="status"></div>
+
+    <div class="raci-flow-wrap">
+      <p class="raci-flow-tip">
+        <strong>使用路線</strong>（與下方分頁同步）：由左而右為建議順序。多數同工會<strong>直接點綠色「診斷問卷」</strong>；需要背景時再回頭看藍、黃兩格。
+      </p>
+      <nav class="raci-flow" aria-label="建議順序與分頁捷徑">
+        <button type="button" class="raci-flow-step raci-flow--why is-current" data-flow="why" aria-current="step">
+          <span class="raci-flow-num">①</span>
+          <span class="raci-flow-lbl">定位</span>
+          <span class="raci-flow-hint">為什麼需要</span>
+        </button>
+        <button type="button" class="raci-flow-step raci-flow--pain" data-flow="pain">
+          <span class="raci-flow-num">②</span>
+          <span class="raci-flow-lbl">對照</span>
+          <span class="raci-flow-hint">痛點四型</span>
+        </button>
+        <button type="button" class="raci-flow-step raci-flow--survey" data-flow="survey">
+          <span class="raci-flow-num">③</span>
+          <span class="raci-flow-lbl">診斷</span>
+          <span class="raci-flow-hint">問卷＋結果</span>
+          <span class="raci-flow-badge">最常用</span>
+        </button>
+        <button type="button" class="raci-flow-step raci-flow--theology" data-flow="theology">
+          <span class="raci-flow-num">④</span>
+          <span class="raci-flow-lbl">延伸</span>
+          <span class="raci-flow-hint">聖經與神學</span>
+        </button>
+        <button type="button" class="raci-flow-step raci-flow--tools" data-flow="tools">
+          <span class="raci-flow-num">⑤</span>
+          <span class="raci-flow-lbl">下載</span>
+          <span class="raci-flow-hint">模板·戰情</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="report-dest-strip report-dest-strip--hero">
+      <span class="report-dest-icon" aria-hidden="true">🧭</span>
+      <span><strong>走完會得到什麼：</strong>①②幫團隊用同一套話描述現場 → ③產出一段可複製的文字（帶去會議或 PDCA）→ ④補神學與經文 → ⑤連到戰情與流程。第一次來若時間緊，可先點<strong>「診斷問卷」</strong>，再回頭讀①②。</span>
+    </div>
+
+    <div class="raci-tabstrip" role="tablist" aria-label="RACI 分頁">
+      <button type="button" role="tab" id="raci-tabbtn-why" aria-controls="raci-tab-why" aria-selected="true" class="is-active" style="font-size:12px;">為什麼需要</button>
+      <button type="button" role="tab" id="raci-tabbtn-pain" aria-controls="raci-tab-pain" aria-selected="false" style="font-size:12px;">痛點四型</button>
+      <button type="button" role="tab" id="raci-tabbtn-survey" aria-controls="raci-tab-survey" aria-selected="false" style="font-size:12px;">診斷問卷</button>
+      <button type="button" role="tab" id="raci-tabbtn-theology" aria-controls="raci-tab-theology" aria-selected="false" style="font-size:12px;">聖經與神學</button>
+      <button type="button" role="tab" id="raci-tabbtn-tools" aria-controls="raci-tab-tools" aria-selected="false" style="font-size:12px;">實作與下載</button>
+    </div>
+
+    <section id="raci-tab-why" class="raci-panel" role="tabpanel" aria-labelledby="raci-tabbtn-why">
+      <header class="raci-10s">
+        <h1>為什麼教會需要 RACI？<br><span style="font-size:12px;opacity:.95;font-weight:600;line-height:1.45;">不是商界玩具，是減少誤會與過勞的<strong>共同語言</strong>。上方路線圖與本分頁同步。</span></h1>
+        <div class="raci-10s-grid">
+          <div class="raci-10s-card"><strong>我在哪裡？</strong>五年計畫裡的「執行檢查」—接在 SWOT／SMART 之後、PDCA 的 Check 之前最合用。</div>
+          <div class="raci-10s-card"><strong>我要做什麼？</strong>用 16 題勾選，看團隊在「決策、承擔、張力、負擔」上是否有需要一起留意的訊號（不是考試、不替人貼標籤）。</div>
+          <div class="raci-10s-card"><strong>能幫我什麼？</strong>產出一段可複製的文字，帶去會議或貼進 PDCA，減少把內部權責誤寫成外在威脅。</div>
+        </div>
+      </header>
+
+      <p class="raci-body-text" style="margin-bottom:12px;">
+        這個工具是為了<strong>配搭五年計畫</strong>：在 SWOT／SMART 之後、進入 <strong>PDCA 的 Check</strong> 階段時，檢查「權責分工」是否健康—避免把內部協調問題誤寫成外在威脅，也避免少數人默默扛完全部執行。
+      </p>
+
+      <div class="fill-zone">
+        <h2 class="fill-zone-title">三個問題（約 1 分鐘自問）</h2>
+        <p class="fill-zone-hint">帶長執讀這三句，再決定要不要進問卷。</p>
+        <ul style="margin:0;padding-left:1.15rem;font-size:13px;line-height:1.6;color:#334155;">
+          <li><strong>我們在哪裡？</strong>計畫是檢討期、新年度起步，還是某個事工剛好卡關？</li>
+          <li><strong>我們遇到什麼痛點？</strong>例如：明明有人做，卻常聽到「怎麼沒人管」；會議有決議，落地時不知道誰當責。</li>
+          <li><strong>RACI 能做什麼？</strong>用一張表把<strong>誰執行（R）、誰當責（A）、誰被諮詢（C）、誰被知會（I）</strong>說清楚；每項任務<strong>A 只能有一個</strong>。</li>
+        </ul>
+      </div>
+
+      <h2 class="raci-section-title">主日崇拜：新朋友接待（30 秒例子）</h2>
+      <p class="raci-dash-muted" style="margin:0 0 8px;">任務：主日接待新朋友動線。以下職稱可依教會改寫，重點是<strong>角色功能</strong>。</p>
+      <table class="raci-demo-table">
+        <thead><tr><th>任務</th><th>R 執行</th><th>A 當責</th><th>C 諮詢</th><th>I 知會</th></tr></thead>
+        <tbody>
+          <tr><td>新朋友接待動線</td><td>招待隊（可多人）</td><td>行政同工<strong>（唯一 A）</strong></td><td>牧師</td><td>小組長群組</td></tr>
+        </tbody>
+      </table>
+      <p class="raci-dash-muted" style="margin:0 0 14px;">若 A 放錯或缺位，就容易出現「痛點四型」裡的混亂—到下一個分頁用故事對照。</p>
+
+      <p class="raci-dash-muted" style="margin:0 0 12px;">技術細節（本機儲存鍵名、清除方式）收在「實作與下載」分頁的摺疊區。</p>
+      <div class="raci-cta-row">
+        <button type="button" class="raci-btn raci-btn-primary" id="raci-from-why-to-pain">第一次使用：先看「教會常見痛點」</button>
+        <button type="button" class="raci-btn raci-btn-secondary" id="raci-from-why-to-survey">我已有概念，直接去診斷問卷</button>
+      </div>
+    </section>
+
+    <section id="raci-tab-pain" class="raci-panel" role="tabpanel" aria-labelledby="raci-tabbtn-pain" hidden>
+      <div class="raci-warm">
+        <strong>先跟你說聲謝謝。</strong>願意思考權責與界線，是愛教會、顧念同工的表現。這裡<strong>不是績效考核</strong>、<strong>不是檢舉箱</strong>；沒有「做錯了」的紅字，只有「我們可以怎麼一起走下一步」。
+      </div>
+      <h2 class="raci-section-title">四種「錯配」訊號（對應診斷問卷四軸）</h2>
+      <p class="raci-dash-muted" style="margin:0 0 12px;">先讓同工在<strong>故事與經文</strong>裡認出自己的處境；願意對照了，再到「診斷問卷」用 16 題把感受說成可討論的語言。</p>
+      <div class="raci-type-grid">
+        <div class="raci-type-card raci-t-A"><div class="ico" aria-hidden="true">🟦</div><h3>越權（掃羅型）</h3><p><strong>一句：</strong>急著自己拍板，繞過應被尊重的流程與同工。<strong>聖經：</strong>撒上 13。</p></div>
+        <div class="raci-type-card raci-t-B"><div class="ico" aria-hidden="true">🟧</div><h3>缺位（亞倫型）</h3><p><strong>一句：</strong>該有人承擔時退縮，變成「大家都看看」。<strong>聖經：</strong>出 32。</p></div>
+        <div class="raci-type-card raci-t-C"><div class="ico" aria-hidden="true">🟥</div><h3>奪權（可拉型）</h3><p><strong>一句：</strong>對安排感到不快，容易繞過正式渠道、左右決策。<strong>聖經：</strong>民 16。</p></div>
+        <div class="raci-type-card raci-t-D"><div class="ico" aria-hidden="true">🟩</div><h3>過勞（馬大型）</h3><p><strong>一句：</strong>執行負擔壓在少數人身上，缺少分擔與替補。<strong>聖經：</strong>路 10。</p></div>
+      </div>
+
+      <div class="raci-pain-expand">
+        <h3>越權：少數人掌控所有決策與細節</h3>
+        <p class="raci-body-text" style="margin:0 0 8px;">長執會上有人拍板，會後卻發現細節全被另一個聲音大的人改寫；其他人只剩「執行」，沒有諮詢與知會的界線。</p>
+        <p class="raci-dash-muted" style="margin:0 0 8px;"><strong>經文：</strong>掃羅在撒母耳未到前獻祭（撒上 13）—急於「把事情做完」，卻繞過神所立的次序。</p>
+        <p class="raci-dash-muted" style="margin:0;"><strong>RACI 幫忙：</strong>把 <strong>A</strong> 固定在合宜的屬靈權柄與會議決議上；<strong>R</strong> 專心執行、<strong>C</strong> 在關鍵處被找進來、<strong>I</strong> 知道進度—避免「誰大聲誰說了算」。</p>
+
+        <h3>缺位：出事時大家都說「我以為是他負責」</h3>
+        <p class="raci-body-text" style="margin:0 0 8px;">金牛犢事件中，眾人推著走，該站出來說「不可」的領袖卻沒有扛住當責的底線。</p>
+        <p class="raci-dash-muted" style="margin:0 0 8px;"><strong>經文：</strong>出 32—亞倫在群眾壓力前退縮，沒有履行應有的 <strong>A</strong> 角色。</p>
+        <p class="raci-dash-muted" style="margin:0;"><strong>RACI 幫忙：</strong>每個任務<strong>只能有一個 A</strong>；A 缺位時，團隊一眼就看見「誰要向上帝交帳、誰要在會議裡承擔拍板」，而不是互相張望。</p>
+
+        <h3>奪權：不在正式結構裡的人，用影響力左右決策</h3>
+        <p class="raci-body-text" style="margin:0 0 8px;">檯面上是某部門負責，檯面下卻有「第三條線」在串聯、放話、使絆子；決策被拖著走。</p>
+        <p class="raci-dash-muted" style="margin:0 0 8px;"><strong>經文：</strong>民 16 可拉一黨—對神所立的代表存疑，用集體壓力重塑權力地圖。</p>
+        <p class="raci-dash-muted" style="margin:0;"><strong>RACI 幫忙：</strong>把「誰在 C」「誰只是 I」寫清楚，減少黑箱；當有人想繞過 <strong>A</strong>，可以用表上白紙黑字回到合宜程序。</p>
+
+        <h3>過勞：忠心的人變成萬用救火隊，沒有 backup</h3>
+        <p class="raci-body-text" style="margin:0 0 8px;">同一批人週週扛主日、活動、行政；別人不是不願意，而是不知道「何時輪到我站 R」。</p>
+        <p class="raci-dash-muted" style="margin:0 0 8px;"><strong>經文：</strong>路 10 馬大忙亂—服事熱心卻失衡，需要主重新校準優先次序。</p>
+        <p class="raci-dash-muted" style="margin:0;"><strong>RACI 幫忙：</strong>讓 <strong>R</strong> 可以多人、可以輪替；看見永遠同一個名字填滿 R 欄，就是該調整分工的訊號。</p>
+      </div>
+
+      <div class="raci-pain-map">
+        <strong>對照小抄（主日例子）：</strong>若「新朋友接待」的 <strong>A</strong> 不明或掛在錯的人身上，容易出現<strong>缺位</strong>（沒人收尾）或<strong>越權</strong>（誰都可以改流程）；若 <strong>R</strong> 永遠同一小群人，長期會往<strong>過勞</strong>靠攏。
+      </div>
+
+      <h2 class="raci-section-title">30 秒範例：主日兩件事（RACI 長相）</h2>
+      <table class="raci-demo-table">
+        <thead><tr><th>任務</th><th>R 執行</th><th>A 當責</th><th>C 諮詢</th><th>I 知會</th></tr></thead>
+        <tbody>
+          <tr><td>新朋友接待動線</td><td>招待隊</td><td>行政同工</td><td>牧師</td><td>小組長</td></tr>
+          <tr><td>敬拜排練</td><td>敬拜團</td><td>敬拜部長</td><td>音控</td><td>牧師</td></tr>
+        </tbody>
+      </table>
+      <p class="raci-dash-muted" style="margin:0;">R 可以多人；每個任務的 A <strong>只保留一個</strong>。職稱不同沒關係，對齊四種角色功能即可。</p>
+      <p class="raci-dash-muted" style="margin:10px 0 0;">想從經文與治理角度再讀一遍，請開「<strong>聖經與神學</strong>」分頁；舊書籤 <code>raci-theology.html</code> 仍可用。</p>
+      <div class="raci-cta-row">
+        <button type="button" class="raci-btn raci-btn-primary" id="raci-go-step2">想知道哪一型較明顯？→ 診斷問卷（約 5 分鐘）</button>
+        <button type="button" class="raci-btn raci-btn-ghost" id="raci-from-pain-to-theology">聖經與神學</button>
+      </div>
+    </section>
+
+    <section id="raci-tab-survey" class="raci-panel" role="tabpanel" aria-labelledby="raci-tabbtn-survey" hidden>
+      <div class="raci-survey-hot">
+        <strong>實用核心（路線圖第③格）：</strong>約 5 分鐘可勾完 16 題，再按「產生我的結果卡」得到可複製文字，適合貼進 PDCA 的 Check／Act。此分頁<strong>同一畫面內</strong>上方是題目、下方是結果，不必另開視窗。
+      </div>
+
+      <div class="raci-survey-locate">
+        <strong>這頁在做什麼？</strong>給籌備會／核心同工，用一小段時間一起察看：事工裡<strong>權責是否失衡</strong>。不是考試、沒有分數；放在五年計畫裡，約在 SWOT／SMART 之後、<strong>PDCA 的 Check</strong> 之前最合用。
+      </div>
+
+      <div class="raci-survey-before">
+        <strong>填答前請放心：</strong>
+        <ul>
+          <li>問卷看的是「人、事、結構怎麼搭配」，<strong>不評誰好誰壞</strong>，像屬靈體檢累積共同感受。</li>
+          <li>若教會曾做<strong>靈命健康</strong>或<strong>性格／恩賜</strong>相關了解，可一邊勾選一邊想：當下的 R／A 安排是否配合承擔與界線。</li>
+          <li>許多事工靠<strong>臨時拉夫</strong>撐起來；這裡幫我們看見是否該調整分工與節奏，而不是追究個人。</li>
+        </ul>
+      </div>
+
+      <div class="raci-survey-phase">
+        <strong>這份問卷在計畫週期的哪一段最有用？</strong>
+        <ul>
+          <li><strong>前期／暖身：</strong>新年度或新事工啟動前，先對齊「誰當責、誰執行」的語言，減少後面摩擦。</li>
+          <li><strong>中期／年度檢討：</strong>對照 SWOT、SMART 與實際執行，看權責是否跟著目標一起漂移。</li>
+          <li><strong>後期／收尾或 rollover：</strong>檢視是靠少數人撐住，還是已有制度與替補（R）承接—再帶進下一輪 PDCA。</li>
+        </ul>
+      </div>
+
+      <h2 id="raci-survey-title" class="raci-section-title">診斷問卷 · 四區小燈</h2>
+      <p class="raci-dash-muted" style="margin:0 0 14px;">每勾一題，該區<strong>小燈會亮起</strong>。每區 ≥2 題時，結果區會請團隊<strong>一起留意</strong>該面向；較硬的 RACI 用語收在題組下的「技術說明（選讀）」。<strong>這不是成績單</strong>，而是一起禱告、對話的起點。</p>
+
+      <div class="raci-privacy">
+        <label>
+          <input type="checkbox" id="raci-privacy-no-store" />
+          <span><strong>不儲存此輪結果（僅此瀏覽器）</strong><br>
+          勾選後：按「產生結果卡」時<strong>不會寫入</strong>本機紀錄（仍可複製文字）。若要下次繼續同一輪勾選，請勿勾選。</span>
+        </label>
+        <details class="raci-tech">
+          <summary>本機儲存與清除（技術說明）</summary>
+          <p style="margin:8px 0 0;">預設寫入鍵名 <code>chp2026-raci-diagnostic-v1</code>；與戰情室「清除 chp2026-*」一併刪除。資料僅在此裝置、此瀏覽器，不上傳雲端。</p>
+        </details>
+      </div>
+
+      <div id="raci-survey-form">
+        <dl class="raci-meta-hints">
+          <dt>問卷主語</dt>
+          <dd><strong>我觀察到的團隊</strong>：代禱、長執或部門負責視角，描述你看見的整體（例：主日團隊）。<strong>我自己的服事</strong>：從個人角色自我檢視；題意不同，請勿混用。</dd>
+          <dt>此刻較接近的角色（選填）</dt>
+          <dd>單選最接近的一項，用來微調結果末段的「依角色提醒」；身兼多職可做完一輪再換視角。可不選。</dd>
+          <dt>事工情境（選填）</dt>
+          <dd>標記討論場景（主日、小組等），方便複製報告時對齊實際狀況。</dd>
+        </dl>
+
+        <div class="raci-meta-row">
+          <div>
+            <label for="raci-lens">問卷主語</label>
+            <select id="raci-lens" aria-label="問卷主語">
+              <option value="team" selected>我觀察到的團隊</option>
+              <option value="self">我自己的服事</option>
+            </select>
+          </div>
+          <div>
+            <label for="raci-role">此刻較接近的角色（選填）</label>
+            <select id="raci-role" aria-label="RACI 角色">
+              <option value="">（不選／多重角色）</option>
+              <option value="R">R — 負責執行</option>
+              <option value="A">A — 當責拍板</option>
+              <option value="C">C — 被諮詢</option>
+              <option value="I">I — 被知會</option>
+            </select>
+          </div>
+          <div>
+            <label for="raci-ministry">事工情境（選填）</label>
+            <select id="raci-ministry">
+              <option value="">（不指定）</option>
+              <option>主日崇拜</option>
+              <option>小組／團契</option>
+              <option>兒童事工</option>
+              <option>敬拜／音控</option>
+              <option>行政／財務</option>
+              <option>宣教／外展</option>
+              <option>其他</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="raci-q-host" aria-live="polite"></div>
+
+        <div class="raci-cta-row">
+          <button type="button" class="raci-btn raci-btn-primary" id="raci-analyze-btn">產生我的結果卡</button>
+          <button type="button" class="raci-btn raci-btn-ghost" id="raci-back-step1">← 回痛點四型</button>
+        </div>
+        <p class="raci-muted" style="margin:0 0 8px;">「產生我的結果卡」會根據勾選整理失衡訊號與建議，並捲動到下方結果區。「← 回痛點四型」只切換分頁，<strong>不會清空</strong>已勾選內容。</p>
+      </div>
+
+      <h2 class="raci-section-title">結果與下一步</h2>
+      <p class="raci-dash-muted" style="margin:0 0 10px;">產生後請先看結果區最上方的摘要，再讀四軸卡片與建議。</p>
+      <p class="raci-result-preface"><strong>再次提醒：</strong>輸出文字是「本輪共同感受」的整理，不是評分、不替任何人貼標籤；適合帶去同工禱告與長執會，作為調整分工的討論素材。</p>
+      <div id="raci-result"><p class="raci-dash-muted">尚無結果。完成上方勾選後按「產生我的結果卡」。</p></div>
+      <div class="raci-cta-row">
+        <button type="button" class="raci-btn raci-btn-primary" id="raci-copy-btn">複製給同工／貼進 PDCA</button>
+        <button type="button" class="raci-btn raci-btn-secondary" id="raci-back-step2">← 回去微調勾選</button>
+        <button type="button" class="raci-btn raci-btn-ghost" id="raci-restart">從頭再走一次</button>
+      </div>
+      <textarea id="raci-copy-fallback" aria-label="手動複製區" style="width:100%;min-height:72px;margin-top:8px;font-size:12px;display:none;border-radius:8px;padding:8px;border:1px solid var(--line);"></textarea>
+      <p id="raci-copy-status" style="font-weight:800;color:#15803d;margin-top:6px;font-size:13px;"></p>
+
+      <details class="raci-advanced">
+        <summary>給同工：我們怎麼解讀你的勾選？（進階）</summary>
+        <ol style="margin:10px 0 0 1.1rem;padding:0;font-size:13px;color:#475569;line-height:1.6;">
+          <li>四區獨立計數；<strong>≥2 勾選</strong>該區即顯示為「本輪較多共同感受」。</li>
+          <li>若多區同時較多，全部顯示；其中勾選<strong>最多</strong>者標為「建議優先留意」（平手依 A→B→C→D）。</li>
+          <li>「人／事／結構」為加權敘事，協助分辨要從關係、流程還是權柄設計下手。</li>
+          <li>健康問卷僅供並讀提示，<strong>不</strong>自動把分數變成 RACI 類型。</li>
+        </ol>
+      </details>
+
+      <p class="raci-dash-muted" style="margin-top:16px;font-size:13px;">
+        更多連結見「<strong>實作與下載</strong>」分頁（模板、PDCA、戰情、流程工作台）。
+      </p>
+    </section>
+
+    <section id="raci-tab-theology" class="raci-panel raci-theology-wrap" role="tabpanel" aria-labelledby="raci-tabbtn-theology" hidden>
+      <p class="raci-theology-lead">
+        <strong>路線圖第④格。</strong>與「診斷問卷」四區敘事對讀最清楚：可先產出結果卡，再回來查經文與字母意義，帶去同工造就或長執會。
+      </p>
+
+      <div class="fill-zone" style="margin-bottom:14px;">
+        <h2 class="fill-zone-title">神是秩序的神</h2>
+        <p class="raci-body-text" style="margin:0;">哥林多前書 14:33 說「神不是叫人混亂的神，乃是叫人安靜的神」；創造敘事裡也有分離、各從其類的秩序。</p>
+        <p class="raci-dash-muted" style="margin:8px 0 0;"><strong>重點句：</strong>RACI 不是用表格控制人，而是幫我們<strong>順服神所設立的次序</strong>，讓會議決策與現場執行說同一種話。</p>
+      </div>
+
+      <div class="fill-zone" style="margin-bottom:14px;">
+        <h2 class="fill-zone-title">權柄與責任要配套</h2>
+        <p class="raci-body-text" style="margin:0;">出埃及記 18 葉忒羅勸摩西分層授權；提摩太前書 3 談監督的品格與職分—有託付，就當有相應界線與承擔。</p>
+        <p class="raci-dash-muted" style="margin:8px 0 0;"><strong>重點句：</strong>寫 <strong>A</strong> 的人需要相應權柄與結局責任；寫 <strong>R</strong> 的人需要資源與替補，不是被丟包後獨自扛完全部細節。</p>
+      </div>
+
+      <div class="fill-zone" style="margin-bottom:14px;">
+        <h2 class="fill-zone-title">身體比喻：百節各按其職</h2>
+        <p class="raci-body-text" style="margin:0;">以弗所書 4:16、哥林多前書 12 描述身體彼此供應；沒有人是萬能肢體，也不該長期閒置。</p>
+        <p class="raci-dash-muted" style="margin:8px 0 0;"><strong>重點句：</strong>RACI 幫助我們<strong>護住身體的平衡</strong>—不讓某些肢體過勞、某些一直躲在「我以為有人會做」裡。</p>
+      </div>
+
+      <div class="teach-box" style="margin-bottom:14px;">
+        <h3>給牧者：三句可以帶走的講法</h3>
+        <ol style="margin:8px 0 0;padding-left:1.15rem;font-size:13px;line-height:1.65;color:#334155;">
+          <li>「我們今天不是找犯人，是把<strong>誰當責、誰執行</strong>講清楚，好叫會友知道怎樣幫忙而不越界。」</li>
+          <li>「聖經裡有掃羅、亞倫、可拉、馬大的提醒；問卷只是幫我們用同一套詞彙，把<strong>痛點說出來禱告</strong>。」</li>
+          <li>「每個任務<strong>只有一個 A</strong>，其餘用 R／C／I 配搭—這是愛，不是官僚。」</li>
+        </ol>
+      </div>
+
+      <div class="teach-box">
+        <h3>字母意義（教會可用一句話記）</h3>
+        <p class="teach-placeholder" style="margin:0;"><strong>R</strong> 做事（可多人）· <strong>A</strong> 對結果當責、拍板（僅一人）· <strong>C</strong> 雙向諮詢 · <strong>I</strong> 單向知會。每個任務至少一個 R、只能一個 A；A 不明＝缺口，兩個 A＝混亂。</p>
+      </div>
+      <div class="section">
+        <h2>屬靈對照（濃縮）</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>RACI</th>
+              <th>屬靈原則</th>
+              <th>參考</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>R</td><td>按恩賜服事，不是「誰最閒」</td><td>林前 12</td></tr>
+            <tr><td>A</td><td>神所立權柄的當責，非個人權力競逐</td><td>來 13:17</td></tr>
+            <tr><td>C</td><td>謀士眾多，所謀乃成</td><td>箴 15:22</td></tr>
+            <tr><td>I</td><td>身體彼此連結、透明非黑箱</td><td>弗 4:16</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <h2>錯配四類 · 聖經參考（與診斷對齊）</h2>
+        <ul style="margin:0;padding-left:1.2rem;line-height:1.65;font-size:13px;">
+          <li><strong>越權（掃羅型）</strong>：撒上 13 — 決策與執行界線模糊、未等候神所定程序。</li>
+          <li><strong>缺位（亞倫型）</strong>：出 32 — 當責者未承擔，執行面易失控。</li>
+          <li><strong>奪權（可拉型）</strong>：民 16 — 對神所立的權責安排存疑，團隊分裂。</li>
+          <li><strong>過勞（馬大型）</strong>：路 10 — 執行過重、界線與分工失衡。</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>正面示範（濃縮）</h2>
+        <ul style="margin:0;padding-left:1.2rem;line-height:1.65;font-size:13px;">
+          <li><strong>出 18 摩西與葉忒羅</strong>：分層授權，A 仍集中最終判斷，R 分散。</li>
+          <li><strong>徒 6 七執事</strong>：使徒守住禱告與道（A 主軸），執事承擔飯食（R）。</li>
+          <li><strong>尼 3 修城牆</strong>：每段有人負責（R 清楚），尼希米當責推進（A）。</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>與 SWOT／SMART／PDCA 的關係</h2>
+        <p style="margin:0;font-size:13px;line-height:1.65;color:#334155;">
+          RACI 不取代 SWOT 的外部環境分析，而是防止把<strong>內部權責與流程問題</strong>偽裝成「威脅／機會」敘事。
+          SMART 訂目標時，每個目標應能指出<strong>唯一的 A</strong>與實際的 <strong>R</strong>。
+          PDCA 的 Check 若只看數字不看角色，易重複誤判；可將本工具輸出貼入 Act 作為「結構性假設」再驗證。
+        </p>
+      </div>
+      <p class="raci-dash-muted" style="margin-top:14px;">
+        <a href="#survey" style="color:var(--accent);font-weight:700;">前往診斷問卷</a>
+        · <a href="raci-theology.html" style="color:var(--accent);font-weight:700;">可列印的濃縮備份頁</a>（離線／轉貼用）
+      </p>
+    </section>
+
+    <section id="raci-tab-tools" class="raci-panel" role="tabpanel" aria-labelledby="raci-tabbtn-tools" hidden>
+      <h2 class="raci-section-title">區塊 1：空白 RACI 模板（從表格開始）</h2>
+      <p class="raci-body-text" style="margin:0 0 10px;">建議用試算表或 Notion 資料庫建立五欄：<strong>任務／R／A／C／I</strong>；每列一個可交付成果，每列只標<strong>一個 A</strong>。可依教會改職稱，重點是角色功能。</p>
+      <p class="raci-dash-muted" style="margin:0 0 12px;">本套件尚未附獨立 .xlsx 檔；你可複製下方「五大事工起手式」的列結構到自有範本。舊版圖文可參考 <a href="RACI-Church.html" style="color:var(--accent);font-weight:700;">RACI-Church.html</a>（含矩陣圖檔連結）。</p>
+
+      <h2 class="raci-section-title">區塊 2：五大事工向度 · 起手式示例</h2>
+      <p class="raci-dash-muted" style="margin:0 0 8px;">下列為「第一句該寫什麼」的示例，請在會議中改成你們真實的職稱與人名。</p>
+      <table class="raci-demo-table">
+        <thead><tr><th>向度</th><th>示例任務（可改寫）</th><th>R</th><th>A</th><th>C</th><th>I</th></tr></thead>
+        <tbody>
+          <tr><td>敬拜</td><td>主日崇拜流程與曲目</td><td>敬拜團</td><td>敬拜部長</td><td>牧師、音控</td><td>招待同工</td></tr>
+          <tr><td>牧養</td><td>關懷名單追蹤與轉介</td><td>小組長</td><td>牧養牧師</td><td>行政</td><td>關懷部同工</td></tr>
+          <tr><td>團契</td><td>季節性聯合聚會</td><td>各團契幹事</td><td>團契部長</td><td>牧師</td><td>全教會公告</td></tr>
+          <tr><td>栽培</td><td>門訓課程開班與教材</td><td>助教群</td><td>栽培部長</td><td>牧師</td><td>小組牧者</td></tr>
+          <tr><td>差傳</td><td>短宣隊行前訓練</td><td>隊輔</td><td>差傳委員會召集人</td><td>牧師</td><td>代禱群組</td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="raci-section-title">區塊 3：與 Smart Ministry 戰情／PDCA 串起來</h2>
+      <p class="raci-body-text" style="margin:0 0 10px;">問卷結果卡可貼進 <strong>PDCA 的 Check／Act</strong>，當作「權責是否健康」的結構性備註；再回 <strong>戰情總覽</strong>對照年度重點是否仍由同一批人硬扛。</p>
+      <ul style="margin:0;padding-left:1.15rem;line-height:1.65;font-size:13px;color:#334155;">
+        <li><a href="../pdca-planning.html" style="color:var(--accent);font-weight:700;">教會版 PDCA</a></li>
+        <li><a href="../dashboard.html" style="color:var(--accent);font-weight:700;">戰情總覽（Smart Ministry）</a></li>
+        <li><a href="../cta-os-tool-report.html?tool=raci" style="color:var(--accent);font-weight:700;">CTA-OS 統一報告中心</a></li>
+        <li><a href="index.html" style="color:var(--accent);font-weight:700;">流程工作台</a></li>
+        <li><a href="#survey" style="color:var(--accent);font-weight:700;">回到診斷問卷</a> · <a href="#theology" style="color:var(--accent);font-weight:700;">聖經與神學</a></li>
+      </ul>
+      <p class="raci-dash-muted" style="margin:12px 0 0;">長期構想：在戰情室中預留「RACI 摘要」欄或連結，讓計畫、數據與權責敘事同一視窗可讀（實作階段再與資訊同工評估）。</p>
+
+      <details class="raci-advanced" style="margin-top:18px;">
+        <summary>本機資料與相容性（給同工／資訊同工）</summary>
+        <ul style="margin:10px 0 0;padding-left:1.15rem;font-size:13px;line-height:1.6;color:#475569;">
+          <li>問卷與結果預設存於 <code>localStorage</code> 鍵 <code>chp2026-raci-diagnostic-v1</code>。</li>
+          <li>戰情室清除 <code>chp2026-*</code> 時會一併刪除此紀錄。</li>
+          <li><code>raci-theology.html</code> 為過渡／備份頁：可讀整合說明、列印濃縮表，並一鍵進入本頁 <code>#theology</code>。</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script src="assets/raci-reflection.js"></script>
+  <script src="../js/cta_os_runtime.js"></script>
+  <script src="../js/cta_os_bridge.js"></script>
+  <script>
+    CTAOSBridge.initPage({
+      toolId: 'raci',
+      cssHref: '../js/cta_os_bridge.css',
+      reportAnchor: '#raci-tab-survey',
+      watchStorage: ['chp2026-raci-diagnostic-v1'],
+      pollMs: 5000,
+      fab: true
+    });
+  </script>
+</body>
+</html>

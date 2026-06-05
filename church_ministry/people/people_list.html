@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>人員總覽 - People</title>
+  <base target="_parent">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f0f2f5; color: #333; font-size: 11px; }
+    .header { background: linear-gradient(135deg, #0b5fa5 0%, #0d47a1 100%); color: white; padding: 10px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .header-nav { margin-bottom: 4px; }
+    .header-nav a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 11px; margin-right: 10px; }
+    .header-nav a:hover { text-decoration: underline; }
+    .header h1 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .tabs { display: flex; gap: 5px; margin-top: 10px; }
+    .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
+    .tab.active { background: white; color: #0b5fa5; font-weight: 600; }
+    .tab:hover:not(.active) { background: rgba(255,255,255,0.3); }
+    .container { max-width: 100%; margin: 0 auto; padding: 12px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .stat-card { background: white; border-radius: 6px; padding: 10px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border-left: 3px solid; }
+    .stat-card.blue { border-color: #0b5fa5; }
+    .stat-card.green { border-color: #27ae60; }
+    .stat-card.orange { border-color: #e67e22; }
+    .stat-card.purple { border-color: #9b59b6; }
+    .stat-card.teal { border-color: #1abc9c; }
+    .stat-num { font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 2px; }
+    .stat-label { font-size: 9px; color: #7f8c8d; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+    .card { background: white; border-radius: 6px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    .card-title { font-size: 12px; font-weight: 600; margin-bottom: 8px; color: #2c3e50; border-left: 3px solid #0b5fa5; padding-left: 8px; }
+    .search-box { padding: 8px 12px; width: 100%; max-width: 300px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 6px; }
+    .people-table { width: 100%; border-collapse: collapse; }
+    .people-table th, .people-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 11px; }
+    .people-table th { background: #f8f9fa; font-weight: 600; }
+    .people-table tr:hover { background: #f0f7ff; }
+    .people-table a { color: #0b5fa5; text-decoration: none; }
+    .empty-state { text-align: center; padding: 40px 20px; color: #95a5a6; }
+    .empty-state-banner { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; color: #856404; }
+    details { margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.15); border-radius: 8px; }
+    details summary { cursor: pointer; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-nav"><a href="../dashboard.html">⛪ 教會事工中心</a></div>
+    <h1>👥 人員總覽</h1>
+    <details>
+      <summary>📋 功能與使用說明</summary>
+      <div style="margin-top:8px;opacity:0.95;font-size:11px;">
+        <p><b>此頁是為誰而設？</b> 牧者、行政同工，以統計圖表檢視會眾結構。</p>
+        <p style="margin-top:4px;"><b>有什麼功能？</b> 性別、地域、年齡等圖表；會友名單（需權限）於「名單」分頁。</p>
+        <p style="margin-top:4px;"><b>典型情境</b> 例：長執會前快速掌握會眾年齡分布，決定是否開設新團契；或查詢某會友出席紀錄。</p>
+        <p style="margin-top:4px;"><b>如何入手？</b> 若無資料，請先至 <a href="../load_central_member_seed.html" target="_parent" style="color:#fff;text-decoration:underline;">載入 500 人</a>。</p>
+      </div>
+    </details>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('overview')">📊 總覽</button>
+      <button class="tab" onclick="switchTab('list')">📋 名單</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- 總覽：圖表 -->
+    <div id="tab-overview" class="tab-content active">
+      <div id="emptyStateBanner" class="empty-state-banner" style="display:none;">
+        <p><b>尚無人員資料</b></p>
+        <p style="margin-top:6px;font-size:11px;">file:// 與 localhost 的 localStorage 不共用。若在 localhost 使用，請先：</p>
+        <p style="margin-top:4px;"><a href="../load_central_member_seed.html" target="_parent" style="color:#0b5fa5;font-weight:600;">→ 點此載入 500 人</a>（需先執行 啟動.bat 啟動 HTTP 伺服器）</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="stat-num" id="statTotal">0</div><div class="stat-label">總人數</div></div>
+        <div class="stat-card green"><div class="stat-num" id="statMale">0</div><div class="stat-label">男性</div></div>
+        <div class="stat-card" style="border-color:#e67e22;"><div class="stat-num" id="statFemale">0</div><div class="stat-label">女性</div></div>
+        <div class="stat-card purple"><div class="stat-num" id="statRegions">0</div><div class="stat-label">地域數</div></div>
+        <div class="stat-card teal"><div class="stat-num" id="statActive">0</div><div class="stat-label">活躍</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-title">📊 性別分布</div><div style="height:140px;"><canvas id="chartGender"></canvas></div></div>
+        <div class="card"><div class="card-title">📈 地域分布</div><div style="height:140px;"><canvas id="chartRegion"></canvas></div></div>
+        <div class="card"><div class="card-title">📊 年齡分布</div><div style="height:140px;"><canvas id="chartAge"></canvas></div></div>
+        <div class="card"><div class="card-title">📈 年齡區間</div><div style="height:140px;"><canvas id="chartAgeBar"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- 名單：會友表 -->
+    <div id="tab-list" class="tab-content">
+      <div class="card">
+        <div class="card-title">會友名單（含姓名，正式環境需權限）</div>
+        <input type="text" class="search-box" id="searchBox" placeholder="搜尋姓名、教會、標籤...">
+        <table class="people-table">
+          <thead><tr><th>姓名</th><th>性別</th><th>地區</th><th>教會</th><th>出席</th><th>標籤</th><th>操作</th></tr></thead>
+          <tbody id="peopleBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var charts = {};
+      var memberList = [];
+      var peopleList = [];
+      var presetFilter = "";
+
+      function loadData() {
+        memberList = [];
+        try {
+          var ms = localStorage.getItem('memberSystemData');
+          if (ms) { var d = JSON.parse(ms); memberList = d.members || []; }
+          if (memberList.length === 0) {
+            var cm = localStorage.getItem('churchMasterDatabase');
+            if (cm) { var c = JSON.parse(cm); memberList = c.members || []; }
+          }
+        } catch(e) {}
+        if (memberList.length === 0) {
+          try {
+            var pl = localStorage.getItem('bible100_people');
+            if (pl) { var p = JSON.parse(pl); peopleList = p.people || []; }
+          } catch(e) {}
+        }
+        return memberList.length > 0 ? memberList : peopleList;
+      }
+
+      function getList() {
+        var raw = loadData();
+        if (raw.length === 0) return [];
+        var regions = ['台北','新北','桃園','台中','高雄','台南','其他'];
+        return raw.map(function(m, i) {
+          var age = m.age;
+          if (age == null && m.age_group) {
+            var ag = String(m.age_group);
+            age = ag.indexOf('青年') >= 0 ? 25 : ag.indexOf('壯年') >= 0 ? 35 : ag.indexOf('中年') >= 0 ? 50 : 65;
+          }
+          age = age || 30;
+          var ageGroup = m.age_group || (age < 26 ? '青年' : age < 46 ? '壯年' : age < 61 ? '中年' : '長者');
+          var region = m.region || (m.church && String(m.church).indexOf('-') > 0 ? String(m.church).split('-')[1] : null) || regions[i % regions.length];
+          return {
+            id: m.id || ('m' + (i + 1)),
+            memberId: m.memberId != null ? m.memberId : m.id,
+            name: m.name || m.memberName,
+            gender: (m.gender || '').indexOf('男') >= 0 ? '男' : '女',
+            region: region,
+            age: age,
+            age_group: ageGroup,
+            church: m.church || '-',
+            attendance_count: m.attendance_count,
+            tags: (m.tags && m.tags.length) ? m.tags : (m.gifts || m.skills ? (Array.isArray(m.gifts) ? m.gifts : [m.gifts, m.skills].filter(Boolean)) : []),
+            status: m.status || 'active',
+            training_status: m.training_status || m.trainingStatus || '',
+            training_credits: Number(m.training_credits != null ? m.training_credits : (m.trainingCredits != null ? m.trainingCredits : 0)) || 0,
+            ministry_load_index: Number(m.ministry_load_index != null ? m.ministry_load_index : (m.ministryLoadIndex != null ? m.ministryLoadIndex : 0)) || 0,
+            spiritual_stage: Number(m.spiritual_stage != null ? m.spiritual_stage : (m.spiritualStage != null ? m.spiritualStage : 0)) || 0
+          };
+        });
+      }
+
+      function parsePresetFilter() {
+        try {
+          var params = new URLSearchParams(window.location.search || "");
+          presetFilter = String(params.get("filter") || "").trim().toLowerCase();
+        } catch (e) {
+          presetFilter = "";
+        }
+      }
+
+      function applyPresetFilter(list) {
+        if (!presetFilter) return list;
+        if (presetFilter === "overloaded") {
+          return list.filter(function(p) { return Number(p.ministry_load_index || 0) > 0.8; });
+        }
+        if (presetFilter === "pending_training") {
+          return list.filter(function(p) {
+            var st = String(p.training_status || "").toLowerCase();
+            if (!st) return true;
+            return st !== "completed" && st !== "done";
+          });
+        }
+        if (presetFilter === "pipeline_stage3") {
+          return list.filter(function(p) {
+            if (Number(p.spiritual_stage || 0) >= 3) return true;
+            if (String(p.training_status || "").toLowerCase() === "completed" && Number(p.training_credits || 0) >= 12) return true;
+            return false;
+          });
+        }
+        return list;
+      }
+
+      function switchTab(name) {
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(tc) { tc.classList.remove('active'); });
+        event.target.classList.add('active');
+        document.getElementById('tab-' + name).classList.add('active');
+        if (name === 'overview') renderOverview();
+        if (name === 'list') renderList();
+      }
+
+      function renderOverview() {
+        var list = getList();
+        var banner = document.getElementById('emptyStateBanner');
+        if (banner) banner.style.display = list.length === 0 ? 'block' : 'none';
+        var male = list.filter(function(p) { return p.gender === '男'; }).length;
+        var female = list.length - male;
+        var regionCount = {};
+        var ageBins = { '18-25': 0, '26-35': 0, '36-45': 0, '46-55': 0, '56-65': 0, '65+': 0 };
+        list.forEach(function(p) {
+          regionCount[p.region] = (regionCount[p.region] || 0) + 1;
+          var a = p.age || 30;
+          if (a < 26) ageBins['18-25']++;
+          else if (a < 36) ageBins['26-35']++;
+          else if (a < 46) ageBins['36-45']++;
+          else if (a < 56) ageBins['46-55']++;
+          else if (a < 66) ageBins['56-65']++;
+          else ageBins['65+']++;
+        });
+
+        document.getElementById('statTotal').textContent = list.length;
+        document.getElementById('statMale').textContent = male;
+        document.getElementById('statFemale').textContent = female;
+        document.getElementById('statRegions').textContent = Object.keys(regionCount).length;
+        document.getElementById('statActive').textContent = list.filter(function(p) { return p.status === 'active' || !p.status; }).length;
+
+        var opt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 9 } } } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { ticks: { font: { size: 9 } } } } };
+        if (charts.gender) charts.gender.destroy();
+        charts.gender = new Chart(document.getElementById('chartGender'), {
+          type: 'doughnut',
+          data: { labels: ['男', '女'], datasets: [{ data: [male || 0, female || 0], backgroundColor: ['#3498db', '#ec4899'] }] },
+          options: opt
+        });
+        var rLabels = Object.keys(regionCount).slice(0, 8);
+        var rVals = rLabels.map(function(k) { return regionCount[k]; });
+        if (charts.region) charts.region.destroy();
+        charts.region = new Chart(document.getElementById('chartRegion'), {
+          type: 'bar',
+          data: { labels: rLabels.length ? rLabels : ['尚無資料'], datasets: [{ label: '人數', data: rVals.length ? rVals : [0], backgroundColor: '#0b5fa5' }] },
+          options: opt
+        });
+        var ageLabels = ['18-25', '26-35', '36-45', '46-55', '56-65', '65+'];
+        var ageVals = ageLabels.map(function(k) { return ageBins[k] || 0; });
+        if (charts.age) charts.age.destroy();
+        charts.age = new Chart(document.getElementById('chartAge'), {
+          type: 'doughnut',
+          data: { labels: ageLabels, datasets: [{ data: ageVals, backgroundColor: ['#3498db','#27ae60','#e67e22','#9b59b6','#1abc9c','#e74c3c'] }] },
+          options: opt
+        });
+        if (charts.ageBar) charts.ageBar.destroy();
+        charts.ageBar = new Chart(document.getElementById('chartAgeBar'), {
+          type: 'bar',
+          data: { labels: ageLabels, datasets: [{ label: '人數', data: ageVals, backgroundColor: '#10b981' }] },
+          options: opt
+        });
+      }
+
+      function renderList() {
+        var list = getList();
+        list = applyPresetFilter(list);
+        var term = (document.getElementById('searchBox') || {}).value || '';
+        if (term) list = list.filter(function(p) { return (p.name || '').toLowerCase().indexOf(term.toLowerCase()) >= 0; });
+        var tbody = document.getElementById('peopleBody');
+        tbody.innerHTML = list.length ? list.map(function(p) {
+          var tags = (p.tags && p.tags.length) ? (Array.isArray(p.tags) ? p.tags.join(', ') : p.tags) : '-';
+          return '<tr><td>' + (p.name || '-') + '</td><td>' + (p.gender || '-') + '</td><td>' + (p.region || '-') + '</td><td>' + (p.church || '-') + '</td><td>' + (p.attendance_count != null ? p.attendance_count : '-') + '</td><td>' + tags + '</td><td><a href="person_detail.html?id=' + encodeURIComponent(p.id) + '" target="contentFrame">查看</a></td></tr>';
+        }).join('') : '<tr><td colspan="7" class="empty-state">尚無人員資料。<br><a href="../load_central_member_seed.html" target="_parent" style="color:#0b5fa5;">→ 載入 500 人</a></td></tr>';
+      }
+
+      loadData();
+      parsePresetFilter();
+      renderOverview();
+      if (presetFilter) {
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(tc) { tc.classList.remove('active'); });
+        var listTabBtn = document.querySelector('.tabs .tab:nth-child(2)');
+        if (listTabBtn) listTabBtn.classList.add('active');
+        var listPane = document.getElementById('tab-list');
+        if (listPane) listPane.classList.add('active');
+        renderList();
+      }
+      var sb = document.getElementById('searchBox');
+      if (sb) sb.oninput = renderList;
+    })();
+  </script>
+</body>
+</html>

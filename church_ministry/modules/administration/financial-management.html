@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>财务管理系统 · Financial Management | Church Ministry</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+.header { background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; padding: 15px 20px; }
+.tabs { display: flex; gap: 5px; margin-top: 10px; }
+.tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
+.tab.active { background: white; color: #27ae60; font-weight: 600; }
+.container { max-width: 1800px; margin: 0 auto; padding: 15px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 15px; }
+.stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #27ae60; }
+.stat-num { font-size: 28px; font-weight: bold; }
+.stat-label { font-size: 10px; color: #7f8c8d; margin-top: 5px; }
+.btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; background: #27ae60; color: white; margin: 5px; }
+.btn-danger { background: #e74c3c; }
+table { width: 100%; border-collapse: collapse; }
+table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+table th { background: #f8f9fa; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+.modal.active { display: flex; }
+.modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; position: relative; }
+.modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+.form-input, .form-select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+</style></head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header">
+    <h1>💰 财务管理系统</h1>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('overview')">📊 总览</button>
+        <button class="tab" onclick="switchTab('income')">💵 收入</button>
+        <button class="tab" onclick="switchTab('expense')">💸 支出</button>
+        <button class="tab" onclick="switchTab('reports')">📈 报表</button>
+    </div>
+</div>
+<div class="container">
+    <div id="tab-overview" class="tab-content active">
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-num" id="s1">$0</div><div class="stat-label">总收入</div></div>
+            <div class="stat-card"><div class="stat-num" id="s2">$0</div><div class="stat-label">总支出</div></div>
+            <div class="stat-card"><div class="stat-num" id="s3">$0</div><div class="stat-label">结余</div></div>
+            <div class="stat-card"><div class="stat-num" id="s4">0</div><div class="stat-label">本月交易</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+            <div class="card"><h3>📊 收支对比</h3><canvas id="pieChart"></canvas></div>
+            <div class="card"><h3>📈 月度趋势</h3><canvas id="lineChart"></canvas></div>
+        </div>
+    </div>
+    <div id="tab-income" class="tab-content">
+        <div class="card">
+            <h3 style="margin-bottom:15px;">💵 收入记录</h3>
+            <button class="btn" onclick="showAddIncomeModal()">➕ 新增收入</button>
+            <table id="incomeTable"><thead><tr><th>日期</th><th>类别</th><th>金额</th><th>说明</th><th>操作</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+    <div id="tab-expense" class="tab-content">
+        <div class="card">
+            <h3 style="margin-bottom:15px;">💸 支出记录</h3>
+            <button class="btn" onclick="showAddExpenseModal()">➕ 新增支出</button>
+            <table id="expenseTable"><thead><tr><th>日期</th><th>类别</th><th>金额</th><th>说明</th><th>操作</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+    <div id="tab-reports" class="tab-content">
+        <div class="card">
+            <h3>📈 财务报表</h3>
+            <button class="btn" onclick="generateReport('month')">月度报表</button>
+            <button class="btn" onclick="generateReport('quarter')">季度报表</button>
+            <button class="btn" onclick="exportData()">📤 导出Excel</button>
+        </div>
+    </div>
+</div>
+<div id="modal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+<script>
+let data = { income: [], expense: [] };
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('financialData');
+    if (saved) data = JSON.parse(saved);
+    if (data.income.length === 0) loadDemo();
+    renderAll();
+});
+function loadDemo() {
+    data.income = [{id:1,date:'2025-10-01',category:'奉献',amount:50000,note:'主日奉献'},{id:2,date:'2025-10-08',category:'奉献',amount:48000,note:'主日奉献'}];
+    data.expense = [{id:1,date:'2025-10-05',category:'水电',amount:5000,note:'10月水电费'},{id:2,date:'2025-10-07',category:'薪资',amount:30000,note:'同工薪资'}];
+    localStorage.setItem('financialData', JSON.stringify(data));
+    renderAll();
+}
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+    if (tab === 'overview') renderOverview();
+}
+function renderAll() {
+    renderOverview();
+    document.querySelector('#incomeTable tbody').innerHTML = data.income.map(i => `<tr><td>${i.date}</td><td>${i.category}</td><td>$${i.amount.toLocaleString()}</td><td>${i.note}</td><td><button class="btn btn-danger" style="padding:6px 12px;" onclick="deleteIncome(${i.id})">删除</button></td></tr>`).join('');
+    document.querySelector('#expenseTable tbody').innerHTML = data.expense.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td>$${e.amount.toLocaleString()}</td><td>${e.note}</td><td><button class="btn btn-danger" style="padding:6px 12px;" onclick="deleteExpense(${e.id})">删除</button></td></tr>`).join('');
+}
+function renderOverview() {
+    const totalIncome = data.income.reduce((sum,i)=>sum+i.amount,0);
+    const totalExpense = data.expense.reduce((sum,e)=>sum+e.amount,0);
+    document.getElementById('s1').textContent = '$' + totalIncome.toLocaleString();
+    document.getElementById('s2').textContent = '$' + totalExpense.toLocaleString();
+    document.getElementById('s3').textContent = '$' + (totalIncome-totalExpense).toLocaleString();
+    document.getElementById('s4').textContent = data.income.length + data.expense.length;
+}
+function showModal(title, content) {
+    document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;margin-bottom:20px;">${title}</div>${content}`;
+    document.getElementById('modal').classList.add('active');
+}
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+function showAddIncomeModal() {
+    showModal('➕ 新增收入', `<div class="form-group"><label>日期</label><input type="date" id="date" class="form-input"></div><div class="form-group"><label>类别</label><select id="cat" class="form-select"><option>奉献</option><option>特别奉献</option><option>其他</option></select></div><div class="form-group"><label>金额</label><input type="number" id="amt" class="form-input"></div><div class="form-group"><label>说明</label><input type="text" id="note" class="form-input"></div><button class="btn" onclick="addIncome()">确定</button>`);
+}
+function addIncome() {
+    data.income.push({id:Date.now(),date:document.getElementById('date').value,category:document.getElementById('cat').value,amount:parseInt(document.getElementById('amt').value),note:document.getElementById('note').value});
+    localStorage.setItem('financialData', JSON.stringify(data));
+    renderAll();
+    closeModal();
+    alert('✅ 已添加！');
+}
+function deleteIncome(id) {
+    if (confirm('删除？')) {
+        data.income = data.income.filter(i => i.id !== id);
+        localStorage.setItem('financialData', JSON.stringify(data));
+        renderAll();
+    }
+}
+function showAddExpenseModal() {
+    showModal('➕ 新增支出', `<div class="form-group"><label>日期</label><input type="date" id="date" class="form-input"></div><div class="form-group"><label>类别</label><select id="cat" class="form-select"><option>薪资</option><option>水电</option><option>维修</option><option>其他</option></select></div><div class="form-group"><label>金额</label><input type="number" id="amt" class="form-input"></div><div class="form-group"><label>说明</label><input type="text" id="note" class="form-input"></div><button class="btn" onclick="addExpense()">确定</button>`);
+}
+function addExpense() {
+    data.expense.push({id:Date.now(),date:document.getElementById('date').value,category:document.getElementById('cat').value,amount:parseInt(document.getElementById('amt').value),note:document.getElementById('note').value});
+    localStorage.setItem('financialData', JSON.stringify(data));
+    renderAll();
+    closeModal();
+    alert('✅ 已添加！');
+}
+function deleteExpense(id) {
+    if (confirm('删除？')) {
+        data.expense = data.expense.filter(e => e.id !== id);
+        localStorage.setItem('financialData', JSON.stringify(data));
+        renderAll();
+    }
+}
+function generateReport(type) { alert(`📊 ${type==='month'?'月度':'季度'}财务报表已生成！`); }
+function exportData() {
+    const csv = '类型,日期,类别,金额,说明\n' + 
+        data.income.map(i=>`收入,${i.date},${i.category},${i.amount},${i.note}`).join('\n') + '\n' +
+        data.expense.map(e=>`支出,${e.date},${e.category},${e.amount},${e.note}`).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
+    a.download = '财务记录.csv';
+    a.click();
+    alert('✅ 已导出！');
+}
+</script>
+</body>
+</html>

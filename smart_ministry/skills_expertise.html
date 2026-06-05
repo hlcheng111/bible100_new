@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技能字典維護 · Smart Ministry</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+        .hero {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: #fff;
+            padding: 1.25rem 1.5rem;
+            border-radius: 0 0 12px 12px;
+        }
+        .hero h1 { margin: 0 0 0.35rem; font-size: 1.15rem; font-weight: 800; }
+        .hero p { margin: 0; font-size: 0.92rem; opacity: 0.95; max-width: 48rem; }
+        .wrap { max-width: 960px; margin: 0 auto; padding: 1rem 1rem 2rem; }
+        .one-line {
+            background: #fff7ed;
+            border: 1px solid #fdba74;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.88rem;
+            color: #9a3412;
+        }
+        .one-line strong { color: #c2410c; }
+        details.page-fold {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fff;
+            margin-bottom: 1rem;
+        }
+        details.page-fold > summary {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: #475569;
+            list-style: none;
+        }
+        details.page-fold > summary::-webkit-details-marker { display: none; }
+        .fold-body { padding: 0 1rem 1rem; font-size: 0.85rem; color: #64748b; }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        @media (min-width: 800px) {
+            .grid-2 { grid-template-columns: 1fr 320px; }
+        }
+        .panel {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        .panel h2 { margin: 0 0 0.75rem; font-size: 1rem; color: #0f172a; }
+        .stat-line {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem 0.65rem;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .search { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; margin-bottom: 0.75rem; }
+        table.sk { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        table.sk th, table.sk td { padding: 0.45rem 0.35rem; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
+        table.sk th { color: #475569; font-weight: 700; background: #f8fafc; }
+        .form label { display: block; font-weight: 600; font-size: 0.82rem; margin: 0.65rem 0 0.25rem; }
+        .form input, .form textarea, .form select {
+            width: 100%; padding: 0.5rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem;
+        }
+        .form textarea { min-height: 72px; resize: vertical; }
+        .btn {
+            margin-top: 0.85rem;
+            padding: 0.6rem 1rem;
+            background: #ea580c;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.88rem;
+        }
+        .btn:hover { background: #c2410c; }
+        .links { margin-top: 1.25rem; font-size: 0.85rem; }
+        .links a { color: #2563eb; font-weight: 600; margin-right: 1rem; }
+        .badge { font-size: 0.72rem; color: #64748b; }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>🛠️ 技能字典維護</h1>
+        <p><strong>給同工：</strong>只整理「教會通用的技能詞條／分類」，方便與事工需求、人才統整對齊。<strong>不做</strong>個人技能勾選、<strong>不做</strong>配對派工。個人資料請至「恩賜與技能統整」。</p>
+    </div>
+    <div class="wrap">
+        <div class="one-line">
+            <strong>資料從哪來：</strong>左表「已出現次數」由本機 <code>bible100_smart_ministry_main</code> 的 <code>talent_skill</code>（與崗位需求字串拆詞）聚合而來。<strong>建議下一步：</strong>缺詞時可在右側新增「同工約定詞條」至 <code>meta.skill_catalog_v1</code>，再到 <a href="talent_skill_unified.html" target="_blank" rel="noopener noreferrer">恩賜與技能統整</a> 為會友掛勾。
+        </div>
+
+        <details class="page-fold">
+            <summary>展開：與配對頁、事工需求的關係（長說明）</summary>
+            <div class="fold-body">
+                事工崗位的「需求」欄位與人才的技能映射，都依賴<strong>同一套可讀的技能詞</strong>。本頁不計算配對分、不寫入邀請紀錄；第③步配對請用 <code>talent_ministry_matching.html</code>。
+            </div>
+        </details>
+
+        <div class="grid-2">
+            <div class="panel">
+                <h2>技能詞彙／使用次數</h2>
+                <div class="stat-line" id="aggStats">載入中…</div>
+                <input type="search" class="search" id="skillFilter" placeholder="篩選名稱…" autocomplete="off">
+                <div style="overflow-x: auto;">
+                    <table class="sk">
+                        <thead>
+                            <tr><th>名稱／詞條</th><th>次數</th><th>註</th></tr>
+                        </thead>
+                        <tbody id="skillRows"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="panel form">
+                <h2>新增同工約定詞條</h2>
+                <p class="badge">寫入 canonical 的 <code>meta.skill_catalog_v1</code>（陣列），不變更頂層 schema 鍵名。</p>
+                <label for="newName">技能名稱（必填）</label>
+                <input id="newName" type="text" placeholder="例：短片剪輯">
+                <label for="newCat">分類（選填）</label>
+                <input id="newCat" type="text" placeholder="例：媒體">
+                <label for="newDesc">說明（選填）</label>
+                <textarea id="newDesc" placeholder="例：含腳本、拍攝、粗剪"></textarea>
+                <button type="button" class="btn" id="btnAdd">加入詞條</button>
+            </div>
+        </div>
+
+        <div class="links">
+            <a href="talent_skill_unified.html" target="_blank" rel="noopener noreferrer">→ 恩賜與技能統整（個人映射）</a>
+            <a href="talent_ministry_matching.html" target="_blank" rel="noopener noreferrer">→ 人才事工配對（第③步）</a>
+            <a href="guide_for_leaders.html" target="_blank" rel="noopener noreferrer">→ 同工指南</a>
+        </div>
+    </div>
+
+    <script src="../js/smart_ministry_canonical_store.js"></script>
+    <script>
+        (function () {
+            var C = window.SmartMinistryCanonical;
+            C.migrateLegacyToCanonical();
+
+            function norm(s) { return String(s == null ? '' : s).trim(); }
+
+            function getCatalog(m) {
+                m.meta = m.meta || {};
+                if (!Array.isArray(m.meta.skill_catalog_v1)) m.meta.skill_catalog_v1 = [];
+                return m.meta.skill_catalog_v1;
+            }
+
+            function aggregate() {
+                var m = C.getStore();
+                var counts = {};
+                function addKey(k, note) {
+                    k = norm(k);
+                    if (!k) return;
+                    if (!counts[k]) counts[k] = { n: 0, notes: {} };
+                    counts[k].n++;
+                    if (note) counts[k].notes[note] = true;
+                }
+                (m.talent_skill || []).forEach(function (r) {
+                    var nm = norm(r.skill_name);
+                    var code = norm(r.skill_code);
+                    var ref = r.skill_id_ref != null ? String(r.skill_id_ref) : '';
+                    var key = nm || code || ref;
+                    addKey(key, 'talent_skill');
+                });
+                (m.ministries || []).forEach(function (min) {
+                    String(min.requires || '').split(/[,，]/).forEach(function (p) {
+                        addKey(p, '崗位需求');
+                    });
+                });
+                getCatalog(m).forEach(function (row) {
+                    var k = norm(row.name);
+                    if (!k) return;
+                    if (!counts[k]) counts[k] = { n: 0, notes: {} };
+                    counts[k].notes['字典'] = true;
+                });
+                return { counts: counts, m: m };
+            }
+
+            function render() {
+                var r = aggregate();
+                var counts = r.counts;
+                var keys = Object.keys(counts).sort(function (a, b) {
+                    return counts[b].n - counts[a].n || a.localeCompare(b, 'zh-Hant');
+                });
+                var fil = (document.getElementById('skillFilter').value || '').toLowerCase();
+                var rows = keys.filter(function (k) { return !fil || k.toLowerCase().includes(fil); });
+                document.getElementById('aggStats').textContent =
+                    '本機聚合：共 ' + keys.length + ' 個相異詞條 · talent_skill 連結 ' +
+                    (r.m.talent_skill || []).length + ' 筆 · 崗位 ' + (r.m.ministries || []).length + ' 個 · 字典條目 ' + getCatalog(r.m).length + ' 筆';
+                var tb = document.getElementById('skillRows');
+                tb.innerHTML = rows.map(function (k) {
+                    var o = counts[k];
+                    var src = Object.keys(o.notes).join('、') || '—';
+                    return '<tr><td>' + escapeHtml(k) + '</td><td>' + o.n + '</td><td style="font-size:0.75rem;color:#64748b">' + escapeHtml(src) + '</td></tr>';
+                }).join('') || '<tr><td colspan="3">尚無資料。請先在統整頁建立人才技能連結，或右側新增詞條。</td></tr>';
+            }
+
+            function escapeHtml(s) {
+                return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+
+            document.getElementById('skillFilter').addEventListener('input', render);
+            document.getElementById('btnAdd').addEventListener('click', function () {
+                var name = norm(document.getElementById('newName').value);
+                if (!name) {
+                    alert('請填技能名稱');
+                    return;
+                }
+                var m = C.getStore();
+                var cat = getCatalog(m);
+                if (cat.some(function (x) { return norm(x.name) === name; })) {
+                    alert('此名稱已在字典中');
+                    return;
+                }
+                cat.push({
+                    id: 'skcat_' + Date.now().toString(36),
+                    name: name,
+                    category: norm(document.getElementById('newCat').value),
+                    description: norm(document.getElementById('newDesc').value),
+                    created_at: new Date().toISOString()
+                });
+                C.saveStore(m);
+                document.getElementById('newName').value = '';
+                document.getElementById('newCat').value = '';
+                document.getElementById('newDesc').value = '';
+                render();
+            });
+
+            render();
+        })();
+    </script>
+</body>
+</html>

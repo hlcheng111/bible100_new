@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 課程規劃助手 - BibleQ&A Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .planning-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .generate-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        .generate-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .lesson-plan {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .plan-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .plan-section h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .plan-section ul {
+            padding-left: 20px;
+        }
+        
+        .plan-section li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        .plan-section .time {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .plan-section .objective {
+            background: #e8f0ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .plan-section .activity {
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .plan-section .assessment {
+            background: #fff8e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .export-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .export-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .export-btn.pdf {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .export-btn.pdf:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        .export-btn.word {
+            background: #3498db;
+            color: white;
+        }
+        
+        .export-btn.word:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .export-btn.html {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .export-btn.html:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background: #95a5a6;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .template-selector {
+            margin-bottom: 20px;
+        }
+        
+        .template-option {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .template-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .template-option.selected {
+            border-color: #667eea;
+            background: #e8f0ff;
+        }
+        
+        .template-option input[type="radio"] {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+        
+        .template-info h5 {
+            color: #2c3e50;
+            margin-bottom: 3px;
+        }
+        
+        .template-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .planning-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .export-options {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回 AI 功能中心</a>
+        
+        <div class="header">
+            <h1>📖 AI 課程規劃助手</h1>
+            <p>智能生成個性化學習計劃和課程內容</p>
+        </div>
+        
+        <div class="planning-container">
+            <!-- 左側：課程參數設置 -->
+            <div class="sidebar">
+                <h3 class="section-title">⚙️ 課程參數</h3>
+                
+                <div class="form-group">
+                    <label for="courseTitle">課程標題</label>
+                    <input type="text" id="courseTitle" placeholder="例如：舊約聖經導論">
+                </div>
+                
+                <div class="form-group">
+                    <label for="courseLevel">課程級別</label>
+                    <select id="courseLevel">
+                        <option value="beginner">初級</option>
+                        <option value="intermediate">中級</option>
+                        <option value="advanced">高級</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="courseDuration">課程時長</label>
+                    <select id="courseDuration">
+                        <option value="4">4 週</option>
+                        <option value="8">8 週</option>
+                        <option value="12">12 週</option>
+                        <option value="16">16 週</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="weeklyHours">每週學習時數</label>
+                    <select id="weeklyHours">
+                        <option value="2">2 小時</option>
+                        <option value="4">4 小時</option>
+                        <option value="6">6 小時</option>
+                        <option value="8">8 小時</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="targetAudience">目標學員</label>
+                    <select id="targetAudience">
+                        <option value="youth">青少年</option>
+                        <option value="adult">成人</option>
+                        <option value="elderly">長者</option>
+                        <option value="mixed">混合年齡</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="learningStyle">學習風格偏好</label>
+                    <select id="learningStyle">
+                        <option value="visual">視覺型</option>
+                        <option value="auditory">聽覺型</option>
+                        <option value="kinesthetic">動手型</option>
+                        <option value="mixed">混合型</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="courseFocus">課程重點</label>
+                    <textarea id="courseFocus" placeholder="描述課程的主要學習目標和重點內容..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="specialRequirements">特殊要求</label>
+                    <textarea id="specialRequirements" placeholder="任何特殊要求或注意事項..."></textarea>
+                </div>
+                
+                <button class="generate-btn" id="generateBtn" onclick="generateLessonPlan()">
+                    🚀 生成課程計劃
+                </button>
+            </div>
+            
+            <!-- 右側：生成的課程計劃 -->
+            <div class="main-content">
+                <h3 class="section-title">📋 課程計劃</h3>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>AI 正在為您生成個性化課程計劃...</p>
+                </div>
+                
+                <div id="lessonPlanContent" class="lesson-plan" style="display: none;">
+                    <!-- 課程計劃內容將在這裡顯示 -->
+                </div>
+                
+                <div id="exportOptions" class="export-options" style="display: none;">
+                    <a href="#" class="export-btn pdf" onclick="exportPlan('pdf')">📄 導出 PDF</a>
+                    <a href="#" class="export-btn word" onclick="exportPlan('word')">📝 導出 Word</a>
+                    <a href="#" class="export-btn html" onclick="exportPlan('html')">🌐 導出 HTML</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentLessonPlan = null;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 設置默認值
+            document.getElementById('courseTitle').value = '舊約聖經導論';
+            document.getElementById('courseFocus').value = '通過系統性學習，幫助學員了解舊約聖經的歷史背景、神學主題和現代應用，建立對神話語的深入理解。';
+            
+            // 添加示例課程標題
+            const titleExamples = [
+                '新約聖經研究',
+                '聖經希伯來文基礎',
+                '教會歷史與神學',
+                '聖經人物研究',
+                '聖經地理與考古',
+                '聖經文學與修辭',
+                '聖經倫理與應用',
+                '聖經預言與末世論'
+            ];
+            
+            // 可以添加自動完成功能
+        });
+        
+        // 生成課程計劃
+        function generateLessonPlan() {
+            const courseData = collectCourseData();
+            
+            if (!validateCourseData(courseData)) {
+                return;
+            }
+            
+            // 顯示加載狀態
+            showLoading(true);
+            
+            // 模擬 AI 生成課程計劃（實際應用中會調用 AI API）
+            setTimeout(() => {
+                const lessonPlan = generateAILessonPlan(courseData);
+                displayLessonPlan(lessonPlan);
+                showLoading(false);
+                showExportOptions();
+            }, 3000);
+        }
+        
+        // 收集課程數據
+        function collectCourseData() {
+            return {
+                title: document.getElementById('courseTitle').value,
+                level: document.getElementById('courseLevel').value,
+                duration: parseInt(document.getElementById('courseDuration').value),
+                weeklyHours: parseInt(document.getElementById('weeklyHours').value),
+                targetAudience: document.getElementById('targetAudience').value,
+                learningStyle: document.getElementById('learningStyle').value,
+                focus: document.getElementById('courseFocus').value,
+                requirements: document.getElementById('specialRequirements').value
+            };
+        }
+        
+        // 驗證課程數據
+        function validateCourseData(data) {
+            if (!data.title.trim()) {
+                alert('請輸入課程標題！');
+                return false;
+            }
+            
+            if (!data.focus.trim()) {
+                alert('請描述課程重點！');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // 生成 AI 課程計劃（模擬）
+        function generateAILessonPlan(courseData) {
+            const plan = {
+                title: courseData.title,
+                overview: generateCourseOverview(courseData),
+                objectives: generateLearningObjectives(courseData),
+                weeklyPlans: generateWeeklyPlans(courseData),
+                assessment: generateAssessmentMethods(courseData),
+                resources: generateLearningResources(courseData)
+            };
+            
+            currentLessonPlan = plan;
+            return plan;
+        }
+        
+        // 生成課程概述
+        function generateCourseOverview(data) {
+            const levelText = {
+                'beginner': '適合初學者的基礎課程',
+                'intermediate': '適合有一定基礎的進階課程',
+                'advanced': '適合深入研究的專業課程'
+            };
+            
+            const audienceText = {
+                'youth': '專為青少年設計',
+                'adult': '適合成人學習者',
+                'elderly': '考慮長者學習特點',
+                'mixed': '適合不同年齡層'
+            };
+            
+            return `本課程是${levelText[data.level]}，${audienceText[data.targetAudience]}。課程為期${data.duration}週，每週學習${data.weeklyHours}小時，總計${data.duration * data.weeklyHours}小時的學習時間。
+
+課程重點：${data.focus}
+
+學習風格：${getLearningStyleText(data.learningStyle)}
+
+${data.requirements ? `特殊要求：${data.requirements}` : ''}`;
+        }
+        
+        // 生成學習目標
+        function generateLearningObjectives(data) {
+            const objectives = [
+                '掌握課程核心概念和基本知識',
+                '培養批判性思維和獨立思考能力',
+                '學會將理論知識應用到實際生活中',
+                '建立持續學習的習慣和興趣',
+                '培養與他人合作學習的能力'
+            ];
+            
+            if (data.level === 'advanced') {
+                objectives.push('發展原創性研究和分析能力');
+                objectives.push('培養學術寫作和表達能力');
+            }
+            
+            return objectives;
+        }
+        
+        // 生成週計劃
+        function generateWeeklyPlans(data) {
+            const weeklyPlans = [];
+            const topics = generateCourseTopics(data);
+            
+            for (let week = 1; week <= data.duration; week++) {
+                const weeklyPlan = {
+                    week: week,
+                    topic: topics[week - 1] || `第${week}週主題`,
+                    objectives: generateWeeklyObjectives(week, data),
+                    activities: generateWeeklyActivities(week, data),
+                    timeAllocation: generateTimeAllocation(data.weeklyHours),
+                    assessment: generateWeeklyAssessment(week, data)
+                };
+                
+                weeklyPlans.push(weeklyPlan);
+            }
+            
+            return weeklyPlans;
+        }
+        
+        // 生成課程主題
+        function generateCourseTopics(data) {
+            if (data.title.includes('舊約')) {
+                return [
+                    '創世記：創造與人類起源',
+                    '出埃及記：救贖與律法',
+                    '利未記：聖潔與敬拜',
+                    '民數記：曠野與試煉',
+                    '申命記：律法與應許',
+                    '約書亞記：征服與分配',
+                    '士師記：循環與拯救',
+                    '路得記：忠誠與救贖',
+                    '撒母耳記：王國建立',
+                    '列王記：王國興衰',
+                    '歷代志：歷史回顧',
+                    '以斯拉記：重建與復興',
+                    '尼希米記：城牆重建',
+                    '以斯帖記：神的主權',
+                    '約伯記：苦難與信心',
+                    '詩篇：讚美與禱告'
+                ];
+            } else if (data.title.includes('新約')) {
+                return [
+                    '四福音書：耶穌生平',
+                    '使徒行傳：教會建立',
+                    '保羅書信：教義建立',
+                    '一般書信：實踐指導',
+                    '啟示錄：末世預言'
+                ];
+            } else {
+                return Array.from({length: data.duration}, (_, i) => `第${i + 1}週：專題學習`);
+            }
+        }
+        
+        // 生成週目標
+        function generateWeeklyObjectives(week, data) {
+            const objectives = [
+                '理解本週主題的核心概念',
+                '掌握相關的聖經經文',
+                '學會應用所學知識'
+            ];
+            
+            if (week === 1) {
+                objectives.unshift('建立學習基礎和興趣');
+            }
+            
+            if (week === data.duration) {
+                objectives.push('總結和整合所學內容');
+            }
+            
+            return objectives;
+        }
+        
+        // 生成週活動
+        function generateWeeklyActivities(week, data) {
+            const activities = [
+                '個人研讀和思考',
+                '小組討論和分享',
+                '實踐應用和反思'
+            ];
+            
+            if (data.learningStyle === 'visual') {
+                activities.push('圖表製作和視覺化學習');
+            } else if (data.learningStyle === 'auditory') {
+                activities.push('音頻學習和口頭表達');
+            } else if (data.learningStyle === 'kinesthetic') {
+                activities.push('動手操作和角色扮演');
+            }
+            
+            return activities;
+        }
+        
+        // 生成時間分配
+        function generateTimeAllocation(weeklyHours) {
+            const allocation = {
+                '個人研讀': Math.round(weeklyHours * 0.4),
+                '小組學習': Math.round(weeklyHours * 0.3),
+                '實踐應用': Math.round(weeklyHours * 0.2),
+                '反思總結': Math.round(weeklyHours * 0.1)
+            };
+            
+            return allocation;
+        }
+        
+        // 生成週評估
+        function generateWeeklyAssessment(week, data) {
+            const assessments = [
+                '參與度評估',
+                '理解程度檢查',
+                '應用能力測試'
+            ];
+            
+            if (week % 4 === 0) {
+                assessments.push('階段性總結報告');
+            }
+            
+            return assessments;
+        }
+        
+        // 生成評估方法
+        function generateAssessmentMethods(data) {
+            const methods = [
+                '課堂參與和討論',
+                '作業和練習',
+                '期中測驗',
+                '期末項目',
+                '自我評估和反思'
+            ];
+            
+            return methods;
+        }
+        
+        // 生成學習資源
+        function generateLearningResources(data) {
+            const resources = [
+                '主要教材和參考書',
+                '聖經經文和註釋',
+                '多媒體資源和視頻',
+                '在線學習平台',
+                '小組討論材料'
+            ];
+            
+            return resources;
+        }
+        
+        // 獲取學習風格描述
+        function getLearningStyleText(style) {
+            const styles = {
+                'visual': '視覺型學習，善於通過圖表、圖像和文字學習',
+                'auditory': '聽覺型學習，善於通過聽講、討論和音頻學習',
+                'kinesthetic': '動手型學習，善於通過實踐、操作和體驗學習',
+                'mixed': '混合型學習，適應多種學習方式'
+            };
+            
+            return styles[style] || styles['mixed'];
+        }
+        
+        // 顯示課程計劃
+        function displayLessonPlan(plan) {
+            const content = document.getElementById('lessonPlanContent');
+            
+            content.innerHTML = `
+                <div class="plan-section">
+                    <h4>📚 課程概述</h4>
+                    <div class="objective">${plan.overview}</div>
+                </div>
+                
+                <div class="plan-section">
+                    <h4>🎯 學習目標</h4>
+                    <ul>
+                        ${plan.objectives.map(obj => `<li>${obj}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="plan-section">
+                    <h4>📅 週計劃詳情</h4>
+                    ${plan.weeklyPlans.map(weekPlan => `
+                        <div class="plan-section" style="margin: 15px 0; padding: 15px; background: #f8f9fa;">
+                            <h5>第${weekPlan.week}週：${weekPlan.topic}</h5>
+                            <div class="time">時間分配：${Object.entries(weekPlan.timeAllocation).map(([key, value]) => `${key} ${value}小時`).join('，')}</div>
+                            <div class="objective">
+                                <strong>本週目標：</strong>
+                                <ul>
+                                    ${weekPlan.objectives.map(obj => `<li>${obj}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="activity">
+                                <strong>學習活動：</strong>
+                                <ul>
+                                    ${weekPlan.activities.map(act => `<li>${act}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="assessment">
+                                <strong>評估方式：</strong>
+                                <ul>
+                                    ${weekPlan.assessment.map(ass => `<li>${ass}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="plan-section">
+                    <h4>📊 評估方法</h4>
+                    <ul>
+                        ${plan.assessment.map(method => `<li>${method}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="plan-section">
+                    <h4>📚 學習資源</h4>
+                    <ul>
+                        ${plan.resources.map(resource => `<li>${resource}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            content.style.display = 'block';
+        }
+        
+        // 顯示加載狀態
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const generateBtn = document.getElementById('generateBtn');
+            
+            if (show) {
+                loading.classList.add('show');
+                generateBtn.disabled = true;
+                generateBtn.textContent = '生成中...';
+            } else {
+                loading.classList.remove('show');
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🚀 生成課程計劃';
+            }
+        }
+        
+        // 顯示導出選項
+        function showExportOptions() {
+            document.getElementById('exportOptions').style.display = 'flex';
+        }
+        
+        // 導出課程計劃
+        function exportPlan(format) {
+            if (!currentLessonPlan) {
+                alert('請先生成課程計劃！');
+                return;
+            }
+            
+            alert(`${format.toUpperCase()} 導出功能正在開發中...`);
+            // 實際應用中這裡會實現真正的導出功能
+        }
+        
+        console.log('AI 課程規劃助手已加載完成！');
+    </script>
+</body>
+</html>

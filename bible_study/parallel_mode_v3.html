@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖經對照模式 v3（離線版）</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            background: #f4f6f8;
+            color: #2c3e50;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .top-bar {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        .badge {
+            background: #e67e22;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 11px;
+        }
+        .status { font-size: 11px; opacity: 0.9; }
+        .nav-bar {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 12px;
+        }
+        .nav-label { white-space: nowrap; }
+        select, button, input[type="number"] {
+            font-size: 12px;
+            padding: 4px 6px;
+            border-radius: 3px;
+            border: 1px solid #bdc3c7;
+        }
+        select { min-width: 120px; }
+        button {
+            background: #3498db;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover { background: #2980b9; }
+        .main {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #dfe4ea;
+        }
+        .panel:first-child { border-left: none; }
+        .panel-header {
+            background: #ecf0f1;
+            padding: 6px 10px;
+            border-bottom: 1px solid #d0d7de;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+        .panel-title { font-weight: bold; font-size: 12px; }
+        .panel-body {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background: #ffffff;
+        }
+        .ref-title {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-align: center;
+            border-bottom: 1px solid #ecf0f1;
+            padding-bottom: 4px;
+        }
+        .verse-row {
+            font-size: 13px;
+            margin: 4px 0;
+            line-height: 1.6;
+        }
+        .verse-no {
+            color: #7f8c8d;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+        .commentary-item {
+            font-size: 13px;
+            margin: 6px 0;
+            padding: 8px 10px;
+            background: #fdfbf5;
+            border-left: 3px solid #e67e22;
+            border-radius: 3px;
+            white-space: pre-wrap;
+        }
+        .commentary-range {
+            font-weight: bold;
+            color: #c0392b;
+        }
+        .empty-hint {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 20px;
+        }
+        @media (max-width: 900px) {
+            .main { flex-direction: column; }
+            .panel {
+                border-left: none;
+                border-top: 1px solid #dfe4ea;
+                max-height: 50vh;
+            }
+        }
+        .setup-panel {
+            flex: 1;
+            padding: 24px 20px;
+            overflow-y: auto;
+            background: #fff;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #2c3e50;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        .setup-panel .setup-h2 { font-size: 15px; margin: 0 0 12px; color: #c0392b; }
+        .setup-panel .setup-p { margin: 0 0 12px; color: #444; }
+        .setup-panel .setup-note { font-size: 11px; color: #64748b; margin-top: 14px; line-height: 1.55; }
+        .setup-panel .setup-pre {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px 14px;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .setup-panel .hint-http { color: #2563eb; font-weight: 600; word-break: break-all; }
+        .setup-panel code { background: #eef2f5; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+        .btn-copy {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            background: #3498db;
+            color: #fff;
+            cursor: pointer;
+        }
+        .btn-copy:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div>
+            <span class="badge">📑 對照模式 v3（離線版，不需伺服器）</span>
+        </div>
+        <div class="status">
+            聖經版本：信望愛(和合本)、NIV ；註釋：每日研經叢書
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <span class="nav-label">📖 書卷：</span>
+        <select id="book-select"></select>
+
+        <span class="nav-label">章：</span>
+        <button id="prev-chapter">&lt;</button>
+        <input id="chapter-input" type="number" min="1" style="width:60px;">
+        <button id="next-chapter">&gt;</button>
+
+        <span class="nav-label">參考：</span>
+        <span id="current-ref">-</span>
+    </div>
+
+    <div class="main">
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">左側：版本 / 註釋</div>
+                <select id="left-source"></select>
+            </div>
+            <div class="panel-body" id="left-content">
+                <div class="empty-hint">請選擇來源與書卷、章節。</div>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">右側：版本 / 註釋</div>
+                <select id="right-source"></select>
+            </div>
+            <div class="panel-body" id="right-content">
+                <div class="empty-hint">可選不同版本或註釋做對照。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 嵌入式資料包（先跑 gen_parallel_v3_data.py 生成這些檔案） -->
+    <script src="../data/bibles/bible_data_faith.js" charset="UTF-8"></script>
+    <script src="../data/bibles/bible_data_niv.js" charset="UTF-8"></script>
+    <script src="../data/cj/commentary_data_meiriyan.js" charset="UTF-8"></script>
+    <script src="js/dev_http_hint.js"></script>
+
+    <script>
+        // 書卷定義（與 v2 相同）
+        const BOOKS = [
+            { id: 1, name: '創世記', chapters: 50 },
+            { id: 2, name: '出埃及記', chapters: 40 },
+            { id: 3, name: '利未記', chapters: 27 },
+            { id: 4, name: '民數記', chapters: 36 },
+            { id: 5, name: '申命記', chapters: 34 },
+            { id: 6, name: '約書亞記', chapters: 24 },
+            { id: 7, name: '士師記', chapters: 21 },
+            { id: 8, name: '路得記', chapters: 4 },
+            { id: 9, name: '撒母耳記上', chapters: 31 },
+            { id: 10, name: '撒母耳記下', chapters: 24 },
+            { id: 11, name: '列王紀上', chapters: 22 },
+            { id: 12, name: '列王紀下', chapters: 25 },
+            { id: 13, name: '歷代志上', chapters: 29 },
+            { id: 14, name: '歷代志下', chapters: 36 },
+            { id: 15, name: '以斯拉記', chapters: 10 },
+            { id: 16, name: '尼希米記', chapters: 13 },
+            { id: 17, name: '以斯帖記', chapters: 10 },
+            { id: 18, name: '約伯記', chapters: 42 },
+            { id: 19, name: '詩篇', chapters: 150 },
+            { id: 20, name: '箴言', chapters: 31 },
+            { id: 21, name: '傳道書', chapters: 12 },
+            { id: 22, name: '雅歌', chapters: 8 },
+            { id: 23, name: '以賽亞書', chapters: 66 },
+            { id: 24, name: '耶利米書', chapters: 52 },
+            { id: 25, name: '耶利米哀歌', chapters: 5 },
+            { id: 26, name: '以西結書', chapters: 48 },
+            { id: 27, name: '但以理書', chapters: 12 },
+            { id: 28, name: '何西阿書', chapters: 14 },
+            { id: 29, name: '約珥書', chapters: 3 },
+            { id: 30, name: '阿摩司書', chapters: 9 },
+            { id: 31, name: '俄巴底亞書', chapters: 1 },
+            { id: 32, name: '約拿書', chapters: 4 },
+            { id: 33, name: '彌迦書', chapters: 7 },
+            { id: 34, name: '那鴻書', chapters: 3 },
+            { id: 35, name: '哈巴谷書', chapters: 3 },
+            { id: 36, name: '西番雅書', chapters: 3 },
+            { id: 37, name: '哈該書', chapters: 2 },
+            { id: 38, name: '撒迦利亞書', chapters: 14 },
+            { id: 39, name: '瑪拉基書', chapters: 4 },
+            { id: 40, name: '馬太福音', chapters: 28 },
+            { id: 41, name: '馬可福音', chapters: 16 },
+            { id: 42, name: '路加福音', chapters: 24 },
+            { id: 43, name: '約翰福音', chapters: 21 },
+            { id: 44, name: '使徒行傳', chapters: 28 },
+            { id: 45, name: '羅馬書', chapters: 16 },
+            { id: 46, name: '哥林多前書', chapters: 16 },
+            { id: 47, name: '哥林多後書', chapters: 13 },
+            { id: 48, name: '加拉太書', chapters: 6 },
+            { id: 49, name: '以弗所書', chapters: 6 },
+            { id: 50, name: '腓立比書', chapters: 4 },
+            { id: 51, name: '歌羅西書', chapters: 4 },
+            { id: 52, name: '帖撒羅尼迦前書', chapters: 5 },
+            { id: 53, name: '帖撒羅尼迦後書', chapters: 3 },
+            { id: 54, name: '提摩太前書', chapters: 6 },
+            { id: 55, name: '提摩太後書', chapters: 4 },
+            { id: 56, name: '提多書', chapters: 3 },
+            { id: 57, name: '腓利門書', chapters: 1 },
+            { id: 58, name: '希伯來書', chapters: 13 },
+            { id: 59, name: '雅各書', chapters: 5 },
+            { id: 60, name: '彼得前書', chapters: 5 },
+            { id: 61, name: '彼得後書', chapters: 3 },
+            { id: 62, name: '約翰一書', chapters: 5 },
+            { id: 63, name: '約翰二書', chapters: 1 },
+            { id: 64, name: '約翰三書', chapters: 1 },
+            { id: 65, name: '猶大書', chapters: 1 },
+            { id: 66, name: '啟示錄', chapters: 22 }
+        ];
+
+        const state = {
+            book: 1,
+            chapter: 1,
+            leftSource: "bible:faith",
+            rightSource: "bible:niv"
+        };
+
+        const BIBLE_SOURCES = {
+            faith:  { name: "信望愛(和合本)", data: window.BIBLE_DATA_faith || [] },
+            niv:    { name: "NIV",           data: window.BIBLE_DATA_niv   || [] }
+        };
+
+        const COMMENTARY_SOURCES = {
+            meiriyan: { name: "每日研經叢書", data: window.COMMENTARY_DATA_meiriyan || [] }
+        };
+
+        function siteRootPrefix() {
+            try {
+                var path = decodeURIComponent(location.pathname || "").replace(/\\/g, "/");
+                var i = path.toLowerCase().indexOf("/bible_study/");
+                if (i >= 0) return location.origin + path.slice(0, i + 1);
+                return location.origin + "/";
+            } catch (e) {
+                return location.origin + "/";
+            }
+        }
+
+        function joinUrlRel(originSlash, relPath) {
+            var o = originSlash.replace(/\/?$/, "/");
+            var segs = relPath.split("/");
+            return o + segs.map(function (s) { return encodeURIComponent(s); }).join("/");
+        }
+
+        function simplifyBibleRows(json) {
+            if (!json || !json.Bible || !Array.isArray(json.Bible.data)) return [];
+            return json.Bible.data.map(function (row) {
+                return {
+                    Book: row.Book,
+                    Chapter: row.Chapter,
+                    Verse: row.Verse,
+                    Text: row.Scripture || row.Text || ""
+                };
+            });
+        }
+
+        function simplifyCommentaryRows(json) {
+            if (!json || !json.commentary || !Array.isArray(json.commentary.data)) return [];
+            return json.commentary.data.map(function (row) {
+                return {
+                    Book: row.Book,
+                    Chapter: row.Chapter,
+                    FromVerse: row.FromVerse,
+                    ToVerse: row.ToVerse,
+                    Content: row.Data || row.Content || ""
+                };
+            });
+        }
+
+        async function fetchJsonRelFirst(paths) {
+            for (var i = 0; i < paths.length; i++) {
+                try {
+                    var u = joinUrlRel(siteRootPrefix(), paths[i]) + "?t=" + Date.now();
+                    var r = await fetch(u, { cache: "no-store" });
+                    if (!r.ok) continue;
+                    return await r.json();
+                } catch (err) {}
+            }
+            return null;
+        }
+
+        async function tryHttpHydrateParallel() {
+            var jFaith = await fetchJsonRelFirst([
+                "data/bibles/信望愛(和合本).json",
+                "data/bibles/信望爱(和合本).json"
+            ]);
+            if (jFaith) window.BIBLE_DATA_faith = simplifyBibleRows(jFaith);
+            var jNiv = await fetchJsonRelFirst(["data/bibles/niv.json", "data/bibles/NIV.json"]);
+            if (jNiv) window.BIBLE_DATA_niv = simplifyBibleRows(jNiv);
+            var jMei = await fetchJsonRelFirst(["data/cj/每日研经丛书.json"]);
+            if (jMei) window.COMMENTARY_DATA_meiriyan = simplifyCommentaryRows(jMei);
+        }
+
+        function parallelHasCoreData() {
+            return (
+                Array.isArray(window.BIBLE_DATA_faith) &&
+                window.BIBLE_DATA_faith.length > 0 &&
+                Array.isArray(window.BIBLE_DATA_niv) &&
+                window.BIBLE_DATA_niv.length > 0
+            );
+        }
+
+        function syncParallelSourceArrays() {
+            BIBLE_SOURCES.faith.data = window.BIBLE_DATA_faith || [];
+            BIBLE_SOURCES.niv.data = window.BIBLE_DATA_niv || [];
+            COMMENTARY_SOURCES.meiriyan.data = window.COMMENTARY_DATA_meiriyan || [];
+        }
+
+        function showParallelMissingPanel() {
+            var main = document.querySelector(".main");
+            var isFile = typeof bible100IsFileProtocol === "function" && bible100IsFileProtocol();
+            var urls = typeof bible100SuggestedHttpUrls === "function" ? bible100SuggestedHttpUrls() : [];
+            var linkHtml = urls
+                .map(function (x) {
+                    return (
+                        '<div style="margin:6px 0;"><a class="hint-http" href="' +
+                        x.href +
+                        '">' +
+                        x.href +
+                        '</a> <span style="color:#64748b;font-size:11px;">（埠 ' +
+                        x.port +
+                        "）</span></div>"
+                    );
+                })
+                .join("");
+            var pyCmd = "cd bible100_new\npython bible_study\\tools\\gen_parallel_v3_data.py";
+            var html =
+                '<div class="setup-panel">' +
+                '<h2 class="setup-h2">找不到對照用經文（嵌入式 .js 或線上 JSON）</h2>' +
+                '<p class="setup-p"><strong>這不是畫面壞掉。</strong>對照 v3 需要經文資料：要嘛載入已產生的 <code>bible_data_*.js</code>，要嘛在<strong>用網址開啟</strong>時自動讀取 <code>data/bibles/*.json</code>。若兩者都沒有，就會看到本說明。</p>' +
+                '<p class="setup-p"><strong>給一般使用者：</strong>若您是開別人架好的網站，請聯絡管理員確認已上傳 <code>data</code> 資料夾；僅上傳 HTML 而沒有經文檔，頁面會一直是空的。</p>' +
+                '<p class="setup-p"><strong>給本機開發者：</strong>可在專案根執行下方指令產生嵌入式 .js，完成後按 F5。瀏覽器<strong>不會</strong>自動幫您跑 Python。</p>' +
+                '<pre class="setup-pre" id="parallel-py-cmd">' +
+                pyCmd +
+                "</pre>" +
+                '<p style="margin-top:10px;"><button type="button" class="btn-copy" id="parallel-copy-py">複製指令</button> ' +
+                '<span id="parallel-copy-msg" style="font-size:11px;color:#0d9488;margin-left:6px;"></span></p>' +
+                (isFile
+                    ? '<p class="setup-p" style="margin-top:18px;"><strong>若以 <code>file://</code> 開啟</strong>，腳本檔容易載入失敗。建議在 <code>bible100_new</code> 啟動 HTTP 後點：</p>' +
+                      linkHtml +
+                      '<p class="setup-note"><strong>選用：</strong>網址後加 <code>?autoredirect=http</code>，可自動改開 <code>http://127.0.0.1:8765</code>…（須先有伺服器）。</p>'
+                    : '<p class="setup-p" style="margin-top:18px;"><strong>您已用 http/https，但 JSON 仍讀不到。</strong>請檢查：① 主機是否上傳 <code>data/bibles/信望愛(和合本).json</code>（或簡體檔名）與 <code>niv.json</code>／<code>NIV.json</code>；② Linux 主機檔名<strong>大小寫</strong>須完全一致；③ 免費空間是否擋下大檔下載。</p>') +
+                "</div>";
+            if (main) main.innerHTML = html;
+            var btn = document.getElementById("parallel-copy-py");
+            if (btn) {
+                btn.addEventListener("click", function () {
+                    var el = document.getElementById("parallel-py-cmd");
+                    var t = el ? el.textContent : pyCmd;
+                    if (typeof bible100CopyText === "function") {
+                        bible100CopyText(t).then(function (ok) {
+                            var m = document.getElementById("parallel-copy-msg");
+                            if (m) m.textContent = ok ? "已複製" : "複製失敗，請手動選取";
+                        });
+                    }
+                });
+            }
+        }
+
+        function getBookName(id) {
+            const b = BOOKS.find(b => b.id === id);
+            return b ? b.name : `書卷 ${id}`;
+        }
+
+        function getMaxChapter(id) {
+            const b = BOOKS.find(b => b.id === id);
+            return b ? b.chapters : 150;
+        }
+
+        function initUI() {
+            syncParallelSourceArrays();
+            const bookSel = document.getElementById("book-select");
+            BOOKS.forEach(b => {
+                const opt = document.createElement("option");
+                opt.value = b.id;
+                opt.textContent = `${String(b.id).padStart(2, "0")} ${b.name}`;
+                bookSel.appendChild(opt);
+            });
+            bookSel.value = state.book;
+
+            document.getElementById("chapter-input").value = state.chapter;
+            updateRef();
+
+            const leftSel = document.getElementById("left-source");
+            const rightSel = document.getElementById("right-source");
+
+            function fill(select) {
+                select.innerHTML = "";
+                const g1 = document.createElement("optgroup");
+                g1.label = "聖經版本";
+                Object.keys(BIBLE_SOURCES).forEach(key => {
+                    const opt = document.createElement("option");
+                    opt.value = "bible:" + key;
+                    opt.textContent = BIBLE_SOURCES[key].name;
+                    g1.appendChild(opt);
+                });
+                const g2 = document.createElement("optgroup");
+                g2.label = "註釋資源";
+                Object.keys(COMMENTARY_SOURCES).forEach(key => {
+                    const opt = document.createElement("option");
+                    opt.value = "comm:" + key;
+                    opt.textContent = "【註釋】" + COMMENTARY_SOURCES[key].name;
+                    g2.appendChild(opt);
+                });
+                select.appendChild(g1);
+                select.appendChild(g2);
+            }
+
+            fill(leftSel);
+            fill(rightSel);
+            leftSel.value = state.leftSource;
+            rightSel.value = state.rightSource;
+
+            // 事件
+            bookSel.addEventListener("change", () => {
+                state.book = parseInt(bookSel.value, 10) || 1;
+                const maxCh = getMaxChapter(state.book);
+                if (state.chapter > maxCh) state.chapter = maxCh;
+                document.getElementById("chapter-input").value = state.chapter;
+                updateRef();
+                renderBoth();
+            });
+
+            document.getElementById("chapter-input").addEventListener("change", () => {
+                let ch = parseInt(document.getElementById("chapter-input").value, 10) || 1;
+                const maxCh = getMaxChapter(state.book);
+                if (ch < 1) ch = 1;
+                if (ch > maxCh) ch = maxCh;
+                state.chapter = ch;
+                document.getElementById("chapter-input").value = ch;
+                updateRef();
+                renderBoth();
+            });
+
+            document.getElementById("prev-chapter").addEventListener("click", () => {
+                if (state.chapter > 1) {
+                    state.chapter--;
+                    document.getElementById("chapter-input").value = state.chapter;
+                    updateRef();
+                    renderBoth();
+                }
+            });
+            document.getElementById("next-chapter").addEventListener("click", () => {
+                const maxCh = getMaxChapter(state.book);
+                if (state.chapter < maxCh) {
+                    state.chapter++;
+                    document.getElementById("chapter-input").value = state.chapter;
+                    updateRef();
+                    renderBoth();
+                }
+            });
+
+            leftSel.addEventListener("change", () => {
+                state.leftSource = leftSel.value;
+                renderPanel("left");
+            });
+            rightSel.addEventListener("change", () => {
+                state.rightSource = rightSel.value;
+                renderPanel("right");
+            });
+        }
+
+        function updateRef() {
+            document.getElementById("current-ref").textContent =
+                `${getBookName(state.book)} ${state.chapter} 章`;
+        }
+
+        function getVerses(sourceKey, book, chapter) {
+            const src = BIBLE_SOURCES[sourceKey];
+            if (!src || !Array.isArray(src.data)) return [];
+            return src.data.filter(v => v.Book === book && v.Chapter === chapter);
+        }
+
+        function getCommentaries(sourceKey, book, chapter) {
+            const src = COMMENTARY_SOURCES[sourceKey];
+            if (!src || !Array.isArray(src.data)) return [];
+            return src.data.filter(c => c.Book === book && c.Chapter === chapter);
+        }
+
+        function renderVersesHTML(sourceKey, book, chapter, verses) {
+            const src = BIBLE_SOURCES[sourceKey];
+            const name = src ? src.name : sourceKey;
+            let html = `<div class="ref-title">${name} — ${getBookName(book)} ${chapter} 章</div>`;
+            if (!verses.length) {
+                html += `<div class="empty-hint">此章暫無經文資料。</div>`;
+                return html;
+            }
+            verses.forEach(v => {
+                html += `
+                    <div class="verse-row">
+                        <span class="verse-no">${v.Verse}</span>
+                        <span>${v.Text || ""}</span>
+                    </div>`;
+            });
+            return html;
+        }
+
+        function renderCommentaryHTML(sourceKey, book, chapter, items) {
+            const src = COMMENTARY_SOURCES[sourceKey];
+            const name = src ? src.name : sourceKey;
+            let html = `<div class="ref-title">${name} — ${getBookName(book)} ${chapter} 章</div>`;
+            if (!items.length) {
+                html += `<div class="empty-hint">此章暫無註釋資料。</div>`;
+                return html;
+            }
+            items.forEach(item => {
+                const fromV = item.FromVerse || 1;
+                const toV = item.ToVerse || fromV;
+                const range = fromV === toV ? `第 ${fromV} 節` : `第 ${fromV}–${toV} 節`;
+                html += `
+                    <div class="commentary-item">
+                        <div class="commentary-range">${range}</div>
+                        <div>${item.Content || ""}</div>
+                    </div>`;
+            });
+            return html;
+        }
+
+        function renderPanel(which) {
+            const container = document.getElementById(which === "left" ? "left-content" : "right-content");
+            const sourceKey = which === "left" ? state.leftSource : state.rightSource;
+            if (!sourceKey) {
+                container.innerHTML = `<div class="empty-hint">尚未選擇來源。</div>`;
+                return;
+            }
+            const [kind, key] = sourceKey.split(":");
+            if (kind === "bible") {
+                const verses = getVerses(key, state.book, state.chapter);
+                container.innerHTML = renderVersesHTML(key, state.book, state.chapter, verses);
+            } else if (kind === "comm") {
+                const items = getCommentaries(key, state.book, state.chapter);
+                container.innerHTML = renderCommentaryHTML(key, state.book, state.chapter, items);
+            } else {
+                container.innerHTML = `<div class="empty-hint">未知來源類型：${kind}</div>`;
+            }
+        }
+
+        function renderBoth() {
+            renderPanel("left");
+            renderPanel("right");
+        }
+
+        // 啟動：先試嵌入式 .js；在 http/https 下再嘗試從 JSON 自動灌入（無須先跑 gen）
+        async function bootstrapParallel() {
+            if (typeof bible100MaybeAutoredirectFromFile === "function") {
+                bible100MaybeAutoredirectFromFile();
+            }
+            syncParallelSourceArrays();
+            var onHttp = location.protocol === "http:" || location.protocol === "https:";
+            if (!parallelHasCoreData() && onHttp) {
+                var st = document.querySelector(".status");
+                if (st) st.textContent = "網址模式：嘗試載入 data/bibles/*.json …";
+                try {
+                    await tryHttpHydrateParallel();
+                } catch (e) {}
+                syncParallelSourceArrays();
+                if (st && parallelHasCoreData()) {
+                    st.textContent =
+                        "聖經版本：信望愛(和合本)、NIV ；註釋：每日研經叢書（JSON 線上載入）";
+                }
+            }
+            if (!parallelHasCoreData()) {
+                showParallelMissingPanel();
+                return;
+            }
+            initUI();
+            renderBoth();
+        }
+        bootstrapParallel().catch(function () {
+            showParallelMissingPanel();
+        });
+    </script>
+</body>
+</html>
+

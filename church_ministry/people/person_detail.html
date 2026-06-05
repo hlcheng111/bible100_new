@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>個人詳情 - 我的參與</title>
+  <base target="_parent">
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; margin: 0; padding: 16px; background: #f6f7fb; font-size: 13px; }
+    .card { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .card h3 { margin: 0 0 12px 0; color: #0b5fa5; font-size: 14px; }
+    .progress-bar { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin: 4px 0; }
+    .progress-fill { height: 100%; background: #0b5fa5; transition: width 0.3s; }
+    .back-link { display: inline-block; margin-bottom: 12px; color: #0b5fa5; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <a href="people_list.html" target="contentFrame" class="back-link">← 返回人員列表</a>
+  <div id="content"></div>
+  <script src="../../js/people_loader.js"></script>
+  <script src="../../js/progress_loader.js"></script>
+  <script>
+    (function() {
+      var params = {};
+      (location.search || '').slice(1).split('&').forEach(function(p) {
+        var kv = p.split('=');
+        if (kv[0]) params[decodeURIComponent(kv[0])] = decodeURIComponent((kv[1] || ''));
+      });
+      var id = params.id;
+
+      var db = window.peopleDB || new PeopleDB();
+      var progDb = window.progressDB || new ProgressDB();
+      var content = document.getElementById('content');
+
+      function render(person) {
+        if (!person) {
+          content.innerHTML = '<div class="card"><p>請從 <a href="people_list.html" target="contentFrame">人員列表</a> 選擇，或於網址加上 ?id=xxx</p></div>';
+          return;
+        }
+        var prog = progDb.getByPerson ? progDb.getByPerson(person.id) : [];
+        var courses = [{ id: 'OT100', name: 'OT100' }, { id: 'NT100', name: 'NT100' }, { id: 'T4', name: 'T4' }];
+        var progMap = {};
+        prog.forEach(function(p) { progMap[p.course_id] = p.current_step || 0; });
+
+        var html = '<div class="card"><h3>基本資料</h3><p><strong>姓名</strong> ' + (person.name || '-') + '</p><p><strong>性別</strong> ' + (person.gender || '-') + '</p><p><strong>地區</strong> ' + (person.region || '-') + '</p><p><strong>年齡層</strong> ' + (person.age_group || '-') + '</p><p><strong>教會</strong> ' + (person.church || '-') + '</p><p><strong>出席次數</strong> ' + (person.attendance_count != null ? person.attendance_count : '-') + '</p><p><strong>最近出席</strong> ' + (person.last_attendance || '-') + '</p><p><strong>標籤</strong> ' + ((person.tags && person.tags.length) ? person.tags.join(', ') : '-') + '</p></div>';
+        html += '<div class="card"><h3>學習進度</h3>';
+        courses.forEach(function(c) {
+          var step = progMap[c.id] || 0;
+          var pct = Math.min(100, step);
+          html += '<p>' + c.name + ' <span>' + step + ' 步</span></p><div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>';
+        });
+        html += '</div>';
+        content.innerHTML = html;
+      }
+
+      db.loadFromFile(function() {
+        if (progDb.loadFromFile) {
+          progDb.loadFromFile(function() {
+            var person = id ? db.get(id) : null;
+            render(person);
+          });
+        } else {
+          var person = id ? db.get(id) : null;
+          render(person);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

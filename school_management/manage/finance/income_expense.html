@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收支管理 - Income & Expense</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>📊 收支管理 · Income & Expense</h1>
+        <p>收入與支出記錄、匯出 CSV／JSON</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 財務、行政同工。</p>
+            <p><b>有什麼功能？</b> 新增收支、編輯／刪除、匯出。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">➕ 新增收支</div>
+        <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+            <div><label class="stat-label">類型</label><br><select name="type" class="module-input"><option value="income">收入</option><option value="expense">支出</option></select></div>
+            <div><label class="stat-label">類別</label><br><input name="category" class="module-input" value="學費" placeholder="學費、教材"></div>
+            <div><label class="stat-label">金額</label><br><input name="amount" class="module-input" type="number" value="100" style="width:90px;"></div>
+            <div><label class="stat-label">備註</label><br><input name="memo" class="module-input" placeholder="選填" style="min-width:180px;"></div>
+            <div><br><button type="submit" class="module-btn">儲存</button></div>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📋 收支列表 <button class="module-btn module-btn-secondary" id="btnExportCsv" style="float:right;">📤 匯出 CSV</button> <button class="module-btn module-btn-secondary" id="btnExportJson" style="float:right;margin-right:8px;">📤 匯出 JSON</button></div>
+        <div id="list"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+            if (db.ensureSeedFull) db.ensureSeedFull();
+
+            const transactions = (db.data.finance && db.data.finance.transactions) || [];
+
+            function draw() {
+                const a = transactions.slice(-200).reverse();
+                const body = a.map(t => '<tr><td>' + t.id + '</td><td>' + (t.type === 'income' ? '收入' : '支出') + '</td><td>' + (t.category || '—') + '</td><td>' + (t.amount || 0) + '</td><td>' + (t.at ? new Date(t.at).toLocaleString() : '—') + '</td><td>' + (t.memo || '—') + '</td><td><a href="#" onclick="editT(' + t.id + ');return false;">編輯</a> | <a href="#" onclick="delT(' + t.id + ');return false;">刪除</a></td></tr>').join('');
+                document.getElementById('list').innerHTML = '<table class="module-table"><thead><tr><th>ID</th><th>類型</th><th>類別</th><th>金額</th><th>時間</th><th>備註</th><th>操作</th></tr></thead><tbody>' + (body || '<tr><td colspan="7">尚無資料</td></tr>') + '</tbody></table>';
+            }
+
+            document.getElementById('f').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                db.insert('finance.transactions', {
+                    type: fm.get('type') || 'income',
+                    category: (fm.get('category') || '').trim() || '學費',
+                    amount: parseInt(fm.get('amount'), 10) || 0,
+                    memo: (fm.get('memo') || '').trim(),
+                    at: new Date().toISOString()
+                });
+                this.reset();
+                draw();
+            };
+
+            window.editT = function(id) {
+                const t = transactions.find(x => x.id === id);
+                if (!t) return;
+                const v = prompt('JSON 編輯（不改 id）', JSON.stringify(t, null, 2));
+                if (!v) return;
+                try {
+                    const o = JSON.parse(v);
+                    delete o.id;
+                    delete o.createdAt;
+                    delete o.updatedAt;
+                    db.update('finance.transactions', id, o);
+                    draw();
+                } catch (e) { alert('JSON 無效'); }
+            };
+            window.delT = function(id) {
+                if (confirm('確認刪除？')) { db.delete('finance.transactions', id); draw(); }
+            };
+
+            document.getElementById('btnExportCsv').onclick = function() {
+                const cols = ['id', 'type', 'category', 'amount', 'at', 'memo'];
+                const head = cols.join(',');
+                const body = transactions.map(r => cols.map(k => '"' + String(r[k] ?? '').replace(/"/g, '""') + '"').join(',')).join('\n');
+                const A = document.createElement('a');
+                A.href = URL.createObjectURL(new Blob(['\ufeff' + head + '\n' + body], { type: 'text/csv;charset=utf-8' }));
+                A.download = 'fin_transactions_' + new Date().toISOString().slice(0, 10) + '.csv';
+                A.click();
+            };
+            document.getElementById('btnExportJson').onclick = function() {
+                const A = document.createElement('a');
+                A.href = URL.createObjectURL(new Blob([JSON.stringify(transactions, null, 2)], { type: 'application/json' }));
+                A.download = 'fin_transactions_' + new Date().toISOString().slice(0, 10) + '.json';
+                A.click();
+            };
+
+            draw();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教會事工儀表板 - Church Ministry Dashboard · Dashboard | Church Ministry</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f5f6fb;
+            color: #111827;
+            font-size: 12px;
+            margin: 0;
+            padding: 16px;
+        }
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+        .hero {
+            background: radial-gradient(circle at 0% 0%, #fef3c7 0, transparent 55%), linear-gradient(135deg, #8b5cf6 0%, #2563eb 100%);
+            border-radius: 16px;
+            padding: 18px 18px 14px;
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(15,23,42,0.25);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+        }
+        .hero-main h1 {
+            font-size: 20px;
+            margin: 0 0 4px;
+        }
+        .hero-main p {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.92;
+        }
+        .hero-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .tag {
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.55);
+            font-size: 10px;
+            background: rgba(15,23,42,0.16);
+            backdrop-filter: blur(4px);
+            white-space: nowrap;
+        }
+        .hero-right {
+            min-width: 180px;
+            text-align: right;
+            font-size: 10px;
+            opacity: 0.95;
+        }
+        .hero-right strong {
+            display: block;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.7fr);
+            gap: 14px;
+        }
+        @media (max-width: 900px) {
+            body { padding: 10px; }
+            .hero { flex-direction: column; align-items: flex-start; }
+            .hero-right { text-align: left; }
+            .layout { grid-template-columns: minmax(0,1fr); }
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 14px 14px 10px;
+            box-shadow: 0 5px 22px rgba(15,23,42,0.10);
+            border: 1px solid #e5e7f0;
+            margin-bottom: 4px;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #111827;
+        }
+        .card-title span.icon {
+            font-size: 15px;
+        }
+        .card-sub {
+            font-size: 10px;
+            color: #6b7280;
+        }
+        .badge {
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px dashed #c7d2fe;
+            background: #eef2ff;
+            color: #4b5563;
+        }
+
+        .stats-spac {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0,1fr));
+            gap: 6px;
+            margin-top: 4px;
+        }
+        @media (max-width: 768px) {
+            .stats-spac { grid-template-columns: repeat(2, minmax(0,1fr)); }
+        }
+        .stat-pill {
+            border-radius: 10px;
+            padding: 8px 8px 6px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+        .stat-label {
+            font-size: 10px;
+            color: #6b7280;
+            margin-bottom: 3px;
+            display: flex;
+            justify-content: space-between;
+            gap: 4px;
+        }
+        .stat-main {
+            font-size: 15px;
+            font-weight: 700;
+            color: #4f46e5;
+        }
+        .stat-foot {
+            font-size: 9px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+            gap: 8px;
+        }
+        @media (max-width: 768px) {
+            .two-col { grid-template-columns: minmax(0,1fr); }
+        }
+
+        .list {
+            margin: 0;
+            padding-left: 12px;
+            font-size: 11px;
+            color: #4b5563;
+        }
+        .list li {
+            margin-bottom: 3px;
+        }
+
+        .role-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .role-card {
+            border-radius: 10px;
+            padding: 7px 8px 6px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+        .role-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: #111827;
+        }
+        .role-todo {
+            font-size: 10px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .link-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .link-chip {
+            font-size: 10px;
+            text-decoration: none;
+            padding: 4px 9px;
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            background: #f9fafb;
+            color: #374151;
+        }
+        .link-chip:hover {
+            background: #e5e7eb;
+        }
+
+        .note {
+            font-size: 10px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .kpi-contract-banner {
+            margin: 0 0 12px 0;
+            font-size: 10px;
+            border-radius: 10px;
+            padding: 8px 10px;
+            border: 1px solid #c7d2fe;
+            background: #eef2ff;
+            color: #3730a3;
+        }
+        .kpi-contract-banner.error {
+            border-color: #fecaca;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .member-chart-wrap {
+            position: relative;
+            min-height: 200px;
+            max-height: 220px;
+        }
+        .member-chart-wrap canvas {
+            max-height: 210px;
+        }
+        .health-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            z-index: 9999;
+            background: rgba(15, 23, 42, 0.42);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .health-modal.active { display: flex; }
+        .health-modal-card {
+            width: min(920px, 96vw);
+            max-height: 82vh;
+            overflow: auto;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #dbeafe;
+            padding: 14px;
+        }
+        .release-notes-card {
+            border-left: 4px solid #7c3aed;
+            margin-bottom: 14px;
+        }
+        .release-notes-card details {
+            font-size: 11px;
+            color: #374151;
+        }
+        .release-notes-card summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #5b21b6;
+            margin-bottom: 6px;
+        }
+        .release-notes-card ul {
+            margin: 4px 0 8px;
+            padding-left: 18px;
+            line-height: 1.55;
+        }
+        .release-notes-card h4 {
+            margin: 10px 0 4px;
+            font-size: 11px;
+            color: #111827;
+        }
+        #auth-session-banner {
+            margin: 0 0 12px 0;
+            font-size: 10px;
+            border-radius: 10px;
+            padding: 8px 10px;
+            border: 1px solid #fde68a;
+            background: #fffbeb;
+            color: #92400e;
+        }
+        .crm-today-desk {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+        @media (max-width: 768px) {
+            .crm-today-desk { grid-template-columns: minmax(0, 1fr); }
+        }
+        .crm-today-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+            padding: 14px 14px 12px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 14px rgba(15,23,42,0.12);
+            min-height: 72px;
+        }
+        .crm-today-btn--shift { background: linear-gradient(135deg, #4338ca, #2563eb); }
+        .crm-today-btn--care { background: linear-gradient(135deg, #6d28d9, #7c3aed); }
+        .crm-today-btn--ai { background: linear-gradient(135deg, #0f766e, #059669); }
+        .crm-today-btn__meta { font-size: 10px; font-weight: 400; opacity: 0.92; }
+        .crm-safety-banner {
+            margin: 0 0 12px 0;
+            font-size: 10px;
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px solid #fde68a;
+            background: #fffbeb;
+            color: #78350f;
+        }
+    </style>
+</head>
+<body>
+    <script src="../js/shell_nav.js"></script>
+    <div class="landing-top-nav" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 14px;background:#e3f2fd;border-radius:8px;margin-bottom:20px;font-size:9px;">
+        <span style="color:#666;">導航（總站殼 index_v5）：</span>
+        <a href="../index_v5.html" target="_top" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">index_v5</a>
+        <a href="#" onclick="return bible100OpenContent(event,'help/global-tools.htm');" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">全站工具說明</a>
+        <a href="#" onclick="return bible100OpenContent(event,'help/translate.html');" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">翻譯</a>
+        <a href="#" onclick="return bible100OpenContent(event,'help/my-saved.html');" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">已收藏</a>
+        <a href="dashboard.html" style="padding:4px 8px;background:#9b59b6;color:#fff;text-decoration:none;border-radius:4px;">本模組首頁</a>
+        <a href="#" onclick="return bible100OpenContent(event,'nav_hub/index.html');" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">目錄搜索</a>
+        <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'bible_study/sidebar.html',contentUrl:'bible_study/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">聖經研讀</a>
+        <a href="#" onclick="return bible100OpenContent(event,'qna/qna_landing.htm');" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">聖經難題</a>
+        <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'disciple_dynamics/sidebar.html',contentUrl:'disciple_dynamics/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">門訓動力站</a>
+        <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'school_management/sidebar.html',contentUrl:'school_management/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">學校管理</a>
+        <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'ai_tools/sidebar.html',contentUrl:'ai_tools/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">AI 工具</a>
+        <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'hymn_management/sidebar.html',contentUrl:'hymn_management/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">詩歌管理</a>
+    </div>
+    <div class="page">
+        <section class="hero">
+            <div class="hero-main">
+                <h1>⛪ 教會事工儀表板 · Church Ministry Dashboard</h1>
+                <p>一眼看見教會健康狀況，並提醒每位領袖「今天最重要的一步」。</p>
+                <div class="hero-tags">
+                    <span class="tag">教會雷達 · SPAC 概覽</span>
+                    <span class="tag">我的工作桌 · 角色導向</span>
+                    <span class="tag">數據輔助 · 牧養優先</span>
+                </div>
+            </div>
+            <div class="hero-right">
+                <strong>提示 Tip</strong>
+                <div>左側欄可進入各完整系統（會友、志工、財務、探訪等），本頁提供「全貌＋待辦」的快速視圖。</div>
+                <details style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,0.12);border-radius:8px;font-size:11px;">
+                    <summary style="cursor:pointer;font-weight:600;">📋 功能與使用說明</summary>
+                    <div style="margin-top:8px;opacity:0.95;">
+                        <div style="font-weight:600;margin-bottom:4px;">此頁是為誰而設？</div>
+                        <p style="margin:0 0 10px;">為牧者、長執、事工負責人，一進來就看到教會全貌與待辦。</p>
+                        <div style="font-weight:600;margin-bottom:4px;">有什麼功能？</div>
+                        <ul style="margin:0 0 10px;padding-left:18px;line-height:1.5;">
+                            <li><b>SPAC 雷達</b>：財務、人事、事工、社群（Bridge KPI）</li>
+                            <li><b>CRM 就緒度</b> + <b>我的工作桌</b>（新人／關懷／晉升／CTA-OS）</li>
+                            <li><b>2026-05 更新</b>：見下方「功能更新紀錄」摺疊區</li>
+                            <li>左側欄 v3.1：整合 6 套 + 探訪工作桌 + 研究索引</li>
+                        </ul>
+                        <div style="font-weight:600;margin-bottom:4px;">如何入手？</div>
+                        <ol style="margin:0;padding-left:18px;line-height:1.5;">
+                            <li>依角色查看「我的工作桌」的待辦</li>
+                            <li>點頂部卡片進入願景、路線圖、事工總覽或 AI 決策</li>
+                            <li>用左側欄進入會友、財務、事工與專案等</li>
+                        </ol>
+                    </div>
+                </details>
+            </div>
+        </section>
+        <div id="kpi-contract-banner" class="kpi-contract-banner">KPI 契約狀態：讀取中…</div>
+        <div id="crm-maturity-banner" class="kpi-contract-banner" style="border-color:#a7f3d0;background:#ecfdf5;color:#065f46;">
+            教會 CRM 資料就緒度：讀取中… · <a href="guide_crm_journey_hub.html" target="_parent" style="color:#047857;font-weight:700;">🗺️ CRM 旅程地圖（中英標題）</a>
+            · <a href="docs/CRM_RELEASE_NOTES_2026-05.md" target="_blank" style="color:#047857;font-weight:600;">更新紀錄</a>
+            · <a href="docs/CHURCH_CRM_BLUEPRINT.md" target="_blank" style="color:#047857;">藍圖</a>
+            · <a href="modules/members/member-360-timeline.html" target="_parent" style="color:#047857;">會眾 360</a>
+        </div>
+        <div id="auth-session-banner">登入狀態：讀取中…</div>
+
+        <div id="hubDataTrustMount"></div>
+
+        <div id="crm-safety-banner" class="crm-safety-banner" role="note">
+            <strong>CRM Dashboard v1 · 資料安全</strong>
+            <ul style="margin:6px 0 0;padding-left:16px;line-height:1.55;">
+                <li><strong>demo KPI 不可當正式決策報告</strong>（Data Trust 為 demo/mixed 時請先清 demo）</li>
+                <li><strong>不會自動通知</strong> LINE／WhatsApp；排班邀請與關懷稿僅供複製（copy_only）</li>
+                <li><strong>牧養敏感資料不顯示全文</strong>；本頁僅數字與 reason 摘要，不含 A2 note</li>
+            </ul>
+            <p style="margin:8px 0 0;font-size:11px;">
+                <a href="admin/demo_data_governance.html" target="_parent" style="color:#b45309;font-weight:700;">⚙️ 管理 demo／正式資料</a>
+            </p>
+        </div>
+
+        <section class="card" style="border-left:4px solid #059669;" id="crm-today-desk-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title"><span class="icon">✅</span> 小白今日工作桌</div>
+                    <div class="card-sub">A1 排班 + A2 探訪跟進 + AI 只預填 · 數字來自 ChurchDataBridge 真 KPI</div>
+                </div>
+            </div>
+            <div class="crm-today-desk">
+                <a class="crm-today-btn crm-today-btn--shift" href="tools/volunteer_shift/list.html" target="_parent" id="deskBtnShifts">
+                    <span>📅 今日要確認的排班</span>
+                    <span class="crm-today-btn__meta" id="deskMetaShifts">載入中…</span>
+                </a>
+                <a class="crm-today-btn crm-today-btn--care" href="tools/visitation_followup/list.html" target="_parent" id="deskBtnFollowup">
+                    <span>🤝 今日要跟進的關懷</span>
+                    <span class="crm-today-btn__meta" id="deskMetaFollowup">載入中…</span>
+                </a>
+                <a class="crm-today-btn crm-today-btn--ai" href="../ai_tools/pages/crm_automation_console.html" target="_parent">
+                    <span>🤖 AI 營運自動化</span>
+                    <span class="crm-today-btn__meta">只預填 · 不儲存 · 不會自動通知</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="card" style="border-left:4px solid #4338ca;" id="crm-kpi-v1-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title"><span class="icon">📊</span> CRM 營運 KPI（A1 / A2 / CTV）</div>
+                    <div class="card-sub">getVolunteerShiftSummary(14) · getPastoralFollowupSummary(7) · listPendingMinistrySuggestions</div>
+                </div>
+            </div>
+            <div id="crm-kpi-v1-root"></div>
+        </section>
+
+        <section class="card" style="border-left:4px solid #4338ca;" id="crm-role-dashboard-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title"><span class="icon">🎭</span> 三級 Dashboard · 我現在的角色</div>
+                    <div class="card-sub">同工：A1/A2/CTV 待辦與下一步 · 決策者：KPI 條 + Data Trust · 不含 note 全文</div>
+                </div>
+            </div>
+            <div id="crm-role-switch" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
+            <div id="crm-role-dashboard-root" class="role-list" style="display:block;grid-template-columns:1fr;"></div>
+        </section>
+
+        <section class="card release-notes-card" aria-label="功能更新紀錄 2026-05">
+            <div class="card-header" style="margin-bottom:4px;">
+                <div class="card-title"><span class="icon">🆕</span> 功能更新紀錄（2026-05 · CRM-0～5）</div>
+                <span class="badge">已寫入案文件</span>
+            </div>
+            <p class="card-sub" style="margin:0 0 8px;">完整條目見 <a href="docs/CRM_RELEASE_NOTES_2026-05.md" target="_blank">docs/CRM_RELEASE_NOTES_2026-05.md</a>。成熟度 ≥90%：<a href="load_crm_maturity_seed.html" target="_parent">載入 CRM 成熟度種子</a>。</p>
+            <details open>
+                <summary>展開／收合各階段變更</summary>
+                <h4>CRM-0 底座</h4>
+                <ul>
+                    <li>屬靈階段常數、牧養事件流 <code>pastoral_events_v1</code>、新人 SLA 規則</li>
+                    <li>志工崗位同步配對目錄、360 時間軸 API、成熟度 KPI</li>
+                </ul>
+                <h4>CRM-1 垂直做深</h4>
+                <ul>
+                    <li><a href="modules/support/visitation_index.html" target="_parent">探訪工作桌</a> 存檔 → 牧養事件</li>
+                    <li><a href="modules/members/member-integrated.html" target="_parent">會友整合</a>：屬靈階段、初來日期、JSON 匯入匯出</li>
+                    <li>工作桌新人項 → 探訪（帶 <code>memberId</code>）</li>
+                </ul>
+                <h4>CRM-2 規劃 ↔ 部門</h4>
+                <ul>
+                    <li>CTA-OS 報告 → Smart Ministry <code>attachAssessmentToTalent</code></li>
+                    <li>配對確認 → 志工排班；志工頁「本崗建議人選」</li>
+                    <li>可晉升階段規則 → 工作桌</li>
+                </ul>
+                <h4>CRM-3～4 精簡與分析</h4>
+                <ul>
+                    <li>側欄 v3.1；<code>analytics</code> → <code>research</code></li>
+                    <li><a href="modules/research/spiritual-stage-funnel.html" target="_parent">屬靈階段漏斗</a>；研究頁 Bridge KPI</li>
+                    <li>動態工作桌四類待辦（取代固定示意文字）</li>
+                </ul>
+                <h4>CRM-5 上雲 demo</h4>
+                <ul>
+                    <li>本機 API：<code>node scripts/church_api_local_server.js</code></li>
+                    <li><a href="admin/cloud_login.html" target="_parent">雲端登入 RBAC</a>（pastor/demo123 等）</li>
+                    <li>Sheets SSOT 適配、<a href="modules/support/ai-pastoral-draft.html" target="_parent">AI 牧養草稿</a>（人工確認後寫入）</li>
+                    <li><code>index_v5</code>／本頁已預載 <code>church_auth.js</code></li>
+                </ul>
+            </details>
+        </section>
+
+        <div class="layout">
+            <!-- 左：教會雷達（SPAC 概覽） -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <span class="icon">📡</span>
+                                教會雷達 · SPAC 概覽
+                            </div>
+                            <div class="card-sub">真實數據來自會友、志工、財務、探訪等核心模組。無資料時顯示 —，請先至 <a href="load_central_member_seed.html" style="color:#4338ca;">載入 500 人</a> 或各模組填入資料。</div>
+                        </div>
+                        <span class="badge">S · P · A · C 四維度</span>
+                    </div>
+                    <div class="stats-spac">
+                        <div class="stat-pill">
+                            <div class="stat-label">
+                                <span>S · Stewardship</span>
+                                <span style="color:#059669;">財務管家</span>
+                            </div>
+                            <div class="stat-main" id="stat-s-balance">—</div>
+                            <div class="stat-foot">本月奉獻總計（Bridge KPI）</div>
+                        </div>
+                        <div class="stat-pill">
+                            <div class="stat-label">
+                                <span>P · People</span>
+                                <span style="color:#2563eb;">人事與志工</span>
+                            </div>
+                            <div class="stat-main" id="stat-p-people">—</div>
+                            <div class="stat-foot">4 週成員留存率（Retention）</div>
+                        </div>
+                        <div class="stat-pill">
+                            <div class="stat-label">
+                                <span>A · Activities</span>
+                                <span style="color:#7c3aed;">事工與專案</span>
+                            </div>
+                            <div class="stat-main" id="stat-a-activities">—</div>
+                            <div class="stat-foot">3 天志工回覆率（RSVP）</div>
+                        </div>
+                        <div class="stat-pill" id="data-health-card" style="cursor:pointer;" title="點擊查看 Data Health 詳細報告">
+                            <div class="stat-label">
+                                <span>C · Community</span>
+                                <span style="color:#ea580c;">社群與捐款人</span>
+                                <span id="smart-alert-badge" class="badge" style="margin-left:6px;background:#fee2e2;color:#b91c1c;border-color:#fecaca;">Alerts 0</span>
+                            </div>
+                            <div class="stat-main" id="stat-c-followup">—</div>
+                            <div class="stat-foot">全站資料品質（Data Health）</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 會友：memberSystemData + Chart.js（僅讀取，不改資料結構） -->
+                <div class="card" style="border-left: 4px solid #4f46e5;">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <span class="icon">📊</span>
+                                會友統計 · memberSystemData
+                            </div>
+                            <div class="card-sub">透過 <code>ChurchDataBridge.getMemberSystemData()</code> 讀取會友資料；報名比例優先採訓練記錄，若無則採小組歸屬。</div>
+                        </div>
+                        <span class="badge">Chart.js</span>
+                    </div>
+                    <div class="two-col" style="align-items: stretch;">
+                        <div class="stat-pill" style="display:flex;flex-direction:column;justify-content:center;">
+                            <div class="stat-label"><span>會友總數</span></div>
+                            <div class="stat-main" id="member-ms-total">—</div>
+                            <div class="stat-foot" id="member-ms-enrolled">—</div>
+                            <div class="stat-foot" id="member-ms-ratio">—</div>
+                        </div>
+                        <div class="member-chart-wrap">
+                            <canvas id="memberSystemChart" aria-label="會友報名比例圖表"></canvas>
+                        </div>
+                    </div>
+                    <p class="note" style="margin-top:8px;">若此處為「—」，請先開啟 <a href="load_central_member_seed.html" target="_parent">載入試用資料</a>（「載入 200+ 筆」不需伺服器；「從 people.json 匯入 500 人」需本機 HTTP）。</p>
+                </div>
+
+                <!-- 學校事工（主日學／培訓）— 與 SchoolMasterDatabase 連接 -->
+                <div class="card" style="border-left: 4px solid #0b5fa5;">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <span class="icon">🏫</span>
+                                學校事工 · School Ministry
+                            </div>
+                            <div class="card-sub">主日學／培訓為教會部門，資料來自學校管理系統（SchoolMasterDatabase）。</div>
+                        </div>
+                        <a href="#" class="badge" style="text-decoration:none;" onclick="return bible100ShellNav(event,{sidebarUrl:'school_management/sidebar.html',contentUrl:'school_management/dashboard.html'});">進入學校管理 →</a>
+                    </div>
+                    <div class="stats-spac" style="margin-top:6px;">
+                        <div class="stat-pill">
+                            <div class="stat-label"><span>學生</span></div>
+                            <div class="stat-main" id="stat-school-students">—</div>
+                            <div class="stat-foot">主日學／培訓學員</div>
+                        </div>
+                        <div class="stat-pill">
+                            <div class="stat-label"><span>教師</span></div>
+                            <div class="stat-main" id="stat-school-teachers">—</div>
+                            <div class="stat-foot">授課同工</div>
+                        </div>
+                        <div class="stat-pill">
+                            <div class="stat-label"><span>課程</span></div>
+                            <div class="stat-main" id="stat-school-courses">—</div>
+                            <div class="stat-foot">開設課程</div>
+                        </div>
+                        <div class="stat-pill">
+                            <div class="stat-label"><span>選課</span></div>
+                            <div class="stat-main" id="stat-school-enrollments">—</div>
+                            <div class="stat-foot">選課記錄</div>
+                        </div>
+                    </div>
+                    <div class="link-row" style="margin-top:8px;">
+                        <a href="#" class="link-chip" onclick="return bible100ShellNav(event,{sidebarUrl:'school_management/sidebar.html',contentUrl:'school_management/dashboard.html'});">📚 學校儀表板</a>
+                        <a href="#" class="link-chip" style="background:#27ae60;color:#fff;border-color:#27ae60;" onclick="return bible100ShellNav(event,{sidebarUrl:'school_management/sidebar.html',contentUrl:'school_management/load_school_seed.html'});">📥 載入示範資料</a>
+                    </div>
+                </div>
+
+                <!-- 門訓與 AI（獨立子站，摘要回寫 churchMasterDatabase） -->
+                <div class="card" style="border-left: 4px solid #0f766e;">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <span class="icon">🛰️</span>
+                                門訓動力站 · AI 智慧事奉
+                            </div>
+                            <div class="card-sub">門訓班級存 <code>discipleData</code>；AI 對話存 <code>aiChatHistory</code>。儲存時會同步摘要至 <code>churchMasterDatabase</code>（見 docs 總檢測文件）。</div>
+                        </div>
+                    </div>
+                    <div class="link-row" style="margin-top:4px;">
+                        <a href="#" class="link-chip" onclick="return bible100ShellNav(event,{sidebarUrl:'disciple_dynamics/sidebar.html',contentUrl:'disciple_dynamics/dashboard.html'});">📖 門訓動力站</a>
+                        <a href="#" class="link-chip" onclick="return bible100ShellNav(event,{sidebarUrl:'ai_tools/sidebar.html',contentUrl:'ai_tools/dashboard.html'});">🤖 AI 工具總覽</a>
+                        <a class="link-chip" href="modules/development/discipleship-training.html" target="_parent">👥 教會事工·門徒班級（簡版）</a>
+                        <a class="link-chip" href="modules/tech/ai-assistant.html" target="_parent">💬 事工內 AI 助手</a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <span class="icon">📌</span>
+                                本週教會焦點 · Church Focus
+                            </div>
+                            <div class="card-sub">依 Bridge 規則與工作桌待辦；請優先處理右欄「未跟進新人」與 Smart Alerts。</div>
+                        </div>
+                    </div>
+                    <ul class="list" id="church-focus-list">
+                        <li>關懷：處理工作桌「風險關懷」與 Data Health 中的 Alerts。</li>
+                        <li>新人：工作桌「未跟進新人」→ 探訪工作桌（已帶會友 id）。</li>
+                        <li>事奉：志工頁檢視「本崗建議人選」；規劃工具完成後可看 CTA-OS 待辦。</li>
+                        <li>資料：若 CRM 就緒度偏低，先 <a href="load_crm_maturity_seed.html" target="_parent">載入成熟度種子</a> 或會友種子。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 右：角色導向「我的工作桌」 -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <span class="icon">🧑‍💼</span>
+                                我的工作桌 · My Desk
+                            </div>
+                            <div class="card-sub">三類待辦來自 ChurchDataBridge：新人跟進、風險關懷、可晉升階段；規劃風險來自 CTA-OS。</div>
+                        </div>
+                        <span class="badge" id="crm-workbench-badge">載入中…</span>
+                    </div>
+                    <div id="crm-workbench-root" class="role-list" style="display:block;grid-template-columns:1fr;">
+                        <p class="role-todo" style="padding:8px;color:#6b7280;">載入待辦…</p>
+                    </div>
+                </div>
+
+                <div class="card" style="border-left: 4px solid #8b5cf6;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">📋</span>
+                            頂部導覽 · 願景與計劃
+                        </div>
+                        <span class="badge">介紹與功能說明</span>
+                    </div>
+                    <div class="role-list" style="grid-template-columns: repeat(2, minmax(0,1fr));">
+                        <div class="role-card">
+                            <div class="role-name">📘 願景與藍圖</div>
+                            <div class="role-todo">教會事工異象、建設藍圖、SPAC 四維度願景。供長執會參考與修正。</div>
+                            <a class="link-chip" href="vision_and_plan.html" target="_parent" style="display:inline-block;margin-top:6px;">進入</a>
+                        </div>
+                        <div class="role-card">
+                            <div class="role-name">🗺️ 路線圖總覽</div>
+                            <div class="role-todo">分階段實施計劃、第 4–5 階段規劃。可依實際進度更新。</div>
+                            <a class="link-chip" href="roadmap-overview.html" target="_parent" style="display:inline-block;margin-top:6px;">進入</a>
+                        </div>
+                        <div class="role-card">
+                            <div class="role-name">⛪ 事工總覽</div>
+                            <div class="role-todo">六大類事工（A–E + 行政）總覽、模組對照。便於新同工認識架構。</div>
+                            <a class="link-chip" href="ministry_core.html" target="_parent" style="display:inline-block;margin-top:6px;">進入</a>
+                        </div>
+                        <div class="role-card">
+                            <div class="role-name">🤖 AI 決策與合規</div>
+                            <div class="role-todo">AI 輔助決策、合規檢查、第 4 階段規劃。功能尚在規劃中。</div>
+                            <a class="link-chip" href="ai-and-compliance.html" target="_parent" style="display:inline-block;margin-top:6px;">進入</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">🔗</span>
+                            快速入口 · Quick Links
+                        </div>
+                        <span class="badge">完整系統與資料</span>
+                    </div>
+                    <div class="link-row">
+                        <a class="link-chip" href="modules/members/member-integrated.html" target="_parent">👥 會友事工</a>
+                        <a class="link-chip" href="modules/volunteer/volunteer-integrated.html" target="_parent">👔 志工事工</a>
+                        <a class="link-chip" href="tools/volunteer_shift/index.html" target="_parent" style="background:#4338ca;color:#fff;border-color:#4338ca;">📅 義工智能排班</a>
+                        <a class="link-chip" href="modules/support/visitation_index.html" target="_parent">🤝 探訪工作桌</a>
+                        <a class="link-chip" href="modules/research/spiritual-stage-funnel.html" target="_parent">📊 屬靈階段漏斗</a>
+                        <a class="link-chip" href="modules/development/congregation-care.html" target="_parent">❤️ 年度關懷計劃／看板</a>
+                        <a class="link-chip" href="modules/finance/finance-integrated.html" target="_parent">💰 財務事工</a>
+                        <a class="link-chip" href="activities-overview.html" target="_parent">🎯 事工與專案</a>
+                        <a class="link-chip" href="community-overview.html" target="_parent">🤝 社群與捐款人</a>
+                        <a class="link-chip" href="load_central_member_seed.html" target="_parent" style="background:#27ae60;color:#fff;border-color:#27ae60;">📥 載入試用資料</a>
+                        <a class="link-chip" href="load_crm_maturity_seed.html" target="_parent">📈 CRM 成熟度種子</a>
+                        <a class="link-chip" href="admin/cloud_login.html" target="_parent">🔐 雲端登入</a>
+                        <a class="link-chip" href="docs/CRM_RELEASE_NOTES_2026-05.md" target="_blank">📄 更新紀錄</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="healthModal" class="health-modal" role="dialog" aria-modal="true">
+        <div class="health-modal-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <div style="font-size:16px;font-weight:700;color:#0f172a;">Data Health 詳細報告</div>
+                <button class="badge" style="cursor:pointer;" onclick="closeHealthModal()">關閉</button>
+            </div>
+            <div id="healthModalBody" style="font-size:12px;color:#334155;"></div>
+        </div>
+    </div>
+
+    <script src="../js/cloud_config.js"></script>
+    <script src="../js/cloud_api.js"></script>
+    <script src="../js/church_auth.js"></script>
+    <script src="../js/central_member_db.js"></script>
+    <script src="../js/church_crm_constants.js"></script>
+    <script src="../js/smart_ministry_canonical_store.js"></script>
+    <script src="../js/church_data_bridge.js"></script>
+    <script src="../js/data_trust_badge.js"></script>
+    <script src="../js/bootstrap_church_data.js"></script>
+    <script src="../js/people_loader.js"></script>
+    <script src="js/crm_role_dashboard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        function setText(id, value) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = value;
+        }
+
+        function renderHubDataTrust() {
+            if (!window.DataTrustBadge || !DataTrustBadge.renderDataTrustBadge) return;
+            var memberCount = 0;
+            var demoFlag = false;
+            try {
+                if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.getMembers) {
+                    memberCount = (ChurchDataBridge.getMembers() || []).length;
+                }
+                if (DataTrustBadge.isVolunteerShiftDemoLoaded && DataTrustBadge.isVolunteerShiftDemoLoaded()) {
+                    demoFlag = true;
+                }
+                try {
+                    if (localStorage.getItem('visitation_followup_demo_loaded_at')) demoFlag = true;
+                    if (localStorage.getItem('finance_reconciliation_demo_loaded_at')) demoFlag = true;
+                } catch (eA2) {}
+            } catch (eHub) {}
+            var state = memberCount > 0 ? (demoFlag ? 'mixed' : 'real') : (demoFlag ? 'demo' : 'empty');
+            DataTrustBadge.renderDataTrustBadge({
+                mount: 'hubDataTrustMount',
+                position: 'top',
+                source_key: 'memberSystemData + volunteerSystemData + churchMasterDatabase',
+                source_label_zh: '教會事工儀表板（會友、志工、探訪、CTV 等）',
+                count: memberCount,
+                demoFlag: demoFlag,
+                data_state: state,
+                write_behavior: 'read_only',
+                notify_behavior: 'none',
+                privacy_level: 'pastoral_sensitive',
+                show_clear_demo: true
+            });
+        }
+
+        function renderCrmWorkbench() {
+            var root = document.getElementById('crm-workbench-root');
+            var badge = document.getElementById('crm-workbench-badge');
+            if (!root || typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getCrmWorkbenchTodos) return;
+            var wb = ChurchDataBridge.getCrmWorkbenchTodos();
+            var sections = [
+                { key: 'newcomer', title: '🌱 未跟進新人', empty: '本週無新人 SLA 提醒' },
+                { key: 'care_risk', title: '⚠️ 風險關懷', empty: '無開放中的 Smart Alert' },
+                { key: 'stage_promotion', title: '📈 可晉升階段', empty: '暫無規則建議晉升' },
+                { key: 'planning', title: '📋 教會規劃（CTA-OS）', empty: '請於規劃工具完成評估後重新掃描戰情室' }
+            ];
+            var html = '';
+            sections.forEach(function (sec) {
+                var list = wb[sec.key] || [];
+                html += '<div class="role-card" style="margin-bottom:8px;"><div class="role-name">' + sec.title + ' <span style="font-weight:400;color:#6b7280;">(' + list.length + ')</span></div>';
+                if (!list.length) {
+                    html += '<div class="role-todo">' + sec.empty + '</div>';
+                } else {
+                    html += '<ul style="margin:6px 0 0;padding-left:16px;font-size:10px;color:#4b5563;">';
+                    list.slice(0, 8).forEach(function (item) {
+                        var link = item.href ? '<a href="' + item.href + '" target="contentFrame" style="color:#2563eb;">處理</a>' : '';
+                        html += '<li style="margin-bottom:4px;"><strong>' + (item.name || item.member_id || '') + '</strong> — ' + (item.title || '') + ' ' + link + '</li>';
+                    });
+                    html += '</ul>';
+                }
+                html += '</div>';
+            });
+            root.innerHTML = html;
+            if (badge) {
+                var t = wb.totals || {};
+                badge.textContent = '待辦 ' + ((t.newcomer || 0) + (t.care_risk || 0) + (t.stage_promotion || 0) + (t.planning || 0));
+            }
+        }
+
+        function setAuthSessionBanner() {
+            var el = document.getElementById('auth-session-banner');
+            if (!el || typeof ChurchAuth === 'undefined') return;
+            var cfg = window.CHURCH_CLOUD_CONFIG || {};
+            if (!ChurchAuth.isAuthRequired || !ChurchAuth.isAuthRequired()) {
+                el.textContent = '登入：本機模式（未強制 RBAC）。啟用 API 請設 cloud_config USE_API + REQUIRE_AUTH，並至 admin/cloud_login.html 登入。';
+                return;
+            }
+            var s = ChurchAuth.getSession();
+            if (s) {
+                el.innerHTML = '已登入：<strong>' + (s.display_name || s.user_id) + '</strong>（' + s.role + '）· <a href="admin/cloud_login.html" target="contentFrame">切換帳號</a>';
+                el.style.borderColor = '#a7f3d0';
+                el.style.background = '#ecfdf5';
+                el.style.color = '#065f46';
+            } else {
+                el.innerHTML = '尚未登入（已啟用 RBAC）· <a href="admin/cloud_login.html" target="contentFrame">請先登入</a>';
+            }
+        }
+
+        function setCrmMaturityBanner() {
+            var el = document.getElementById('crm-maturity-banner');
+            if (!el || typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getCrmMaturitySummary) return;
+            try {
+                var m = ChurchDataBridge.getCrmMaturitySummary();
+                var failed = (m.checks || []).filter(function (c) { return !c.ok; }).map(function (c) { return c.label; });
+                el.textContent = '';
+                el.appendChild(document.createTextNode(
+                    '教會 CRM 資料就緒度：' + (m.percent != null ? m.percent : '—') + '% · 階段 ' + (m.phase || '—') +
+                    (failed.length ? ' · 待補：' + failed.slice(0, 3).join('、') : '')
+                ));
+            } catch (e) {
+                el.textContent = '教會 CRM 資料就緒度：無法計算';
+            }
+        }
+
+        function setKpiContractBanner(summary, error) {
+            var el = document.getElementById('kpi-contract-banner');
+            if (!el) return;
+            if (error) {
+                el.className = 'kpi-contract-banner error';
+                el.textContent = 'KPI 契約錯誤：' + (error.message || error);
+                return;
+            }
+            var skipped = (summary && summary.diagnostics && summary.diagnostics.skipped_invalid) ? summary.diagnostics.skipped_invalid : {};
+            el.className = 'kpi-contract-banner';
+            el.textContent =
+                'KPI 契約 v1 · source=' + (summary ? summary.source : '—') +
+                ' · generated_at=' + (summary ? summary.generated_at : '—') +
+                ' · skipped(att=' + (skipped.attendance_invalid_date || 0) +
+                ',sch=' + (skipped.schedule_invalid_date || 0) +
+                ',inc=' + (skipped.income_invalid_date || 0) +
+                ',fin=' + (skipped.finance_invalid_records || 0) + ')';
+        }
+
+        function renderSchoolSummary() {
+            try {
+                if (typeof ChurchDataBridge === 'undefined') return;
+                if (ChurchDataBridge.syncSchoolSnapshotToChurchMaster) ChurchDataBridge.syncSchoolSnapshotToChurchMaster();
+                var school = ChurchDataBridge.getSchoolMinistrySummary ? ChurchDataBridge.getSchoolMinistrySummary() : null;
+                if (!school) return;
+                setText('stat-school-students', String(school.students || 0));
+                setText('stat-school-teachers', String(school.teachers || 0));
+                setText('stat-school-courses', String(school.courses || 0));
+                setText('stat-school-enrollments', String(school.enrollments || 0));
+            } catch (e) {}
+        }
+
+        function renderHealthList(title, arr, fmt) {
+            var list = Array.isArray(arr) ? arr : [];
+            if (!list.length) {
+                return '<div class="list-item"><div class="list-item-title">' + title + '</div><div class="list-item-meta">無</div></div>';
+            }
+            return '<div class="list-item"><div class="list-item-title">' + title + '</div>' +
+                list.slice(0, 20).map(function (x) { return '<div class="list-item-meta">- ' + fmt(x) + '</div>'; }).join('') +
+                '</div>';
+        }
+
+        async function openHealthModal() {
+            var modal = document.getElementById('healthModal');
+            var body = document.getElementById('healthModalBody');
+            if (!modal || !body) return;
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getDataHealthDetails) {
+                body.innerHTML = '<div class="list-item-meta">Bridge 不可用，無法顯示詳細報告。</div>';
+                modal.classList.add('active');
+                return;
+            }
+            var d = ChurchDataBridge.getDataHealthDetails();
+            var alerts = [];
+            if (ChurchDataBridge.evaluateSmartAlertsAsync) {
+                alerts = await ChurchDataBridge.evaluateSmartAlertsAsync();
+            } else if (ChurchDataBridge.getSmartAlerts) {
+                alerts = ChurchDataBridge.getSmartAlerts();
+            }
+            if (ChurchDataBridge.evaluateNewcomerFollowUpAlerts) {
+                alerts = alerts.concat(ChurchDataBridge.evaluateNewcomerFollowUpAlerts() || []);
+            }
+            var members = (ChurchDataBridge.getMembers ? ChurchDataBridge.getMembers() : []) || [];
+            var memberById = {};
+            members.forEach(function (m) {
+                var mid = m && (m.memberId != null ? m.memberId : m.id);
+                if (mid != null) memberById[String(mid)] = m;
+            });
+            var alertHtml = renderHealthList('Smart Alerts（可執行建議）', alerts, function (a) {
+                var mm = memberById[String(a.member_id)] || {};
+                var memberName = mm.fullName || mm.name || ('Member ' + a.member_id);
+                var ev = a.evidence || {};
+                return memberName + ' (' + a.member_id + ') · ' + (a.rule_id || '-') +
+                    ' · overlap=' + ((ev.overlap_weeks || []).join(',') || '-') +
+                    ' · 建議：' + (a.recommendation || '-');
+            });
+            body.innerHTML =
+                '<div class="list-item"><div class="list-item-title">生成時間</div><div class="list-item-meta">' + (d.generated_at || '-') + '</div></div>' +
+                renderHealthList('重複 member_id', d.duplicate_ids && d.duplicate_ids.member_id, function (x) { return x.id + ' (x' + x.count + ')'; }) +
+                renderHealthList('重複 finance txn_id', d.duplicate_ids && d.duplicate_ids.finance_txn_id, function (x) { return x.id + ' (x' + x.count + ')'; }) +
+                renderHealthList('重複 RSVP schedule_id', d.duplicate_ids && d.duplicate_ids.rsvp_schedule_id, function (x) { return x.id + ' (x' + x.count + ')'; }) +
+                renderHealthList('日期錯誤：attendance', d.invalid_date_records && d.invalid_date_records.attendance, function (x) { return 'row=' + x.row + ', member=' + x.member_id + ', date=' + x.date; }) +
+                renderHealthList('日期錯誤：finance', d.invalid_date_records && d.invalid_date_records.finance, function (x) { return 'row=' + x.row + ', txn=' + x.txn_id + ', date=' + x.date; }) +
+                renderHealthList('日期錯誤：volunteer_rsvp', d.invalid_date_records && d.invalid_date_records.volunteer_rsvp, function (x) { return 'row=' + x.row + ', event=' + x.event_id + ', invited_at=' + x.invited_at; }) +
+                alertHtml;
+            modal.classList.add('active');
+        }
+
+        function closeHealthModal() {
+            var modal = document.getElementById('healthModal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function renderMemberSystemChart() {
+            var totalEl = document.getElementById('member-ms-total');
+            var enrolledEl = document.getElementById('member-ms-enrolled');
+            var ratioEl = document.getElementById('member-ms-ratio');
+            var canvas = document.getElementById('memberSystemChart');
+            if (!totalEl || !canvas || typeof Chart === 'undefined' || typeof ChurchDataBridge === 'undefined') return;
+
+            var ms = ChurchDataBridge.getMemberSystemData ? ChurchDataBridge.getMemberSystemData() : { members: [] };
+            var members = Array.isArray(ms.members) ? ms.members : [];
+            var trainings = Array.isArray(ms.trainings) ? ms.trainings : [];
+            var groupMem = Array.isArray(ms.groupMemberships) ? ms.groupMemberships : [];
+            var total = members.length;
+            if (!total) {
+                totalEl.textContent = '0';
+                if (enrolledEl) enrolledEl.textContent = '尚無會友資料';
+                if (ratioEl) ratioEl.textContent = '請先建立會友資料';
+                return;
+            }
+            var useTrainings = trainings.length > 0;
+            var idSet = {};
+            (useTrainings ? trainings : groupMem).forEach(function (x) {
+                var mid = x && x.memberId;
+                if (mid != null && mid !== '') idSet[String(mid)] = true;
+            });
+            var enrolledCount = Math.min(Object.keys(idSet).length, total);
+            var other = Math.max(0, total - enrolledCount);
+            var ratio = Math.round((enrolledCount / total) * 1000) / 10;
+            totalEl.textContent = String(total);
+            if (enrolledEl) enrolledEl.textContent = (useTrainings ? '已列入培訓記錄：' : '已列入小組歸屬：') + enrolledCount + ' 人';
+            if (ratioEl) ratioEl.textContent = '報名比例：' + ratio + '%（' + enrolledCount + ' / ' + total + '）';
+
+            if (window.__memberSystemChartInstance) window.__memberSystemChartInstance.destroy();
+            window.__memberSystemChartInstance = new Chart(canvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['已報名', '其餘會友'],
+                    datasets: [{ data: [enrolledCount, other], backgroundColor: ['#6366f1', '#e5e7eb'], borderColor: '#fff', borderWidth: 1 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        (async function bootstrapDashboard() {
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getDashboardKpiSummary) {
+                setKpiContractBanner(null, new Error('ChurchDataBridge 不可用'));
+                return;
+            }
+            if (ChurchDataBridge.whenReady) {
+                try {
+                    await ChurchDataBridge.whenReady({ timeoutMs: 8000 });
+                } catch (e) {
+                    console.warn('[dashboard] whenReady', e && e.message ? e.message : e);
+                }
+            }
+            try {
+                var summary = ChurchDataBridge.getDashboardKpiSummaryAsync
+                    ? await ChurchDataBridge.getDashboardKpiSummaryAsync()
+                    : ChurchDataBridge.getDashboardKpiSummary();
+                setKpiContractBanner(summary, null);
+                setText('stat-s-balance', summary.offerings_month_total == null ? '—' : ('¥' + Number(summary.offerings_month_total).toLocaleString()));
+                setText('stat-p-people', summary.retention_4w_pct == null ? '—' : (summary.retention_4w_pct + '%'));
+                setText('stat-a-activities', summary.volunteer_rsvp_3d_pct == null ? '—' : (summary.volunteer_rsvp_3d_pct + '%'));
+
+                var skipped = summary.diagnostics && summary.diagnostics.skipped_invalid ? summary.diagnostics.skipped_invalid : {};
+                var invalidTotal = (skipped.attendance_invalid_date || 0) + (skipped.schedule_invalid_date || 0) + (skipped.income_invalid_date || 0) + (skipped.finance_invalid_records || 0);
+                var financeHealth = summary.finance_health_pct == null ? 'N/A' : (summary.finance_health_pct + '%');
+                setText('stat-c-followup', 'Finance ' + financeHealth + ' · Invalid ' + invalidTotal);
+                var alerts = [];
+                if (ChurchDataBridge.evaluateSmartAlertsAsync) {
+                    alerts = await ChurchDataBridge.evaluateSmartAlertsAsync();
+                } else if (ChurchDataBridge.getSmartAlerts) {
+                    alerts = ChurchDataBridge.getSmartAlerts();
+                }
+                if (ChurchDataBridge.evaluateNewcomerFollowUpAlerts) {
+                    alerts = alerts.concat(ChurchDataBridge.evaluateNewcomerFollowUpAlerts() || []);
+                }
+                var openAlerts = (alerts || []).filter(function (a) { return !a.status || a.status === 'open'; }).length;
+                setText('smart-alert-badge', 'Alerts ' + openAlerts);
+                var healthCard = document.getElementById('data-health-card');
+                if (healthCard) healthCard.onclick = openHealthModal;
+
+                renderSchoolSummary();
+                renderMemberSystemChart();
+                setAuthSessionBanner();
+                setCrmMaturityBanner();
+                renderCrmWorkbench();
+                if (window.CrmRoleDashboard && CrmRoleDashboard.init) CrmRoleDashboard.init();
+                else {
+                    if (CrmRoleDashboard && CrmRoleDashboard.renderCrmKpiStrip) CrmRoleDashboard.renderCrmKpiStrip();
+                    if (CrmRoleDashboard && CrmRoleDashboard.renderTodayDesk) CrmRoleDashboard.renderTodayDesk();
+                }
+                renderHubDataTrust();
+            } catch (e) {
+                setKpiContractBanner(null, e);
+                setText('stat-s-balance', '資料污染');
+                setText('stat-p-people', '資料污染');
+                setText('stat-a-activities', '資料污染');
+                setText('stat-c-followup', '資料污染');
+                setText('smart-alert-badge', 'Alerts —');
+            }
+        })();
+
+        window.onclick = function (e) {
+            if (e && e.target && e.target.id === 'healthModal') closeHealthModal();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,2089 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI工具導航平台 V3 - 完整版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --text-color: #333;
+            --border-color: #dee2e6;
+            --bg-light: #f8f9fa;
+            --sidebar-width: 320px;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", "PingFang TC", "Helvetica Neue", Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            font-size: 14px;
+        }
+
+        /* 頂欄1 */
+        .top-nav-1 {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 10px 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-nav-left {
+            flex: 1;
+        }
+
+        .top-nav-1 h1 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .main-categories {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .main-cat-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .main-cat-btn:hover, .main-cat-btn.active {
+            background: rgba(255,255,255,0.9);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .prompts-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            white-space: nowrap;
+            box-shadow: 0 2px 10px rgba(255,107,107,0.3);
+        }
+
+        .prompts-btn:hover {
+            background: #ff5252;
+            transform: scale(1.05);
+        }
+
+        /* 頂欄2 */
+        .top-nav-2 {
+            background: white;
+            padding: 10px 15px;
+            border-bottom: 2px solid var(--border-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-2-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .sub-categories {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .sub-cat-btn {
+            background: var(--bg-light);
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 5px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .sub-cat-btn:hover, .sub-cat-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        /* 常用平台快捷欄 */
+        .favorites-bar {
+            background: #fff3cd;
+            padding: 8px 15px;
+            border-bottom: 1px solid #ffc107;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .favorites-bar::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .favorites-bar::-webkit-scrollbar-thumb {
+            background: #ffc107;
+            border-radius: 2px;
+        }
+
+        .favorites-label {
+            font-weight: bold;
+            color: #856404;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .favorite-quick-btn {
+            background: white;
+            border: 2px solid #ffc107;
+            color: #856404;
+            padding: 4px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 12px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .favorite-quick-btn:hover {
+            background: #ffc107;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* 主容器 */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 175px);
+        }
+
+        /* 側邊欄 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-light);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 12px;
+            transition: transform 0.3s;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .sidebar-title {
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+
+        .add-tool-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .add-tool-btn:hover {
+            opacity: 0.8;
+        }
+
+        .search-box {
+            margin-bottom: 10px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .filter-tags {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tag {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .filter-tag:hover, .filter-tag.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .tools-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .tool-group {
+            margin-bottom: 10px;
+        }
+
+        .tool-group-header {
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            padding: 5px 8px;
+            background: #e9ecef;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tool-group-header:hover {
+            background: #dee2e6;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s;
+        }
+
+        .tool-group-header.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .tool-group-content {
+            margin-top: 5px;
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .tool-group-content.collapsed {
+            max-height: 0;
+        }
+
+        .tool-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            margin-bottom: 5px;
+        }
+
+        .tool-item:hover {
+            background: #e7f3ff;
+            border-left-color: var(--primary-color);
+            transform: translateX(3px);
+        }
+
+        .tool-item.active {
+            background: var(--primary-color);
+            color: white;
+            border-left-color: var(--secondary-color);
+        }
+
+        .tool-item.disabled {
+            opacity: 0.5;
+        }
+
+        .tool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .tool-name {
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .favorite-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .favorite-btn.active {
+            color: #ffc107;
+        }
+
+        .tool-item.active .favorite-btn {
+            color: white;
+        }
+
+        .tool-item.active .favorite-btn.active {
+            color: #ffc107;
+        }
+
+        .tool-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: var(--primary-color);
+            color: white;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .action-btn:hover {
+            background: var(--secondary-color);
+        }
+
+        .action-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .tool-item.active .action-btn {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .tool-item.active .action-btn:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        .tool-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+
+        .tool-tag {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: var(--success-color);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tool-tag:hover {
+            transform: scale(1.1);
+        }
+
+        .tool-tag.paid {
+            background: var(--warning-color);
+            color: #000;
+        }
+
+        .tool-tag.cn {
+            background: #ff6b6b;
+        }
+
+        .tool-tag.intl {
+            background: #4ecdc4;
+        }
+
+        .tool-item.active .tool-tag {
+            opacity: 0.9;
+        }
+
+        /* 內容區 */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+        }
+
+        .content-header {
+            padding: 10px 15px;
+            background: var(--bg-light);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .current-site {
+            font-size: 14px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .iframe-container {
+            flex: 1;
+            position: relative;
+            background: #f0f0f0;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            color: var(--primary-color);
+        }
+
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #6c757d;
+            padding: 20px;
+        }
+
+        .empty-state h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        /* 隱藏類 */
+        .hidden {
+            display: none !important;
+        }
+
+        /* 模態框 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 15px;
+            width: 95%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            opacity: 0.8;
+        }
+
+        /* 手機適配 */
+        .mobile-toggle {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .top-nav-1 {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .top-nav-1 h1 {
+                font-size: 16px;
+            }
+
+            .main-cat-btn {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+
+            .sub-cat-btn {
+                font-size: 11px;
+                padding: 4px 10px;
+            }
+
+            .main-container {
+                height: calc(100vh - 220px);
+            }
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 220px;
+                height: calc(100vh - 220px);
+                z-index: 100;
+                transform: translateX(-100%);
+                box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .mobile-toggle {
+                display: block;
+                position: fixed;
+                left: 10px;
+                bottom: 20px;
+                z-index: 101;
+                background: var(--primary-color);
+                color: white;
+                border: none;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                font-size: 20px;
+                cursor: pointer;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            }
+
+            .content-area {
+                width: 100%;
+            }
+        }
+
+        .no-tools {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .search-result-count {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+
+        .highlight {
+            background-color: yellow;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- 頂欄1 -->
+    <div class="top-nav-1">
+        <div class="top-nav-left">
+            <h1>🤖 AI工具導航平台 V3</h1>
+            <div class="main-categories" id="mainCategories"></div>
+        </div>
+        <button class="prompts-btn" onclick="openPromptsLibrary()">📝 提示詞庫</button>
+    </div>
+
+    <!-- 頂欄2 -->
+    <div class="top-nav-2">
+        <span class="nav-2-label">子分類:</span>
+        <div class="sub-categories" id="subCategories"></div>
+    </div>
+
+    <!-- 常用平台快捷欄 -->
+    <div class="favorites-bar" id="favoritesBar">
+        <span class="favorites-label">⭐ 常用:</span>
+        <div id="quickFavorites" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 側邊欄 -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title" id="sidebarTitle">工具列表</span>
+                <button class="add-tool-btn" onclick="showAddToolModal()">+ 新增</button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 全局搜索工具...">
+            </div>
+
+            <div class="filter-tags">
+                <span class="filter-tag" data-filter="all">全部</span>
+                <span class="filter-tag" data-filter="免費">免費</span>
+                <span class="filter-tag" data-filter="付費">付費</span>
+                <span class="filter-tag" data-filter="國際">國際</span>
+                <span class="filter-tag" data-filter="國內">國內</span>
+            </div>
+
+            <div id="searchResultCount" class="search-result-count hidden"></div>
+
+            <div class="tools-list" id="toolsList"></div>
+        </div>
+
+        <!-- 內容區 -->
+        <div class="content-area">
+            <div class="content-header">
+                <div class="current-site" id="currentSite">請選擇工具</div>
+            </div>
+            <div class="iframe-container" id="iframeContainer">
+                <div class="empty-state">
+                    <h2>👈 選擇AI工具開始使用</h2>
+                    <p>1️⃣ 點擊頂部主分類<br>2️⃣ 選擇子分類<br>3️⃣ 從左側選擇工具<br>4️⃣ 點擊「內嵌」或「新頁」開啟</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 手機側邊欄切換按鈕 -->
+    <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+
+    <!-- 新增工具模態框 -->
+    <div class="modal" id="toolModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>新增工具</span>
+                <button class="close-modal" onclick="closeModal('toolModal')">&times;</button>
+            </div>
+            <form id="toolForm">
+                <div class="form-group">
+                    <label>工具名稱 *</label>
+                    <input type="text" id="toolName" required>
+                </div>
+                <div class="form-group">
+                    <label>網址 *</label>
+                    <input type="url" id="toolUrl" required placeholder="https://">
+                </div>
+                <div class="form-group">
+                    <label>主分類 *</label>
+                    <select id="toolMainCat" required></select>
+                </div>
+                <div class="form-group">
+                    <label>子分類 *</label>
+                    <select id="toolSubCat" required></select>
+                </div>
+                <div class="form-group">
+                    <label>分組 (可選)</label>
+                    <input type="text" id="toolGroup" placeholder="例如: 圖片處理工具">
+                </div>
+                <div class="form-group">
+                    <label>標籤 (用逗號分隔)</label>
+                    <input type="text" id="toolTags" placeholder="例如: 免費, 國際, 需登入">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('toolModal')">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 工具數據 ====================
+        const toolsData = {
+            "ai-chat": {
+                name: "💬 AI聊天對話",
+                subcategories: {
+                    "intl-platform": {
+                        name: "國際平台",
+                        tools: [
+                            {name: "ChatGPT", url: "https://chatgpt.com", tags: ["付費", "國際", "GPT-4"]},
+                            {name: "Gemini", url: "https://gemini.google.com/?hl=zh_TW", tags: ["免費", "國際", "Google"]},
+                            {name: "Claude", url: "https://claude.ai", tags: ["付費", "國際", "Anthropic"]},
+                            {name: "Copilot", url: "https://copilot.microsoft.com", tags: ["免費", "國際", "Microsoft"]},
+                            {name: "POE", url: "https://poe.com", tags: ["免費", "國際", "多模型"]},
+                            {name: "Perplexity", url: "https://www.perplexity.ai", tags: ["免費", "國際", "搜索"]},
+                            {name: "Grok", url: "https://x.com/i/grok", tags: ["付費", "國際", "X平台"], noIframe: true},
+                            {name: "You.com", url: "https://you.com", tags: ["免費", "國際", "搜索AI"]}
+                        ]
+                    },
+                    "cn-platform": {
+                        name: "國內平台",
+                        tools: [
+                            {name: "豆包", url: "https://www.doubao.com/chat/", tags: ["免費", "國內", "字節"]},
+                            {name: "文心一言", url: "https://yiyan.baidu.com", tags: ["免費", "國內", "百度"]},
+                            {name: "智譜清言", url: "https://chatglm.cn", tags: ["免費", "國內", "清華"]},
+                            {name: "通義千問", url: "https://tongyi.aliyun.com", tags: ["免費", "國內", "阿里"]},
+                            {name: "Kimi", url: "https://kimi.moonshot.cn", tags: ["免費", "國內", "長文本"]},
+                            {name: "Monica", url: "https://monica.im/home", tags: ["免費", "國內", "插件"]},
+                            {name: "天工AI", url: "https://www.tiangong.cn", tags: ["免費", "國內"]}
+                        ]
+                    },
+                    "special": {
+                        name: "專業助手",
+                        tools: [
+                            {name: "NotebookLM", url: "https://notebooklm.google.com", tags: ["免費", "國際", "筆記"]},
+                            {name: "Pi AI", url: "https://pi.ai", tags: ["免費", "國際", "陪伴"]},
+                            {name: "Character AI", url: "https://character.ai", tags: ["免費", "國際", "角色"], noIframe: true},
+                            {name: "HuggingChat", url: "https://huggingface.co/chat", tags: ["免費", "國際", "開源"]}
+                        ]
+                    }
+                }
+            },
+            "ai-create": {
+                name: "🎨 AI創作工具",
+                subcategories: {
+                    "image-gen": {
+                        name: "圖像生成",
+                        tools: [
+                            {name: "Midjourney", url: "https://www.midjourney.com", tags: ["付費", "國際", "高質量"], group: "文生圖", noIframe: true},
+                            {name: "DALL-E 3", url: "https://openai.com/dall-e-3", tags: ["付費", "國際", "OpenAI"], group: "文生圖"},
+                            {name: "Stable Diffusion", url: "https://stablediffusionweb.com", tags: ["免費", "國際", "開源"], group: "文生圖"},
+                            {name: "Leonardo AI", url: "https://leonardo.ai", tags: ["免費額度", "國際"], group: "文生圖"},
+                            {name: "Ideogram", url: "https://ideogram.ai", tags: ["免費額度", "國際", "文字"], group: "文生圖"},
+                            {name: "文心一格", url: "https://yige.baidu.com", tags: ["免費", "國內", "百度"], group: "文生圖"},
+                            {name: "無界AI", url: "https://www.wujieai.com", tags: ["免費", "國內"], group: "文生圖"},
+                            {name: "通義萬相", url: "https://tongyi.aliyun.com/wanxiang", tags: ["免費", "國內", "阿里"], group: "文生圖"}
+                        ]
+                    },
+                    "image-edit": {
+                        name: "圖片編輯",
+                        tools: [
+                            {name: "Photoshop AI", url: "https://www.adobe.com/products/photoshop.html", tags: ["付費", "國際", "專業"]},
+                            {name: "Clipdrop", url: "https://clipdrop.co", tags: ["免費額度", "國際"]},
+                            {name: "Remove.bg", url: "https://www.remove.bg", tags: ["免費額度", "國際", "去背景"]},
+                            {name: "美圖秀秀", url: "https://pc.meitu.com", tags: ["免費", "國內"]}
+                        ]
+                    },
+                    "video-gen": {
+                        name: "視頻生成",
+                        tools: [
+                            {name: "Runway", url: "https://runwayml.com", tags: ["付費", "國際", "專業"]},
+                            {name: "Pika", url: "https://pika.art", tags: ["免費額度", "國際"]},
+                            {name: "HeyGen", url: "https://www.heygen.com", tags: ["付費", "國際", "數字人"]},
+                            {name: "D-ID", url: "https://www.d-id.com", tags: ["付費", "國際", "數字人"]},
+                            {name: "即夢AI", url: "https://jimeng.jianying.com", tags: ["免費", "國內", "抖音"]},
+                            {name: "可靈AI", url: "https://klingai.kuaishou.com", tags: ["免費", "國內", "快手"]}
+                        ]
+                    },
+                    "audio-gen": {
+                        name: "音頻創作",
+                        tools: [
+                            {name: "Suno", url: "https://suno.ai", tags: ["免費額度", "國際", "音樂"]},
+                            {name: "Udio", url: "https://www.udio.com", tags: ["免費額度", "國際", "音樂"]},
+                            {name: "ElevenLabs", url: "https://elevenlabs.io", tags: ["付費", "國際", "語音"]},
+                            {name: "Murf AI", url: "https://murf.ai", tags: ["付費", "國際", "配音"]},
+                            {name: "TTSMaker", url: "https://ttsmaker.com", tags: ["免費", "國際", "TTS"]}
+                        ]
+                    },
+                    "writing": {
+                        name: "文字創作",
+                        tools: [
+                            {name: "Jasper", url: "https://www.jasper.ai", tags: ["付費", "國際", "文案"]},
+                            {name: "Copy.ai", url: "https://www.copy.ai", tags: ["免費額度", "國際"]},
+                            {name: "Writesonic", url: "https://writesonic.com", tags: ["免費額度", "國際"]},
+                            {name: "秘塔寫作貓", url: "https://xiezuocat.com", tags: ["免費", "國內"]},
+                            {name: "筆靈AI", url: "https://ibiling.cn", tags: ["免費", "國內"]}
+                        ]
+                    }
+                }
+            },
+            "ai-office": {
+                name: "💼 AI辦公助手",
+                subcategories: {
+                    "google": {
+                        name: "Google生態",
+                        tools: [
+                            {name: "Google Docs", url: "https://docs.google.com", tags: ["免費", "國際", "文檔"], group: "文檔處理"},
+                            {name: "Google Sheets", url: "https://sheets.google.com", tags: ["免費", "國際", "表格"], group: "文檔處理"},
+                            {name: "Google Slides", url: "https://slides.google.com", tags: ["免費", "國際", "簡報"], group: "文檔處理"},
+                            {name: "Google Drive", url: "https://drive.google.com", tags: ["免費", "國際", "雲端"], group: "雲端服務"},
+                            {name: "Gmail", url: "https://mail.google.com", tags: ["免費", "國際", "郵件"], group: "通訊工具"},
+                            {name: "Google Meet", url: "https://meet.google.com", tags: ["免費", "國際", "視訊"], group: "通訊工具"},
+                            {name: "Google Calendar", url: "https://calendar.google.com", tags: ["免費", "國際", "日曆"], group: "效率工具"},
+                            {name: "Google Keep", url: "https://keep.google.com", tags: ["免費", "國際", "筆記"], group: "效率工具"}
+                        ]
+                    },
+                    "microsoft": {
+                        name: "Microsoft生態",
+                        tools: [
+                            {name: "Word Online", url: "https://www.office.com/launch/word", tags: ["免費", "國際", "文檔"], group: "Office套件"},
+                            {name: "Excel Online", url: "https://www.office.com/launch/excel", tags: ["免費", "國際", "表格"], group: "Office套件"},
+                            {name: "PowerPoint", url: "https://www.office.com/launch/powerpoint", tags: ["免費", "國際", "簡報"], group: "Office套件"},
+                            {name: "OneDrive", url: "https://onedrive.live.com", tags: ["免費", "國際", "雲端"], group: "雲端服務"},
+                            {name: "Outlook", url: "https://outlook.live.com", tags: ["免費", "國際", "郵件"], group: "通訊工具"},
+                            {name: "Teams", url: "https://teams.microsoft.com", tags: ["免費", "國際", "協作"], group: "通訊工具"},
+                            {name: "OneNote", url: "https://www.onenote.com", tags: ["免費", "國際", "筆記"], group: "效率工具"}
+                        ]
+                    },
+                    "ppt": {
+                        name: "PPT製作",
+                        tools: [
+                            {name: "Gamma", url: "https://gamma.app", tags: ["免費額度", "國際", "AI簡報"]},
+                            {name: "Beautiful.ai", url: "https://www.beautiful.ai", tags: ["付費", "國際"]},
+                            {name: "Tome", url: "https://tome.app", tags: ["免費額度", "國際"]},
+                            {name: "Canva", url: "https://www.canva.com", tags: ["免費額度", "國際"]},
+                            {name: "WPS AI", url: "https://www.wps.cn", tags: ["免費", "國內"]}
+                        ]
+                    },
+                    "pdf": {
+                        name: "PDF處理",
+                        tools: [
+                            {name: "ChatPDF", url: "https://www.chatpdf.com", tags: ["免費額度", "國際"]},
+                            {name: "PDF.ai", url: "https://pdf.ai", tags: ["免費額度", "國際"]},
+                            {name: "Smallpdf", url: "https://smallpdf.com", tags: ["免費額度", "國際"]},
+                            {name: "iLovePDF", url: "https://www.ilovepdf.com", tags: ["免費", "國際"]}
+                        ]
+                    },
+                    "translate": {
+                        name: "翻譯工具",
+                        tools: [
+                            {name: "DeepL", url: "https://www.deepl.com", tags: ["免費額度", "國際", "高質量"]},
+                            {name: "Google翻譯", url: "https://translate.google.com", tags: ["免費", "國際"]},
+                            {name: "彩雲小譯", url: "https://fanyi.caiyunapp.com", tags: ["免費", "國內"]},
+                            {name: "有道翻譯", url: "https://fanyi.youdao.com", tags: ["免費", "國內"]}
+                        ]
+                    },
+                    "note": {
+                        name: "筆記工具",
+                        tools: [
+                            {name: "Notion", url: "https://www.notion.so", tags: ["免費額度", "國際"]},
+                            {name: "Obsidian", url: "https://obsidian.md", tags: ["免費", "國際"]},
+                            {name: "語雀", url: "https://www.yuque.com", tags: ["免費", "國內", "阿里"]},
+                            {name: "飛書文檔", url: "https://www.feishu.cn", tags: ["免費", "國內", "字節"]}
+                        ]
+                    }
+                }
+            },
+            "ai-professional": {
+                name: "🔧 專業工具",
+                subcategories: {
+                    "coding": {
+                        name: "AI編程",
+                        tools: [
+                            {name: "GitHub Copilot", url: "https://github.com/features/copilot", tags: ["付費", "國際", "GitHub"]},
+                            {name: "Cursor", url: "https://cursor.sh", tags: ["免費額度", "國際", "IDE"]},
+                            {name: "Tabnine", url: "https://www.tabnine.com", tags: ["免費額度", "國際"]},
+                            {name: "Codeium", url: "https://codeium.com", tags: ["免費", "國際"]},
+                            {name: "Replit", url: "https://replit.com", tags: ["免費", "國際", "在線IDE"]},
+                            {name: "CodeWhisperer", url: "https://aws.amazon.com/codewhisperer/", tags: ["免費", "國際", "AWS"]}
+                        ]
+                    },
+                    "design": {
+                        name: "AI設計",
+                        tools: [
+                            {name: "Canva", url: "https://www.canva.com", tags: ["免費額度", "國際", "平面"]},
+                            {name: "Figma", url: "https://www.figma.com", tags: ["免費", "國際", "UI設計"]},
+                            {name: "Adobe Firefly", url: "https://www.adobe.com/products/firefly.html", tags: ["付費", "國際"]},
+                            {name: "Framer", url: "https://www.framer.com", tags: ["免費額度", "國際"]},
+                            {name: "即時設計", url: "https://js.design", tags: ["免費", "國內"]},
+                            {name: "Mastergo", url: "https://mastergo.com", tags: ["免費", "國內"]}
+                        ]
+                    },
+                    "dev-platform": {
+                        name: "開發平台",
+                        tools: [
+                            {name: "Supabase", url: "https://supabase.com", tags: ["免費額度", "國際", "後端"]},
+                            {name: "Vercel", url: "https://vercel.com", tags: ["免費", "國際", "部署"]},
+                            {name: "Netlify", url: "https://www.netlify.com", tags: ["免費", "國際", "部署"]},
+                            {name: "Railway", url: "https://railway.app", tags: ["免費額度", "國際"]},
+                            {name: "Cloudflare Pages", url: "https://pages.cloudflare.com", tags: ["免費", "國際"]}
+                        ]
+                    },
+                    "data": {
+                        name: "數據分析",
+                        tools: [
+                            {name: "Julius AI", url: "https://julius.ai", tags: ["免費額度", "國際"]},
+                            {name: "DataChat", url: "https://datachat.ai", tags: ["付費", "國際"]},
+                            {name: "Hex", url: "https://hex.tech", tags: ["免費額度", "國際"]},
+                            {name: "Tableau", url: "https://www.tableau.com", tags: ["付費", "國際"]}
+                        ]
+                    },
+                    "legal": {
+                        name: "法律助手",
+                        tools: [
+                            {name: "DoNotPay", url: "https://donotpay.com", tags: ["付費", "國際"]},
+                            {name: "LawDroid", url: "https://lawdroid.com", tags: ["付費", "國際"]},
+                            {name: "無訟", url: "https://www.itslaw.com", tags: ["免費", "國內"]}
+                        ]
+                    }
+                }
+            },
+            "learning": {
+                name: "📚 學習資源",
+                subcategories: {
+                    "prompt": {
+                        name: "提示詞庫",
+                        tools: [
+                            {name: "PromptBase", url: "https://promptbase.com", tags: ["付費", "國際", "市場"]},
+                            {name: "FlowGPT", url: "https://flowgpt.com", tags: ["免費", "國際", "社區"]},
+                            {name: "ChatGPT Prompts", url: "https://prompts.chat", tags: ["免費", "國際"]},
+                            {name: "AI指令庫", url: "https://www.aishort.top", tags: ["免費", "國內"]},
+                            {name: "PromptHero", url: "https://prompthero.com", tags: ["免費", "國際"]}
+                        ]
+                    },
+                    "tutorial": {
+                        name: "教程文章",
+                        tools: [
+                            {name: "MKEAI教程", url: "https://www.mkeai.com/tutorials.html", tags: ["免費", "國內"]},
+                            {name: "Learn Prompting", url: "https://learnprompting.org", tags: ["免費", "國際"]},
+                            {name: "機器之心", url: "https://www.jiqizhixin.com", tags: ["免費", "國內"]},
+                            {name: "AI研習社", url: "https://www.yanxishe.com", tags: ["免費", "國內"]}
+                        ]
+                    },
+                    "video": {
+                        name: "視頻課程",
+                        tools: [
+                            {name: "YouTube AI", url: "https://www.youtube.com/results?search_query=AI+tutorial", tags: ["免費", "國際"]},
+                            {name: "Bilibili AI", url: "https://search.bilibili.com/all?keyword=AI教程", tags: ["免費", "國內"]},
+                            {name: "Coursera AI", url: "https://www.coursera.org/courses?query=artificial%20intelligence", tags: ["付費", "國際"]},
+                            {name: "Udemy AI", url: "https://www.udemy.com/topic/artificial-intelligence/", tags: ["付費", "國際"]}
+                        ]
+                    },
+                    "community": {
+                        name: "AI社區",
+                        tools: [
+                            {name: "Reddit AI", url: "https://www.reddit.com/r/artificial/", tags: ["免費", "國際"], noIframe: true},
+                            {name: "HuggingFace", url: "https://huggingface.co", tags: ["免費", "國際", "開源"]},
+                            {name: "GitHub AI", url: "https://github.com/topics/artificial-intelligence", tags: ["免費", "國際"], noIframe: true},
+                            {name: "AI工具集", url: "https://ai-bot.cn", tags: ["免費", "國內"]}
+                        ]
+                    }
+                }
+            },
+            "navigation": {
+                name: "🔍 工具導航",
+                subcategories: {
+                    "collection": {
+                        name: "工具集合",
+                        tools: [
+                            {name: "AI569工具箱", url: "https://www.ai569.com", tags: ["免費", "國內"]},
+                            {name: "ToolAI", url: "https://www.toolai.io/zh/", tags: ["免費", "國內"]},
+                            {name: "AIGC排行榜", url: "https://aigc.izzi.cn", tags: ["免費", "國內"]},
+                            {name: "Future Tools", url: "https://www.futuretools.io", tags: ["免費", "國際"]},
+                            {name: "There's An AI", url: "https://theresanaiforthat.com", tags: ["免費", "國際"]},
+                            {name: "AI工具集", url: "https://ai-bot.cn", tags: ["免費", "國內"]}
+                        ]
+                    },
+                    "news": {
+                        name: "AI資訊",
+                        tools: [
+                            {name: "OpenAI Blog", url: "https://openai.com/blog", tags: ["免費", "國際"]},
+                            {name: "Google AI Blog", url: "https://ai.googleblog.com", tags: ["免費", "國際"]},
+                            {name: "36氪AI", url: "https://36kr.com/newsflashes", tags: ["免費", "國內"]},
+                            {name: "量子位", url: "https://www.qbitai.com", tags: ["免費", "國內"]}
+                        ]
+                    }
+                }
+            }
+        };
+
+        let currentMainCat = 'ai-chat';
+        let currentSubCat = 'intl-platform';
+        let favorites = JSON.parse(localStorage.getItem('aitools_favorites') || '[]');
+        let customTools = JSON.parse(localStorage.getItem('aitools_custom') || '{}');
+        let topFavorites = JSON.parse(localStorage.getItem('aitools_top10') || '[]');
+        let activeFilter = 'all';
+
+        // 合併自定義工具
+        function mergeCustomTools() {
+            for (let mainCat in customTools) {
+                if (toolsData[mainCat]) {
+                    for (let subCat in customTools[mainCat]) {
+                        if (toolsData[mainCat].subcategories[subCat]) {
+                            toolsData[mainCat].subcategories[subCat].tools.push(...customTools[mainCat][subCat]);
+                        }
+                    }
+                }
+            }
+        }
+
+        mergeCustomTools();
+
+        // 初始化
+        function init() {
+            renderMainCategories();
+            updateSubCategories();
+            updateToolsList();
+            updateQuickFavorites();
+            setupFilterTags();
+
+            const lastVisited = localStorage.getItem('aitools_lastVisited');
+            if (lastVisited) {
+                const data = JSON.parse(lastVisited);
+                const container = document.getElementById('iframeContainer');
+                container.innerHTML = `<iframe src="${data.url}"></iframe>`;
+                document.getElementById('currentSite').textContent = data.name;
+            }
+        }
+
+        // 渲染主分類
+        function renderMainCategories() {
+            const container = document.getElementById('mainCategories');
+            container.innerHTML = '';
+
+            for (let key in toolsData) {
+                const btn = document.createElement('button');
+                btn.className = 'main-cat-btn' + (key === currentMainCat ? ' active' : '');
+                btn.textContent = toolsData[key].name;
+                btn.onclick = () => switchMainCategory(key);
+                container.appendChild(btn);
+            }
+        }
+
+        // 切換主分類
+        function switchMainCategory(catKey) {
+            currentMainCat = catKey;
+            const firstSubCat = Object.keys(toolsData[catKey].subcategories)[0];
+            currentSubCat = firstSubCat;
+
+            renderMainCategories();
+            updateSubCategories();
+            updateToolsList();
+            document.getElementById('searchInput').value = '';
+            activeFilter = 'all';
+            setupFilterTags();
+        }
+
+        // 更新子分類
+        function updateSubCategories() {
+            const container = document.getElementById('subCategories');
+            container.innerHTML = '';
+
+            const subcats = toolsData[currentMainCat].subcategories;
+            for (let key in subcats) {
+                const btn = document.createElement('button');
+                btn.className = 'sub-cat-btn' + (key === currentSubCat ? ' active' : '');
+                btn.textContent = subcats[key].name;
+                btn.onclick = () => switchSubCategory(key);
+                container.appendChild(btn);
+            }
+        }
+
+        // 切換子分類
+        function switchSubCategory(subcatKey) {
+            currentSubCat = subcatKey;
+            updateSubCategories();
+            updateToolsList();
+            document.getElementById('searchInput').value = '';
+        }
+
+        // 更新工具列表
+        function updateToolsList() {
+            const container = document.getElementById('toolsList');
+            const titleEl = document.getElementById('sidebarTitle');
+
+            const subcat = toolsData[currentMainCat].subcategories[currentSubCat];
+            titleEl.textContent = subcat.name;
+
+            if (!subcat.tools || subcat.tools.length === 0) {
+                container.innerHTML = '<div class="no-tools">暫無工具</div>';
+                return;
+            }
+
+            // 按分組分類
+            const grouped = {};
+            subcat.tools.forEach(tool => {
+                const group = tool.group || '其他';
+                if (!grouped[group]) grouped[group] = [];
+                grouped[group].push(tool);
+            });
+
+            let html = '';
+            for (let groupName in grouped) {
+                if (groupName === '其他' && Object.keys(grouped).length > 1) {
+                    grouped[groupName].forEach(tool => {
+                        html += renderToolItem(tool);
+                    });
+                } else if (groupName !== '其他') {
+                    html += `
+                        <div class="tool-group">
+                            <div class="tool-group-header" onclick="toggleGroup(this)">
+                                <span>${groupName}</span>
+                                <span class="toggle-icon">▼</span>
+                            </div>
+                            <div class="tool-group-content">
+                                ${grouped[groupName].map(tool => renderToolItem(tool)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            if (Object.keys(grouped).length === 1 && grouped['其他']) {
+                html = grouped['其他'].map(tool => renderToolItem(tool)).join('');
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderToolItem(tool) {
+            const iframeSupported = !tool.noIframe;
+            return `
+                <div class="tool-item ${!iframeSupported ? 'disabled' : ''}" data-url="${tool.url}" data-name="${tool.name}">
+                    <div>
+                        <div class="tool-header">
+                            <div class="tool-name">
+                                <button class="favorite-btn ${favorites.includes(tool.url) ? 'active' : ''}" 
+                                    onclick="toggleFavorite('${tool.url}', '${tool.name}', event)">
+                                    ${favorites.includes(tool.url) ? '⭐' : '☆'}
+                                </button>
+                                ${tool.name}
+                            </div>
+                            <div class="tool-actions">
+                                <button class="action-btn" onclick="loadInIframe(this, event)" ${!iframeSupported ? 'disabled title="此網站不支持內嵌"' : ''}>內嵌</button>
+                                <button class="action-btn" onclick="openNewTab(this, event)">新頁</button>
+                            </div>
+                        </div>
+                        <div class="tool-tags">
+                            ${tool.tags.map(tag => {
+                                let tagClass = '';
+                                if (tag.includes('付費')) tagClass = 'paid';
+                                else if (tag.includes('國內')) tagClass = 'cn';
+                                else if (tag.includes('國際')) tagClass = 'intl';
+                                return `<span class="tool-tag ${tagClass}" onclick="filterByTag('${tag}', event)">${tag}</span>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleGroup(header) {
+            header.classList.toggle('collapsed');
+            header.nextElementSibling.classList.toggle('collapsed');
+        }
+
+        function loadInIframe(button, event) {
+            event.stopPropagation();
+            const toolItem = button.closest('.tool-item');
+            const url = toolItem.dataset.url;
+            const name = toolItem.dataset.name;
+
+            document.querySelectorAll('.tool-item').forEach(item => item.classList.remove('active'));
+            toolItem.classList.add('active');
+
+            document.getElementById('currentSite').textContent = name;
+            const container = document.getElementById('iframeContainer');
+            container.innerHTML = `<div class="loading">⏳ 載入中...</div><iframe src="${url}"></iframe>`;
+
+            localStorage.setItem('aitools_lastVisited', JSON.stringify({url, name}));
+
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('show');
+            }
+        }
+
+        function openNewTab(button, event) {
+            event.stopPropagation();
+            const url = button.closest('.tool-item').dataset.url;
+            window.open(url, '_blank');
+        }
+
+        function toggleFavorite(url, name, event) {
+            event.stopPropagation();
+            const index = favorites.indexOf(url);
+            if (index > -1) {
+                favorites.splice(index, 1);
+                const topIndex = topFavorites.findIndex(f => f.url === url);
+                if (topIndex > -1) {
+                    topFavorites.splice(topIndex, 1);
+                }
+            } else {
+                favorites.push(url);
+                if (topFavorites.length < 10) {
+                    topFavorites.push({url, name});
+                }
+            }
+            localStorage.setItem('aitools_favorites', JSON.stringify(favorites));
+            localStorage.setItem('aitools_top10', JSON.stringify(topFavorites));
+            updateToolsList();
+            updateQuickFavorites();
+        }
+
+        function updateQuickFavorites() {
+            const container = document.getElementById('quickFavorites');
+            if (topFavorites.length === 0) {
+                container.innerHTML = '<span style="color: #856404; font-size: 12px;">暫無常用平台，點擊工具前的⭐收藏</span>';
+                return;
+            }
+
+            container.innerHTML = topFavorites.map(fav => `
+                <button class="favorite-quick-btn" onclick="quickOpenTool('${fav.url}', '${fav.name}')">
+                    ${fav.name}
+                </button>
+            `).join('');
+        }
+
+        function quickOpenTool(url, name) {
+            document.getElementById('currentSite').textContent = name;
+            const container = document.getElementById('iframeContainer');
+            container.innerHTML = `<div class="loading">⏳ 載入中...</div><iframe src="${url}"></iframe>`;
+            localStorage.setItem('aitools_lastVisited', JSON.stringify({url, name}));
+        }
+
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const resultCount = document.getElementById('searchResultCount');
+
+            if (!searchTerm) {
+                updateToolsList();
+                resultCount.classList.add('hidden');
+                return;
+            }
+
+            let allResults = [];
+            for (let mainCat in toolsData) {
+                for (let subCat in toolsData[mainCat].subcategories) {
+                    const tools = toolsData[mainCat].subcategories[subCat].tools;
+                    tools.forEach(tool => {
+                        const name = tool.name.toLowerCase();
+                        const tags = tool.tags.join(' ').toLowerCase();
+                        if (name.includes(searchTerm) || tags.includes(searchTerm)) {
+                            allResults.push({
+                                ...tool,
+                                mainCat: toolsData[mainCat].name,
+                                subCat: toolsData[mainCat].subcategories[subCat].name
+                            });
+                        }
+                    });
+                }
+            }
+
+            resultCount.textContent = `找到 ${allResults.length} 個結果`;
+            resultCount.classList.remove('hidden');
+
+            const container = document.getElementById('toolsList');
+            if (allResults.length === 0) {
+                container.innerHTML = '<div class="no-tools">未找到匹配的工具</div>';
+                return;
+            }
+
+            container.innerHTML = allResults.map(tool => {
+                let html = renderToolItem(tool);
+                const regex = new RegExp(`(${searchTerm})`, 'gi');
+                html = html.replace(regex, '<span class="highlight">$1</span>');
+                return html;
+            }).join('');
+        });
+
+        function setupFilterTags() {
+            document.querySelectorAll('.filter-tag').forEach(tag => {
+                tag.classList.remove('active');
+                if (tag.dataset.filter === activeFilter) {
+                    tag.classList.add('active');
+                }
+
+                tag.onclick = function() {
+                    activeFilter = this.dataset.filter;
+                    setupFilterTags();
+                    filterTools();
+                };
+            });
+        }
+
+        function filterByTag(tag, event) {
+            event.stopPropagation();
+            activeFilter = tag;
+            setupFilterTags();
+            filterTools();
+        }
+
+        function filterTools() {
+            if (activeFilter === 'all') {
+                document.querySelectorAll('.tool-item').forEach(item => {
+                    item.style.display = 'block';
+                });
+                return;
+            }
+
+            document.querySelectorAll('.tool-item').forEach(item => {
+                const tags = Array.from(item.querySelectorAll('.tool-tag')).map(t => t.textContent);
+                if (tags.includes(activeFilter)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+        }
+
+        function showAddToolModal() {
+            const modal = document.getElementById('toolModal');
+            modal.classList.add('show');
+
+            const mainCatSelect = document.getElementById('toolMainCat');
+            mainCatSelect.innerHTML = Object.keys(toolsData).map(key => 
+                `<option value="${key}" ${key === currentMainCat ? 'selected' : ''}>${toolsData[key].name}</option>`
+            ).join('');
+
+            updateSubCatOptions();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            if (modalId === 'toolModal') {
+                document.getElementById('toolForm').reset();
+            }
+        }
+
+        function updateSubCatOptions() {
+            const mainCat = document.getElementById('toolMainCat').value;
+            const subCatSelect = document.getElementById('toolSubCat');
+
+            if (toolsData[mainCat]) {
+                subCatSelect.innerHTML = Object.keys(toolsData[mainCat].subcategories).map(key => 
+                    `<option value="${key}" ${key === currentSubCat ? 'selected' : ''}>${toolsData[mainCat].subcategories[key].name}</option>`
+                ).join('');
+            }
+        }
+
+        document.getElementById('toolMainCat').addEventListener('change', updateSubCatOptions);
+
+        document.getElementById('toolForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const mainCat = document.getElementById('toolMainCat').value;
+            const subCat = document.getElementById('toolSubCat').value;
+            const name = document.getElementById('toolName').value;
+            const url = document.getElementById('toolUrl').value;
+            const group = document.getElementById('toolGroup').value;
+            const tags = document.getElementById('toolTags').value.split(',').map(t => t.trim()).filter(t => t);
+
+            const newTool = {name, url, tags, group: group || undefined};
+
+            toolsData[mainCat].subcategories[subCat].tools.push(newTool);
+
+            if (!customTools[mainCat]) customTools[mainCat] = {};
+            if (!customTools[mainCat][subCat]) customTools[mainCat][subCat] = [];
+            customTools[mainCat][subCat].push(newTool);
+            localStorage.setItem('aitools_custom', JSON.stringify(customTools));
+
+            if (mainCat === currentMainCat && subCat === currentSubCat) {
+                updateToolsList();
+            }
+
+            closeModal('toolModal');
+            alert(`✅ 成功添加「${name}」`);
+        });
+
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                closeModal(e.target.id);
+            }
+        });
+
+        // ==================== 提示詞庫模組 ====================
+        let promptsData = JSON.parse(localStorage.getItem('prompts_library') || JSON.stringify({
+            "writing": {
+                name: "📝 寫作",
+                subcategories: {
+                    "chatgpt": {
+                        name: "ChatGPT",
+                        groups: {
+                            "copywriting": {
+                                name: "文案寫作",
+                                prompts: [
+                                    {
+                                        id: Date.now() + '_1',
+                                        title: "產品文案生成器",
+                                        content: "請為以下產品撰寫吸引人的文案:\n\n產品名稱: [產品名]\n目標受眾: [受眾]\n核心賣點: [賣點]\n\n要求:\n1. 標題吸睛\n2. 強調痛點和解決方案\n3. 加入行動號召",
+                                        tags: ["文案", "產品", "營銷"],
+                                        source: ""
+                                    }
+                                ]
+                            },
+                            "email": {
+                                name: "郵件寫作",
+                                prompts: [
+                                    {
+                                        id: Date.now() + '_2',
+                                        title: "商務郵件模板",
+                                        content: "幫我撰寫一封專業的商務郵件:\n\n收件人: [姓名/職位]\n目的: [郵件目的]\n重點內容: [要點]\n\n要求正式、禮貌、簡潔",
+                                        tags: ["郵件", "商務", "溝通"],
+                                        source: ""
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "coding": {
+                name: "💻 編程",
+                subcategories: {
+                    "general": {
+                        name: "通用編程",
+                        groups: {
+                            "debug": {
+                                name: "代碼調試",
+                                prompts: [
+                                    {
+                                        id: Date.now() + '_3',
+                                        title: "Bug修復助手",
+                                        content: "我的代碼出現了以下錯誤:\n\n[粘貼錯誤信息]\n\n代碼:\n```\n[粘貼代碼]\n```\n\n請幫我:\n1. 分析錯誤原因\n2. 提供修復方案\n3. 解釋如何避免類似問題",
+                                        tags: ["調試", "修復", "學習"],
+                                        source: ""
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "creative": {
+                name: "🎨 創意",
+                subcategories: {
+                    "midjourney": {
+                        name: "Midjourney",
+                        groups: {
+                            "portrait": {
+                                name: "人物肖像",
+                                prompts: [
+                                    {
+                                        id: Date.now() + '_4',
+                                        title: "專業頭像生成",
+                                        content: "professional headshot of [description], studio lighting, clean background, high quality, photorealistic --ar 1:1 --v 6",
+                                        tags: ["頭像", "專業", "肖像"],
+                                        source: "https://midjourney.com"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }));
+
+        function openPromptsLibrary() {
+            const modalHtml = `
+                <div class="modal show" id="promptsModal" style="z-index: 2000;">
+                    <div class="modal-content" style="max-width: 1200px; height: 85vh; display: flex; flex-direction: column;">
+                        <div class="modal-header">
+                            <span>📝 提示詞庫管理系統</span>
+                            <button class="close-modal" onclick="closePromptsLibrary()">&times;</button>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                            <button class="btn btn-primary" onclick="showAddPromptForm()">+ 新增提示詞</button>
+                            <button class="btn btn-secondary" onclick="exportPrompts()">📤 導出</button>
+                            <button class="btn btn-secondary" onclick="importPrompts()">📥 導入</button>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; flex: 1; overflow: hidden;">
+                            <div style="width: 280px; background: #f8f9fa; border-radius: 8px; padding: 15px; overflow-y: auto;">
+                                <h3 style="font-size: 14px; margin-bottom: 10px; color: #667eea;">分類導航</h3>
+                                <input type="text" id="promptSearch" placeholder="🔍 搜索提示詞..." 
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; font-size: 13px;"
+                                    oninput="searchPrompts(this.value)">
+                                <div id="promptsTree"></div>
+                            </div>
+
+                            <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                                <div id="promptsListArea" style="flex: 1; overflow-y: auto; background: white; border-radius: 8px; padding: 15px;">
+                                    <div style="text-align: center; color: #999; padding: 40px;">
+                                        <h3>👈 從左側選擇分類查看提示詞</h3>
+                                        <p style="margin-top: 10px;">或使用搜索功能快速查找</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            renderPromptsTree();
+        }
+
+        function closePromptsLibrary() {
+            const modal = document.getElementById('promptsModal');
+            if (modal) modal.remove();
+        }
+
+        function renderPromptsTree() {
+            const container = document.getElementById('promptsTree');
+            let html = '';
+
+            for (let cat1Key in promptsData) {
+                const cat1 = promptsData[cat1Key];
+                html += `
+                    <div class="prompt-cat1" style="margin-bottom: 10px;">
+                        <div style="font-weight: bold; padding: 8px; background: white; border-radius: 5px; cursor: pointer; font-size: 13px;"
+                            onclick="togglePromptCat(this)">
+                            <span class="toggle-icon">▼</span> ${cat1.name}
+                        </div>
+                        <div class="prompt-cat1-content" style="margin-left: 10px; margin-top: 5px;">
+                `;
+
+                for (let cat2Key in cat1.subcategories) {
+                    const cat2 = cat1.subcategories[cat2Key];
+                    html += `
+                        <div class="prompt-cat2" style="margin-bottom: 8px;">
+                            <div style="padding: 6px; background: #e9ecef; border-radius: 4px; cursor: pointer; font-size: 12px;"
+                                onclick="togglePromptCat(this)">
+                                <span class="toggle-icon">▼</span> ${cat2.name}
+                            </div>
+                            <div class="prompt-cat2-content" style="margin-left: 10px; margin-top: 5px;">
+                    `;
+
+                    for (let groupKey in cat2.groups) {
+                        const group = cat2.groups[groupKey];
+                        const promptCount = group.prompts.length;
+                        html += `
+                            <div style="padding: 5px; background: #f8f9fa; border-radius: 3px; cursor: pointer; font-size: 12px; margin-bottom: 3px;
+                                border-left: 3px solid #667eea;"
+                                onclick="showGroupPrompts('${cat1Key}', '${cat2Key}', '${groupKey}')">
+                                📄 ${group.name} <span style="color: #999;">(${promptCount})</span>
+                            </div>
+                        `;
+                    }
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function togglePromptCat(el) {
+            const icon = el.querySelector('.toggle-icon');
+            const content = el.nextElementSibling;
+
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '▶';
+            }
+        }
+
+        function showGroupPrompts(cat1, cat2, group) {
+            const prompts = promptsData[cat1].subcategories[cat2].groups[group].prompts;
+            const groupName = promptsData[cat1].subcategories[cat2].groups[group].name;
+            const container = document.getElementById('promptsListArea');
+
+            if (prompts.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #999; padding: 40px;">
+                        <h3>此分組暫無提示詞</h3>
+                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="showAddPromptForm('${cat1}', '${cat2}', '${group}')">
+                            + 新增第一個提示詞
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="color: #667eea;">📚 ${groupName}</h3>
+                    <button class="btn btn-primary" onclick="showAddPromptForm('${cat1}', '${cat2}', '${group}')">+ 新增</button>
+                </div>
+            `;
+
+            prompts.forEach(prompt => {
+                html += `
+                    <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #667eea;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                            <h4 style="font-size: 15px; color: #333;">${prompt.title}</h4>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn btn-primary" style="font-size: 11px; padding: 4px 8px;" onclick="copyPrompt('${prompt.id}')">
+                                    📋 複製
+                                </button>
+                                <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px;" onclick="editPrompt('${prompt.id}', '${cat1}', '${cat2}', '${group}')">
+                                    ✏️ 編輯
+                                </button>
+                                <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px; background: #dc3545;" onclick="deletePrompt('${prompt.id}', '${cat1}', '${cat2}', '${group}')">
+                                    🗑️ 刪除
+                                </button>
+                            </div>
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 5px; white-space: pre-wrap; font-size: 13px; line-height: 1.6; max-height: 200px; overflow-y: auto;">
+                            ${escapeHtml(prompt.content)}
+                        </div>
+                        <div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap;">
+                            ${prompt.tags.map(tag => `<span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 10px; font-size: 11px;">${tag}</span>`).join('')}
+                        </div>
+                        ${prompt.source ? `<div style="margin-top: 8px;"><a href="${prompt.source}" target="_blank" style="color: #667eea; font-size: 12px;">🔗 來源連結</a></div>` : ''}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function showAddPromptForm(preselectedCat1 = '', preselectedCat2 = '', preselectedGroup = '') {
+            const formHtml = `
+                <div class="modal show" id="addPromptModal" style="z-index: 2001;">
+                    <div class="modal-content" style="max-width: 700px;">
+                        <div class="modal-header">
+                            <span>新增提示詞</span>
+                            <button class="close-modal" onclick="closeAddPromptForm()">&times;</button>
+                        </div>
+
+                        <form id="addPromptForm" onsubmit="savePrompt(event)">
+                            <div class="form-group">
+                                <label>提示詞標題 *</label>
+                                <input type="text" id="promptTitle" required>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="form-group">
+                                    <label>第1層分類 *</label>
+                                    <select id="promptCat1" required onchange="updatePromptCat2Options()">
+                                        ${Object.keys(promptsData).map(key => 
+                                            `<option value="${key}" ${key === preselectedCat1 ? 'selected' : ''}>${promptsData[key].name}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>第2層分類 *</label>
+                                    <select id="promptCat2" required onchange="updatePromptGroupOptions()"></select>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="form-group">
+                                    <label>第3層分組 *</label>
+                                    <select id="promptGroup" required></select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>或新建分組</label>
+                                    <input type="text" id="newPromptGroup" placeholder="輸入新分組名稱">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>提示詞內容 * <span style="font-size: 11px; color: #999;">(支持換行)</span></label>
+                                <textarea id="promptContent" rows="8" required style="font-family: monospace;"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>標籤 <span style="font-size: 11px; color: #999;">(用逗號分隔)</span></label>
+                                <input type="text" id="promptTags" placeholder="例如: 文案, 營銷, ChatGPT">
+                            </div>
+
+                            <div class="form-group">
+                                <label>來源連結 <span style="font-size: 11px; color: #999;">(可選)</span></label>
+                                <input type="url" id="promptSource" placeholder="https://">
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="closeAddPromptForm()">取消</button>
+                                <button type="submit" class="btn btn-primary">保存</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', formHtml);
+            updatePromptCat2Options();
+
+            if (preselectedCat2) {
+                document.getElementById('promptCat2').value = preselectedCat2;
+                updatePromptGroupOptions();
+            }
+            if (preselectedGroup) {
+                document.getElementById('promptGroup').value = preselectedGroup;
+            }
+        }
+
+        function closeAddPromptForm() {
+            const modal = document.getElementById('addPromptModal');
+            if (modal) modal.remove();
+        }
+
+        function updatePromptCat2Options() {
+            const cat1 = document.getElementById('promptCat1').value;
+            const cat2Select = document.getElementById('promptCat2');
+
+            cat2Select.innerHTML = Object.keys(promptsData[cat1].subcategories).map(key => 
+                `<option value="${key}">${promptsData[cat1].subcategories[key].name}</option>`
+            ).join('');
+
+            updatePromptGroupOptions();
+        }
+
+        function updatePromptGroupOptions() {
+            const cat1 = document.getElementById('promptCat1').value;
+            const cat2 = document.getElementById('promptCat2').value;
+            const groupSelect = document.getElementById('promptGroup');
+
+            groupSelect.innerHTML = Object.keys(promptsData[cat1].subcategories[cat2].groups).map(key => 
+                `<option value="${key}">${promptsData[cat1].subcategories[cat2].groups[key].name}</option>`
+            ).join('');
+        }
+
+        function savePrompt(event) {
+            event.preventDefault();
+
+            const cat1 = document.getElementById('promptCat1').value;
+            const cat2 = document.getElementById('promptCat2').value;
+            let group = document.getElementById('promptGroup').value;
+            const newGroup = document.getElementById('newPromptGroup').value.trim();
+
+            if (newGroup) {
+                const groupKey = newGroup.toLowerCase().replace(/\s+/g, '_');
+                if (!promptsData[cat1].subcategories[cat2].groups[groupKey]) {
+                    promptsData[cat1].subcategories[cat2].groups[groupKey] = {
+                        name: newGroup,
+                        prompts: []
+                    };
+                }
+                group = groupKey;
+            }
+
+            const newPrompt = {
+                id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                title: document.getElementById('promptTitle').value,
+                content: document.getElementById('promptContent').value,
+                tags: document.getElementById('promptTags').value.split(',').map(t => t.trim()).filter(t => t),
+                source: document.getElementById('promptSource').value
+            };
+
+            promptsData[cat1].subcategories[cat2].groups[group].prompts.push(newPrompt);
+            localStorage.setItem('prompts_library', JSON.stringify(promptsData));
+
+            closeAddPromptForm();
+            renderPromptsTree();
+            showGroupPrompts(cat1, cat2, group);
+            alert('✅ 提示詞已保存!');
+        }
+
+        function copyPrompt(promptId) {
+            let foundPrompt = null;
+
+            outer: for (let c1 in promptsData) {
+                for (let c2 in promptsData[c1].subcategories) {
+                    for (let g in promptsData[c1].subcategories[c2].groups) {
+                        const prompt = promptsData[c1].subcategories[c2].groups[g].prompts.find(p => p.id === promptId);
+                        if (prompt) {
+                            foundPrompt = prompt;
+                            break outer;
+                        }
+                    }
+                }
+            }
+
+            if (foundPrompt) {
+                navigator.clipboard.writeText(foundPrompt.content).then(() => {
+                    alert('✅ 提示詞已複製到剪貼板!');
+                });
+            }
+        }
+
+        function deletePrompt(promptId, cat1, cat2, group) {
+            if (!confirm('確定要刪除此提示詞嗎?')) return;
+
+            const prompts = promptsData[cat1].subcategories[cat2].groups[group].prompts;
+            const index = prompts.findIndex(p => p.id === promptId);
+
+            if (index > -1) {
+                prompts.splice(index, 1);
+                localStorage.setItem('prompts_library', JSON.stringify(promptsData));
+                showGroupPrompts(cat1, cat2, group);
+                alert('✅ 已刪除');
+            }
+        }
+
+        function editPrompt(promptId, cat1, cat2, group) {
+            const prompt = promptsData[cat1].subcategories[cat2].groups[group].prompts.find(p => p.id === promptId);
+            if (!prompt) return;
+
+            showAddPromptForm(cat1, cat2, group);
+
+            setTimeout(() => {
+                document.getElementById('promptTitle').value = prompt.title;
+                document.getElementById('promptContent').value = prompt.content;
+                document.getElementById('promptTags').value = prompt.tags.join(', ');
+                document.getElementById('promptSource').value = prompt.source || '';
+
+                document.getElementById('addPromptForm').onsubmit = function(e) {
+                    e.preventDefault();
+                    prompt.title = document.getElementById('promptTitle').value;
+                    prompt.content = document.getElementById('promptContent').value;
+                    prompt.tags = document.getElementById('promptTags').value.split(',').map(t => t.trim()).filter(t => t);
+                    prompt.source = document.getElementById('promptSource').value;
+
+                    localStorage.setItem('prompts_library', JSON.stringify(promptsData));
+                    closeAddPromptForm();
+                    showGroupPrompts(cat1, cat2, group);
+                    alert('✅ 已更新');
+                };
+            }, 100);
+        }
+
+        function searchPrompts(query) {
+            if (!query) {
+                document.getElementById('promptsListArea').innerHTML = `
+                    <div style="text-align: center; color: #999; padding: 40px;">
+                        <h3>👈 從左側選擇分類查看提示詞</h3>
+                    </div>
+                `;
+                return;
+            }
+
+            const results = [];
+            const queryLower = query.toLowerCase();
+
+            for (let cat1 in promptsData) {
+                for (let cat2 in promptsData[cat1].subcategories) {
+                    for (let group in promptsData[cat1].subcategories[cat2].groups) {
+                        const prompts = promptsData[cat1].subcategories[cat2].groups[group].prompts;
+                        prompts.forEach(prompt => {
+                            if (prompt.title.toLowerCase().includes(queryLower) || 
+                                prompt.content.toLowerCase().includes(queryLower) ||
+                                prompt.tags.some(tag => tag.toLowerCase().includes(queryLower))) {
+                                results.push({
+                                    ...prompt,
+                                    cat1,
+                                    cat2,
+                                    group,
+                                    groupName: promptsData[cat1].subcategories[cat2].groups[group].name
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+
+            const container = document.getElementById('promptsListArea');
+
+            if (results.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: #999; padding: 40px;">未找到匹配的提示詞</div>`;
+                return;
+            }
+
+            let html = `<h3 style="margin-bottom: 15px; color: #667eea;">🔍 搜索結果 (${results.length})</h3>`;
+
+            results.forEach(prompt => {
+                let title = prompt.title;
+                let content = prompt.content;
+                const regex = new RegExp(`(${query})`, 'gi');
+                title = title.replace(regex, '<span class="highlight">$1</span>');
+                content = content.replace(regex, '<span class="highlight">$1</span>');
+
+                html += `
+                    <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #667eea;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">
+                            <h4 style="font-size: 15px; color: #333;">${title}</h4>
+                            <button class="btn btn-primary" style="font-size: 11px; padding: 4px 8px;" onclick="copyPrompt('${prompt.id}')">
+                                📋 複製
+                            </button>
+                        </div>
+                        <div style="font-size: 11px; color: #999; margin-bottom: 10px;">
+                            📂 ${promptsData[prompt.cat1].name} > ${promptsData[prompt.cat1].subcategories[prompt.cat2].name} > ${prompt.groupName}
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 5px; white-space: pre-wrap; font-size: 13px; line-height: 1.6; max-height: 150px; overflow-y: auto;">
+                            ${content}
+                        </div>
+                        <div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap;">
+                            ${prompt.tags.map(tag => `<span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 10px; font-size: 11px;">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function exportPrompts() {
+            const dataStr = JSON.stringify(promptsData, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'prompts_library_' + new Date().toISOString().slice(0,10) + '.json';
+            a.click();
+            alert('✅ 提示詞庫已導出!');
+        }
+
+        function importPrompts() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        promptsData = importedData;
+                        localStorage.setItem('prompts_library', JSON.stringify(promptsData));
+                        renderPromptsTree();
+                        alert('✅ 導入成功!');
+                    } catch (err) {
+                        alert('❌ 導入失敗: 文件格式錯誤');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

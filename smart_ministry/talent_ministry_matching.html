@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人才事工配對 · Smart Ministry</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --text: #1e293b;
+            --muted: #64748b;
+        }
+        body {
+            font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+            background: #f5f6fa;
+            color: var(--text);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .topbar { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar h1 { font-size: 1.15rem; font-weight: 700; }
+        .topbar-actions a, .topbar-actions button {
+            margin-left: 8px;
+            padding: 6px 12px;
+            border: none;
+            background: white;
+            color: #f5576c;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            font-family: inherit;
+        }
+        .topbar-actions a:hover { opacity: 0.92; }
+        .stats-summary {
+            margin: 0 10px;
+            padding: 12px 14px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            color: #334155;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: stretch;
+            gap: 14px 20px;
+        }
+        .stats-summary strong { color: #be185d; font-weight: 700; }
+        .stats-summary .sep { color: #cbd5e1; }
+        .stats-chart-col { flex: 1; min-width: 200px; }
+        .stats-chart-title { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+        .stat-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.78rem; }
+        .stat-bar-label { width: 3.2rem; flex-shrink: 0; color: #475569; }
+        .stat-bar-track { flex: 1; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; }
+        .stat-bar-fill { height: 100%; border-radius: 6px; transition: width 0.35s ease; min-width: 2px; }
+        .stat-bar-fill.bar-talents { background: linear-gradient(90deg, #f9a8d4, #ec4899); }
+        .stat-bar-fill.bar-ministries { background: linear-gradient(90deg, #fde047, #eab308); }
+        .stat-bar-fill.bar-matches { background: linear-gradient(90deg, #86efac, #22c55e); }
+        .stat-bar-num { width: 2.5rem; text-align: right; font-weight: 700; color: #be185d; font-size: 0.8rem; }
+        .stats-viz-col { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 88px; }
+        .stats-donut {
+            width: 52px; height: 52px; border-radius: 50%;
+            background: conic-gradient(#db2777 0deg var(--donut-deg, 0deg), #e2e8f0 0deg);
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .stats-donut::after {
+            content: '';
+            width: 30px; height: 30px; border-radius: 50%; background: #fff; position: absolute;
+        }
+        .stats-donut-cap { font-size: 0.65rem; color: var(--muted); text-align: center; max-width: 92px; line-height: 1.35; }
+        .stat-context-line { width: 100%; font-size: 0.72rem; color: #475569; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0; }
+        .workflow-tabs {
+            display: none;
+            margin: 0 10px 0;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .workflow-tab {
+            flex: 1;
+            min-width: 88px;
+            padding: 8px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+        .workflow-tab.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #fff;
+            border-color: transparent;
+            font-weight: 600;
+        }
+        .toolbar-sub {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+            padding: 8px 20px;
+            background: #fdf2f8;
+            border-bottom: 1px solid #fce7f3;
+            font-size: 0.8rem;
+            color: #831843;
+        }
+        .toolbar-sub details { position: relative; }
+        .toolbar-sub summary {
+            cursor: pointer;
+            list-style: none;
+            padding: 6px 12px;
+            background: #fff;
+            border: 1px solid #f9a8d4;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #be185d;
+        }
+        .toolbar-sub summary::-webkit-details-marker { display: none; }
+        .toolbar-sub .tools-menu-inner {
+            position: absolute;
+            left: 0;
+            top: 100%;
+            margin-top: 4px;
+            min-width: 200px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+            z-index: 50;
+            padding: 6px;
+        }
+        .toolbar-sub .tools-menu-inner button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            color: #334155;
+        }
+        .toolbar-sub .tools-menu-inner button:hover { background: #f1f5f9; }
+        .toolbar-sub .tool-desc { display: block; font-size: 9px; color: #64748b; font-weight: normal; margin-top: 3px; line-height: 1.35; }
+        .panel-tools {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 9px;
+            color: #64748b;
+        }
+        .panel-tools label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+        details.adv-block {
+            margin-bottom: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fafafa;
+            font-size: 10px;
+        }
+        details.adv-block > summary {
+            padding: 6px 10px;
+            cursor: pointer;
+            color: #475569;
+            font-weight: 600;
+        }
+        details.adv-block .adv-inner { padding: 8px 10px 10px; border-top: 1px solid #eef2f7; }
+        details.batch-strategy { margin: 0 10px 8px; font-size: 10px; color: #475569; }
+        details.batch-strategy > summary { cursor: pointer; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; }
+        details.batch-strategy .batch-inner { padding: 10px 12px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 6px 6px; background: #fff; }
+        .data-roadmap-foot {
+            margin: 12px 10px 20px;
+            padding: 10px 14px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            font-size: 10px;
+            color: #0c4a6e;
+            line-height: 1.5;
+        }
+        .data-roadmap-foot a { color: #0369a1; font-weight: 600; }
+        .main { display: flex; height: calc(100vh - 132px); gap: 10px; padding: 10px; }
+        .panel { background: white; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
+        .panel-left, .panel-right { flex: 1; }
+        .panel-center { width: 360px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+        .panel-header { padding: 10px 12px; background: rgba(0,0,0,0.05); font-weight: 600; font-size: 0.9rem; display: flex; justify-content: space-between; }
+        .panel-center .panel-header { background: rgba(255,255,255,0.1); }
+        .panel-body { flex: 1; overflow-y: auto; padding: 10px; }
+        .search-box input { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.85rem; margin-bottom: 8px; }
+        .item { padding: 8px 10px; margin-bottom: 4px; background: #f8f9fa; border-radius: 3px; cursor: pointer; border-left: 3px solid transparent; }
+        .item:hover { background: #e9ecef; }
+        .item.selected { background: #fce4ec; border-left-color: #f5576c; }
+        .item.linked { border-left-color: #27ae60; }
+        .item-title { font-weight: 600; font-size: 0.88rem; margin-bottom: 3px; }
+        .item-meta { font-size: 0.72rem; color: #7f8c8d; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 8px; margin-left: 4px; }
+        .badge-pink { background: #fce4ec; color: #880e4f; }
+        .badge-green { background: #d5f4e6; color: #196f3d; }
+        .badge-gold { background: #fff9c4; color: #f57f17; }
+        .score-badge { background: rgba(255,255,255,0.9); color: #f5576c; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 12px; }
+        .center-score { background: rgba(255,255,255,0.15); padding: 20px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
+        .score-num { font-size: 40px; font-weight: bold; margin-bottom: 5px; line-height: 1.15; }
+        .score-num .tier-sub { display: block; font-size: 0.72rem; font-weight: 600; opacity: 0.92; margin-top: 6px; }
+        .score-raw-line { font-size: 11px; font-weight: 600; opacity: 0.88; margin-top: 4px; }
+        .score-label { font-size: 10px; }
+        .match-hard-banner {
+            background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+            border-radius: 8px; padding: 10px 12px; margin: 12px 0 0; font-size: 11px; line-height: 1.45;
+        }
+        .match-hard-banner strong { display: block; margin-bottom: 4px; }
+        .match-review-banner {
+            background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
+            border-radius: 8px; padding: 10px 12px; margin: 10px 0 0; font-size: 11px; line-height: 1.45;
+        }
+        .match-review-banner strong { display: block; margin-bottom: 4px; }
+        .match-reason-block { margin-top: 10px; font-size: 11px; text-align: left; }
+        .match-reason-block h5 { margin: 0 0 6px; font-size: 11px; color: rgba(255,255,255,0.95); }
+        .match-reason-block ul { margin: 0; padding-left: 1.1rem; }
+        .match-reason-block li { margin-bottom: 4px; }
+        .match-details { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 10px; }
+        .match-details h4 { font-size: 11px; margin-bottom: 6px; }
+        .match-item { padding: 4px 0; display: flex; justify-content: space-between; }
+        .center-actions { display: flex; flex-direction: column; gap: 8px; }
+        .center-actions button { padding: 10px; border: none; background: white; color: #f5576c; border-radius: 4px; cursor: pointer; font-size: 0.88rem; font-weight: 600; }
+        .center-info { background: rgba(255,255,255,0.1); padding: 12px; border-radius: 4px; margin-top: 10px; font-size: 10px; }
+        .empty { text-align: center; padding: 40px 20px; color: #95a5a6; font-size: 10px; }
+        .msg {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            padding: 10px 15px;
+            background: #27ae60;
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            z-index: 1000;
+            animation: slideIn 0.3s;
+            white-space: pre-line;
+            max-width: min(340px, 92vw);
+            line-height: 1.45;
+        }
+        @keyframes slideIn { from { transform: translateX(300px); } to { transform: translateX(0); } }
+        .msg.error { background: #e74c3c; }
+        .step-strip {
+            margin: 10px;
+            padding: 8px 12px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 10px;
+            color: #334155;
+            line-height: 1.5;
+        }
+        .filter-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+        .filter-row input, .filter-row select {
+            flex: 1;
+            min-width: 110px;
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 10px;
+            background: #fff;
+        }
+        .list-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 9px; color: #64748b; }
+        .list-table-wrap { display: block; }
+        .list-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+        .list-table th, .list-table td { padding: 7px 8px; border-bottom: 1px solid #eef2f7; text-align: left; vertical-align: top; }
+        .list-table th { background: #f8fafc; color: #334155; font-weight: 700; }
+        .list-table tr { cursor: pointer; }
+        .list-table tr:hover { background: #f8fafc; }
+        .list-table tr.selected-row { background: #fce7f3; }
+        .th-sort { border: none; background: transparent; color: inherit; font-size: 10px; font-weight: 700; cursor: pointer; padding: 0; display: inline-flex; align-items: center; gap: 4px; }
+        .sort-mark { color: #64748b; font-size: 9px; }
+        .mobile-list { display: none; }
+        .mobile-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fff;
+            padding: 8px 9px;
+            margin-bottom: 7px;
+            cursor: pointer;
+        }
+        .mobile-card.selected { border-color: #f472b6; background: #fdf2f8; }
+        .mobile-card .line1 { font-size: 11px; font-weight: 700; color: #1f2937; margin-bottom: 3px; display: flex; justify-content: space-between; gap: 8px; }
+        .mobile-card .line2 { font-size: 9px; color: #64748b; line-height: 1.45; }
+        .pick-cell { width: 30px; text-align: center; }
+        .pick-check { transform: scale(0.9); accent-color: #db2777; cursor: pointer; }
+        .history-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.52);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+            padding: 16px;
+        }
+        .history-modal.open { display: flex; }
+        .history-panel {
+            width: min(980px, 96vw);
+            max-height: 94vh;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .history-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .history-head h3 { font-size: 12px; margin: 0; color: #334155; }
+        .history-tools { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        .history-tools select, .history-tools input {
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 10px;
+            min-width: 130px;
+        }
+        .history-body {
+            flex: 1;
+            min-height: 220px;
+            overflow: auto;
+            padding: 10px 12px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+        .history-table th, .history-table td { padding: 6px 8px; border-bottom: 1px solid #eef2f7; text-align: left; vertical-align: top; }
+        .history-table th { background: #f8fafc; color: #334155; position: sticky; top: 0; z-index: 1; }
+        .history-empty { text-align: center; color: #64748b; font-size: 10px; padding: 22px; }
+        @media (max-width: 900px) {
+            .workflow-tabs { display: flex; }
+            .main.matching-layout {
+                flex-direction: column;
+                height: auto;
+                min-height: 420px;
+            }
+            .main.matching-layout .panel {
+                display: none;
+                width: 100% !important;
+                min-height: 280px;
+            }
+            .main.matching-layout .panel.panel-active {
+                display: flex;
+            }
+        }
+        @media (max-width: 760px) {
+            .list-table-wrap { display: none; }
+            .mobile-list { display: block; }
+        }
+        @media (min-width: 901px) {
+            .main.matching-layout .panel { display: flex; }
+        }
+        .howto-box {
+            margin: 10px;
+            padding: 12px 14px;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            font-size: 10px;
+            color: #14532d;
+            line-height: 1.55;
+        }
+        .howto-box strong { color: #166534; }
+        .howto-box ol { margin: 8px 0 0; padding-left: 1.2rem; }
+        .panel-left, .panel-right, .panel-center { border: 1px solid #e2e8f0; }
+        .orient-strip {
+            margin: 0 10px 8px;
+            padding: 8px 12px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            font-size: 10px;
+            color: #1e3a5f;
+            line-height: 1.55;
+        }
+        .orient-strip strong { color: #1d4ed8; }
+        details.list-collapse {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fafafa;
+            margin-top: 4px;
+        }
+        details.list-collapse > summary {
+            padding: 8px 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 10px;
+            color: #475569;
+            list-style: none;
+        }
+        details.list-collapse > summary::-webkit-details-marker { display: none; }
+        details.list-collapse .list-collapse-inner { padding: 0 6px 8px; }
+        .adv-hint { font-size: 9px; color: #64748b; margin: 0 0 6px; line-height: 1.45; }
+        .center-pick-block label { display: block; margin-bottom: 4px; font-size: 10px; opacity: 0.95; }
+        .center-pick-block select {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 11px;
+            color: #1f2937;
+            background: #fff;
+        }
+        .center-pick-hint { font-size: 9px; opacity: 0.9; margin: 0 0 10px; line-height: 1.45; }
+        .journey-strip {
+            margin: 0 10px 10px;
+            padding: 10px 14px;
+            background: #faf5ff;
+            border: 1px solid #e9d5ff;
+            border-radius: 8px;
+            font-size: 10px;
+            color: #4c1d95;
+            line-height: 1.55;
+        }
+        .journey-strip strong { color: #5b21b6; }
+        .journey-strip ul { margin: 6px 0 0; padding-left: 1.1rem; }
+        .journey-strip li { margin: 4px 0; }
+        .journey-strip em { font-style: normal; font-weight: 700; color: #6d28d9; }
+        .score-pair-line {
+            font-size: 10px;
+            margin-top: 8px;
+            opacity: 0.95;
+            line-height: 1.4;
+            font-weight: 600;
+        }
+        .action-wrap { margin-bottom: 4px; }
+        .action-help {
+            font-size: 0.74rem;
+            opacity: 0.9;
+            margin: 4px 0 10px;
+            line-height: 1.45;
+        }
+        details.page-fold {
+            margin: 0 10px 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #fafafa;
+            overflow: hidden;
+        }
+        details.page-fold > summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 10px 14px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            color: #475569;
+        }
+        details.page-fold > summary::-webkit-details-marker { display: none; }
+        details.page-fold .page-fold-body { padding: 0 14px 12px; font-size: 0.8rem; line-height: 1.55; color: #334155; }
+        .center-invite-block {
+            background: rgba(255,255,255,0.12);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 0.78rem;
+        }
+        .center-invite-block label { display: block; margin-top: 8px; margin-bottom: 4px; font-weight: 600; }
+        .center-invite-block select, .center-invite-block textarea, .center-invite-block input[type="date"] {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.85rem;
+            color: #1f2937;
+        }
+        .center-invite-block textarea { min-height: 56px; resize: vertical; }
+        .center-step-banner {
+            background: rgba(255,255,255,0.18);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            font-size: 0.76rem;
+            line-height: 1.5;
+        }
+        .center-step-banner strong { display: block; margin-bottom: 6px; font-size: 0.82rem; }
+        .ministry-pick-banner {
+            font-size: 0.78rem;
+            margin-bottom: 10px;
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            display: none;
+        }
+        .ministry-pick-banner.visible { display: block; }
+        .panel-step-hint { font-size: 0.76rem; color: #64748b; margin-bottom: 10px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>🎯 人才事工配對</h1>
+        <div class="topbar-actions">
+            <a href="talent_skill_unified.html" target="_blank" rel="noopener noreferrer" title="新分頁開啟：人才技能管理，補齊恩賜／技能後再回到本頁配對">🔗 人才與技能</a>
+            <a href="landing.html#journey" target="_blank" rel="noopener noreferrer" title="新分頁開啟：智慧事奉路線圖（不取代目前分頁）">🗺️ 路線圖</a>
+            <a href="dashboard.html" target="_blank" rel="noopener noreferrer" title="新分頁開啟：Smart Ministry 領袖總覽">🏠 返回總覽</a>
+        </div>
+    </div>
+    <p style="margin:8px 14px 0;font-size:0.88rem;line-height:1.55;color:#334155;max-width:52rem;"><strong>首屏一句話：</strong>本頁<strong>幫牧者／同工</strong>為<strong>事工崗位找人並寫入邀請紀錄</strong>。<strong>不做</strong>自動派工、<strong>不</strong>取代禱告與面談。</p>
+    <div class="toolbar-sub">
+        <span style="opacity:.9;"><strong>工具選單</strong>（四項皆已接好，點 ▾ 展開；批次配對與匯出報表用）</span>
+        <details id="toolsMenuDetails">
+            <summary>開啟工具選單 ▾</summary>
+            <div class="tools-menu-inner" onclick="event.stopPropagation()">
+                <button type="button" onclick="closeToolsMenu(); aiMatch();">
+                    🤖 AI 配對（規則）
+                    <span class="tool-desc">依規則為每個崗位各配一位候選（分數≥60），寫入「建議 proposed」；仍須您實際邀請與跟進。</span>
+                </button>
+                <button type="button" onclick="closeToolsMenu(); batchMatch();">
+                    📋 批量配對
+                    <span class="tool-desc">一次為多個崗位試配（可搭配左側「批量選取」）；策略見下方「批量配對策略」。</span>
+                </button>
+                <button type="button" onclick="closeToolsMenu(); exportMatching();">
+                    📤 匯出 JSON（canonical）
+                    <span class="tool-desc">備份整包 Smart Ministry 結構化資料，供進階同工或搬機還原用。</span>
+                </button>
+                <button type="button" onclick="closeToolsMenu(); exportMatchingExcel();">
+                    📊 匯出 Excel（CSV）
+                    <span class="tool-desc">下載「姓名／崗位／分數／狀態」表，帶去同工會議最直覽。</span>
+                </button>
+            </div>
+        </details>
+    </div>
+    <details class="page-fold" open>
+        <summary>展開／收合：本頁脈絡與三步怎麼做（第③步 · 建議先看）</summary>
+        <div class="page-fold-body">
+            <div class="journey-strip" role="region" aria-label="本頁上下文" style="margin:0;border:none;padding:0;">
+                <strong>小白先看：這頁在上、下文中做什麼？</strong>
+                <ul>
+                    <li><em>從哪來</em> 會友／人才資料來自<strong>註冊、問卷、「人才與技能」</strong>，存在您這台電腦的本機（不是雲端自動同步）。</li>
+                    <li><em>在這做什麼</em> 先<strong>③ 選事工</strong>，再在<strong>② 配對與記錄</strong>選人、看<strong>規則建議分</strong>，最後<strong>寫入邀請紀錄</strong>（仍要實際邀請與禱告分辨）。</li>
+                    <li><em>到哪去</em> 工具選單<strong>匯出 CSV／JSON</strong>；頂部連結以<strong>新分頁</strong>開啟路線圖／總覽；主線下一站：<strong>人才發展追蹤</strong>。</li>
+                </ul>
+            </div>
+            <div class="howto-box" role="region" aria-label="如何使用配對工作台" style="margin:12px 0 0;">
+                <strong>如何使用（路線圖第 3 步 · 無一鍵自動派工）</strong>
+                <p style="margin:8px 0 0;font-size:0.78rem;color:#166534;"><strong>怕迷路？</strong> 建議順序：<strong>③ 選崗 → ② 選人與紀錄</strong>；進階才用<strong>① 人才列表</strong>先鎖人再找崗。選取可用<strong>左右列表</strong>或<strong>中欄下拉</strong>（同步）。</p>
+                <ol>
+                    <li><strong>③ 事工崗位：</strong>搜尋／篩選後點列；窄螢幕選定後可自動切到②。</li>
+                    <li><strong>② 配對與記錄：</strong>崗位＋人才 →「重新計算建議分數」→ 填邀請狀態／備註 →「寫入邀請紀錄」。</li>
+                    <li><strong>① 人才列表（進階）：</strong>展開列表點人；再到②選崗。</li>
+                </ol>
+                <details style="margin-top:8px;">
+                    <summary style="cursor:pointer;font-weight:600;color:#166534;">展開：詳細步驟與會議匯出</summary>
+                    <p style="margin-top:8px;">建議與牧者禱告分辨後再邀請。需帶去同工會議時，用工具選單中的 JSON／Excel。</p>
+                </details>
+            </div>
+        </div>
+    </details>
+
+    <div id="historyModal" class="history-modal" onclick="closeHistory(event)">
+        <div class="history-panel">
+            <div class="history-head">
+                <h3>📜 配對歷史紀錄</h3>
+                <button type="button" class="btn" onclick="closeHistory()">關閉</button>
+            </div>
+            <div class="history-tools">
+                <select id="historySourceFilter" onchange="renderHistory()" title="這些紀錄怎麼產生的">
+                    <option value="">來源（全部）</option>
+                    <option value="manual_confirm">同工手動確認（manual_confirm）</option>
+                    <option value="ai_auto">工具·AI 規則批次（ai_auto）</option>
+                    <option value="batch_rules">工具·批量規則（batch_rules）</option>
+                </select>
+                <select id="historyStatusFilter" onchange="renderHistory()" title="邀請進度標籤">
+                    <option value="">狀態（全部）</option>
+                    <option value="invited">已發邀請（invited）</option>
+                    <option value="proposed">僅建議（proposed）</option>
+                </select>
+                <input id="historyKeyword" type="text" placeholder="搜尋姓名／崗位／識別碼" onkeyup="renderHistory()">
+                <button type="button" class="btn btn-secondary" onclick="exportHistoryCsv()">匯出目前清單 CSV</button>
+            </div>
+            <p class="history-hint" style="margin:0;padding:0 12px 10px;font-size:0.74rem;color:#64748b;line-height:1.5;border-bottom:1px solid #e2e8f0;">
+                以下為<strong>曾寫入的邀請／配對紀錄</strong>（可篩選、匯出）。<strong>撤銷紀錄</strong>：移除該筆 assignment（僅本機），不刪人才或崗位主檔。報表區可<strong>向下捲動</strong>。
+            </p>
+            <div class="history-body">
+                <div id="historyTableWrap"></div>
+            </div>
+        </div>
+    </div>
+
+    <details class="page-fold">
+        <summary>展開／收合：配對分數說明與資料從哪裡來</summary>
+        <div class="page-fold-body">
+            <div style="padding:10px 0;background:transparent;border:none;font-size:0.8rem;color:#78350f;line-height:1.55;max-width:100%;">
+                <strong>說明 · Note：</strong>本頁以<strong>M1 可解釋理由（2–3 因子）</strong>為主、<strong>弱化總分</strong>；並支援 <strong>M2 硬性排除</strong>與<strong>需人工確認</strong>旗標。規則仍依技能對需求、恩賜權重與 MBTI 首字加總，為<strong>同工參考</strong>，不會自動派工。
+                <span style="display:block;margin-top:6px;font-size:0.72rem;color:#92400e;">Scores are rule-based suggestions, not auto-assignment. Final discernment rests with leaders and prayer.</span>
+                <span style="display:block;margin-top:6px;"><strong>進階（可選）</strong>：人才列可含 <code>matching_constraints</code> 物件（或 JSON 字串），欄位例如 <code>no_sunday_morning</code>、<code>physical_limited</code>、<code>hard_stop</code>、<code>health_concern</code>、<code>conflict_of_interest</code>、<code>family_opposition</code>（布林）。詳見 <a href="docs/SMART_MINISTRY_DATA_RULES.md" target="_blank" rel="noopener noreferrer">SMART_MINISTRY_DATA_RULES.md</a>。</span>
+                <span style="display:block;margin-top:6px;">資料流：註冊／問卷 → <a href="talent_skill_unified.html" target="_blank" rel="noopener noreferrer" style="color:#4338ca;font-weight:600;">人才技能管理</a> → 本頁。本機鍵 <code>bible100_smart_ministry_main</code>；上雲見 <a href="../docs/CLOUD_BAAS_AND_CROSS_MODULE.md" target="_blank" rel="noopener noreferrer" style="color:#4338ca;">CLOUD_BAAS_AND_CROSS_MODULE.md</a>。</span>
+            </div>
+        </div>
+    </details>
+
+    <details class="batch-strategy">
+        <summary>批量配對策略（進階，預設建議開啟）</summary>
+        <div class="batch-inner">
+            <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="batchUniqueToggle" checked>
+                同一批次內，每位人才最多擔任一個新配對崗位（避免同批重複佔用）</label>
+            <p style="margin-top:8px;font-size:9px;color:#64748b;">與「配對率」無關；批量僅依規則分數 ≥60 寫入 <code>proposed</code>。詳見工具選單 → 批量配對。</p>
+        </div>
+    </details>
+
+    <div class="stats-summary" role="status" aria-live="polite" id="statsSummaryBar">
+        <div class="stats-chart-col">
+            <div class="stats-chart-title">資源概覽（柱狀 · 數字同步於右側）</div>
+            <div class="stat-bar-row">
+                <span class="stat-bar-label">人才</span>
+                <div class="stat-bar-track"><div class="stat-bar-fill bar-talents" id="barTalents" style="width:0%"></div></div>
+                <span class="stat-bar-num" id="summaryTalents">0</span>
+            </div>
+            <div class="stat-bar-row">
+                <span class="stat-bar-label">崗位</span>
+                <div class="stat-bar-track"><div class="stat-bar-fill bar-ministries" id="barMinistries" style="width:0%"></div></div>
+                <span class="stat-bar-num" id="summaryMinistries">0</span>
+            </div>
+            <div class="stat-bar-row">
+                <span class="stat-bar-label">紀錄</span>
+                <div class="stat-bar-track"><div class="stat-bar-fill bar-matches" id="barMatches" style="width:0%"></div></div>
+                <span class="stat-bar-num" id="summaryMatches">0</span>
+            </div>
+            <div class="stat-context-line" id="statContextLine">請先在<strong>③ 事工崗位</strong>選定一個崗位，以顯示「此崗已分配人數」。</div>
+        </div>
+        <div class="stats-viz-col" title="配對紀錄數 ÷ 人才數（僅視覺比例，非績效）">
+            <div class="stats-donut" id="statsDonut" style="--donut-deg:0deg"></div>
+            <div class="stats-donut-cap" id="statsDonutCap">紀錄／人才比</div>
+        </div>
+    </div>
+
+    <div class="workflow-tabs" role="tablist" aria-label="工作流程（窄螢幕 · 與桌面左中右一致）">
+        <button type="button" class="workflow-tab active" role="tab" aria-selected="true" data-tab="ministries" onclick="setWorkflowTab('ministries')">③ 事工崗位</button>
+        <button type="button" class="workflow-tab" role="tab" aria-selected="false" data-tab="match" onclick="setWorkflowTab('match')">② 配對與記錄</button>
+        <button type="button" class="workflow-tab" role="tab" aria-selected="false" data-tab="talents" onclick="setWorkflowTab('talents')">① 人才（進階）</button>
+    </div>
+    <div class="orient-strip" role="note">
+        <strong>路標：</strong>建議<strong>③ → ②</strong>；① 適合先鎖定某位人才。桌面三欄並列；窄螢幕請用頂部分頁。頂部導覽會<strong>另開新分頁</strong>，不佔用本頁。
+    </div>
+
+    <div class="main matching-layout" id="matchingMain">
+        <div class="panel panel-left panel-talents" id="panelTalents" data-panel="talents">
+            <div class="panel-header"><span>① 人才列表（進階）</span><span class="badge badge-pink" id="talentCount">0</span></div>
+            <div class="panel-body">
+                <div class="search-box"><input type="text" id="talentSearch" placeholder="🔍 搜尋姓名／技能（優先）" onkeyup="filterTalents()" aria-label="搜尋人才"></div>
+                <details class="adv-block">
+                    <summary>進階篩選（系統識別碼／恩賜）</summary>
+                    <div class="adv-inner" style="margin:0;">
+                        <p class="adv-hint"><strong>personId</strong>＝人才主鍵（<code>talent_id</code>／會友編號），<strong>不是姓名</strong>。若已從下拉選定一筆，會<strong>優先</strong>依該識別碼精準篩選；要改用手打關鍵字，請先把下拉改回「全部」。</p>
+                        <div class="filter-row" style="margin-bottom:6px;">
+                            <select id="talentPersonIdSelect" onchange="onTalentPersonIdSelectChange()" aria-label="依識別碼篩選">
+                                <option value="">識別碼（全部／下拉選）</option>
+                            </select>
+                        </div>
+                        <div class="filter-row" style="margin-bottom:6px;">
+                            <input type="text" id="talentPersonIdSearch" placeholder="或手動輸入識別碼關鍵字" onkeyup="filterTalents()" aria-label="識別碼自填">
+                        </div>
+                        <p class="adv-hint" style="margin-top:8px;"><strong>恩賜</strong>：下拉選常見值，或改選「（改用下方自填）」後輸入關鍵字。</p>
+                        <div class="filter-row" style="margin-bottom:6px;">
+                            <select id="talentGiftSelect" onchange="onTalentGiftSelectChange()" aria-label="依恩賜篩選">
+                                <option value="">恩賜（全部／下拉選）</option>
+                            </select>
+                        </div>
+                        <div class="filter-row" style="margin:0;">
+                            <input type="text" id="talentGiftSearch" placeholder="或手動輸入恩賜關鍵字" onkeyup="filterTalents()" aria-label="恩賜自填">
+                        </div>
+                    </div>
+                </details>
+                <div class="panel-tools">
+                    <label title="勾選後表格左側出現核取方塊，供批量配對">
+                        <input type="checkbox" id="batchModeToggle" onchange="onBatchModeChange()"> 批量選取</label>
+                    <label title="顯示內部識別碼欄（上雲後可對應統一 person 鍵）">
+                        <input type="checkbox" id="showTechColumns" onchange="onTechColsChange()"> 顯示技術欄</label>
+                </div>
+                <details class="list-collapse" id="talentListWrap">
+                    <summary id="talentListSummary">展開人才列表（載入中…）</summary>
+                    <div class="list-collapse-inner" id="talentList"></div>
+                </details>
+            </div>
+        </div>
+
+        <div class="panel panel-center panel-match" id="panelMatch" data-panel="match">
+            <div class="panel-header"><span>② 配對與記錄</span></div>
+            <div class="panel-body">
+                <div class="center-step-banner" role="region" aria-label="第③步主線">
+                    <strong>第③步：為事工邀請合適同工</strong>
+                    1）選崗位 → 2）選人才並看<strong>規則建議分</strong> → 3）填邀請狀態後<strong>寫入紀錄</strong>（之後可在「人才發展追蹤」回顧）。系統<strong>不會自動派工</strong>。
+                </div>
+                <div class="ministry-pick-banner" id="ministryPickBanner" aria-live="polite"></div>
+                <div class="center-info center-pick-block" style="margin-top:0;">
+                    <p class="center-pick-hint">請選<strong>事工崗位</strong>與<strong>人才</strong>。可用下方兩個下拉，或切到<strong>③／①</strong>從列表點選。</p>
+                    <label for="quickPickMinistry">選擇事工崗位</label>
+                    <select id="quickPickMinistry" onchange="onQuickPickMinistry()" aria-label="快速選擇事工崗位">
+                        <option value="">— 請選擇崗位 —</option>
+                    </select>
+                    <label for="quickPickTalent">選擇人才</label>
+                    <select id="quickPickTalent" onchange="onQuickPickTalent()" aria-label="快速選擇人才">
+                        <option value="">— 請選擇人才 —</option>
+                    </select>
+                </div>
+                <div class="center-score" id="scoreDisplay" style="display:none;">
+                    <div class="score-num" id="matchScore"><span id="matchScoreTier">—</span><span class="tier-sub" id="matchScoreTierHint">參考帶（弱化總分）</span></div>
+                    <div class="score-raw-line" id="matchScoreRaw" aria-label="規則分細項"></div>
+                    <div class="score-label">規則建議（M1 可解釋因子 + M2 排除／人工確認）</div>
+                    <div class="score-pair-line" id="scorePairLabel"></div>
+                    <div id="matchHardBanner" class="match-hard-banner" style="display:none;" role="alert"></div>
+                    <div id="matchReviewBanner" class="match-review-banner" style="display:none;"></div>
+                    <div class="match-reason-block" id="matchReasonBulletsWrap" style="display:none;">
+                        <h5>推薦理由（2–3 個因子）</h5>
+                        <ul id="matchReasonBullets"></ul>
+                    </div>
+                    <p class="score-pair-line" id="scoreMeaning" style="font-weight:400;opacity:.9;margin-top:6px;font-size:0.72rem;">
+                        依<strong>技能對需求</strong>、<strong>恩賜權重</strong>與<strong>MBTI 首字</strong>等規則計算；<strong>總分僅輔助</strong>，請以理由與人工確認為準，並搭配禱告與實際認識。
+                    </p>
+                </div>
+
+                <div class="match-details" id="matchDetails" style="display:none;">
+                    <h4>配對分析（規則細項）</h4>
+                    <div id="matchReasons"></div>
+                </div>
+
+                <div class="center-invite-block">
+                    <strong style="font-size:0.82rem;">邀請紀錄（寫入本機）</strong>
+                    <label for="inviteStageSelect">邀請／跟進狀態</label>
+                    <select id="inviteStageSelect" aria-label="邀請狀態">
+                        <option value="invited">已發邀請（預設）</option>
+                        <option value="約談中">已約談</option>
+                        <option value="已加入">已加入事工</option>
+                        <option value="觀察中">觀察中</option>
+                        <option value="暫緩">暫緩</option>
+                        <option value="拒絕">拒絕／婉拒</option>
+                    </select>
+                    <label for="inviteNote">備註（選填）</label>
+                    <textarea id="inviteNote" placeholder="例：已電話聯絡、待回覆、建議先參與培訓…" aria-label="邀請備註"></textarea>
+                    <label for="inviteDate">紀錄日期</label>
+                    <input type="date" id="inviteDate" aria-label="紀錄日期" onchange="refreshLeaderOutreachPreview()">
+                    <label for="leaderOutreachCopy" style="margin-top:10px;">給負責同工／牧者（M4 · 複製用草稿）</label>
+                    <textarea id="leaderOutreachCopy" readonly rows="6" style="width:100%;max-width:100%;font-size:0.78rem;line-height:1.45;padding:8px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;resize:vertical;" aria-label="給負責同工的複製稿"></textarea>
+                    <button type="button" onclick="copyLeaderOutreach()" style="margin-top:6px;padding:6px 12px;border:none;border-radius:6px;background:#be185d;color:#fff;font-weight:700;cursor:pointer;font-size:0.8rem;">複製草稿</button>
+                </div>
+
+                <div class="center-actions">
+                    <div class="action-wrap">
+                        <button type="button" onclick="calculateMatch()">🎯 重新計算建議分數</button>
+                        <p class="action-help"><strong>用途：</strong>資料有更新時<strong>預覽</strong>分數，<strong>不會存檔</strong>。可換人、換崗重算。</p>
+                    </div>
+                    <div class="action-wrap">
+                        <button type="button" onclick="assignMinistry()">✅ 寫入邀請紀錄</button>
+                        <p class="action-help"><strong>用途：</strong>寫入本機 <code>ministry_assignment</code>（狀態 <code>invited</code>；跟進細項在 <code>metadata</code>）。<strong>不會</strong>自動通知對方。<strong>這些紀錄會出現在 <a href="talent_tracking.html" target="_blank" rel="noopener noreferrer" style="color:#fff;text-decoration:underline;">人才發展追蹤</a></strong>時間軸（與本頁「查看配對歷史」）。</p>
+                    </div>
+                    <div class="action-wrap">
+                        <button type="button" onclick="viewHistory()">📜 查看配對歷史</button>
+                        <p class="action-help"><strong>用途：</strong>篩選、匯出 CSV；可<strong>撤銷單筆紀錄</strong>。</p>
+                    </div>
+                </div>
+
+                <div class="center-info" id="selectedInfo" style="display:none;">
+                    <h4>目前選取</h4>
+                    <div id="selectedTalentInfo"></div>
+                    <div id="selectedMinistryInfo"></div>
+                </div>
+
+                <details class="adv-block" style="margin-top:10px;background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.25);">
+                    <summary style="color:#fff;">展開：規則配分說明（非 AI 推論）</summary>
+                    <div class="adv-inner" style="color:#fff;font-size:0.76rem;">
+                        <ul style="list-style:none; padding:0; margin:0;">
+                            <li style="padding:3px 0;">• 技能與崗位需求比對：每项命中 +40（上限視需求數）</li>
+                            <li style="padding:3px 0;">• 恩賜權重：固定 30（示範規則）</li>
+                            <li style="padding:3px 0;">• MBTI 首字 E／I：20 或 15</li>
+                            <li style="padding:3px 0;">• 總分 capped 100；僅供同工參考</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <div class="panel panel-right panel-ministries panel-active" id="panelMinistries" data-panel="ministries">
+            <div class="panel-header"><span>③ 事工崗位</span><span class="badge badge-gold" id="ministryCount">0</span></div>
+            <div class="panel-body">
+                <p class="panel-step-hint"><strong>第一步：</strong>選一個現在要找人的事工。可按<strong>優先度</strong>或<strong>已分配人數</strong>排序（表頭箭頭），先處理較急的崗位。</p>
+                <div class="search-box"><input type="text" id="ministrySearch" placeholder="🔍 搜尋崗位名稱" onkeyup="filterMinistries()" aria-label="搜尋崗位"></div>
+                <details class="adv-block">
+                    <summary>進階篩選（優先度／需求技能）</summary>
+                    <div class="adv-inner" style="margin:0;">
+                        <p class="adv-hint"><strong>資料何來？</strong> 崗位名稱、優先度、需求字串來自本機 canonical <code>ministries</code>（與「人才與技能」管理同源）。<strong>有何用？</strong> 與人才技能對照後計分、記錄邀請、匯出會議報表。</p>
+                        <div class="filter-row" style="margin-bottom:6px;">
+                            <select id="ministryUrgencyFilter" onchange="filterMinistries()" aria-label="優先度">
+                                <option value="">優先度（全部）</option>
+                                <option value="高">高</option>
+                                <option value="中">中</option>
+                                <option value="低">低</option>
+                            </select>
+                        </div>
+                        <div class="filter-row" style="margin-bottom:6px;">
+                            <select id="ministryRequirePick" onchange="filterMinistries()" aria-label="需求技能片語">
+                                <option value="">需求技能（全部／下拉選片語）</option>
+                            </select>
+                        </div>
+                        <div class="filter-row" style="margin:0;">
+                            <input type="text" id="ministryRequireSearch" placeholder="或手動輸入需求關鍵字" onkeyup="filterMinistries()" aria-label="需求自填">
+                        </div>
+                    </div>
+                </details>
+                <div class="panel-tools">
+                    <span><strong>選取方式：</strong>桌面點表格列；螢幕較窄時改為<strong>卡片列表</strong>（同一批資料，版面自動切換）。亦可直接用中欄下拉選崗。</span>
+                </div>
+                <div id="ministryList"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="data-roadmap-foot">
+        <strong>資料預留（內部）：</strong> 現為瀏覽器 <code>localStorage</code>。上線集中庫需後端／BaaS、登入與角色權限，以及跨模組統一鍵與集中儲存策略——見
+        <a href="../docs/CLOUD_BAAS_AND_CROSS_MODULE.md" target="_blank" rel="noopener noreferrer">CLOUD_BAAS_AND_CROSS_MODULE.md</a>。
+        主線下一站：<a href="talent_tracking.html" target="_blank" rel="noopener noreferrer"><code>talent_tracking.html</code> · 人才發展追蹤</a>。
+    </footer>
+
+    <script src="../js/smart_ministry_canonical_store.js"></script>
+    <script src="report_columns.js"></script>
+    <script>
+        var C = null;
+        var selectedTalent = null;
+        var selectedMinistry = null;
+        var talentSort = { key: 'name', dir: 'asc' };
+        var ministrySort = { key: 'name', dir: 'asc' };
+        var batchSelectedTalentIds = {};
+        var batchSelectedMinistryIds = {};
+        var MATCHING_AUDIT_KEY = 'smart_ministry_matching_audit_log_v1';
+        /** @type {null|Object} 最近一次 calculateMatch 的完整分析（供寫入 metadata、避免 DOM 取分失準） */
+        var lastMatchAnalysis = null;
+
+        function closeToolsMenu() {
+            var d = document.getElementById('toolsMenuDetails');
+            if (d) d.removeAttribute('open');
+        }
+
+        function setWorkflowTab(name) {
+            document.querySelectorAll('.workflow-tab').forEach(function(t) {
+                var on = t.getAttribute('data-tab') === name;
+                t.classList.toggle('active', on);
+                t.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            document.querySelectorAll('.matching-layout .panel').forEach(function(p) {
+                p.classList.toggle('panel-active', p.getAttribute('data-panel') === name);
+            });
+        }
+
+        function isBatchMode() {
+            var el = document.getElementById('batchModeToggle');
+            return !!(el && el.checked);
+        }
+
+        function showTechColumnsEnabled() {
+            var el = document.getElementById('showTechColumns');
+            return !!(el && el.checked);
+        }
+
+        function onBatchModeChange() {
+            renderTalents();
+            renderMinistries();
+        }
+
+        function onTechColsChange() {
+            renderTalents();
+            renderMinistries();
+        }
+
+        function escapeHtml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function uniqueSorted(arr) {
+            var o = {};
+            (arr || []).forEach(function(x) {
+                var t = String(x == null ? '' : x).trim();
+                if (t) o[t] = true;
+            });
+            return Object.keys(o).sort(function(a, b) { return a.localeCompare(b, 'zh-Hant'); });
+        }
+
+        function populateAdvancedFilterDropdowns() {
+            var talents = C.listTalents();
+            var ministries = C.listMinistriesCatalog();
+            var pidSel = document.getElementById('talentPersonIdSelect');
+            var giftSel = document.getElementById('talentGiftSelect');
+            var reqSel = document.getElementById('ministryRequirePick');
+            var prevPid = pidSel ? pidSel.value : '';
+            var prevGift = giftSel ? giftSel.value : '';
+            var prevReq = reqSel ? reqSel.value : '';
+
+            if (pidSel) {
+                var pidHtml = '<option value="">識別碼（全部／下拉選）</option>';
+                talents.forEach(function(t) {
+                    var k = talentKey(t);
+                    pidHtml += '<option value="' + escapeHtml(k) + '">' + escapeHtml((t.name || '(無名)') + ' · ' + k) + '</option>';
+                });
+                pidSel.innerHTML = pidHtml;
+                if (prevPid && Array.prototype.some.call(pidSel.options, function(o) { return o.value === prevPid; })) {
+                    pidSel.value = prevPid;
+                }
+            }
+            if (giftSel) {
+                var gifts = uniqueSorted(talents.map(function(t) { return t.gift; }));
+                var gHtml = '<option value="">恩賜（全部／下拉選）</option>';
+                gifts.forEach(function(g) {
+                    gHtml += '<option value="' + escapeHtml(g) + '">' + escapeHtml(g) + '</option>';
+                });
+                gHtml += '<option value="__custom__">（改用下方自填）</option>';
+                giftSel.innerHTML = gHtml;
+                if (prevGift && Array.prototype.some.call(giftSel.options, function(o) { return o.value === prevGift; })) {
+                    giftSel.value = prevGift;
+                }
+            }
+            if (reqSel) {
+                var tokens = [];
+                ministries.forEach(function(m) {
+                    String(m.requires || '').split(/[,，]/).forEach(function(p) {
+                        var t = p.trim();
+                        if (t) tokens.push(t);
+                    });
+                });
+                var uniq = uniqueSorted(tokens);
+                var rHtml = '<option value="">需求技能（全部／下拉選片語）</option>';
+                uniq.forEach(function(t) {
+                    rHtml += '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>';
+                });
+                reqSel.innerHTML = rHtml;
+                if (prevReq && Array.prototype.some.call(reqSel.options, function(o) { return o.value === prevReq; })) {
+                    reqSel.value = prevReq;
+                }
+            }
+        }
+
+        function onTalentPersonIdSelectChange() {
+            var sel = document.getElementById('talentPersonIdSelect');
+            var inp = document.getElementById('talentPersonIdSearch');
+            if (!sel || !inp) return;
+            if (sel.value) inp.value = sel.value;
+            else inp.value = '';
+            filterTalents();
+        }
+
+        function onTalentGiftSelectChange() {
+            var sel = document.getElementById('talentGiftSelect');
+            var inp = document.getElementById('talentGiftSearch');
+            if (!sel || !inp) return;
+            if (sel.value === '__custom__') {
+                inp.focus();
+                return;
+            }
+            if (sel.value) inp.value = sel.value;
+            filterTalents();
+        }
+
+        function refreshQuickPickDropdowns() {
+            var qt = document.getElementById('quickPickTalent');
+            var qm = document.getElementById('quickPickMinistry');
+            if (!qt || !qm) return;
+            var curT = selectedTalent ? talentKey(selectedTalent) : '';
+            var curM = selectedMinistry ? ministryKey(selectedMinistry) : '';
+            var hT = '<option value="">— 請選擇人才 —</option>';
+            C.listTalents().forEach(function(t) {
+                var k = talentKey(t);
+                hT += '<option value="' + escapeHtml(k) + '">' + escapeHtml((t.name || '(無名)') + ' · ' + k) + '</option>';
+            });
+            qt.innerHTML = hT;
+            qt.value = curT;
+            var hM = '<option value="">— 請選擇崗位 —</option>';
+            C.listMinistriesCatalog().forEach(function(m) {
+                var k = ministryKey(m);
+                hM += '<option value="' + escapeHtml(k) + '">' + escapeHtml((m.name || '(無名)') + ' · ' + k) + '</option>';
+            });
+            qm.innerHTML = hM;
+            qm.value = curM;
+        }
+
+        function onQuickPickTalent() {
+            var v = document.getElementById('quickPickTalent').value;
+            if (!v) {
+                selectedTalent = null;
+                renderTalents();
+                updateInfo();
+                updateStats();
+                return;
+            }
+            selectTalent(v);
+        }
+
+        function onQuickPickMinistry() {
+            var v = document.getElementById('quickPickMinistry').value;
+            if (!v) {
+                selectedMinistry = null;
+                renderMinistries();
+                updateMinistryPickBanner();
+                updateInfo();
+                updateStats();
+                return;
+            }
+            selectMinistry(v);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            C = window.SmartMinistryCanonical;
+            C.migrateLegacyToCanonical();
+            if (C.listTalents().length === 0 && C.listMinistriesCatalog().length === 0) {
+                generateSampleCanonical();
+            }
+            var idInput = document.getElementById('inviteDate');
+            if (idInput && !idInput.value) {
+                idInput.value = new Date().toISOString().slice(0, 10);
+            }
+            loadData();
+            setWorkflowTab('ministries');
+            refreshLeaderOutreachPreview();
+        });
+
+        function maybeSwitchToMatchTab() {
+            if (typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 900px)').matches) {
+                setWorkflowTab('match');
+            }
+        }
+
+        function countAssignmentsForMinistry(mid) {
+            if (!mid) return 0;
+            var sm = String(mid);
+            return C.listMinistryAssignments().filter(function(a) {
+                return String(a.ministry_id) === sm;
+            }).length;
+        }
+
+        function updateMinistryPickBanner() {
+            var el = document.getElementById('ministryPickBanner');
+            if (!el) return;
+            if (!selectedMinistry) {
+                el.classList.remove('visible');
+                el.innerHTML = '';
+                return;
+            }
+            var mk = ministryKey(selectedMinistry);
+            var n = countAssignmentsForMinistry(mk);
+            el.classList.add('visible');
+            el.innerHTML = '<strong>已選崗位：</strong>' + escapeHtml(selectedMinistry.name || '') +
+                '（需求：' + escapeHtml(selectedMinistry.requires || '—') + '）<br><span style="opacity:.9">此崗目前已分配（本機紀錄）：<strong>' + n + '</strong> 人</span>' +
+                '<br><button type="button" class="goto-step2-btn" onclick="setWorkflowTab(\'match\')" style="margin-top:8px;padding:6px 12px;border:none;border-radius:6px;background:#fff;color:#be185d;font-weight:700;cursor:pointer;font-size:0.8rem;">前往 ② 配對與記錄（選人才、算分、寫入紀錄）</button>';
+        }
+
+        function talentKey(t) {
+            return String(t.talent_id != null ? t.talent_id : t.id);
+        }
+
+        function ministryKey(m) {
+            return String(m.ministry_id != null ? m.ministry_id : m.id);
+        }
+
+        /** M5：與 canonical 主檔對照之穩定參照（非資料庫 surrogate id） */
+        function assignmentCanonicalRef(talentId, ministryId) {
+            return 'bible100_smart_ministry_main:ministry_assignment:' + String(talentId) + ':' + String(ministryId);
+        }
+
+        /** M3：以紀錄日為基準 +28 天試用／跟進提醒（ISO 日期 YYYY-MM-DD） */
+        function trialFollowupDueFromRecordDate(recDateYmd) {
+            var s = recDateYmd && String(recDateYmd).slice(0, 10);
+            var base = s && /^\d{4}-\d{2}-\d{2}$/.test(s)
+                ? new Date(s + 'T12:00:00')
+                : new Date();
+            if (isNaN(base.getTime())) base = new Date();
+            base.setDate(base.getDate() + 28);
+            return base.toISOString().slice(0, 10);
+        }
+
+        /**
+         * M4：給部門負責人／牧者的複製用草稿（寫入 metadata.leader_outreach_snippet 供追蹤頁對照）
+         */
+        function buildLeaderOutreachSnippet(talentName, ministryName, recDateYmd, trialDue, canonicalRef, mode) {
+            var m = mode || 'invited';
+            var head = m === 'proposed'
+                ? '【事工配對 · 規則建議（proposed，仍須人工邀請與確認）】'
+                : '【事工邀請 · 給部門夥伴／牧者參考】';
+            var tn = talentName || '（同仁）';
+            var mn = ministryName || '（崗位）';
+            var rd = recDateYmd || new Date().toISOString().slice(0, 10);
+            return (
+                head + '\n' +
+                '同仁「' + tn + '」／崗位「' + mn + '」已於 ' + rd + ' 在本機留下配對紀錄（同工內部參考，非自動派工）。\n' +
+                '• 請確認是否已與當事人實際聯絡，並以禱告與面談分辨為準。\n' +
+                '• 建議約四週後（' + trialDue + '）簡短跟進：參與意願、是否需要培訓或調整崗位。\n' +
+                '• 資料對照：' + canonicalRef + '（localStorage · bible100_smart_ministry_main · ministry_assignment）\n' +
+                '相關頁：talent_tracking.html（時間軸）· talent_ministry_matching.html（配對主線）'
+            );
+        }
+
+        function buildAssignmentMetadataExtras(talentId, ministryId, talentName, ministryName, recDateYmd, mode) {
+            var tid = String(talentId);
+            var mid = String(ministryId);
+            var ref = assignmentCanonicalRef(tid, mid);
+            var due = trialFollowupDueFromRecordDate(recDateYmd);
+            return {
+                trial_followup_due: due,
+                canonical_ref: ref,
+                leader_outreach_snippet: buildLeaderOutreachSnippet(talentName, ministryName, recDateYmd, due, ref, mode)
+            };
+        }
+
+        function refreshLeaderOutreachPreview() {
+            var ta = document.getElementById('leaderOutreachCopy');
+            if (!ta) return;
+            if (!selectedTalent || !selectedMinistry) {
+                ta.value = '請先選定人才與事工崗位，此處會產生「給負責同工／牧者」複製稿（M4）。';
+                return;
+            }
+            var recEl = document.getElementById('inviteDate');
+            var recDate = recEl && recEl.value ? recEl.value : new Date().toISOString().slice(0, 10);
+            var ex = buildAssignmentMetadataExtras(
+                talentKey(selectedTalent),
+                ministryKey(selectedMinistry),
+                selectedTalent.name,
+                selectedMinistry.name,
+                recDate,
+                'invited'
+            );
+            ta.value = ex.leader_outreach_snippet;
+        }
+
+        function copyLeaderOutreach() {
+            var ta = document.getElementById('leaderOutreachCopy');
+            if (!ta || !ta.value) return;
+            ta.select();
+            try {
+                document.execCommand('copy');
+                msg('已複製「給負責同工／牧者」草稿。可貼到通訊軟體；正式邀請仍以實際面談為準。');
+            } catch (e) {
+                msg('複製失敗，請手動選取文字複製。', 'error');
+            }
+        }
+
+        function skillsStr(talentRow) {
+            return C.getSkillsDisplayString(talentRow);
+        }
+
+        function sortIndicator(sortState, key) {
+            if (sortState.key !== key) return '↕';
+            return sortState.dir === 'asc' ? '↑' : '↓';
+        }
+        function setTalentSort(key) {
+            if (talentSort.key === key) talentSort.dir = talentSort.dir === 'asc' ? 'desc' : 'asc';
+            else { talentSort.key = key; talentSort.dir = 'asc'; }
+            renderTalents();
+        }
+        function setMinistrySort(key) {
+            if (ministrySort.key === key) ministrySort.dir = ministrySort.dir === 'asc' ? 'desc' : 'asc';
+            else { ministrySort.key = key; ministrySort.dir = 'asc'; }
+            renderMinistries();
+        }
+        function norm(v) { return String(v == null ? '' : v).toLowerCase(); }
+        function loadAuditLogs() {
+            try {
+                var raw = localStorage.getItem(MATCHING_AUDIT_KEY);
+                var parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                return [];
+            }
+        }
+        function appendAuditLog(entry) {
+            var logs = loadAuditLogs();
+            logs.push(entry);
+            try {
+                localStorage.setItem(MATCHING_AUDIT_KEY, JSON.stringify(logs));
+            } catch (e) {}
+        }
+        function isBatchTalentPicked(id) { return !!batchSelectedTalentIds[String(id)]; }
+        function isBatchMinistryPicked(id) { return !!batchSelectedMinistryIds[String(id)]; }
+        function toggleBatchTalent(id) {
+            var key = String(id);
+            batchSelectedTalentIds[key] = !batchSelectedTalentIds[key];
+            renderTalents();
+        }
+        function toggleBatchMinistry(id) {
+            var key = String(id);
+            batchSelectedMinistryIds[key] = !batchSelectedMinistryIds[key];
+            renderMinistries();
+        }
+
+        function generateSampleCanonical() {
+            [
+                { name: '张三', mbti: 'ENFJ', gift: '教导', skills_legacy: '讲道,教学', talent_id: 'sample_t_1' },
+                { name: '李四', mbti: 'ISFJ', gift: '服事', skills_legacy: '音乐,敬拜', talent_id: 'sample_t_2' },
+                { name: '王五', mbti: 'ENTJ', gift: '领导', skills_legacy: '管理,组织', talent_id: 'sample_t_3' },
+                { name: '赵六', mbti: 'INFP', gift: '怜悯', skills_legacy: '辅导,关怀', talent_id: 'sample_t_4' }
+            ].forEach(function(t) { C.saveOrUpdateTalent(t); });
+
+            [
+                { name: '主日学教师', requires: '教导,耐心', urgency: '高', ministry_id: 'sample_m_1', id: 'sample_m_1' },
+                { name: '敬拜主领', requires: '音乐,敬拜', urgency: '高', ministry_id: 'sample_m_2', id: 'sample_m_2' },
+                { name: '小组长', requires: '领导,管理', urgency: '中', ministry_id: 'sample_m_3', id: 'sample_m_3' },
+                { name: '关怀同工', requires: '怜悯,辅导', urgency: '中', ministry_id: 'sample_m_4', id: 'sample_m_4' }
+            ].forEach(function(m) { C.upsertMinistryCatalog(m); });
+
+            msg('示例数据已写入 canonical · bible100_smart_ministry_main');
+        }
+
+        function loadData() {
+            populateAdvancedFilterDropdowns();
+            renderTalents();
+            renderMinistries();
+            refreshQuickPickDropdowns();
+            updateStats();
+        }
+
+        function renderTalents() {
+            var talents = C.listTalents();
+            var search = (document.getElementById('talentSearch').value || '').toLowerCase();
+            var pidSelEl = document.getElementById('talentPersonIdSelect');
+            var pidSel = pidSelEl ? pidSelEl.value : '';
+            var personIdSearch = (document.getElementById('talentPersonIdSearch').value || '').toLowerCase();
+            var giftSelEl = document.getElementById('talentGiftSelect');
+            var giftSel = giftSelEl ? giftSelEl.value : '';
+            var giftSearch = (document.getElementById('talentGiftSearch').value || '').toLowerCase();
+            var assigns = C.listMinistryAssignments();
+            var filtered = talents.filter(function(t) {
+                var sk = skillsStr(t);
+                var tk = talentKey(t);
+                var pidOk;
+                if (pidSel) pidOk = tk === pidSel;
+                else pidOk = tk.toLowerCase().includes(personIdSearch);
+                var giftOk;
+                if (giftSel && giftSel !== '__custom__') {
+                    giftOk = norm(t.gift) === norm(giftSel);
+                } else {
+                    giftOk = (t.gift || '').toLowerCase().includes(giftSearch);
+                }
+                return ((t.name || '').toLowerCase().includes(search) || sk.toLowerCase().includes(search)) &&
+                    pidOk && giftOk;
+            });
+            var rows = filtered.map(function(t) {
+                var tk = talentKey(t);
+                var n = assigns.filter(function(l) { return String(l.talent_id) === tk; }).length;
+                return { row: t, assigned: n, skills: skillsStr(t) };
+            });
+            rows.sort(function(a, b) {
+                var av;
+                var bv;
+                if (talentSort.key === 'name') { av = norm(a.row.name); bv = norm(b.row.name); }
+                else if (talentSort.key === 'personId') { av = norm(talentKey(a.row)); bv = norm(talentKey(b.row)); }
+                else if (talentSort.key === 'gift') { av = norm(a.row.gift); bv = norm(b.row.gift); }
+                else { av = a.assigned; bv = b.assigned; }
+                if (typeof av === 'number' && typeof bv === 'number') return talentSort.dir === 'asc' ? av - bv : bv - av;
+                if (av < bv) return talentSort.dir === 'asc' ? -1 : 1;
+                if (av > bv) return talentSort.dir === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            var sumEl = document.getElementById('talentListSummary');
+            if (sumEl) sumEl.textContent = '展開人才列表（目前篩選 ' + rows.length + ' 人，點列選取）';
+
+            if (rows.length === 0) {
+                document.getElementById('talentList').innerHTML = '<div class="empty">无人才</div>';
+                document.getElementById('talentCount').textContent = 0;
+                return;
+            }
+
+            var batchOn = isBatchMode();
+            var techOn = showTechColumnsEnabled();
+            var tableRows = rows.map(function(item) {
+                var t = item.row;
+                var tk = talentKey(t);
+                var isSelected = selectedTalent && talentKey(selectedTalent) === tk;
+                var pickCell = batchOn
+                    ? '<td class="pick-cell"><input class="pick-check" type="checkbox" ' + (isBatchTalentPicked(tk) ? 'checked' : '') + ' onclick="event.stopPropagation();toggleBatchTalent(' + JSON.stringify(tk) + ')"></td>'
+                    : '';
+                var idCell = techOn ? '<td><code>' + tk + '</code></td>' : '';
+                return '<tr class="' + (isSelected ? 'selected-row' : '') + '" onclick="selectTalent(' + JSON.stringify(tk) + ')">' +
+                    pickCell +
+                    '<td><strong>' + (t.name || '-') + '</strong> ' + (item.assigned > 0 ? '<span class="badge badge-green">已分配</span>' : '') + '</td>' +
+                    idCell +
+                    '<td>' + (t.gift || '-') + '</td>' +
+                    '<td>' + item.assigned + '</td>' +
+                    '</tr>';
+            }).join('');
+            var mobileRows = rows.map(function(item) {
+                var t = item.row;
+                var tk = talentKey(t);
+                var isSelected = selectedTalent && talentKey(selectedTalent) === tk;
+                var pickPrefix = batchOn
+                    ? '<input class="pick-check" type="checkbox" ' + (isBatchTalentPicked(tk) ? 'checked' : '') + ' onclick="event.stopPropagation();toggleBatchTalent(' + JSON.stringify(tk) + ')"> '
+                    : '';
+                var idLine = techOn ? '<div class="line2">personId: ' + tk + '</div>' : '';
+                return '<div class="mobile-card ' + (isSelected ? 'selected' : '') + '" onclick="selectTalent(' + JSON.stringify(tk) + ')">' +
+                    '<div class="line1"><span>' + pickPrefix + (t.name || '-') + '</span><span>' + item.assigned + ' 崗位</span></div>' +
+                    idLine +
+                    '<div class="line2">恩賜: ' + (t.gift || '-') + ' · MBTI: ' + (t.mbti || '-') + '</div>' +
+                    '<div class="line2">技能: ' + (item.skills || '无') + '</div>' +
+                    '</div>';
+            }).join('');
+
+            var thPick = batchOn ? '<th class="pick-cell">批</th>' : '';
+            var thId = techOn ? '<th><button type="button" class="th-sort" onclick="setTalentSort(\'personId\')">personId <span class="sort-mark">' + sortIndicator(talentSort, 'personId') + '</span></button></th>' : '';
+            document.getElementById('talentList').innerHTML =
+                '<div class="list-table-wrap"><table class="list-table"><thead><tr>' +
+                thPick +
+                '<th><button type="button" class="th-sort" onclick="setTalentSort(\'name\')">姓名 <span class="sort-mark">' + sortIndicator(talentSort, 'name') + '</span></button></th>' +
+                thId +
+                '<th><button type="button" class="th-sort" onclick="setTalentSort(\'gift\')">主要恩賜 <span class="sort-mark">' + sortIndicator(talentSort, 'gift') + '</span></button></th>' +
+                '<th><button type="button" class="th-sort" onclick="setTalentSort(\'assigned\')">已分配數 <span class="sort-mark">' + sortIndicator(talentSort, 'assigned') + '</span></button></th>' +
+                '</tr></thead><tbody>' + tableRows + '</tbody></table></div>' +
+                '<div class="mobile-list">' + mobileRows + '</div>';
+
+            document.getElementById('talentCount').textContent = rows.length;
+        }
+
+        function renderMinistries() {
+            var ministries = C.listMinistriesCatalog();
+            var search = (document.getElementById('ministrySearch').value || '').toLowerCase();
+            var urgency = document.getElementById('ministryUrgencyFilter').value || '';
+            var reqPickEl = document.getElementById('ministryRequirePick');
+            var reqPick = reqPickEl ? reqPickEl.value : '';
+            var requireSearch = (document.getElementById('ministryRequireSearch').value || '').toLowerCase();
+            var assigns = C.listMinistryAssignments();
+            var filtered = ministries.filter(function(m) {
+                var reqLower = (m.requires || '').toLowerCase();
+                var reqOk;
+                if (reqPick) reqOk = reqLower.indexOf(reqPick.toLowerCase()) !== -1;
+                else reqOk = reqLower.includes(requireSearch);
+                return (m.name || '').toLowerCase().includes(search) &&
+                    (!urgency || (m.urgency || '') === urgency) &&
+                    reqOk;
+            });
+            var rows = filtered.map(function(m) {
+                var mk = ministryKey(m);
+                return {
+                    row: m,
+                    assigned: assigns.filter(function(l) { return String(l.ministry_id) === mk; }).length
+                };
+            });
+            rows.sort(function(a, b) {
+                var av;
+                var bv;
+                if (ministrySort.key === 'name') { av = norm(a.row.name); bv = norm(b.row.name); }
+                else if (ministrySort.key === 'urgency') { av = norm(a.row.urgency); bv = norm(b.row.urgency); }
+                else { av = a.assigned; bv = b.assigned; }
+                if (typeof av === 'number' && typeof bv === 'number') return ministrySort.dir === 'asc' ? av - bv : bv - av;
+                if (av < bv) return ministrySort.dir === 'asc' ? -1 : 1;
+                if (av > bv) return ministrySort.dir === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            if (rows.length === 0) {
+                document.getElementById('ministryList').innerHTML = '<div class="empty">无岗位</div>';
+                document.getElementById('ministryCount').textContent = 0;
+                return;
+            }
+
+            var batchOn = isBatchMode();
+            var tableRows = rows.map(function(item) {
+                var m = item.row;
+                var mk = ministryKey(m);
+                var isSelected = selectedMinistry && ministryKey(selectedMinistry) === mk;
+                var urgencyBadge = m.urgency === '高' ? 'badge-gold' : 'badge-green';
+                var pickCell = batchOn
+                    ? '<td class="pick-cell"><input class="pick-check" type="checkbox" ' + (isBatchMinistryPicked(mk) ? 'checked' : '') + ' onclick="event.stopPropagation();toggleBatchMinistry(' + JSON.stringify(mk) + ')"></td>'
+                    : '';
+                return '<tr class="' + (isSelected ? 'selected-row' : '') + '" onclick="selectMinistry(' + JSON.stringify(mk) + ')">' +
+                    pickCell +
+                    '<td><strong>' + (m.name || '-') + '</strong></td>' +
+                    '<td>' + (m.urgency || '中') + ' <span class="badge ' + urgencyBadge + '">' + (m.urgency || '中') + '</span></td>' +
+                    '<td>' + item.assigned + '</td>' +
+                    '<td>' + (m.requires || '无') + '</td>' +
+                    '</tr>';
+            }).join('');
+            var mobileRows = rows.map(function(item) {
+                var m = item.row;
+                var mk = ministryKey(m);
+                var isSelected = selectedMinistry && ministryKey(selectedMinistry) === mk;
+                var pickPrefix = batchOn
+                    ? '<input class="pick-check" type="checkbox" ' + (isBatchMinistryPicked(mk) ? 'checked' : '') + ' onclick="event.stopPropagation();toggleBatchMinistry(' + JSON.stringify(mk) + ')"> '
+                    : '';
+                return '<div class="mobile-card ' + (isSelected ? 'selected' : '') + '" onclick="selectMinistry(' + JSON.stringify(mk) + ')">' +
+                    '<div class="line1"><span>' + pickPrefix + (m.name || '-') + '</span><span>' + item.assigned + ' 人</span></div>' +
+                    '<div class="line2">優先度: ' + (m.urgency || '中') + '</div>' +
+                    '<div class="line2">需求: ' + (m.requires || '无') + '</div>' +
+                    '</div>';
+            }).join('');
+
+            var thPickM = batchOn ? '<th class="pick-cell">批</th>' : '';
+            document.getElementById('ministryList').innerHTML =
+                '<div class="list-table-wrap"><table class="list-table"><thead><tr>' +
+                thPickM +
+                '<th><button type="button" class="th-sort" onclick="setMinistrySort(\'name\')">崗位名稱 <span class="sort-mark">' + sortIndicator(ministrySort, 'name') + '</span></button></th>' +
+                '<th><button type="button" class="th-sort" onclick="setMinistrySort(\'urgency\')">優先度 <span class="sort-mark">' + sortIndicator(ministrySort, 'urgency') + '</span></button></th>' +
+                '<th><button type="button" class="th-sort" onclick="setMinistrySort(\'assigned\')">已分配人數 <span class="sort-mark">' + sortIndicator(ministrySort, 'assigned') + '</span></button></th>' +
+                '<th>需求</th>' +
+                '</tr></thead><tbody>' + tableRows + '</tbody></table></div>' +
+                '<div class="mobile-list">' + mobileRows + '</div>';
+
+            document.getElementById('ministryCount').textContent = rows.length;
+        }
+
+        function selectTalent(tid) {
+            selectedTalent = C.listTalents().find(function(t) { return talentKey(t) === String(tid); }) || null;
+            renderTalents();
+            refreshQuickPickDropdowns();
+            var wrap = document.getElementById('talentListWrap');
+            if (wrap) wrap.setAttribute('open', 'open');
+            updateInfo();
+            updateStats();
+            if (selectedMinistry) calculateMatch();
+        }
+
+        function selectMinistry(mid) {
+            selectedMinistry = C.listMinistriesCatalog().find(function(m) { return ministryKey(m) === String(mid); }) || null;
+            renderMinistries();
+            refreshQuickPickDropdowns();
+            updateMinistryPickBanner();
+            updateInfo();
+            updateStats();
+            if (selectedTalent) calculateMatch();
+            maybeSwitchToMatchTab();
+        }
+
+        function updateInfo() {
+            var info = document.getElementById('selectedInfo');
+            if (!selectedTalent && !selectedMinistry) {
+                info.style.display = 'none';
+                return;
+            }
+            info.style.display = 'block';
+            document.getElementById('selectedTalentInfo').innerHTML = selectedTalent ?
+                '<p><strong>人才:</strong> ' + selectedTalent.name + '<br>' + (selectedTalent.mbti || '') + ' | ' + (selectedTalent.gift || '') + '</p>' : '';
+            document.getElementById('selectedMinistryInfo').innerHTML = selectedMinistry ?
+                '<p><strong>崗位:</strong> ' + selectedMinistry.name + '<br>需求: ' + (selectedMinistry.requires || '') + '</p>' : '';
+            refreshLeaderOutreachPreview();
+        }
+
+        /**
+         * M1/M2：可解釋推薦 + 硬性排除 + 需人工確認旗標。
+         * 可選人才欄位 matching_constraints：{ no_sunday_morning, physical_limited, hard_stop, health_concern, conflict_of_interest, family_opposition }（皆布林，預設 false）
+         */
+        function parseTalentMatchingConstraints(talent) {
+            var mc = talent && talent.matching_constraints;
+            if (typeof mc === 'string') {
+                try { mc = JSON.parse(mc); } catch (e) { mc = null; }
+            }
+            mc = mc && typeof mc === 'object' ? mc : {};
+            return {
+                no_sunday_morning: !!mc.no_sunday_morning,
+                physical_limited: !!mc.physical_limited,
+                hard_stop: !!mc.hard_stop,
+                health_concern: !!mc.health_concern,
+                conflict_of_interest: !!mc.conflict_of_interest,
+                family_opposition: !!mc.family_opposition
+            };
+        }
+
+        function ministryTextBlob(ministry) {
+            return ((ministry && ministry.name) || '') + ' ' + ((ministry && ministry.requires) || '');
+        }
+
+        function computeMatchAnalysis(talent, ministry) {
+            var skillText = skillsStr(talent);
+            var talentSkills = skillText.split(/[,，]/).map(function(s) { return s.trim(); }).filter(Boolean);
+            var requiredSkills = (ministry.requires || '').split(/[,，]/).map(function(s) { return s.trim(); }).filter(Boolean);
+
+            var matchedReqs = [];
+            var skillScore = 0;
+            requiredSkills.forEach(function(r) {
+                if (!r) return;
+                if (talentSkills.some(function(ts) {
+                    return ts && (ts.indexOf(r) !== -1 || r.indexOf(ts) !== -1);
+                })) {
+                    skillScore += 40;
+                    if (matchedReqs.indexOf(r) === -1) matchedReqs.push(r);
+                }
+            });
+
+            var gift = (talent.gift || '').trim();
+            var blob = ministryTextBlob(ministry);
+            var giftOverlap = !!(gift && (blob.indexOf(gift) !== -1));
+            var giftScore = 30;
+
+            var mbti = (talent.mbti || 'X').trim();
+            var mbti0 = mbti.charAt(0);
+            var mbtiScore = mbti0 === 'E' ? 20 : (mbti0 === 'I' ? 15 : 10);
+
+            var totalScore = Math.min(skillScore + giftScore + mbtiScore, 100);
+
+            var reasons = [];
+            if (matchedReqs.length) {
+                reasons.push({
+                    factor: '技能／需求',
+                    text: '與崗位需求欄位相符：「' + matchedReqs.slice(0, 3).join('、') + '」' + (matchedReqs.length > 3 ? '…' : '')
+                });
+            }
+            if (gift) {
+                reasons.push({
+                    factor: '恩賜',
+                    text: '人才主要恩賜「' + gift + '」' + (giftOverlap ? '（與崗位敘述有字面關聯）' : '（與需求欄字面重疊有限，仍供牧養參考）')
+                });
+            }
+            if (mbti && mbti !== 'X' && mbti.length >= 2) {
+                reasons.push({
+                    factor: 'MBTI（輔助）',
+                    text: '首字為「' + mbti0 + '」— 僅作輔助加權，不單獨決定適任'
+                });
+            }
+            if (reasons.length < 2) {
+                reasons.push({ factor: '規則綜合', text: '規則加權後得到參考分；請以同工實際認識與禱告分辨為準' });
+            }
+            reasons = reasons.slice(0, 3);
+
+            var hardBlocks = [];
+            var reviewFlags = [];
+            var mc = parseTalentMatchingConstraints(talent);
+            if (mc.no_sunday_morning && /主日|週日早|禮拜早|早堂|主日早/i.test(blob)) {
+                hardBlocks.push({ code: 'TIME_SUNDAY', message: '人才標示「主日早上不可」與此崗位時段敘述可能衝突（硬性排除）' });
+            }
+            if (mc.physical_limited && /搬運|體力|重物|跪|久站/i.test(blob)) {
+                hardBlocks.push({ code: 'PHYSICAL', message: '人才標示「體能限制」與此崗位體力敘述可能衝突（硬性排除）' });
+            }
+            if (mc.hard_stop || talent.service_status === 'pause' || talent.status === 'pause_service') {
+                hardBlocks.push({ code: 'PROFILE_STOP', message: '人才資料標示暫停／硬性停止配對（硬性排除）' });
+            }
+            if (requiredSkills.length && skillScore === 0) {
+                reviewFlags.push({ code: 'SKILL_GAP', message: '崗位需求欄有具體項，但技能欄未見對應關鍵字—需人工確認' });
+            }
+            if (!mbti || mbti === 'X' || mbti.length < 2) {
+                reviewFlags.push({ code: 'MBTI_MISSING', message: 'MBTI 未填或不明—規則加分較保守' });
+            }
+            if (mc.health_concern) {
+                reviewFlags.push({ code: 'HEALTH', message: '人才標示健康顧慮—須人工確認節奏與負荷' });
+            }
+            if (mc.conflict_of_interest) {
+                reviewFlags.push({ code: 'CONFLICT_INTEREST', message: '人才標示利益衝突—須部門負責人／牧者確認' });
+            }
+            if (mc.family_opposition) {
+                reviewFlags.push({ code: 'FAMILY', message: '人才標示家庭阻力—須牧養同行與人工確認' });
+            }
+
+            var blocked = hardBlocks.length > 0;
+            return {
+                skillScore: skillScore,
+                giftScore: giftScore,
+                mbtiScore: mbtiScore,
+                totalScore: totalScore,
+                blocked: blocked,
+                matchedReqs: matchedReqs,
+                giftOverlap: giftOverlap,
+                reasons: reasons,
+                hardBlocks: hardBlocks,
+                reviewFlags: reviewFlags,
+                ruleVersion: 'match_m1m2_v1'
+            };
+        }
+
+        function scoreTierLabel(n) {
+            if (n >= 80) return '高';
+            if (n >= 60) return '中';
+            return '低';
+        }
+
+        function calculateMatch(silent) {
+            if (!selectedTalent || !selectedMinistry) {
+                msg('請先選擇事工崗位與人才', 'error');
+                return;
+            }
+            var a = computeMatchAnalysis(selectedTalent, selectedMinistry);
+            lastMatchAnalysis = a;
+
+            var tier = scoreTierLabel(a.totalScore);
+            var tierEl = document.getElementById('matchScoreTier');
+            if (tierEl) tierEl.textContent = a.blocked ? '硬性排除' : tier + '（參考帶）';
+            var hintEl = document.getElementById('matchScoreTierHint');
+            if (hintEl) hintEl.textContent = a.blocked ? '請先看下方排除原因' : '總分弱化：請以理由與人工確認為準';
+            var rawEl = document.getElementById('matchScoreRaw');
+            if (rawEl) {
+                rawEl.textContent = a.blocked
+                    ? '規則分 ' + a.totalScore + '（已被硬性排除，不建議自動建議／批量寫入）'
+                    : '規則分 ' + a.totalScore + ' · 技能 ' + a.skillScore + '／恩賜權重 ' + a.giftScore + '／MBTI ' + a.mbtiScore;
+            }
+            document.getElementById('scoreDisplay').style.display = 'block';
+            var pairEl = document.getElementById('scorePairLabel');
+            if (pairEl) {
+                pairEl.textContent = (selectedTalent.name || '') + ' × ' + (selectedMinistry.name || '') + ' · 規則建議（M1/M2）';
+            }
+
+            var hb = document.getElementById('matchHardBanner');
+            if (hb) {
+                if (a.hardBlocks.length) {
+                    hb.style.display = 'block';
+                    hb.innerHTML = '<strong>硬性排除（M2）</strong>' + a.hardBlocks.map(function(b) {
+                        return '<div>· ' + escapeHtml(b.message) + '</div>';
+                    }).join('');
+                } else {
+                    hb.style.display = 'none';
+                    hb.innerHTML = '';
+                }
+            }
+            var rb = document.getElementById('matchReviewBanner');
+            if (rb) {
+                if (a.reviewFlags.length) {
+                    rb.style.display = 'block';
+                    rb.innerHTML = '<strong>需人工確認（M2）</strong>' + a.reviewFlags.map(function(b) {
+                        return '<div>· ' + escapeHtml(b.message) + '</div>';
+                    }).join('');
+                } else {
+                    rb.style.display = 'none';
+                    rb.innerHTML = '';
+                }
+            }
+            var bulletWrap = document.getElementById('matchReasonBulletsWrap');
+            var bulletUl = document.getElementById('matchReasonBullets');
+            if (bulletWrap && bulletUl) {
+                bulletWrap.style.display = 'block';
+                bulletUl.innerHTML = a.reasons.map(function(r) {
+                    return '<li><strong>' + escapeHtml(r.factor) + '：</strong>' + escapeHtml(r.text) + '</li>';
+                }).join('');
+            }
+
+            document.getElementById('matchReasons').innerHTML =
+                '<div class="match-item"><span>技能對需求</span><span>' + a.skillScore + ' 分</span></div>' +
+                '<div class="match-item"><span>恩賜權重（規則）</span><span>' + a.giftScore + ' 分</span></div>' +
+                '<div class="match-item"><span>MBTI 首字加權</span><span>' + a.mbtiScore + ' 分</span></div>';
+            document.getElementById('matchDetails').style.display = 'block';
+
+            var tn = selectedTalent.name || '';
+            var mn = selectedMinistry.name || '';
+            if (!silent) {
+                if (a.blocked) {
+                    msg('硬性排除：此組合不建議自動建議。\n「' + tn + '」×「' + mn + '」\n若仍要記錄，請在寫入時確認已與牧者／部門負責人溝通。', 'error');
+                } else if (a.totalScore >= 80) {
+                    msg('參考帶「高」，規則分 ' + a.totalScore + '。\n「' + tn + '」配「' + mn + '」— 仍請看「需人工確認」與理由，再決定是否寫入邀請紀錄。');
+                } else if (a.totalScore >= 60) {
+                    msg('參考帶「中」，規則分 ' + a.totalScore + '。\n可作同工參考；請與禱告分辨後再寫入。');
+                } else {
+                    msg('參考帶「低」，規則分 ' + a.totalScore + '。\n建議換人或補資料；若仍要記錄，寫入前會再請您確認。', 'error');
+                }
+            }
+        }
+
+        function assignMinistry() {
+            if (!selectedTalent || !selectedMinistry) {
+                msg('請先選擇事工崗位與人才', 'error');
+                return;
+            }
+            calculateMatch(true);
+            var a = lastMatchAnalysis || computeMatchAnalysis(selectedTalent, selectedMinistry);
+            var score = a.totalScore;
+            if (a.blocked) {
+                if (!confirm('此組合觸發「硬性排除」（M2）。\n仍要寫入邀請紀錄嗎？（僅限已與牧者／部門負責人確認之例外）')) return;
+            } else if (score < 60 && !confirm('規則分較低（' + score + ' 分），仍要寫入邀請紀錄嗎？')) return;
+            else if (a.reviewFlags.length && !confirm('此組合有「需人工確認」旗標（' + a.reviewFlags.length + ' 項）。\n已實際確認後再寫入邀請紀錄？')) return;
+
+            var stageEl = document.getElementById('inviteStageSelect');
+            var noteEl = document.getElementById('inviteNote');
+            var dateEl = document.getElementById('inviteDate');
+            var stage = stageEl ? stageEl.value : 'invited';
+            var note = noteEl ? String(noteEl.value || '').trim() : '';
+            var recDate = dateEl && dateEl.value ? dateEl.value : new Date().toISOString().slice(0, 10);
+            var metaExtra = buildAssignmentMetadataExtras(
+                talentKey(selectedTalent),
+                ministryKey(selectedMinistry),
+                selectedTalent.name,
+                selectedMinistry.name,
+                recDate,
+                'invited'
+            );
+
+            var res = C.addMinistryAssignment({
+                talent_id: talentKey(selectedTalent),
+                ministry_id: ministryKey(selectedMinistry),
+                ministry_name: selectedMinistry.name,
+                status: 'invited',
+                source: 'manual_confirm',
+                metadata: {
+                    matchScore: score,
+                    match_analysis: {
+                        reasons: a.reasons,
+                        hardBlocks: a.hardBlocks,
+                        reviewFlags: a.reviewFlags,
+                        blocked: a.blocked,
+                        ruleVersion: a.ruleVersion
+                    },
+                    assignDate: new Date().toISOString(),
+                    invite_stage: stage,
+                    invite_note: note,
+                    invite_record_date: recDate,
+                    trial_followup_due: metaExtra.trial_followup_due,
+                    canonical_ref: metaExtra.canonical_ref,
+                    leader_outreach_snippet: metaExtra.leader_outreach_snippet
+                }
+            });
+            if (res.duplicate) {
+                msg('此「人 × 崗」已有一筆紀錄（本機不重複建立）。若要改狀態，請先撤銷舊紀錄或於追蹤頁另記。', 'error');
+                return;
+            }
+            msg('已寫入：' + (selectedTalent.name || '') + ' → ' + (selectedMinistry.name || '') + '（規則分 ' + score + '）。\n請實際聯絡對方；完整清單請用「查看配對歷史」或匯出 CSV。\n之後可在 talent_tracking 與同工一起回顧。');
+            if (noteEl) noteEl.value = '';
+            renderTalents();
+            renderMinistries();
+            updateStats();
+            updateMinistryPickBanner();
+        }
+
+        function aiMatch() {
+            var talents = C.listTalents();
+            var ministries = C.listMinistriesCatalog();
+            if (!confirm('將以「規則引擎」為每個崗位試配最高分人才（M1/M2：會跳過硬性排除）。\n寫入狀態為 proposed，仍需人工確認。確定執行？')) return;
+
+            var count = 0;
+            ministries.forEach(function(ministry) {
+                var candidates = talents.map(function(talent) {
+                    var an = computeMatchAnalysis(talent, ministry);
+                    return { talent: talent, analysis: an, score: an.blocked ? -1 : an.totalScore };
+                }).filter(function(x) { return x.score >= 0; })
+                    .sort(function(a, b) { return b.score - a.score; });
+
+                if (candidates.length > 0 && candidates[0].score >= 60) {
+                    var top = candidates[0];
+                    var an = top.analysis;
+                    var recAi = new Date().toISOString().slice(0, 10);
+                    var exAi = buildAssignmentMetadataExtras(
+                        talentKey(top.talent),
+                        ministryKey(ministry),
+                        top.talent.name,
+                        ministry.name,
+                        recAi,
+                        'proposed'
+                    );
+                    var r = C.addMinistryAssignment({
+                        talent_id: talentKey(top.talent),
+                        ministry_id: ministryKey(ministry),
+                        ministry_name: ministry.name,
+                        status: 'proposed',
+                        source: 'ai_auto',
+                        metadata: {
+                            matchScore: top.score,
+                            method: 'ai_auto',
+                            match_analysis: {
+                                reasons: an.reasons,
+                                hardBlocks: an.hardBlocks,
+                                reviewFlags: an.reviewFlags,
+                                blocked: an.blocked,
+                                ruleVersion: an.ruleVersion
+                            },
+                            trial_followup_due: exAi.trial_followup_due,
+                            canonical_ref: exAi.canonical_ref,
+                            leader_outreach_snippet: exAi.leader_outreach_snippet
+                        }
+                    });
+                    if (r.success) count++;
+                }
+            });
+
+            msg('規則批量建議完成：寫入 ' + count + ' 筆 proposed（已跳過硬性排除組合）');
+            renderTalents();
+            renderMinistries();
+            updateStats();
+        }
+
+        function computeMatchScore(talent, ministry) {
+            var a = computeMatchAnalysis(talent, ministry);
+            return a.blocked ? -1 : a.totalScore;
+        }
+
+        function batchMatch() {
+            var allTalents = C.listTalents();
+            var allMinistries = C.listMinistriesCatalog();
+            var pickedTalentIds = Object.keys(batchSelectedTalentIds).filter(function(k) { return batchSelectedTalentIds[k]; });
+            var pickedMinistryIds = Object.keys(batchSelectedMinistryIds).filter(function(k) { return batchSelectedMinistryIds[k]; });
+            var talents = pickedTalentIds.length > 0
+                ? allTalents.filter(function(t) { return pickedTalentIds.indexOf(talentKey(t)) !== -1; })
+                : allTalents;
+            var ministries = pickedMinistryIds.length > 0
+                ? allMinistries.filter(function(m) { return pickedMinistryIds.indexOf(ministryKey(m)) !== -1; })
+                : allMinistries;
+
+            if (talents.length === 0 || ministries.length === 0) {
+                msg('請先選人才或崗位（或確保列表有資料）', 'error');
+                return;
+            }
+            if (!confirm('將為 ' + ministries.length + ' 個崗位進行批量配對（候選人才 ' + talents.length + ' 人）？')) return;
+
+            var created = 0;
+            var skipped = 0;
+            var enforceUnique = !!document.getElementById('batchUniqueToggle').checked;
+            var usedTalentIds = {};
+            var batchRecDate = new Date().toISOString().slice(0, 10);
+            ministries.forEach(function(ministry) {
+                var ranked = talents.map(function(talent) {
+                    var an = computeMatchAnalysis(talent, ministry);
+                    var sc = an.blocked ? -1 : an.totalScore;
+                    return { talent: talent, analysis: an, score: sc };
+                }).filter(function(x) {
+                    return x.score >= 0 && (!enforceUnique || !usedTalentIds[talentKey(x.talent)]);
+                }).sort(function(a, b) { return b.score - a.score; });
+                if (!ranked.length || ranked[0].score < 60) {
+                    skipped++;
+                    return;
+                }
+                var top = ranked[0];
+                var an = top.analysis;
+                var exB = buildAssignmentMetadataExtras(
+                    talentKey(top.talent),
+                    ministryKey(ministry),
+                    top.talent.name,
+                    ministry.name,
+                    batchRecDate,
+                    'proposed'
+                );
+                var res = C.addMinistryAssignment({
+                    talent_id: talentKey(top.talent),
+                    ministry_id: ministryKey(ministry),
+                    ministry_name: ministry.name,
+                    status: 'proposed',
+                    source: 'batch_rules',
+                    metadata: {
+                        matchScore: top.score,
+                        method: 'batch_rules',
+                        batchAt: new Date().toISOString(),
+                        candidatePool: talents.length,
+                        match_analysis: {
+                            reasons: an.reasons,
+                            hardBlocks: an.hardBlocks,
+                            reviewFlags: an.reviewFlags,
+                            blocked: an.blocked,
+                            ruleVersion: an.ruleVersion
+                        },
+                        invite_record_date: batchRecDate,
+                        trial_followup_due: exB.trial_followup_due,
+                        canonical_ref: exB.canonical_ref,
+                        leader_outreach_snippet: exB.leader_outreach_snippet
+                    }
+                });
+                if (res.success) created++;
+                else skipped++;
+                if (res.success && enforceUnique) usedTalentIds[talentKey(top.talent)] = true;
+            });
+            msg('批量配對完成：新增 ' + created + ' 筆，略過 ' + skipped + ' 筆');
+            renderTalents();
+            renderMinistries();
+            updateStats();
+        }
+
+        function viewHistory() {
+            document.getElementById('historyModal').classList.add('open');
+            renderHistory();
+        }
+        function closeHistory(event) {
+            if (event && event.target && event.target.id !== 'historyModal') return;
+            document.getElementById('historyModal').classList.remove('open');
+        }
+        function getHistoryRows() {
+            var talents = C.listTalents();
+            var ministries = C.listMinistriesCatalog();
+            var talentMap = {};
+            talents.forEach(function(t) { talentMap[talentKey(t)] = t; });
+            var ministryMap = {};
+            ministries.forEach(function(m) { ministryMap[ministryKey(m)] = m; });
+            var assignmentRows = C.listMinistryAssignments().map(function(a) {
+                var t = talentMap[String(a.talent_id)] || {};
+                var m = ministryMap[String(a.ministry_id)] || {};
+                return {
+                    id: a.id,
+                    talentName: t.name || '',
+                    personId: (t.talent_id != null || t.id != null) ? talentKey(t) : String(a.talent_id || ''),
+                    ministryName: m.name || a.ministry_name || '',
+                    score: (a.metadata && a.metadata.matchScore != null) ? a.metadata.matchScore : '',
+                    status: a.status || '',
+                    source: a.source || '',
+                    time: (a.metadata && (a.metadata.assignDate || a.metadata.batchAt)) || a.created_at || '',
+                    raw: a
+                };
+            });
+            var auditRows = loadAuditLogs().map(function(log) {
+                return {
+                    id: log.id || ('audit_' + Math.random().toString(36).slice(2, 7)),
+                    talentName: log.talentName || '',
+                    personId: log.talentId || '',
+                    ministryName: log.ministryName || '',
+                    score: log.score || '',
+                    status: 'rolled_back',
+                    source: 'rollback_audit',
+                    time: log.time || '',
+                    raw: log,
+                    readonly: true
+                };
+            });
+            return assignmentRows.concat(auditRows).sort(function(a, b) { return String(b.time).localeCompare(String(a.time)); });
+        }
+        function renderHistory() {
+            var source = document.getElementById('historySourceFilter').value || '';
+            var status = document.getElementById('historyStatusFilter').value || '';
+            var keyword = (document.getElementById('historyKeyword').value || '').toLowerCase();
+            var rows = getHistoryRows().filter(function(r) {
+                return (!source || r.source === source) &&
+                    (!status || r.status === status) &&
+                    (!keyword ||
+                        r.talentName.toLowerCase().includes(keyword) ||
+                        r.personId.toLowerCase().includes(keyword) ||
+                        r.ministryName.toLowerCase().includes(keyword));
+            });
+            if (rows.length === 0) {
+                document.getElementById('historyTableWrap').innerHTML = '<div class="history-empty">沒有符合條件的歷史紀錄</div>';
+                return;
+            }
+            var tableRows = rows.map(function(r) {
+                var meta = (r.raw && r.raw.metadata) ? r.raw.metadata : {};
+                var stage = meta.invite_stage ? String(meta.invite_stage) : '';
+                var note = meta.invite_note ? String(meta.invite_note) : '';
+                var extra = [stage ? '跟進：' + stage : '', note ? '備註：' + note : ''].filter(Boolean).join(' · ');
+                return '<tr title="紀錄ID：' + escapeHtml(String(r.id)) + (r.personId ? ' · 識別碼：' + escapeHtml(String(r.personId)) : '') + '">' +
+                    '<td>' + (r.talentName || '-') + '</td>' +
+                    '<td>' + (r.ministryName || '-') + '</td>' +
+                    '<td>' + (r.score === '' ? '-' : r.score) + '</td>' +
+                    '<td>' + (r.status || '-') + (extra ? '<div style="font-size:0.7rem;color:#64748b;margin-top:2px">' + escapeHtml(extra) + '</div>' : '') + '</td>' +
+                    '<td>' + (r.source || '-') + '</td>' +
+                    '<td>' + (r.time || '-') + '</td>' +
+                    '<td>' + (r.readonly ? '<span style="font-size:0.72rem;color:#64748b;">審計</span>' : '<button type="button" class="btn btn-secondary" style="padding:4px 8px;font-size:0.72rem;" title="若這次邀請已不適用，可撤銷本筆紀錄（僅本機）" onclick="rollbackAssignment(' + JSON.stringify(r.id) + ')">撤銷這次紀錄</button>') + '</td>' +
+                    '</tr>';
+            }).join('');
+            document.getElementById('historyTableWrap').innerHTML =
+                '<p style="margin:0 0 8px;font-size:0.78rem;color:#475569;">以下為過去的邀請紀錄，可回顧曾邀請誰、狀態與來源。技術識別碼請見各列 <code>title</code> 提示。</p>' +
+                '<table class="history-table"><thead><tr>' +
+                '<th>姓名</th><th>崗位</th><th>分數</th><th>狀態／跟進</th><th>來源</th><th>時間</th><th>操作</th>' +
+                '</tr></thead><tbody>' + tableRows + '</tbody></table>';
+        }
+        function exportHistoryCsv() {
+            var source = document.getElementById('historySourceFilter').value || '';
+            var status = document.getElementById('historyStatusFilter').value || '';
+            var keyword = (document.getElementById('historyKeyword').value || '').toLowerCase();
+            var rows = getHistoryRows().filter(function(r) {
+                return (!source || r.source === source) &&
+                    (!status || r.status === status) &&
+                    (!keyword ||
+                        r.talentName.toLowerCase().includes(keyword) ||
+                        r.personId.toLowerCase().includes(keyword) ||
+                        r.ministryName.toLowerCase().includes(keyword));
+            });
+            var header = ['紀錄ID', '姓名', 'personId', '崗位', '分數', '狀態', '來源', '時間'];
+            var csv = [header].concat(rows.map(function(r) {
+                return [r.id, r.talentName, r.personId, r.ministryName, r.score, r.status, r.source, r.time];
+            })).map(function(r) {
+                return r.map(function(v) {
+                    var t = String(v == null ? '' : v).replace(/"/g, '""');
+                    return '"' + t + '"';
+                }).join(',');
+            }).join('\n');
+            var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'smart_ministry_matching_history_' + new Date().toISOString().slice(0, 10) + '.csv';
+            a.click();
+            msg('已匯出歷史清單 CSV');
+        }
+        function rollbackAssignment(assignmentId) {
+            if (!assignmentId) return;
+            if (!confirm('確定撤銷這筆紀錄？此操作只移除該筆 assignment（本機），不刪除人才或崗位主檔。')) return;
+            var rows = C.listMinistryAssignments();
+            var before = rows.length;
+            var filtered = rows.filter(function(r) { return String(r.id) !== String(assignmentId); });
+            if (filtered.length === before) {
+                msg('找不到指定紀錄', 'error');
+                return;
+            }
+            var removed = rows.find(function(r) { return String(r.id) === String(assignmentId); }) || null;
+            var removedTalentName = '';
+            if (removed) {
+                var trow = C.listTalents().find(function(t) { return talentKey(t) === String(removed.talent_id); }) || null;
+                removedTalentName = trow ? (trow.name || '') : '';
+            }
+            C.setMinistryAssignments(filtered);
+            if (removed) {
+                appendAuditLog({
+                    id: 'rb_' + Date.now().toString(36),
+                    assignmentId: removed.id,
+                    talentId: removed.talent_id,
+                    talentName: removedTalentName,
+                    ministryId: removed.ministry_id,
+                    ministryName: removed.ministry_name || '',
+                    score: removed.metadata && removed.metadata.matchScore != null ? removed.metadata.matchScore : '',
+                    action: 'rollback',
+                    source: removed.source || '',
+                    time: new Date().toISOString()
+                });
+            }
+            msg('已撤銷 1 筆紀錄');
+            renderTalents();
+            renderMinistries();
+            updateStats();
+            renderHistory();
+        }
+
+        function exportMatching() {
+            if (!confirm('將匯出整包 canonical JSON（人才、崗位、配對紀錄等），供備份或進階同工使用。確定嗎？')) return;
+            var store = C.getStore();
+            var blob = new Blob([JSON.stringify({
+                schema_version: store.schema_version,
+                talents: store.talents,
+                ministries: store.ministries,
+                talent_skill: store.talent_skill,
+                ministry_assignment: store.ministry_assignment,
+                assessments: store.assessments
+            }, null, 2)], { type: 'application/json' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'smart_ministry_canonical_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            msg('已匯出 canonical · Exported bible100_smart_ministry_main slice');
+        }
+
+        function exportMatchingExcel() {
+            if (!confirm('將匯出目前配對紀錄為 CSV（可於 Excel 開啟），方便同工會議使用。確定嗎？')) return;
+            var talents = C.listTalents();
+            var ministries = C.listMinistriesCatalog();
+            var ministryMap = {};
+            ministries.forEach(function(m) { ministryMap[ministryKey(m)] = m; });
+            var talentMap = {};
+            talents.forEach(function(t) { talentMap[talentKey(t)] = t; });
+            var rows = C.listMinistryAssignments().map(function(a) {
+                var t = talentMap[String(a.talent_id)] || {};
+                var m = ministryMap[String(a.ministry_id)] || {};
+                var score = (a.metadata && a.metadata.matchScore != null) ? a.metadata.matchScore : '';
+                var personId = (t.talent_id != null || t.id != null) ? talentKey(t) : String(a.talent_id || '');
+                return [
+                    t.name || '',
+                    personId,
+                    t.gift || '',
+                    t.mbti || '',
+                    m.name || a.ministry_name || '',
+                    score,
+                    a.status || '',
+                    a.source || '',
+                    (a.metadata && a.metadata.assignDate) || a.created_at || '',
+                    m.urgency || '',
+                    m.requires || '',
+                ];
+            });
+            var header = (window.SMART_MINISTRY_REPORT_COLUMNS && window.SMART_MINISTRY_REPORT_COLUMNS.MATCHING) ||
+                ['姓名', 'personId', '主要恩賜', 'MBTI', '崗位', '配對分數', '狀態', '來源', '時間', '優先度', '需求'];
+            var csv = [header].concat(rows).map(function(r) {
+                return r.map(function(v) {
+                    var text = String(v == null ? '' : v).replace(/"/g, '""');
+                    return '"' + text + '"';
+                }).join(',');
+            }).join('\n');
+            var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'smart_ministry_matching_' + new Date().toISOString().slice(0, 10) + '.csv';
+            a.click();
+            msg('已匯出 Excel 報表（CSV）');
+        }
+
+        function updateStats() {
+            var talents = C.listTalents();
+            var ministries = C.listMinistriesCatalog();
+            var matches = C.listMinistryAssignments();
+            var t = talents.length;
+            var m = ministries.length;
+            var a = matches.length;
+            document.getElementById('summaryTalents').textContent = t;
+            document.getElementById('summaryMinistries').textContent = m;
+            document.getElementById('summaryMatches').textContent = a;
+            var maxBar = Math.max(t, m, a, 1);
+            var bt = document.getElementById('barTalents');
+            var bm = document.getElementById('barMinistries');
+            var bmat = document.getElementById('barMatches');
+            if (bt) bt.style.width = (100 * t / maxBar) + '%';
+            if (bm) bm.style.width = (100 * m / maxBar) + '%';
+            if (bmat) bmat.style.width = (100 * a / maxBar) + '%';
+            var donut = document.getElementById('statsDonut');
+            var cap = document.getElementById('statsDonutCap');
+            var ratio = t > 0 ? Math.min(100, Math.round(100 * a / t)) : 0;
+            if (donut) donut.style.setProperty('--donut-deg', (3.6 * ratio) + 'deg');
+            if (cap) cap.textContent = '紀錄／人才比 ' + ratio + '%';
+            var ctx = document.getElementById('statContextLine');
+            if (ctx) {
+                if (selectedMinistry) {
+                    var mk = ministryKey(selectedMinistry);
+                    var n = countAssignmentsForMinistry(mk);
+                    ctx.innerHTML = '已選崗位：<strong>' + escapeHtml(selectedMinistry.name || '') + '</strong>｜此崗目前已分配 <strong>' + n + '</strong> 人（本機 <code>ministry_assignment</code>）。可配對人才總數：<strong>' + t + '</strong>。';
+                } else {
+                    ctx.innerHTML = '請先在<strong>③ 事工崗位</strong>選定崗位，以顯示「此崗已分配人數」。全庫：<strong>' + t + '</strong> 位人才、<strong>' + m + '</strong> 個崗、<strong>' + a + '</strong> 筆紀錄。';
+                }
+            }
+        }
+
+        function filterTalents() { renderTalents(); }
+        function filterMinistries() { renderMinistries(); }
+
+        function msg(text, type) {
+            type = type || 'success';
+            var div = document.createElement('div');
+            div.className = 'msg ' + (type === 'error' ? 'error' : '');
+            div.textContent = text;
+            document.body.appendChild(div);
+            setTimeout(function() { div.remove(); }, 3000);
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

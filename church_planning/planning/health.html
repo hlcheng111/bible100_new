@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Step 0 · 教會歷史與健康</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <script src="assets/shell.js"></script>
+  <div class="planning-wrap">
+    <div class="step-head-mini">
+      <h2>Step 0 · 歷史與健康</h2>
+      <a class="step-head-back" href="index.html">← 流程總覽</a>
+    </div>
+    <div class="report-dest-strip">
+      <span class="report-dest-icon" aria-hidden="true">📊</span>
+      <span>儲存後可到 <strong>戰情總覽</strong> 看里程碑摘要與健康自評；與 Step 3、SWOT 並列。</span>
+    </div>
+
+    <div class="fill-zone">
+      <h2 class="fill-zone-title">教會歷史與里程碑</h2>
+      <p class="fill-zone-hint">每年一行，可按「新增一行」加列。此區會出現在戰情總覽與 SWOT 旁「現況」。</p>
+      <div class="report-table-wrap">
+        <table class="milestone-table">
+          <thead>
+            <tr><th>年份</th><th>事件</th><th>屬靈意義／備註</th></tr>
+          </thead>
+          <tbody id="milestone-rows"></tbody>
+        </table>
+      </div>
+      <p class="milestone-actions"><button type="button" class="btn-row" id="btn-add-milestone">新增一行</button></p>
+      <label for="pastor-reflect">牧者／長執反思</label>
+      <textarea id="pastor-reflect" placeholder="從歷史看上帝如何帶領？現在最需要警醒的是？"></textarea>
+    </div>
+
+    <div class="fill-zone">
+      <h2 class="fill-zone-title">教會健康自評（1＝弱，5＝強）</h2>
+      <p class="fill-zone-hint">此為<strong>同工內部</strong>自評；會眾問卷在 Step 2。儀表板會一併顯示各面向分數。</p>
+      <div id="health-sliders"></div>
+    </div>
+
+    <div class="fill-zone">
+      <h2 class="fill-zone-title">問卷網址（與 Step 2 同步）</h2>
+      <p style="color:var(--muted);font-size:13px;margin-top:0;">兩處共用同一儲存；在這裡或 Step 2 貼皆可。</p>
+      <label for="url-public-h">會眾問卷</label>
+      <input type="url" id="url-public-h" placeholder="https://…" autocomplete="off">
+      <label for="url-leaders-h" style="margin-top:12px;">領袖問卷</label>
+      <input type="url" id="url-leaders-h" placeholder="https://…" autocomplete="off">
+    </div>
+
+    <div class="data-use-box">
+      <h3>這些資料會怎麼用？</h3>
+      <ul>
+        <li>問卷結果以<strong>匿名趨勢</strong>整理；不會對外逐條點名。</li>
+        <li>本頁自評＋問卷＋Step 3 摘要，一併供長埅會訂 3～5 年重點。</li>
+      </ul>
+    </div>
+
+    <p><button type="button" class="btn-big" id="btn-save-step0" style="display:inline-block;width:auto;">儲存 Step 0</button> <span id="save-status" class="status-saved" aria-live="polite"></span></p>
+
+    <a class="btn-big step-jump" href="theology.html">前往 Step 1</a>
+    <p class="nav-back"><a href="index.html">流程總覽</a></p>
+  </div>
+
+  <script src="assets/pipeline.js"></script>
+  <script>
+(function () {
+  var P = window.LongTermPipeline;
+  var SLIDER_CONFIG = [
+    { key: "leadership", label: "領導與接班" },
+    { key: "mission", label: "使命匹配" },
+    { key: "finance", label: "財務穩健" },
+    { key: "culture", label: "文化與氣氛" },
+    { key: "tech", label: "資訊與科技運用" },
+    { key: "worship", label: "敬拜" },
+    { key: "fellowship", label: "相交與團契" },
+    { key: "discipleship", label: "門訓" },
+    { key: "evangelism", label: "傳福音與關懷" },
+  ];
+
+  var data = P.loadStep0();
+  var surveys = P.loadSurveys();
+
+  function renderMilestones() {
+    var tb = document.getElementById("milestone-rows");
+    tb.innerHTML = "";
+    data.milestones.forEach(function (row, i) {
+      var tr = document.createElement("tr");
+      ["year", "event", "spiritualMeaning"].forEach(function (field) {
+        var td = document.createElement("td");
+        var inp = document.createElement("input");
+        inp.type = "text";
+        inp.value = row[field] || "";
+        inp.style.cssText = "width:100%;box-sizing:border-box;padding:6px;border:1px solid var(--line);border-radius:6px;";
+        inp.dataset.idx = i;
+        inp.dataset.field = field;
+        inp.addEventListener("input", onMilestoneInput);
+        td.appendChild(inp);
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+  }
+
+  function onMilestoneInput(e) {
+    var inp = e.target;
+    var i = parseInt(inp.dataset.idx, 10);
+    var field = inp.dataset.field;
+    if (!data.milestones[i]) return;
+    data.milestones[i][field] = inp.value;
+    persist();
+  }
+
+  function renderSliders() {
+    var host = document.getElementById("health-sliders");
+    host.innerHTML = "";
+    SLIDER_CONFIG.forEach(function (cfg) {
+      var row = document.createElement("div");
+      row.className = "health-slider-row";
+      var lab = document.createElement("label");
+      lab.textContent = cfg.label;
+      var range = document.createElement("input");
+      range.type = "range";
+      range.min = "1";
+      range.max = "5";
+      range.step = "1";
+      range.value = String(data.healthScores[cfg.key] != null ? data.healthScores[cfg.key] : 3);
+      range.dataset.key = cfg.key;
+      var val = document.createElement("span");
+      val.className = "slider-val";
+      val.textContent = range.value;
+      range.addEventListener("input", function () {
+        val.textContent = range.value;
+        data.healthScores[cfg.key] = parseInt(range.value, 10);
+        persist();
+      });
+      row.appendChild(lab);
+      row.appendChild(range);
+      row.appendChild(val);
+      host.appendChild(row);
+    });
+  }
+
+  function persist() {
+    P.saveStep0(data);
+    flashSaved();
+  }
+
+  var saveTimer;
+  function flashSaved() {
+    var el = document.getElementById("save-status");
+    el.textContent = "已自動儲存";
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () { el.textContent = ""; }, 1600);
+  }
+
+  document.getElementById("pastor-reflect").value = data.pastorReflection || "";
+  document.getElementById("pastor-reflect").addEventListener("input", function () {
+    data.pastorReflection = this.value;
+    persist();
+  });
+
+  document.getElementById("url-public-h").value = surveys.publicUrl || "";
+  document.getElementById("url-leaders-h").value = surveys.leadersUrl || "";
+  function syncSurveys() {
+    surveys.publicUrl = document.getElementById("url-public-h").value.trim();
+    surveys.leadersUrl = document.getElementById("url-leaders-h").value.trim();
+    P.saveSurveys(surveys);
+    flashSaved();
+  }
+  document.getElementById("url-public-h").addEventListener("change", syncSurveys);
+  document.getElementById("url-leaders-h").addEventListener("change", syncSurveys);
+
+  document.getElementById("btn-add-milestone").addEventListener("click", function () {
+    data.milestones.push({ year: "", event: "", spiritualMeaning: "" });
+    P.saveStep0(data);
+    renderMilestones();
+  });
+
+  document.getElementById("btn-save-step0").addEventListener("click", function () {
+    P.saveStep0(data);
+    var el = document.getElementById("save-status");
+    el.textContent = "已儲存於 localStorage";
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () { el.textContent = ""; }, 2200);
+  });
+
+  renderMilestones();
+  renderSliders();
+})();
+  </script>
+</body>
+</html>

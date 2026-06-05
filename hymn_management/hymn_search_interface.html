@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖詩智能搜索系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .search-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .search-header {
+            background: linear-gradient(135deg, #2aa5ff 0%, #1e8bcc 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .search-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .search-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .search-bar {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .search-input-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 50px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #2aa5ff;
+            box-shadow: 0 0 20px rgba(42, 165, 255, 0.2);
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #2aa5ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: #1e8bcc;
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .search-filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            background: white;
+            font-size: 0.9rem;
+        }
+
+        .quick-search-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: #e9ecef;
+            color: #495057;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tag:hover {
+            background: #2aa5ff;
+            color: white;
+        }
+
+        .search-results {
+            padding: 30px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .results-count {
+            font-size: 1.1rem;
+            color: #6c757d;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .sort-btn {
+            padding: 8px 15px;
+            border: 1px solid #ced4da;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .sort-btn.active {
+            background: #2aa5ff;
+            color: white;
+            border-color: #2aa5ff;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .hymn-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .hymn-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .hymn-number {
+            background: #2aa5ff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .hymn-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .hymn-author {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .hymn-themes {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .theme-tag {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+        }
+
+        .hymn-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #ced4da;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .action-btn.primary {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .action-btn.primary:hover {
+            background: #218838;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .no-results h3 {
+            margin-bottom: 10px;
+        }
+
+        .suggestions {
+            margin-top: 20px;
+        }
+
+        .suggestion-item {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 15px;
+            background: #e9ecef;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-item:hover {
+            background: #2aa5ff;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2aa5ff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .search-header h1 {
+                font-size: 2rem;
+            }
+            
+            .search-filters {
+                flex-direction: column;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <!-- 搜索標題 -->
+        <div class="search-header">
+            <h1>🎵 聖詩智能搜索</h1>
+            <p>快速找到您需要的聖詩</p>
+        </div>
+
+        <!-- 搜索欄 -->
+        <div class="search-bar">
+            <div class="search-input-container">
+                <input type="text" class="search-input" id="searchInput" 
+                       placeholder="輸入聖詩標題、作者、主題或關鍵詞..." 
+                       autocomplete="off">
+                <button class="search-btn" onclick="performSearch()">🔍 搜索</button>
+            </div>
+
+            <!-- 搜索過濾器 -->
+            <div class="search-filters">
+                <div class="filter-group">
+                    <label class="filter-label">搜索類型</label>
+                    <select class="filter-select" id="searchType">
+                        <option value="all">全部</option>
+                        <option value="title">標題</option>
+                        <option value="author">作者</option>
+                        <option value="theme">主題</option>
+                        <option value="content">內容</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">語言</label>
+                    <select class="filter-select" id="languageFilter">
+                        <option value="all">全部語言</option>
+                        <option value="chinese">中文</option>
+                        <option value="english">英文</option>
+                        <option value="taiwanese">台語</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">結果數量</label>
+                    <select class="filter-select" id="resultLimit">
+                        <option value="20">20 首</option>
+                        <option value="50" selected>50 首</option>
+                        <option value="100">100 首</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 快速搜索標籤 -->
+            <div class="quick-search-tags">
+                <span class="tag" onclick="quickSearch('讚美')">讚美</span>
+                <span class="tag" onclick="quickSearch('敬拜')">敬拜</span>
+                <span class="tag" onclick="quickSearch('愛')">愛</span>
+                <span class="tag" onclick="quickSearch('救恩')">救恩</span>
+                <span class="tag" onclick="quickSearch('聖誕')">聖誕</span>
+                <span class="tag" onclick="quickSearch('復活')">復活</span>
+                <span class="tag" onclick="quickSearch('聖靈')">聖靈</span>
+                <span class="tag" onclick="quickSearch('宣教')">宣教</span>
+                <span class="tag" onclick="quickSearch('家庭')">家庭</span>
+                <span class="tag" onclick="quickSearch('希望')">希望</span>
+            </div>
+        </div>
+
+        <!-- 搜索結果 -->
+        <div class="search-results" id="searchResults">
+            <div class="results-header">
+                <div class="results-count" id="resultsCount">請輸入搜索關鍵詞</div>
+                <div class="sort-options">
+                    <button class="sort-btn active" onclick="sortResults('relevance')">相關性</button>
+                    <button class="sort-btn" onclick="sortResults('title')">標題</button>
+                    <button class="sort-btn" onclick="sortResults('author')">作者</button>
+                    <button class="sort-btn" onclick="sortResults('number')">編號</button>
+                </div>
+            </div>
+
+            <div id="resultsContainer">
+                <div class="no-results">
+                    <h3>🎵 歡迎使用聖詩搜索系統</h3>
+                    <p>輸入關鍵詞開始搜索，或點擊上方標籤快速搜索</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局變量
+        let hymnSystem;
+        let currentResults = [];
+        let currentSort = 'relevance';
+
+        // 初始化系統
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化聖詩系統
+            hymnSystem = new HymnIntelligenceSystem();
+            
+            // 添加搜索輸入事件
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+
+            // 實時搜索建議
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim();
+                if (query.length > 1) {
+                    showSearchSuggestions(query);
+                } else {
+                    hideSearchSuggestions();
+                }
+            });
+        });
+
+        // 執行搜索
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            const searchType = document.getElementById('searchType').value;
+            const language = document.getElementById('languageFilter').value;
+            const limit = parseInt(document.getElementById('resultLimit').value);
+
+            showLoading();
+
+            // 模擬搜索延遲
+            setTimeout(() => {
+                const results = hymnSystem.search(query, {
+                    type: searchType,
+                    language: language,
+                    limit: limit
+                });
+
+                currentResults = results;
+                displayResults(results);
+                updateResultsCount(results.length, query);
+            }, 500);
+        }
+
+        // 快速搜索
+        function quickSearch(keyword) {
+            document.getElementById('searchInput').value = keyword;
+            performSearch();
+        }
+
+        // 顯示搜索建議
+        function showSearchSuggestions(query) {
+            // 實現搜索建議功能
+            console.log('搜索建議:', query);
+        }
+
+        // 隱藏搜索建議
+        function hideSearchSuggestions() {
+            // 隱藏搜索建議
+        }
+
+        // 顯示加載狀態
+        function showLoading() {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在搜索聖詩...</p>
+                </div>
+            `;
+        }
+
+        // 顯示搜索結果
+        function displayResults(results) {
+            const container = document.getElementById('resultsContainer');
+            
+            if (results.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <h3>😔 沒有找到相關聖詩</h3>
+                        <p>請嘗試其他關鍵詞或檢查拼寫</p>
+                        <div class="suggestions">
+                            <p>建議搜索：</p>
+                            <span class="suggestion-item" onclick="quickSearch('讚美')">讚美</span>
+                            <span class="suggestion-item" onclick="quickSearch('敬拜')">敬拜</span>
+                            <span class="suggestion-item" onclick="quickSearch('耶穌')">耶穌</span>
+                            <span class="suggestion-item" onclick="quickSearch('愛')">愛</span>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const resultsHTML = results.map(hymn => `
+                <div class="hymn-card" onclick="openHymn('${hymn.path}')">
+                    <div class="hymn-number">${hymn.metadata.hymnNumber || 'N/A'}</div>
+                    <div class="hymn-title">${hymn.metadata.title || hymn.name}</div>
+                    <div class="hymn-author">作者：${hymn.metadata.author || '未知'}</div>
+                    <div class="hymn-themes">
+                        ${hymn.metadata.theme.map(theme => 
+                            `<span class="theme-tag">${theme}</span>`
+                        ).join('')}
+                    </div>
+                    <div class="hymn-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); playHymn('${hymn.path}')">🎵 播放</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); addToFavorites('${hymn.path}')">❤️ 收藏</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); shareHymn('${hymn.path}')">📤 分享</button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `<div class="results-grid">${resultsHTML}</div>`;
+        }
+
+        // 更新結果計數
+        function updateResultsCount(count, query) {
+            const countElement = document.getElementById('resultsCount');
+            if (count === 0) {
+                countElement.textContent = '沒有找到相關聖詩';
+            } else {
+                countElement.textContent = `找到 ${count} 首聖詩 (搜索："${query}")`;
+            }
+        }
+
+        // 排序結果
+        function sortResults(sortBy) {
+            if (!currentResults.length) return;
+
+            // 更新按鈕狀態
+            document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            currentSort = sortBy;
+
+            // 排序邏輯
+            let sortedResults = [...currentResults];
+            switch (sortBy) {
+                case 'title':
+                    sortedResults.sort((a, b) => (a.metadata.title || a.name).localeCompare(b.metadata.title || b.name));
+                    break;
+                case 'author':
+                    sortedResults.sort((a, b) => (a.metadata.author || '').localeCompare(b.metadata.author || ''));
+                    break;
+                case 'number':
+                    sortedResults.sort((a, b) => (a.metadata.hymnNumber || '').localeCompare(b.metadata.hymnNumber || ''));
+                    break;
+                case 'relevance':
+                default:
+                    // 保持原有順序（相關性）
+                    break;
+            }
+
+            displayResults(sortedResults);
+        }
+
+        // 打開聖詩
+        function openHymn(path) {
+            console.log('打開聖詩:', path);
+            // 實際實現：打開聖詩詳情頁面
+        }
+
+        // 播放聖詩
+        function playHymn(path) {
+            console.log('播放聖詩:', path);
+            // 實際實現：播放聖詩音頻
+        }
+
+        // 添加到收藏
+        function addToFavorites(path) {
+            console.log('添加到收藏:', path);
+            // 實際實現：添加到收藏夾
+        }
+
+        // 分享聖詩
+        function shareHymn(path) {
+            console.log('分享聖詩:', path);
+            // 實際實現：分享功能
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

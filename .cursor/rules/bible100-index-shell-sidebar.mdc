@@ -1,0 +1,26 @@
+---
+description: 總站 index_v5 與模組側欄、iframe 命名；避免巢狀模組殼與 contentFrame 衝突
+alwaysApply: true
+---
+
+# 總站殼與側欄（index_v5）
+
+## 核心規則
+
+1. **`index_v5.html` 右欄 iframe 固定 `name="contentFrame"`**（與多數模組側欄連結的 `target="contentFrame"` 對齊）。**AI Lab 側欄**（`sidebar_lab.html`）內的 `labNav`／攔截連結必須導向此右欄，不可把導讀頁載入左欄 `sidebarFrame`（見 `lab-frame-nav.js` 的 **`navigateParentContentFrame`**）。
+2. **禁止「殼中殼」**：不要把 **`church_planning/index.html`**（或其他帶 **同名 `name="contentFrame"`** 內層 iframe 的模組殼）再塞進總站右欄。否則側欄連結的 `target="contentFrame"` 可能導到**外層**，整個教會規劃雙欄殼被換成單頁，側欄看似消失。
+3. **教會規劃從總站進入**：一律 **`clearHymnEmbedLayout()`** + 外層 **`sidebarFrame` → `church_planning/sidebar_plan.html`** + **`contentFrame` → 單一內容頁**（主索引用 **`index_plan.html`**）。實作：`openChurchPlanningHub()`（勿再用 `enableModuleShellEmbedLayout()` + `church_planning/index.html`）。
+4. **與教會規劃同一模式**：`openChurchPlanningMission`、`openChurchPlanningProcess`、`openChurchPlanningHealth` 等已採外層雙欄；新增捷徑時比照，不要改回巢狀殼。
+5. **`mode-module-shell-embed`**：保留給 **智慧事奉／學校／教會事工** 等「內含自帶側欄的 `…/index.html`」；**教會規劃 Hub 不再使用** embed 模式，以便窄屏時總站 ☰ 與左欄行為與其他「外層雙欄」模組一致。
+6. **總站頂欄橫幅或連結**：指向教會規劃時，若已在外層載入 `sidebar_plan.html`，可連 **`index_plan.html`** + `target="contentFrame"`；**不要**連到會再嵌一層殼的頁面組合。
+
+## 模組內 `church_planning/index.html`
+
+- **用途**：使用者**直接開檔**（`file://`）或嵌入其他**非** `index_v5` 的情境時，模組內雙欄殼仍可用。
+- **維護**：若新增內層 iframe，**避免**與父頁常用名 `contentFrame` 重名；若需與總站並存，內層改用唯一名（例如 `planningContent`）並同步修改側欄 `target`。
+
+## 相關檔案
+
+- `bible100_new/index_v5.html` — `openChurchPlanningHub` 與 `mode-module-shell-embed` 樣式。
+- `bible100_new/church_planning/sidebar_plan.html` — `target="contentFrame"` 連到總站右欄。
+- `bible100_new/church_planning/index_plan.html` — 教會規劃主索引（總站預設內容）。

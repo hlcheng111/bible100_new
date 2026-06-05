@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>事奉配對建議 - 智慧事奉中心</title>
+    <style>
+        body {font-family:'Microsoft YaHei',Arial,sans-serif;background:#f6f7fb;color:#333;font-size:12px;margin:0;padding:20px;}
+        .header {background:linear-gradient(135deg,#9b59b6 0%,#8e44ad 100%);color:white;padding:20px;border-radius:8px;margin-bottom:20px;text-align:center;}
+        .container {background:white;padding:25px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);max-width:900px;margin:0 auto;}
+        .card {background:#f8f9fa;padding:18px;border-radius:8px;margin-bottom:20px;border-left:5px solid #9b59b6;}
+        .match-bar {height:8px;background:#e0e0e0;border-radius:10px;margin:8px 0;overflow:hidden;}
+        .match-fill {height:100%;background:linear-gradient(135deg,#9b59b6 0%,#8e44ad 100%);}
+        .btn {padding:10px 18px;border:none;border-radius:4px;font-size:12px;cursor:pointer;margin:5px;}
+        .btn-primary {background:linear-gradient(135deg,#9b59b6 0%,#8e44ad 100%);color:white;}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔗 MBTI + SHAPE 事奉配對建議</h1>
+        <p>神按您的性格與塑造，為您預備最適合的事奉崗位（弗2:10）</p>
+    </div>
+
+    <div class="container" id="main">
+        <!-- 動態內容 -->
+    </div>
+
+    <div style="text-align:center;margin-top:30px;">
+        <a href="index.html" style="color:#9b59b6;font-weight:bold;">← 返回智慧事奉中心</a>
+    </div>
+
+    <script>
+        // ==================== 手動輸入版 ====================
+        const ministries = [
+            {name:"青少年小組帶領", mbti:["ENFJ","ENFP","INFJ"], gifts:["leadership","encouragement","teaching"], heart:["youth"]},
+            {name:"兒童主日學老師", mbti:["ESFJ","ISFJ","ENFP"], gifts:["teaching","mercy","serving"], heart:["children"]},
+            {name:"接待與新人關懷", mbti:["ESFJ","ENFJ","ESFP"], gifts:["mercy","encouragement"], heart:["community"]},
+            {name:"行政與事工協調", mbti:["ISTJ","ESTJ","INTJ"], gifts:["leadership","giving"], heart:["admin"]},
+            {name:"敬拜團隊領詩", mbti:["ENFP","ESFP","INFJ"], gifts:["teaching"], heart:["worship"]},
+            {name:"關懷探訪與輔導", mbti:["INFJ","INFP","ISFJ"], gifts:["mercy","encouragement"], heart:["mercy_work"]},
+            {name:"短宣與外展開拓", mbti:["ENTJ","ESTP","ENFJ"], gifts:["leadership","prophecy"], heart:["mission"]},
+            {name:"音控、技術、後勤", mbti:["ISTP","ISTJ","ESTJ"], gifts:["serving"], heart:["admin"]},
+            {name:"文字事工與創作", mbti:["INFP","INTJ","INFJ"], gifts:["teaching"], heart:["media"]},
+            {name:"代禱與靈命造就", mbti:["INFJ","INFP","ISFJ"], gifts:["prophecy","encouragement"], heart:["prayer"]}
+        ];
+
+        function calculateAndShow(mbti, gifts, hearts) {
+            let results = ministries.map(m => {
+                let score = 0;
+                if (m.mbti.includes(mbti)) score += 40;
+                m.gifts.forEach(g => { if (gifts.includes(g)) score += 15; });
+                m.heart.forEach(h => { if (hearts.includes(h)) score += 15; });
+                return {name: m.name, score: Math.min(98, score + Math.floor(Math.random()*5))};
+            });
+            results.sort((a,b)=>b.score-a.score);
+
+            let html = `<div class="card"><h3>${mbti} + ${gifts.join('、')} 的配對結果</h3>`;
+            results.slice(0,5).forEach((r,i) => {
+                html += `
+                    <div class="card">
+                        <div style="display:flex;justify-content:space-between;">
+                            <strong>${i+1}. ${r.name}</strong>
+                            <span style="color:#9b59b6;font-size:18px;">${r.score}%</span>
+                        </div>
+                        <div class="match-bar"><div class="match-fill" style="width:${r.score}%"></div></div>
+                    </div>`;
+            });
+            html += `</div><div style="text-align:center;margin-top:20px;"><button class="btn btn-primary" onclick="location.reload()">重新輸入</button></div>`;
+            document.getElementById('main').innerHTML = html;
+        }
+
+        // 顯示手動輸入表單
+        function showManualForm() {
+            let html = `
+                <div class="card">
+                    <h3>請手動輸入您的測驗結果（即使直接雙擊也能使用）</h3>
+                    <p><strong>MBTI 類型：</strong></p>
+                    <select id="mbti" style="width:100%;padding:8px;font-size:12px;">
+                        <option value="ENFJ">ENFJ</option><option value="ENFP">ENFP</option>
+                        <option value="INFJ">INFJ</option><option value="INFP">INFP</option>
+                        <option value="ENTJ">ENTJ</option><option value="ENTP">ENTP</option>
+                        <option value="INTJ">INTJ</option><option value="INTP">INTP</option>
+                        <option value="ESTJ">ESTJ</option><option value="ESFJ">ESFJ</option>
+                        <option value="ISTJ">ISTJ</option><option value="ISFJ">ISFJ</option>
+                        <option value="ESTP">ESTP</option><option value="ESFP">ESFP</option>
+                        <option value="ISTP">ISTP</option><option value="ISFP">ISFP</option>
+                    </select>
+                    <p style="margin-top:15px;"><strong>主要靈性恩賜（可複選）</strong></p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">
+                        <label><input type="checkbox" value="teaching"> 教導</label>
+                        <label><input type="checkbox" value="leadership"> 領導</label>
+                        <label><input type="checkbox" value="mercy"> 憐憫</label>
+                        <label><input type="checkbox" value="encouragement"> 勸化</label>
+                        <label><input type="checkbox" value="serving"> 服事</label>
+                        <label><input type="checkbox" value="prophecy"> 說預言</label>
+                    </div>
+                    <p style="margin-top:15px;"><strong>核心心志熱情（可複選）</strong></p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">
+                        <label><input type="checkbox" value="youth"> 青少年</label>
+                        <label><input type="checkbox" value="children"> 兒童</label>
+                        <label><input type="checkbox" value="worship"> 敬拜音樂</label>
+                        <label><input type="checkbox" value="mission"> 宣教</label>
+                        <label><input type="checkbox" value="prayer"> 代禱</label>
+                        <label><input type="checkbox" value="admin"> 行政</label>
+                    </div>
+                    <div style="text-align:center;margin-top:20px;">
+                        <button class="btn btn-primary" onclick="getManualInput()">開始配對</button>
+                    </div>
+                </div>`;
+            document.getElementById('main').innerHTML = html;
+        }
+
+        function getManualInput() {
+            const mbti = document.getElementById('mbti').value;
+            const gifts = Array.from(document.querySelectorAll('input[type=checkbox]:checked'))
+                              .filter(cb => ['teaching','leadership','mercy','encouragement','serving','prophecy'].includes(cb.value))
+                              .map(cb => cb.value);
+            const hearts = Array.from(document.querySelectorAll('input[type=checkbox]:checked'))
+                               .filter(cb => ['youth','children','worship','mission','prayer','admin'].includes(cb.value))
+                               .map(cb => cb.value);
+            calculateAndShow(mbti, gifts, hearts);
+        }
+
+        // 自動執行
+        window.onload = showManualForm;
+    </script>
+</body>
+</html>

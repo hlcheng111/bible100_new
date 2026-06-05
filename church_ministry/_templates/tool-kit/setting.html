@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TOOL_LABEL_ZH}} · 設定</title>
+  <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <link rel="stylesheet" href="_shared.css">
+  <script src="../../../js/church_auth.js"></script>
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../../js/data_trust_badge.js"></script>
+  <script src="tool.js"></script>
+</head>
+<body class="cm-tool-page">
+  <nav class="cm-back-bar">
+    <a class="cm-back-bar__link" href="index.html">← {{TOOL_LABEL_ZH}}</a>
+  </nav>
+  <header class="cm-tool-hero">
+    <h1>{{TOOL_LABEL_ZH}} · 設定</h1>
+    <p>參數 · 權限 · 工作流（僅 admin／pastor 可改）。</p>
+  </header>
+  <nav class="cm-tool-nav" aria-label="工具分頁" id="toolNav"></nav>
+  <div id="dataTrustMount"></div>
+  <main class="cm-tool-main">
+    <section class="cm-card">
+      <p class="cm-muted">目前角色：<strong id="roleLabel">—</strong></p>
+      <p class="cm-muted" style="margin:8px 0;">Bridge 契約（<code>tool.meta.json</code>）：</p>
+      <ul id="bridgeContract" style="font-size:11px;margin:0 0 12px;padding-left:18px;color:#475569;"></ul>
+      <p class="cm-muted">Demo 標記鍵：<code id="demoKeyLabel">{{TOOL_ID}}_demo_loaded_at</code> · 狀態：<strong id="demoStateLabel">—</strong></p>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin:12px 0;">
+        <input type="checkbox" id="optWorkflow"> 啟用 Phase1 工作流佇列（上雲時）
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin:12px 0;">
+        <input type="checkbox" id="optHitl" checked disabled> 通知僅 HITL 複製稿（強制 · 不會自動通知）
+      </label>
+      <button type="button" id="btnSaveSettings" class="cm-btn cm-btn-success">儲存設定</button>
+      <p id="settingStatus" class="cm-muted" style="margin-top:10px;"></p>
+    </section>
+    <section class="cm-card">
+      <h2 style="font-size:14px;margin:0 0 8px;">雲端雙存儲</h2>
+      <p class="cm-muted">儲存模式：<strong id="storageModeLabel">—</strong></p>
+      <p class="cm-muted">USE_API：<code id="useApiFlag">false</code> · 詳見 <code>js/cloud_config.js</code> 與總站 ⚡ 同步紀錄抽屜。</p>
+    </section>
+  </main>
+  <script>
+    document.getElementById('toolNav').innerHTML = ToolKit.renderToolNav('setting');
+    ToolKit.renderTrustBadge('dataTrustMount', {
+      write_behavior: 'manual_save',
+      notify_behavior: 'none',
+      data_state: ToolKit.isDemoLoaded() ? 'demo' : undefined
+    });
+    (function () {
+      var SETTINGS_KEY = '{{TOOL_ID}}_settings_v1';
+      var cfg = window.CHURCH_CLOUD_CONFIG || {};
+      document.getElementById('useApiFlag').textContent = cfg.USE_API ? 'true' : 'false';
+      var role = (window.ChurchAuth && ChurchAuth.getRole) ? (ChurchAuth.getRole() || 'offline-open') : 'offline-open';
+      document.getElementById('roleLabel').textContent = role;
+      document.getElementById('demoStateLabel').textContent = ToolKit.isDemoLoaded() ? '已載入 demo 標記' : '無 demo 標記';
+      if (window.DataTrustBadge && DataTrustBadge.getStorageModeLabel) {
+        var sm = DataTrustBadge.getStorageModeLabel();
+        document.getElementById('storageModeLabel').textContent = sm.zh + ' · ' + sm.storage;
+      }
+      var contract = document.getElementById('bridgeContract');
+      contract.innerHTML = '<li>read: 見 tool.meta.json → bridge.read</li><li>write: 見 tool.meta.json → bridge.write</li>';
+
+      try {
+        var saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+        if (saved.workflow) document.getElementById('optWorkflow').checked = !!saved.workflow;
+      } catch (e) {}
+
+      document.getElementById('btnSaveSettings').onclick = function () {
+        try {
+          if (window.ChurchAuth && ChurchAuth.assertCan) ChurchAuth.assertCan('crm.admin');
+        } catch (e) {
+          document.getElementById('settingStatus').textContent = '權限不足：' + e.message;
+          return;
+        }
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+          workflow: document.getElementById('optWorkflow').checked,
+          hitl_only: true,
+          updated_at: new Date().toISOString()
+        }));
+        document.getElementById('settingStatus').textContent = '已儲存本機設定。';
+        ToolKit.notifySync();
+      };
+    })();
+  </script>
+</body>
+</html>

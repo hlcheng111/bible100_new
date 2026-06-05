@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖經一百步 - 智慧型工作檯 (一體化版本)</title>
+    <style>
+        :root {
+            --primary: #27ae60;    /* 聖經綠 */
+            --dark: #2c3e50;       /* 深藍灰 */
+            --accent: #e67e22;     /* 亮橙色 */
+            --bg: #f4f7f6;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* 工作檯外殼 */
+        .workbench {
+            width: 100%;
+            max-width: 800px;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+
+        /* 頂部控制列 */
+        .control-bar {
+            background: var(--dark);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .control-bar label {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .control-bar select {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 16px;
+            min-width: 200px;
+            cursor: pointer;
+        }
+
+        /* Tab 導航列 */
+        .tab-nav {
+            display: flex;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: bold;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+            font-size: 15px;
+        }
+
+        .tab-btn:hover {
+            background: #f9f9f9;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            background: #f0fff4;
+        }
+
+        /* 內容顯示區 */
+        .content-zone {
+            padding: 25px;
+            min-height: 350px;
+        }
+
+        .tab-panel {
+            display: none;
+            line-height: 1.7;
+        }
+
+        .tab-panel.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 影音區容器 (16:9) */
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* AI 拼裝車內部樣式 */
+        .ai-box {
+            background: #f9fbf9;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e0eadd;
+        }
+
+        .ai-box h4 { margin-top: 0; color: var(--primary); }
+
+        .prompt-textarea {
+            width: 100%;
+            height: 120px;
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: #fdfdfd;
+            font-family: monospace;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        /* 按鈕樣式 */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #219150; }
+        .btn-secondary { background: #3498db; color: white; }
+        .btn-secondary:hover { background: #2980b9; }
+
+        @media (max-width: 600px) {
+            .control-bar { flex-direction: column; align-items: flex-start; }
+            .control-bar select { width: 100%; }
+        }
+    </style>
+  <script src="../assets/js/lab-frame-nav.js"></script>
+</head>
+<body>
+
+<div class="workbench">
+    <div class="control-bar">
+        <label for="step-picker">📍 教材進度：</label>
+        <select id="step-picker" onchange="syncData()">
+            <option value="20">Step 20: 耶穌受洗 (The Baptism of Jesus)</option>
+            <option value="45">Step 45: 保羅第一次宣教 (Paul's 1st Journey)</option>
+            <option value="100">Step 100: 新天新地 (The New Creation)</option>
+        </select>
+    </div>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab(event, 'tab-bible')">📖 經文背景</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-media')">🎬 影音教材</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-ai')">🤖 AI 拼裝車</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-quiz')">📝 課後測驗</button>
+    </div>
+
+    <div class="content-zone">
+        
+        <div id="tab-bible" class="tab-panel active">
+            <h2 id="display-title" style="color: var(--primary); margin-top: 0;"></h2>
+            <p id="display-desc"></p>
+            <div id="display-ref" style="background:#eee; padding:10px; border-left:5px solid var(--primary); font-style:italic;"></div>
+        </div>
+
+        <div id="tab-media" class="tab-panel">
+            <div class="video-container">
+                <iframe id="youtube-frame" src="" allowfullscreen></iframe>
+            </div>
+            <p style="text-align:center; color:#888; font-size:0.85em; margin-top:10px;">🌐 需連接網絡以觀看 YouTube 影片</p>
+        </div>
+
+        <div id="tab-ai" class="tab-panel">
+            <div class="ai-box">
+                <h4>🤖 智慧 Prompt 生成器</h4>
+                <label>選擇教學重點 (OIA)：</label>
+                <select id="oia-goal" style="width:100%; padding:8px; margin:10px 0;">
+                    <option value="觀察 (Observation)">觀察 (O) - 著重歷史背景與細節</option>
+                    <option value="解釋 (Interpretation)">解釋 (I) - 著重神學意義與真理</option>
+                    <option value="應用 (Application)">應用 (A) - 著重生活實踐與反思</option>
+                </select>
+                
+                <button class="btn btn-primary" onclick="buildPrompt()">✨ 生成專屬 AI 指令</button>
+                <textarea id="prompt-output" class="prompt-textarea" readonly placeholder="指令將顯示在此處..."></textarea>
+                <button class="btn btn-secondary" onclick="copyToClipboard()">📋 複製指令 (貼往 ChatGPT/Kimi)</button>
+            </div>
+        </div>
+
+        <div id="tab-quiz" class="tab-panel">
+            <h3 style="border-bottom:1px solid #eee; padding-bottom:10px;">🧠 知識檢測</h3>
+            <div id="quiz-content"></div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /* 數據資料庫 - 未來可外連至 bible100_data.js */
+    const bibleData = {
+        "20": {
+            title: "第 20 步：耶穌受洗",
+            desc: "耶穌受了洗，隨即從水裡上來。天忽然為他開了，他就看見上帝的靈彷彿鴿子降下，落在他身上。天上有聲音說：『這是我的愛子，我所喜悅的。』",
+            ref: "馬太福音 3:13-17",
+            video: "S2p6I_vM6cI",
+            quiz: ["1. 耶穌在哪裡受洗？", "2. 聖靈以什麼形狀降下？", "3. 天父對耶穌的稱呼是什麼？"]
+        },
+        "45": {
+            title: "第 45 步：保羅第一次宣教",
+            desc: "巴拿巴和掃羅受聖靈差遣，下到西流基，從那裡坐船往塞浦路斯去。他們在撒拉米奉傳上帝的道。",
+            ref: "使徒行傳 13:1-5",
+            video: "f9S3_G6-q9U",
+            quiz: ["1. 保羅第一站去了哪裡？", "2. 誰與保羅同工？", "3. 他們是受誰差遣？"]
+        },
+        "100": {
+            title: "第 100 步：新天新地",
+            desc: "我又看見一個新天新地；因為先前的天地已經過去了。上帝要擦去他們一切的眼淚；不再有死亡，也不再有悲哀。",
+            ref: "啟示錄 21:1-5",
+            video: "8uEa5O22i2w",
+            quiz: ["1. 誰由上帝那裡從天而降？", "2. 為什麼不再有悲哀？", "3. 上帝將一切都變成怎樣了？"]
+        }
+    };
+
+    /* 1. 數據同步函數 */
+    function syncData() {
+        const step = document.getElementById('step-picker').value;
+        const data = bibleData[step];
+
+        // 更新文字
+        document.getElementById('display-title').innerText = data.title;
+        document.getElementById('display-desc').innerText = data.desc;
+        document.getElementById('display-ref').innerText = "📖 參考經文：" + data.ref;
+        
+        // 更新影片
+        document.getElementById('youtube-frame').src = "https://www.youtube.com/embed/" + data.video;
+
+        // 更新測驗
+        let quizHtml = "";
+        data.quiz.forEach(q => quizHtml += `<p style="padding:10px; background:#f9f9f9; border-radius:4px; margin-bottom:8px;">${q}</p>`);
+        document.getElementById('quiz-content').innerHTML = quizHtml;
+
+        // 重置 Prompt
+        document.getElementById('prompt-output').value = "";
+    }
+
+    /* 2. Tab 切換函數 */
+    function switchTab(evt, tabId) {
+        // 隱藏所有面板
+        const panels = document.querySelectorAll('.tab-panel');
+        panels.forEach(p => p.classList.remove('active'));
+
+        // 移除所有按鈕激活狀態
+        const btns = document.querySelectorAll('.tab-btn');
+        btns.forEach(b => b.classList.remove('active'));
+
+        // 顯示當前面板並激活按鈕
+        document.getElementById(tabId).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    }
+
+    /* 3. AI Prompt 生成邏輯 */
+    function buildPrompt() {
+        const stepName = document.getElementById('step-picker').options[document.getElementById('step-picker').selectedIndex].text;
+        const oiaType = document.getElementById('oia-goal').value;
+        
+        const prompt = `你是一位精通《新約精覽》的神學教育專家。
+請針對「${stepName}」這一課，以「${oiaType}」為教學重心。
+請提供：
+1. 針對初學者的深入淺出解釋。
+2. 三個能啟發討論的問題。
+3. 一個實際的生命應用方向。
+請用繁體中文回答。`;
+
+        document.getElementById('prompt-output').value = prompt;
+    }
+
+    /* 4. 複製到剪貼簿 */
+    function copyToClipboard() {
+        const output = document.getElementById("prompt-output");
+        if (!output.value) {
+            alert("請先生成指令！");
+            return;
+        }
+        output.select();
+        document.execCommand("copy");
+        alert("✅ 指令已複製！請直接貼往 ChatGPT 或 Kimi 使用。");
+    }
+
+    /* 頁面加載後自動執行初始化 */
+    window.onload = syncData;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>效果趨勢分析 · Effectiveness Trends | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <script src="../../assets/js/chart.min.js"></script>
+    <link rel="stylesheet" href="../../assets/css/fontawesome.min.css">
+</head>
+<body class="bg-gray-50 cm-research-page">
+    <nav class="cm-back-bar" aria-label="區域導覽">
+      <a class="cm-back-bar__link" href="../../dashboard.html">⛪ 返回教會事工</a>
+      <span class="cm-back-bar__muted">研究與統計</span>
+    </nav>
+    <p class="cm-data-banner" role="status"><strong>資料來源：</strong><span id="cm-data-source-line">讀取中…</span></p>
+    <div class="cm-kpi-row" aria-label="即時匯總（ChurchDataBridge）">
+      <span class="cm-kpi-pill">會友 <b id="cm-kpi-members">—</b></span>
+      <span class="cm-kpi-pill">小組 <b id="cm-kpi-groups">—</b></span>
+      <span class="cm-kpi-pill">探訪任務 <b id="cm-kpi-missions">—</b></span>
+      <span class="cm-kpi-pill">志工指派 <b id="cm-kpi-volunteers">—</b></span>
+      <span class="cm-kpi-pill">財務結餘 <b id="cm-kpi-finance-balance">—</b></span>
+    </div>
+    <div class="container mx-auto px-4 py-6">
+        <!-- 页面标题 -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-chart-line text-blue-600 mr-2"></i>效果趨勢分析
+            </h1>
+            <p class="text-gray-600">分析教會各項事工的效果趨勢和發展方向</p>
+        </div>
+
+        <!-- 效果概览卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-full">
+                        <i class="fas fa-arrow-up text-green-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">整體效果</p>
+                        <p class="text-xl font-semibold text-gray-800">85.2%</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-green-600">↑ 2.3%</span>
+                    <span class="text-xs text-gray-500 ml-1">較上月</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-full">
+                        <i class="fas fa-users text-blue-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">參與度</p>
+                        <p class="text-xl font-semibold text-gray-800">78.5%</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-blue-600">↑ 1.8%</span>
+                    <span class="text-xs text-gray-500 ml-1">較上月</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-full">
+                        <i class="fas fa-heart text-purple-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">滿意度</p>
+                        <p class="text-xl font-semibold text-gray-800">92.1%</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-purple-600">↑ 0.9%</span>
+                    <span class="text-xs text-gray-500 ml-1">較上月</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-orange-100 rounded-full">
+                        <i class="fas fa-target text-orange-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">達成率</p>
+                        <p class="text-xl font-semibold text-gray-800">88.7%</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-orange-600">↑ 3.1%</span>
+                    <span class="text-xs text-gray-500 ml-1">較上月</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 效果趋势图表 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 整体效果趋势 -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">整體效果趨勢</h3>
+                <canvas id="overallEffectChart" height="300"></canvas>
+            </div>
+
+            <!-- 各事工效果对比 -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">各事工效果對比</h3>
+                <canvas id="ministryEffectChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- 效果分析表格 -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">效果分析詳情</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">事工項目</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">當前效果</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">趨勢</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">參與人數</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">滿意度</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">改進建議</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-pray text-blue-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">禱告會</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">優秀</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-green-600 text-sm">↑ 上升</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">45人</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">94%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">增加互動環節</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-book text-green-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">聖經學習</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">良好</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-blue-600 text-sm">→ 穩定</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">38人</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">87%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">豐富討論內容</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-hands-helping text-purple-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">關懷事工</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">一般</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-yellow-600 text-sm">↓ 下降</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">25人</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">72%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">加強培訓和支援</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 效果预测 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">效果預測分析</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-600 mb-2">短期 (1-3個月)</div>
+                    <div class="text-sm text-gray-600 mb-2">預測效果提升</div>
+                    <div class="text-lg font-semibold text-blue-800">3-5%</div>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <div class="text-2xl font-bold text-green-600 mb-2">中期 (3-6個月)</div>
+                    <div class="text-sm text-gray-600 mb-2">預測效果提升</div>
+                    <div class="text-lg font-semibold text-green-800">8-12%</div>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <div class="text-2xl font-bold text-purple-600 mb-2">長期 (6-12個月)</div>
+                    <div class="text-sm text-gray-600 mb-2">預測效果提升</div>
+                    <div class="text-lg font-semibold text-purple-800">15-20%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 整体效果趋势图表
+        const overallEffectCtx = document.getElementById('overallEffectChart').getContext('2d');
+        new Chart(overallEffectCtx, {
+            type: 'line',
+            data: {
+                labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                datasets: [{
+                    label: '整體效果 (%)',
+                    data: [78, 80, 82, 83, 84, 85.2],
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: '參與度 (%)',
+                    data: [72, 74, 75, 76, 77, 78.5],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 60,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // 各事工效果对比图表
+        const ministryEffectCtx = document.getElementById('ministryEffectChart').getContext('2d');
+        new Chart(ministryEffectCtx, {
+            type: 'radar',
+            data: {
+                labels: ['禱告會', '聖經學習', '關懷事工', '敬拜讚美', '兒童主日學', '青年團契'],
+                datasets: [{
+                    label: '當前效果',
+                    data: [94, 87, 72, 89, 91, 85],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    pointBackgroundColor: 'rgb(59, 130, 246)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(59, 130, 246)'
+                }, {
+                    label: '目標效果',
+                    data: [95, 90, 85, 92, 95, 90],
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                    pointBackgroundColor: 'rgb(239, 68, 68)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(239, 68, 68)'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    </script>
+
+<script src="../../../js/church_data_bridge.js"></script>
+<script src="../../js/cm_research_snapshot.js"></script>
+<script>document.addEventListener("DOMContentLoaded",function(){if(window.CMResearchSnapshot)CMResearchSnapshot.initPage();});</script>
+
+</body>
+</html>

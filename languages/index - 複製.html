@@ -1,0 +1,267 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bible 100 Steps Four Treasures - 多语言控制器</title>
+  <style type="text/css">
+    body { 
+      margin: 0; 
+      padding: 0; 
+      font-family: "Microsoft YaHei", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; 
+      background:#f6f7fb; 
+      font-size: 12px;
+    }
+    
+    /* Topbar */
+    .topbar { 
+      position: fixed; 
+      top:0; 
+      left:0; 
+      right:0; 
+      height:55px; 
+      background:#0b5fa5; 
+      color:#fff; 
+      border-bottom:3px solid #2aa5ff; 
+      z-index:999; 
+    }
+    
+    .topbar-inner { 
+      display: table; 
+      width:100%; 
+      height:55px; 
+    }
+    
+    .brand { 
+      display: table-cell; 
+      vertical-align: middle; 
+      padding-left:14px; 
+      font-weight:bold; 
+      font-size:13px; 
+    }
+    
+    .lang { 
+      display: table-cell; 
+      vertical-align: middle; 
+      text-align:right; 
+      padding-right:10px; 
+    }
+    
+    .lang a { 
+      display:inline-block; 
+      margin:0 2px; 
+      padding:4px 6px; 
+      background:#2aa5ff; 
+      color:#fff; 
+      text-decoration:none; 
+      border-radius:3px; 
+      font-weight:bold; 
+      font-size: 11px;
+      transition: all 0.2s ease;
+    }
+    
+    .lang a.active { 
+      background:#00b894; 
+    }
+    
+    .lang a:hover { 
+      filter:brightness(1.1); 
+      transform: translateY(-1px);
+    }
+
+    /* Main area with 2 iframes */
+    .main { 
+      margin-top: 55px; 
+    }
+    
+    table.layout { 
+      width: 100%; 
+      height: calc(100vh - 55px); 
+      border-collapse: collapse; 
+      table-layout: fixed; 
+    }
+    
+    td.left { 
+      width: 200px; /* 调整为更合适的sidebar宽度 */
+      background: #eef6ff; 
+      border-right: 2px solid #2aa5ff; 
+      vertical-align: top; 
+    }
+    
+    td.right { 
+      vertical-align: top; 
+    }
+    
+    iframe { 
+      border: 0; 
+      width: 100%; 
+      height: 100%; 
+    }
+    
+    #sidebarFrame { 
+      background: #eef6ff; 
+    }
+    
+    #contentFrame { 
+      background: #ffffff; 
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .brand {
+        font-size: 11px;
+        padding-left: 10px;
+      }
+      
+      .lang a {
+        padding: 3px 5px;
+        margin: 0 1px;
+        font-size: 10px;
+      }
+      
+      td.left {
+        width: 180px;
+      }
+      
+      .topbar-inner {
+        height: 45px;
+      }
+      
+      .topbar {
+        height: 45px;
+      }
+      
+      .main {
+        margin-top: 45px;
+      }
+      
+      table.layout {
+        height: calc(100vh - 45px);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .brand {
+        font-size: 10px;
+        padding-left: 6px;
+      }
+      
+      .lang a {
+        padding: 2px 4px;
+        margin: 0 1px;
+        font-size: 9px;
+      }
+      
+      td.left {
+        width: 160px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">📚 Bible 100 Steps Four Treasures - 多语言控制器</div>
+      <div class="lang">
+        <a href="#" data-lang="cn">中文 (CN)</a>
+        <a href="#" data-lang="en">English (EN)</a>
+        <a href="#" data-lang="vi">Tiếng Việt (VN)</a>
+        <a href="#" data-lang="id">Bahasa Indonesia (ID)</a>
+        <a href="#" data-lang="ch">Children's (CH)</a>
+        <a href="#" data-lang="ad">Advanced (AD)</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <table class="layout">
+      <tr>
+        <td class="left">
+          <iframe id="sidebarFrame" name="sidebarFrame" title="Sidebar"></iframe>
+        </td>
+        <td class="right">
+          <iframe id="contentFrame" name="contentFrame" title="Content"></iframe>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <script type="text/javascript">
+    // Map language to page and default landing page
+    var langMap = {
+      cn: { page: 'index_cn.html', first: 'landP_cn.html' },
+      en: { page: 'index_en.html', first: 'landP_en.html' },
+      vi: { page: 'index_vi.html', first: 'landP_vi.html' },
+      id: { page: 'index_id.html', first: 'landP_id.html' },
+      ch: { page: 'index_ch.html', first: 'landP_ch.html' },
+      ad: { page: 'index_ad.html', first: 'landP_ad.html' }
+    };
+
+    function setActive(lang) {
+      var links = document.querySelectorAll('.lang a');
+      for (var i = 0; i < links.length; i++) {
+        if (links[i].getAttribute('data-lang') === lang) {
+          links[i].className = 'active';
+        } else {
+          links[i].className = '';
+        }
+      }
+    }
+
+    function switchLanguage(lang) {
+      var info = langMap[lang];
+      if (!info) return;
+      setActive(lang);
+      
+      // Load sidebar page
+      var sf = document.getElementById('sidebarFrame');
+      sf.src = info.page + '?mode=sidebar';
+      
+      // Load the landing page for this language
+      document.getElementById('contentFrame').src = info.first;
+    }
+
+    // Wire up topbar clicks
+    function initTopbar() {
+      var links = document.querySelectorAll('.lang a');
+      for (var i = 0; i < links.length; i++) {
+        links[i].onclick = function(ev) {
+          ev.preventDefault();
+          switchLanguage(this.getAttribute('data-lang'));
+        };
+      }
+    }
+
+    // 初始化頁面
+    function initPage() {
+      console.log('初始化父頁面...');
+      
+      // 設置頂部導航
+      initTopbar();
+      
+      // 等待 iframe 載入完成後設置
+      var sidebarFrame = document.getElementById('sidebarFrame');
+      var contentFrame = document.getElementById('contentFrame');
+      
+      sidebarFrame.onload = function() {
+        console.log('Sidebar iframe 已載入');
+      };
+      
+      contentFrame.onload = function() {
+        console.log('Content iframe 已載入');
+      };
+      
+      // Default language: CN (Chinese) - 載入中文版首頁
+      console.log('載入預設語言: CN');
+      switchLanguage('cn');
+    }
+
+    // 當 DOM 載入完成後初始化
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPage);
+    } else {
+      initPage();
+    }
+  </script>
+</body>
+</html>

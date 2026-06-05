@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>敬拜团队管理 · Worship Team Management | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+        .header { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; padding: 15px 20px; }
+        .header h1 { font-size: 20px; }
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
+        .tab.active { background: white; color: #9b59b6; font-weight: 600; }
+        .container { max-width: 1800px; margin: 0 auto; padding: 15px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; border-left: 4px solid #9b59b6; padding-left: 10px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; margin-right: 5px; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; position: relative; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+        .form-input, .form-select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
+        <h1>🎵 敬拜团队管理</h1>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('members')">👥 成员</button>
+            <button class="tab" onclick="switchTab('schedule')">📅 排班</button>
+            <button class="tab" onclick="switchTab('songs')">🎵 曲目</button>
+        </div>
+                        </div>
+    <div class="container">
+        <div id="tab-members" class="tab-content active">
+            <div class="card">
+                <div class="card-title">👥 团队成员</div>
+                <button class="btn" onclick="showAddMemberModal()">➕ 新增成员</button>
+                <table id="membersTable"><thead><tr><th>姓名</th><th>职位</th><th>服事次数</th><th>操作</th></tr></thead><tbody></tbody></table>
+            </div>
+        </div>
+        <div id="tab-schedule" class="tab-content">
+            <div class="card">
+                <div class="card-title">📅 本月排班</div>
+                <button class="btn" onclick="showAddScheduleModal()">➕ 新增排班</button>
+                <table id="scheduleTable"><thead><tr><th>日期</th><th>主领</th><th>键盘</th><th>吉他</th><th>鼓手</th></tr></thead><tbody></tbody></table>
+            </div>
+        </div>
+        <div id="tab-songs" class="tab-content">
+            <div class="card">
+                <div class="card-title">🎵 曲目库</div>
+                <button class="btn" onclick="showAddSongModal()">➕ 新增曲目</button>
+                <table id="songsTable"><thead><tr><th>歌名</th><th>调号</th><th>速度</th><th>使用次数</th></tr></thead><tbody></tbody></table>
+            </div>
+        </div>
+    </div>
+    <div id="modal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+    <script>
+        let data = { members: [], schedules: [], songs: [] };
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('worshipTeamData');
+            if (saved) data = JSON.parse(saved);
+            if (data.members.length === 0) loadDemo();
+            renderAll();
+        });
+        function loadDemo() {
+            data.members = [{id:1,name:'王弟兄',position:'主领',count:15},{id:2,name:'李姊妹',position:'键盘',count:12}];
+            data.schedules = [{id:1,date:'2025-10-13',lead:'王弟兄',keyboard:'李姊妹',guitar:'张弟兄',drums:'陈弟兄'}];
+            data.songs = [{id:1,name:'赞美之泉',key:'G',tempo:'中速',count:20}];
+            localStorage.setItem('worshipTeamData', JSON.stringify(data));
+            renderAll();
+        }
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+        }
+        function renderAll() {
+            document.querySelector('#membersTable tbody').innerHTML = data.members.map(m => `<tr><td>${m.name}</td><td>${m.position}</td><td>${m.count}次</td><td><button class="btn btn-sm" onclick="deleteMember(${m.id})">删除</button></td></tr>`).join('');
+            document.querySelector('#scheduleTable tbody').innerHTML = data.schedules.map(s => `<tr><td>${s.date}</td><td>${s.lead}</td><td>${s.keyboard}</td><td>${s.guitar}</td><td>${s.drums}</td></tr>`).join('');
+            document.querySelector('#songsTable tbody').innerHTML = data.songs.map(s => `<tr><td>${s.name}</td><td>${s.key}</td><td>${s.tempo}</td><td>${s.count}次</td></tr>`).join('');
+        }
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;font-weight:600;margin-bottom:20px;">${title}</div>${content}`;
+            document.getElementById('modal').classList.add('active');
+        }
+        function closeModal() { document.getElementById('modal').classList.remove('active'); }
+        function showAddMemberModal() {
+            showModal('➕ 新增成员', `<div class="form-group"><label class="form-label">姓名</label><input type="text" id="mname" class="form-input"></div><div class="form-group"><label class="form-label">职位</label><select id="mposition" class="form-select"><option>主领</option><option>键盘</option><option>吉他</option><option>贝斯</option><option>鼓手</option></select></div><button class="btn" onclick="addMember()">确定</button>`);
+        }
+        function addMember() {
+            data.members.push({id:Date.now(),name:document.getElementById('mname').value,position:document.getElementById('mposition').value,count:0});
+            localStorage.setItem('worshipTeamData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 已添加！');
+        }
+        function deleteMember(id) {
+            if (confirm('删除？')) {
+                data.members = data.members.filter(m => m.id !== id);
+                localStorage.setItem('worshipTeamData', JSON.stringify(data));
+                renderAll();
+            }
+        }
+        function showAddScheduleModal() { showModal('➕ 新增排班', `<div class="form-group"><label>日期</label><input type="date" id="sdate" class="form-input"></div><button class="btn" onclick="addSchedule()">确定</button>`); }
+        function addSchedule() { alert('功能完成中'); closeModal(); }
+        function showAddSongModal() { showModal('➕ 新增曲目', `<div class="form-group"><label>歌名</label><input type="text" id="sname" class="form-input"></div><button class="btn" onclick="addSong()">确定</button>`); }
+        function addSong() { alert('功能完成中'); closeModal(); }
+    </script>
+</body>
+</html>

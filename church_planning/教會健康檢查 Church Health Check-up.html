@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⛪ 教會健康數位診斷系統 | Church Health Check-up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap');
+        body { font-family: 'Noto Sans SC', sans-serif; scroll-behavior: smooth; background: #f8fafc; }
+        .bg-church { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .btn-primary { background: linear-gradient(to right, #4f46e5, #7c3aed); transition: transform 0.2s; }
+        .btn-primary:hover { transform: scale(1.02); }
+        input[type="radio"]:checked + span { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body class="text-slate-800">
+
+<div id="app" class="min-h-screen pb-12">
+    <nav class="bg-church p-6 text-white text-center shadow-lg mb-8">
+        <h1 class="text-2xl md:text-3xl font-bold italic">Church Health Pro ⛪</h1>
+        <p class="text-sm opacity-80 mt-1">「以人為本，以健康為終點」的成長診斷工具</p>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4">
+        
+        <div v-if="step === 0" class="glass-card p-8 animate-fadeIn">
+            <h2 class="text-2xl font-bold mb-4 border-l-4 border-indigo-500 pl-3">📘 問卷理念簡介</h2>
+            <div class="bg-indigo-50 p-4 rounded-xl text-sm leading-relaxed mb-8">
+                這套工具側重於實務操作與目標導向的自我評估。核心理念是「生物性原理」：當教會的每個肢體（範疇）都健康時，增長將是自然的結果。我們不是在尋找完美的計畫，而是在尋找更好、更健康的人。
+            </div>
+
+            <h2 class="text-2xl font-bold mb-6 border-l-4 border-indigo-500 pl-3">📋 1. 教會背景資料</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div><label class="block text-sm font-bold mb-2">教會名稱</label>
+                     <input v-model="churchInfo.name" type="text" class="w-full border-2 border-slate-200 rounded-lg p-3 outline-none focus:border-indigo-500 transition"></div>
+                <div><label class="block text-sm font-bold mb-2">建立年份</label>
+                     <input v-model="churchInfo.year" type="number" class="w-full border-2 border-slate-200 rounded-lg p-3 outline-none"></div>
+                <div><label class="block text-sm font-bold mb-2">現有信徒人數</label>
+                     <select v-model="churchInfo.size" class="w-full border-2 border-slate-200 rounded-lg p-3">
+                         <option value="10">微型 (10人左右)</option>
+                         <option value="100">小型 (100人左右)</option>
+                         <option value="500">中型 (500人左右)</option>
+                         <option value="1000">大型 (1000人以上)</option>
+                     </select></div>
+                <div><label class="block text-sm font-bold mb-2">主要年齡分布</label>
+                     <select v-model="churchInfo.age" class="w-full border-2 border-slate-200 rounded-lg p-3">
+                         <option value="mixed">跨代均衡</option>
+                         <option value="young">青年/學生為主</option>
+                         <option value="mid">壯年為主</option>
+                         <option value="elder">長輩為主</option>
+                     </select></div>
+            </div>
+            <button @click="startSurvey" class="w-full btn-primary text-white py-4 rounded-xl font-bold shadow-lg">開始診斷 🚀</button>
+        </div>
+
+        <div v-if="step >= 1 && step <= 7" class="glass-card p-6 md:p-10 relative">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-indigo-600 font-bold uppercase tracking-widest text-sm">Category {{step}}/7</h3>
+                    <h2 class="text-3xl font-bold">{{ categories[step-1].name }}</h2>
+                </div>
+                <button @click="resetCurrent" class="text-slate-400 text-xs hover:text-red-500 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    重置本頁 (Reset)
+                </button>
+            </div>
+
+            <div v-for="(q, idx) in categories[step-1].questions" :key="idx" class="mb-10 p-5 bg-slate-50 rounded-2xl border-l-4 border-transparent hover:border-indigo-400 transition">
+                <p class="text-lg font-medium mb-1">{{ idx+1 }}. {{ q.cn }}</p>
+                <p class="text-xs text-slate-400 italic mb-5">{{ q.en }}</p>
+                
+                <div class="flex flex-wrap justify-between gap-2 max-w-md mx-auto">
+                    <label v-for="n in 5" :key="n" class="cursor-pointer">
+                        <input type="radio" :name="step+'-'+idx" :value="n" v-model="answers[step-1][idx]" class="hidden">
+                        <span class="w-12 h-12 flex items-center justify-center rounded-xl border-2 border-slate-200 font-bold hover:border-indigo-300 transition-all">{{ n }}</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex gap-4 mt-8">
+                <button @click="prevStep" class="flex-1 py-4 bg-slate-200 text-slate-600 rounded-xl font-bold">上一步</button>
+                <button @click="nextStep" class="flex-1 btn-primary text-white py-4 rounded-xl font-bold shadow-md">下一步 (Next)</button>
+            </div>
+            
+            <p class="text-center text-xs text-slate-400 mt-6">⚠️ 每頁 10 題必須全部評分才可進入下一範疇。</p>
+        </div>
+
+        <div id="final-report" v-if="step === 8" class="glass-card p-6 md:p-12 animate-fadeIn">
+            
+            <div class="flex justify-between items-start border-b pb-6 mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-800">{{ churchInfo.name }}</h2>
+                    <p class="text-slate-500">診斷日期：{{ today }} | 建立年份：{{ churchInfo.year }}</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm font-bold text-indigo-600 uppercase">總體健康得分</div>
+                    <div class="text-5xl font-black">{{ overallScore }}</div>
+                </div>
+            </div>
+
+            <div class="mb-12 bg-white p-6 rounded-3xl shadow-inner border border-slate-100">
+                <h3 class="text-center font-bold text-slate-400 mb-4 tracking-widest">📋 七大範疇健康剖面圖 (Profile)</h3>
+                <canvas id="healthRadar"></canvas>
+            </div>
+
+            <div :class="['p-8 rounded-3xl mb-12 flex items-center gap-6', getHealthZone(overallScore).bg]">
+                <div class="text-6xl">{{ getHealthZone(overallScore).emoji }}</div>
+                <div>
+                    <h3 class="text-2xl font-bold mb-1">{{ getHealthZone(overallScore).label }}</h3>
+                    <p class="opacity-90">{{ getHealthZone(overallScore).desc }}</p>
+                </div>
+            </div>
+
+            <div class="space-y-12 mb-12">
+                <h3 class="text-2xl font-black flex items-center">
+                    <span class="w-2 h-8 bg-indigo-500 mr-3"></span> 全範疇深度建議报告
+                </h3>
+                
+                <div v-for="(cat, idx) in categories" :key="idx" class="relative pl-8 border-l-2 border-slate-200">
+                    <div class="absolute -left-2.5 top-0 w-5 h-5 rounded-full border-4 border-white shadow-sm" :style="{backgroundColor: getHealthZone(categoryScores[idx]).color}"></div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-xl font-bold">{{ cat.name }} <small class="text-slate-400">Score: {{ categoryScores[idx] }}</small></h4>
+                        <span :class="['px-3 py-1 rounded-full text-xs font-bold', getHealthZone(categoryScores[idx]).bg, getHealthZone(categoryScores[idx]).text]">
+                            {{ getHealthZone(categoryScores[idx]).label }}
+                        </span>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-4">
+                        <p class="text-indigo-600 font-bold text-sm mb-2 italic">🔍 現況診斷：</p>
+                        <p class="text-slate-600 text-sm mb-4">{{ getDetailedDiagnosis(cat.name, categoryScores[idx]) }}</p>
+                        <p class="text-emerald-600 font-bold text-sm mb-2 italic">🚀 具體改善建議：</p>
+                        <ul class="list-disc ml-5 space-y-1 text-sm text-slate-700">
+                            <li v-for="tip in getDetailedTips(cat.name, categoryScores[idx])">{{ tip }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="no-print mb-12">
+                <button @click="showRaw = !showRaw" class="text-indigo-600 text-sm underline">{{ showRaw ? '隱藏' : '查看' }}原始填寫數據 (唯讀)</button>
+                <div v-if="showRaw" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div v-for="(cat, cIdx) in categories" class="text-xs bg-slate-50 p-4 rounded-xl">
+                        <p class="font-bold border-b mb-2">{{ cat.name }}</p>
+                        <div v-for="(ans, aIdx) in answers[cIdx]" class="flex justify-between py-1">
+                            <span>Q{{ aIdx+1 }}</span> <span>Score: {{ ans }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="education-part" class="mt-12 pt-12 border-t-4 border-slate-100 text-slate-500 text-xs leading-relaxed">
+                <h3 class="text-sm font-bold text-slate-800 mb-4">📖 教育附件：了解教會健康檢查 (教材)</h3>
+                <p class="mb-4">神的方法是「人」：引用 E. M. Bounds 的話，強調教會往往過於追求更好的「方法、計畫、組織」，但神尋找的是「更好的人」。</p>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><strong>1. 核心理念：</strong> 以健康帶動繁殖。當教會整體生命質素提升，增長將是自然的結果。</div>
+                    <div><strong>2. 定期測量：</strong> 發展結構是為了讓福音前進，因此需持續檢查健康狀況。</div>
+                </div>
+                <p class="font-bold text-slate-800">操作方法：</p>
+                <p>對齊共識：領袖團隊應針對最低得分的「最短木板」進行集體討論。設定未來 3-6 個月的優先處理事項，將主觀感覺轉向數據支持的決策。</p>
+            </div>
+
+            <div class="flex gap-4 no-print mt-12">
+                <button @click="resetAll" class="flex-1 py-4 bg-slate-200 text-slate-600 rounded-xl font-bold">重置全部數據</button>
+                <button @click="downloadPDF" class="flex-1 bg-emerald-500 text-white py-4 rounded-xl font-bold shadow-lg">📥 下載完整 PDF 報告</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+    data() {
+        return {
+            step: 0,
+            showRaw: false,
+            today: new Date().toLocaleDateString(),
+            churchInfo: { name: '', year: 2000, size: '100', age: 'mixed' },
+            categories: [
+                { id: 'evangelism', name: '佈道', en: 'Evangelism', questions: [
+                    { cn: "成員向他人分享信仰並邀請他們。", en: "Members share faith and invite others." },
+                    { cn: "教會強調為未信者祈禱。", en: "Emphasizes prayer for spiritually lost." },
+                    { cn: "有完善的新人接待與跟進系統。", en: "System for greeting and follow-up." },
+                    { cn: "定期培訓個人佈道技巧。", en: "Regular evangelism training." },
+                    { cn: "有計畫地聯繫並邀請訪客。", en: "Plan to identify and contact guests." },
+                    { cn: "鼓勵成員投資社交網絡中的關係。", en: "Encourage investing in social networks." },
+                    { cn: "定期舉辦外展活動。", en: "Regular outreach events." },
+                    { cn: "具備「邀請」的文化。", en: "Culture of inviting." },
+                    { cn: "每季至少舉行一次洗禮。", en: "Baptism celebrated quarterly." },
+                    { cn: "了解社區人口特徵與需求。", en: "Aware of community demographics." }
+                ]},
+                { id: 'discipleship', name: '門徒訓練', en: 'Discipleship', questions: [
+                    { cn: "牧者在講台上強調門訓的重要性。", en: "Pastor emphasizes discipleship from pulpit." },
+                    { cn: "根據屬靈恩賜培訓領袖。", en: "Leaders trained by spiritual gifts." },
+                    { cn: "小組長定期參加領袖會議。", en: "Leaders attend planned meetings." },
+                    { cn: "提供新友/新信徒階梯課程。", en: "New members class available." },
+                    { cn: "有清楚的信徒成長成熟計畫。", en: "Clear plan for spiritual maturity." },
+                    { cn: "成員清楚知道下一個成長步驟。", en: "Members know next steps to grow." },
+                    { cn: "小組隨參與人數增加而倍增。", en: "Multiplies groups as participation grows." },
+                    { cn: "為家長提供兒少門訓資源。", en: "Resources provided for parents." },
+                    { cn: "講道內容附帶實踐練習。", en: "Sermons include application exercises." },
+                    { cn: "講道旨在教授核心真理立場。", en: "Sermons teach core doctrine." }
+                ]},
+                { id: 'fellowship', name: '團契', en: 'Fellowship', questions: [
+                    { cn: "教導並鼓勵信徒通過洗禮歸入教會。", en: "Teach/encourage baptism into community." },
+                    { cn: "建立充滿恩慈、接納與支持的環境。", en: "Environment of grace and support." },
+                    { cn: "提供主日以外的建立關係機會。", en: "Opportunities for connection beyond Sunday." },
+                    { cn: "提供共同禱告與服事的機會。", en: "Opportunities for prayer/service together." },
+                    { cn: "講道強調活在團契與群體生活。", en: "Sermons focus on community life." },
+                    { cn: "為新人提供清晰的連線路徑。", en: "Clear pathway for new members." },
+                    { cn: "不過度增加志願者負擔。", en: "Avoid over-burdening volunteers." },
+                    { cn: "成員互相滿足實質與屬靈需求。", en: "Members meet each other's needs." },
+                    { cn: "小組議程包含加深關係的部分。", en: "Small groups intentional about relationships." },
+                    { cn: "信徒常在教會時間以外聚會。", en: "Members spend time together outside church." }
+                ]},
+                { id: 'mission', name: '宣教/服事', en: 'Mission/Ministry', questions: [
+                    { cn: "有計畫識別並滿足內外慈善需求。", en: "Plan to meet benevolent needs." },
+                    { cn: "提供發現恩賜與才幹的途徑。", en: "Pathway to discover spiritual gifts." },
+                    { cn: "領袖裝備信徒，由信徒完成事工。", en: "Leaders equip; members perform ministry." },
+                    { cn: "提供主日以外的服事參與機會。", en: "Opportunities for non-Sunday ministry." },
+                    { cn: "服事組織良好，提前排班。", en: "Ministry well organized and scheduled." },
+                    { cn: "定期公開表揚慶祝志願者。", en: "Volunteers publicly acknowledged." },
+                    { cn: "有國內外宣教計畫與資金。", en: "Plan/resources for missions." },
+                    { cn: "鼓勵並裝備成員參與短宣。", en: "Equipped for short-term missions." },
+                    { cn: "教會樂意參與開拓新教會。", en: "Open to church planting." },
+                    { cn: "為事工擴展預留資金。", en: "Funds set aside for expansion." }
+                ]},
+                { id: 'worship', name: '崇拜', en: 'Worship', questions: [
+                    { cn: "志願者參與崇拜策劃與執行。", en: "Volunteers involved in planning." },
+                    { cn: "使用多元創意元素。", en: "Use of creative elements." },
+                    { cn: "音樂水準一致，不讓人分心。", en: "Consistent musicianship level." },
+                    { cn: "崇拜風格符合目標對象需求。", en: "Style fits prospective members." },
+                    { cn: "對未信者友善並解釋流程。", en: "Friendly to guests; explain purpose." },
+                    { cn: "忠實且具說服力地宣講聖經。", en: "Sermons proclaim Word of God." },
+                    { cn: "提供回應福音的呼召機會。", en: "Opportunity for response/altar call." },
+                    { cn: "將奉獻視為崇拜的一部分。", en: "Offering as an act of worship." },
+                    { cn: "信徒重視主日出席與群體經歷。", en: "Members prioritize Sunday attendance." },
+                    { cn: "為不同年齡提供合適崇拜體驗。", en: "Age-appropriate worship experiences." }
+                ]},
+                { id: 'leadership', name: '領導力', en: 'Leadership', questions: [
+                    { cn: "有清晰的使命宣言並廣為傳達。", en: "Clear mission statement communicated." },
+                    { cn: "成員了解自己的角色與使命。", en: "Members know their role." },
+                    { cn: "牧者經常溝通異象。", en: "Pastor communicates vision often." },
+                    { cn: "成員了解對其行為的期待。", en: "Members know what is expected." },
+                    { cn: "決策權責清晰明確。", en: "Decision making is clear." },
+                    { cn: "決策透明且無官僚氣息。", en: "Transparent, bureaucracy-free." },
+                    { cn: "領袖團隊合一和諧。", en: "Leadership unified and harmonious." },
+                    { cn: "領袖被授權負責其領域。", en: "Leaders empowered for their areas." },
+                    { cn: "有清楚的領袖發展路徑。", en: "Pathway to develop new leaders." },
+                    { cn: "有繼任計畫準備。", en: "Succession plan in place." }
+                ]},
+                { id: 'stewardship', name: '管家職分', en: 'Stewardship', questions: [
+                    { cn: "領袖在奉獻上作榜樣。", en: "Leaders exemplify stewardship." },
+                    { cn: "成員了解教會資金流向。", en: "Members know how funds are spent." },
+                    { cn: "每年有管家專題教育。", en: "Annual stewardship emphasis." },
+                    { cn: "提供財務管理課程。", en: "Financial management classes." },
+                    { cn: "能滿足所有財務負擔與合約。", en: "Meeting all financial obligations." },
+                    { cn: "有應急備用金儲備。", en: "Cash reserve for unexpected needs." },
+                    { cn: "牧者待遇充足無後顧之憂。", en: "Pastor's compensation sufficient." },
+                    { cn: "預算增長支持事工擴充。", en: "Budget growth supports expansion." },
+                    { cn: "設施維護良好滿足現有需求。", en: "Facility maintained and meets needs." },
+                    { cn: "對外形象(告示/印刷)高品質。", en: "Quality signage and materials." }
+                ]}
+            ],
+            answers: Array.from({ length: 7 }, () => Array(10).fill(0))
+        }
+    },
+    computed: {
+        categoryScores() { return this.answers.map(ans => ans.reduce((a, b) => a + b, 0)); },
+        overallScore() { return (this.categoryScores.reduce((a, b) => a + b, 0) / 7).toFixed(1); }
+    },
+    methods: {
+        startSurvey() { 
+            if(!this.churchInfo.name) { alert("請填寫教會名稱！"); return; }
+            this.step = 1; window.scrollTo(0, 0); 
+        },
+        nextStep() {
+            if (this.answers[this.step - 1].includes(0)) {
+                alert("請完成本頁 10 個項目的評分後再繼續。");
+                return;
+            }
+            if (this.step < 7) { this.step++; window.scrollTo(0, 0); }
+            else { this.step = 8; this.$nextTick(() => this.initChart()); }
+        },
+        prevStep() { if (this.step > 1) { this.step--; window.scrollTo(0, 0); } },
+        resetCurrent() { if(confirm("確定要重置本範疇的評分嗎？")) { this.answers[this.step-1] = Array(10).fill(0); } },
+        resetAll() { if(confirm("確定要清空所有填寫數據重新開始嗎？")) { location.reload(); } },
+        getHealthZone(score) {
+            if (score >= 40) return { label: '健康區', text: 'text-emerald-700', bg: 'bg-emerald-100', color: '#10b981', emoji: '🌟', desc: '您的教會處於極佳狀態。目前的重點是「保持動力」並開始思考如何幫助其他軟弱的教會。' };
+            if (score >= 30) return { label: '邊際區', text: 'text-blue-700', bg: 'bg-blue-100', color: '#3b82f6', emoji: '📈', desc: '教會運行尚可，但存在一些隱患。需要在生活方式和核心文化上進行策略性微調。' };
+            if (score >= 20) return { label: '不健康區', text: 'text-orange-700', bg: 'bg-orange-100', color: '#f59e0b', emoji: '⚠️', desc: '核心健康受威脅。需要暫停一些事工，進行「復甦術」並重新聚焦核心大使命。' };
+            return { label: '危機區', text: 'text-red-700', bg: 'bg-red-100', color: '#ef4444', emoji: '🚨', desc: '情況極其危急。需要外部專業顧問介入，進行緊急的結構與異象「手術」。' };
+        },
+        getDetailedDiagnosis(cat, score) {
+            const zones = {
+                '佈道': score < 30 ? "教會可能陷入了「封閉循環」，過度關注內部需求而忽略了未信者的聲音。" : "具備基本的宣教意識，但可能缺乏系統性的新友轉化路徑。",
+                '門徒訓練': score < 30 ? "信徒在知識上可能豐富，但在生命應用與領袖倍增上存在嚴重斷層。" : "門訓計畫正在運作，但需確保小組不再僅是社交團契。",
+                '團契': score < 30 ? "教會氛圍可能顯得冷漠或存在派系，新人難以融入深層關係。" : "關係良好，但需注意是否「過度內聚」而導致對外排斥。",
+                '宣教/服事': score < 30 ? "服事主要依賴少數核心同工，容易造成長期疲憊感。" : "恩賜配搭尚可，但可進一步開拓海內外宣教視野。",
+                '崇拜': score < 30 ? "主日崇拜可能流於形式，無法讓參與者感受到神聖的連結或福音的挑戰。" : "聚會穩定，但可在創意與對未信者的友善度上再提升。",
+                '領導力': score < 30 ? "權責模糊或決策集中於單一人員，缺乏透明度與傳承計畫。" : "領導層合一，但需更頻繁地與基層成員溝通長期異象。",
+                '管家職分': score < 30 ? "財務透明度不足或儲備匮乏，限制了教會在突發機會中的反應能力。" : "財務管理穩健，可進一步教導信徒全方位的事奉生命。"
+            };
+            return zones[cat];
+        },
+        getDetailedTips(cat, score) {
+            const size = parseInt(this.churchInfo.size);
+            const basicTips = {
+                '佈道': ["建立24小時新人回訪機制", "舉辦針對社區需求的預佈道活動", "訓練信徒撰寫3分鐘個人見證"],
+                '門徒訓練': ["設計「門徒階梯」必修課", "推動「一對一」陪伴成長", "將小組目標定為「兩年內倍增」"],
+                '團契': ["舉辦跨小組的趣味友誼活動", "建立同工心理諮商或互助網", "強化新人入會的「歡迎儀式感」"],
+                '宣教/服事': ["進行全教會恩賜普查", "減少無效聚會，騰出體力服事社區", "設立專項宣教基金"],
+                '崇拜': ["重新檢討崇拜流程的敘事性", "培訓招待人員的專業與熱情", "增加會眾互動與見證環節"],
+                '領導力': ["推行「決策透明化」週報公告", "啟動青年領袖影子培訓計畫", "建立長老/執事定期退修制度"],
+                '管家職分': ["邀請第三方進行財務審計", "設立「緊急修繕與宣教」備用金", "舉辦基督徒理財系列講座"]
+            };
+            if(size >= 1000) basicTips[cat].push("大型教會需特別防範官僚化流程");
+            if(size <= 100) basicTips[cat].push("小型教會應加強「關係型」影響力");
+            return basicTips[cat];
+        },
+        initChart() {
+            const ctx = document.getElementById('healthRadar').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: this.categories.map(c => c.name),
+                    datasets: [{
+                        label: '得分 (Max 50)',
+                        data: this.categoryScores,
+                        backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                        borderColor: '#4f46e5',
+                        pointBackgroundColor: '#4f46e5',
+                        borderWidth: 3
+                    }]
+                },
+                options: { scales: { r: { min: 0, max: 50, ticks: { stepSize: 10 } } } }
+            });
+        },
+        downloadPDF() {
+            const element = document.getElementById('final-report');
+            const opt = {
+                margin: 0.3,
+                filename: `教會健康報告_${this.churchInfo.name}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    }
+}).mount('#app');
+</script>
+
+</body>
+</html>

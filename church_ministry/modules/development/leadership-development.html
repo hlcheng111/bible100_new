@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>领导力培养 · Leadership Development | Church Ministry</title>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+.header { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 15px 20px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 15px; }
+.card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; background: #f39c12; color: white; margin: 5px; }
+table { width: 100%; border-collapse: collapse; }
+table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+table th { background: #f8f9fa; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+.modal.active { display: flex; }
+.modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; position: relative; }
+.modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+.form-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }</style></head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header"><h1>🎯 领导力培养</h1></div>
+<div class="container">
+    <div class="card"><h3 style="margin-bottom:15px;">👥 领袖候选人</h3>
+        <button class="btn" onclick="showAddModal()">➕ 新增候选人</button>
+        <table id="table"><thead><tr><th>姓名</th><th>潜力评估</th><th>培训课程</th><th>服事经验</th><th>操作</th></tr></thead><tbody></tbody></table>
+    </div>
+</div>
+<div id="modal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+<script>
+let candidates = [];
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('leadershipData');
+    if (saved) candidates = JSON.parse(saved);
+    if (candidates.length === 0) loadDemo();
+    render();
+});
+function loadDemo() {
+    candidates = [{id:1,name:'张弟兄',potential:'高',courses:5,experience:'小组长3年'},{id:2,name:'李姊妹',potential:'中',courses:3,experience:'诗班1年'}];
+    localStorage.setItem('leadershipData', JSON.stringify(candidates));
+    render();
+}
+function render() {
+    document.querySelector('#table tbody').innerHTML = candidates.map(c => `<tr><td>${c.name}</td><td>${c.potential}</td><td>${c.courses}门</td><td>${c.experience}</td><td><button class="btn" style="padding:6px 12px;" onclick="del(${c.id})">删除</button></td></tr>`).join('');
+}
+function showModal(title, content) {
+    document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;margin-bottom:20px;">${title}</div>${content}`;
+    document.getElementById('modal').classList.add('active');
+}
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+function showAddModal() {
+    showModal('➕ 新增候选人', `<div class="form-group"><label>姓名</label><input id="name" class="form-input"></div><div class="form-group"><label>潜力评估</label><select id="pot" class="form-input"><option>高</option><option>中</option><option>低</option></select></div><div class="form-group"><label>服事经验</label><input id="exp" class="form-input"></div><button class="btn" onclick="add()">确定</button>`);
+}
+function add() {
+    candidates.push({id:Date.now(),name:document.getElementById('name').value,potential:document.getElementById('pot').value,courses:0,experience:document.getElementById('exp').value});
+    localStorage.setItem('leadershipData', JSON.stringify(candidates));
+    render();
+    closeModal();
+    alert('✅ 已添加！');
+}
+function del(id) {
+    if (confirm('删除？')) {
+        candidates = candidates.filter(c => c.id !== id);
+        localStorage.setItem('leadershipData', JSON.stringify(candidates));
+        render();
+    }
+}
+</script>
+</body>
+</html>

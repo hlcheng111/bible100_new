@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TOOL_LABEL_ZH}} · 新增</title>
+  <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <link rel="stylesheet" href="_shared.css">
+  <script src="../../../js/persistence_provider.js"></script>
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/church_auth.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../../js/data_trust_badge.js"></script>
+  <script src="tool.js"></script>
+</head>
+<body class="cm-tool-page">
+  <nav class="cm-back-bar">
+    <a class="cm-back-bar__link" href="index.html">← {{TOOL_LABEL_ZH}}</a>
+  </nav>
+  <header class="cm-tool-hero">
+    <h1>{{TOOL_LABEL_ZH}} · 新增紀錄</h1>
+    <p>支援 AI 控制台預填（<code>data-crm-intent</code>）· 提交前請核對 <code>member_id</code>。</p>
+  </header>
+  <nav class="cm-tool-nav" aria-label="工具分頁" id="toolNav"></nav>
+  <div id="dataTrustMount"></div>
+  <main class="cm-tool-main">
+    <form id="crmIntentForm" class="cm-card" data-bridge-action="saveToolRecord" data-crm-intent="{{TOOL_ID}}.create">
+      <label style="display:block;font-size:12px;margin-bottom:4px;">member_id（必填）</label>
+      <input name="member_id" id="fieldMemberId" required style="width:100%;max-width:320px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:10px;">
+      <label style="display:block;font-size:12px;margin-bottom:4px;">日期</label>
+      <input name="date" type="date" id="fieldDate" style="width:100%;max-width:320px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:10px;">
+      <label style="display:block;font-size:12px;margin-bottom:4px;">摘要</label>
+      <textarea name="summary" id="fieldSummary" rows="4" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:10px;"></textarea>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:12px;">
+        <input type="checkbox" id="humanConfirm" required> 我已核對內容，允許寫入資料層
+      </label>
+      <div>
+        <button type="submit" class="cm-btn cm-btn-primary">💾 儲存</button>
+        <div id="trustSaveNotice"></div>
+      </div>
+      <p id="formStatus" class="cm-muted" style="margin-top:10px;"></p>
+    </form>
+    <section class="cm-card">
+      <h2 style="font-size:14px;margin:0 0 8px;">AI 預填 hook</h2>
+      <p class="cm-muted">父頁或控制台可呼叫 <code>window.applyCrmIntentToForm({ member_id, summary, date })</code>。</p>
+    </section>
+  </main>
+  <script>
+    document.getElementById('toolNav').innerHTML = ToolKit.renderToolNav('form');
+    ToolKit.renderTrustBadge('dataTrustMount', { write_behavior: 'manual_save', notify_behavior: 'none' });
+    if (window.DataTrustBadge) {
+      DataTrustBadge.renderActionTrustNotice({
+        mount: 'trustSaveNotice',
+        write_behavior: 'manual_save',
+        notify_behavior: 'none',
+        requires_human_confirmation: true
+      });
+    }
+    (function () {
+      var d = document.getElementById('fieldDate');
+      if (d && !d.value) d.value = ToolKit.todayYmd();
+
+      window.applyCrmIntentToForm = function (payload) {
+        if (!payload) return;
+        if (payload.member_id != null) document.getElementById('fieldMemberId').value = payload.member_id;
+        if (payload.summary) document.getElementById('fieldSummary').value = payload.summary;
+        if (payload.date) document.getElementById('fieldDate').value = payload.date;
+      };
+
+      document.getElementById('crmIntentForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var status = document.getElementById('formStatus');
+        try {
+          if (window.ChurchAuth && ChurchAuth.isAuthRequired && ChurchAuth.isAuthRequired()) {
+            ChurchAuth.assertCan('members.write');
+          }
+          status.textContent = '已驗證表單（請在實作工具時接上 Bridge 寫入方法）。';
+          ToolKit.notifySync();
+        } catch (err) {
+          status.textContent = err.message || String(err);
+          status.style.color = '#b91c1c';
+        }
+      });
+
+      window.addEventListener('message', function (ev) {
+        if (!ev.data || ev.data.type !== 'CRM_INTENT_PREFILL') return;
+        window.applyCrmIntentToForm(ev.data.payload || {});
+      });
+    })();
+  </script>
+</body>
+</html>

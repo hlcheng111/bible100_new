@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>義工排班 · 小白驗收（UAT）</title>
+  <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <link rel="stylesheet" href="_shared.css">
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/smart_ministry_canonical_store.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../../js/data_trust_badge.js"></script>
+  <script src="tool.js"></script>
+  <style>
+    .uat-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+    .uat-ok { color: #047857; font-weight: 700; }
+    .uat-fail { color: #b91c1c; font-weight: 700; }
+    .uat-pending { color: #64748b; }
+  </style>
+</head>
+<body class="cm-tool-page">
+  <nav class="cm-back-bar">
+    <a class="cm-back-bar__link" href="index.html">← 義工智能排班</a>
+  </nav>
+  <header class="cm-tool-hero">
+    <h1>✅ A1 驗收檢查</h1>
+    <p>本頁在瀏覽器內直接呼叫 ChurchDataBridge · 不需 Node</p>
+  </header>
+  <div id="dataTrustMount"></div>
+  <main class="cm-tool-main">
+    <section class="cm-card">
+      <div class="uat-row">
+        <span>ChurchDataBridge 是否可用</span>
+        <span id="stBridge" class="uat-pending">—</span>
+      </div>
+      <div class="uat-row">
+        <span>目前排班筆數（全部）</span>
+        <strong id="stCount">—</strong>
+      </div>
+      <div class="uat-row">
+        <span>資料來源</span>
+        <span id="stSource" class="cm-muted" style="font-size:10px;">—</span>
+      </div>
+      <p style="margin-top:12px;">
+        <button type="button" class="cm-btn cm-btn-primary" id="btnRunAll">▶ 執行全部檢查</button>
+        <button type="button" class="cm-btn cm-btn-secondary" id="btnLoadDemo">載入 demo 後再檢查</button>
+      </p>
+      <div id="trustRunAllNotice"></div>
+      <div id="checkList" style="margin-top:14px;font-size:11px;line-height:1.6;"></div>
+      <pre id="log" style="margin-top:12px;font-size:10px;background:#f8fafc;padding:10px;border-radius:8px;max-height:200px;overflow:auto;"></pre>
+    </section>
+  </main>
+  <script>
+    VolunteerShiftTool.renderTrustBadge('dataTrustMount', { position: 'top', write_behavior: 'manual_save', notify_behavior: 'none' });
+    if (window.DataTrustBadge) {
+      DataTrustBadge.renderActionTrustNotice({
+        mount: 'trustRunAllNotice',
+        write_behavior: 'manual_save',
+        notify_behavior: 'none',
+        requires_human_confirmation: true
+      });
+    }
+    (function () {
+      var logEl = document.getElementById('log');
+      function log(msg) {
+        logEl.textContent = (logEl.textContent ? logEl.textContent + '\n' : '') + msg;
+      }
+      function setStatus(id, ok, text) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.className = ok ? 'uat-ok' : 'uat-fail';
+        el.textContent = text;
+      }
+
+      function refreshMeta() {
+        var b = VolunteerShiftTool.bridge();
+        setStatus('stBridge', !!b, b ? '✅ 可用' : '❌ 未載入');
+        if (!b) return null;
+        var all = b.listVolunteerShifts ? b.listVolunteerShifts({}) : [];
+        document.getElementById('stCount').textContent = String(all.length);
+        var m = VolunteerShiftTool.getDataSourceMeta();
+        document.getElementById('stSource').textContent = m.source + ' · ' + m.storage;
+        VolunteerShiftTool.renderTrustBadge('dataTrustMount', { position: 'top', write_behavior: 'manual_save', notify_behavior: 'none' });
+        return b;
+      }
+
+      function runChecks() {
+        logEl.textContent = '';
+        document.getElementById('checkList').innerHTML = '';
+        var b = refreshMeta();
+        var lines = [];
+        function add(name, ok, detail) {
+          lines.push('<div class="uat-row"><span>' + VolunteerShiftTool.esc(name) + '</span><span class="' +
+            (ok ? 'uat-ok' : 'uat-fail') + '">' + (ok ? 'PASS' : 'FAIL') + '</span></div>' +
+            (detail ? '<p class="cm-muted" style="margin:0 0 8px 0;font-size:10px;">' + VolunteerShiftTool.esc(detail) + '</p>' : ''));
+          log((ok ? 'PASS' : 'FAIL') + ' ' + name + (detail ? ' — ' + detail : ''));
+        }
+        if (!b) {
+          add('Bridge', false, '請確認已載入 church_data_bridge.js');
+          document.getElementById('checkList').innerHTML = lines.join('');
+          return;
+        }
+        add('listVolunteerShifts', typeof b.listVolunteerShifts === 'function', '');
+        add('getVolunteerShiftSummary', typeof b.getVolunteerShiftSummary === 'function', '');
+        add('saveVolunteerShift', typeof b.saveVolunteerShift === 'function', '');
+        add('listShiftCandidates', typeof b.listShiftCandidates === 'function', '');
+        add('promoteAssignmentToShift', typeof b.promoteAssignmentToShift === 'function', '');
+
+        var before = (b.listVolunteerShifts({}) || []).length;
+        var testDate = VolunteerShiftTool.addDaysYmd(21);
+        var created;
+        try {
+          created = b.saveVolunteerShift({
+            member_id: 901,
+            ministry_id: 901,
+            date: testDate,
+            shift: 'UAT 測試班',
+            note: 'uat_autotest'
+          });
+        } catch (e) {
+          created = { ok: false, error: e.message };
+        }
+        add('新增測試排班', created && created.ok, created && created.schedule ? 'id=' + created.schedule.id : (created.error || ''));
+
+        var after = (b.listVolunteerShifts({}) || []).length;
+        add('清單讀到新增筆', after > before, 'before=' + before + ' after=' + after);
+
+        var found = (b.listVolunteerShifts({ fromDate: testDate, toDate: testDate }) || []).some(function (s) {
+          return String(s.date) === testDate && (s.note === 'uat_autotest' || (s.shift && s.shift.indexOf('UAT') >= 0));
+        });
+        add('日期篩選同一筆', found, testDate);
+
+        var candidates = b.listShiftCandidates({ include_volunteer_pool: true }) || [];
+        var hasCtv = candidates.some(function (c) { return c.type === 'ctv_suggestion'; });
+        var hasPool = candidates.some(function (c) { return c.type === 'volunteer_pool'; });
+        add('CTV 建議候選', hasCtv, 'candidates=' + candidates.length);
+        add('志工池候選', hasPool, '');
+
+        var pending = b.listPendingMinistrySuggestions ? b.listPendingMinistrySuggestions() : [];
+        var assignId = pending.length ? pending[0].id : null;
+        if (assignId && b.promoteAssignmentToShift) {
+          var promoDate = VolunteerShiftTool.addDaysYmd(28);
+          var pr = b.promoteAssignmentToShift(assignId, { date: promoDate, shift: 'UAT promote' });
+          var listed = (b.listVolunteerShifts({ fromDate: promoDate, toDate: promoDate }) || []).length > 0;
+          add('CTV promote → 排班', pr && pr.ok && listed, assignId);
+          var canon = window.SmartMinistryCanonical;
+          if (canon && canon.listMinistryAssignments) {
+            var row = (canon.listMinistryAssignments() || []).find(function (a) {
+              return String(a.id) === String(assignId);
+            });
+            add('promote 後 assignment active', row && String(row.status).toLowerCase() === 'active', row ? row.status : '—');
+          }
+        } else {
+          add('CTV promote（需先有建議）', false, '請先按「載入 demo」或至事奉配對產生建議');
+        }
+
+        document.getElementById('checkList').innerHTML = lines.join('');
+        refreshMeta();
+        VolunteerShiftTool.notifySync();
+      }
+
+      document.getElementById('btnRunAll').onclick = runChecks;
+      document.getElementById('btnLoadDemo').onclick = function () {
+        try {
+          var r = VolunteerShiftTool.loadA1DemoData();
+          log('demo: ' + JSON.stringify(r));
+        } catch (e) {
+          log('demo error: ' + e.message);
+        }
+        runChecks();
+      };
+      refreshMeta();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>增長趨勢分析 - Growth Trends Analysis · Growth Trends | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <link href="../../assets/css/fontawesome.min.css" rel="stylesheet">
+    <script src="../../assets/js/chart.min.js"></script>
+</head>
+<body class="bg-gray-50 cm-research-page">
+    <nav class="cm-back-bar" aria-label="區域導覽">
+      <a class="cm-back-bar__link" href="../../dashboard.html">⛪ 返回教會事工</a>
+      <span class="cm-back-bar__muted">研究與統計</span>
+    </nav>
+    <p class="cm-data-banner" role="status"><strong>資料來源：</strong><span id="cm-data-source-line">讀取中…</span></p>
+    <div class="cm-kpi-row" aria-label="即時匯總（ChurchDataBridge）">
+      <span class="cm-kpi-pill">會友 <b id="cm-kpi-members">—</b></span>
+      <span class="cm-kpi-pill">小組 <b id="cm-kpi-groups">—</b></span>
+      <span class="cm-kpi-pill">探訪任務 <b id="cm-kpi-missions">—</b></span>
+      <span class="cm-kpi-pill">志工指派 <b id="cm-kpi-volunteers">—</b></span>
+      <span class="cm-kpi-pill">財務結餘 <b id="cm-kpi-finance-balance">—</b></span>
+    </div>
+    <div class="container mx-auto px-4 py-6">
+        <!-- 頁面標題 -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">增長趨勢分析</h1>
+            <p class="text-gray-600">分析教會各項指標的增長趨勢和發展模式</p>
+            <details class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <summary class="cursor-pointer font-semibold text-amber-800">📋 功能說明／計畫願景</summary>
+                <p class="mt-2 text-sm text-gray-700">本頁為示意：會員、志工、活動參與率、整體增長趨勢。圖表與數字尚待檢討：可接 memberSystemData 的歷史趨勢、或定義「增長」的計算方式。今後可：依季度／年度比較、與會眾統計連動。</p>
+            </details>
+        </div>
+
+        <!-- 增長概覽 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-green-500 p-3 rounded-lg">
+                        <i class="fas fa-users text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">會員增長率</p>
+                        <p class="text-2xl font-bold text-gray-900">+12.5%</p>
+                        <p class="text-xs text-green-600">較上月</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-blue-500 p-3 rounded-lg">
+                        <i class="fas fa-hands-helping text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">志工增長率</p>
+                        <p class="text-2xl font-bold text-gray-900">+8.3%</p>
+                        <p class="text-xs text-blue-600">較上月</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-purple-500 p-3 rounded-lg">
+                        <i class="fas fa-calendar-check text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">活動參與率</p>
+                        <p class="text-2xl font-bold text-gray-900">+15.2%</p>
+                        <p class="text-xs text-purple-600">較上月</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-orange-500 p-3 rounded-lg">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">整體增長</p>
+                        <p class="text-2xl font-bold text-gray-900">+11.8%</p>
+                        <p class="text-xs text-orange-600">較上月</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要圖表區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- 會員增長趨勢 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">會員增長趨勢</h2>
+                <canvas id="memberGrowthChart" width="400" height="200"></canvas>
+            </div>
+
+            <!-- 志工增長趨勢 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">志工增長趨勢</h2>
+                <canvas id="volunteerGrowthChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- 活動參與趨勢 -->
+        <div class="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">活動參與趨勢</h2>
+            <canvas id="activityParticipationChart" width="800" height="300"></canvas>
+        </div>
+
+        <!-- 增長分析表格 -->
+        <div class="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">增長分析詳情</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">指標</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">當前值</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">上月值</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">增長率</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">趨勢</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">預測</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">總會員數</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1,234</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1,098</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">+12.4%</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <i class="fas fa-arrow-up text-green-500"></i>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1,350</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">活躍會員</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">987</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">876</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">+12.7%</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <i class="fas fa-arrow-up text-green-500"></i>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1,080</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">新會員</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">45</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">38</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">+18.4%</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <i class="fas fa-arrow-up text-green-500"></i>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">52</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">志工數量</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">89</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">82</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">+8.5%</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <i class="fas fa-arrow-up text-green-500"></i>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">95</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 增長預測 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- 短期預測 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">短期預測 (3個月)</h2>
+                <div class="space-y-4">
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <h3 class="font-medium text-blue-900 mb-2">會員增長預測</h3>
+                        <div class="text-sm text-blue-700 space-y-1">
+                            <p>預計增長率: +15.2%</p>
+                            <p>預期會員數: 1,420</p>
+                            <p>置信度: 85%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                        <h3 class="font-medium text-green-900 mb-2">活動參與預測</h3>
+                        <div class="text-sm text-green-700 space-y-1">
+                            <p>預計增長率: +18.5%</p>
+                            <p>預期參與率: 78%</p>
+                            <p>置信度: 82%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 長期預測 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">長期預測 (12個月)</h2>
+                <div class="space-y-4">
+                    <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                        <h3 class="font-medium text-purple-900 mb-2">年度增長目標</h3>
+                        <div class="text-sm text-purple-700 space-y-1">
+                            <p>會員增長: +25.0%</p>
+                            <p>志工增長: +20.0%</p>
+                            <p>活動增長: +30.0%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                        <h3 class="font-medium text-orange-900 mb-2">發展里程碑</h3>
+                        <div class="text-sm text-orange-700 space-y-1">
+                            <p>Q2: 會員數突破1,500</p>
+                            <p>Q3: 志工數突破100</p>
+                            <p>Q4: 活動參與率達80%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速操作按鈕 -->
+        <div class="mt-8 flex flex-wrap gap-4">
+            <button onclick="alert('導出增長報告')" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-download mr-2"></i>導出報告
+            </button>
+            <button onclick="alert('設置增長目標')" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                <i class="fas fa-bullseye mr-2"></i>設置目標
+            </button>
+            <button onclick="alert('查看詳細分析')" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+                <i class="fas fa-chart-bar mr-2"></i>詳細分析
+            </button>
+            <button onclick="alert('生成預測報告')" class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors">
+                <i class="fas fa-crystal-ball mr-2"></i>預測報告
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 會員增長趨勢圖表
+        const memberGrowthCtx = document.getElementById('memberGrowthChart').getContext('2d');
+        new Chart(memberGrowthCtx, {
+            type: 'line',
+            data: {
+                labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                datasets: [{
+                    label: '會員數量',
+                    data: [1050, 1080, 1120, 1150, 1190, 1234],
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 1000
+                    }
+                }
+            }
+        });
+
+        // 志工增長趨勢圖表
+        const volunteerGrowthCtx = document.getElementById('volunteerGrowthChart').getContext('2d');
+        new Chart(volunteerGrowthCtx, {
+            type: 'line',
+            data: {
+                labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                datasets: [{
+                    label: '志工數量',
+                    data: [75, 78, 80, 82, 85, 89],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 70
+                    }
+                }
+            }
+        });
+
+        // 活動參與趨勢圖表
+        const activityParticipationCtx = document.getElementById('activityParticipationChart').getContext('2d');
+        new Chart(activityParticipationCtx, {
+            type: 'line',
+            data: {
+                labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                datasets: [{
+                    label: '活動參與率 (%)',
+                    data: [65, 68, 72, 75, 78, 82],
+                    borderColor: 'rgb(147, 51, 234)',
+                    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 60,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        console.log('增長趨勢分析模組已載入');
+    </script>
+
+<script src="../../../js/church_data_bridge.js"></script>
+<script src="../../js/cm_research_snapshot.js"></script>
+<script>document.addEventListener("DOMContentLoaded",function(){if(window.CMResearchSnapshot)CMResearchSnapshot.initPage();});</script>
+
+</body>
+</html>

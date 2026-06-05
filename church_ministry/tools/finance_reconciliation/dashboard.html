@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>奉獻與財務對帳 · 儀表板</title>
+  <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <link rel="stylesheet" href="_shared.css">
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../../js/data_trust_badge.js"></script>
+  <script src="tool.js"></script>
+  <style>.cm-tool-hero { background: linear-gradient(135deg, #0f766e 0%, #059669 100%); }</style>
+</head>
+<body class="cm-tool-page">
+  <nav class="cm-back-bar"><a class="cm-back-bar__link" href="index.html">← 財務對帳</a></nav>
+  <header class="cm-tool-hero">
+    <h1>📊 財務對帳儀表板</h1>
+    <p>真 KPI · finance_sensitive · 不顯示完整 note · demo 不可當正式報表</p>
+  </header>
+  <nav class="cm-tool-nav" id="toolNav"></nav>
+  <div id="dataTrustMount"></div>
+  <main class="cm-tool-main">
+    <div class="cm-kpi-grid cm-card" style="border:none;padding:0;background:transparent;">
+      <div class="cm-kpi"><span class="cm-muted">近 N 天筆數</span><strong id="kpiCount">—</strong></div>
+      <div class="cm-kpi"><span class="cm-muted">總金額</span><strong id="kpiAmt">—</strong></div>
+      <div class="cm-kpi"><span class="cm-muted">待對帳</span><strong id="kpiPending">—</strong></div>
+      <div class="cm-kpi"><span class="cm-muted">異常 exception</span><strong id="kpiEx">—</strong></div>
+      <div class="cm-kpi"><span class="cm-muted">待收據</span><strong id="kpiRcpt">—</strong></div>
+    </div>
+    <section class="cm-card">
+      <h2 style="font-size:14px;margin:0 0 8px;">近期紀錄（摘要）</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead><tr style="border-bottom:2px solid #e2e8f0;text-align:left;">
+          <th style="padding:6px;">日期</th><th>會友</th><th>基金</th><th>金額</th><th>狀態</th>
+        </tr></thead>
+        <tbody id="recentBody"></tbody>
+      </table>
+    </section>
+  </main>
+  <script>
+    document.getElementById('toolNav').innerHTML = FinanceReconciliationTool.renderToolNav('dashboard');
+    FinanceReconciliationTool.renderTrustBadge('dataTrustMount', { write_behavior: 'read_only', notify_behavior: 'none', privacy_level: 'finance_sensitive' });
+    (function () {
+      var b = FinanceReconciliationTool.bridge();
+      if (!b) return;
+      var days = 30;
+      var s = b.getFinanceReconciliationSummary(days);
+      document.getElementById('kpiCount').textContent = s.total_records;
+      document.getElementById('kpiAmt').textContent = (s.total_amount != null ? s.total_amount : '—') + ' TWD';
+      document.getElementById('kpiPending').textContent = s.pending;
+      document.getElementById('kpiEx').textContent = s.exception;
+      document.getElementById('kpiRcpt').textContent = s.receipt_pending;
+      var rows = b.listFinanceReconciliationRecords({ limit: 10, excludeArchived: true }) || [];
+      var tbody = document.getElementById('recentBody');
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="cm-muted" style="padding:8px;">尚無紀錄</td></tr>';
+      } else {
+        tbody.innerHTML = rows.map(function (r) {
+          return '<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:6px;">' + FinanceReconciliationTool.esc(r.date) +
+            '</td><td>' + FinanceReconciliationTool.esc(r.member_name) + '</td><td>' + FinanceReconciliationTool.esc(r.fund) +
+            '</td><td>' + FinanceReconciliationTool.esc(r.amount) + ' ' + FinanceReconciliationTool.esc(r.currency) +
+            '</td><td>' + FinanceReconciliationTool.esc(r.status) + '</td></tr>';
+        }).join('');
+      }
+    })();
+  </script>
+</body>
+</html>

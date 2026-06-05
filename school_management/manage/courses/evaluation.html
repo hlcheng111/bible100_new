@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>課程評估 - Course Evaluation</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>📝 課程評估 · Course Evaluation</h1>
+        <p>學員對課程的評分與評語、線上測驗成績、匯出</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 教師、教務、課程負責人。</p>
+            <p><b>有什麼功能？</b> 新增課程評分（1–5）、評語；匯出 CSV；可結合成績模組的成績資料。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📊 統計</div>
+        <div class="stats-row">
+            <div class="stat-pill"><div class="stat-num" id="statTotal">0</div><div class="stat-label">評估筆數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statAvg">0</div><div class="stat-label">平均評分</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statCourses">0</div><div class="stat-label">已評估課程</div></div>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">新增評估</div>
+        <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+            <div><label class="stat-label">學員</label><br><select name="studentId" class="module-input" required style="min-width:140px;"></select></div>
+            <div><label class="stat-label">課程</label><br><select name="courseId" class="module-input" required style="min-width:180px;"></select></div>
+            <div><label class="stat-label">評分</label><br><select name="score" class="module-input"><option value="5">5</option><option value="4">4</option><option value="3" selected>3</option><option value="2">2</option><option value="1">1</option></select></div>
+            <div><label class="stat-label">評語</label><br><input name="comment" class="module-input" placeholder="選填" style="min-width:180px;"></div>
+            <div><br><button type="submit" class="module-btn">提交</button></div>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">最近評估 <button class="module-btn module-btn-secondary" id="btnExport" style="float:right;">📤 匯出 CSV</button></div>
+        <div id="evalList"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+            if (db.ensureSeedFull) db.ensureSeedFull();
+
+            const data = db.data;
+            const courseEvals = (data.course && data.course.evaluations) || [];
+            const courses = data.courses || [];
+            const students = data.students || [];
+
+            function load() {
+                const evals = courseEvals.slice(-100).reverse();
+                document.getElementById('statTotal').textContent = courseEvals.length;
+                const withScore = courseEvals.filter(e => e.score != null);
+                const avg = withScore.length ? (withScore.reduce((s, e) => s + e.score, 0) / withScore.length).toFixed(2) : '0';
+                document.getElementById('statAvg').textContent = avg;
+                document.getElementById('statCourses').textContent = [...new Set(courseEvals.map(e => e.courseId))].length;
+
+                const selS = document.querySelector('select[name="studentId"]');
+                const selC = document.querySelector('select[name="courseId"]');
+                selS.innerHTML = '<option value="">-- 選擇學員 --</option>' + students.slice(0, 100).map(s => '<option value="' + s.id + '">' + (s.name || s.studentNumber || s.id) + '</option>').join('');
+                selC.innerHTML = '<option value="">-- 選擇課程 --</option>' + courses.map(c => '<option value="' + c.id + '">' + (c.name || c.code || c.id) + '</option>').join('');
+
+                let html = evals.length ? '<table class="module-table"><thead><tr><th>學員</th><th>課程</th><th>評分</th><th>評語</th><th>時間</th></tr></thead><tbody>' + evals.map(e => {
+                    const s = students.find(x => x.id === e.studentId);
+                    const c = courses.find(x => x.id === e.courseId);
+                    return '<tr><td>' + (s ? s.name : e.studentId) + '</td><td>' + (c ? c.name : e.courseId) + '</td><td>' + (e.score || '—') + '</td><td>' + (e.comment || '—') + '</td><td>' + (e.createdAt ? new Date(e.createdAt).toLocaleString() : '—') + '</td></tr>';
+                }).join('') + '</tbody></table>' : '<div class="empty-state">尚無評估</div>';
+                document.getElementById('evalList').innerHTML = html;
+            }
+
+            document.getElementById('f').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                db.insert('course.evaluations', {
+                    studentId: parseInt(fm.get('studentId'), 10),
+                    courseId: parseInt(fm.get('courseId'), 10),
+                    score: parseInt(fm.get('score'), 10),
+                    comment: (fm.get('comment') || '').trim()
+                });
+                this.reset();
+                load();
+            };
+
+            document.getElementById('btnExport').onclick = function() {
+                const cols = ['studentId', 'courseId', 'score', 'comment', 'createdAt'];
+                const head = cols.join(',');
+                const body = courseEvals.map(r => cols.map(k => '"' + String(r[k] ?? '').replace(/"/g, '""') + '"').join(',')).join('\n');
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob(['\ufeff' + head + '\n' + body], { type: 'text/csv;charset=utf-8' }));
+                a.download = 'course_evaluations_' + new Date().toISOString().slice(0, 10) + '.csv';
+                a.click();
+            };
+
+            load();
+        })();
+    </script>
+</body>
+</html>

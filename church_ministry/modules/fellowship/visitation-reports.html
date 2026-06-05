@@ -1,0 +1,895 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>探訪報表 · Visitation Reports | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+    <script src="assets/js/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">探訪報表與分析</h1>
+        
+        <!-- 報表類型選擇 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('monthly')">
+                <div class="text-4xl text-blue-600 mb-2">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h3 class="text-lg font-semibold">月報</h3>
+                <p class="text-sm text-gray-600">月度探訪統計</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('quarterly')">
+                <div class="text-4xl text-green-600 mb-2">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="text-lg font-semibold">季報</h3>
+                <p class="text-sm text-gray-600">季度趨勢分析</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('yearly')">
+                <div class="text-4xl text-purple-600 mb-2">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3 class="text-lg font-semibold">年報</h3>
+                <p class="text-sm text-gray-600">年度總結報告</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('custom')">
+                <div class="text-4xl text-orange-600 mb-2">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <h3 class="text-lg font-semibold">自定義</h3>
+                <p class="text-sm text-gray-600">自定義報表</p>
+            </div>
+        </div>
+
+        <!-- 報表參數設置 -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="px-6 py-4 border-b">
+                <h3 class="text-lg font-semibold">報表參數設置</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
+                        <input type="date" id="startDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
+                        <input type="date" id="endDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">報表類型</label>
+                        <select id="reportType" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="monthly">月報</option>
+                            <option value="quarterly">季報</option>
+                            <option value="yearly">年報</option>
+                            <option value="custom">自定義</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">分析維度</label>
+                        <select id="analysisDimension" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="overview">總覽</option>
+                            <option value="area">地區分析</option>
+                            <option value="type">類型分析</option>
+                            <option value="visitor">探訪者分析</option>
+                            <option value="trend">趨勢分析</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-6 flex space-x-3">
+                    <button onclick="generateReport()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-chart-bar mr-2"></i>生成報表
+                    </button>
+                    <button onclick="exportReport()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>匯出報表
+                    </button>
+                    <button onclick="printReport()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-print mr-2"></i>列印報表
+                    </button>
+                    <button onclick="showAdvancedAnalysis()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-chart-line mr-2"></i>進階分析
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 報表內容顯示 -->
+        <div id="reportContent" class="space-y-8">
+            <!-- 報表將在這裡動態生成 -->
+        </div>
+
+        <!-- 進階分析模態框 -->
+        <div id="advancedAnalysisModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+            <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-4/5 lg:w-3/4 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">進階分析</h3>
+                        <button onclick="closeAdvancedAnalysisModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-3">探訪效率分析</h4>
+                            <canvas id="efficiencyChart" width="400" height="300"></canvas>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-3">地區覆蓋率</h4>
+                            <canvas id="coverageChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-gray-900 mb-3">探訪者績效排名</h4>
+                        <div id="visitorPerformance" class="space-y-2">
+                            <!-- 績效排名將在這裡動態生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 註冊 Chart.js 插件
+        Chart.register(ChartDataLabels);
+
+        // 數據存儲
+        let visitPlans = [];
+        let visitRecords = [];
+        let members = [];
+
+        // 頁面載入
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setDefaultDates();
+            generateReport('monthly'); // 自動生成當月報表
+        });
+
+        // 載入數據
+        function loadData() {
+            visitPlans = JSON.parse(localStorage.getItem('visitPlans')) || [];
+            visitRecords = JSON.parse(localStorage.getItem('visitRecords')) || [];
+            members = JSON.parse(localStorage.getItem('members')) || [];
+            
+            // 如果沒有數據，載入示例數據
+            if (visitPlans.length === 0) {
+                loadSampleData();
+            }
+        }
+
+        // 載入示例數據
+        function loadSampleData() {
+            const samplePlans = [
+                {
+                    id: 1,
+                    title: '新人探訪計劃',
+                    targetPerson: '張小明',
+                    visitor: '李牧師',
+                    area: '北區',
+                    type: 'regular',
+                    plannedDate: '2024-01-15',
+                    status: 'completed',
+                    description: '歡迎新會友'
+                },
+                {
+                    id: 2,
+                    title: '病患關懷',
+                    targetPerson: '王大媽',
+                    visitor: '陳姊妹',
+                    area: '東區',
+                    type: 'irregular',
+                    plannedDate: '2024-01-20',
+                    status: 'pending',
+                    description: '術後關懷'
+                }
+            ];
+
+            const sampleRecords = [
+                {
+                    id: 1,
+                    planId: 1,
+                    visitDate: '2024-01-15',
+                    duration: 45,
+                    notes: '新人很熱情，願意參與教會活動',
+                    followUp: '邀請參加下週小組聚會'
+                }
+            ];
+
+            localStorage.setItem('visitPlans', JSON.stringify(samplePlans));
+            localStorage.setItem('visitRecords', JSON.stringify(sampleRecords));
+            
+            visitPlans = samplePlans;
+            visitRecords = sampleRecords;
+        }
+
+        // 設置默認日期
+        function setDefaultDates() {
+            const today = new Date();
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+            document.getElementById('startDate').value = startOfMonth.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endOfMonth.toISOString().split('T')[0];
+        }
+
+        // 生成報表
+        function generateReport(type = null) {
+            const reportType = type || document.getElementById('reportType').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const analysisDimension = document.getElementById('analysisDimension').value;
+
+            if (!startDate || !endDate) {
+                alert('請選擇開始和結束日期');
+                return;
+            }
+
+            const reportData = analyzeData(startDate, endDate, reportType);
+            displayReport(reportData, reportType, analysisDimension);
+        }
+
+        // 分析數據
+        function analyzeData(startDate, endDate, reportType) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            const filteredPlans = visitPlans.filter(plan => {
+                const planDate = new Date(plan.plannedDate);
+                return planDate >= start && planDate <= end;
+            });
+
+            const filteredRecords = visitRecords.filter(record => {
+                const recordDate = new Date(record.visitDate);
+                return recordDate >= start && recordDate <= end;
+            });
+
+            const totalPlans = filteredPlans.length;
+            const completedPlans = filteredRecords.length;
+            const completionRate = totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0;
+
+            // 地區統計
+            const areaStats = {};
+            filteredPlans.forEach(plan => {
+                areaStats[plan.area] = (areaStats[plan.area] || 0) + 1;
+            });
+
+            // 類型統計
+            const typeStats = {};
+            filteredPlans.forEach(plan => {
+                typeStats[plan.type] = (typeStats[plan.type] || 0) + 1;
+            });
+
+            // 探訪者統計
+            const visitorStats = {};
+            filteredPlans.forEach(plan => {
+                visitorStats[plan.visitor] = (visitorStats[plan.visitor] || 0) + 1;
+            });
+
+            // 趨勢分析
+            const trendData = generateTrendData(start, end, filteredPlans, filteredRecords);
+
+            return {
+                totalPlans,
+                completedPlans,
+                completionRate,
+                areaStats,
+                typeStats,
+                visitorStats,
+                trendData,
+                filteredPlans,
+                filteredRecords,
+                startDate,
+                endDate
+            };
+        }
+
+        // 生成趨勢數據
+        function generateTrendData(start, end, plans, records) {
+            const trendData = [];
+            const current = new Date(start);
+            
+            while (current <= end) {
+                const dateStr = current.toISOString().split('T')[0];
+                const dayPlans = plans.filter(plan => plan.plannedDate === dateStr).length;
+                const dayRecords = records.filter(record => record.visitDate === dateStr).length;
+                
+                trendData.push({
+                    date: dateStr,
+                    plans: dayPlans,
+                    records: dayRecords
+                });
+                
+                current.setDate(current.getDate() + 1);
+            }
+            
+            return trendData;
+        }
+
+        // 顯示報表
+        function displayReport(data, reportType, analysisDimension) {
+            const reportContent = document.getElementById('reportContent');
+            const reportTitle = getReportTitle(reportType, data.startDate, data.endDate);
+            
+            let content = `
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-900">${reportTitle}</h3>
+                        <p class="text-sm text-gray-600">報表期間：${data.startDate} 至 ${data.endDate}</p>
+                    </div>
+                    <div class="p-6">
+                        <!-- 關鍵指標 -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                                <div class="text-3xl font-bold text-blue-600">${data.totalPlans}</div>
+                                <div class="text-sm text-gray-600">總計劃數</div>
+                            </div>
+                            <div class="text-center p-4 bg-green-50 rounded-lg">
+                                <div class="text-3xl font-bold text-green-600">${data.completedPlans}</div>
+                                <div class="text-sm text-gray-600">已完成</div>
+                            </div>
+                            <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                                <div class="text-3xl font-bold text-yellow-600">${data.totalPlans - data.completedPlans}</div>
+                                <div class="text-sm text-gray-600">待完成</div>
+                            </div>
+                            <div class="text-center p-4 bg-purple-50 rounded-lg">
+                                <div class="text-3xl font-bold text-purple-600">${data.completionRate}%</div>
+                                <div class="text-sm text-gray-600">完成率</div>
+                            </div>
+                        </div>
+
+                        <!-- 圖表區域 -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-gray-900 mb-3">地區分布</h4>
+                                <canvas id="areaChart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-gray-900 mb-3">探訪類型</h4>
+                                <canvas id="typeChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- 趨勢圖 -->
+                        <div class="bg-gray-50 p-4 rounded-lg mb-8">
+                            <h4 class="font-semibold text-gray-900 mb-3">探訪趨勢</h4>
+                            <canvas id="trendChart" width="800" height="300"></canvas>
+                        </div>
+            `;
+
+            // 根據分析維度添加不同內容
+            if (analysisDimension === 'area') {
+                content += generateAreaAnalysis(data);
+            } else if (analysisDimension === 'type') {
+                content += generateTypeAnalysis(data);
+            } else if (analysisDimension === 'visitor') {
+                content += generateVisitorAnalysis(data);
+            } else {
+                content += generateOverviewAnalysis(data);
+            }
+
+            content += `
+                        <!-- 探訪計劃列表 -->
+                        <div class="mt-8">
+                            <h4 class="font-semibold text-gray-900 mb-3">探訪計劃列表</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">計劃名稱</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">目標對象</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">探訪者</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">地區</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">計劃日期</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">狀態</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${data.filteredPlans.map(plan => `
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${plan.title}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${plan.targetPerson}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${plan.visitor}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${plan.area}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${plan.plannedDate}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                                        plan.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                                        plan.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                                                    }">
+                                                        ${plan.status === 'completed' ? '已完成' : 
+                                                          plan.status === 'pending' ? '待完成' : '逾期'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            reportContent.innerHTML = content;
+            
+            // 渲染圖表
+            renderCharts(data);
+        }
+
+        // 生成地區分析
+        function generateAreaAnalysis(data) {
+            return `
+                <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-blue-900 mb-3">地區分析詳情</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${Object.entries(data.areaStats).map(([area, count]) => `
+                            <div class="flex justify-between items-center p-3 bg-white rounded">
+                                <span class="text-sm font-medium text-gray-700">${area}</span>
+                                <span class="font-semibold text-blue-600">${count} 個計劃</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成類型分析
+        function generateTypeAnalysis(data) {
+            return `
+                <div class="bg-green-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-green-900 mb-3">探訪類型分析</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${Object.entries(data.typeStats).map(([type, count]) => `
+                            <div class="flex justify-between items-center p-3 bg-white rounded">
+                                <span class="text-sm font-medium text-gray-700">${type === 'regular' ? '定期探訪' : '不定期探訪'}</span>
+                                <span class="font-semibold text-green-600">${count} 個計劃</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成探訪者分析
+        function generateVisitorAnalysis(data) {
+            return `
+                <div class="bg-purple-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-purple-900 mb-3">探訪者分析</h4>
+                    <div class="space-y-3">
+                        ${Object.entries(data.visitorStats)
+                            .sort(([,a], [,b]) => b - a)
+                            .map(([visitor, count]) => `
+                                <div class="flex justify-between items-center p-3 bg-white rounded">
+                                    <span class="text-sm font-medium text-gray-700">${visitor}</span>
+                                    <span class="font-semibold text-purple-600">${count} 個計劃</span>
+                                </div>
+                            `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成總覽分析
+        function generateOverviewAnalysis(data) {
+            return `
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">綜合分析</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">最活躍地區</div>
+                            <div class="text-sm text-gray-600">${getMostActiveArea(data.areaStats)}</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">主要探訪類型</div>
+                            <div class="text-sm text-gray-600">${getMainVisitType(data.typeStats)}</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">最活躍探訪者</div>
+                            <div class="text-sm text-gray-600">${getMostActiveVisitor(data.visitorStats)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 獲取最活躍地區
+        function getMostActiveArea(areaStats) {
+            if (Object.keys(areaStats).length === 0) return '無數據';
+            const maxArea = Object.entries(areaStats).reduce((a, b) => a[1] > b[1] ? a : b);
+            return `${maxArea[0]} (${maxArea[1]}個計劃)`;
+        }
+
+        // 獲取主要探訪類型
+        function getMainVisitType(typeStats) {
+            if (Object.keys(typeStats).length === 0) return '無數據';
+            const maxType = Object.entries(typeStats).reduce((a, b) => a[1] > b[1] ? a : b);
+            return `${maxType[0] === 'regular' ? '定期探訪' : '不定期探訪'} (${maxType[1]}個計劃)`;
+        }
+
+        // 獲取最活躍探訪者
+        function getMostActiveVisitor(visitorStats) {
+            if (Object.keys(visitorStats).length === 0) return '無數據';
+            const maxVisitor = Object.entries(visitorStats).reduce((a, b) => a[1] > b[1] ? a : b);
+            return `${maxVisitor[0]} (${maxVisitor[1]}個計劃)`;
+        }
+
+        // 渲染圖表
+        function renderCharts(data) {
+            // 地區分布圖
+            renderAreaChart(data.areaStats);
+            
+            // 探訪類型圖
+            renderTypeChart(data.typeStats);
+            
+            // 趨勢圖
+            renderTrendChart(data.trendData);
+        }
+
+        // 渲染地區分布圖
+        function renderAreaChart(areaStats) {
+            const ctx = document.getElementById('areaChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(areaStats),
+                    datasets: [{
+                        data: Object.values(areaStats),
+                        backgroundColor: [
+                            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染探訪類型圖
+        function renderTypeChart(typeStats) {
+            const ctx = document.getElementById('typeChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(typeStats).map(type => type === 'regular' ? '定期探訪' : '不定期探訪'),
+                    datasets: [{
+                        data: Object.values(typeStats),
+                        backgroundColor: ['#10B981', '#F59E0B']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染趨勢圖
+        function renderTrendChart(trendData) {
+            const ctx = document.getElementById('trendChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: trendData.map(item => item.date),
+                    datasets: [
+                        {
+                            label: '計劃數量',
+                            data: trendData.map(item => item.plans),
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: '完成數量',
+                            data: trendData.map(item => item.records),
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 獲取報表標題
+        function getReportTitle(type, startDate, endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            switch(type) {
+                case 'monthly':
+                    return `月度探訪報表 (${start.getFullYear()}年${start.getMonth() + 1}月)`;
+                case 'quarterly':
+                    const quarter = Math.floor(start.getMonth() / 3) + 1;
+                    return `季度探訪報表 (${start.getFullYear()}年第${quarter}季)`;
+                case 'yearly':
+                    return `年度探訪報表 (${start.getFullYear()}年)`;
+                case 'custom':
+                    return `自定義探訪報表`;
+                default:
+                    return '探訪報表';
+            }
+        }
+
+        // 顯示進階分析
+        function showAdvancedAnalysis() {
+            document.getElementById('advancedAnalysisModal').classList.remove('hidden');
+            generateAdvancedAnalysis();
+        }
+
+        // 關閉進階分析模態框
+        function closeAdvancedAnalysisModal() {
+            document.getElementById('advancedAnalysisModal').classList.add('hidden');
+        }
+
+        // 生成進階分析
+        function generateAdvancedAnalysis() {
+            // 探訪者績效分析
+            const visitorPerformance = analyzeVisitorPerformance();
+            displayVisitorPerformance(visitorPerformance);
+            
+            // 渲染進階圖表
+            renderAdvancedCharts();
+        }
+
+        // 分析探訪者績效
+        function analyzeVisitorPerformance() {
+            const visitorStats = {};
+            
+            visitPlans.forEach(plan => {
+                if (!visitorStats[plan.visitor]) {
+                    visitorStats[plan.visitor] = {
+                        totalPlans: 0,
+                        completedPlans: 0,
+                        completionRate: 0
+                    };
+                }
+                visitorStats[plan.visitor].totalPlans++;
+            });
+            
+            visitRecords.forEach(record => {
+                const plan = visitPlans.find(p => p.id === record.planId);
+                if (plan && visitorStats[plan.visitor]) {
+                    visitorStats[plan.visitor].completedPlans++;
+                }
+            });
+            
+            // 計算完成率
+            Object.keys(visitorStats).forEach(visitor => {
+                const stats = visitorStats[visitor];
+                stats.completionRate = stats.totalPlans > 0 ? 
+                    Math.round((stats.completedPlans / stats.totalPlans) * 100) : 0;
+            });
+            
+            return visitorStats;
+        }
+
+        // 顯示探訪者績效
+        function displayVisitorPerformance(visitorStats) {
+            const container = document.getElementById('visitorPerformance');
+            const sortedVisitors = Object.entries(visitorStats)
+                .sort(([,a], [,b]) => b.completionRate - a.completionRate);
+            
+            container.innerHTML = sortedVisitors.map(([visitor, stats], index) => `
+                <div class="flex justify-between items-center p-3 bg-white rounded border-l-4 ${
+                    index === 0 ? 'border-l-yellow-400' : 
+                    index === 1 ? 'border-l-gray-400' : 
+                    index === 2 ? 'border-l-orange-400' : 'border-l-blue-400'
+                }">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-lg font-bold text-gray-600">${index + 1}</span>
+                        <span class="font-medium text-gray-900">${visitor}</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-600">完成率: ${stats.completionRate}%</div>
+                        <div class="text-xs text-gray-500">${stats.completedPlans}/${stats.totalPlans} 個計劃</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染進階圖表
+        function renderAdvancedCharts() {
+            // 效率分析圖
+            renderEfficiencyChart();
+            
+            // 地區覆蓋率圖
+            renderCoverageChart();
+        }
+
+        // 渲染效率分析圖
+        function renderEfficiencyChart() {
+            const ctx = document.getElementById('efficiencyChart');
+            if (!ctx) return;
+
+            const visitorStats = analyzeVisitorPerformance();
+            const labels = Object.keys(visitorStats);
+            const data = Object.values(visitorStats).map(stats => stats.completionRate);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '完成率 (%)',
+                        data: data,
+                        backgroundColor: '#3B82F6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value + '%'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染地區覆蓋率圖
+        function renderCoverageChart() {
+            const ctx = document.getElementById('coverageChart');
+            if (!ctx) return;
+
+            const areaStats = {};
+            visitPlans.forEach(plan => {
+                areaStats[plan.area] = (areaStats[plan.area] || 0) + 1;
+            });
+
+            new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: Object.keys(areaStats),
+                    datasets: [{
+                        data: Object.values(areaStats),
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(139, 92, 246, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    }
+                }
+            });
+        }
+
+        // 匯出報表
+        function exportReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent.innerHTML.trim()) {
+                alert('請先生成報表');
+                return;
+            }
+
+            const reportData = generateReportData();
+            const csvContent = generateCSV(reportData);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `探訪報表_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 生成報表數據
+        function generateReportData() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const reportType = document.getElementById('reportType').value;
+            
+            return analyzeData(startDate, endDate, reportType);
+        }
+
+        // 生成CSV
+        function generateCSV(data) {
+            const headers = ['計劃名稱', '目標對象', '探訪者', '地區', '計劃日期', '狀態', '描述'];
+            const rows = data.filteredPlans.map(plan => [
+                plan.title,
+                plan.targetPerson,
+                plan.visitor,
+                plan.area,
+                plan.plannedDate,
+                plan.status === 'completed' ? '已完成' : plan.status === 'pending' ? '待完成' : '逾期',
+                plan.description || ''
+            ]);
+
+            return [headers, ...rows].map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('
+');
+        }
+
+        // 列印報表
+        function printReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent.innerHTML.trim()) {
+                alert('請先生成報表');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>探訪報表</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            table { border-collapse: collapse; width: 100%; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                            .chart-container { margin: 20px 0; }
+                        </style>
+                    </head>
+                    <body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>                        ${reportContent.innerHTML}
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    </script>
+</body>
+</html>

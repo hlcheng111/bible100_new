@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Ministry Matching</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <main class="max-w-6xl mx-auto p-4 md:p-6">
+    <header class="bg-white border border-slate-200 rounded-xl p-4 mb-4">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <h1 class="text-xl font-bold">Smart Ministry Matching</h1>
+        <a class="px-3 py-2 border rounded text-sm" href="talent_ministry_matching.html">返回主線工作台</a>
+      </div>
+      <p class="text-sm text-slate-600 mt-2">比對 `chp2026_default_goals` / planning goals 與 CentralMemberDB，推薦低負載且技能相符人選。</p>
+    </header>
+
+    <section id="cards" class="space-y-3"></section>
+  </main>
+
+  <script src="../js/church_data_bridge_phase1.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/persistence_provider.js"></script>
+  <script src="../js/central_member_db.js"></script>
+  <script src="../church_planning/planning/assets/pipeline.js"></script>
+  <script>
+    (function () {
+      var DB = window.CentralMemberDB;
+      if (!DB) return;
+
+      function esc(v) {
+        var d = document.createElement("div");
+        d.textContent = String(v == null ? "" : v);
+        return d.innerHTML;
+      }
+
+      function loadGoals() {
+        // Preferred custom key
+        try {
+          var raw = localStorage.getItem("chp2026_default_goals");
+          if (raw) {
+            var p = JSON.parse(raw);
+            if (Array.isArray(p)) return p;
+            if (p && Array.isArray(p.goals)) return p.goals;
+          }
+        } catch (e) {}
+        // Fallback to LongTermPipeline
+        if (window.LongTermPipeline && typeof window.LongTermPipeline.loadGoals === "function") {
+          var gs = window.LongTermPipeline.loadGoals() || {};
+          return Array.isArray(gs.goals) ? gs.goals : [];
+        }
+        return [];
+      }
+
+      function tokenize(text) {
+        return String(text || "")
+          .toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, " ")
+          .split(/\s+/)
+          .filter(Boolean);
+      }
+
+      function inferRequiredSkills(goal) {
+        var text = [goal.title, goal.description, goal.visionAxis, goal.smart && goal.smart.s, goal.smart && goal.smart.r].join(" ");
+        var tk = tokenize(text);
+        var map = [
+          { k: "教導", kw: ["教導", "門訓", "課程", "discipleship"] },
+          { k: "關懷", kw: ["關懷", "牧養", "輔導", "care"] },
+          { k: "敬拜", kw: ["敬拜", "崇拜", "worship", "音樂"] },
+          { k: "行政", kw: ["行政", "管理", "治理", "admin"] },
+          { k: "青少年", kw: ["青年", "青少年", "youth"] },
+          { k: "傳福音", kw: ["福音", "外展", "mission", "evangel"] }
+        ];
+        var hit = [];
+        map.forEach(function (r) {
+          if (r.kw.some(function (w) { return tk.indexOf(String(w).toLowerCase()) >= 0; })) hit.push(r.k);
+        });
+        return hit.length ? hit : ["行政"];
+      }
+
+      function buildLoadIndexMap(db) {
+        var map = {};
+        var list = Array.isArray(db.ministryAssignments) ? db.ministryAssignments : [];
+        list.forEach(function (a) {
+          if (!a || !a.memberId) return;
+          map[a.memberId] = (map[a.memberId] || 0) + 1;
+        });
+        return map;
+      }
+
+      function scoreMember(member, requiredSkills, loadMap) {
+        var skills = String(member.skills || "").split(",").map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+        var skillHit = requiredSkills.filter(function (s) { return skills.indexOf(String(s).toLowerCase()) >= 0; }).length;
+        var load = Number(loadMap[member.id] || 0);
+        var ministryLoadIndex = Number(member.Ministry_Load_Index || load);
+        var score = skillHit * 10 + Math.max(0, 8 - ministryLoadIndex);
+        return { score: score, skillHit: skillHit, load: ministryLoadIndex };
+      }
+
+      function render() {
+        var db = DB.get() || {};
+        var members = Array.isArray(db.members) ? db.members : [];
+        var goals = loadGoals();
+        var loadMap = buildLoadIndexMap(db);
+
+        var html = goals.slice(0, 12).map(function (g, idx) {
+          var req = inferRequiredSkills(g);
+          var ranked = members.map(function (m) {
+            var s = scoreMember(m, req, loadMap);
+            return { member: m, score: s.score, skillHit: s.skillHit, load: s.load };
+          }).filter(function (x) {
+            return x.skillHit > 0;
+          }).sort(function (a, b) {
+            if (b.score !== a.score) return b.score - a.score;
+            return a.load - b.load;
+          }).slice(0, 5);
+
+          return (
+            '<article class="bg-white border border-slate-200 rounded-xl p-4">' +
+            '<h2 class="font-semibold">目標 ' + (idx + 1) + " · " + esc(g.title || "（無標題）") + "</h2>" +
+            '<p class="text-xs text-slate-500 mt-1">需要技能：' + esc(req.join(", ")) + "</p>" +
+            (ranked.length
+              ? '<ul class="mt-2 space-y-1 text-sm">' + ranked.map(function (r) {
+                  return "<li class='border rounded px-2 py-1'>" +
+                    "<strong>" + esc(r.member.name) + "</strong>" +
+                    " · 命中技能 " + r.skillHit +
+                    " · Ministry_Load_Index " + r.load +
+                    " · 推薦分 " + r.score +
+                    "</li>";
+                }).join("") + "</ul>"
+              : '<p class="text-sm text-amber-700 mt-2">目前找不到技能匹配人選，建議先做培訓補強。</p>') +
+            "</article>"
+          );
+        }).join("");
+
+        document.getElementById("cards").innerHTML = html || '<section class="bg-white border border-slate-200 rounded-xl p-4 text-sm text-slate-500">尚未偵測到可用策略目標（請先建立 `chp2026_default_goals` 或 planning goals）。</section>';
+        if (window.ChurchDataBridge && typeof window.ChurchDataBridge.triggerDataSync === "function") {
+          try { window.ChurchDataBridge.triggerDataSync("smart_ministry_matching_rendered"); } catch (e) {}
+        }
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

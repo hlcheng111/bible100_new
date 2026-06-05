@@ -1,0 +1,417 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>器乐团队管理系统 · Instrument Team | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+        .header { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 15px 20px; }
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
+        .tab.active { background: white; color: #f39c12; font-weight: 600; }
+        .container { max-width: 1800px; margin: 0 auto; padding: 15px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 15px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #f39c12; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; background: #f39c12; color: white; margin: 5px; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+        .form-input, .form-select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .instrument-tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; margin: 2px; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div class="header">
+        <h1>🎸 器乐团队管理系统</h1>
+        <details style="margin-top:8px;padding:8px 12px;background:rgba(255,255,255,0.25);border-radius:8px;font-size:11px;">
+            <summary style="cursor:pointer;font-weight:600;">📋 理念與事務流程</summary>
+            <p style="margin-top:6px;line-height:1.5;">器樂團除排班與樂器清單外，宜對齊<strong>年度計劃、導師／團員、練習、編配、演出、培訓、聚會匯報</strong>。最後一分頁為可編輯流程表（本機）。</p>
+        </details>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview', this)">📊 总览</button>
+            <button class="tab" onclick="switchTab('members', this)">👥 成员</button>
+            <button class="tab" onclick="switchTab('instruments', this)">🎸 乐器</button>
+            <button class="tab" onclick="switchTab('schedule', this)">📅 排班</button>
+            <button class="tab" onclick="switchTab('songs', this)">🎵 曲目</button>
+            <button class="tab" onclick="switchTab('flow', this)">📋 事工流程</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="tab-overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-num" id="s1">0</div><div style="font-size:10px;color:#7f8c8d;margin-top:5px;">团队成员</div></div>
+                <div class="stat-card"><div class="stat-num" id="s2">0</div><div style="font-size:10px;color:#7f8c8d;margin-top:5px;">乐器总数</div></div>
+                <div class="stat-card"><div class="stat-num" id="s3">0</div><div style="font-size:10px;color:#7f8c8d;margin-top:5px;">本月排班</div></div>
+                <div class="stat-card"><div class="stat-num" id="s4">0</div><div style="font-size:10px;color:#7f8c8d;margin-top:5px;">曲目库</div></div>
+                <div class="stat-card"><div class="stat-num" id="s5">0</div><div style="font-size:10px;color:#7f8c8d;margin-top:5px;">本周练习</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+                <div class="card"><h3 style="margin-bottom:15px;">🎸 乐器分布</h3><canvas id="instrumentChart"></canvas></div>
+                <div class="card"><h3 style="margin-bottom:15px;">📈 服侍次数</h3><canvas id="serviceChart"></canvas></div>
+            </div>
+        </div>
+        
+        <div id="tab-members" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom:15px;">👥 团队成员</h3>
+                <button class="btn" onclick="showAddMemberModal()">➕ 新增成员</button>
+                <button class="btn" style="background:#27ae60;" onclick="exportMembers()">📤 导出</button>
+                <table id="membersTable">
+                    <thead><tr><th>姓名</th><th>乐器</th><th>技能等级</th><th>联系方式</th><th>服侍次数</th><th>会友ID</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="tab-instruments" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom:15px;">🎸 乐器清单</h3>
+                <button class="btn" onclick="showAddInstrumentModal()">➕ 新增乐器</button>
+                <table id="instrumentsTable">
+                    <thead><tr><th>乐器名称</th><th>型号</th><th>购买日期</th><th>状态</th><th>负责人</th><th>设备ID</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="tab-schedule" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom:15px;">📅 排班表</h3>
+                <button class="btn" onclick="showAddScheduleModal()">➕ 新增排班</button>
+                <table id="scheduleTable">
+                    <thead><tr><th>日期</th><th>聚会</th><th>成员</th><th>乐器</th><th>曲目</th><th>活动ID</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="tab-songs" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom:15px;">🎵 曲目库</h3>
+                <button class="btn" onclick="showAddSongModal()">➕ 新增曲目</button>
+                <table id="songsTable">
+                    <thead><tr><th>曲名</th><th>难度</th><th>所需乐器</th><th>练习次数</th><th>诗歌ID</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-flow" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom:10px;">📋 事工流程表（與詩班同構 · 器樂專用）</h3>
+                <p style="font-size:10px;color:#666;margin-bottom:10px;">資料鍵 <code>church_ministry_instrument_flow_v1</code> · <button type="button" class="btn btn-sm" onclick="exportInstFlowCsv()">匯出 CSV</button></p>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;" id="instFlowNav">
+                    <button type="button" class="btn btn-sm inst-fbtn active" data-f="annual" onclick="showInstFlow('annual',this)">年度計劃</button>
+                    <button type="button" class="btn btn-sm inst-fbtn" data-f="mentors" onclick="showInstFlow('mentors',this)">導師</button>
+                    <button type="button" class="btn btn-sm inst-fbtn" data-f="practices" onclick="showInstFlow('practices',this)">練習</button>
+                    <button type="button" class="btn btn-sm inst-fbtn" data-f="assignments" onclick="showInstFlow('assignments',this)">編配</button>
+                    <button type="button" class="btn btn-sm inst-fbtn" data-f="performances" onclick="showInstFlow('performances',this)">演出</button>
+                    <button type="button" class="btn btn-sm inst-fbtn" data-f="training" onclick="showInstFlow('training',this)">培訓</button>
+                    <button type="button" class="btn btn-sm inst-fbtn" data-f="reports" onclick="showInstFlow('reports',this)">匯報</button>
+                </div>
+                <div id="instFlowBody"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+    
+    <script>
+        let data = { members: [], instruments: [], schedule: [], songs: [] };
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('instrumentTeamData');
+            if (saved) data = JSON.parse(saved);
+            loadInstFlow();
+            if (data.members.length === 0) loadDemo();
+            else renderAll();
+        });
+        
+        function loadDemo() {
+            data.members = [
+                {id:1, name:'李弟兄', instrument:'吉他', level:'高级', phone:'0912-001', serviceCount:25, memberID:'M001'},
+                {id:2, name:'王姊妹', instrument:'钢琴', level:'中级', phone:'0912-002', serviceCount:18, memberID:'M002'},
+                {id:3, name:'张弟兄', instrument:'鼓', level:'高级', phone:'0912-003', serviceCount:30, memberID:'M003'}
+            ];
+            data.instruments = [
+                {id:1, name:'电吉他', model:'Fender Stratocaster', purchaseDate:'2022-05-10', status:'良好', keeper:'李弟兄', equipmentID:'EQ001'},
+                {id:2, name:'电子琴', model:'Yamaha PSR', purchaseDate:'2021-03-15', status:'良好', keeper:'王姊妹', equipmentID:'EQ002'},
+                {id:3, name:'架子鼓', model:'Roland V-Drums', purchaseDate:'2020-08-20', status:'维修中', keeper:'张弟兄', equipmentID:'EQ003'}
+            ];
+            data.schedule = [
+                {id:1, date:'2025-10-15', service:'主日崇拜', members:'李弟兄,王姊妹,张弟兄', instruments:'吉他,钢琴,鼓', songs:'奇异恩典,耶稣爱你', eventID:'EV001'},
+                {id:2, date:'2025-10-22', service:'青年崇拜', members:'李弟兄,王姊妹', instruments:'吉他,钢琴', songs:'赞美之泉', eventID:'EV002'}
+            ];
+            data.songs = [
+                {id:1, title:'奇异恩典', difficulty:'简单', instruments:'吉他,钢琴', practiceCount:15, songID:'S001'},
+                {id:2, title:'赞美之泉', difficulty:'中等', instruments:'吉他,钢琴,鼓', practiceCount:8, songID:'S002'}
+            ];
+            localStorage.setItem('instrumentTeamData', JSON.stringify(data));
+            renderAll();
+        }
+        
+        var instFlow = { annualPlans: [], mentors: [], practices: [], assignments: [], performances: [], training: [], reports: [] };
+        var INST_FLOW_KEY = 'church_ministry_instrument_flow_v1';
+        var instFlowCur = 'annual';
+
+        function loadInstFlow() {
+            instFlow = { annualPlans: [], mentors: [], practices: [], assignments: [], performances: [], training: [], reports: [] };
+            try {
+                var raw = localStorage.getItem(INST_FLOW_KEY);
+                if (raw) instFlow = Object.assign(instFlow, JSON.parse(raw));
+            } catch (e) {}
+            ['annualPlans','mentors','practices','assignments','performances','training','reports'].forEach(function (k) {
+                if (!Array.isArray(instFlow[k])) instFlow[k] = [];
+            });
+        }
+        function saveInstFlow() { localStorage.setItem(INST_FLOW_KEY, JSON.stringify(instFlow)); }
+
+        function showInstFlow(key, btn) {
+            instFlowCur = key;
+            document.querySelectorAll('.inst-fbtn').forEach(function(b) { b.classList.remove('active'); });
+            if (btn) btn.classList.add('active');
+            renderInstFlow(key);
+        }
+        function escI(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+        function renderInstFlow(key) {
+            var el = document.getElementById('instFlowBody');
+            if (key === 'annual') {
+                el.innerHTML = '<button type="button" class="btn btn-sm" onclick="addInstRow(\'annual\')">➕ 新增</button><table class="flow-table" style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;"><thead><tr><th>年度</th><th>主題</th><th>目標</th><th>備註</th><th></th></tr></thead><tbody>' + instFlow.annualPlans.map(function(r) {
+                    return '<tr><td><input style="width:100%;padding:4px;" value="' + escI(r.year) + '" onchange="uIF(\'annualPlans\',\'' + r.id + '\',\'year\',this.value)"></td><td><input style="width:100%;padding:4px;" value="' + escI(r.title) + '" onchange="uIF(\'annualPlans\',\'' + r.id + '\',\'title\',this.value)"></td><td><input style="width:100%;padding:4px;" value="' + escI(r.goals) + '" onchange="uIF(\'annualPlans\',\'' + r.id + '\',\'goals\',this.value)"></td><td><input style="width:100%;padding:4px;" value="' + escI(r.note) + '" onchange="uIF(\'annualPlans\',\'' + r.id + '\',\'note\',this.value)"></td><td><button type="button" class="btn btn-sm" onclick="dIF(\'annualPlans\',\'' + r.id + '\')">刪</button></td></tr>';
+                }).join('') + '</tbody></table>';
+                return;
+            }
+            var map = { mentors: ['mentors',['姓名','職責','備註'], ['name','role','note']],
+                practices: ['practices',['日期','時間','地點','帶領','備註'], ['date','time','place','leader','note']],
+                assignments: ['assignments',['聚會日','曲目','樂器編組','團員'], ['date','piece','part','names']],
+                performances: ['performances',['名稱','日期','地點','備註'], ['title','date','venue','note']],
+                training: ['training',['日期','主題','對象','備註'], ['date','topic','attendees','note']],
+                reports: ['reports',['聚會日','人數／狀況','摘要','代禱'], ['date','attendance','summary','prayer']] };
+            var m = map[key];
+            if (!m) return;
+            var an = m[0], headers = m[1], fields = m[2];
+            el.innerHTML = '<button type="button" class="btn btn-sm" onclick="addInstRow(\'' + key + '\')">➕ 新增</button><table class="flow-table" style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;"><thead><tr><th>' + headers.join('</th><th>') + '</th><th></th></tr></thead><tbody>' + instFlow[an].map(function(r) {
+                return '<tr>' + fields.map(function(f) {
+                    return '<td><input style="width:100%;padding:4px;" value="' + escI(r[f]) + '" onchange="uIF(\'' + an + '\',\'' + r.id + '\',\'' + f + '\',this.value)"></td>';
+                }).join('') + '<td><button type="button" class="btn btn-sm" onclick="dIF(\'' + an + '\',\'' + r.id + '\')">刪</button></td></tr>';
+            }).join('') + '</tbody></table>';
+        }
+        function addInstRow(kind) {
+            var id = String(Date.now());
+            if (kind === 'annual') instFlow.annualPlans.push({ id: id, year: String(new Date().getFullYear()), title: '', goals: '', note: '' });
+            else if (kind === 'mentors') instFlow.mentors.push({ id: id, name: '', role: '樂器導師', note: '' });
+            else if (kind === 'practices') instFlow.practices.push({ id: id, date: '', time: '', place: '', leader: '', note: '' });
+            else if (kind === 'assignments') instFlow.assignments.push({ id: id, date: '', piece: '', part: '', names: '' });
+            else if (kind === 'performances') instFlow.performances.push({ id: id, title: '', date: '', venue: '', note: '' });
+            else if (kind === 'training') instFlow.training.push({ id: id, date: '', topic: '', attendees: '', note: '' });
+            else if (kind === 'reports') instFlow.reports.push({ id: id, date: '', attendance: '', summary: '', prayer: '' });
+            saveInstFlow(); renderInstFlow(instFlowCur);
+        }
+        function uIF(arr, id, k, v) {
+            var row = instFlow[arr].filter(function(x) { return String(x.id) === String(id); })[0];
+            if (row) { row[k] = v; saveInstFlow(); }
+        }
+        function dIF(arr, id) {
+            instFlow[arr] = instFlow[arr].filter(function(x) { return String(x.id) !== String(id); });
+            saveInstFlow(); renderInstFlow(instFlowCur);
+        }
+        function exportInstFlowCsv() {
+            var key = instFlowCur, headers, rows, arrn;
+            if (key === 'annual') { arrn = 'annualPlans'; headers = ['year','title','goals','note']; }
+            else if (key === 'mentors') { arrn = 'mentors'; headers = ['name','role','note']; }
+            else if (key === 'practices') { arrn = 'practices'; headers = ['date','time','place','leader','note']; }
+            else if (key === 'assignments') { arrn = 'assignments'; headers = ['date','piece','part','names']; }
+            else if (key === 'performances') { arrn = 'performances'; headers = ['title','date','venue','note']; }
+            else if (key === 'training') { arrn = 'training'; headers = ['date','topic','attendees','note']; }
+            else { arrn = 'reports'; headers = ['date','attendance','summary','prayer']; }
+            rows = instFlow[arrn];
+            var csv = '\ufeff' + headers.join(',') + '\n' + rows.map(function(r) { return headers.map(function(h) { return '"' + String(r[h] != null ? r[h] : '').replace(/"/g,'""') + '"'; }).join(','); }).join('\n');
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+            a.download = 'instrument_flow_' + key + '.csv';
+            a.click();
+        }
+
+        function switchTab(tab, el) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            if (el) el.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+            if (tab === 'flow') { loadInstFlow(); renderInstFlow(instFlowCur); }
+        }
+        
+        function renderAll() {
+            document.getElementById('s1').textContent = data.members.length;
+            document.getElementById('s2').textContent = data.instruments.length;
+            document.getElementById('s3').textContent = data.schedule.filter(s => new Date(s.date).getMonth() === new Date().getMonth()).length;
+            document.getElementById('s4').textContent = data.songs.length;
+            document.getElementById('s5').textContent = data.schedule.filter(s => {
+                const d = new Date(s.date);
+                const now = new Date();
+                return d >= now && d <= new Date(now.getTime() + 7*24*60*60*1000);
+            }).length;
+            
+            document.querySelector('#membersTable tbody').innerHTML = data.members.map(m => `
+                <tr><td>${m.name}</td><td>${m.instrument}</td><td>${m.level}</td><td>${m.phone}</td><td>${m.serviceCount}次</td><td><code>${m.memberID}</code></td><td><button class="btn btn-sm" onclick="delMember(${m.id})">删除</button></td></tr>
+            `).join('');
+            
+            document.querySelector('#instrumentsTable tbody').innerHTML = data.instruments.map(i => `
+                <tr><td>${i.name}</td><td>${i.model}</td><td>${i.purchaseDate}</td><td>${i.status}</td><td>${i.keeper}</td><td><code>${i.equipmentID}</code></td><td><button class="btn btn-sm" onclick="delInstrument(${i.id})">删除</button></td></tr>
+            `).join('');
+            
+            document.querySelector('#scheduleTable tbody').innerHTML = data.schedule.map(s => `
+                <tr><td>${s.date}</td><td>${s.service}</td><td>${s.members}</td><td>${s.instruments}</td><td>${s.songs}</td><td><code>${s.eventID}</code></td></tr>
+            `).join('');
+            
+            document.querySelector('#songsTable tbody').innerHTML = data.songs.map(s => `
+                <tr><td>${s.title}</td><td>${s.difficulty}</td><td>${s.instruments}</td><td>${s.practiceCount}次</td><td><code>${s.songID}</code></td><td><button class="btn btn-sm" onclick="delSong(${s.id})">删除</button></td></tr>
+            `).join('');
+        }
+        
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;margin-bottom:20px;">${title}</div>${content}`;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() { document.getElementById('modal').classList.remove('active'); }
+        
+        function showAddMemberModal() {
+            showModal('➕ 新增成员', `
+                <div class="form-group"><label>姓名</label><input id="mname" class="form-input"></div>
+                <div class="form-group"><label>会友ID（关联字段）</label><input id="mmemberID" class="form-input" placeholder="例如：M001"></div>
+                <div class="form-group"><label>乐器</label><select id="minst" class="form-select"><option>吉他</option><option>钢琴</option><option>鼓</option><option>贝斯</option><option>小提琴</option></select></div>
+                <div class="form-group"><label>技能等级</label><select id="mlevel" class="form-select"><option>初级</option><option>中级</option><option>高级</option></select></div>
+                <div class="form-group"><label>联系方式</label><input id="mphone" class="form-input"></div>
+                <button class="btn" onclick="addMember()">确定</button>
+            `);
+        }
+        
+        function addMember() {
+            data.members.push({
+                id: Date.now(),
+                name: document.getElementById('mname').value,
+                memberID: document.getElementById('mmemberID').value || 'M' + String(data.members.length + 1).padStart(3, '0'),
+                instrument: document.getElementById('minst').value,
+                level: document.getElementById('mlevel').value,
+                phone: document.getElementById('mphone').value,
+                serviceCount: 0
+            });
+            localStorage.setItem('instrumentTeamData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 已添加！会友ID: ' + data.members[data.members.length-1].memberID);
+        }
+        
+        function showAddInstrumentModal() {
+            showModal('➕ 新增乐器', `
+                <div class="form-group"><label>乐器名称</label><input id="iname" class="form-input"></div>
+                <div class="form-group"><label>设备ID（关联字段）</label><input id="iequipID" class="form-input" placeholder="例如：EQ001"></div>
+                <div class="form-group"><label>型号</label><input id="imodel" class="form-input"></div>
+                <div class="form-group"><label>购买日期</label><input type="date" id="ipurchase" class="form-input"></div>
+                <div class="form-group"><label>负责人</label><input id="ikeeper" class="form-input"></div>
+                <button class="btn" onclick="addInstrument()">确定</button>
+            `);
+        }
+        
+        function addInstrument() {
+            data.instruments.push({
+                id: Date.now(),
+                name: document.getElementById('iname').value,
+                equipmentID: document.getElementById('iequipID').value || 'EQ' + String(data.instruments.length + 1).padStart(3, '0'),
+                model: document.getElementById('imodel').value,
+                purchaseDate: document.getElementById('ipurchase').value,
+                status: '良好',
+                keeper: document.getElementById('ikeeper').value
+            });
+            localStorage.setItem('instrumentTeamData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 已添加！设备ID: ' + data.instruments[data.instruments.length-1].equipmentID);
+        }
+        
+        function showAddScheduleModal() {
+            showModal('➕ 新增排班', `
+                <div class="form-group"><label>日期</label><input type="date" id="sdate" class="form-input"></div>
+                <div class="form-group"><label>活动ID（关联字段）</label><input id="seventID" class="form-input" placeholder="例如：EV001"></div>
+                <div class="form-group"><label>聚会</label><input id="sservice" class="form-input" placeholder="例如：主日崇拜"></div>
+                <div class="form-group"><label>成员（逗号分隔）</label><input id="smembers" class="form-input"></div>
+                <div class="form-group"><label>乐器（逗号分隔）</label><input id="sinst" class="form-input"></div>
+                <div class="form-group"><label>曲目（逗号分隔）</label><input id="ssongs" class="form-input"></div>
+                <button class="btn" onclick="addSchedule()">确定</button>
+            `);
+        }
+        
+        function addSchedule() {
+            data.schedule.push({
+                id: Date.now(),
+                date: document.getElementById('sdate').value,
+                eventID: document.getElementById('seventID').value || 'EV' + String(data.schedule.length + 1).padStart(3, '0'),
+                service: document.getElementById('sservice').value,
+                members: document.getElementById('smembers').value,
+                instruments: document.getElementById('sinst').value,
+                songs: document.getElementById('ssongs').value
+            });
+            localStorage.setItem('instrumentTeamData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 已添加！活动ID: ' + data.schedule[data.schedule.length-1].eventID);
+        }
+        
+        function showAddSongModal() {
+            showModal('➕ 新增曲目', `
+                <div class="form-group"><label>曲名</label><input id="stitle" class="form-input"></div>
+                <div class="form-group"><label>诗歌ID（关联字段）</label><input id="ssongID" class="form-input" placeholder="例如：S001"></div>
+                <div class="form-group"><label>难度</label><select id="sdiff" class="form-select"><option>简单</option><option>中等</option><option>困难</option></select></div>
+                <div class="form-group"><label>所需乐器（逗号分隔）</label><input id="sinsts" class="form-input"></div>
+                <button class="btn" onclick="addSong()">确定</button>
+            `);
+        }
+        
+        function addSong() {
+            data.songs.push({
+                id: Date.now(),
+                title: document.getElementById('stitle').value,
+                songID: document.getElementById('ssongID').value || 'S' + String(data.songs.length + 1).padStart(3, '0'),
+                difficulty: document.getElementById('sdiff').value,
+                instruments: document.getElementById('sinsts').value,
+                practiceCount: 0
+            });
+            localStorage.setItem('instrumentTeamData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 已添加！诗歌ID: ' + data.songs[data.songs.length-1].songID);
+        }
+        
+        function delMember(id) { if (confirm('删除？')) { data.members = data.members.filter(m => m.id !== id); localStorage.setItem('instrumentTeamData', JSON.stringify(data)); renderAll(); } }
+        function delInstrument(id) { if (confirm('删除？')) { data.instruments = data.instruments.filter(i => i.id !== id); localStorage.setItem('instrumentTeamData', JSON.stringify(data)); renderAll(); } }
+        function delSong(id) { if (confirm('删除？')) { data.songs = data.songs.filter(s => s.id !== id); localStorage.setItem('instrumentTeamData', JSON.stringify(data)); renderAll(); } }
+        
+        function exportMembers() {
+            const csv = '姓名,会友ID,乐器,技能等级,联系方式,服侍次数\n' + 
+                data.members.map(m => `${m.name},${m.memberID},${m.instrument},${m.level},${m.phone},${m.serviceCount}`).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'}));
+            a.download = '器乐团队成员.csv';
+            a.click();
+            alert('✅ 已导出！');
+        }
+    </script>
+</body>
+</html>

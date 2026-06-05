@@ -1,0 +1,715 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>相簿管理 · Photo Album | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">相簿管理</h1>
+        
+        <!-- 統計概覽 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">總相冊數</h3>
+                <p class="text-3xl font-bold text-blue-600" id="totalAlbums">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">總照片數</h3>
+                <p class="text-3xl font-bold text-green-600" id="totalPhotos">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">公開相冊</h3>
+                <p class="text-3xl font-bold text-purple-600" id="publicAlbums">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">總存儲空間</h3>
+                <p class="text-3xl font-bold text-orange-600" id="totalStorage">0 MB</p>
+            </div>
+        </div>
+
+        <!-- 主要功能區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- 相冊列表 -->
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold">相冊列表</h3>
+                            <button onclick="showAddAlbumModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                新增相冊
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="albumsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- 相冊列表將在這裡動態生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 側邊欄 -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">快速操作</h4>
+                    <button onclick="showUploadPhotoModal()" class="w-full bg-green-600 text-white py-3 px-4 rounded hover:bg-green-700 mb-3">
+                        上傳照片
+                    </button>
+                    <button onclick="showBatchUploadModal()" class="w-full bg-purple-600 text-white py-3 px-4 rounded hover:bg-purple-700 mb-3">
+                        批量上傳
+                    </button>
+                    <button onclick="exportAlbumData()" class="w-full bg-gray-600 text-white py-3 px-4 rounded hover:bg-gray-700">
+                        匯出數據
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">最近上傳</h4>
+                    <div id="recentPhotos">
+                        <!-- 最近上傳的照片將在這裡動態生成 -->
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">權限管理</h4>
+                    <div id="permissionSettings">
+                        <!-- 權限設定將在這裡動態生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯相冊模態框 -->
+    <div id="albumModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" id="albumModalTitle">新增相冊</h3>
+                    <button onclick="closeAlbumModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="albumForm" class="space-y-4">
+                    <input type="hidden" id="albumId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">相冊名稱</label>
+                        <input type="text" id="albumName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">相冊描述</label>
+                        <textarea id="albumDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">分類</label>
+                            <select id="albumCategory" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="events">活動相冊</option>
+                                <option value="worship">崇拜相冊</option>
+                                <option value="fellowship">團契相冊</option>
+                                <option value="outreach">宣教相冊</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">權限設定</label>
+                            <select id="albumPermission" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="public">公開</option>
+                                <option value="members">僅會員</option>
+                                <option value="private">私人</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">標籤</label>
+                        <input type="text" id="albumTags" placeholder="用逗號分隔多個標籤" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">創建者</label>
+                        <input type="text" id="albumCreator" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeAlbumModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 上傳照片模態框 -->
+    <div id="uploadPhotoModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">上傳照片</h3>
+                    <button onclick="closeUploadPhotoModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="uploadPhotoForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">選擇相冊</label>
+                        <select id="photoAlbum" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <!-- 相冊選項將在這裡動態生成 -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">照片標題</label>
+                        <input type="text" id="photoTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">照片描述</label>
+                        <textarea id="photoDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">照片URL</label>
+                        <input type="text" id="photoUrl" required placeholder="照片的URL地址" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">拍攝日期</label>
+                        <input type="date" id="photoDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">拍攝者</label>
+                        <input type="text" id="photoPhotographer" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">標籤</label>
+                        <input type="text" id="photoTags" placeholder="用逗號分隔多個標籤" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeUploadPhotoModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">上傳</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量上傳模態框 -->
+    <div id="batchUploadModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">批量上傳照片</h3>
+                    <button onclick="closeBatchUploadModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="batchUploadForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">選擇相冊</label>
+                        <select id="batchPhotoAlbum" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <!-- 相冊選項將在這裡動態生成 -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">照片URL列表</label>
+                        <textarea id="batchPhotoUrls" rows="6" required placeholder="每行一個照片URL，格式：標題|描述|URL|拍攝日期|拍攝者|標籤" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">格式說明：標題|描述|URL|拍攝日期|拍攝者|標籤，每行一個照片</p>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeBatchUploadModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">批量上傳</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 照片詳情模態框 -->
+    <div id="photoDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">照片詳情</h3>
+                    <button onclick="closePhotoDetailModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="photoDetailContent" class="space-y-4">
+                    <!-- 照片詳情將在這裡動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 數據存儲
+        let albums = [];
+        let photos = [];
+
+        // 頁面載入
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            loadDemoData();
+            renderData();
+            bindEvents();
+        });
+
+        // 綁定事件
+        function bindEvents() {
+            document.getElementById('albumForm').addEventListener('submit', handleAlbumSubmit);
+            document.getElementById('uploadPhotoForm').addEventListener('submit', handlePhotoUpload);
+            document.getElementById('batchUploadForm').addEventListener('submit', handleBatchUpload);
+        }
+
+        // 載入數據
+        function loadData() {
+            albums = JSON.parse(localStorage.getItem('photoAlbums')) || [];
+            photos = JSON.parse(localStorage.getItem('photoPhotos')) || [];
+        }
+
+        // 載入演示數據
+        function loadDemoData() {
+            if (albums.length === 0) {
+                albums = [
+                    {
+                        id: '1',
+                        name: '主日崇拜',
+                        description: '每週主日崇拜的精彩瞬間',
+                        category: 'worship',
+                        permission: 'public',
+                        tags: '崇拜,主日,教會',
+                        creator: '陳牧師',
+                        photoCount: 0,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: '2',
+                        name: '青年團契',
+                        description: '青年團契活動照片',
+                        category: 'fellowship',
+                        permission: 'members',
+                        tags: '青年,團契,活動',
+                        creator: '李姊妹',
+                        photoCount: 0,
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                localStorage.setItem('photoAlbums', JSON.stringify(albums));
+            }
+
+            if (photos.length === 0) {
+                photos = [
+                    {
+                        id: '1',
+                        albumId: '1',
+                        title: '主日崇拜現場',
+                        description: '會眾專心聽道的場景',
+                        url: 'worship1.jpg',
+                        date: '2024-01-14',
+                        photographer: '張弟兄',
+                        tags: '崇拜,會眾,專心',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: '2',
+                        albumId: '1',
+                        title: '詩班獻詩',
+                        description: '詩班獻詩的精彩時刻',
+                        url: 'worship2.jpg',
+                        date: '2024-01-14',
+                        photographer: '王姊妹',
+                        tags: '詩班,獻詩,音樂',
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                localStorage.setItem('photoPhotos', JSON.stringify(photos));
+            }
+        }
+
+        // 渲染數據
+        function renderData() {
+            renderAlbums();
+            renderRecentPhotos();
+            renderPermissionSettings();
+            updateStatistics();
+            updatePhotoCounts();
+        }
+
+        // 渲染相冊列表
+        function renderAlbums() {
+            const albumsList = document.getElementById('albumsList');
+            if (albums.length === 0) {
+                albumsList.innerHTML = '<p class="text-gray-500 col-span-full text-center py-8">暫無相冊</p>';
+                return;
+            }
+
+            albumsList.innerHTML = albums.map(album => {
+                const albumPhotos = photos.filter(p => p.albumId === album.id);
+                const coverPhoto = albumPhotos.length > 0 ? albumPhotos[0] : null;
+                
+                return `
+                    <div class="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <div class="aspect-w-16 aspect-h-9 bg-gray-200">
+                            ${coverPhoto ? `
+                                <img src="${coverPhoto.url}" alt="${album.name}" class="w-full h-48 object-cover">
+                            ` : `
+                                <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                                    <i class="fas fa-images text-4xl text-gray-400"></i>
+                                </div>
+                            `}
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-semibold text-lg">${album.name}</h4>
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    getPermissionColor(album.permission)
+                                }">
+                                    ${getPermissionText(album.permission)}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${album.description || '無描述'}</p>
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-3">
+                                <span>${albumPhotos.length} 張照片</span>
+                                <span>${formatDate(album.createdAt)}</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="viewAlbum('${album.id}')" class="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700">
+                                    查看
+                                </button>
+                                <button onclick="editAlbum('${album.id}')" class="flex-1 bg-green-600 text-white py-2 px-3 rounded text-sm hover:bg-green-700">
+                                    編輯
+                                </button>
+                                <button onclick="deleteAlbum('${album.id}')" class="flex-1 bg-red-600 text-white py-2 px-3 rounded text-sm hover:bg-red-700">
+                                    刪除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 渲染最近上傳的照片
+        function renderRecentPhotos() {
+            const recentPhotosDiv = document.getElementById('recentPhotos');
+            const recentPhotos = photos
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .slice(0, 5);
+
+            if (recentPhotos.length === 0) {
+                recentPhotosDiv.innerHTML = '<p class="text-gray-500 text-sm">暫無照片</p>';
+                return;
+            }
+
+            recentPhotosDiv.innerHTML = recentPhotos.map(photo => `
+                <div class="border rounded-lg p-3 mb-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-16 h-16 bg-gray-200 rounded overflow-hidden">
+                            <img src="${photo.url}" alt="${photo.title}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1">
+                            <h5 class="font-medium text-sm">${photo.title}</h5>
+                            <p class="text-xs text-gray-600">${formatDate(photo.date)}</p>
+                            <p class="text-xs text-gray-500">${photo.photographer || '未知'}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染權限設定
+        function renderPermissionSettings() {
+            const permissionSettingsDiv = document.getElementById('permissionSettings');
+            const permissionStats = {
+                public: albums.filter(a => a.permission === 'public').length,
+                members: albums.filter(a => a.permission === 'members').length,
+                private: albums.filter(a => a.permission === 'private').length
+            };
+
+            permissionSettingsDiv.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">公開相冊</span>
+                        <span class="text-sm font-medium">${permissionStats.public}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">會員相冊</span>
+                        <span class="text-sm font-medium">${permissionStats.members}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">私人相冊</span>
+                        <span class="text-sm font-medium">${permissionStats.private}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 更新統計
+        function updateStatistics() {
+            document.getElementById('totalAlbums').textContent = albums.length;
+            document.getElementById('totalPhotos').textContent = photos.length;
+            document.getElementById('publicAlbums').textContent = albums.filter(a => a.permission === 'public').length;
+            
+            // 計算總存儲空間（假設每張照片平均2MB）
+            const totalStorageMB = photos.length * 2;
+            document.getElementById('totalStorage').textContent = `${totalStorageMB} MB`;
+        }
+
+        // 更新相冊照片數量
+        function updatePhotoCounts() {
+            albums.forEach(album => {
+                album.photoCount = photos.filter(p => p.albumId === album.id).length;
+            });
+            localStorage.setItem('photoAlbums', JSON.stringify(albums));
+        }
+
+        // 輔助函數
+        function getPermissionColor(permission) {
+            const colors = {
+                'public': 'bg-green-100 text-green-800',
+                'members': 'bg-blue-100 text-blue-800',
+                'private': 'bg-gray-100 text-gray-800'
+            };
+            return colors[permission] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getPermissionText(permission) {
+            const texts = {
+                'public': '公開',
+                'members': '會員',
+                'private': '私人'
+            };
+            return texts[permission] || permission;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-TW');
+        }
+
+        // 顯示新增相冊模態框
+        function showAddAlbumModal() {
+            document.getElementById('albumModalTitle').textContent = '新增相冊';
+            document.getElementById('albumForm').reset();
+            document.getElementById('albumId').value = '';
+            document.getElementById('albumModal').classList.remove('hidden');
+        }
+
+        // 顯示編輯相冊模態框
+        function editAlbum(albumId) {
+            const album = albums.find(a => a.id === albumId);
+            if (!album) return;
+
+            document.getElementById('albumModalTitle').textContent = '編輯相冊';
+            document.getElementById('albumId').value = album.id;
+            document.getElementById('albumName').value = album.name;
+            document.getElementById('albumDescription').value = album.description || '';
+            document.getElementById('albumCategory').value = album.category;
+            document.getElementById('albumPermission').value = album.permission;
+            document.getElementById('albumTags').value = album.tags || '';
+            document.getElementById('albumCreator').value = album.creator;
+
+            document.getElementById('albumModal').classList.remove('hidden');
+        }
+
+        // 關閉相冊模態框
+        function closeAlbumModal() {
+            document.getElementById('albumModal').classList.add('hidden');
+        }
+
+        // 處理相冊表單提交
+        function handleAlbumSubmit(e) {
+            e.preventDefault();
+            
+            const albumId = document.getElementById('albumId').value;
+            const albumData = {
+                name: document.getElementById('albumName').value,
+                description: document.getElementById('albumDescription').value,
+                category: document.getElementById('albumCategory').value,
+                permission: document.getElementById('albumPermission').value,
+                tags: document.getElementById('albumTags').value,
+                creator: document.getElementById('albumCreator').value,
+                photoCount: 0
+            };
+
+            if (albumId) {
+                // 編輯現有相冊
+                const index = albums.findIndex(a => a.id === albumId);
+                if (index !== -1) {
+                    albums[index] = { ...albums[index], ...albumData };
+                }
+            } else {
+                // 新增相冊
+                albumData.id = Date.now().toString();
+                albumData.createdAt = new Date().toISOString();
+                albums.push(albumData);
+            }
+
+            localStorage.setItem('photoAlbums', JSON.stringify(albums));
+            closeAlbumModal();
+            renderData();
+        }
+
+        // 刪除相冊
+        function deleteAlbum(albumId) {
+            if (confirm('確定要刪除這個相冊嗎？相關照片也會被刪除。')) {
+                albums = albums.filter(a => a.id !== albumId);
+                photos = photos.filter(p => p.albumId !== albumId);
+                localStorage.setItem('photoAlbums', JSON.stringify(albums));
+                localStorage.setItem('photoPhotos', JSON.stringify(photos));
+                renderData();
+            }
+        }
+
+        // 查看相冊
+        function viewAlbum(albumId) {
+            const album = albums.find(a => a.id === albumId);
+            const albumPhotos = photos.filter(p => p.albumId === albumId);
+            
+            if (!album) return;
+
+            // 這裡可以實現相冊詳情頁面或模態框
+            alert(`查看相冊：${album.name}
+包含 ${albumPhotos.length} 張照片`);
+        }
+
+        // 顯示上傳照片模態框
+        function showUploadPhotoModal() {
+            document.getElementById('uploadPhotoForm').reset();
+            populateAlbumOptions();
+            document.getElementById('uploadPhotoModal').classList.remove('hidden');
+        }
+
+        // 關閉上傳照片模態框
+        function closeUploadPhotoModal() {
+            document.getElementById('uploadPhotoModal').classList.add('hidden');
+        }
+
+        // 顯示批量上傳模態框
+        function showBatchUploadModal() {
+            document.getElementById('batchUploadForm').reset();
+            populateAlbumOptions();
+            document.getElementById('batchUploadModal').classList.remove('hidden');
+        }
+
+        // 關閉批量上傳模態框
+        function closeBatchUploadModal() {
+            document.getElementById('batchUploadModal').classList.add('hidden');
+        }
+
+        // 填充分類選項
+        function populateAlbumOptions() {
+            const albumSelects = ['photoAlbum', 'batchPhotoAlbum'];
+            albumSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">選擇相冊</option>';
+                    albums.forEach(album => {
+                        const option = document.createElement('option');
+                        option.value = album.id;
+                        option.textContent = album.name;
+                        select.appendChild(option);
+                    });
+                }
+            });
+        }
+
+        // 處理照片上傳
+        function handlePhotoUpload(e) {
+            e.preventDefault();
+            
+            const photoData = {
+                albumId: document.getElementById('photoAlbum').value,
+                title: document.getElementById('photoTitle').value,
+                description: document.getElementById('photoDescription').value,
+                url: document.getElementById('photoUrl').value,
+                date: document.getElementById('photoDate').value || new Date().toISOString().split('T')[0],
+                photographer: document.getElementById('photoPhotographer').value,
+                tags: document.getElementById('photoTags').value
+            };
+
+            photoData.id = Date.now().toString();
+            photoData.createdAt = new Date().toISOString();
+            photos.push(photoData);
+
+            localStorage.setItem('photoPhotos', JSON.stringify(photos));
+            closeUploadPhotoModal();
+            renderData();
+        }
+
+        // 處理批量上傳
+        function handleBatchUpload(e) {
+            e.preventDefault();
+            
+            const albumId = document.getElementById('batchPhotoAlbum').value;
+            const urlsText = document.getElementById('batchPhotoUrls').value;
+            
+            if (!albumId || !urlsText.trim()) {
+                alert('請填寫完整信息');
+                return;
+            }
+
+            const lines = urlsText.trim().split('
+');
+            let successCount = 0;
+
+            lines.forEach(line => {
+                if (line.trim()) {
+                    const parts = line.split('|');
+                    if (parts.length >= 3) {
+                        const photoData = {
+                            id: Date.now().toString() + Math.random(),
+                            albumId: albumId,
+                            title: parts[0].trim(),
+                            description: parts[1].trim(),
+                            url: parts[2].trim(),
+                            date: parts[3] ? parts[3].trim() : new Date().toISOString().split('T')[0],
+                            photographer: parts[4] ? parts[4].trim() : '',
+                            tags: parts[5] ? parts[5].trim() : '',
+                            createdAt: new Date().toISOString()
+                        };
+                        photos.push(photoData);
+                        successCount++;
+                    }
+                }
+            });
+
+            localStorage.setItem('photoPhotos', JSON.stringify(photos));
+            closeBatchUploadModal();
+            alert(`成功上傳 ${successCount} 張照片`);
+            renderData();
+        }
+
+        // 匯出相冊數據
+        function exportAlbumData() {
+            const csvContent = generateCSV();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `相冊數據_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 生成CSV數據
+        function generateCSV() {
+            const headers = ['相冊名稱', '分類', '權限', '創建者', '照片數量', '描述', '標籤'];
+            const rows = albums.map(album => [
+                album.name,
+                album.category,
+                getPermissionText(album.permission),
+                album.creator,
+                album.photoCount,
+                album.description || '',
+                album.tags || ''
+            ]);
+
+            return [headers, ...rows].map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('
+');
+        }
+    </script>
+</body>
+</html>

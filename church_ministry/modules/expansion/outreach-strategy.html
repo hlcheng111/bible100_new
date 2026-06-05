@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>外展策略 - 区域地图视图 · Outreach Strategy | Church Ministry</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%); padding: 20px; font-size: 11px; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+        .header h1 { font-size: 26px; color: #FF6B6B; }
+        
+        /* Map Grid Layout */
+        .map-container { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); margin-bottom: 20px; }
+        .region-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+        .region-card { background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%); border-radius: 10px; padding: 20px; border: 2px solid #e0e0e0; position: relative; transition: all 0.3s; cursor: pointer; }
+        .region-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(255,107,107,0.3); border-color: #FF6B6B; }
+        .region-name { font-size: 18px; font-weight: 600; margin-bottom: 10px; color: #2c3e50; }
+        .region-stats { display: flex; gap: 10px; margin-top: 10px; }
+        .stat-badge { padding: 6px 12px; background: #FFE66D; color: #856404; border-radius: 20px; font-size: 10px; font-weight: 600; }
+        
+        /* Activity List */
+        .activity-section { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+        .activity-item { background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%); border-left: 4px solid #FF6B6B; padding: 15px; border-radius: 8px; margin-bottom: 12px; }
+        .activity-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+        
+        .load-btn { display: block; margin: 20px auto; padding: 15px 30px; background: linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%); color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container">
+        <div class="header">
+            <h1>🗺️ 外展策略管理 - 区域地图视图</h1>
+            <p style="color:#7f8c8d;margin-top:10px;">📍 地理分布可视化 · 区域活动追踪 · 效果评估</p>
+        </div>
+        
+        <button class="load-btn" onclick="loadDemo()" id="loadBtn">🎯 载入示例（6个区域·9个外展活动）</button>
+        
+        <div class="map-container">
+            <h2 style="font-size:20px;font-weight:600;margin-bottom:15px;color:#2c3e50;">📍 社区区域分布地图</h2>
+            <div class="region-grid" id="regionGrid"></div>
+        </div>
+        
+        <div class="activity-section">
+            <h2 style="font-size:20px;font-weight:600;margin-bottom:15px;color:#2c3e50;">📋 外展活动清单</h2>
+            <div id="activityList"></div>
+        </div>
+    </div>
+    
+    <script>
+        let regions = [];
+        let activities = [];
+        
+        function loadDemo() {
+            regions = [
+                {name:'东区', population:15000, churches:3, activities:3, color:'#FF6B6B'},
+                {name:'西区', population:12000, churches:2, activities:2, color:'#4ECDC4'},
+                {name:'南区', population:18000, churches:4, activities:2, color:'#95E1D3'},
+                {name:'北区', population:10000, churches:1, activities:1, color:'#F38181'},
+                {name:'中心区', population:25000, churches:5, activities:1, color:'#AA96DA'},
+                {name:'郊区', population:8000, churches:1, activities:0, color:'#FCBAD3'}
+            ];
+            
+            activities = [
+                {name:'东区社区嘉年华', region:'东区', date:'2025-03-15', expected:500, budget:50000},
+                {name:'东区长者健康讲座', region:'东区', date:'2025-04-10', expected:100, budget:10000},
+                {name:'东区青少年营会', region:'东区', date:'2025-05-20', expected:80, budget:30000},
+                {name:'西区福音布道会', region:'西区', date:'2025-03-20', expected:300, budget:40000},
+                {name:'西区英语班', region:'西区', date:'2025-04-01', expected:50, budget:15000},
+                {name:'南区职场讲座', region:'南区', date:'2025-03-25', expected:120, budget:20000},
+                {name:'南区家庭日', region:'南区', date:'2025-06-01', expected:200, budget:25000},
+                {name:'北区探访活动', region:'北区', date:'2025-04-15', expected:30, budget:5000},
+                {name:'中心区圣诞晚会', region:'中心区', date:'2025-12-24', expected:800, budget:100000}
+            ];
+            
+            render();
+            document.getElementById('loadBtn').style.display = 'none';
+        }
+        
+        function render() {
+            document.getElementById('regionGrid').innerHTML = regions.map(r => `
+                <div class="region-card" style="border-color:${r.color};">
+                    <div style="position:absolute;top:15px;right:15px;font-size:32px;">📍</div>
+                    <div class="region-name" style="color:${r.color};">${r.name}</div>
+                    <div style="font-size:12px;color:#7f8c8d;margin-bottom:10px;">
+                        👥 人口：${r.population.toLocaleString()}<br>
+                        ⛪ 教会：${r.churches}间
+                    </div>
+                    <div class="region-stats">
+                        <span class="stat-badge">${r.activities}个活动</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('activityList').innerHTML = activities.map(a => `
+                <div class="activity-item">
+                    <div class="activity-title">📢 ${a.name}</div>
+                    <div style="font-size:11px;color:#7f8c8d;margin-top:5px;">
+                        📍 ${a.region} · 📅 ${a.date} · 👥 预计${a.expected}人 · 💰 $${a.budget.toLocaleString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

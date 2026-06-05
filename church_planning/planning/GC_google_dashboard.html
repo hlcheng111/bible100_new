@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google 生態屋智慧 Dashboard 中樞</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        /* Google 經典四色邊框與亮色陰影 */
+        .google-blue { color: #1a73e8; }
+        .google-red { color: #ea4335; }
+        .google-yellow { color: #f9ab00; }
+        .google-green { color: #1e8e3e; }
+        
+        .active-tab {
+            border-bottom: 4px solid #1a73e8;
+            color: #1a73e8;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- 自訂通知 Modal -->
+    <div id="custom-alert" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[999] hidden flex items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl transform scale-95 transition-transform duration-200" id="alert-card">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="bg-blue-50 text-blue-600 p-2.5 rounded-xl" id="alert-icon-container">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900" id="alert-title">系統通知</h3>
+            </div>
+            <p class="text-slate-600 text-sm leading-relaxed mb-6" id="alert-message">通知內容</p>
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeAlert()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2 rounded-lg transition-all">關閉</button>
+                <a id="alert-action-btn" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all hidden">立即前往</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 頂部智慧導航欄 (Google 風格) -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 px-4 lg:px-8 h-16 flex items-center justify-between shadow-sm">
+        <div class="flex items-center space-x-3">
+            <!-- Google 四色標誌盒子 -->
+            <div class="flex p-1.5 bg-slate-100 rounded-xl space-x-0.5">
+                <span class="w-2.5 h-6 bg-[#1a73e8] rounded-l-md"></span>
+                <span class="w-2.5 h-6 bg-[#ea4335]"></span>
+                <span class="w-2.5 h-6 bg-[#f9ab00]"></span>
+                <span class="w-2.5 h-6 bg-[#1e8e3e] rounded-r-md"></span>
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h1 class="text-md sm:text-lg font-bold text-slate-900 tracking-tight">Google 生態屋智慧中樞</h1>
+                    <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-200">v3.5 一站式頂部固定版</span>
+                </div>
+                <p class="text-[11px] text-slate-500">100+ 軟體統一集中容器 · 一次付費 · 持續重用</p>
+            </div>
+        </div>
+
+        <!-- 頂部通用搜尋器 (移至大導航欄右側) -->
+        <div class="hidden md:flex items-center flex-1 max-w-sm mx-6">
+            <div class="relative w-full">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" id="global-search" oninput="handleSearch()" placeholder="搜尋 100+ 軟體、平替或自學課程..." class="block w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-full bg-slate-50 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs transition-all">
+            </div>
+        </div>
+
+        <!-- SSO 狀態說明 -->
+        <div class="flex items-center space-x-4 text-xs font-medium">
+            <div class="flex items-center space-x-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full border border-green-200" title="一次登入，百款 Google 軟體免密碼安全通行">
+                <span class="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
+                <span>🔑 企業級 SSO 免密保護中</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 固定於頂部的 4 大房間 Tab 導航區 -->
+    <div class="bg-white border-b border-slate-200 sticky top-16 z-40 shadow-xs px-4 lg:px-8">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between">
+            <nav class="flex space-x-1 sm:space-x-8 overflow-x-auto py-1">
+                <button onclick="switchRoom('lobby')" id="room-btn-lobby" class="active-tab py-3 px-3 text-sm font-medium transition-all duration-150 flex items-center space-x-2 border-b-4 border-transparent hover:text-blue-600">
+                    <span>🏛️ 核心大堂 (100+ 軟體)</span>
+                    <span id="lobby-count-badge" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-bold">100+</span>
+                </button>
+                <button onclick="switchRoom('warehouse')" id="room-btn-warehouse" class="py-3 px-3 text-sm font-medium transition-all duration-150 flex items-center space-x-2 border-b-4 border-transparent text-slate-500 hover:text-blue-600">
+                    <span>📦 智慧貨倉 (資產管理)</span>
+                </button>
+                <button onclick="switchRoom('school')" id="room-btn-school" class="py-3 px-3 text-sm font-medium transition-all duration-150 flex items-center space-x-2 border-b-4 border-transparent text-slate-500 hover:text-blue-600">
+                    <span>🏫 智慧學校 (自學培訓)</span>
+                    <span class="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">推薦</span>
+                </button>
+                <button onclick="switchRoom('lab')" id="room-btn-lab" class="py-3 px-3 text-sm font-medium transition-all duration-150 flex items-center space-x-2 border-b-4 border-transparent text-slate-500 hover:text-blue-600">
+                    <span>🧪 自動化實驗室 (協作加工)</span>
+                </button>
+            </nav>
+            
+            <!-- 行動端搜尋欄 (寬度不夠時在頂部顯示) -->
+            <div class="md:hidden w-full py-2">
+                <div class="relative w-full">
+                    <input type="text" id="global-search-mobile" oninput="handleSearchMobile()" placeholder="搜尋軟體或自學課程..." class="block w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-full bg-slate-50 text-xs">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主體佈局 (左側 A-F 目錄與右側內容區) -->
+    <div class="flex flex-1 flex-col lg:flex-row">
+        
+        <!-- 左側 A-F 兩/三層式結構目錄 (亮色系) -->
+        <aside class="w-full lg:w-72 bg-white border-r border-slate-200 p-4 flex-shrink-0 space-y-4 overflow-y-auto max-h-[calc(100vh-8rem)]">
+            <div class="px-3">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">A-F 軟體快捷目錄</p>
+                <p class="text-[9px] text-slate-400">💡 提示：點擊子軟體可連動高亮定位</p>
+            </div>
+            
+            <div class="space-y-2">
+                
+                <!-- 分類 A -->
+                <div class="border border-slate-100 rounded-xl overflow-hidden">
+                    <button onclick="toggleSidebarCategory('cat-a')" class="w-full bg-slate-50 hover:bg-slate-100 px-3 py-2.5 flex justify-between items-center text-xs font-bold text-slate-700">
+                        <span class="flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#1a73e8]"></span>
+                            <span>A. 協作、文書與辦公 (12)</span>
+                        </span>
+                        <span id="arrow-cat-a" class="transform transition-transform text-[8px]">▼</span>
+                    </button>
+                    <div id="list-cat-a" class="p-1 bg-white space-y-0.5 text-[11px] hidden">
+                        <!-- 動態填充 -->
+                    </div>
+                </div>
+
+                <!-- 分類 B -->
+                <div class="border border-slate-100 rounded-xl overflow-hidden">
+                    <button onclick="toggleSidebarCategory('cat-b')" class="w-full bg-slate-50 hover:bg-slate-100 px-3 py-2.5 flex justify-between items-center text-xs font-bold text-slate-700">
+                        <span class="flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#ea4335]"></span>
+                            <span>B. 雲端基礎與資料庫 (16)</span>
+                        </span>
+                        <span id="arrow-cat-b" class="transform transition-transform text-[8px]">▼</span>
+                    </button>
+                    <div id="list-cat-b" class="p-1 bg-white space-y-0.5 text-[11px] hidden"></div>
+                </div>
+
+                <!-- 分類 C -->
+                <div class="border border-slate-100 rounded-xl overflow-hidden">
+                    <button onclick="toggleSidebarCategory('cat-c')" class="w-full bg-slate-50 hover:bg-slate-100 px-3 py-2.5 flex justify-between items-center text-xs font-bold text-slate-700">
+                        <span class="flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#f9ab00]"></span>
+                            <span>C. AI 與進階研發 (10)</span>
+                        </span>
+                        <span id="arrow-cat-c" class="transform transition-transform text-[8px]">▼</span>
+                    </button>
+                    <div id="list-cat-c" class="p-1 bg-white space-y-0.5 text-[11px] hidden"></div>
+                </div>
+
+                <!-- 分類 D -->
+                <div class="border border-slate-100 rounded-xl overflow-hidden">
+                    <button onclick="toggleSidebarCategory('cat-d')" class="w-full bg-slate-50 hover:bg-slate-100 px-3 py-2.5 flex justify-between items-center text-xs font-bold text-slate-700">
+                        <span class="flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#7248B9]"></span>
+                            <span>D. 系統管理與安全保護 (8)</span>
+                        </span>
+                        <span id="arrow-cat-d" class="transform transition-transform text-[8px]">▼</span>
+                    </button>
+                    <div id="list-cat-d" class="p-1 bg-white space-y-0.5 text-[11px] hidden"></div>
+                </div>
+
+                <!-- 分類 E -->
+                <div class="border border-slate-100 rounded-xl overflow-hidden">
+                    <button onclick="toggleSidebarCategory('cat-e')" class="w-full bg-slate-50 hover:bg-slate-100 px-3 py-2.5 flex justify-between items-center text-xs font-bold text-slate-700">
+                        <span class="flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#1e8e3e]"></span>
+                            <span>E. 數據分析、廣告與推廣 (15)</span>
+                        </span>
+                        <span id="arrow-cat-e" class="transform transition-transform text-[8px]">▼</span>
+                    </button>
+                    <div id="list-cat-e" class="p-1 bg-white space-y-0.5 text-[11px] hidden"></div>
+                </div>
+
+                <!-- 分類 F -->
+                <div class="border border-slate-100 rounded-xl overflow-hidden">
+                    <button onclick="toggleSidebarCategory('cat-f')" class="w-full bg-slate-50 hover:bg-slate-100 px-3 py-2.5 flex justify-between items-center text-xs font-bold text-slate-700">
+                        <span class="flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                            <span>F. 實用智慧生活與地圖 (39)</span>
+                        </span>
+                        <span id="arrow-cat-f" class="transform transition-transform text-[8px]">▼</span>
+                    </button>
+                    <div id="list-cat-f" class="p-1 bg-white space-y-0.5 text-[11px] hidden"></div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- 右側主要工作區域 -->
+        <main class="flex-1 p-4 lg:p-8 space-y-8 overflow-y-auto max-h-[calc(100vh-8rem)]">
+
+            <!-- ==================== 房間 0：核心大堂 (100+ 軟體列表) ==================== -->
+            <section id="section-lobby" class="space-y-6">
+                <!-- 歡迎看板 -->
+                <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+                    <div class="absolute -right-8 -bottom-8 opacity-10">
+                        <svg width="240" height="240" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2zm0 8H7v-2h10v2z"/></svg>
+                    </div>
+                    <div class="relative z-10 max-w-4xl space-y-2">
+                        <div class="inline-block bg-white/20 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">ECO-HOUSE LOBBY</div>
+                        <h2 class="text-2xl font-black">Google 生態系統統一操作控制台</h2>
+                        <p class="text-white/80 text-sm">
+                            整合 Google 旗下 100 多款軟體。設有「難度分級指示」與「同行熱門平替品連結」，實現無縫學習、即點即用！
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 頂部快速分類篩選按鈕 (大堂專用) -->
+                <div class="space-y-3 pb-3 border-b border-slate-200">
+                    <!-- 第一排：分類篩選 -->
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <span class="text-xs font-bold text-slate-400 mr-2">按類別篩選：</span>
+                        <button onclick="filterLobby('ALL')" id="filter-btn-ALL" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-blue-600 text-white shadow-sm">全部軟體 (100+)</button>
+                        <button onclick="filterLobby('A')" id="filter-btn-A" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">A. 協作辦公</button>
+                        <button onclick="filterLobby('B')" id="filter-btn-B" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">B. 雲端數據</button>
+                        <button onclick="filterLobby('C')" id="filter-btn-C" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">C. AI研發</button>
+                        <button onclick="filterLobby('D')" id="filter-btn-D" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">D. 安全管理</button>
+                        <button onclick="filterLobby('E')" id="filter-btn-E" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">E. 數據推廣</button>
+                        <button onclick="filterLobby('F')" id="filter-btn-F" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">F. 智慧生活</button>
+                    </div>
+                    
+                    <!-- 第二排：難度分組快速篩選 -->
+                    <div class="flex flex-wrap gap-2 items-center bg-slate-100/60 p-2 rounded-xl border border-slate-200/60">
+                        <span class="text-xs font-bold text-slate-500 mr-2 pl-1">🎯 難易度篩選：</span>
+                        <button onclick="filterByLevel('ALL')" id="lvl-btn-ALL" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-700 text-white transition-all shadow-xs">全部難度</button>
+                        <button onclick="filterByLevel('must')" id="lvl-btn-must" class="px-3 py-1 rounded-lg text-xs font-bold bg-white text-slate-700 hover:bg-slate-200/70 border border-slate-200 transition-all flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span> <span>🟢 入手必試 (Must Try)</span>
+                        </button>
+                        <button onclick="filterByLevel('should')" id="lvl-btn-should" class="px-3 py-1 rounded-lg text-xs font-bold bg-white text-slate-700 hover:bg-slate-200/70 border border-slate-200 transition-all flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span> <span>🔵 營運要試 (Should Try)</span>
+                        </button>
+                        <button onclick="filterByLevel('can')" id="lvl-btn-can" class="px-3 py-1 rounded-lg text-xs font-bold bg-white text-slate-700 hover:bg-slate-200/70 border border-slate-200 transition-all flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-slate-400"></span> <span>⚪ 進階可試 (Can Try)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 100+ 軟體卡片展示網格 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="lobby-software-grid">
+                    <!-- JS 將會在這裡動態渲染 100+ 個包含平替品標籤的軟體卡片 -->
+                </div>
+            </section>
+
+            <!-- ==================== 房間 1：智慧貨倉 (Warehouse) ==================== -->
+            <section id="section-warehouse" class="hidden space-y-6">
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+                    <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
+                        <span class="text-3xl">📦</span>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">智慧貨倉 (Warehouse)</h2>
+                            <p class="text-xs text-slate-500">集中管理與原料資產化 · 隨時重用再加工</p>
+                        </div>
+                    </div>
+
+                    <!-- 貨倉核心配置與三大實體按鈕 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- 左邊大按鈕與嵌入區 -->
+                        <div class="space-y-4">
+                            <h3 class="text-sm font-bold text-slate-700">📍 快速通路 (一鍵直達)</h3>
+                            
+                            <div class="p-5 border border-green-200 rounded-2xl bg-green-50/50 flex items-center justify-between shadow-sm">
+                                <div class="space-y-1">
+                                    <h4 class="text-sm font-bold text-green-900">1. 【生態屋核心資料庫】</h4>
+                                    <p class="text-xs text-green-700">以 Google Sheets 作為最底層的關聯試算表，存放所有成員、Prompt 庫等數據。</p>
+                                </div>
+                                <button onclick="openExternal('https://docs.google.com/spreadsheets/')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md transition-all whitespace-nowrap">進入資料庫 ➔</button>
+                            </div>
+
+                            <div class="p-5 border border-blue-200 rounded-2xl bg-blue-50/50 flex items-center justify-between shadow-sm">
+                                <div class="space-y-1">
+                                    <h4 class="text-sm font-bold text-blue-900">2. 【原料與成品倉庫】</h4>
+                                    <p class="text-xs text-blue-700">以 Google Drive 統一存放所有的專案文件、 Apps Script 原始碼與音視頻原料。</p>
+                                </div>
+                                <button onclick="openExternal('https://drive.google.com/')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md transition-all whitespace-nowrap">進入雲端硬碟 ➔</button>
+                            </div>
+                        </div>
+
+                        <!-- 右邊儲存架構指導（路線圖） -->
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/60 space-y-3">
+                            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">💡 貨倉的最佳儲存路線（推薦方案）</h3>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                <b>如何有效儲存 100+ 軟體的制成品？</b><br>
+                                我們不建議隨意、散亂地存放。我們強烈推薦在 Google Drive 中，為每一組核心工具（或專案）建立專屬的「智慧資料夾夾層（一軟體一夾）」，結構如下：
+                            </p>
+                            <div class="font-mono text-xs bg-white border border-slate-200 p-3.5 rounded-xl text-slate-700 space-y-1">
+                                <p class="text-blue-600 font-bold font-sans">📂 /生態屋總倉庫 (Eco-House Main)</p>
+                                <p class="pl-4">├── 📂 [A_Office_Docs] ➔ Docs/Slides 匯報模版</p>
+                                <p class="pl-4">├── 📂 [B_Data_Infra] ➔ BigQuery / Firestore 備份</p>
+                                <p class="pl-4">├── 📂 [C_AI_SOPs] ➔ NotebookLM 專用學習原料</p>
+                                <p class="pl-4">└── 📄 [Master_Database] ➔ 主 Sheets 控制台</p>
+                            </div>
+                            <p class="text-[10px] text-slate-400 leading-relaxed">※ 利用這種高度結構化的「一軟體一夾」架構，您的 Apps Script 自動化程式就能精確定位並抽取原料，秒級生成新成品並直接回存！</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ==================== 房間 2：智慧學校 (School) ==================== -->
+            <section id="section-school" class="hidden space-y-6">
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+                    <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
+                        <span class="text-3xl">🏫</span>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">智慧學校 (School)</h2>
+                            <p class="text-xs text-slate-500">自學與組織培訓體系 · 玩轉 100+ Google 工具</p>
+                        </div>
+                    </div>
+
+                    <!-- 啟動 AI 導師 -->
+                    <div class="p-6 border border-amber-200 bg-amber-50 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="space-y-1.5">
+                            <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">NotebookLM 整合</span>
+                            <h3 class="text-md font-bold text-amber-950">1. 啟動您的 AI 組織專屬導師 (NotebookLM)</h3>
+                            <p class="text-xs text-amber-950/70 leading-relaxed max-w-2xl">
+                                將智慧貨倉中累積的 SOP、工具使用說明、研發文件一鍵倒入 NotebookLM。它會自動轉化成專屬的 AI 知識庫導師，更能自動生成雙人 Podcast 語音，幫新成員在 5 分鐘內了解 100+ 軟體的運作全貌！
+                            </p>
+                        </div>
+                        <button onclick="openExternal('https://notebooklm.google.com')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-5 py-3 rounded-xl shadow-md transition-all whitespace-nowrap">啟動 AI 導師 ➔</button>
+                    </div>
+
+                    <!-- SOP 智慧嵌入與自學課程連結 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        
+                        <!-- 組織標準 SOP 手冊（文字區塊） -->
+                        <div class="border border-slate-200 rounded-2xl p-5 space-y-3">
+                            <div class="flex justify-between items-center border-b pb-2">
+                                <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-1">
+                                    <span>📝</span> <span>生態屋組織標準 SOP 手冊</span>
+                                </h4>
+                                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">版本: v3.1</span>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl text-xs text-slate-600 leading-relaxed space-y-2 h-[220px] overflow-y-auto font-serif">
+                                <p class="font-bold text-slate-800">【第一章：生態屋基本協作心法】</p>
+                                <p>本生態屋的核心是「低成本、高效率、一次整合」。所有員工在使用 Google 協作工具時，需嚴格遵守「資產入庫」規範。所有製作的文件均須統一放回「智慧貨倉」對應分類資料夾，嚴禁建立個人私有文件。</p>
+                                <p class="font-bold text-slate-800 pt-2">【第二章：軟體改版與 Alert 追蹤】</p>
+                                <p>因 Google 軟體更新頻繁（如 A07 Jamboard 退役、C01 Gemini 升級），各部門在開發自動化工具時，應隨時查閱 Dashboard 標示的「改版 Alert」標籤，避免 Apps Script 因 API 廢棄而失效。</p>
+                                <p class="font-bold text-slate-800 pt-2">【第三章：自學與培訓路徑】</p>
+                                <p>每位新成員入職首週，必須在「智慧學校」完成下方的 YouTube 官方基礎實戰課，並向 NotebookLM 提交一份隨堂報告。</p>
+                            </div>
+                        </div>
+
+                        <!-- 推薦自學影片 (YouTube 連結) -->
+                        <div class="border border-slate-200 rounded-2xl p-5 space-y-3">
+                            <div class="flex justify-between items-center border-b pb-2">
+                                <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-1">
+                                    <span>🎥</span> <span>推薦自學實戰影片 (官方及優質課程)</span>
+                                </h4>
+                            </div>
+                            
+                            <div class="space-y-2 max-h-[220px] overflow-y-auto">
+                                
+                                <div class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl border border-slate-100 transition-all">
+                                    <div class="flex items-center space-x-3">
+                                        <span class="text-xl">📊</span>
+                                        <div>
+                                            <p class="text-xs font-bold text-slate-800">Google Sheets 實戰極致技巧</p>
+                                            <p class="text-[10px] text-slate-400">適合：新手 ➔ 貨倉管理大師</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="openYouTube('https://www.youtube.com/results?search_query=Google+Sheets+Tutorial+Intermediate')" class="text-xs text-blue-600 hover:underline font-bold">點擊觀看 ➔</button>
+                                </div>
+
+                                <div class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl border border-slate-100 transition-all">
+                                    <div class="flex items-center space-x-3">
+                                        <span class="text-xl">🔮</span>
+                                        <div>
+                                            <p class="text-xs font-bold text-slate-800">NotebookLM 核心功能完全拆解</p>
+                                            <p class="text-[10px] text-slate-400">適合：所有成員建立專屬 AI 導師</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="openYouTube('https://www.youtube.com/results?search_query=NotebookLM+Tutorial')" class="text-xs text-blue-600 hover:underline font-bold">點擊觀看 ➔</button>
+                                </div>
+
+                                <div class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl border border-slate-100 transition-all">
+                                    <div class="flex items-center space-x-3">
+                                        <span class="text-xl">⚡</span>
+                                        <div>
+                                            <p class="text-xs font-bold text-slate-800">Apps Script 自動化 101 入門</p>
+                                            <p class="text-[10px] text-slate-400">適合：研發人員開發「工具的新工具」</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="openYouTube('https://www.youtube.com/results?search_query=Google+Apps+Script+Automation+Tutorial')" class="text-xs text-blue-600 hover:underline font-bold">點擊觀看 ➔</button>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ==================== 房間 3：自動化實驗室 (Lab) ==================== -->
+            <section id="section-lab" class="hidden space-y-6">
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+                    <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
+                        <span class="text-3xl">🧪</span>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">自動化實驗室 (Automation Lab)</h2>
+                            <p class="text-xs text-slate-500">協作 100+ 軟體 · 達到「工具生出新工具」的最高境界</p>
+                        </div>
+                    </div>
+
+                    <!-- 初始極簡引導：按鈕按下後才解鎖實驗室 -->
+                    <div id="lab-locked-state" class="py-12 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 rounded-2xl space-y-4 bg-slate-50/50">
+                        <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-sm">🧪</div>
+                        <div class="max-w-md space-y-2">
+                            <h3 class="text-base font-bold text-slate-850">已就位：自動化高階協作實驗面板</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">
+                                點擊下方按鈕以安全載入 API 串接管線、GitHub 儲存庫、Gemini AI 連接器及多工具自動協調加工面板。
+                            </p>
+                        </div>
+                        <button onclick="unlockLabPanel()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-6 py-3 rounded-xl shadow-md transition-all flex items-center space-x-2">
+                            <span>⚙️ 啟動自動化實驗線面板</span>
+                            <span>➔</span>
+                        </button>
+                    </div>
+
+                    <!-- 載入動畫 (預設隱藏) -->
+                    <div id="lab-loading-state" class="hidden py-24 flex flex-col items-center justify-center text-center space-y-4">
+                        <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p class="text-xs text-slate-500 font-bold">正在安全建立 Cloud Run 與 API 控制管線...</p>
+                    </div>
+
+                    <!-- 實驗室大面板內容 (按後才出現) -->
+                    <div id="lab-unlocked-panel" class="hidden space-y-6">
+                        
+                        <!-- 實驗室大按鈕 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button onclick="openExternal('https://github.com')" class="p-4 border border-slate-200 rounded-2xl bg-slate-50 text-left hover:border-blue-500 transition-all">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase">1. 代碼協作容器</h4>
+                                <p class="text-sm font-bold text-slate-900 mt-1">Cursor / GitHub 研發專案目錄 ➔</p>
+                                <p class="text-xs text-slate-400 mt-2">集中存放與版本控制您的 Apps Script 腳本原始碼，供團隊隨時調取改版。</p>
+                            </button>
+
+                            <button onclick="openExternal('https://aistudio.google.com')" class="p-4 border border-slate-200 rounded-2xl bg-slate-50 text-left hover:border-purple-500 transition-all">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase">2. AI 連接器</h4>
+                                <p class="text-sm font-bold text-slate-900 mt-1">Google AI Studio / Gemini API 測試平台 ➔</p>
+                                <p class="text-xs text-slate-400 mt-2">獲取您的 API Key，將極低成本的 Gemini 2.5 Flash 引入試算表進行批量加工。</p>
+                            </button>
+                        </div>
+
+                        <!-- 協作流：從原料到成品的最高境界 -->
+                        <div class="border border-slate-200 rounded-2xl p-5 space-y-4">
+                            <h3 class="text-sm font-bold text-slate-800">⚙️ 協作自動化流水線演示：如何生出新產品</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">
+                                在生態屋中，單一工具的力量有限，但透過 **Apps Script + API** 將工具與工具無縫串聯（協同作戰），就能在完全不需人工干預的情況下，自動把原料煉製成高階產品！
+                            </p>
+
+                            <!-- 自動化視覺路線圖 -->
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                                
+                                <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-xs space-y-1.5">
+                                    <p class="font-bold text-blue-800">1. Raw Materials (原料)</p>
+                                    <p class="text-slate-600 text-[11px]">從 Google Sheets 智慧貨倉或 Forms 收集客戶意向與背景數據。</p>
+                                    <span class="inline-block bg-blue-100 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full">A02 Sheets</span>
+                                </div>
+
+                                <div class="bg-purple-50 border border-purple-200 p-4 rounded-xl text-xs space-y-1.5">
+                                    <p class="font-bold text-purple-800">2. Reprocessor (AI加工)</p>
+                                    <p class="text-slate-600 text-[11px]">透過 Apps Script 自動調度 Gemini 2.5 API，進行深度改寫與分析。</p>
+                                    <span class="inline-block bg-purple-100 text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded-full">C01 Gemini API</span>
+                                </div>
+
+                                <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs space-y-1.5">
+                                    <p class="font-bold text-amber-800">3. Refined Doc (新產品)</p>
+                                    <p class="text-slate-600 text-[11px]">自動調用 Google Doc API，生成排版精美的「個人化企劃案」Doc。</p>
+                                    <span class="inline-block bg-amber-100 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded-full">A01 Docs</span>
+                                </div>
+
+                                <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-xs space-y-1.5">
+                                    <p class="font-bold text-emerald-800">4. Delivery (通知發送)</p>
+                                    <p class="text-slate-600 text-[11px]">自動調用 Gmail API，將生成的文檔作為附件發送給新成員與主管。</p>
+                                    <span class="inline-block bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-0.5 rounded-full">A09 Gmail</span>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- 頁尾 (明亮簡約) -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+        <p class="max-w-3xl mx-auto leading-relaxed">
+            💡 <b>總建築師貼心說明</b>：點擊上方的軟體卡片，可以直接免除網址跳轉。部分核心工具（如 Docs、Sheets）我們預置了「內嵌 Dashboard 操作」相容通道，以便於您在一站式環境中實時修改與團隊協作。
+        </p>
+        <p class="mt-2 text-[11px]">© 2026 Google 生態屋一站式架構委員會. 專注於高內聚、低耦合的數位智慧系統規劃.</p>
+    </footer>
+
+    <!-- JS 邏輯區 (100+ 軟體資料與交互功能) -->
+    <script>
+        // 100+ Google 軟體詳細資料庫 (加上 level 難度與 alts 平替產品列表)
+        const googleSoftwareDB = [
+            // ==================== 分類 A: 協作、文書與辦公 (12) ====================
+            { id: "A01", name: "Google Docs (文件)", nameEn: "Docs", cat: "A", desc: "線上文字處理器，支援多人實時協同編輯與評論。", url: "https://docs.google.com/document/", status: "stable", level: "must", alts: [{name:"MS Word", url:"https://office.com"}, {name:"Notion", url:"https://notion.so"}] },
+            { id: "A02", name: "Google Sheets (試算表)", nameEn: "Sheets", cat: "A", desc: "雲端試算表工具，生態屋內核數據庫的主體。", url: "https://docs.google.com/spreadsheets/", status: "stable", level: "must", alts: [{name:"MS Excel", url:"https://office.com"}, {name:"Airtable", url:"https://airtable.com"}] },
+            { id: "A03", name: "Google Slides (簡報)", nameEn: "Slides", cat: "A", desc: "線上簡報工具，支持數據動態連結 Sheets 報表。", url: "https://docs.google.com/presentation/", status: "stable", level: "must", alts: [{name:"PowerPoint", url:"https://office.com"}, {name:"Canva", url:"https://canva.com"}] },
+            { id: "A04", name: "Google Forms (表單)", nameEn: "Forms", cat: "A", desc: "用於數據採集、線上調查、客戶意向問卷生成。", url: "https://docs.google.com/forms/", status: "stable", level: "must", alts: [{name:"Typeform", url:"https://typeform.com"}] },
+            { id: "A05", name: "Google Meet (視訊會議)", nameEn: "Meet", cat: "A", desc: "企業級安全視訊會議，支持錄製與 AI 會議摘要。", url: "https://meet.google.com/", status: "stable", level: "should", alts: [{name:"Zoom", url:"https://zoom.us"}, {name:"Teams", url:"https://teams.microsoft.com"}] },
+            { id: "A06", name: "Google Keep (便簽)", nameEn: "Keep", cat: "A", desc: "快速記錄碎片化想法、待辦事項、語音轉文字。", url: "https://keep.google.com/", status: "stable", level: "must", alts: [{name:"Apple Notes", url:"https://www.apple.com"}, {name:"Todoist", url:"https://todoist.com"}] },
+            { id: "A07", name: "Google Jamboard (電子白板)", nameEn: "Jamboard", cat: "A", desc: "官方已於 2024 年底停止服務。推薦轉移至 FigJam 或 Lucidspark。", url: "https://jamboard.google.com/", status: "retired", level: "can", alts: [{name:"FigJam", url:"https://figma.com/figjam"}, {name:"Miro", url:"https://miro.com"}] },
+            { id: "A08", name: "Google Drive (雲端硬碟)", nameEn: "Drive", cat: "A", desc: "安全集中的雲端儲存空間，貨倉的主要地基。", url: "https://drive.google.com/", status: "stable", level: "must", alts: [{name:"OneDrive", url:"https://onedrive.live.com"}, {name:"Dropbox", url:"https://dropbox.com"}] },
+            { id: "A09", name: "Google Gmail (電子郵件)", nameEn: "Gmail", cat: "A", desc: "安全強大的電子郵件客戶端，內建 Chat 與 Meet。", url: "https://mail.google.com/", status: "stable", level: "must", alts: [{name:"Outlook", url:"https://outlook.live.com"}] },
+            { id: "A10", name: "Google Calendar (日曆)", nameEn: "Calendar", cat: "A", desc: "團隊協作日曆，管理排程與會議預約。", url: "https://calendar.google.com/", status: "stable", level: "must", alts: [{name:"Outlook日曆", url:"https://outlook.live.com"}] },
+            { id: "A11", name: "Google Chat (即時通訊)", nameEn: "Chat", cat: "A", desc: "團隊溝通頻道，支援直接分享 Drive 檔案與機器人整合。", url: "https://chat.google.com/", status: "stable", level: "should", alts: [{name:"Slack", url:"https://slack.com"}, {name:"Teams", url:"https://teams.microsoft.com"}] },
+            { id: "A12", name: "Google Sites (協作平台)", nameEn: "Sites", cat: "A", desc: "無代碼網站搭建工具，生態屋一站式大堂的主要容器。", url: "https://sites.google.com/", status: "stable", level: "should", alts: [{name:"WordPress", url:"https://wordpress.org"}, {name:"Wix", url:"https://wix.com"}] },
+
+            // ==================== 分類 B: 雲端基礎與資料庫 (16) ====================
+            { id: "B01", name: "Google Cloud Run (伺服器託管)", nameEn: "Cloud Run", cat: "B", desc: "全代管無伺服器容器運行平台，部署生態屋自動化 API 微服務的最愛。", url: "https://console.cloud.google.com/run", status: "stable", level: "can", alts: [{name:"Vercel", url:"https://vercel.com"}, {name:"Heroku", url:"https://heroku.com"}] },
+            { id: "B02", name: "Google Firestore (資料庫)", nameEn: "Firestore", cat: "B", desc: "企業級無伺服器 NoSQL 文檔資料庫，適合實時數據同步與儲存。", url: "https://console.cloud.google.com/firestore", status: "stable", level: "can", alts: [{name:"MongoDB", url:"https://mongodb.com"}, {name:"Supabase", url:"https://supabase.com"}] },
+            { id: "B03", name: "Google BigQuery (數據倉庫)", nameEn: "BigQuery", cat: "B", desc: "海量數據即時分析倉庫，適合匯流 100+ 工具的最終用戶行為數據。", url: "https://console.cloud.google.com/bigquery", status: "stable", level: "can", alts: [{name:"Snowflake", url:"https://snowflake.com"}] },
+            { id: "B04", name: "Google Cloud Storage (物件儲存)", nameEn: "Cloud Storage", cat: "B", desc: "提供全球、安全、低成本的高持久性非結構化數據儲存。", url: "https://console.cloud.google.com/storage", status: "stable", level: "can", alts: [{name:"AWS S3", url:"https://aws.amazon.com/s3"}] },
+            { id: "B05", name: "Compute Engine (虛擬主機)", nameEn: "Compute Engine", cat: "B", desc: "在 Google 的基礎設施上運作的安全、可調整容量的虛擬機。", url: "https://console.cloud.google.com/compute", status: "stable", level: "can", alts: [{name:"AWS EC2", url:"https://aws.amazon.com"}] },
+            { id: "B06", name: "Cloud Functions (事件驅動函數)", nameEn: "Cloud Functions", cat: "B", desc: "事件驅動的輕量級無伺服器計算代碼服務，適合小型 Webhook。", url: "https://console.cloud.google.com/functions", status: "stable", level: "can", alts: [{name:"AWS Lambda", url:"https://aws.amazon.com"}] },
+            { id: "B07", name: "Google Cloud SQL (關係型資料庫)", nameEn: "Cloud SQL", cat: "B", desc: "全代管的 MySQL、PostgreSQL 和 SQL Server 資料庫服務。", url: "https://console.cloud.google.com/sql", status: "stable", level: "can", alts: [{name:"Amazon RDS", url:"https://aws.amazon.com"}] },
+            { id: "B08", name: "Cloud Spanner (強一致全球資料庫)", nameEn: "Cloud Spanner", cat: "B", desc: "企業級、強一致性的分布式 SQL 資料庫，具備極高可用性。", url: "https://console.cloud.google.com/spanner", status: "stable", level: "can", alts: [] },
+            { id: "B09", name: "Google Kubernetes Engine (GKE)", nameEn: "GKE", cat: "B", desc: "全代管的 Kubernetes 容器化部署、調度與管理服務。", url: "https://console.cloud.google.com/kubernetes", status: "stable", level: "can", alts: [{name:"AWS EKS", url:"https://aws.amazon.com"}] },
+            { id: "B10", name: "Google Cloud Build (持續集成)", nameEn: "Cloud Build", cat: "B", desc: "在 Google Cloud 上建置、測試及部署程式碼的 CI/CD 服務。", url: "https://console.cloud.google.com/cloud-build", status: "stable", level: "can", alts: [{name:"GitHub Actions", url:"https://github.com"}] },
+            { id: "B11", name: "Cloud Identity-Aware Proxy (IAP)", nameEn: "IAP", cat: "B", desc: "控制對部屬在 Google Cloud 上的應用程序和 VM 的訪問，安全防線。", url: "https://console.cloud.google.com/security/iap", status: "stable", level: "can", alts: [] },
+            { id: "B12", name: "Google Cloud CDN (內容分發網路)", nameEn: "Cloud CDN", cat: "B", desc: "利用 Google 全球邊緣站點加速靜態網站與多媒體文件的傳輸。", url: "https://console.cloud.google.com/net-services/cdn", status: "stable", level: "can", alts: [{name:"Cloudflare", url:"https://cloudflare.com"}] },
+            { id: "B13", name: "Google Memorystore (內存資料庫)", nameEn: "Memorystore", cat: "B", desc: "為 Redis 和 Memcached 提供的高性能全代管內存緩存服務。", url: "https://console.cloud.google.com/memorystore", status: "stable", level: "can", alts: [] },
+            { id: "B14", name: "Google Secret Manager (憑證管理)", nameEn: "Secret Manager", cat: "B", desc: "安全地存儲、管理與隨時調用 API 金鑰、密碼及證書。", url: "https://console.cloud.google.com/security/secret-manager", status: "stable", level: "can", alts: [{name:"HashiCorp Vault", url:"https://vaultproject.io"}] },
+            { id: "B15", name: "Google Cloud Logging (日誌管理)", nameEn: "Cloud Logging", cat: "B", desc: "實時收集和分析您所有雲端應用與自動化腳本的錯誤日誌。", url: "https://console.cloud.google.com/logs", status: "stable", level: "can", alts: [{name:"Datadog", url:"https://datadoghq.com"}] },
+            { id: "B16", name: "Google Cloud DNS (網域系統)", nameEn: "Cloud DNS", cat: "B", desc: "在 Google 高可用性的基礎架構上發布和管理域名。", url: "https://console.cloud.google.com/net-services/dns", status: "stable", level: "can", alts: [{name:"GoDaddy", url:"https://godaddy.com"}] },
+
+            // ==================== 分類 C: AI 與進階研發 (10) ====================
+            { id: "C01", name: "Google Gemini (智慧 AI 助理)", nameEn: "Gemini", cat: "C", desc: "Google 最強大、功能最全面的多模態人工智慧交互助理。", url: "https://gemini.google.com/", status: "updated", level: "must", alts: [{name:"ChatGPT", url:"https://chatgpt.com"}, {name:"Claude", url:"https://claude.ai"}] },
+            { id: "C02", name: "NotebookLM (智慧學術筆記)", nameEn: "NotebookLM", cat: "C", desc: "將您的文件轉化成專屬 AI 導師，智慧學校的核心技術。", url: "https://notebooklm.google.com/", status: "new", level: "must", alts: [{name:"Heptabase", url:"https://heptabase.com"}, {name:"ChatGPT Plus", url:"https://chatgpt.com"}] },
+            { id: "C03", name: "Google Vertex AI (機器學習平台)", nameEn: "Vertex AI", cat: "C", desc: "專為研發者設計的一站式機器學習與大模型微調、託管平台。", url: "https://console.cloud.google.com/vertex-ai", status: "stable", level: "can", alts: [{name:"Hugging Face", url:"https://huggingface.co"}] },
+            { id: "C04", name: "Google Apps Script (應用自動化)", nameEn: "Apps Script", cat: "C", desc: "內建於 Workspace，黏合與驅動 100+ 軟體自動化的最關鍵武器。", url: "https://script.google.com/", status: "stable", level: "should", alts: [{name:"Zapier", url:"https://zapier.com"}, {name:"Make", url:"https://make.com"}] },
+            { id: "C05", name: "Google Project IDX (雲端 IDE)", nameEn: "Project IDX", cat: "C", desc: "基於雲端的、融入 AI 輔助的下一代多功能全棧編程環境。", url: "https://idx.google.com/", status: "new", level: "can", alts: [{name:"Cursor", url:"https://cursor.sh"}, {name:"Manus AI", url:"https://manus.im"}] },
+            { id: "C06", name: "Google Colab (Jupyter 筆記本)", nameEn: "Colab", cat: "C", desc: "在瀏覽器中編寫與執行 Python 程式碼，免費調用 GPU 跑 AI 實驗。", url: "https://colab.research.google.com/", status: "stable", level: "can", alts: [{name:"Kaggle Notebooks", url:"https://kaggle.com"}] },
+            { id: "C07", name: "Google Firebase (移動/Web平台)", nameEn: "Firebase", cat: "C", desc: "幫助開發人員快速構建、運行與監控 Web、移動端應用的平台。", url: "https://console.firebase.google.com/", status: "stable", level: "can", alts: [{name:"Supabase", url:"https://supabase.com"}] },
+            { id: "C08", name: "Google Looker (企業商業智能)", nameEn: "Looker", cat: "C", desc: "強大的企業級商業智能與數據建模、深度挖掘分析平台。", url: "https://console.cloud.google.com/looker", status: "stable", level: "can", alts: [{name:"Tableau", url:"https://tableau.com"}] },
+            { id: "C09", name: "Google Kaggle (數據科學競賽)", nameEn: "Kaggle", cat: "C", desc: "全球最大的數據科學家社群，提供海量免費開源數據集與代碼實例。", url: "https://www.kaggle.com/", status: "stable", level: "can", alts: [] },
+            { id: "C10", name: "Google Dialogflow (對話式AI)", nameEn: "Dialogflow", cat: "C", desc: "構建自然、豐富的對話式用戶界面（如語音客服與智能聊天機器人）。", url: "https://dialogflow.cloud.google.com/", status: "stable", level: "can", alts: [{name:"Coze", url:"https://coze.com"}] },
+
+            // ==================== 分類 D: 系統管理與安全保護 (8) ====================
+            { id: "D01", name: "Google Workspace Admin (管理控制台)", nameEn: "Admin", cat: "D", desc: "全面配置、管理您組織的所有用戶賬號、密鑰與軟體權限。", url: "https://admin.google.com/", status: "stable", level: "can", alts: [{name:"MS 365 Admin", url:"https://admin.microsoft.com"}] },
+            { id: "D02", name: "Google Cloud Identity (身份識別管理)", nameEn: "Cloud Identity", cat: "D", desc: "管理您的團隊用戶和設備的登入安全及 SSO 單一登入權限。", url: "https://console.cloud.google.com/iam-admin/identity-plat", status: "stable", level: "can", alts: [{name:"Okta", url:"https://okta.com"}] },
+            { id: "D03", name: "Google Vault (資訊保存與電子搜尋)", nameEn: "Vault", cat: "D", desc: "保留、封存、搜尋和導出您組織的電子郵件及 Drive 資料夾數據。", url: "https://vault.google.com/", status: "stable", level: "can", alts: [] },
+            { id: "D04", name: "Chrome Enterprise (企業瀏覽器管理)", nameEn: "Chrome Enterprise", cat: "D", desc: "安全地集中管理全體員工的 Chrome 瀏覽器配置與擴充程序。", url: "https://chromeenterprise.google/", status: "stable", level: "can", alts: [] },
+            { id: "D05", name: "Google Authenticator (兩步驟驗證)", nameEn: "Authenticator", cat: "D", desc: "雙重身份驗證工具，為您的生態屋提供最高安全保障。", url: "https://g.co/2step", status: "stable", level: "must", alts: [{name:"Duo Security", url:"https://duo.com"}] },
+            { id: "D06", name: "Google Cloud IAM (權限控制)", nameEn: "IAM", cat: "D", desc: "精細控制組織成員對 Google Cloud 上各項資源 and API 的訪問權限。", url: "https://console.cloud.google.com/iam-admin/iam", status: "stable", level: "can", alts: [{name:"AWS IAM", url:"https://aws.amazon.com"}] },
+            { id: "D07", name: "Google Device Management (設備管理)", nameEn: "MDM", cat: "D", desc: "遠端管理和確保登入生態屋的 Android/iOS 手機和電腦的安全。", url: "https://admin.google.com/ac/devices", status: "stable", level: "can", alts: [{name:"Microsoft Intune", url:"https://microsoft.com"}] },
+            { id: "D08", name: "Google Security Command Center", nameEn: "Security Center", cat: "D", desc: "提供全面的安全防護、漏洞掃描及威脅檢測警報功能。", url: "https://console.cloud.google.com/security/scc", status: "stable", level: "can", alts: [] },
+
+            // ==================== 分類 E: 數據分析、廣告與推廣 (15) ====================
+            { id: "E01", name: "Google Analytics 4 (網站流量分析)", nameEn: "GA4", cat: "E", desc: "新一代網站和 App 用戶流量統計分析儀表板。", url: "https://analytics.google.com/", status: "stable", level: "should", alts: [{name:"Mixpanel", url:"https://mixpanel.com"}, {name:"Amplitude", url:"https://amplitude.com"}] },
+            { id: "E02", name: "Google Ads (廣告投放系統)", nameEn: "Ads", cat: "E", desc: "Google 的關鍵字與展示廣告購買和監控系統。", url: "https://ads.google.com/", status: "stable", level: "should", alts: [{name:"Meta Ads", url:"https://facebook.com"}] },
+            { id: "E03", name: "Looker Studio (互動報表與儀表板)", nameEn: "Looker Studio", cat: "E", desc: "前稱 Data Studio，零代碼將 Sheets、BigQuery 資料生成精美視覺報表。", url: "https://lookerstudio.google.com/", status: "updated", level: "should", alts: [{name:"Tableau", url:"https://tableau.com"}, {name:"PowerBI", url:"https://powerbi.microsoft.com"}] },
+            { id: "E04", name: "Google Search Console (搜尋主機控制台)", nameEn: "Search Console", cat: "E", desc: "分析您的網站在 Google 搜尋引擎上的曝光率與 SEO 排名健康狀況。", url: "https://search.google.com/search-console", status: "stable", level: "should", alts: [{name:"Ahrefs", url:"https://ahrefs.com"}, {name:"Semrush", url:"https://semrush.com"}] },
+            { id: "E05", name: "Google Tag Manager (代碼管理工具)", nameEn: "GTM", cat: "E", desc: "無需修改網站程式碼，直接在 Dashboard 集中管理與觸發第三方追蹤代碼。", url: "https://tagmanager.google.com/", status: "stable", level: "should", alts: [{name:"Tealium", url:"https://tealium.com"}] },
+            { id: "E06", name: "Google AdSense (網站廣告變現)", nameEn: "AdSense", cat: "E", desc: "在您的網站上展示 Google 廣告以賺取持續被動收入的工具。", url: "https://adsense.google.com/", status: "stable", level: "should", alts: [] },
+            { id: "E07", name: "Google AdMob (移動應用變現)", nameEn: "AdMob", cat: "E", desc: "為開發人員設計的、通過在手機 APP 內展示廣告進行高額變現的系統。", url: "https://admob.google.com/", status: "stable", level: "can", alts: [{name:"AppLovin", url:"https://applovin.com"}] },
+            { id: "E08", name: "Google Merchant Center (商品資訊)", nameEn: "Merchant Center", cat: "E", desc: "將您的線上商城的商品目錄上傳至 Google 購物搜尋中展示。", url: "https://merchants.google.com/", status: "stable", level: "should", alts: [] },
+            { id: "E09", name: "Google Business Profile (商家檔案)", nameEn: "Business Profile", cat: "E", desc: "前稱 Google 我的商家，管理您在 Google 地圖上的店鋪資訊與評分。", url: "https://business.google.com/", status: "stable", level: "must", alts: [{name:"Yelp For Business", url:"https://biz.yelp.com"}] },
+            { id: "E10", name: "Google Ad Manager (進階廣告管理)", nameEn: "Ad Manager", cat: "E", desc: "針對大型發布商的多管道、跨平台、全天候廣告投放管理系統。", url: "https://admanager.google.com/", status: "stable", level: "can", alts: [] },
+            { id: "E11", name: "Google Trends (趨勢分析工具)", nameEn: "Trends", cat: "E", desc: "實時分析全球與各地區用戶的關鍵字搜尋趨勢和熱門話題。", url: "https://trends.google.com/", status: "stable", level: "must", alts: [{name:"Baidu Index", url:"https://index.baidu.com"}] },
+            { id: "E12", name: "Google Optimize (網頁A/B測試)", nameEn: "Optimize", cat: "E", desc: "官方已於 2023 年 9 月底停止運作，推薦使用 Firebase A/B 測試代替。", url: "https://optimize.google.com/", status: "retired", level: "can", alts: [{name:"VWO", url:"https://vwo.com"}, {name:"Optimizely", url:"https://optimizely.com"}] },
+            { id: "E13", name: "Google Publisher Console (發佈商診斷)", nameEn: "Publisher Console", cat: "E", desc: "為開發人員提供的網頁廣告載入速度診斷與出錯排查控制台。", url: "https://partner.google.com/gampad/publisher_console", status: "stable", level: "can", alts: [] },
+            { id: "E14", name: "Google Surveys (市場調查問卷)", nameEn: "Surveys", cat: "E", desc: "官方已停止獨立服務，推薦使用 Google Forms 進行客戶自主調研。", url: "https://surveys.google.com/", status: "retired", level: "should", alts: [{name:"SurveyMonkey", url:"https://surveymonkey.com"}] },
+            { id: "E15", name: "Google Keyword Planner (關鍵字規劃)", nameEn: "Keyword Planner", cat: "E", desc: "精確查詢各行各業關鍵字的搜尋量、競爭難度與平均廣告點擊單價。", url: "https://ads.google.com/aw/keywordplanner", status: "stable", level: "should", alts: [] },
+
+            // ==================== 分類 F: 實用智慧生活與地圖 (39) ====================
+            { id: "F01", name: "Google Maps (地圖導航)", nameEn: "Maps", cat: "F", desc: "全球最精準的街道地圖、街景導航與實時路況反饋。", url: "https://maps.google.com/", status: "stable", level: "must", alts: [{name:"Apple Maps", url:"https://www.apple.com"}, {name:"Waze", url:"https://waze.com"}] },
+            { id: "F02", name: "YouTube (影音串流)", nameEn: "YouTube", cat: "F", desc: "全球最大的影音分享平台，在學校中用作主要的視訊學習庫。", url: "https://www.youtube.com/", status: "stable", level: "must", alts: [{name:"Vimeo", url:"https://vimeo.com"}] },
+            { id: "F03", name: "Google Earth (地球虛擬模擬器)", nameEn: "Earth", cat: "F", desc: "提供全球最壯觀、最清晰的 3D 地形和高空俯瞰衛星圖像。", url: "https://earth.google.com/", status: "stable", level: "should", alts: [] },
+            { id: "F04", name: "Google Translate (翻譯工具)", nameEn: "Translate", cat: "F", desc: "支持 100 多種語言的快速、精準的文本、語音與拍照翻譯工具。", url: "https://translate.google.com/", status: "stable", level: "must", alts: [{name:"DeepL", url:"https://deepl.com"}] },
+            { id: "F05", name: "Google Photos (相簿儲存)", nameEn: "Photos", cat: "F", desc: "智能照片與視訊存儲庫，支持 AI 人臉自動識別與智能分類標記。", url: "https://photos.google.com/", status: "stable", level: "must", alts: [{name:"iCloud Photos", url:"https://icloud.com"}] },
+            { id: "F06", name: "Google Contacts (聯絡人管理)", nameEn: "Contacts", cat: "F", desc: "雲端儲存和備份您與團隊、客戶的所有聯繫人電話及電郵地址。", url: "https://contacts.google.com/", status: "stable", level: "must", alts: [] },
+            { id: "F07", name: "Google Books (圖書搜尋與購買)", nameEn: "Books", cat: "F", desc: "搜尋全球海量的電子書、出版文檔與報紙歷史歸檔文章。", url: "https://books.google.com/", status: "stable", level: "should", alts: [] },
+            { id: "F08", name: "Google Scholar (學術搜尋引擎)", nameEn: "Scholar", cat: "F", desc: "搜尋全球高校科研機構的專利、博士論文及學術期刊檔案。", url: "https://scholar.google.com/", status: "stable", level: "must", alts: [] },
+            { id: "F09", name: "Google Finance (財經與即時股市)", nameEn: "Finance", cat: "F", desc: "提供全球各大股市、指數的即時報價、歷史走勢與財經新聞。", url: "https://www.google.com/finance", status: "stable", level: "must", alts: [{name:"Yahoo Finance", url:"https://finance.yahoo.com"}] },
+            { id: "F10", name: "Google Fonts (開源字型庫)", nameEn: "Fonts", cat: "F", desc: "提供數千款精緻、支持商用的開源多國語言免費字型下載與 Web 鏈接。", url: "https://fonts.google.com/", status: "stable", level: "should", alts: [{name:"Adobe Fonts", url:"https://fonts.adobe.com"}] },
+            { id: "F11", name: "Google Flights (機票預訂)", nameEn: "Flights", cat: "F", desc: "分析和比價全球各家航空公司的航班動態、價格與最佳預訂時機。", url: "https://www.google.com/flights", status: "stable", level: "must", alts: [{name:"Skyscanner", url:"https://skyscanner.com"}] },
+            { id: "F12", name: "Google Play Store (應用商店)", nameEn: "Play Store", cat: "F", desc: "Android 手機與 Chromebook 應用程序、遊戲與數位商品的官方下載源。", url: "https://play.google.com/", status: "stable", level: "must", alts: [{name:"App Store", url:"https://apple.com"}] },
+            { id: "F13", name: "Google Classroom (課堂教育)", nameEn: "Classroom", cat: "F", desc: "為學校和非營利組織設計的、管理線上作業與分發課程資料的容器。", url: "https://classroom.google.com/", status: "stable", level: "should", alts: [{name:"Canvas LMS", url:"https://instructure.com/canvas"}] },
+            { id: "F14", name: "Google News (新聞聚合)", nameEn: "News", cat: "F", desc: "聚合全球各家主流媒體的新聞報導，提供個性化推薦與多視角解讀。", url: "https://news.google.com/", status: "stable", level: "must", alts: [] },
+            { id: "F15", name: "Google Groups (網上論壇)", nameEn: "Groups", cat: "F", desc: "建立網絡討論社群與企業內部大批量群發電郵地址。分組極佳。", url: "https://groups.google.com/", status: "stable", level: "should", alts: [{name:"Reddit", url:"https://reddit.com"}] },
+            { id: "F16", name: "Google Travel (智慧行程規劃)", nameEn: "Travel", cat: "F", desc: "一站式管理您的機票、酒店訂單及景點旅遊路徑規劃。", url: "https://www.google.com/travel", status: "stable", level: "must", alts: [] },
+            { id: "F17", name: "Google Podcasts (播客平台)", nameEn: "Podcasts", cat: "F", desc: "官方已於 2024 年退役。推薦使用 YouTube Music 聆聽所有播客。", url: "https://podcasts.google.com/", status: "retired", level: "should", alts: [{name:"Spotify", url:"https://spotify.com"}] },
+            { id: "F18", name: "Google Duo (視訊通話)", nameEn: "Duo", cat: "F", desc: "已與 Google Meet 合併，成為 Meet 移動版核心框架。", url: "https://duo.google.com/", status: "retired", level: "should", alts: [{name:"FaceTime", url:"https://apple.com"}] },
+            { id: "F19", name: "Google Hangouts (即時通話)", nameEn: "Hangouts", cat: "F", desc: "已全面停止服務。由 Google Chat 及 Google Meet 取代。", url: "https://hangouts.google.com/", status: "retired", level: "should", alts: [] },
+            { id: "F20", name: "Google Cloud Print (雲端列印)", nameEn: "Cloud Print", cat: "F", desc: "已停止列印託管服務。推薦使用各作業系統內建的網絡列印。", url: "https://www.google.com/cloudprint", status: "retired", level: "can", alts: [] },
+            { id: "F21", name: "Google Arts & Culture (藝術文化)", nameEn: "Arts & Culture", cat: "F", desc: "虛擬參觀全球各大頂級博物館，高保真度觀賞名畫與歷史文物。", url: "https://artsandculture.google.com/", status: "stable", level: "should", alts: [] },
+            { id: "F22", name: "Google Fit (健康數據記錄)", nameEn: "Fit", cat: "F", desc: "記錄您的運動步數、心率及睡眠狀態的健康跟蹤大數據平台。", url: "https://www.google.com/fit", status: "stable", level: "must", alts: [{name:"Apple Health", url:"https://apple.com"}] },
+            { id: "F23", name: "Google One (雲端擴充容量服務)", nameEn: "One", cat: "F", desc: "升級您 Gmail 和 Drive 雲端容量，附帶 VPN 與進階 AI 特權。", url: "https://one.google.com/", status: "stable", level: "must", alts: [] },
+            { id: "F24", name: "Google Shopping (購物搜索引擎)", nameEn: "Shopping", cat: "F", desc: "在全球各大零售商中快速對比並搜尋同款商品的最便宜價格與購買點。", url: "https://shopping.google.com/", status: "stable", level: "must", alts: [{name:"Amazon", url:"https://amazon.com"}] },
+            { id: "F25", name: "Google Alerts (快訊訂閱)", nameEn: "Alerts", cat: "F", desc: "當網路上出現您指定的關鍵字時，自動向您發送 Gmail 提醒。", url: "https://www.google.com/alerts", status: "stable", level: "should", alts: [] },
+            { id: "F26", name: "Google Input Tools (輸入工具)", nameEn: "Input Tools", cat: "F", desc: "免安裝在任意網頁、設備上快速切換多國語言的虛擬鍵盤與手寫。", url: "https://www.google.com/inputtools", status: "stable", level: "should", alts: [] },
+            { id: "F27", name: "Google Password Manager (密碼管理器)", nameEn: "Password Manager", cat: "F", desc: "安全管理並在您登入任何其他非 Google 網站時自動填寫賬號密碼。", url: "https://passwords.google.com/", status: "stable", level: "must", alts: [{name:"1Password", url:"https://1password.com"}, {name:"Bitwarden", url:"https://bitwarden.com"}] },
+            { id: "F28", name: "Google Find My Device (尋找我的設備)", nameEn: "Find My Device", cat: "F", desc: "遠端定位、鎖定、清除或使其發出警報您丟失的安卓手機及耳機。", url: "https://www.google.com/android/find", status: "stable", level: "must", alts: [{name:"Find My Apple", url:"https://apple.com"}] },
+            { id: "F29", name: "Google Web Designer (網頁設計師)", nameEn: "Web Designer", cat: "F", desc: "強大的 HTML5 動畫、交互式網頁橫幅和多媒體創意設計工具。", url: "https://webdesigner.withgoogle.com/", status: "stable", level: "can", alts: [{name:"Figma", url:"https://figma.com"}] },
+            { id: "F30", name: "Google Search (經典搜索引擎)", nameEn: "Search", cat: "F", desc: "全球市場佔有率最高的網頁搜索引擎，萬物知識的起源地。", url: "https://www.google.com/", status: "stable", level: "must", alts: [{name:"Bing", url:"https://bing.com"}] },
+            { id: "F31", name: "Google Cast (螢幕投射組件)", nameEn: "Cast", cat: "F", desc: "將您的手機、電腦網頁影音內容一鍵无线投影至電視或音響上。", url: "https://www.google.com/chromecast", status: "stable", level: "should", alts: [] },
+            { id: "F32", name: "Google Lens (智慧鏡頭)", nameEn: "Lens", cat: "F", desc: "利用手機相機進行實物拍攝、拍照翻譯、掃碼搜同款商品的 AI 視覺工具。", url: "https://lens.google.com/", status: "stable", level: "must", alts: [] },
+            { id: "F33", name: "Google Pay (數位錢包支付)", nameEn: "Pay", cat: "F", desc: "在數百萬個網站及線下實體店鋪中實現一鍵秒級安全付款。", url: "https://pay.google.com/", status: "stable", level: "must", alts: [{name:"Apple Pay", url:"https://apple.com"}] },
+            { id: "F34", name: "Google Home (智慧家庭管家)", nameEn: "Home", cat: "F", desc: "集中管理您家中的智能音箱、監控攝像頭與燈光開關的操作中樞。", url: "https://home.google.com/", status: "stable", level: "should", alts: [{name:"Apple Home", url:"https://apple.com"}] },
+            { id: "F35", name: "Google Family Link (家長控制)", nameEn: "Family Link", cat: "F", desc: "引導子女健康上網，限制遊戲使用時間和過濾不良內容的管家。", url: "https://families.google.com/familylink", status: "stable", level: "must", alts: [] },
+            { id: "F36", name: "Google Store (官方硬體商店)", nameEn: "Store", cat: "F", desc: "購買 Pixel 手機、Nest 智慧家居設備、Chromecast 的官方渠道。", url: "https://store.google.com/", status: "stable", level: "must", alts: [] },
+            { id: "F37", name: "Google Tasks (個人任務清單)", nameEn: "Tasks", cat: "F", desc: "記錄、編輯、管理您在 Gmail 郵件和 Calendar 日曆中附屬的代辦事項。", url: "https://mail.google.com/tasks", status: "stable", level: "must", alts: [] },
+            { id: "F38", name: "Google Earth Engine (地球分析)", nameEn: "Earth Engine", cat: "F", desc: "學術級多時相衛星遙感數據在線分析處理平台，適合環境研究學家。", url: "https://earthengine.google.com/", status: "stable", level: "can", alts: [] },
+            { id: "F39", name: "Google Play Books (數位書庫)", nameEn: "Play Books", cat: "F", desc: "在您的任何設備、電腦網頁上下載、閱讀和聆聽數百萬本電子書與有聲書。", url: "https://play.google.com/store/books", status: "stable", level: "must", alts: [{name:"Kindle", url:"https://amazon.com"}] }
+        ];
+
+        // 頁面初始化
+        window.onload = function() {
+            renderSidebar();
+            renderLobbyCards(googleSoftwareDB);
+        }
+
+        // 渲染左側 2、3 層結構目錄
+        function renderSidebar() {
+            const categories = ["A", "B", "C", "D", "E", "F"];
+            categories.forEach(cat => {
+                const listEl = document.getElementById('list-cat-' + cat.toLowerCase());
+                listEl.innerHTML = "";
+                
+                const filtered = googleSoftwareDB.filter(app => app.cat === cat);
+                filtered.forEach(app => {
+                    const statusBadge = app.status === 'new' ? '<span class="ml-1 text-[8px] bg-amber-500 text-white px-1 py-0.2 rounded font-bold">新</span>' : 
+                                       app.status === 'updated' ? '<span class="ml-1 text-[8px] bg-blue-500 text-white px-1 py-0.2 rounded font-bold">改版</span>' : 
+                                       app.status === 'retired' ? '<span class="ml-1 text-[8px] bg-red-500 text-white px-1 py-0.2 rounded font-bold">退役</span>' : '';
+                    
+                    // 根據難度設定色彩標識
+                    let levelColor = "bg-slate-300";
+                    if (app.level === "must") levelColor = "bg-green-500";
+                    if (app.level === "should") levelColor = "bg-blue-500";
+
+                    // 提取簡單的中文功能小說明
+                    const shortChName = app.name.replace("Google", "").trim();
+
+                    const itemHTML = `
+                        <button onclick="handleSidebarAppClick('${app.id}')" class="w-full text-left px-3 py-1.5 rounded hover:bg-slate-100 flex items-center justify-between text-slate-600 hover:text-slate-900 transition-colors">
+                            <span class="truncate pr-1 flex items-center space-x-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full ${levelColor}" title="${app.level === 'must' ? '入手必試' : app.level === 'should' ? '核心要試' : '進階可試'}"></span>
+                                <span class="font-mono text-[9px] text-slate-400 font-bold">${app.id}</span>
+                                <span class="font-bold text-[11px]">${app.nameEn}</span>
+                                <span class="text-slate-400 text-[10px] font-normal">${shortChName}</span>
+                            </span>
+                            <span class="flex items-center space-x-0.5">
+                                ${statusBadge}
+                            </span>
+                        </button>
+                    `;
+                    listEl.insertAdjacentHTML('beforeend', itemHTML);
+                });
+            });
+        }
+
+        // 渲染大堂軟體卡片
+        function renderLobbyCards(dataList, highlightId = null) {
+            const gridEl = document.getElementById('lobby-software-grid');
+            gridEl.innerHTML = "";
+
+            if (dataList.length === 0) {
+                gridEl.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-slate-400 text-sm">
+                        😭 找不到符合條件的軟體或課程，請換個關鍵字搜尋！
+                    </div>
+                `;
+                return;
+            }
+
+            dataList.forEach(app => {
+                let badgeHTML = "";
+                let cardBorderClass = "border-slate-200 hover:border-blue-500 hover:shadow-md";
+                let btnColor = "bg-blue-600 hover:bg-blue-700";
+                
+                // 檢查是否為高亮卡片
+                if (highlightId === app.id) {
+                    cardBorderClass = "border-2 border-blue-600 ring-4 ring-blue-100 shadow-xl scale-102";
+                } else {
+                    if (app.cat === 'A') cardBorderClass = "border-slate-200 hover:border-blue-500 hover:shadow-md";
+                    if (app.cat === 'B') cardBorderClass = "border-slate-200 hover:border-red-500 hover:shadow-md";
+                    if (app.cat === 'C') cardBorderClass = "border-slate-200 hover:border-amber-500 hover:shadow-md";
+                    if (app.cat === 'D') cardBorderClass = "border-slate-200 hover:border-purple-500 hover:shadow-md";
+                    if (app.cat === 'E') cardBorderClass = "border-slate-200 hover:border-green-500 hover:shadow-md";
+                }
+
+                if (app.status === 'new') {
+                    badgeHTML = `<span class="bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase">新推出</span>`;
+                } else if (app.status === 'updated') {
+                    badgeHTML = `<span class="bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase">已改版 Alert</span>`;
+                } else if (app.status === 'retired') {
+                    badgeHTML = `<span class="bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase">已停用/退役</span>`;
+                    btnColor = "bg-slate-400 cursor-not-allowed";
+                }
+
+                // 根據 level 標注難度
+                let levelBadge = "";
+                if (app.level === "must") {
+                    levelBadge = `<span class="bg-green-50 text-green-700 text-[10px] px-2 py-0.5 rounded border border-green-200 font-bold">🟢 入手必試</span>`;
+                } else if (app.level === "should") {
+                    levelBadge = `<span class="bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded border border-blue-200 font-bold">🔵 營運要試</span>`;
+                } else {
+                    levelBadge = `<span class="bg-slate-50 text-slate-500 text-[10px] px-2 py-0.5 rounded border border-slate-200 font-bold">⚪ 進階可試</span>`;
+                }
+
+                // 同行平替產品 UI 渲染
+                let altHTML = "";
+                if (app.alts && app.alts.length > 0) {
+                    altHTML = `
+                        <div class="mt-3 bg-slate-50 p-2 rounded-xl border border-slate-100 flex flex-wrap items-center gap-1">
+                            <span class="text-[10px] text-slate-400 font-bold mr-1">同行平替:</span>
+                            ${app.alts.map(alt => `
+                                <a href="${alt.url}" target="_blank" class="text-[10px] font-bold bg-white hover:bg-indigo-50 border border-slate-200 text-indigo-600 px-1.5 py-0.5 rounded hover:border-indigo-300 transition-all">
+                                    ${alt.name} ➔
+                                </a>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                const catNames = { A: "A.協作辦公", B: "B.雲端數據", C: "C.AI研發", D: "D.安全管理", E: "E.數據推廣", F: "F.智慧生活" };
+
+                const cardHTML = `
+                    <div id="card-${app.id}" class="bg-white border ${cardBorderClass} rounded-2xl p-5 flex flex-col justify-between transition-all duration-300">
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">${app.id} · ${catNames[app.cat]}</span>
+                                ${badgeHTML || levelBadge}
+                            </div>
+                            <div class="flex justify-between items-start pt-1">
+                                <h3 class="text-base font-bold text-slate-900">${app.name}</h3>
+                                ${badgeHTML ? levelBadge : ""}
+                            </div>
+                            <p class="text-xs text-slate-500 leading-relaxed min-h-[48px]">${app.desc}</p>
+                            
+                            <!-- 平替產品 -->
+                            ${altHTML}
+                        </div>
+                        
+                        <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
+                            <span class="text-[10px] text-slate-400 truncate max-w-[120px]" title="${app.url}">${app.url}</span>
+                            <button onclick="handleAppClick('${app.id}')" class="${btnColor} text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-sm">
+                                ${app.status === 'retired' ? '查看替代' : '即點即用 ➔'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                gridEl.insertAdjacentHTML('beforeend', cardHTML);
+            });
+
+            // 如果有高亮對象，將其捲動到可視範圍
+            if (highlightId) {
+                setTimeout(() => {
+                    const targetCard = document.getElementById(`card-${highlightId}`);
+                    if (targetCard) {
+                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 200);
+            }
+        }
+
+        // 搜尋處理
+        function handleSearch() {
+            const query = document.getElementById('global-search').value.toLowerCase().trim();
+            executeSearch(query);
+        }
+
+        // 行動端搜尋處理
+        function handleSearchMobile() {
+            const query = document.getElementById('global-search-mobile').value.toLowerCase().trim();
+            executeSearch(query);
+        }
+
+        function executeSearch(query) {
+            const filtered = googleSoftwareDB.filter(app => {
+                // 擴大搜尋範圍，讓平替品、中英文也能搜尋
+                const matchAlt = app.alts ? app.alts.some(alt => alt.name.toLowerCase().includes(query)) : false;
+                return app.name.toLowerCase().includes(query) || 
+                       app.nameEn.toLowerCase().includes(query) || 
+                       app.id.toLowerCase().includes(query) ||
+                       app.desc.toLowerCase().includes(query) ||
+                       matchAlt;
+            });
+            
+            switchRoom('lobby');
+            renderLobbyCards(filtered);
+            document.getElementById('lobby-count-badge').innerText = filtered.length;
+        }
+
+        // 難度分級篩選邏輯
+        let currentLevelFilter = 'ALL';
+        function filterByLevel(level) {
+            currentLevelFilter = level;
+            
+            // 重置難度按鈕樣式
+            const levels = ['ALL', 'must', 'should', 'can'];
+            levels.forEach(lvl => {
+                const btn = document.getElementById('lvl-btn-' + lvl);
+                if (lvl === level) {
+                    btn.className = "px-3 py-1 rounded-lg text-xs font-bold bg-slate-700 text-white transition-all shadow-xs";
+                } else {
+                    btn.className = "px-3 py-1 rounded-lg text-xs font-bold bg-white text-slate-700 hover:bg-slate-200/70 border border-slate-200 transition-all flex items-center space-x-1.5";
+                }
+            });
+
+            // 連動：先符合大堂分類，再過濾難度
+            let filtered = currentLobbyFilter === 'ALL' ? googleSoftwareDB : googleSoftwareDB.filter(app => app.cat === currentLobbyFilter);
+            if (level !== 'ALL') {
+                filtered = filtered.filter(app => app.level === level);
+            }
+            
+            renderLobbyCards(filtered);
+            document.getElementById('lobby-count-badge').innerText = filtered.length;
+        }
+
+        // 大堂頂部分類篩選
+        let currentLobbyFilter = 'ALL';
+        function filterLobby(cat) {
+            currentLobbyFilter = cat;
+            
+            const filters = ['ALL', 'A', 'B', 'C', 'D', 'E', 'F'];
+            filters.forEach(f => {
+                const btn = document.getElementById('filter-btn-' + f);
+                if (f === cat) {
+                    btn.className = "px-4 py-2 rounded-full text-xs font-bold transition-all bg-blue-600 text-white shadow-sm";
+                } else {
+                    btn.className = "px-4 py-2 rounded-full text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200";
+                }
+            });
+
+            // 結合當前的難度過濾器進行連動篩選
+            let filtered = cat === 'ALL' ? googleSoftwareDB : googleSoftwareDB.filter(app => app.cat === cat);
+            if (currentLevelFilter !== 'ALL') {
+                filtered = filtered.filter(app => app.level === currentLevelFilter);
+            }
+            
+            renderLobbyCards(filtered);
+            document.getElementById('lobby-count-badge').innerText = filtered.length;
+        }
+
+        // 左側目錄折疊開關
+        function toggleSidebarCategory(catId) {
+            const list = document.getElementById('list-' + catId);
+            const arrow = document.getElementById('arrow-' + catId);
+            if (list.classList.contains('hidden')) {
+                list.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                list.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // 頂部房間(頁面)切換
+        function switchRoom(roomId) {
+            // 隱藏所有 Section
+            document.getElementById('section-lobby').classList.add('hidden');
+            document.getElementById('section-warehouse').classList.add('hidden');
+            document.getElementById('section-school').classList.add('hidden');
+            document.getElementById('section-lab').classList.add('hidden');
+
+            // 重置所有 Tab 樣式
+            const rooms = ['lobby', 'warehouse', 'school', 'lab'];
+            rooms.forEach(r => {
+                const btn = document.getElementById('room-btn-' + r);
+                btn.className = "py-3 px-3 text-sm font-medium transition-all duration-150 flex items-center space-x-2 border-b-4 border-transparent text-slate-500 hover:text-blue-600";
+            });
+
+            // 顯示當前選定 Room
+            document.getElementById('section-' + roomId).classList.remove('hidden');
+            
+            // 設置當前 Tab 的 Active 樣式
+            const activeBtn = document.getElementById('room-btn-' + roomId);
+            activeBtn.className = "active-tab py-3 px-3 text-sm font-medium transition-all duration-150 flex items-center space-x-2 border-b-4 border-transparent hover:text-blue-600";
+        }
+
+        // 左側 A-F 軟體快捷目錄點擊處理 (智慧連動：自動跳回大堂並高亮選取)
+        function handleSidebarAppClick(appId) {
+            const app = googleSoftwareDB.find(a => a.id === appId);
+            if (!app) return;
+
+            // 1. 自動跳轉到 核心大堂 Tab
+            switchRoom('lobby');
+
+            // 2. 自動按其分類進行篩選，以確保該卡片在大堂中顯示
+            filterLobby(app.cat);
+
+            // 3. 渲染並高亮該卡片
+            const catFiltered = googleSoftwareDB.filter(a => a.cat === app.cat);
+            renderLobbyCards(catFiltered, appId);
+        }
+
+        // 實驗室：啟動與解鎖面板
+        function unlockLabPanel() {
+            // 1. 進入載入狀態
+            document.getElementById('lab-locked-state').classList.add('hidden');
+            document.getElementById('lab-loading-state').classList.remove('hidden');
+
+            // 2. 模擬 API 管道部署與安全檢查 (1.2 秒)
+            setTimeout(() => {
+                document.getElementById('lab-loading-state').classList.add('hidden');
+                document.getElementById('lab-unlocked-panel').classList.remove('hidden');
+                showAlert(
+                    "🧪 實驗室安全連線已建立",
+                    "一站式微服務 API 控制管線部署完畢！代碼協作容器 GitHub 與 Google AI Studio API 連接點現已裝載完成。您可以開始測試多工具流水線。"
+                );
+            }, 1200);
+        }
+
+        // 自訂 Alert 控制
+        function showAlert(title, message, btnUrl = "", btnText = "立即前往") {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-message').innerText = message;
+            
+            const actionBtn = document.getElementById('alert-action-btn');
+            if (btnUrl) {
+                actionBtn.href = btnUrl;
+                actionBtn.innerText = btnText;
+                actionBtn.classList.remove('hidden');
+            } else {
+                actionBtn.classList.add('hidden');
+            }
+
+            const alertModal = document.getElementById('custom-alert');
+            alertModal.classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('alert-card').classList.remove('scale-95');
+                document.getElementById('alert-card').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeAlert() {
+            document.getElementById('alert-card').classList.add('scale-95');
+            document.getElementById('alert-card').classList.remove('scale-100');
+            setTimeout(() => {
+                document.getElementById('custom-alert').classList.add('hidden');
+            }, 150);
+        }
+
+        // 處理即點即用點擊
+        function handleAppClick(appId) {
+            const app = googleSoftwareDB.find(a => a.id === appId);
+            if (!app) return;
+
+            if (app.status === 'retired') {
+                showAlert(
+                    `⚠️ 【${app.name}】已於 2024 退役`,
+                    `很抱歉，這款軟體目前已經被 Google 終止。如果您需要進行替代方案協同，我們強烈建議您前往「智慧學校」學習最新平替工具的操作，或前往 A12 Google Sites 與團隊組建新版白板系統。`
+                );
+                return;
+            }
+
+            // 對於能內嵌協作的核心文書工具，給出引導或直接連結
+            const inlineApps = ['A01', 'A02', 'A03', 'A04', 'E03'];
+            if (inlineApps.includes(app.id)) {
+                showAlert(
+                    `✨ 【${app.name}】一站式多端實時協作中`,
+                    `您已在生態屋成功發起安全 SSO 權限。此軟體支援多人實時協同編輯與數據熱重用。\n\n點擊下方按鈕將飛往新頁面，且您的數據將自動同步存放在智慧貨倉（Drive / Sheets）對應專案檔案中，任何人打開均可直接協同作業！`,
+                    app.url,
+                    "直接開啟 & 開工協作"
+                );
+            } else {
+                showAlert(
+                    `🔐 單一登入成功：飛往新分頁`,
+                    `即將啟動 Google Cloud Platform / 企業級工具通道。\n\n您已被授予安全訪問密鑰，點擊「立即前往」將直達其操作終端。`,
+                    app.url,
+                    "直達該軟體控制台 ➔"
+                );
+            }
+        }
+
+        // 開放外部連結
+        function openExternal(url) {
+            window.open(url, '_blank');
+        }
+
+        // 開放 YouTube 自學
+        function openYouTube(url) {
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>

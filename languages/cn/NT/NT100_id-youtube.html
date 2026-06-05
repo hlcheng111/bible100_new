@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 BibleProject Indonesian - 分層卡片展示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .layout-section {
+            margin-bottom: 50px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .layout-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        /* 網格布局 - 8格顯示 */
+        .grid-8 {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+        }
+
+        .card {
+            border: 1px solid #e1e5e9;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: white;
+            min-height: 200px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .youtube-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .youtube-thumbnail:hover {
+            transform: scale(1.05);
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .play-overlay:hover {
+            background: rgba(255, 0, 0, 1);
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .video-duration {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1px 4px;
+            border-radius: 2px;
+            font-size: 0.7rem;
+        }
+
+        .youtube-embed {
+            width: 100%;
+            height: 100px;
+            border: none;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .card-content {
+            padding: 12px;
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .card-subtitle {
+            color: #666;
+            font-size: 0.7rem;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .card-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        .play-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            font-size: 0.7rem;
+        }
+
+        .play-btn:hover {
+            background: #5a6fd8;
+        }
+
+        /* 分類標籤 */
+        .tabs-layout {
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e1e5e9;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 1400px) {
+            .grid-8 {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .grid-8 {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .grid-8 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .grid-8 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .grid-8 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 教學區域樣式 */
+        .tutorial-section {
+            background: #f8f9fa;
+            border: 2px solid #007bff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+        }
+
+        .tutorial-title {
+            color: #007bff;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .add-video-guide {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .code-template {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 BibleProject Indonesian</h1>
+            <p>聖經項目 - 印尼語 YouTube播放列表</p>
+            <p style="font-size: 0.9rem; margin-top: 10px; opacity: 0.9;">點擊任何縮略圖即可播放YouTube視頻</p>
+        </div>
+
+        <!-- 分類標籤布局 -->
+        <div class="layout-section">
+            <h2 class="layout-title">📺 BibleProject Indonesian 播放列表</h2>
+            <div class="tabs-layout">
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab(event, 'bible-study')">聖經研讀</button>
+                    <button class="tab" onclick="showTab(event, 'book-series')">書卷系列</button>
+                    <button class="tab" onclick="showTab(event, 'theme-series')">主題系列</button>
+                </div>
+
+                <!-- 聖經研讀系列 (8格展示) -->
+                <div id="bible-study" class="tab-content active">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">📚 聖經研讀系列 (8格展示)</h3>
+                    <div class="grid-8">
+                        <div class="card">
+                            <div class="card-image" onclick="playVideo(this, 'd8EOCZKJS4Y')">
+                                <img src="https://img.youtube.com/vi/d8EOCZKJS4Y/maxresdefault.jpg" alt="如何讀聖經" class="youtube-thumbnail">
+                                <button class="play-overlay">▶</button>
+                                <div class="video-duration">19集</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-title">如何讀聖經系列</div>
+                                <div class="card-subtitle">Seri Bagaimana Membaca Alkitab</div>
+                                <div class="card-stats">
+                                    <span>📺 19部</span>
+                                    <a href="https://www.youtube.com/playlist?list=PL-T20gptDCBizZ78togUMqem9fWtayEV8" target="_blank" class="play-btn">列表</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-image" onclick="playVideo(this, 'fow__qqQylI')">
+                                <img src="https://img.youtube.com/vi/fow__qqQylI/maxresdefault.jpg" alt="單字研究" class="youtube-thumbnail">
+                                <button class="play-overlay">▶</button>
+                                <div class="video-duration">2集</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-title">單字研究系列</div>
+                                <div class="card-subtitle">Studi Kata</div>
+                                <div class="card-stats">
+                                    <span>📺 2部</span>
+                                    <a href="https://www.youtube.com/playlist?list=PL-T20gptDCBhRYQk27MObgLZXNJaOF9cu" target="_blank" class="play-btn">列表</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 預留位置 - 未來添加 -->
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">未來新增</div>
+                                <div class="card-subtitle" style="color: #999;">New Series</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待定</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">未來新增</div>
+                                <div class="card-subtitle" style="color: #999;">New Series</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待定</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">未來新增</div>
+                                <div class="card-subtitle" style="color: #999;">New Series</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待定</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">未來新增</div>
+                                <div class="card-subtitle" style="color: #999;">New Series</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待定</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">未來新增</div>
+                                <div class="card-subtitle" style="color: #999;">New Series</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待定</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">未來新增</div>
+                                <div class="card-subtitle" style="color: #999;">New Series</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待定</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 書卷系列 (8格展示) -->
+                <div id="book-series" class="tab-content">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">📖 書卷系列 (8格展示)</h3>
+                    <div class="grid-8">
+                        <div class="card">
+                            <div class="card-image" onclick="playVideo(this, 'fmeHRAhG240')">
+                                <img src="https://img.youtube.com/vi/fmeHRAhG240/maxresdefault.jpg" alt="路加使徒行傳" class="youtube-thumbnail">
+                                <button class="play-overlay">▶</button>
+                                <div class="video-duration">10集</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-title">路加-使徒行傳</div>
+                                <div class="card-subtitle">Seri Lukas-Kisah Para Rasul</div>
+                                <div class="card-stats">
+                                    <span>📺 10部</span>
+                                    <a href="https://www.youtube.com/playlist?list=PL-T20gptDCBigd47UgBxjDxBVsl2CYctV" target="_blank" class="play-btn">列表</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-image" onclick="playVideo(this, 'n7CqWxmyCPg')">
+                                <img src="https://img.youtube.com/vi/n7CqWxmyCPg/maxresdefault.jpg" alt="智慧書系列" class="youtube-thumbnail">
+                                <button class="play-overlay">▶</button>
+                                <div class="video-duration">3集</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-title">智慧書系列</div>
+                                <div class="card-subtitle">Seri Kitab Hikmat</div>
+                                <div class="card-stats">
+                                    <span>📺 3部</span>
+                                    <a href="https://www.youtube.com/playlist?list=PL-T20gptDCBiTHFRJx2Mz7G1umWBEIM5h" target="_blank" class="play-btn">列表</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-image" onclick="playVideo(this, 'TWMhcg83AWg')">
+                                <img src="https://img.youtube.com/vi/TWMhcg83AWg/maxresdefault.jpg" alt="律法書系列" class="youtube-thumbnail">
+                                <button class="play-overlay">▶</button>
+                                <div class="video-duration">5集</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-title">律法書系列</div>
+                                <div class="card-subtitle">Seri Kitab Taurat</div>
+                                <div class="card-stats">
+                                    <span>📺 5部</span>
+                                    <a href="https://www.youtube.com/playlist?list=PL-T20gptDCBgASXWSjElOHDkjjOrTtNSp" target="_blank" class="play-btn">列表</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 預留位置 - 未來書卷 -->
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">先知書系列</div>
+                                <div class="card-subtitle" style="color: #999;">Seri Kitab Nabi</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待添加</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">詩歌書系列</div>
+                                <div class="card-subtitle" style="color: #999;">Seri Kitab Puisi</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待添加</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">福音書系列</div>
+                                <div class="card-subtitle" style="color: #999;">Seri Injil</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待添加</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">書信系列</div>
+                                <div class="card-subtitle" style="color: #999;">Seri Surat</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待添加</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">歷史書系列</div>
+                                <div class="card-subtitle" style="color: #999;">Seri Kitab Sejarah</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待添加</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 主題系列 (8格展示) -->
+                <div id="theme-series" class="tab-content">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">🌟 主題系列 (8格展示)</h3>
+                    <div class="grid-8">
+                        <div class="card">
+                            <div class="card-image" onclick="playVideo(this, 'zuF-YBz213I')">
+                                <img src="https://img.youtube.com/vi/zuF-YBz213I/maxresdefault.jpg" alt="降臨節系列" class="youtube-thumbnail">
+                                <button class="play-overlay">▶</button>
+                                <div class="video-duration">8集</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-title">降臨節系列</div>
+                                <div class="card-subtitle">Seri Adven</div>
+                                <div class="card-stats">
+                                    <span>📺 8部</span>
+                                    <a href="https://www.youtube.com/playlist?list=PL-T20gptDCBjUu-moKzqtj1V4zN50KDgM" target="_blank" class="play-btn">列表</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-image" onclick="playVideo(this, 'i4zJsDiuIK8')">
+                                <img src="https://img.youtube.com/vi/i4zJsDiuIK8/maxresdefault.jpg" alt="示瑪系列" class="youtube-thumbnail">
+                                <button class="play-overlay">▶</button>
+                                <div class="video-duration">4集</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-title">示瑪系列</div>
+                                <div class="card-subtitle">Seri Shema</div>
+                                <div class="card-stats">
+                                    <span>📺 4部</span>
+                                    <a href="https://www.youtube.com/playlist?list=PL-T20gptDCBjH92bbjI0ObGyWLS7lgY8x" target="_blank" class="play-btn">列表</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-image" onclick="playVideo(this, 'guWpNyF4gjE')">
+                                <img src="https://img.youtube.com/vi/guWpNyF4gjE/maxresdefault.jpg" alt="惡言系列" class="youtube-thumbnail">
+                                <button class="play-overlay">▶</button>
+                                <div class="video-duration">5集</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-title">惡言系列</div>
+                                <div class="card-subtitle">Seri Kata-kata Buruk</div>
+                                <div class="card-stats">
+                                    <span>📺 5部</span>
+                                    <a href="https://www.youtube.com/playlist?list=PL-T20gptDCBiq3fef-EY7sqi2mwQuyB8U" target="_blank" class="play-btn">列表</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 預留位置 - 未來主題 -->
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">聖潔主題</div>
+                                <div class="card-subtitle" style="color: #999;">Tema Kekudusan</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待添加</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">愛的主題</div>
+                                <div class="card-subtitle" style="color: #999;">Tema Kasih</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待添加</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">天國主題</div>
+                                <div class="card-subtitle" style="color: #999;">Tema Kerajaan Surga</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待添加</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">救贖主題</div>
+                                <div class="card-subtitle" style="color: #999;">Tema Penebusan</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待添加</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="border: 2px dashed #ccc; background: #f9f9f9;">
+                            <div class="card-content" style="text-align: center; padding-top: 30px;">
+                                <div class="card-title" style="color: #999;">禱告主題</div>
+                                <div class="card-subtitle" style="color: #999;">Tema Doa</div>
+                                <div class="card-stats">
+                                    <span style="color: #999;">📺 待添加</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 添加新視頻教學區域 -->
+        <div class="tutorial-section">
+            <h2 class="tutorial-title">📚 如何添加新的YouTube播放列表？</h2>
+
+            <div class="add-video-guide">
+                <h4 style="color: #1976d2; margin-bottom: 10px;">🎯 方法一：使用AI助手（推薦）</h4>
+                <p><strong>只需提供：</strong></p>
+                <ul style="margin-left: 20px; line-height: 1.8;">
+                    <li>YouTube播放列表網址</li>
+                    <li>系列標題（中文和印尼文）</li>
+                    <li>選擇分類（聖經研讀/書卷系列/主題系列）</li>
+                    <li>AI會自動生成完整的卡片代碼！</li>
+                </ul>
+            </div>
+
+            <div class="add-video-guide">
+                <h4 style="color: #1976d2; margin-bottom: 10px;">🛠️ 方法二：手動添加代碼</h4>
+                <p>將虛線框卡片替換為以下模板：</p>
+                <div class="code-template">
+&lt;div class="card"&gt;
+    &lt;div class="card-image" onclick="playVideo(this, '<span style="color: #ffd700;">您的視頻ID</span>')"&gt;
+        &lt;img src="https://img.youtube.com/vi/<span style="color: #ffd700;">您的視頻ID</span>/maxresdefault.jpg"
+             alt="視頻標題" class="youtube-thumbnail"&gt;
+        &lt;button class="play-overlay"&gt;▶&lt;/button&gt;
+        &lt;div class="video-duration"&gt;<span style="color: #ffd700;">集數</span>&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="card-content"&gt;
+        &lt;div class="card-title"&gt;<span style="color: #ffd700;">中文標題</span>&lt;/div&gt;
+        &lt;div class="card-subtitle"&gt;<span style="color: #ffd700;">印尼文標題</span>&lt;/div&gt;
+        &lt;div class="card-stats"&gt;
+            &lt;span&gt;📺 <span style="color: #ffd700;">影片數</span>部&lt;/span&gt;
+            &lt;a href="<span style="color: #ffd700;">播放列表網址</span>" target="_blank" class="play-btn"&gt;列表&lt;/a&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                </div>
+            </div>
+
+            <div class="add-video-guide" style="background: #e8f5e8; border-left: 4px solid #4CAF50;">
+                <h4 style="color: #2e7d32; margin-bottom: 10px;">💡 專業提示</h4>
+                <ul style="margin-left: 20px; line-height: 1.8; color: #2e7d32;">
+                    <li><strong>視頻ID提取</strong>：從 https://youtube.com/watch?v=<strong>d8EOCZKJS4Y</strong> 提取粗體部分</li>
+                    <li><strong>播放列表網址</strong>：完整的 https://youtube.com/playlist?list=... 網址</li>
+                    <li><strong>響應式設計</strong>：8格會自動適配不同屏幕大小</li>
+                    <li><strong>測試功能</strong>：添加後請測試播放功能是否正常</li>
+                </ul>
+            </div>
+
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                <h4 style="color: #856404; margin-bottom: 10px;">🚀 需要幫助？</h4>
+                <p style="color: #856404;">
+                    如果您有新的YouTube播放列表要添加，請提供播放列表網址和標題，
+                    我可以立即為您生成完整的卡片代碼！
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // YouTube播放功能
+        function playVideo(element, videoId) {
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+            iframe.className = 'youtube-embed';
+            iframe.frameBorder = '0';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+            iframe.allowFullscreen = true;
+
+            element.innerHTML = '';
+            element.appendChild(iframe);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '✕';
+            closeBtn.style.cssText = `
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                background: rgba(0,0,0,0.7);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 25px;
+                height: 25px;
+                cursor: pointer;
+                font-size: 12px;
+                z-index: 10;
+            `;
+            closeBtn.onclick = function(e) {
+                e.stopPropagation();
+                restoreVideo(element, videoId);
+            };
+            element.appendChild(closeBtn);
+        }
+
+        function restoreVideo(element, videoId) {
+            element.innerHTML = `
+                <img src="https://img.youtube.com/vi/${videoId}/maxresdefault.jpg" alt="YouTube Video" class="youtube-thumbnail">
+                <button class="play-overlay">▶</button>
+                <div class="video-duration">系列</div>
+            `;
+            element.onclick = function() {
+                playVideo(element, videoId);
+            };
+        }
+
+        // 標籤切換功能
+        function showTab(event, tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+    </script>
+</body>
+</html>

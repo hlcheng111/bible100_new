@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>牧養探訪工作桌 1.0 · Pastoral Visitation Desk</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background: #f5f5f7;
+      color: #222;
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin: 0 0 0.5rem;
+    }
+    h2 {
+      font-size: 1.1rem;
+      margin: 1rem 0 0.4rem;
+    }
+    h3 {
+      font-size: 1rem;
+      margin: 0.8rem 0 0.3rem;
+    }
+    p {
+      margin: 0.2rem 0;
+      line-height: 1.5;
+    }
+    small {
+      font-size: 0.8rem;
+      color: #666;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      padding: 0.75rem 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+    .card-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0.05rem 0.45rem;
+      font-size: 0.75rem;
+      background: #eef2ff;
+      color: #3730a3;
+    }
+    .badge-sm {
+      font-size: 0.7rem;
+      padding: 0.02rem 0.35rem;
+      background: #e0f2fe;
+      color: #0f172a;
+    }
+    .pill {
+      border-radius: 999px;
+      padding: 0.1rem 0.4rem;
+      font-size: 0.75rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      border-bottom: 1px solid #eee;
+      padding: 0.3rem 0.2rem;
+      text-align: left;
+    }
+    th {
+      background: #f9fafb;
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: #555;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    .status-pill {
+      border-radius: 999px;
+      padding: 0.1rem 0.45rem;
+      font-size: 0.75rem;
+      display: inline-block;
+    }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-planned { background: #e0f2fe; color: #075985; }
+    .status-done    { background: #dcfce7; color: #166534; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem 0.75rem;
+      margin-top: 0.5rem;
+    }
+    @media (max-width: 700px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      margin-bottom: 0.1rem;
+      color: #374151;
+    }
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 0.85rem;
+      padding: 0.25rem 0.3rem;
+      border-radius: 4px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+    }
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+    .form-row {
+      margin-bottom: 0.4rem;
+    }
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 0.6rem;
+      margin-top: 0.2rem;
+    }
+    .checkbox-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.8rem;
+      margin-bottom: 0;
+    }
+    button {
+      padding: 0.3rem 0.8rem;
+      font-size: 0.85rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: #374151;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-top: 0.2rem;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0.05rem 0.5rem;
+      font-size: 0.75rem;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      margin-right: 0.25rem;
+      margin-top: 0.25rem;
+    }
+    .tags {
+      margin-top: 0.25rem;
+    }
+    .nav-project {
+      font-size: 0.8rem;
+      margin-bottom: 0.75rem;
+    }
+    .nav-project a {
+      color: #2563eb;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <p class="nav-project">
+    （給帶領同工用）更多背景與計劃：
+    <a href="../../church_ministry/projects/visitation_ministry/index.html">探訪事工專案</a>
+    · <a href="../../church_ministry/projects/visitation_ministry/整改工程計劃書.md">整改工程計劃書</a>
+    · <a href="../../church_ministry/modules/support/visitation.html">完整版（執行／排程，規劃中）</a>
+  </p>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h1>牧養探訪工作桌 1.0 · Pastoral Visitation Desk</h1>
+        <small>為 10 / 100 / 1000 人教會設計：有計劃、有名單、有行動、有記錄、有跟進。</small>
+      </div>
+      <div class="badge">試行版 · Prototype</div>
+    </div>
+    <p>
+      探訪不是「臨時去看一下」，而是教會牧養核心之一：主動關心新朋友、病患長者、久未出席的肢體，讓人感到被記念、被愛、被陪伴。健康教會往往
+      都有清楚的探訪計劃、團隊分工和簡單的記錄系統。<span class="hint">（此頁就是為此而設的小桌面。）</span>
+    </p>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <h2>一、探訪理念與優先次序</h2>
+          <span class="badge-sm">For pastors & leaders</span>
+        </div>
+        <p><strong>目標：</strong>讓每一位會友與常來的新朋友，在重要時候不被遺忘。</p>
+        <h3>1. 優先關懷對象</h3>
+        <ul style="padding-left:1.1rem; margin:0.2rem 0;">
+          <li>新朋友／新決志（來教會的頭一個月）</li>
+          <li>病患、長者、獨居或行動不便者</li>
+          <li>過去 4–6 週未出席、原本穩定的會友</li>
+          <li>正在經歷重大事件：喪親、手術、失業、家庭危機等</li>
+        </ul>
+        <h3>2. 探訪基本守則</h3>
+        <ul style="padding-left:1.1rem; margin:0.2rem 0;">
+          <li>兩人一組，男女配搭合宜，避免單獨落單情況。</li>
+          <li>以聆聽為主，少講多聽；留出時間禱告，不急著給建議。</li>
+          <li>尊重對方時間與空間，一般以 30–60 分鐘為宜。</li>
+          <li>注意保密，只在需要的範圍內與牧者／核心同工分享。</li>
+        </ul>
+        <h3>3. 三種教會規模三種用法</h3>
+        <ul style="padding-left:1.1rem; margin:0.2rem 0;">
+          <li><strong>小教會（&lt; 30 人）：</strong>手動維護本週清單，重點是「記錄」與「不要漏掉任何人」。</li>
+          <li><strong>中教會（約 100 人）：</strong>由牧者與小組長一起維護清單，分工探訪，定期檢視名單。</li>
+          <li><strong>大教會（約 1000 人）：</strong>接出席／新人／病患名單，由系統或 AI 先推薦，再由領袖確認。</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>二、AI 可以幫什麼忙？</h2>
+        </div>
+        <p>AI 不會代替你去探訪，但可以像「幕後秘書」：</p>
+        <div class="tags">
+          <span class="chip">排序：誰需要優先探訪？</span>
+          <span class="chip">整理：長篇回報 → 幾個關鍵標籤</span>
+          <span class="chip">撰寫：跟進訊息草稿、禱告方向</span>
+          <span class="chip">提醒：多久沒探某人、該再關心</span>
+        </div>
+        <p class="hint" style="margin-top:0.4rem;">
+          在後續版本，你可以把「本週清單」與「探訪紀錄」抽給 AI，請它幫你生成牧者月報、優先名單與簡短建議。
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <h2>三、本週探訪清單</h2>
+          <span class="badge-sm">Today’s To‑Do</span>
+        </div>
+        <p class="hint">
+          可先用假資料運作，之後再接教會資料庫。狀態顏色：黃色＝待安排、藍色＝已排程、綠色＝已完成。
+        </p>
+        <table id="visitTable">
+          <thead>
+            <tr>
+              <th>對象</th>
+              <th>類型</th>
+              <th>負責同工</th>
+              <th>預計日期</th>
+              <th>狀態</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <div style="margin-top:0.4rem;">
+          <button class="btn-ghost" type="button" id="btnResetDemo">載入示範清單</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>四、新增探訪記錄</h2>
+          <span class="badge-sm">Log a visit</span>
+        </div>
+        <p class="hint">
+          這一區是給探訪同工用的簡易表單，幫你記錄已完成的探訪，避免忘記重要關懷對象。
+        </p>
+        <p class="hint">
+          只要填下面幾格：日期、對象、探訪方式、簡短內容、是否需要跟進，再按「儲存記錄」即可。
+        </p>
+        <p class="hint">
+          目前資料只會存在你這台電腦的瀏覽器裡，換電腦或清除瀏覽資料就看不到。未來會接上教會資料庫，牧者與同工登入後可以一起看到同一份清單。
+        </p>
+        <div style="margin-top:0.5rem; padding:0.6rem; border-radius:6px; border:1px solid #e5e7eb; background:#f9fafb;">
+        <form id="visitForm">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="visitDate">探訪日期</label>
+              <input type="date" id="visitDate" name="visitDate" />
+            </div>
+            <div class="form-row">
+              <label for="visitPerson">對象姓名</label>
+              <input type="text" id="visitPerson" name="visitPerson" placeholder="例：張弟兄 / 李姐妹" required />
+            </div>
+            <div class="form-row">
+              <label for="visitType">探訪類型</label>
+              <select id="visitType" name="visitType">
+                <option value="新朋友">新朋友 / 新決志</option>
+                <option value="病患長者">病患 / 長者</option>
+                <option value="流失預警">流失預警</option>
+                <option value="一般關懷">一般關懷</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="visitWorker">探訪同工</label>
+              <input type="text" id="visitWorker" name="visitWorker" placeholder="例：王傳道 / 小組長陳姊妹" />
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-top:0.4rem;">
+            <label for="visitSummary">探訪簡要</label>
+            <textarea id="visitSummary" name="visitSummary"
+              placeholder="可簡記內容：最近情況、感恩、挑戰、特別需要禱告事項等。"></textarea>
+          </div>
+
+          <div class="form-row">
+            <label>關懷優先級</label>
+            <div class="checkbox-row">
+              <label><input type="radio" name="priority" value="高" /> 高</label>
+              <label><input type="radio" name="priority" value="中" checked /> 中</label>
+              <label><input type="radio" name="priority" value="低" /> 低</label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label>需要跟進</label>
+            <div class="checkbox-row">
+              <label><input type="checkbox" name="followup" value="牧者跟進" /> 牧者跟進</label>
+              <label><input type="checkbox" name="followup" value="小組多關心" /> 小組多關心</label>
+              <label><input type="checkbox" name="followup" value="祈禱代求" /> 祈禱代求</label>
+              <label><input type="checkbox" name="followup" value="實際援助" /> 實際援助（探病、物資）</label>
+            </div>
+          </div>
+
+          <div style="margin-top:0.6rem; display:flex; gap:0.5rem;">
+            <button type="submit" class="btn-primary">儲存記錄（示範）</button>
+            <button type="button" class="btn-ghost" id="btnClearForm">清除表單</button>
+          </div>
+        </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const STORAGE_KEY = 'visitation_demo_list_v1';
+
+  function todayISO() {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day;
+  }
+
+  function getVisits() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      return JSON.parse(raw);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveVisits(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+
+  function resetDemoData() {
+    const demo = [
+      {
+        person: '陳弟兄',
+        type: '流失預警',
+        worker: '王傳道',
+        plannedDate: todayISO(),
+        status: 'planned'
+      },
+      {
+        person: '李姐妹',
+        type: '病患長者',
+        worker: '小組長黃姊妹',
+        plannedDate: todayISO(),
+        status: 'pending'
+      },
+      {
+        person: '張先生（新朋友）',
+        type: '新朋友',
+        worker: '接待同工',
+        plannedDate: '',
+        status: 'pending'
+      }
+    ];
+    saveVisits(demo);
+    renderTable();
+  }
+
+  function statusLabel(status) {
+    switch (status) {
+      case 'pending': return '待安排';
+      case 'planned': return '已排程';
+      case 'done':    return '已完成';
+      default:        return status || '';
+    }
+  }
+
+  function renderTable() {
+    const tbody = document.querySelector('#visitTable tbody');
+    const visits = getVisits();
+    tbody.innerHTML = '';
+    if (!visits.length) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 5;
+      td.textContent = '目前沒有資料。可先按「載入示範清單」，或從下方新增探訪記錄。';
+      td.style.fontSize = '0.8rem';
+      td.style.color = '#6b7280';
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
+    visits.forEach(function (v) {
+      const tr = document.createElement('tr');
+      var st = v.status || 'pending';
+      tr.innerHTML =
+        '<td>' + escapeHtml(v.person || '') + '</td>' +
+        '<td>' + escapeHtml(v.type || '') + '</td>' +
+        '<td>' + escapeHtml(v.worker || '') + '</td>' +
+        '<td>' + escapeHtml(v.plannedDate || '') + '</td>' +
+        '<td><span class="status-pill status-' + st + '">' + statusLabel(st) + '</span></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    var form = e.target;
+    var visitDate = form.visitDate.value || todayISO();
+    var person = (form.visitPerson && form.visitPerson.value || '').trim();
+    var type = form.visitType.value;
+    var worker = (form.visitWorker && form.visitWorker.value || '').trim();
+    var summary = (form.visitSummary && form.visitSummary.value || '').trim();
+    var followups = Array.prototype.slice.call(form.querySelectorAll('input[name="followup"]:checked'))
+      .map(function (i) { return i.value; });
+
+    if (!person) {
+      window.alert('請至少填寫對象姓名。');
+      return;
+    }
+
+    var visits = getVisits();
+    visits.unshift({
+      person: person,
+      type: type,
+      worker: worker,
+      plannedDate: visitDate,
+      status: 'done',
+      summary: summary,
+      followups: followups
+    });
+    saveVisits(visits);
+    renderTable();
+    clearForm();
+    window.alert('已儲存示範記錄（實際部署時可改為寫入教會資料庫）。');
+  }
+
+  function clearForm() {
+    var form = document.getElementById('visitForm');
+    form.reset();
+    var di = document.getElementById('visitDate');
+    if (di) di.value = todayISO();
+  }
+
+  function init() {
+    var dateInput = document.getElementById('visitDate');
+    if (dateInput) dateInput.value = todayISO();
+    var form = document.getElementById('visitForm');
+    if (form) form.addEventListener('submit', handleSubmit);
+    var b = document.getElementById('btnResetDemo');
+    if (b) b.addEventListener('click', resetDemoData);
+    var c = document.getElementById('btnClearForm');
+    if (c) c.addEventListener('click', clearForm);
+    renderTable();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

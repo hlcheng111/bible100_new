@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>義工智能排班 · 新增</title>
+  <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <link rel="stylesheet" href="_shared.css">
+  <script src="../../../js/persistence_provider.js"></script>
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/church_auth.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../../js/smart_ministry_canonical_store.js"></script>
+  <script src="../../../js/data_trust_badge.js"></script>
+  <script src="tool.js"></script>
+</head>
+<body class="cm-tool-page">
+  <nav class="cm-back-bar">
+    <a class="cm-back-bar__link" href="index.html">← 義工智能排班</a>
+  </nav>
+  <header class="cm-tool-hero">
+    <h1>➕ 新增／編輯排班</h1>
+    <p>選會友與日期 · 可從 CTV 候選一鍵帶入 · 儲存後複製邀請文字（HITL）</p>
+  </header>
+  <nav class="cm-tool-nav" aria-label="工具分頁" id="toolNav"></nav>
+  <div id="dataTrustMount"></div>
+  <main class="cm-tool-main">
+    <section class="cm-card">
+      <h2 style="font-size:14px;margin:0 0 10px;">CTV 智能候選（僅建議，不會自動派工）</h2>
+      <div id="candidatesHost"><p class="cm-muted">載入中…</p></div>
+    </section>
+
+    <form id="crmIntentForm" class="cm-card" data-crm-intent="volunteer_shift.create">
+      <input type="hidden" id="fieldShiftId" name="id" value="">
+      <input type="hidden" id="fieldAssignmentId" name="assignment_id" value="">
+      <label class="cm-field">會友 member_id
+        <select id="fieldMemberId" name="member_id" required></select>
+      </label>
+      <label class="cm-field">事工崗位
+        <select id="fieldMinistryId" name="ministry_id"></select>
+      </label>
+      <label class="cm-field">服事日期
+        <input type="date" id="fieldDate" name="date" required>
+      </label>
+      <label class="cm-field">班次名稱
+        <input type="text" id="fieldShift" name="shift" value="主日崇拜" placeholder="例：主日崇拜、週三禱告會">
+      </label>
+      <label class="cm-field">備註
+        <textarea id="fieldNote" name="note" rows="2" placeholder="可選"></textarea>
+      </label>
+      <label class="cm-field" style="display:flex;align-items:center;gap:8px;max-width:none;">
+        <input type="checkbox" id="fieldConfirmed"> 同工已口頭確認可服事
+      </label>
+      <label class="cm-field" style="display:flex;align-items:center;gap:8px;max-width:none;">
+        <input type="checkbox" id="humanConfirm" required> 我已核對 member_id 與日期，允許寫入資料層
+      </label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;">
+        <div>
+          <button type="submit" class="cm-btn cm-btn-primary">💾 儲存排班</button>
+          <div id="trustSaveNotice"></div>
+        </div>
+        <div>
+          <button type="button" class="cm-btn cm-btn-secondary" id="btnPromoteCtv">從 CTV 建議直接排班</button>
+          <div id="trustPromoteNotice"></div>
+        </div>
+      </div>
+      <p id="formStatus" class="cm-muted" style="margin-top:10px;"></p>
+      <div id="snippetBox" class="cm-snippet" style="display:none;">
+        <strong>邀請複製稿（請人工轉發）：</strong>
+        <p id="snippetText" style="margin:6px 0;"></p>
+        <button type="button" class="cm-btn cm-btn-success" id="btnCopySnippet">📋 複製文字</button>
+      </div>
+    </form>
+  </main>
+  <script>
+    document.getElementById('toolNav').innerHTML = VolunteerShiftTool.renderToolNav('form');
+    VolunteerShiftTool.renderTrustBadge('dataTrustMount', {
+      position: 'top',
+      write_behavior: 'manual_save',
+      notify_behavior: 'copy_only'
+    });
+    if (window.DataTrustBadge) {
+      DataTrustBadge.renderActionTrustNotice({
+        mount: 'trustSaveNotice',
+        write_behavior: 'manual_save',
+        notify_behavior: 'copy_only',
+        requires_human_confirmation: true
+      });
+      DataTrustBadge.renderActionTrustNotice({
+        mount: 'trustPromoteNotice',
+        write_behavior: 'manual_save',
+        notify_behavior: 'copy_only',
+        requires_human_confirmation: true
+      });
+    }
+
+    function getQueryParam(key) {
+      try {
+        return new URLSearchParams(window.location.search || '').get(key);
+      } catch (e) { return null; }
+    }
+
+    function renderCandidates() {
+      var host = document.getElementById('candidatesHost');
+      var b = VolunteerShiftTool.bridge();
+      if (!b || !b.listShiftCandidates) {
+        host.innerHTML = '<p class="cm-muted">Bridge 未就緒</p>';
+        return;
+      }
+      var rows = b.listShiftCandidates({ include_volunteer_pool: true }) || [];
+      var ctv = rows.filter(function (r) { return r.type === 'ctv_suggestion'; });
+      if (!ctv.length) {
+        host.innerHTML = '<p class="cm-muted">尚無 CTV 建議。請至 <a href="../../../smart_ministry/talent_ministry_matching.html" target="_parent">事奉配對</a> 產生後再回來。</p>';
+        return;
+      }
+      host.innerHTML = ctv.slice(0, 12).map(function (c) {
+        var score = c.match_score != null ? ' · 分數 ' + c.match_score : '';
+        return '<div class="cm-candidate"><div><span class="cm-tag">CTV</span> ' +
+          VolunteerShiftTool.esc(c.member_name) + ' → ' + VolunteerShiftTool.esc(c.ministry_name || c.ministry_id) + score +
+          '</div><button type="button" class="cm-btn cm-btn-secondary btn-pick-candidate" data-member="' + VolunteerShiftTool.esc(c.member_id) +
+          '" data-ministry="' + VolunteerShiftTool.esc(c.ministry_id) + '" data-assignment="' + VolunteerShiftTool.esc(c.assignment_id) + '">帶入表單</button></div>';
+      }).join('');
+      host.querySelectorAll('.btn-pick-candidate').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.getElementById('fieldMemberId').value = btn.getAttribute('data-member') || '';
+          document.getElementById('fieldAssignmentId').value = btn.getAttribute('data-assignment') || '';
+          var mid = btn.getAttribute('data-ministry');
+          if (mid) document.getElementById('fieldMinistryId').value = mid;
+        });
+      });
+    }
+
+    window.applyCrmIntentToForm = function (payload) {
+      if (!payload) return;
+      if (payload.member_id != null) document.getElementById('fieldMemberId').value = String(payload.member_id);
+      if (payload.ministry_id != null) document.getElementById('fieldMinistryId').value = String(payload.ministry_id);
+      if (payload.date) document.getElementById('fieldDate').value = payload.date;
+      if (payload.shift) document.getElementById('fieldShift').value = payload.shift;
+      if (payload.note) document.getElementById('fieldNote').value = payload.note;
+      if (payload.assignment_id) document.getElementById('fieldAssignmentId').value = payload.assignment_id;
+    };
+
+    document.getElementById('fieldDate').value = VolunteerShiftTool.todayYmd();
+    VolunteerShiftTool.fillMemberSelect(document.getElementById('fieldMemberId'), getQueryParam('member_id'));
+    VolunteerShiftTool.fillMinistrySelect(document.getElementById('fieldMinistryId'));
+    if (getQueryParam('assignment_id')) {
+      document.getElementById('fieldAssignmentId').value = getQueryParam('assignment_id');
+    }
+    renderCandidates();
+
+    document.getElementById('crmIntentForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var status = document.getElementById('formStatus');
+      var b = VolunteerShiftTool.bridge();
+      status.style.color = '#64748b';
+      try {
+        if (window.ChurchAuth && ChurchAuth.isAuthRequired && ChurchAuth.isAuthRequired()) {
+          ChurchAuth.assertCan('volunteer.write');
+        }
+        if (!b || !b.saveVolunteerShift) throw new Error('saveVolunteerShift 不可用');
+        var payload = {
+          id: document.getElementById('fieldShiftId').value || undefined,
+          member_id: document.getElementById('fieldMemberId').value,
+          ministry_id: document.getElementById('fieldMinistryId').value || null,
+          date: document.getElementById('fieldDate').value,
+          shift: document.getElementById('fieldShift').value.trim() || '主日崇拜',
+          note: document.getElementById('fieldNote').value.trim(),
+          confirmed: document.getElementById('fieldConfirmed').checked,
+          assignment_id: document.getElementById('fieldAssignmentId').value || null
+        };
+        var res = b.saveVolunteerShift(payload);
+        status.textContent = '✅ 已儲存排班 #' + (res.schedule && res.schedule.id);
+        if (res.leader_outreach_snippet) {
+          document.getElementById('snippetBox').style.display = 'block';
+          document.getElementById('snippetText').textContent = res.leader_outreach_snippet;
+        }
+        VolunteerShiftTool.notifySync();
+      } catch (err) {
+        status.textContent = err.message || String(err);
+        status.style.color = '#b91c1c';
+      }
+    });
+
+    document.getElementById('btnPromoteCtv').addEventListener('click', function () {
+      var status = document.getElementById('formStatus');
+      var b = VolunteerShiftTool.bridge();
+      var aid = document.getElementById('fieldAssignmentId').value;
+      if (!aid) {
+        status.textContent = '請先從 CTV 候選「帶入表單」，或填 assignment_id';
+        status.style.color = '#b91c1c';
+        return;
+      }
+      if (!document.getElementById('humanConfirm').checked) {
+        status.textContent = '請先勾選人工確認';
+        return;
+      }
+      try {
+        if (window.ChurchAuth && ChurchAuth.isAuthRequired && ChurchAuth.isAuthRequired()) {
+          ChurchAuth.assertCan('volunteer.write');
+        }
+        var res = b.promoteAssignmentToShift(aid, {
+          date: document.getElementById('fieldDate').value,
+          shift: document.getElementById('fieldShift').value.trim() || '主日崇拜',
+          note: document.getElementById('fieldNote').value.trim(),
+          confirmed: document.getElementById('fieldConfirmed').checked
+        });
+        if (res.ok) {
+          status.textContent = '✅ 已確認 CTV 並寫入排班 #' + (res.schedule && res.schedule.id);
+          if (res.leader_outreach_snippet) {
+            document.getElementById('snippetBox').style.display = 'block';
+            document.getElementById('snippetText').textContent = res.leader_outreach_snippet;
+          }
+          VolunteerShiftTool.notifySync();
+          renderCandidates();
+        } else {
+          status.textContent = '失敗：' + (res.error || '');
+          status.style.color = '#b91c1c';
+        }
+      } catch (err) {
+        status.textContent = err.message || String(err);
+        status.style.color = '#b91c1c';
+      }
+    });
+
+    document.getElementById('btnCopySnippet').addEventListener('click', function () {
+      VolunteerShiftTool.copySnippet(document.getElementById('snippetText').textContent).then(function () {
+        document.getElementById('formStatus').textContent = '📋 已複製到剪貼簿，請貼到 LINE／WhatsApp';
+      });
+    });
+
+    window.addEventListener('message', function (ev) {
+      if (!ev.data || ev.data.type !== 'CRM_INTENT_PREFILL') return;
+      window.applyCrmIntentToForm(ev.data.payload || {});
+    });
+  </script>
+</body>
+</html>

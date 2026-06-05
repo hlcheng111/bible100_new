@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>已抽取詩歌預覽 - temp_hymn</title>
+  <style>
+    body { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; margin: 0; padding: 20px; background: #f5f7fa; font-size: 13px; }
+    .header { background: linear-gradient(135deg, #0b5fa5, #2aa5ff); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    .header h1 { margin: 0 0 8px 0; font-size: 22px; }
+    .header p { margin: 0; opacity: 0.95; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 8px; overflow: hidden; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #0b5fa5; color: white; font-weight: 600; font-size: 11px; }
+    tr:hover { background: #f8fafc; }
+    .hymnal { font-size: 10px; color: #666; background: #f0f4f8; padding: 2px 6px; border-radius: 4px; }
+    .title-zh { font-weight: 500; color: #1a1a1a; }
+    .title-en { font-size: 11px; color: #555; font-style: italic; }
+    .nav { margin-bottom: 16px; }
+    .nav a { padding: 6px 12px; background: #e3f2fd; color: #0b5fa5; text-decoration: none; border-radius: 4px; margin-right: 8px; font-size: 12px; }
+    .nav a:hover { background: #bbdefb; }
+    .note { font-size: 11px; color: #666; margin-top: 16px; }
+    .link-html { color: #0b5fa5; font-weight: 600; }
+    td a { color: #0b5fa5; text-decoration: none; }
+    td a:hover { text-decoration: underline; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { background: #0a4a8a; }
+    .sort-indicator { margin-left: 2px; font-size: 0.75em; opacity: 0.8; }
+    .editable { cursor: text; }
+    .editable:hover { background: #f0f8ff; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <a href="index.html">← 返回聖詩管理</a>
+    <a href="hymn_template.html" target="_blank" class="link-html">📋 模範頁（hymnary 風格）</a>
+    <a href="sample_hymn_001_主耶和华求祢引领.htm" target="_blank" class="link-html">📄 範例：主耶和华求祢引领（真實 HTML）</a>
+    <button type="button" id="btnExportOverrides" style="display:none; margin-left:8px; padding:4px 10px; background:#27ae60; color:white; border:none; border-radius:4px; cursor:pointer;">📋 匯出已改</button>
+  </div>
+  <div class="header">
+    <h1>🎵 已抽取詩歌預覽 (temp_hymn)</h1>
+    <p>來源：<span id="metaSource">載入中…</span> · 擷取時間：<span id="metaExtracted">—</span> · 共 <span id="metaTotal">0</span> 首 · 第 1 首有本機範例可點</p>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th class="sortable" data-col="idx">#<span class="sort-indicator"></span></th>
+        <th class="sortable" data-col="hymnal">詩集<span class="sort-indicator"></span></th>
+        <th class="sortable" data-col="hymnNo">編號<span class="sort-indicator"></span></th>
+        <th class="sortable" data-col="titleZh">標題（中）<span class="sort-indicator"></span></th>
+        <th class="sortable" data-col="titleEn">標題（英）<span class="sort-indicator"></span></th>
+        <th class="sortable" data-col="author">作詞者<span class="sort-indicator"></span></th>
+        <th class="sortable" data-col="tune">曲調名<span class="sort-indicator"></span></th>
+        <th class="sortable" data-col="catalog">分類<span class="sort-indicator"></span></th>
+        <th class="sortable" data-col="tags">識別<span class="sort-indicator"></span></th>
+        <th>開</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <p class="note" id="note">✅ <b>file://</b> 與 <b>HTTP</b> 皆可顯示 2015 首（內嵌）。雙擊「標題(中)」「標題(英)」「作詞者」「曲調名」「分類」可修剪／編輯，改動存於瀏覽器，點「📋 匯出已改」複製到 <code>data/hymn-overrides.json</code>。排序不受影響（依解析後內容）。建置時僅覆寫內嵌 JSON 區塊，詩集對照在 <code>js/hymnal-aliases.js</code>。重新擷取後請執行 <code>node scripts/build-temp-embedded.js</code> 更新。</p>
+
+  <script src="data/source-hymns-loader.js"></script>
+  <script src="js/hymnal-aliases.js"></script>
+  <script>
+    (function() {
+      var norm = window.normalizeHymnal || function(id) { return id || ''; };
+      var urlParams = new URLSearchParams(window.location.search);
+      var filterHymnal = norm(urlParams.get('hymnal') || '');
+      var filterAuthor = urlParams.get('author') || '';
+      var filterTune = urlParams.get('tune') || '';
+      var filterCatalog = urlParams.get('catalog') || '';
+      var filterTags = (urlParams.get('tags') || '').split(/\s+/).filter(Boolean);
+      var filterSearch = (urlParams.get('search') || '').trim();
+      <!-- EMBEDDED_DATA_START -->
+      var EMBEDDED = { hymns: [] };
+      <!-- EMBEDDED_DATA_END -->
+
+      function toFileUrl(sp) {
+        if (!sp) return '#';
+        return 'hymn/' + (sp || '').replace(/^\.\.\//,'');
+      }
+      function esc(s) { return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+      function cleanTitleZh(s) {
+        return (s || '').replace(/^[＿．\s]*第\s*\d*\s*首\s*[．\s]*/g, '').replace(/^[＿．\s]+/g, '').trim();
+      }
+      function cleanTitleEn(s) {
+        return (s || '').replace(/^\d{3,4}\s+/, '').trim();
+      }
+      function extractTags(fullTitle) {
+        var t = (fullTitle || '');
+        var tags = [];
+        var m;
+        var re = /(▲▲|▲|●|◆|★|\[華\]|\[韓\]|\[輪唱\])/g;
+        while ((m = re.exec(t)) !== null) { if (tags.indexOf(m[1]) < 0) tags.push(m[1]); }
+        return tags.join(' ') || '—';
+      }
+      function parseHymn(h) {
+        var t = (h.title_zh || h.title_en || '').trim();
+        var sp = (h.sourcePath || '');
+        var hymnNo = (sp.match(/\/(\d{3,4})\s/) || t.match(/^(\d{3,4})\s/) || [null, h.number])[1];
+        var s = t.replace(/^\d{3,4}\s+/, '').trim();
+        s = s.replace(/\s+([A-Z][A-Z0-9.'\s\-]+(?:\s*\([^)]*\))?)(?![a-z])\s*$/, '').replace(/\s+([A-Z]{2}\s+[A-Z][a-z]+)\s*$/, '').trim();
+        var zhParts = s.match(/[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]+/g) || [];
+        var titleZh = cleanTitleZh((zhParts.join(' ') || '').trim());
+        var titleEn = s.replace(/[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]+/g, ' ').replace(/\s*_\s*[A-Za-z][A-Za-z.\s\-']+(?=\s+[\u4e00-\u9fff]|$)/g, '').replace(/\s+/g, ' ').trim();
+        if (!titleZh) titleZh = s;
+        if (!titleEn) titleEn = s;
+        return { hymnNo: hymnNo || h.number, titleZh: titleZh, titleEn: titleEn };
+      }
+      var sortCol = '', sortDir = 1;
+      function render(data) {
+        window.__HYMN_DATA__ = data;
+        var meta = data.metadata || {};
+        document.getElementById('metaSource').textContent = meta.total > 100 ? 'source-hymns.json' : '內嵌樣本';
+        document.getElementById('metaExtracted').textContent = (meta.extracted || '—').toString().slice(0, 10);
+        var hymns = data.hymns || [];
+        var filterParts = [];
+        if (filterHymnal) { hymns = hymns.filter(function(h) { return (h.hymnal || '') === filterHymnal; }); filterParts.push('詩集:' + filterHymnal); }
+        if (filterAuthor) { hymns = hymns.filter(function(h) { return ((h.author||'').replace(/^_+/, '').trim()) === filterAuthor; }); filterParts.push('作詞:' + filterAuthor); }
+        if (filterTune) { hymns = hymns.filter(function(h) { return (h.tune || '').trim() === filterTune; }); filterParts.push('曲調:' + filterTune); }
+        if (filterCatalog) { hymns = hymns.filter(function(h) { return (h.catalogNumber || '').trim() === filterCatalog; }); filterParts.push('分類:' + filterCatalog); }
+        if (filterTags.length) { hymns = hymns.filter(function(h) { var t = extractTags(h.title_zh||h.title_en); return filterTags.some(function(tag) { return t.indexOf(tag) >= 0; }); }); filterParts.push('識別:' + filterTags.join(',')); }
+        if (filterSearch) {
+          var q = filterSearch.toLowerCase();
+          hymns = hymns.filter(function(h) {
+            var p = parseHymn(h);
+            return (h.number||'').toLowerCase().indexOf(q)>=0 || (h.title_zh||'').toLowerCase().indexOf(q)>=0 || (h.title_en||'').toLowerCase().indexOf(q)>=0 || (p.titleZh||'').toLowerCase().indexOf(q)>=0 || (p.titleEn||'').toLowerCase().indexOf(q)>=0 || ((h.author||'').replace(/^_+/, '')).toLowerCase().indexOf(q)>=0 || (h.tune||'').toLowerCase().indexOf(q)>=0 || (h.catalogNumber||'').toLowerCase().indexOf(q)>=0 || extractTags(h.title_zh||h.title_en).toLowerCase().indexOf(q)>=0;
+          });
+          filterParts.push('搜尋:' + filterSearch);
+        }
+        document.getElementById('metaTotal').textContent = filterParts.length ? hymns.length + '（篩選：' + filterParts.join(' ') + '）' : hymns.length;
+        try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'hymnDisplayUpdate', total: (data.hymns||[]).length, displayed: hymns.length }, '*'); } catch(e) {}
+        if (sortCol) {
+          hymns.sort(function(a,b){
+            var va = a, vb = b;
+            if (sortCol==='idx') { va = a.id || ''; vb = b.id || ''; }
+            else if (sortCol==='hymnal') { va = (a.hymnal||''); vb = (b.hymnal||''); }
+            else if (sortCol==='hymnNo') { var pa=parseHymn(a), pb=parseHymn(b); va=pa.hymnNo; vb=pb.hymnNo; }
+            else if (sortCol==='titleZh') { var pa=parseHymn(a), pb=parseHymn(b); va=pa.titleZh; vb=pb.titleZh; }
+            else if (sortCol==='titleEn') { var pa=parseHymn(a), pb=parseHymn(b); va=pa.titleEn; vb=pb.titleEn; }
+            else if (sortCol==='author') { va=(a.author||'').replace(/^_+/, '').trim(); vb=(b.author||'').replace(/^_+/, '').trim(); }
+            else if (sortCol==='tune') { va=(a.tune||''); vb=(b.tune||''); }
+            else if (sortCol==='catalog') { va=(a.catalogNumber||''); vb=(b.catalogNumber||''); }
+            else if (sortCol==='tags') { va=extractTags(a.title_zh||a.title_en); vb=extractTags(b.title_zh||b.title_en); }
+            var cmp = (va+'').localeCompare(vb+'', 'zh');
+            return sortDir * (cmp || 0);
+          });
+        }
+        var tbody = document.getElementById('tbody');
+        tbody.innerHTML = '';
+        for (var i = 0; i < hymns.length; i++) {
+        var h = hymns[i];
+        var o = pendingOverrides[h.id];
+        if (o) h = Object.assign({}, h, o);
+        var p = parseHymn(h);
+        var isSample = (h.id === 'hymn_00_0001');
+        var htmlLink = isSample ? 'sample_hymn_001_主耶和华求祢引领.htm' : toFileUrl(h.sourcePath);
+        var linkText = isSample ? '開（本機範例）' : '開';
+        var tr = document.createElement('tr');
+        var numLink = isSample ? 'sample_hymn_001_主耶和华求祢引领.htm' : toFileUrl(h.sourcePath);
+        var hymnalLink = 'temp_hymn.html?hymnal=' + encodeURIComponent(h.hymnal || '');
+        var titleLink = isSample ? 'sample_hymn_001_主耶和华求祢引领.htm' : toFileUrl(h.sourcePath);
+        var authorDisp = (h.author || '').replace(/^_+/, '').substring(0, 25);
+        var authorLink = 'temp_hymn.html?author=' + encodeURIComponent((h.author || '').replace(/^_+/, '').trim());
+        var tuneLink = 'temp_hymn.html?tune=' + encodeURIComponent((h.tune || '').trim());
+        var catalogLink = 'temp_hymn.html?catalog=' + encodeURIComponent((h.catalogNumber || '').trim());
+        var authorCell = '<span class="editable" data-id="' + esc(h.id) + '" data-field="author" title="雙擊編輯">' + (authorDisp ? '<a href="' + authorLink + '">' + esc(authorDisp) + '</a>' : '<em>—</em>') + '</span>';
+        var tuneCell = '<span class="editable" data-id="' + esc(h.id) + '" data-field="tune" title="雙擊編輯">' + ((h.tune||'') ? '<a href="' + tuneLink + '">' + esc((h.tune||'').substring(0,25)) + ((h.tune||'').length > 25 ? '…' : '') + '</a>' : '<em>—</em>') + '</span>';
+        var catalogCell = '<span class="editable" data-id="' + esc(h.id) + '" data-field="catalogNumber" title="雙擊編輯">' + ((h.catalogNumber||'') ? '<a href="' + catalogLink + '">' + esc(h.catalogNumber||'') + '</a>' : '<em>—</em>') + '</span>';
+        var fullTitle = (h.title_zh || h.title_en || '');
+        var displayTitleEn = cleanTitleEn(fullTitle);
+        var displayTitleZh = cleanTitleZh(p.titleZh || fullTitle);
+        var tagsStr = extractTags(fullTitle);
+        var tagsLink = (tagsStr !== '—') ? ('temp_hymn.html?tags=' + encodeURIComponent(tagsStr.split(/\s+/)[0])) : '';
+        var tagsCell = tagsLink ? '<a href="' + tagsLink + '">' + esc(tagsStr) + '</a>' : esc(tagsStr);
+        var editLink = 'hymn_editor.html?id=' + encodeURIComponent(h.id);
+        var titleZhCell = '<span class="editable" data-id="' + esc(h.id) + '" data-field="title_zh" title="雙擊編輯">' + '<a href="' + titleLink + '" target="_blank">' + esc((displayTitleZh||'').substring(0,60)) + ((displayTitleZh||'').length > 60 ? '…' : '') + '</a></span>';
+        var titleEnCell = '<span class="editable" data-id="' + esc(h.id) + '" data-field="title_en" title="雙擊編輯">' + '<a href="' + titleLink + '" target="_blank">' + esc(displayTitleEn||'') + '</a></span>';
+        tr.innerHTML = '<td><a href="' + numLink + '" target="_blank">' + (i + 1) + '</a></td><td><a href="' + hymnalLink + '"><span class="hymnal">' + (h.hymnal || '') + '</span></a></td><td><a href="' + numLink + '" target="_blank">' + esc(p.hymnNo) + '</a></td><td class="title-zh">' + titleZhCell + '</td><td class="title-en">' + titleEnCell + '</td><td>' + authorCell + '</td><td>' + tuneCell + '</td><td>' + catalogCell + '</td><td class="tags-cell">' + tagsCell + '</td><td><a href="' + editLink + '" target="_blank" title="編輯">✏️</a> <a href="' + htmlLink + '" target="_blank" class="link-html">' + linkText + '</a></td>';
+        tbody.appendChild(tr);
+        }
+        document.getElementById('btnExportOverrides').style.display = Object.keys(pendingOverrides).length ? 'inline-block' : 'none';
+        document.querySelectorAll('th.sortable .sort-indicator').forEach(function(sp) {
+          var th = sp.closest('th');
+          var col = th ? th.getAttribute('data-col') : '';
+          sp.textContent = (sortCol && col === sortCol) ? (sortDir > 0 ? ' ▲' : ' ▼') : '';
+        });
+      }
+      document.getElementById('tbody').addEventListener('dblclick', function(e) {
+        var sp = e.target.closest('.editable');
+        if (!sp) return;
+        e.preventDefault();
+        var id = sp.getAttribute('data-id');
+        var field = sp.getAttribute('data-field');
+        var data = window.__HYMN_DATA__ || { hymns: [] };
+        var h = (data.hymns || []).find(function(x) { return x.id === id; });
+        if (!h) return;
+        var cur;
+        var o = pendingOverrides[id];
+        if (o && o[field] !== undefined) cur = String(o[field]);
+        else if (field === 'title_zh') { var pp = parseHymn(h); cur = cleanTitleZh(pp.titleZh || (h.title_zh||h.title_en||'')); }
+        else if (field === 'title_en') cur = cleanTitleEn(h.title_zh||h.title_en||'');
+        else cur = (h[field] || '').toString();
+        var inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = cur;
+        inp.style.width = '90%';
+        inp.style.padding = '2px 4px';
+        sp.innerHTML = '';
+        sp.appendChild(inp);
+        inp.focus();
+        inp.select();
+        function saveEdit() {
+          var val = inp.value.trim();
+          if (!pendingOverrides[id]) pendingOverrides[id] = {};
+          pendingOverrides[id][field] = val || '';
+          try { localStorage.setItem('hymn-overrides-pending', JSON.stringify(pendingOverrides)); } catch (_) {}
+          document.getElementById('btnExportOverrides').style.display = Object.keys(pendingOverrides).length ? 'inline-block' : 'none';
+          var d = window.__HYMN_DATA__ || { hymns: [] };
+          render(d);
+        }
+        inp.addEventListener('blur', saveEdit);
+        inp.addEventListener('keydown', function(ev) { if (ev.key === 'Enter') { inp.blur(); } });
+      });
+      document.getElementById('tbody').closest('table').addEventListener('click', function(e) {
+        var th = e.target.closest('th.sortable');
+        if (!th) return;
+        var col = th.getAttribute('data-col');
+        if (!col) return;
+        sortDir = (sortCol === col) ? -sortDir : 1;
+        sortCol = col;
+        var data = window.__HYMN_DATA__ || { hymns: [] };
+        render(data);
+      });
+
+      document.getElementById('btnExportOverrides').onclick = function() {
+        var ov = {};
+        for (var id in pendingOverrides) ov[id] = pendingOverrides[id];
+        var json = JSON.stringify({ overrides: ov }, null, 2);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(json).then(function() { alert('已複製 ' + Object.keys(ov).length + ' 筆覆寫到剪貼簿，請貼到 data/hymn-overrides.json 的 overrides 中'); });
+        } else { prompt('請複製以下 JSON 到 hymn-overrides.json：', json); }
+      };
+      window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 'hymnFilter' && ev.data.filters) {
+          var f = ev.data.filters;
+          if (f.categories) filterTags = f.categories;
+          if (f.hymnal != null) filterHymnal = norm(f.hymnal === 'all' ? '' : (f.hymnal || ''));
+          if (f.search != null) filterSearch = (f.search || '').trim();
+          var d = window.__HYMN_DATA__ || { hymns: [] };
+          if (d.hymns && d.hymns.length) render(d);
+        }
+      });
+      // 優先用內嵌資料秒開，再嘗試載入覆寫
+      function applyOverrides(data, ovData) {
+        var ov = (ovData && (ovData.overrides || ovData)) || {};
+        var adds = (ovData && ovData.additions) || [];
+        (data.hymns || []).forEach(function(h) {
+          var o = ov[h.id];
+          if (o) { if (o.title_zh != null) h.title_zh = o.title_zh; if (o.title_en != null) h.title_en = o.title_en; if (o.author != null) h.author = o.author; if (o.tune != null) h.tune = o.tune; if (o.catalogNumber != null) h.catalogNumber = o.catalogNumber; }
+        });
+        adds.forEach(function(a) { if (a && a.id) data.hymns.push(a); });
+      }
+      if (typeof EMBEDDED !== 'undefined' && EMBEDDED.hymns && EMBEDDED.hymns.length > 100) {
+        var d = JSON.parse(JSON.stringify(EMBEDDED));
+        window.__HYMN_DATA__ = d;
+        render(d);
+        fetch('data/hymn-overrides.json').then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; }).then(function(ovData){ applyOverrides(d, ovData); render(d); });
+      } else {
+        Promise.all([
+          (window.loadSourceHymns || function(){ return fetch('data/source-hymns.json').then(function(r){ return r.ok ? r.json() : Promise.reject(); }); })(),
+          fetch('data/hymn-overrides.json').then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; })
+        ]).then(function(arr) {
+          var data = arr[0];
+          applyOverrides(data, arr[1]);
+          render(data);
+        }).catch(function() {
+          document.getElementById('metaSource').textContent = '內嵌';
+          if (typeof EMBEDDED !== 'undefined') render(EMBEDDED); else document.getElementById('tbody').innerHTML = '<tr><td colspan="10">尚無資料</td></tr>';
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

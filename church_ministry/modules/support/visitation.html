@@ -1,0 +1,1818 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>探訪關懷管理系統 - 完整版 · Visitation | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="../../css/module_onboarding.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: #f5f6fa; color: #2c3e50; font-size: 12px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .header-tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
+        .tab.active { background: white; color: #667eea; font-weight: 600; }
+        .container { max-width: 1800px; margin: 0 auto; padding: 15px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #2c3e50; border-left: 4px solid #667eea; padding-left: 10px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 15px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid; }
+        .stat-card.blue { border-color: #3498db; }
+        .stat-card.green { border-color: #27ae60; }
+        .stat-card.orange { border-color: #e67e22; }
+        .stat-card.red { border-color: #e74c3c; }
+        .stat-card.purple { border-color: #9b59b6; }
+        .stat-card.teal { border-color: #1abc9c; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; }
+        .stat-label { font-size: 10px; color: #7f8c8d; margin-top: 5px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #e67e22; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #334155; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        table tr:hover { background: #f8f9fa; }
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; margin-right: 5px; }
+        .tag.type-regular { background: #d4edda; color: #155724; }
+        .tag.type-crisis { background: #f8d7da; color: #721c24; }
+        .tag.type-newcomer { background: #cce5ff; color: #004085; }
+        .tag.status-planned { background: #fff3cd; color: #856404; }
+        .tag.status-completed { background: #d4edda; color: #155724; }
+        .tag.status-pending { background: #f8d7da; color: #721c24; }
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #7f8c8d; }
+        .plan-item { background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #667eea; }
+        .plan-item h4 { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+        .plan-item p { font-size: 11px; color: #7f8c8d; }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 15px; }
+        .calendar-day { background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px; min-height: 80px; font-size: 10px; }
+        .calendar-day.has-visit { background: #e3f2fd; border-color: #2196f3; }
+        .calendar-date { font-weight: 600; margin-bottom: 5px; }
+        .calendar-event { background: #667eea; color: white; padding: 2px 5px; border-radius: 3px; margin-top: 3px; font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .alert { padding: 12px; border-radius: 6px; margin-bottom: 15px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .sys-intro { background: #fff; border: 1px solid #dfe4ea; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; font-size: 11px; line-height: 1.55; color: #34495e; }
+        .sys-intro h2 { font-size: 13px; margin: 0 0 8px 0; color: #667eea; }
+        .sys-intro .roles { margin: 8px 0; padding-left: 18px; }
+        .flow-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-top: 10px; }
+        .flow-step { background: #f8f9fa; border-radius: 6px; padding: 8px; border-left: 3px solid #667eea; }
+        .flow-step strong { display: block; color: #2c3e50; margin-bottom: 4px; }
+        .stat-foot { font-size: 9px; color: #95a5a6; margin-top: 6px; line-height: 1.3; }
+        .quick-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .quick-links a { font-size: 11px; color: #667eea; text-decoration: none; padding: 6px 10px; border: 1px solid #667eea; border-radius: 6px; }
+        .quick-links a:hover { background: #667eea; color: #fff; }
+        .demo-badge { font-size: 10px; color: #c2410c; font-weight: 700; display: inline-block; margin-bottom: 6px; }
+        .page-blurb { font-size: 11px; color: #64748b; line-height: 1.55; margin-bottom: 12px; padding: 10px 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .action-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; align-items: center; }
+        .action-toolbar .btn { margin-right: 0; }
+        .action-panel { min-height: 48px; padding: 12px 14px; margin-bottom: 14px; background: #fff; border: 1px dashed #c7d2fe; border-radius: 10px; }
+        .ap-section { display: none; }
+        .ap-section.is-visible { display: block; }
+        .ap-hint { font-size: 10px; color: #94a3b8; margin: 0 0 10px; }
+        .chart-foot { font-size: 9px; color: #94a3b8; margin-top: 6px; }
+        .grid-3-charts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        @media (max-width: 1000px) { .grid-3-charts { grid-template-columns: 1fr; } }
+        .permission-hint { font-size: 10px; color: #94a3b8; display: block; margin-top: 6px; line-height: 1.4; }
+        .stats-row-dash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px; }
+        @media (max-width: 900px) { .stats-row-dash { grid-template-columns: 1fr; } }
+        .stat-next-hint { font-size: 9px; color: #64748b; margin-top: 8px; line-height: 1.35; border-top: 1px dashed #e2e8f0; padding-top: 6px; }
+        .ux-mini-link { font-size: 10px; color: #667eea; cursor: pointer; text-decoration: none; }
+        .ux-mini-link:hover { text-decoration: underline; }
+        .page-guide-block { font-size: 11px; color: #475569; line-height: 1.55; margin-bottom: 12px; padding: 12px 14px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .page-guide-block strong { color: #334155; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
+        <h1>🤝 探訪關懷管理系統 - 完整版</h1>
+        <div class="header-tabs">
+            <button class="tab active" onclick="switchTab('dashboard')">📊 總覽</button>
+            <button class="tab" onclick="switchTab('strategy')">🎯 戰略規劃</button>
+            <button class="tab" onclick="switchTab('schedule')">📅 排程</button>
+            <button class="tab" onclick="switchTab('missions')">🚀 出動</button>
+            <button class="tab" onclick="switchTab('reports')">📈 報表</button>
+            <button class="tab" onclick="switchTab('training')">👥 培訓</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 總覽：Landing（系統說明、路線圖、指標、圖表） -->
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="sys-intro">
+                <span class="demo-badge">示範版 · 本機測試用資料</span>
+                <h2>📖 系統說明 · 資料互聯</h2>
+                <p><strong>目前（示範）</strong>：本頁使用<strong>示範／測試資料</strong>，資料儲存在<strong>瀏覽器本機</strong>（例如 <code>visitationData</code>）。若已載入 <code>ChurchDataBridge</code>，探訪 JSON 會一併反映到本機的 <code>localStorage</code> 鍵 <code>churchMasterDatabase</code>（僅供<strong>同一瀏覽器、同一網址</strong>內預覽），<strong>並非</strong>連線至教會正式伺服器或雲端資料庫。</p>
+                <p><strong>未來（正式部署）</strong>：規劃與後端 <code>churchMasterDatabase.pastoral.visitation</code> 結構對齊，支援從 <strong>Excel</strong> 匯入會友／探訪名單、權限與多裝置同步；畫面上的列表與圖表將與現在相同邏輯呈現。</p>
+                <!--
+                  未來實作備註：REST/GraphQL 讀寫 pastoral.visitation；
+                  Excel 匯入欄位需對應 missions[]：id, date, type, target, targetId?, team, status；
+                  合併策略：以 id 為主鍵，伺服器版本優先或最後寫入勝，依教會政策決定。
+                -->
+                <p><strong>角色（示意）</strong>：正式環境之<strong>可見名單、匯報全文、匯出</strong>由<strong>後端權限</strong>決定；本頁僅示範資料流與 UI。</p>
+                <ul class="roles">
+                    <li><strong>探訪統籌</strong>：維護年度目標、分區與小組、檢視報表。</li>
+                    <li><strong>區牧／小組長</strong>：排程、分派任務、追蹤匯報。</li>
+                    <li><strong>探訪同工</strong>：出動、提交匯報（「出動」分頁）。</li>
+                    <li><strong>一般會友</strong>：名單來源可為 <a href="../members/member-integrated.html" style="color:#667eea;">會友事工</a>。</li>
+                </ul>
+                <p style="margin-top:10px;padding:10px 12px;background:#f1f5f9;border-radius:6px;border-left:3px solid #667eea;"><strong>與會友系統的關係：</strong>會友名單、小組與分區主檔在「<a href="../members/member-integrated.html" style="color:#4f46e5;">會友事工完整系統</a>」維護。<strong>正式部署時</strong>，探訪目標與分區覆蓋率等指標將依該處最新資料計算，並與本模組透過同一套 <code>churchMasterDatabase</code>（或後端 API）對齊，兩邊看到的是同一套真實資料。示範版若僅本機測試，連動程度視是否載入相同瀏覽器資料而定。</p>
+                <div class="quick-links">
+                    <a href="../development/congregation-care.html">📋 年度計劃書</a>
+                    <a href="../members/member-integrated.html">👥 會友資料</a>
+                    <a href="#" onclick="switchTab('schedule'); return false;">📅 排程</a>
+                    <a href="#" onclick="switchTab('missions'); return false;">🚀 出動</a>
+                    <a href="../../dashboard.html">🏠 事工儀表板</a>
+                </div>
+            </div>
+
+            <section class="ministry-roadmap" id="ministry-roadmap" aria-label="探訪關懷事工路線圖">
+                <h3 class="cm-roadmap-title">🧭 事工路線圖（從這裡開始）</h3>
+                <div class="roadmap-track" role="navigation">
+                    <a class="roadmap-node" href="../development/congregation-care.html" title="年度計劃">
+                        <span class="icon">📋</span><span class="title">年度計劃</span><span class="desc">主題、目標、分區策略。</span>
+                    </a>
+                    <span class="roadmap-arrow" aria-hidden="true">→</span>
+                    <a class="roadmap-node" href="../members/member-integrated.html" title="名單管理">
+                        <span class="icon">👥</span><span class="title">名單管理</span><span class="desc">會友主檔與對象。</span>
+                    </a>
+                    <span class="roadmap-arrow" aria-hidden="true">→</span>
+                    <a class="roadmap-node" href="#" onclick="goRoadmapStep('schedule', 'action-panel-schedule'); return false;" title="排程與出動">
+                        <span class="icon">📅</span><span class="title">排程與出動</span><span class="desc">分區、月曆、任務。</span>
+                    </a>
+                    <span class="roadmap-arrow" aria-hidden="true">→</span>
+                    <a class="roadmap-node" href="#" onclick="goRoadmapStep('reports', 'action-panel-reports'); return false;" title="匯報與統計">
+                        <span class="icon">📊</span><span class="title">匯報與統計</span><span class="desc">月報、趨勢圖。</span>
+                    </a>
+                    <span class="roadmap-arrow" aria-hidden="true">→</span>
+                    <a class="roadmap-node" href="#" onclick="goRoadmapStep('training', 'action-panel-training'); return false;" title="培訓與資源">
+                        <span class="icon">🎓</span><span class="title">培訓與資源</span><span class="desc">課程與同工名冊。</span>
+                    </a>
+                </div>
+            </section>
+
+            <p class="page-blurb" style="margin-bottom:12px;">本頁是<strong>儀表板快照</strong>：只放 2 張關鍵圖，避免與「📈 報表」混淆。需要月／季／年、分區覆蓋或匯報匯出，請到報表分頁。</p>
+            <span class="permission-hint">敏感匯報全文與 RBAC 於正式環境由後端決定；前端僅顯示摘要與示範結構。</span>
+
+            <div class="stats-row-dash">
+                <div class="stat-card blue"><div class="stat-num" id="stat-dash-month">0</div><div class="stat-label">本月出動任務數</div><div class="stat-foot">本月排程／出動筆數</div><div class="stat-next-hint">查看明細：請到 <a href="#" class="ux-mini-link" onclick="switchTab('missions');return false;">🚀 出動</a> 分頁</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-dash-month-rate">0%</div><div class="stat-label">本月完成率</div><div class="stat-foot">已完成／本月任務</div><div class="stat-next-hint">查看完成／匯報狀況：請到 <a href="#" class="ux-mini-link" onclick="switchTab('reports');return false;">📈 報表</a> →「匯報記錄」</div></div>
+                <div class="stat-card red"><div class="stat-num" id="stat-dash-overdue">0</div><div class="stat-label">逾期任務</div><div class="stat-foot">逾預定日未匯報</div><div class="stat-next-hint">逾期與待追蹤：請到 <a href="#" class="ux-mini-link" onclick="switchTab('reports');return false;">📈 報表</a> →「匯報記錄」</div></div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">📈 出動趨勢（近 6 個月）</div>
+                    <canvas id="chartMonthTrend" height="200"></canvas>
+                    <p class="chart-foot">由 <code>missions[].date</code> 彙總。</p>
+                    <p class="stat-next-hint" style="border-top:none;padding-top:0;margin-top:4px;">查看完整月／季／年：請到 <a href="#" class="ux-mini-link" onclick="switchTab('reports');return false;">📈 報表</a></p>
+                </div>
+                <div class="card">
+                    <div class="card-title">⏱️ 任務狀態分布</div>
+                    <canvas id="chartStatusCompare" height="200"></canvas>
+                    <p class="chart-foot">計劃中／逾期／已完成。</p>
+                    <p class="stat-next-hint" style="border-top:none;padding-top:0;margin-top:4px;">與完成率相關的明細：請到 <a href="#" class="ux-mini-link" onclick="switchTab('reports');return false;">📈 報表</a></p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📚 即將舉行培訓（示範）</div>
+                <div id="dash-upcoming-trainings" style="font-size:11px;color:#475569;line-height:1.6;">—</div>
+                <p id="dash-training-footer" class="stat-next-hint">管理課程、歷史與教材：請到 <a href="#" class="ux-mini-link" onclick="switchTab('training');return false;">👥 培訓</a> · <a href="#" class="ux-mini-link" onclick="switchTab('training');return false;">查看全部培訓 →</a></p>
+            </div>
+            <p style="text-align:center;margin:12px 0;"><a href="#" onclick="switchTab('reports'); return false;" style="font-size:12px;color:#667eea;font-weight:600;">📈 查看完整報表、分區覆蓋與匯報記錄 →</a></p>
+        </div>
+        
+        <!-- Strategy -->
+        <div id="tab-strategy" class="tab-content">
+            <div class="page-guide-block">
+                <strong>【本頁用途】</strong>牧者／探訪統籌在此寫<strong>全年探訪策略與配搭</strong>：經常性／危機性／新人性的方向、目標與計劃。<br>
+                <strong>【適合誰用】</strong>牧者、探訪統籌。<br>
+                <strong>【如何開始】</strong>① 本示範以電腦日期為「今年」（尚未獨立年份選單時，請以目標文字備註年度）→ ② 為三種類型分別填寫目標與計劃 → ③ 儲存並視需要<strong>匯出 JSON 備份</strong>。<br>
+                <span class="permission-hint">計劃若含敏感策略，正式環境僅授權角色可編修（後端控管）。</span>
+            </div>
+            <div class="action-toolbar">
+                <button type="button" class="btn btn-primary" onclick="showApSection('strategy','ap-strategy-goal')">➕ 新增年度目標</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="showApSection('strategy','ap-strategy-plan-regular')">🔄 新增經常性計劃</button>
+                <button type="button" class="btn btn-warning btn-sm" onclick="showApSection('strategy','ap-strategy-plan-crisis')">🚨 新增危機性計劃</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="showApSection('strategy','ap-strategy-plan-new')">🆕 新增新人性計劃</button>
+                <button type="button" class="btn btn-sm" onclick="clearApPanel('strategy')">收起動作區</button>
+            </div>
+            <div id="action-panel-strategy" class="action-panel">
+                <div id="ap-strategy-empty" class="ap-section is-visible">
+                    <p class="ap-hint">請點上方按鈕，於此處填寫並儲存（寫入本機示範資料）。</p>
+                </div>
+                <div id="ap-strategy-goal" class="ap-section">
+                    <h4 style="font-size:13px;margin-bottom:8px;">新增年度目標</h4>
+                    <div class="form-group"><label class="form-label">目標類別</label><select id="inline-goalCategory" class="form-select"><option>經常性</option><option>危機性</option><option>新人性</option></select></div>
+                    <div class="form-group"><label class="form-label">具體目標</label><input type="text" id="inline-goalTarget" class="form-input" placeholder="例如：長者關懷"></div>
+                    <div class="form-group"><label class="form-label">年度指標（次）</label><input type="number" id="inline-goalAnnual" class="form-input" value="100"></div>
+                    <div class="form-group"><label class="form-label">目前進度</label><input type="number" id="inline-goalCurrent" class="form-input" value="0"></div>
+                    <div class="form-group"><label class="form-label">負責人</label><input type="text" id="inline-goalResponsible" class="form-input" placeholder="例如：李長老"></div>
+                    <button type="button" class="btn btn-primary" onclick="addGoalInline()">儲存目標</button>
+                </div>
+                <div id="ap-strategy-plan-regular" class="ap-section">
+                    <h4 style="font-size:13px;margin-bottom:8px;">新增經常性探訪計劃</h4>
+                    <div class="form-group"><label class="form-label">計劃名稱</label><input type="text" id="inline-planName-r" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">說明</label><textarea id="inline-planDesc-r" class="form-textarea"></textarea></div>
+                    <div class="form-group"><label class="form-label">頻率</label><select id="inline-planFreq-r" class="form-select"><option>每週</option><option>每月</option><option>每季</option><option>隨時</option></select></div>
+                    <div class="form-group"><label class="form-label">年度目標次數</label><input type="number" id="inline-planTargets-r" class="form-input" value="50"></div>
+                    <button type="button" class="btn btn-primary" onclick="addPlanInline('regular')">儲存計劃</button>
+                </div>
+                <div id="ap-strategy-plan-crisis" class="ap-section">
+                    <h4 style="font-size:13px;margin-bottom:8px;">新增危機性探訪計劃</h4>
+                    <div class="form-group"><label class="form-label">計劃名稱</label><input type="text" id="inline-planName-c" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">說明</label><textarea id="inline-planDesc-c" class="form-textarea"></textarea></div>
+                    <div class="form-group"><label class="form-label">頻率</label><select id="inline-planFreq-c" class="form-select"><option>每週</option><option>每月</option><option>隨時</option></select></div>
+                    <div class="form-group"><label class="form-label">年度目標次數</label><input type="number" id="inline-planTargets-c" class="form-input" value="20"></div>
+                    <button type="button" class="btn btn-primary" onclick="addPlanInline('crisis')">儲存計劃</button>
+                </div>
+                <div id="ap-strategy-plan-new" class="ap-section">
+                    <h4 style="font-size:13px;margin-bottom:8px;">新增新人性探訪計劃</h4>
+                    <div class="form-group"><label class="form-label">計劃名稱</label><input type="text" id="inline-planName-n" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">說明</label><textarea id="inline-planDesc-n" class="form-textarea"></textarea></div>
+                    <div class="form-group"><label class="form-label">頻率</label><select id="inline-planFreq-n" class="form-select"><option>每週</option><option>每月</option></select></div>
+                    <div class="form-group"><label class="form-label">年度目標次數</label><input type="number" id="inline-planTargets-n" class="form-input" value="30"></div>
+                    <button type="button" class="btn btn-primary" onclick="addPlanInline('newcomer')">儲存計劃</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎯 年度目標列表</div>
+                <table id="goalsTable" style="margin-top:15px;">
+                    <thead><tr><th>類別</th><th>目標</th><th>年度指標</th><th>進度</th><th>負責人</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-title">🔄 經常性探訪</div>
+                    <p style="font-size:11px;color:#475569;margin-bottom:10px;line-height:1.5;"><strong>教會實務上常指：</strong>長者關懷、小組例行關懷、固定家訪等<strong>可預期節奏</strong>的探訪。</p>
+                    <div id="regularPlans" style="margin-top:10px;"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🚨 危機性探訪</div>
+                    <p style="font-size:11px;color:#475569;margin-bottom:10px;line-height:1.5;"><strong>教會實務上常指：</strong>住院、喪親、家庭衝突、突發變故等需<strong>即時或短期密集</strong>關懷。</p>
+                    <div id="crisisPlans" style="margin-top:10px;"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🆕 新人性探訪</div>
+                    <p style="font-size:11px;color:#475569;margin-bottom:10px;line-height:1.5;"><strong>教會實務上常指：</strong>新決志者、新會友、慕道友之<strong>首訪與跟進</strong>，協助接入小組與主日。</p>
+                    <div id="newcomerPlans" style="margin-top:10px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Schedule -->
+        <div id="tab-schedule" class="tab-content">
+            <div class="page-guide-block">
+                <strong>【本頁用途】</strong>按分區與小組，為接下來幾週<strong>安排「要探訪誰、哪個小組／同工去」</strong>，並用月曆檢視。<br>
+                <strong>【適合誰用】</strong>區牧、小組長、探訪統籌。<br>
+                <strong>【如何開始】</strong>① 先確認分區與小組（與會友系統小組／分區命名一致較佳）→ ② 用「新增分區／小組」或於「🚀 出動」手動建任務，或使用「智慧排程」產生<strong>草稿</strong> → ③ 儲存後通知同工（正式環境由系統通知）。<br>
+                <span class="permission-hint">「會友人數」於正式部署時宜與會友主檔／分區匯總一致；示範可手動填寫。</span>
+            </div>
+            <p class="page-blurb">維護分區、小組與月曆檢視。<strong>智慧排程</strong>為示範：僅補齊未來數週任務，且<strong>略過同日同小組已存在</strong>之重複筆。</p>
+            <div class="action-toolbar">
+                <button type="button" class="btn btn-primary" onclick="showApSection('schedule','ap-schedule-zone')">➕ 新增分區</button>
+                <button type="button" class="btn btn-success" onclick="showApSection('schedule','ap-schedule-team')">➕ 新增小組</button>
+                <button type="button" class="btn btn-warning" title="為每個小組在未來 4 週建立示範任務草稿；建立後仍可手動改日期、對象與同工，請由統籌檢查後再正式使用" onclick="showApSection('schedule','ap-schedule-auto')">🤖 智慧排程</button>
+                <button type="button" class="btn btn-sm" onclick="clearApPanel('schedule')">收起動作區</button>
+            </div>
+            <div id="action-panel-schedule" class="action-panel">
+                <div id="ap-schedule-empty" class="ap-section is-visible"><p class="ap-hint">請選擇上方動作。</p></div>
+                <div id="ap-schedule-zone" class="ap-section">
+                    <h4 style="font-size:13px;margin-bottom:8px;">新增分區</h4>
+                    <div class="form-group"><label class="form-label">分區名稱</label><input type="text" id="inline-zoneName" class="form-input" placeholder="例如：東區"></div>
+                    <div class="form-group"><label class="form-label">家庭數（戶）</label><input type="number" id="inline-zoneFamilies" class="form-input" value="50"></div>
+                    <div class="form-group"><label class="form-label">會友人數（選填）</label><input type="number" id="inline-zoneMemberCount" class="form-input" placeholder="Excel 匯入後優先；空則覆蓋率以戶數近似"></div>
+                    <div class="form-group"><label class="form-label">負責小組</label><select id="inline-zoneTeam" class="form-select"></select></div>
+                    <button type="button" class="btn btn-primary" onclick="addZoneInline()">儲存分區</button>
+                </div>
+                <div id="ap-schedule-team" class="ap-section">
+                    <h4 style="font-size:13px;margin-bottom:8px;">新增小組</h4>
+                    <div class="form-group"><label class="form-label">小組名稱</label><input type="text" id="inline-teamName" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">組長</label><input type="text" id="inline-teamLeader" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">成員數</label><input type="number" id="inline-teamMembers" class="form-input" value="8"></div>
+                    <button type="button" class="btn btn-primary" onclick="addTeamInline()">儲存小組</button>
+                </div>
+                <div id="ap-schedule-auto" class="ap-section">
+                    <p class="ap-hint"><strong>智慧排程不是「AI 全自動搞定」</strong>，而是<strong>快速產生草稿</strong>：為每小組在未來 4 週各排一筆「經常性」示範任務；若該週該小組已有任務則不重複。產生後請<strong>手動調整</strong>日期、對象、同工，並由統籌確認後再正式使用。</p>
+                    <button type="button" class="btn btn-warning" title="產生示範草稿任務，可再手動修改" onclick="autoSchedule(); clearApPanel('schedule');">執行智慧排程</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📅 月曆（本月）</div>
+                <div id="scheduleCalendar" class="calendar"></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">🗺️ 分區</div><p style="font-size:10px;color:#64748b;margin:0 0 8px;line-height:1.45;">「會友人數」於正式環境宜與<strong>會友系統</strong>之分區／名單匯總一致；示範可手動填寫或留空以戶數近似。</p><table id="zonesTable"><thead><tr><th>分區</th><th>戶數</th><th>會友（若有）</th><th>負責小組</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+                <div class="card"><div class="card-title">👥 小組</div><table id="teamsTable"><thead><tr><th>小組</th><th>組長</th><th>成員</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+            </div>
+        </div>
+        
+        <!-- Missions -->
+        <div id="tab-missions" class="tab-content">
+            <div class="page-guide-block">
+                <strong>【本頁用途】</strong>讓探訪同工<strong>查任務、填匯報、補交記錄</strong>（與手機匯報流程銜接）。<br>
+                <strong>【適合誰用】</strong>探訪同工、小組長、統籌。<br>
+                <strong>【如何開始】</strong>① 在下方列表找到負責的任務（可依日期排序捲動查找）→ ② 對「已完成未匯報」按「新增匯報」→ ③ 提交後由統籌在 <a href="#" class="ux-mini-link" onclick="switchTab('reports');return false;">📈 報表</a> 追蹤。<br>
+                <span class="permission-hint">正式環境可加「只看我負責」篩選；本示範尚未實作。</span>
+            </div>
+            <p class="page-blurb">建立出動任務與手機匯報流程。列表顯示<strong>匯報摘要</strong>；完整內容與誰可編輯由後端權限決定（本頁示範可填寫全文）。</p>
+            <div class="action-toolbar">
+                <button type="button" class="btn btn-primary" onclick="showApSection('missions','ap-missions-dispatch'); document.getElementById('dispatch-form').scrollIntoView({block:'nearest'});">➕ 新增出動任務</button>
+                <button type="button" class="btn btn-success" onclick="showApSection('missions','ap-missions-week'); buildWeeklyDispatchDoc();">📄 生成本週出動計劃書（可複製）</button>
+                <button type="button" class="btn btn-info" onclick="showAddMissionModal()">🧾 完整表單（彈窗）</button>
+                <button type="button" class="btn btn-warning btn-sm" onclick="showApSection('missions','ap-missions-mobile')">📱 手機匯報說明</button>
+                <button type="button" class="btn btn-sm" onclick="switchTab('schedule')">📅 分區排程</button>
+                <button type="button" class="btn btn-sm" onclick="clearApPanel('missions')">收起動作區</button>
+            </div>
+            <div id="action-panel-missions" class="action-panel">
+                <div id="ap-missions-empty" class="ap-section is-visible"><p class="ap-hint">請選擇上方動作，或直接使用下方表單。</p></div>
+                <div id="ap-missions-dispatch" class="ap-section">
+                    <p class="ap-hint">於下方「快速新增出動」填寫；與完整彈窗擇一即可。</p>
+                </div>
+                <div id="ap-missions-week" class="ap-section">
+                    <h4 style="font-size:13px;margin-bottom:8px;">本週出動計劃書（文字）</h4>
+                    <textarea id="weekly-dispatch-text" class="form-textarea" style="min-height:140px;font-family:monospace;" readonly></textarea>
+                    <button type="button" class="btn btn-primary" style="margin-top:8px;" onclick="copyWeeklyDispatchDoc()">📋 複製到剪貼簿</button>
+                </div>
+                <div id="ap-missions-mobile" class="ap-section">
+                    <p style="font-size:11px;line-height:1.6;">1. 同工開啟教會傳送之連結或 QR。<br>2. 完成探訪後於手機提交。<br>3. 回到本頁將該筆任務按「匯報」完成。</p>
+                    <a class="btn btn-success" href="visitation_mobile_demo.html" target="_blank" rel="noopener">📱 打開手機匯報示範</a>
+                    <button type="button" class="btn btn-sm" onclick="showMobileReportInfo()">詳細說明</button>
+                </div>
+            </div>
+
+            <div class="dispatch-guide">
+                <div class="dispatch-col">
+                    <h4>後台（桌面）</h4>
+                    <ol><li>選對象</li><li>選同工／小組</li><li>設定日期與類型</li></ol>
+                </div>
+                <div class="dispatch-col">
+                    <h4>同工（手機）</h4>
+                    <ol><li>收到連結</li><li>完成探訪</li><li>提交報告</li></ol>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🚀 出動列表</div>
+                <p style="font-size:10px;color:#64748b;margin:0 0 10px;line-height:1.45;">已完成的任務若有匯報，<strong>摘要</strong>會顯示在「匯報摘要」欄；<strong>詳細內容與下載</strong>在正式環境由有權限者在 <a href="#" class="ux-mini-link" onclick="switchTab('reports');return false;">📈 報表</a> 查閱（示範版本頁仍可編輯全文）。</p>
+                <div id="dispatch-form">
+                    <h4 style="font-size:13px;margin-bottom:8px;">📝 快速新增出動</h4>
+                    <p style="font-size:10px;color:#94a3b8;margin:0 0 10px;">寫入本機示範資料；結構與未來匯入之 <code>missions</code> 一致。</p>
+                    <form id="dispatch-form-el" onsubmit="return false;">
+                        <div class="form-row-dispatch">
+                            <label for="df-date">探訪日期</label>
+                            <input type="date" id="df-date" class="form-input">
+                        </div>
+                        <div class="form-row-dispatch">
+                            <label for="df-target">探訪對象</label>
+                            <select id="df-target" class="form-select">
+                                <option value="">— 請選擇 —</option>
+                                <option value="new">新會友｜陳弟兄</option>
+                                <option value="sick">病患關懷｜王姊妹</option>
+                                <option value="other">自填（備註寫姓名）</option>
+                            </select>
+                        </div>
+                        <div class="form-row-dispatch">
+                            <label for="df-type">類型</label>
+                            <select id="df-type" class="form-select">
+                                <option value="regular">經常性</option>
+                                <option value="crisis">危機性</option>
+                                <option value="newcomer">新人性</option>
+                            </select>
+                        </div>
+                        <div class="form-row-dispatch">
+                            <label for="df-workers">同行同工（多選）</label>
+                            <select id="df-workers" class="form-select" multiple size="4" style="min-height:88px;"></select>
+                            <span style="font-size:10px;color:#94a3b8;">Ctrl／⌘ 多選。名單來自「培訓」同工表。</span>
+                        </div>
+                        <div class="form-row-dispatch">
+                            <label for="df-note">備註</label>
+                            <textarea id="df-note" class="form-textarea" placeholder="例：需翻譯、只適合姊妹探訪…"></textarea>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="dispatchFormSubmit()">儲存至出動列表</button>
+                        <button type="button" class="btn btn-secondary" onclick="dispatchFormReset()">清除表單</button>
+                    </form>
+                </div>
+                <table id="missionsTable" style="margin-top:15px;">
+                    <thead><tr><th>日期</th><th>類型</th><th>對象</th><th>小組</th><th>狀態</th><th>匯報摘要</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Reports -->
+        <div id="tab-reports" class="tab-content">
+            <div class="page-guide-block">
+                <strong>【本頁用途】</strong>按月／季／年查看探訪<strong>統計</strong>與<strong>匯報記錄</strong>，必要時匯出 CSV（示範）。<br>
+                <strong>【適合誰用】</strong>牧者、探訪統籌、有權限的行政同工。<br>
+                <strong>【如何開始】</strong>① 用上方按鈕選月／季／年 → ② 檢視<strong>趨勢圖與分區覆蓋</strong>（多為匯總）→ ③ 下捲至「匯報記錄」看摘要或匯出。<br>
+                <span class="permission-hint">下方<strong>統計圖</strong>以匯總為主；<strong>匯報記錄</strong>含具名與摘要。匯報全文與會友敏感資料在正式部署時由後端權限控制，本示範僅展示結構與假資料。</span>
+            </div>
+            <p class="page-blurb">資料來自本機 <code>missions</code>。與會友主檔連動後，分區覆蓋將更貼近實況。</p>
+            <div class="action-toolbar">
+                <button type="button" class="btn btn-primary" onclick="showApSection('reports','ap-reports-month'); renderReportMonthView();">📅 月度報表</button>
+                <button type="button" class="btn btn-success" onclick="showApSection('reports','ap-reports-quarter'); renderReportQuarterView();">📊 季度報表</button>
+                <button type="button" class="btn btn-warning" onclick="showApSection('reports','ap-reports-year'); renderReportYearView();">📈 年度報表</button>
+                <button type="button" class="btn btn-sm" onclick="clearApPanel('reports')">收起動作區</button>
+            </div>
+            <div id="action-panel-reports" class="action-panel">
+                <div id="ap-reports-empty" class="ap-section is-visible"><p class="ap-hint">請選擇報表類型。</p></div>
+                <div id="ap-reports-month" class="ap-section">
+                    <label class="form-label">選擇月份</label>
+                    <select id="report-month-select" class="form-select" style="max-width:200px;" onchange="renderReportMonthView()"></select>
+                    <div id="report-month-table-wrap" style="margin-top:12px;overflow:auto;"></div>
+                </div>
+                <div id="ap-reports-quarter" class="ap-section">
+                    <p class="ap-hint">本季（示範）任務筆數與完成率</p>
+                    <div id="report-quarter-summary"></div>
+                </div>
+                <div id="ap-reports-year" class="ap-section">
+                    <p class="ap-hint">年度統計（示範）</p>
+                    <div id="report-year-summary"></div>
+                    <button type="button" class="btn btn-primary" onclick="exportYearReportCsv()">⬇ 匯出 CSV（示範）</button>
+                </div>
+            </div>
+            <div class="card" id="reports-panel-anchor">
+                <div class="card-title">📈 趨勢圖（近 6 個月）</div>
+                <canvas id="reportChart" height="260"></canvas>
+            </div>
+            <div class="card">
+                <div class="card-title">🗺️ 分區探訪覆蓋（本年度 · 資料齊全時為真）</div>
+                <p style="font-size:10px;color:#64748b;margin:0 0 8px;">此區為<strong>聚合統計圖</strong>，不逐筆列出個人地址等敏感欄位。</p>
+                <canvas id="chartZoneCoverage" height="260"></canvas>
+                <p class="chart-foot" id="zone-chart-foot">每區「目標人數」優先 <code>memberCount</code>，否則 <code>families</code>（戶）；「已探訪」為本年度已完成任務中不重複之 <code>targetMemberId</code>（無則以對象字串）。</p>
+            </div>
+            <div class="card">
+                <div class="card-title">📝 匯報記錄（摘要）</div>
+                <p class="permission-hint">此表可能含對象稱呼與匯報摘要。匯報<strong>全文</strong>與<strong>下載／匯出權限</strong>在正式環境僅後端依角色回傳；此處為本機示範。</p>
+                <div class="action-toolbar">
+                    <select id="report-log-filter" class="form-select" style="max-width:200px;" onchange="renderReportLogTable()">
+                        <option value="all">全部</option>
+                        <option value="year">本年度</option>
+                        <option value="month">本月</option>
+                    </select>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="exportReportLogCsv()">⬇ 匯出 CSV（示範）</button>
+                </div>
+                <div id="report-log-table-wrap" style="overflow:auto;margin-top:10px;"></div>
+            </div>
+        </div>
+        
+        <!-- Training -->
+        <div id="tab-training" class="tab-content">
+            <div class="page-guide-block">
+                <strong>【本頁用途】</strong>設計、發布與回顧<strong>探訪同工／小組長</strong>培訓課程，讓新同工知道可參與哪些裝備。<br>
+                <strong>【適合誰用】</strong>牧者、培訓統籌、行政同工。<br>
+                <strong>【如何開始】</strong>① 點「新增培訓課程」→ ② 填寫目標、大綱、報名方式與教材連結 → ③ 課程結束後在「歷史課程／教材」區留存摘要或連結。<br>
+                <span class="permission-hint">與「🚀 出動」表單的同工多選共用 <code>workers[]</code>（示範）。</span>
+            </div>
+            <p class="page-blurb">欄位與 <code>docs/VISITATION_DATA_MODEL.md</code> 的 <code>trainings[]</code> 對齊。</p>
+            <div class="action-toolbar">
+                <button type="button" class="btn btn-primary" onclick="showApSection('training','ap-training-add');">➕ 新增培訓課程</button>
+                <button type="button" class="btn btn-sm" onclick="clearApPanel('training')">收起動作區</button>
+            </div>
+            <div id="action-panel-training" class="action-panel">
+                <div id="ap-training-empty" class="ap-section is-visible"><p class="ap-hint">可新增課程或檢視下方表格。</p></div>
+                <div id="ap-training-add" class="ap-section">
+                    <h4 style="font-size:13px;margin-bottom:8px;">新增培訓課程</h4>
+                    <div class="form-group"><label class="form-label">課程名稱</label><input type="text" id="inline-trainingName" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">日期</label><input type="date" id="inline-trainingDate" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">時間／時段</label><input type="text" id="inline-trainingTimeSlot" class="form-input" placeholder="例：週六 14:00–17:00"></div>
+                    <div class="form-group"><label class="form-label">地點</label><input type="text" id="inline-trainingLocation" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">對象</label><input type="text" id="inline-trainingAudience" class="form-input" placeholder="探訪同工／小組長／全教會"></div>
+                    <div class="form-group"><label class="form-label">課程目標</label><textarea id="inline-trainingObjectives" class="form-textarea" style="min-height:56px;"></textarea></div>
+                    <div class="form-group"><label class="form-label">大綱</label><textarea id="inline-trainingOutline" class="form-textarea" style="min-height:56px;"></textarea></div>
+                    <div class="form-group"><label class="form-label">作業／實習</label><input type="text" id="inline-trainingHomework" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">報名方式</label><input type="text" id="inline-trainingSignup" class="form-input" placeholder="例如：事工窗口"></div>
+                    <div class="form-group"><label class="form-label">教材／講義連結</label><input type="text" id="inline-trainingMaterialsUrl" class="form-input" placeholder="https://…"></div>
+                    <div class="form-group"><label class="form-label">學員人數（預估）</label><input type="number" id="inline-trainingStudents" class="form-input" value="15"></div>
+                    <div class="form-group"><label class="form-label">講師</label><input type="text" id="inline-trainingTrainer" class="form-input"></div>
+                    <button type="button" class="btn btn-primary" onclick="addTrainingInline()">儲存課程</button>
+                </div>
+            </div>
+            <div class="card" id="training-panel-anchor">
+                <div class="card-title">👥 培訓課程</div>
+                <table id="trainingsTable" style="margin-top:15px;">
+                    <thead><tr><th>課程</th><th>日期</th><th>地點</th><th>對象</th><th>學員</th><th>講師</th><th>狀態</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <div class="card-title">📚 歷史課程／教材（摘要）</div>
+                <div id="training-history-wrap" style="font-size:11px;color:#475569;line-height:1.6;">—</div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎓 同工資質</div>
+                <table id="workersTable">
+                    <thead><tr><th>姓名</th><th>培訓</th><th>探訪次數</th><th>等級</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script src="../../../js/cloud_config.js"></script>
+    <script src="../../../js/cloud_api.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
+    <script>
+        let data = {
+            goals: [],
+            plans: [],
+            zones: [],
+            teams: [],
+            missions: [],
+            trainings: [],
+            workers: []
+        };
+        let charts = {};
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const cfg = typeof CHURCH_CLOUD_CONFIG !== 'undefined' ? CHURCH_CLOUD_CONFIG : {};
+            const useApi = cfg.USE_API === true && cfg.API_BASE_URL && String(cfg.API_BASE_URL).trim();
+            const runInit = () => {
+                loadData();
+                if (data.goals.length === 0) loadDemo();
+                initReportMonthSelect();
+                renderAll();
+            };
+            if (useApi && typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.hydrateFromApi) {
+                ChurchDataBridge.hydrateFromApi().then(runInit).catch(function (e) {
+                    console.warn('[visitation] hydrateFromApi failed, using local', e);
+                    runInit();
+                });
+            } else {
+                runInit();
+            }
+        });
+        
+        function migrateVisitationPayload(d) {
+            if (!d || !d.missions) return;
+            (d.missions || []).forEach(function (m) {
+                if (m.targetId != null && m.targetMemberId == null) m.targetMemberId = m.targetId;
+                if (m.report && typeof m.report === 'object' && m.report.content && !m.reportSummary) {
+                    m.reportSummary = String(m.report.content).slice(0, 80);
+                }
+            });
+        }
+
+        function loadData() {
+            const bridge = typeof ChurchDataBridge !== 'undefined' ? ChurchDataBridge : null;
+            const saved = bridge ? bridge.getVisitationData() : (() => { try { return JSON.parse(localStorage.getItem('visitationData') || 'null'); } catch(e){ return null; } })();
+            if (saved && (saved.missions || saved.goals || saved.teams)) {
+                data = {
+                    goals: saved.goals || [],
+                    plans: saved.plans || [],
+                    zones: saved.zones || [],
+                    teams: saved.teams || [],
+                    missions: saved.missions || [],
+                    trainings: saved.trainings || [],
+                    workers: saved.workers || []
+                };
+                migrateVisitationPayload(data);
+            }
+        }
+        
+        function saveData() {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.saveVisitationData) {
+                ChurchDataBridge.saveVisitationData(data);
+                data = ChurchDataBridge.getVisitationData();
+            } else {
+                try {
+                    localStorage.setItem('visitationData', JSON.stringify(data));
+                    var cm = JSON.parse(localStorage.getItem('churchMasterDatabase') || '{}');
+                    if (!cm.pastoral) cm.pastoral = {};
+                    cm.pastoral.visitation = data;
+                    localStorage.setItem('churchMasterDatabase', JSON.stringify(cm));
+                } catch (e) {
+                    localStorage.setItem('visitationData', JSON.stringify(data));
+                }
+            }
+        }
+
+        /** 依日期將「计划中」且已過預定日的任務標為逾期；若有變更則回傳 true 以便存檔 */
+        function recomputeOverdueStatuses() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            let changed = false;
+            (data.missions || []).forEach(function (m) {
+                if (!m.date || m.status === 'completed') return;
+                const d = new Date(m.date);
+                if (isNaN(d.getTime())) return;
+                d.setHours(0, 0, 0, 0);
+                if (m.status === 'planned' && d < today) {
+                    m.status = 'overdue';
+                    changed = true;
+                }
+            });
+            return changed;
+        }
+        
+        function loadDemo() {
+            data.goals = [
+                {id:1, category:'經常性', target:'長者關懷', annual:200, current:145, responsible:'李長老'},
+                {id:2, category:'危機性', target:'緊急關懷', annual:50, current:32, responsible:'王傳道'},
+                {id:3, category:'新人性', target:'新會友', annual:100, current:68, responsible:'張姊妹'}
+            ];
+            data.plans = [
+                {id:1, type:'regular', name:'长者定期探访', desc:'每月探访65岁以上长者', freq:'每月', targets:50, fiscalYear:new Date().getFullYear()},
+                {id:2, type:'crisis', name:'住院紧急关怀', desc:'会友住院24小时内探访', freq:'随时', targets:20, fiscalYear:new Date().getFullYear()},
+                {id:3, type:'newcomer', name:'新会友首访', desc:'新会友1周内首次探访', freq:'每周', targets:30, fiscalYear:new Date().getFullYear()}
+            ];
+            data.zones = [
+                {id:1, name:'东区', families:45, memberCount:120, team:'东区小组'},
+                {id:2, name:'西区', families:38, memberCount:95, team:'西区小组'},
+                {id:3, name:'南区', families:52, memberCount:140, team:'南区小组'}
+            ];
+            data.teams = [
+                {id:1, name:'东区小组', leader:'王弟兄', members:8},
+                {id:2, name:'西区小组', leader:'李姊妹', members:6},
+                {id:3, name:'南区小组', leader:'张长老', members:10}
+            ];
+            const teamRot = ['东区小组','西区小组','南区小组'];
+            const zids = [1, 2, 3];
+            for (let i = 0; i < 15; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+                const ti = i % 3;
+                const completed = i < 10;
+                const rep = completed && (i % 4 === 0) ? {
+                    reporter: '王弟兄',
+                    content: '關懷順利，約定下月再訪；鼓勵參加小組。',
+                    prayer: '身體健康與家庭和睦',
+                    reportedAt: date.toISOString()
+                } : null;
+                const contentStr = rep ? rep.content : '';
+                data.missions.push({
+                    id: i + 1,
+                    date: date.toISOString().split('T')[0],
+                    type: ['regular','crisis','newcomer'][i % 3],
+                    target: '對象' + (i + 1),
+                    targetMemberId: 2000 + i,
+                    zoneId: zids[ti],
+                    team: teamRot[ti],
+                    status: completed ? 'completed' : 'planned',
+                    report: rep || undefined,
+                    reportSummary: rep ? contentStr.slice(0, 80) : ''
+                });
+            }
+            migrateVisitationPayload(data);
+            const y = new Date().getFullYear();
+            data.trainings = [
+                {id:1, name:'探访技巧', date:y + '-01-15', students:15, trainer:'李牧师', status:'completed', location:'副堂', audience:'探訪同工', objectives:'建立基礎技巧', outline:'破冰、聆聽、禱告', homework:'實習一次', signupMethod:'事工窗口', materialsUrl:''},
+                {id:2, name:'危机关怀', date:y + '-06-20', students:12, trainer:'王传道', status:'planned', location:'主日學教室', audience:'小組長', objectives:'辨識與轉介', outline:'危機類型與資源', homework:'案例討論', signupMethod:'線上表單', materialsUrl:''}
+            ];
+            data.workers = [
+                {id:1, name:'王弟兄', trainings:3, visits:28, level:'高級'},
+                {id:2, name:'李姊妹', trainings:2, visits:15, level:'中級'},
+                {id:3, name:'張長老', trainings:5, visits:42, level:'資深'}
+            ];
+            saveData();
+            renderAll();
+        }
+        
+        /** 事工路線圖：切分頁後捲動到錨點（與 module_onboarding.css 搭配） */
+        function goRoadmapStep(tabName, anchorId) {
+            if (typeof switchTab === 'function') switchTab(tabName);
+            if (anchorId) {
+                setTimeout(function () {
+                    var el = document.getElementById(anchorId);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 120);
+            }
+        }
+
+        /** 動作區：依分頁 id 切換 ap-section */
+        const AP_PREFIX = { strategy: 'action-panel-strategy', schedule: 'action-panel-schedule', missions: 'action-panel-missions', reports: 'action-panel-reports', training: 'action-panel-training' };
+        function showApSection(tab, sectionId) {
+            var panel = document.getElementById(AP_PREFIX[tab]);
+            if (!panel) return;
+            panel.querySelectorAll('.ap-section').forEach(function (el) { el.classList.remove('is-visible'); });
+            var sec = document.getElementById(sectionId);
+            if (sec) sec.classList.add('is-visible');
+            if (tab === 'schedule' && sectionId === 'ap-schedule-zone') populateZoneTeamSelect();
+        }
+        function clearApPanel(tab) {
+            var panel = document.getElementById(AP_PREFIX[tab]);
+            if (!panel) return;
+            panel.querySelectorAll('.ap-section').forEach(function (el) { el.classList.remove('is-visible'); });
+            var emptyId = { strategy: 'ap-strategy-empty', schedule: 'ap-schedule-empty', missions: 'ap-missions-empty', reports: 'ap-reports-empty', training: 'ap-training-empty' }[tab];
+            var empty = emptyId ? document.getElementById(emptyId) : null;
+            if (empty) empty.classList.add('is-visible');
+        }
+
+        function populateZoneTeamSelect() {
+            var sel = document.getElementById('inline-zoneTeam');
+            if (!sel) return;
+            sel.innerHTML = (data.teams && data.teams.length)
+                ? data.teams.map(function (t) { return '<option>' + String(t.name).replace(/</g, '&lt;') + '</option>'; }).join('')
+                : '<option>（請先新增小組）</option>';
+        }
+
+        function addGoalInline() {
+            var goal = {
+                id: Date.now(),
+                category: document.getElementById('inline-goalCategory').value,
+                target: document.getElementById('inline-goalTarget').value.trim(),
+                annual: parseInt(document.getElementById('inline-goalAnnual').value, 10) || 0,
+                current: parseInt(document.getElementById('inline-goalCurrent').value, 10) || 0,
+                responsible: document.getElementById('inline-goalResponsible').value.trim()
+            };
+            if (!goal.target) return alert('請填寫具體目標');
+            data.goals.push(goal);
+            saveData();
+            renderStrategy();
+            renderDashboard();
+            alert('已新增年度目標');
+            clearApPanel('strategy');
+        }
+
+        function addPlanInline(type) {
+            var suf = type === 'regular' ? 'r' : (type === 'crisis' ? 'c' : 'n');
+            var plan = {
+                id: Date.now(),
+                type: type,
+                name: document.getElementById('inline-planName-' + suf).value.trim(),
+                desc: document.getElementById('inline-planDesc-' + suf).value.trim(),
+                freq: document.getElementById('inline-planFreq-' + suf).value,
+                targets: parseInt(document.getElementById('inline-planTargets-' + suf).value, 10) || 0,
+                fiscalYear: new Date().getFullYear()
+            };
+            if (!plan.name) return alert('請填寫計劃名稱');
+            data.plans.push(plan);
+            saveData();
+            renderStrategy();
+            alert('已新增探訪計劃');
+            clearApPanel('strategy');
+        }
+
+        function addZoneInline() {
+            var mc = document.getElementById('inline-zoneMemberCount');
+            var zone = {
+                id: Date.now(),
+                name: document.getElementById('inline-zoneName').value.trim(),
+                families: parseInt(document.getElementById('inline-zoneFamilies').value, 10) || 0,
+                memberCount: mc && mc.value !== '' ? (parseInt(mc.value, 10) || 0) : undefined,
+                team: document.getElementById('inline-zoneTeam').value
+            };
+            if (!zone.name) return alert('請填寫分區名稱');
+            if (zone.memberCount === 0) delete zone.memberCount;
+            data.zones.push(zone);
+            saveData();
+            renderSchedule();
+            renderLandingCharts();
+            alert('已新增分區');
+            clearApPanel('schedule');
+        }
+
+        function addTeamInline() {
+            var team = {
+                id: Date.now(),
+                name: document.getElementById('inline-teamName').value.trim(),
+                leader: document.getElementById('inline-teamLeader').value.trim(),
+                members: parseInt(document.getElementById('inline-teamMembers').value, 10) || 0
+            };
+            if (!team.name) return alert('請填寫小組名稱');
+            data.teams.push(team);
+            saveData();
+            renderSchedule();
+            alert('已新增小組');
+            clearApPanel('schedule');
+        }
+
+        function addTrainingInline() {
+            var t = {
+                id: Date.now(),
+                name: document.getElementById('inline-trainingName').value.trim(),
+                date: document.getElementById('inline-trainingDate').value,
+                timeSlot: (document.getElementById('inline-trainingTimeSlot') || {}).value || '',
+                location: (document.getElementById('inline-trainingLocation') || {}).value || '',
+                audience: (document.getElementById('inline-trainingAudience') || {}).value || '',
+                objectives: (document.getElementById('inline-trainingObjectives') || {}).value || '',
+                outline: (document.getElementById('inline-trainingOutline') || {}).value || '',
+                homework: (document.getElementById('inline-trainingHomework') || {}).value || '',
+                signupMethod: (document.getElementById('inline-trainingSignup') || {}).value || '',
+                materialsUrl: (document.getElementById('inline-trainingMaterialsUrl') || {}).value || '',
+                students: parseInt(document.getElementById('inline-trainingStudents').value, 10) || 0,
+                trainer: document.getElementById('inline-trainingTrainer').value.trim(),
+                status: 'planned'
+            };
+            if (!t.name || !t.date) return alert('請填寫課程名稱與日期');
+            data.trainings.push(t);
+            saveData();
+            renderTraining();
+            renderDashboard();
+            alert('已新增課程');
+            clearApPanel('training');
+        }
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function resolveZoneIdForTeam(teamName) {
+            if (!teamName) return null;
+            var found = (data.zones || []).find(function (z) { return z.team === teamName; });
+            return found ? found.id : null;
+        }
+
+        function countVisitedUniqueByZone(year) {
+            var zones = data.zones || [];
+            var map = {};
+            zones.forEach(function (z) { map[z.id] = new Set(); });
+            (data.missions || []).forEach(function (m) {
+                if (m.status !== 'completed') return;
+                var md = new Date(m.date);
+                if (isNaN(md.getTime()) || md.getFullYear() !== year) return;
+                var zid = m.zoneId || resolveZoneIdForTeam(m.team);
+                if (!zid || !map[zid]) return;
+                var key = (m.targetMemberId != null) ? ('m:' + m.targetMemberId) : ('t:' + String(m.target));
+                map[zid].add(key);
+            });
+            return zones.map(function (z) { return map[z.id] ? map[z.id].size : 0; });
+        }
+
+        function renderDashUpcomingTrainings() {
+            var el = document.getElementById('dash-upcoming-trainings');
+            if (!el) return;
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            var upcoming = (data.trainings || []).filter(function (t) {
+                var d = new Date(t.date);
+                return !isNaN(d.getTime()) && d >= today && t.status !== 'completed';
+            }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); }).slice(0, 4);
+            if (!upcoming.length) {
+                el.innerHTML = '（暫無即將舉行之課程）';
+                return;
+            }
+            el.innerHTML = '<ul style="margin:0;padding-left:18px;">' + upcoming.map(function (t) {
+                return '<li><strong>' + escapeHtml(t.name) + '</strong> · ' + t.date + (t.location ? ' · ' + escapeHtml(t.location) : '') + '</li>';
+            }).join('') + '</ul>';
+        }
+
+        function renderLandingCharts() {
+            var mt = document.getElementById('chartMonthTrend');
+            var sc = document.getElementById('chartStatusCompare');
+            if (!mt || !sc) return;
+
+            var now = new Date();
+            var monthLabels = [];
+            var monthCounts = [];
+            for (var i = 5; i >= 0; i--) {
+                var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                monthLabels.push((d.getMonth() + 1) + '月');
+                var mi = d.getMonth();
+                var yy = d.getFullYear();
+                var cnt = (data.missions || []).filter(function (m) {
+                    var md = new Date(m.date);
+                    return md.getMonth() === mi && md.getFullYear() === yy;
+                }).length;
+                monthCounts.push(cnt);
+            }
+            if (charts.landingMonth) charts.landingMonth.destroy();
+            charts.landingMonth = new Chart(mt, {
+                type: 'line',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{
+                        label: '出動次數',
+                        data: monthCounts,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102,126,234,0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+
+            var done = (data.missions || []).filter(function (m) { return m.status === 'completed'; }).length;
+            var overdue = (data.missions || []).filter(function (m) { return m.status === 'overdue'; }).length;
+            var planned = (data.missions || []).filter(function (m) { return m.status === 'planned'; }).length;
+            if (charts.landingStatus) charts.landingStatus.destroy();
+            charts.landingStatus = new Chart(sc, {
+                type: 'doughnut',
+                data: {
+                    labels: ['已完成', '逾期', '計劃中'],
+                    datasets: [{
+                        data: [done, overdue, planned],
+                        backgroundColor: ['#27ae60', '#e74c3c', '#f39c12']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        function renderZoneCoverageChart() {
+            var canvas = document.getElementById('chartZoneCoverage');
+            if (!canvas) return;
+            var foot = document.getElementById('zone-chart-foot');
+            var zones = data.zones || [];
+            var y = new Date().getFullYear();
+            var labels = zones.length ? zones.map(function (z) { return z.name; }) : ['（尚無分區）'];
+            var bases = zones.length ? zones.map(function (z) {
+                return (z.memberCount != null && z.memberCount > 0) ? z.memberCount : (z.families || 0);
+            }) : [0];
+            var visited = zones.length ? countVisitedUniqueByZone(y) : [0];
+            if (foot) {
+                foot.textContent = zones.length
+                    ? '每區「目標人數」優先 memberCount，否則戶數；「已探訪」為 ' + y + ' 年度已完成任務中不重複對象。'
+                    : '新增分區後可顯示覆蓋圖。';
+            }
+            if (charts.zoneCoverage) charts.zoneCoverage.destroy();
+            charts.zoneCoverage = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: '目標人數（會友或戶）', data: bases, backgroundColor: 'rgba(102,126,234,0.35)' },
+                        { label: '本年度已探訪（不重複）', data: visited, backgroundColor: 'rgba(39,174,96,0.65)' }
+                    ]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function renderReportLogTable() {
+            var wrap = document.getElementById('report-log-table-wrap');
+            if (!wrap) return;
+            var filtSel = document.getElementById('report-log-filter');
+            var filt = filtSel ? filtSel.value : 'all';
+            var now = new Date();
+            var yy = now.getFullYear(), mo = now.getMonth();
+            var rows = [];
+            (data.missions || []).forEach(function (m) {
+                if (!m.report || !m.report.content) return;
+                var d = new Date(m.date);
+                if (isNaN(d.getTime())) return;
+                if (filt === 'month' && (d.getFullYear() !== yy || d.getMonth() !== mo)) return;
+                if (filt === 'year' && d.getFullYear() !== yy) return;
+                rows.push(m);
+            });
+            rows.sort(function (a, b) {
+                return new Date(b.report.reportedAt || b.date) - new Date(a.report.reportedAt || a.date);
+            });
+            if (!rows.length) {
+                wrap.innerHTML = '<p style="color:#94a3b8;font-size:11px;">尚無匯報記錄</p>';
+                return;
+            }
+            wrap.innerHTML = '<table><thead><tr><th>日期</th><th>對象</th><th>匯報人</th><th>摘要</th></tr></thead><tbody>' +
+                rows.map(function (m) {
+                    var sum = m.reportSummary || (m.report.content || '').slice(0, 80);
+                    return '<tr><td>' + m.date + '</td><td>' + escapeHtml(String(m.target).slice(0, 40)) + '</td><td>' + escapeHtml(m.report.reporter) + '</td><td>' + escapeHtml(sum) + '</td></tr>';
+                }).join('') + '</tbody></table>';
+        }
+
+        function exportReportLogCsv() {
+            var filtSel = document.getElementById('report-log-filter');
+            var filt = filtSel ? filtSel.value : 'all';
+            var now = new Date();
+            var yy = now.getFullYear(), mo = now.getMonth();
+            var rows = [];
+            (data.missions || []).forEach(function (m) {
+                if (!m.report || !m.report.content) return;
+                var d = new Date(m.date);
+                if (isNaN(d.getTime())) return;
+                if (filt === 'month' && (d.getFullYear() !== yy || d.getMonth() !== mo)) return;
+                if (filt === 'year' && d.getFullYear() !== yy) return;
+                rows.push(m);
+            });
+            var csv = 'date,target,reporter,summary\n' + rows.map(function (m) {
+                var sum = (m.reportSummary || (m.report.content || '').slice(0, 120)).replace(/"/g, '""');
+                return [m.date, '"' + String(m.target).replace(/"/g, '""') + '"', '"' + String(m.report.reporter).replace(/"/g, '""') + '"', '"' + sum + '"'].join(',');
+            }).join('\n');
+            var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'visitation_reports_log_demo.csv';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        function buildWeeklyDispatchDoc() {
+            var today = new Date();
+            var lines = [];
+            lines.push('【本週出動計劃書】（示範）');
+            lines.push('產生時間：' + today.toISOString().slice(0, 10));
+            lines.push('');
+            var week = (data.missions || []).filter(function (m) {
+                var diff = (new Date(m.date) - today) / (1000 * 60 * 60 * 24);
+                return diff >= 0 && diff <= 7;
+            });
+            if (week.length === 0) lines.push('（本週尚無排程任務，請至「出動」新增任務）');
+            else week.forEach(function (m) {
+                lines.push(m.date + '｜' + getTypeText(m.type) + '｜' + m.target + '｜' + m.team + '｜' + getStatusText(m.status));
+            });
+            lines.push('');
+            lines.push('—— 以上資料來自本機 missions[]，與未來 Excel 匯入後之顯示格式一致 ——');
+            var ta = document.getElementById('weekly-dispatch-text');
+            if (ta) ta.value = lines.join('\n');
+        }
+
+        function copyWeeklyDispatchDoc() {
+            var ta = document.getElementById('weekly-dispatch-text');
+            if (!ta || !ta.value) { buildWeeklyDispatchDoc(); ta = document.getElementById('weekly-dispatch-text'); }
+            if (!ta) return;
+            ta.select();
+            try {
+                navigator.clipboard.writeText(ta.value);
+                alert('已複製到剪貼簿');
+            } catch (e) {
+                document.execCommand('copy');
+                alert('已複製');
+            }
+        }
+
+        function initReportMonthSelect() {
+            var sel = document.getElementById('report-month-select');
+            if (!sel) return;
+            sel.innerHTML = '';
+            var now = new Date();
+            for (var i = 0; i < 12; i++) {
+                var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                var v = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                var opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = d.getFullYear() + ' 年 ' + (d.getMonth() + 1) + ' 月';
+                sel.appendChild(opt);
+            }
+        }
+
+        function renderReportMonthView() {
+            var sel = document.getElementById('report-month-select');
+            var wrap = document.getElementById('report-month-table-wrap');
+            if (!sel || !wrap) return;
+            var parts = sel.value.split('-');
+            var y = parseInt(parts[0], 10), mo = parseInt(parts[1], 10) - 1;
+            var rows = (data.missions || []).filter(function (m) {
+                var d = new Date(m.date);
+                return d.getFullYear() === y && d.getMonth() === mo;
+            });
+            if (rows.length === 0) {
+                wrap.innerHTML = '<p style="color:#94a3b8;font-size:11px;">此月份無任務</p>';
+                return;
+            }
+            wrap.innerHTML = '<table><thead><tr><th>日期</th><th>類型</th><th>對象</th><th>狀態</th></tr></thead><tbody>' +
+                rows.map(function (m) {
+                    return '<tr><td>' + m.date + '</td><td>' + getTypeText(m.type) + '</td><td>' + String(m.target).replace(/</g, '&lt;') + '</td><td>' + getStatusText(m.status) + '</td></tr>';
+                }).join('') + '</tbody></table>';
+        }
+
+        function renderReportQuarterView() {
+            var el = document.getElementById('report-quarter-summary');
+            if (!el) return;
+            var now = new Date();
+            var q = Math.floor(now.getMonth() / 3);
+            var startM = q * 3;
+            var total = (data.missions || []).filter(function (m) {
+                var d = new Date(m.date);
+                return d.getFullYear() === now.getFullYear() && d.getMonth() >= startM && d.getMonth() < startM + 3;
+            }).length;
+            var done = (data.missions || []).filter(function (m) {
+                var d = new Date(m.date);
+                return d.getFullYear() === now.getFullYear() && d.getMonth() >= startM && d.getMonth() < startM + 3 && m.status === 'completed';
+            }).length;
+            var rate = total ? Math.round(done / total * 100) : 0;
+            el.innerHTML = '<p style="font-size:11px;">本季任務數：<strong>' + total + '</strong>，已完成：<strong>' + done + '</strong>，完成率約 <strong>' + rate + '%</strong></p>';
+        }
+
+        function renderReportYearView() {
+            var el = document.getElementById('report-year-summary');
+            if (!el) return;
+            var y = new Date().getFullYear();
+            var total = (data.missions || []).filter(function (m) { return new Date(m.date).getFullYear() === y; }).length;
+            el.innerHTML = '<p style="font-size:11px;">' + y + ' 年度累計任務：<strong>' + total + '</strong>（示範）</p>';
+        }
+
+        function exportYearReportCsv() {
+            var y = new Date().getFullYear();
+            var rows = (data.missions || []).filter(function (m) { return new Date(m.date).getFullYear() === y; });
+            var csv = 'date,type,target,team,status\n' + rows.map(function (m) {
+                return [m.date, m.type, '"' + String(m.target).replace(/"/g, '""') + '"', m.team, m.status].join(',');
+            }).join('\n');
+            var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'visitation_' + y + '_demo.csv';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        function refreshDispatchWorkerSelect() {
+            var sel = document.getElementById('df-workers');
+            if (!sel) return;
+            if (data.workers && data.workers.length) {
+                sel.innerHTML = data.workers.map(function (w) {
+                    return '<option value="' + String(w.name).replace(/"/g, '&quot;') + '">' + String(w.name).replace(/</g, '&lt;') + '</option>';
+                }).join('');
+            } else {
+                sel.innerHTML = '<option value="">（尚無同工名冊，請先載入示範資料）</option>';
+            }
+        }
+
+        function dispatchFormReset() {
+            var f = document.getElementById('dispatch-form-el');
+            if (f) f.reset();
+            var d = document.getElementById('df-date');
+            if (d) d.value = new Date().toISOString().slice(0, 10);
+        }
+
+        function dispatchFormSubmit() {
+            var dateEl = document.getElementById('df-date');
+            var targetEl = document.getElementById('df-target');
+            var typeEl = document.getElementById('df-type');
+            var noteEl = document.getElementById('df-note');
+            var date = dateEl ? dateEl.value : '';
+            if (!date) { alert('請選擇探訪日期'); return; }
+            if (!targetEl || !targetEl.value) { alert('請選擇探訪對象'); return; }
+            var targetText = targetEl.options[targetEl.selectedIndex].text;
+            var type = typeEl ? typeEl.value : 'regular';
+            var workersSel = document.getElementById('df-workers');
+            var teamLabel = '（表單）';
+            if (workersSel && workersSel.selectedOptions && workersSel.selectedOptions.length) {
+                teamLabel = Array.from(workersSel.selectedOptions).map(function (o) { return o.value; }).join('、');
+            }
+            var note = noteEl ? noteEl.value.trim() : '';
+            var targetLine = targetText;
+            if (note) targetLine += '｜' + note.slice(0, 80);
+            data.missions.push({
+                id: Date.now(),
+                date: date,
+                type: type,
+                target: targetLine,
+                team: teamLabel || '未指定',
+                status: 'planned'
+            });
+            saveData();
+            renderMissions();
+            renderDashboard();
+            dispatchFormReset();
+            alert('已新增一筆出動任務（本機示範資料）。');
+        }
+
+        const TAB_ORDER = ['dashboard', 'strategy', 'schedule', 'missions', 'reports', 'training'];
+        function switchTab(tab) {
+            document.querySelectorAll('.header-tabs .tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            const idx = TAB_ORDER.indexOf(tab);
+            const tabBtns = document.querySelectorAll('.header-tabs .tab');
+            if (idx >= 0 && tabBtns[idx]) tabBtns[idx].classList.add('active');
+            const panel = document.getElementById('tab-' + tab);
+            if (panel) panel.classList.add('active');
+            if (tab === 'dashboard') renderDashboard();
+            if (tab === 'strategy') renderStrategy();
+            if (tab === 'schedule') renderSchedule();
+            if (tab === 'missions') renderMissions();
+            if (tab === 'reports') renderReports();
+            if (tab === 'training') renderTraining();
+        }
+        
+        function renderAll() {
+            renderDashboard();
+            renderStrategy();
+            renderSchedule();
+            renderMissions();
+            renderReports();
+            renderTraining();
+        }
+        
+        function renderDashboard() {
+            if (recomputeOverdueStatuses()) saveData();
+            migrateVisitationPayload(data);
+            var now = new Date();
+            var ym = now.getMonth(), yy = now.getFullYear();
+            var monthMissions = (data.missions || []).filter(function (m) {
+                var d = new Date(m.date);
+                return !isNaN(d.getTime()) && d.getMonth() === ym && d.getFullYear() === yy;
+            });
+            var monthDone = monthMissions.filter(function (m) { return m.status === 'completed'; }).length;
+            var monthRate = monthMissions.length ? Math.round(monthDone / monthMissions.length * 100) : 0;
+            var elM = document.getElementById('stat-dash-month');
+            var elR = document.getElementById('stat-dash-month-rate');
+            var elO = document.getElementById('stat-dash-overdue');
+            if (elM) elM.textContent = monthMissions.length;
+            if (elR) elR.textContent = monthRate + '%';
+            if (elO) elO.textContent = (data.missions || []).filter(function (m) { return m.status === 'overdue'; }).length;
+            renderDashUpcomingTrainings();
+            renderLandingCharts();
+        }
+        
+        function renderStrategy() {
+            const tbody = document.querySelector('#goalsTable tbody');
+            tbody.innerHTML = data.goals.map(g => `
+                <tr>
+                    <td>${g.category}</td>
+                    <td>${g.target}</td>
+                    <td>${g.annual}次</td>
+                    <td>
+                        <div class="progress-bar"><div class="progress-fill" style="width:${(g.current/g.annual*100)}%"></div></div>
+                        ${g.current}/${g.annual} (${Math.round(g.current/g.annual*100)}%)
+                    </td>
+                    <td>${g.responsible}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editGoal(${g.id})">編輯</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteGoal(${g.id})">刪除</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" style="text-align:center;color:#7f8c8d;">暫無目標，請使用上方「新增年度目標」</td></tr>';
+            
+            ['regular','crisis','newcomer'].forEach(type => {
+                const plans = data.plans.filter(p => p.type === type);
+                const container = document.getElementById(type + 'Plans');
+                container.innerHTML = plans.map(p => `
+                    <div class="plan-item">
+                        <h4>${escapeHtml(p.name)}</h4>
+                        <p>${escapeHtml(p.desc)} · ${escapeHtml(p.freq)} · 年度${p.targets}次</p>
+                        <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">
+                            <button type="button" class="btn btn-sm btn-secondary" title="以今年設定為模板建立下一年度計劃（新筆記，可再改名稱與次數）" onclick="copyPlanToNextYear(${p.id})">複製新年度</button>
+                            <button type="button" class="btn btn-sm btn-secondary" title="備份目前這一筆計劃為 JSON（給技術同工存檔或匯入他處）" onclick="exportPlanJson(${p.id})">匯出 JSON</button>
+                            <button type="button" class="btn btn-sm btn-danger" title="永久刪除此計劃；建議先匯出 JSON" onclick="deletePlan(${p.id})">刪除</button>
+                        </div>
+                    </div>
+                `).join('') || '<p style="font-size:11px;color:#7f8c8d;margin-top:10px;">暫無計劃</p>';
+            });
+        }
+
+        function copyPlanToNextYear(id) {
+            var p = data.plans.find(function (x) { return x.id === id; });
+            if (!p) return;
+            var copy = Object.assign({}, p, {
+                id: Date.now(),
+                name: p.name + '（新年度副本）',
+                fiscalYear: (new Date().getFullYear() + 1)
+            });
+            data.plans.push(copy);
+            saveData();
+            renderStrategy();
+            alert('已複製為新年度計劃（可再編修名稱與次數）。');
+        }
+
+        function exportPlanJson(id) {
+            var p = data.plans.find(function (x) { return x.id === id; });
+            if (!p) return;
+            var blob = new Blob(['\ufeff' + JSON.stringify(p, null, 2)], { type: 'application/json' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'visitation_plan_' + id + '.json';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+        
+        function renderSchedule() {
+            const tbody1 = document.querySelector('#zonesTable tbody');
+            tbody1.innerHTML = data.zones.map(z => `
+                <tr>
+                    <td>${escapeHtml(z.name)}</td>
+                    <td>${z.families}戶</td>
+                    <td>${z.memberCount != null ? z.memberCount + '人' : '—'}</td>
+                    <td>${escapeHtml(z.team)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editZone(${z.id})">編輯</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteZone(${z.id})">刪除</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" style="text-align:center;color:#7f8c8d;">暫無分區</td></tr>';
+            
+            const tbody2 = document.querySelector('#teamsTable tbody');
+            tbody2.innerHTML = data.teams.map(t => `
+                <tr>
+                    <td>${t.name}</td>
+                    <td>${t.leader}</td>
+                    <td>${t.members}人</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editTeam(${t.id})">編輯</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteTeam(${t.id})">刪除</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" style="text-align:center;color:#7f8c8d;">暫無小組</td></tr>';
+            
+            renderCalendar();
+        }
+        
+        function renderCalendar() {
+            const container = document.getElementById('scheduleCalendar');
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDay = firstDay.getDay();
+            
+            let html = '';
+            ['日','一','二','三','四','五','六'].forEach(day => {
+                html += `<div style="font-weight:600;text-align:center;padding:5px;">${day}</div>`;
+            });
+            
+            for (let i = 0; i < startDay; i++) html += '<div class="calendar-day"></div>';
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const dayMissions = data.missions.filter(m => m.date === dateStr);
+                html += `
+                    <div class="calendar-day ${dayMissions.length > 0 ? 'has-visit' : ''}">
+                        <div class="calendar-date">${day}</div>
+                        ${dayMissions.map(m => `<div class="calendar-event">${m.team}</div>`).join('')}
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+        
+        function renderMissions() {
+            const tbody = document.querySelector('#missionsTable tbody');
+            tbody.innerHTML = data.missions.map(m => {
+                const hasRep = m.report && m.report.content;
+                const sum = hasRep ? (m.reportSummary || (m.report.content || '').slice(0, 60) + '…') : '—';
+                const btnLabel = hasRep ? (m.status === 'completed' ? '查看／編輯匯報' : '補匯報') : '新增匯報';
+                return `
+                <tr>
+                    <td>${m.date}</td>
+                    <td><span class="tag type-${m.type}">${getTypeText(m.type)}</span></td>
+                    <td>${escapeHtml(String(m.target))}</td>
+                    <td>${escapeHtml(String(m.team))}</td>
+                    <td><span class="tag status-${m.status}">${getStatusText(m.status)}</span></td>
+                    <td style="max-width:180px;font-size:10px;color:#64748b;">${escapeHtml(sum)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="submitReport(${m.id})">${btnLabel}</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteMission(${m.id})">刪除</button>
+                    </td>
+                </tr>`;
+            }).join('') || '<tr><td colspan="7" style="text-align:center;color:#7f8c8d;">暫無出動紀錄</td></tr>';
+            refreshDispatchWorkerSelect();
+            var d0 = document.getElementById('df-date');
+            if (d0 && !d0.value) d0.value = new Date().toISOString().slice(0, 10);
+        }
+        
+        function renderReports() {
+            const ctx = document.getElementById('reportChart');
+            if (!ctx) return;
+            if (charts.reportChart) charts.reportChart.destroy();
+            var now = new Date();
+            var monthLabels = [];
+            var counts = [];
+            for (var i = 5; i >= 0; i--) {
+                var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                monthLabels.push((d.getMonth() + 1) + '月');
+                var mi = d.getMonth();
+                var yy = d.getFullYear();
+                counts.push((data.missions || []).filter(function (mission) {
+                    var md = new Date(mission.date);
+                    return md.getMonth() === mi && md.getFullYear() === yy;
+                }).length);
+            }
+            charts.reportChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{
+                        label: '探訪次數',
+                        data: counts,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102,126,234,0.1)',
+                        fill: true
+                    }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+            renderZoneCoverageChart();
+            renderReportLogTable();
+        }
+        
+        function renderTraining() {
+            const tbody1 = document.querySelector('#trainingsTable tbody');
+            tbody1.innerHTML = data.trainings.map(t => `
+                <tr>
+                    <td>${escapeHtml(t.name)}</td>
+                    <td>${t.date}</td>
+                    <td>${escapeHtml(t.location || '—')}</td>
+                    <td>${escapeHtml(t.audience || '—')}</td>
+                    <td>${t.students}人</td>
+                    <td>${escapeHtml(t.trainer)}</td>
+                    <td><span class="tag status-${t.status}">${t.status==='completed'?'已完成':'計劃中'}</span></td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteTraining(${t.id})">刪除</button></td>
+                </tr>
+            `).join('') || '<tr><td colspan="8" style="text-align:center;color:#7f8c8d;">暫無課程</td></tr>';
+
+            var hist = document.getElementById('training-history-wrap');
+            if (hist) {
+                var done = (data.trainings || []).filter(function (t) { return t.status === 'completed'; });
+                hist.innerHTML = done.length ? '<ul style="margin:0;padding-left:18px;">' + done.map(function (t) {
+                    return '<li><strong>' + escapeHtml(t.name) + '</strong>（' + t.date + '）' + (t.materialsUrl ? ' · <a href="' + escapeHtml(t.materialsUrl) + '" target="_blank" rel="noopener">教材連結</a>' : '') + '</li>';
+                }).join('') + '</ul>' : '（尚無已完成課程）';
+            }
+
+            const tbody2 = document.querySelector('#workersTable tbody');
+            tbody2.innerHTML = data.workers.map(w => `
+                <tr>
+                    <td>${w.name}</td>
+                    <td>${w.trainings}門</td>
+                    <td>${w.visits}次</td>
+                    <td><span class="tag type-${w.level==='資深'?'regular':'crisis'}">${w.level}</span></td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" style="text-align:center;color:#7f8c8d;">暫無同工</td></tr>';
+        }
+        
+        function getTypeText(type) {
+            return { regular: '經常性', crisis: '危機性', newcomer: '新人性' }[type] || type;
+        }
+        
+        function getStatusText(status) {
+            return { completed: '已完成', planned: '計劃中', overdue: '逾期' }[status] || status;
+        }
+        
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `<div class="modal-header">${title}</div>${content}`;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        function showAddGoalModal() {
+            showModal('➕ 新增年度目标', `
+                <div class="form-group"><label class="form-label">目标类别</label><select id="goalCategory" class="form-select"><option>经常性</option><option>危机性</option><option>新人性</option></select></div>
+                <div class="form-group"><label class="form-label">具体目标</label><input type="text" id="goalTarget" class="form-input" placeholder="例如：长者关怀"></div>
+                <div class="form-group"><label class="form-label">年度指标（次数）</label><input type="number" id="goalAnnual" class="form-input" value="100"></div>
+                <div class="form-group"><label class="form-label">当前进度</label><input type="number" id="goalCurrent" class="form-input" value="0"></div>
+                <div class="form-group"><label class="form-label">负责人</label><input type="text" id="goalResponsible" class="form-input" placeholder="例如：李长老"></div>
+                <button class="btn btn-primary" onclick="addGoal()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addGoal() {
+            const goal = {
+                id: Date.now(),
+                category: document.getElementById('goalCategory').value,
+                target: document.getElementById('goalTarget').value,
+                annual: parseInt(document.getElementById('goalAnnual').value),
+                current: parseInt(document.getElementById('goalCurrent').value),
+                responsible: document.getElementById('goalResponsible').value
+            };
+            if (!goal.target) return alert('请填写具体目标');
+            data.goals.push(goal);
+            saveData();
+            renderStrategy();
+            closeModal();
+            alert('✅ 年度目标已添加！');
+        }
+        
+        function deleteGoal(id) {
+            if (confirm('确定删除此目标？')) {
+                data.goals = data.goals.filter(g => g.id !== id);
+                saveData();
+                renderStrategy();
+            }
+        }
+        
+        function showAddPlanModal(type) {
+            showModal(`➕ 新增${getTypeText(type)}探访计划`, `
+                <div class="form-group"><label class="form-label">计划名称</label><input type="text" id="planName" class="form-input" placeholder="例如：长者定期探访"></div>
+                <div class="form-group"><label class="form-label">计划描述</label><textarea id="planDesc" class="form-textarea" placeholder="详细说明探访对象和内容"></textarea></div>
+                <div class="form-group"><label class="form-label">频率</label><select id="planFreq" class="form-select"><option>每周</option><option>每月</option><option>每季</option><option>随时</option></select></div>
+                <div class="form-group"><label class="form-label">年度目标次数</label><input type="number" id="planTargets" class="form-input" value="50"></div>
+                <button class="btn btn-primary" onclick="addPlan('${type}')">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addPlan(type) {
+            const plan = {
+                id: Date.now(),
+                type: type,
+                name: document.getElementById('planName').value,
+                desc: document.getElementById('planDesc').value,
+                freq: document.getElementById('planFreq').value,
+                targets: parseInt(document.getElementById('planTargets').value)
+            };
+            if (!plan.name) return alert('请填写计划名称');
+            data.plans.push(plan);
+            saveData();
+            renderStrategy();
+            closeModal();
+            alert('✅ 探访计划已添加！');
+        }
+        
+        function deletePlan(id) {
+            if (confirm('確定刪除此探訪計劃？此動作無法復原。若需保留紀錄，請先按「匯出 JSON」備份。')) {
+                data.plans = data.plans.filter(p => p.id !== id);
+                saveData();
+                renderStrategy();
+            }
+        }
+        
+        function showAddZoneModal() {
+            showModal('➕ 新增区域', `
+                <div class="form-group"><label class="form-label">区域名称</label><input type="text" id="zoneName" class="form-input" placeholder="例如：东区"></div>
+                <div class="form-group"><label class="form-label">家庭数量</label><input type="number" id="zoneFamilies" class="form-input" value="50"></div>
+                <div class="form-group"><label class="form-label">负责小组</label><select id="zoneTeam" class="form-select">${data.teams.map(t => `<option>${t.name}</option>`).join('')}</select></div>
+                <button class="btn btn-primary" onclick="addZone()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addZone() {
+            const zone = {
+                id: Date.now(),
+                name: document.getElementById('zoneName').value,
+                families: parseInt(document.getElementById('zoneFamilies').value),
+                team: document.getElementById('zoneTeam').value
+            };
+            if (!zone.name) return alert('请填写区域名称');
+            data.zones.push(zone);
+            saveData();
+            renderSchedule();
+            closeModal();
+            alert('✅ 区域已添加！');
+        }
+        
+        function deleteZone(id) {
+            if (confirm('确定删除此区域？')) {
+                data.zones = data.zones.filter(z => z.id !== id);
+                saveData();
+                renderSchedule();
+            }
+        }
+        
+        function showAddTeamModal() {
+            showModal('➕ 新增小组', `
+                <div class="form-group"><label class="form-label">小组名称</label><input type="text" id="teamName" class="form-input" placeholder="例如：东区小组"></div>
+                <div class="form-group"><label class="form-label">组长</label><input type="text" id="teamLeader" class="form-input" placeholder="例如：王弟兄"></div>
+                <div class="form-group"><label class="form-label">成员数量</label><input type="number" id="teamMembers" class="form-input" value="8"></div>
+                <button class="btn btn-primary" onclick="addTeam()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addTeam() {
+            const team = {
+                id: Date.now(),
+                name: document.getElementById('teamName').value,
+                leader: document.getElementById('teamLeader').value,
+                members: parseInt(document.getElementById('teamMembers').value)
+            };
+            if (!team.name) return alert('请填写小组名称');
+            data.teams.push(team);
+            saveData();
+            renderSchedule();
+            closeModal();
+            alert('✅ 小组已添加！');
+        }
+        
+        function deleteTeam(id) {
+            if (confirm('确定删除此小组？')) {
+                data.teams = data.teams.filter(t => t.id !== id);
+                saveData();
+                renderSchedule();
+            }
+        }
+        
+        function showAddMissionModal() {
+            const members = (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.getMembers) ? ChurchDataBridge.getMembers() : [];
+            const memberOpts = members.map(m => `<option value="${m.id}">${(m.name||'')} ${m.gender ? '('+m.gender+')' : ''}</option>`).join('');
+            const teamOpts = data.teams.map(t => `<option>${t.name}</option>`).join('');
+            showModal('➕ 新增出动计划', `
+                <div class="form-group"><label class="form-label">出动日期</label><input type="date" id="missionDate" class="form-input"></div>
+                <div class="form-group"><label class="form-label">探访类型</label><select id="missionType" class="form-select"><option value="regular">经常性</option><option value="crisis">危机性</option><option value="newcomer">新人性</option></select></div>
+                <div class="form-group"><label class="form-label">探访对象</label>
+                    <select id="missionTargetSelect" class="form-select" onchange="toggleMissionTargetCustom(this)">
+                        <option value="">— 請選擇會友 —</option>
+                        ${memberOpts}
+                        <option value="_custom">其他（自填）</option>
+                    </select>
+                    <input type="text" id="missionTarget" class="form-input" placeholder="例如：王姊妹" style="margin-top:6px;display:none;">
+                </div>
+                <div class="form-group"><label class="form-label">负责小组</label><select id="missionTeam" class="form-select">${teamOpts || '<option>（尚無小組）</option>'}</select></div>
+                <button class="btn btn-primary" onclick="addMission()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function toggleMissionTargetCustom(sel) {
+            const custom = document.getElementById('missionTarget');
+            if (custom) custom.style.display = (sel && sel.value === '_custom') ? 'block' : 'none';
+        }
+        
+        function addMission() {
+            const sel = document.getElementById('missionTargetSelect');
+            const customInput = document.getElementById('missionTarget');
+            let target = '', targetId = null;
+            if (sel && sel.value === '_custom' && customInput) {
+                target = customInput.value.trim();
+            } else if (sel && sel.value && sel.value !== '_custom') {
+                targetId = parseInt(sel.value, 10) || sel.value;
+                const m = (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.getMemberById) ? ChurchDataBridge.getMemberById(targetId) : null;
+                target = m ? (m.name || '') : (sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : String(targetId));
+            }
+            var teamName = (document.getElementById('missionTeam') || {}).value || '';
+            const mission = {
+                id: Date.now(),
+                date: document.getElementById('missionDate').value,
+                type: document.getElementById('missionType').value,
+                target: target,
+                targetId: targetId,
+                targetMemberId: targetId != null ? targetId : undefined,
+                team: teamName,
+                zoneId: resolveZoneIdForTeam(teamName) || undefined,
+                status: 'planned'
+            };
+            if (!mission.date || !mission.target) return alert('请填写完整信息（请选择或输入探访对象）');
+            data.missions.push(mission);
+            saveData();
+            renderMissions();
+            renderSchedule();
+            renderDashboard();
+            closeModal();
+            alert('✅ 出動計劃已新增！');
+        }
+        
+        function deleteMission(id) {
+            if (confirm('確定刪除此出動紀錄？')) {
+                data.missions = data.missions.filter(m => m.id !== id);
+                saveData();
+                renderMissions();
+                renderSchedule();
+                renderDashboard();
+            }
+        }
+        
+        function submitReport(id) {
+            var mission = data.missions.find(function (m) { return m.id === id; });
+            var r = mission && mission.report;
+            var rep = r && r.reporter ? r.reporter : '';
+            var cont = r && r.content ? r.content : '';
+            var pray = r && r.prayer ? r.prayer : '';
+            var title = r && r.content ? '📝 編輯探訪匯報' : '📝 提交探訪匯報';
+            var btnLabel = r && r.content ? '更新匯報' : '提交匯報';
+            showModal(title, `
+                <p class="permission-hint" style="margin-bottom:10px;">正式環境中誰可閱讀全文由後端授權；此處為本機示範。</p>
+                <div class="form-group"><label class="form-label">匯報人</label><input type="text" id="reporter" class="form-input" value="${escapeHtml(rep)}" placeholder="您的姓名"></div>
+                <div class="form-group"><label class="form-label">探訪內容</label><textarea id="reportContent" class="form-textarea" placeholder="記錄探訪情況、對象狀況">${escapeHtml(cont)}</textarea></div>
+                <div class="form-group"><label class="form-label">代禱（選填）</label><textarea id="reportPrayer" class="form-textarea" style="min-height:52px;">${escapeHtml(pray)}</textarea></div>
+                <p class="permission-hint" style="margin-top:12px;">匯報提交後，正式環境通常<strong>不允許完全刪除</strong>，僅可由有權限之牧者／統籌更正，以保護會友私隱與事實紀錄（本示範仍可刪除整筆任務）。</p>
+                <button class="btn btn-success" onclick="saveReport(${id})">${btnLabel}</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+
+        function saveReport(id) {
+            var reporter = document.getElementById('reporter').value.trim();
+            var content = document.getElementById('reportContent').value.trim();
+            var prayerEl = document.getElementById('reportPrayer');
+            var prayer = prayerEl ? prayerEl.value.trim() : '';
+            if (!reporter || !content) return alert('請填寫匯報人與內容');
+
+            var mission = data.missions.find(function (m) { return m.id === id; });
+            if (!mission) return;
+            mission.status = 'completed';
+            mission.report = {
+                reporter: reporter,
+                content: content,
+                prayer: prayer || undefined,
+                reportedAt: new Date().toISOString()
+            };
+            mission.reportSummary = content.slice(0, 80);
+            saveData();
+            renderMissions();
+            renderDashboard();
+            renderReportLogTable();
+            closeModal();
+            alert('匯報已儲存（本機示範）。');
+        }
+        
+        function showAddTrainingModal() {
+            showModal('➕ 新增培训课程', `
+                <div class="form-group"><label class="form-label">课程名称</label><input type="text" id="trainingName" class="form-input" placeholder="例如：探访技巧基础"></div>
+                <div class="form-group"><label class="form-label">培训日期</label><input type="date" id="trainingDate" class="form-input"></div>
+                <div class="form-group"><label class="form-label">学员人数</label><input type="number" id="trainingStudents" class="form-input" value="15"></div>
+                <div class="form-group"><label class="form-label">讲师</label><input type="text" id="trainingTrainer" class="form-input" placeholder="例如：李牧师"></div>
+                <button class="btn btn-primary" onclick="addTraining()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addTraining() {
+            const training = {
+                id: Date.now(),
+                name: document.getElementById('trainingName').value,
+                date: document.getElementById('trainingDate').value,
+                students: parseInt(document.getElementById('trainingStudents').value),
+                trainer: document.getElementById('trainingTrainer').value,
+                status: 'planned'
+            };
+            if (!training.name || !training.date) return alert('请填写完整信息');
+            data.trainings.push(training);
+            saveData();
+            renderTraining();
+            closeModal();
+            alert('✅ 培训课程已添加！');
+        }
+        
+        function deleteTraining(id) {
+            if (confirm('确定删除此培训？')) {
+                data.trainings = data.trainings.filter(t => t.id !== id);
+                saveData();
+                renderTraining();
+                renderDashboard();
+            }
+        }
+        
+        function missionExistsOnDateForTeam(dateStr, teamName) {
+            return (data.missions || []).some(function (m) {
+                return m.date === dateStr && m.team === teamName;
+            });
+        }
+
+        function autoSchedule() {
+            if (data.zones.length === 0 || data.teams.length === 0) {
+                return alert('⚠️ 请先添加区域和小组！');
+            }
+            if (confirm('智慧排程（示範）將在未來 4 週為每個小組各補一筆「經常性」任務；若該週該小組已有任務則略過。\n\n是否繼續？')) {
+                const today = new Date();
+                let added = 0;
+                for (let i = 0; i < 4; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() + (i * 7));
+                    const dateStr = date.toISOString().split('T')[0];
+                    data.teams.forEach(team => {
+                        if (missionExistsOnDateForTeam(dateStr, team.name)) return;
+                        var zid = resolveZoneIdForTeam(team.name);
+                        data.missions.push({
+                            id: Date.now() + i * 1000 + team.id + Math.floor(Math.random() * 1000),
+                            date: dateStr,
+                            type: 'regular',
+                            target: '自動排程-' + team.name,
+                            team: team.name,
+                            zoneId: zid || undefined,
+                            status: 'planned'
+                        });
+                        added++;
+                    });
+                }
+                saveData();
+                renderSchedule();
+                renderMissions();
+                renderDashboard();
+                alert('智慧排程完成：新增 ' + added + ' 筆（已略過重複之同日同小組）。');
+            }
+        }
+        
+        function showMobileReportInfo() {
+            showModal('📱 手機匯報說明', `
+                <div class="alert alert-info">
+                    <strong>📱 同工如何提交探訪匯報</strong><br><br>
+                    正式上線後，可由教會設定下列任一方式（目前為示意）：<br><br>
+                    <strong>1. 掃描 QR Code：</strong><br>
+                    <div style="width:200px;height:200px;background:#f8f9fa;margin:15px 0;display:flex;align-items:center;justify-content:center;border-radius:8px;">
+                        <span style="font-size:48px;">📱</span>
+                    </div>
+                    <strong>2. 開啟連結：</strong><br>
+                    <input type="text" class="form-input" value="（同資料夾）visitation_mobile_demo.html" readonly style="margin:10px 0;">
+                    <br><br>
+                    <strong>3. 其他：</strong> 例如教會 App、LINE、微信官方帳號等，由資訊同工設定。<br><br>
+                    匯報後，請在電腦版「出動」列表將該筆任務按「匯報」標為完成。
+                </div>
+                <button class="btn btn-primary" onclick="closeModal()">知道了</button>
+            `);
+        }
+        
+        /** 舊版報表入口；已改為 action-panel 內月度／季／年檢視 */
+        function generateReport() { /* deprecated */ }
+        
+        window.onclick = (e) => {
+            if (e.target.id === 'modal') closeModal();
+        };
+    </script>
+</body>
+</html>
+

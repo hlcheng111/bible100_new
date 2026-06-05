@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活動績效評估 · Activity Performance | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <script src="../../assets/js/chart.min.js"></script>
+    <link rel="stylesheet" href="../../assets/css/fontawesome.min.css">
+</head>
+<body class="bg-gray-50 cm-research-page">
+    <nav class="cm-back-bar" aria-label="區域導覽">
+      <a class="cm-back-bar__link" href="../../dashboard.html">⛪ 返回教會事工</a>
+      <span class="cm-back-bar__muted">研究與統計</span>
+    </nav>
+    <p class="cm-data-banner" role="status"><strong>資料來源：</strong><span id="cm-data-source-line">讀取中…</span></p>
+    <div class="cm-kpi-row" aria-label="即時匯總（ChurchDataBridge）">
+      <span class="cm-kpi-pill">會友 <b id="cm-kpi-members">—</b></span>
+      <span class="cm-kpi-pill">小組 <b id="cm-kpi-groups">—</b></span>
+      <span class="cm-kpi-pill">探訪任務 <b id="cm-kpi-missions">—</b></span>
+      <span class="cm-kpi-pill">志工指派 <b id="cm-kpi-volunteers">—</b></span>
+      <span class="cm-kpi-pill">財務結餘 <b id="cm-kpi-finance-balance">—</b></span>
+    </div>
+    <div class="container mx-auto px-4 py-6">
+        <!-- 页面标题 -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-calendar-check text-purple-600 mr-2"></i>活動績效評估
+            </h1>
+            <p class="text-gray-600">全面評估教會各項活動的績效表現和影響力</p>
+        </div>
+
+        <!-- 活動概览卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-full">
+                        <i class="fas fa-calendar text-green-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">本月活動</p>
+                        <p class="text-xl font-semibold text-gray-800">24場</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-green-600">↑ 新增3場</span>
+                    <span class="text-xs text-gray-500 ml-1">較上月</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-full">
+                        <i class="fas fa-users text-blue-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">總參與人次</p>
+                        <p class="text-xl font-semibold text-gray-800">1,856人</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-blue-600">↑ 12.5%</span>
+                    <span class="text-xs text-gray-500 ml-1">較上月</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-full">
+                        <i class="fas fa-star text-purple-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">平均滿意度</p>
+                        <p class="text-xl font-semibold text-gray-800">4.7/5.0</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-purple-600">↑ 0.3分</span>
+                    <span class="text-xs text-gray-500 ml-1">較上月</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+                <div class="flex items-center">
+                    <div class="p-2 bg-orange-100 rounded-full">
+                        <i class="fas fa-chart-line text-orange-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-gray-600">達成率</p>
+                        <p class="text-xl font-semibold text-gray-800">94.2%</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="text-xs text-orange-600">↑ 2.8%</span>
+                    <span class="text-xs text-gray-500 ml-1">較上月</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 活動績效图表 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 活動參與度趨勢 -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">活動參與度趨勢</h3>
+                <canvas id="activityParticipationChart" height="300"></canvas>
+            </div>
+
+            <!-- 各類型活動績效对比 -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">各類型活動績效對比</h3>
+                <canvas id="activityTypeChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- 活動績效排名表格 -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">活動績效排名 (本月)</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">排名</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">活動名稱</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">類型</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">參與人數</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">滿意度</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">達成率</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">綜合評分</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr class="bg-yellow-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-yellow-500 text-white text-sm font-bold rounded-full">1</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-pray text-blue-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">禱告特會</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">靈命培育</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">156人</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4.9/5.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">98%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">96.5</td>
+                        </tr>
+                        <tr class="bg-blue-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-blue-500 text-white text-sm font-bold rounded-full">2</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-child text-pink-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">兒童夏令營</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">教育培訓</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">89人</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4.8/5.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">95%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">94.0</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-gray-500 text-white text-sm font-bold rounded-full">3</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-music text-purple-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">敬拜讚美之夜</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">敬拜讚美</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">134人</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4.7/5.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">92%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">91.5</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-gray-500 text-white text-sm font-bold rounded-full">4</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-hands-helping text-green-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">社區關懷日</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">關懷事工</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">78人</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4.6/5.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">88%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">87.0</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-gray-500 text-white text-sm font-bold rounded-full">5</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <i class="fas fa-book text-blue-600 text-lg"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">聖經研習班</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">教育培訓</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">67人</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4.5/5.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">85%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">84.0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 成本效益分析 -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">成本效益分析</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600 mb-2">1:3.2</div>
+                        <div class="text-sm text-gray-600">投資報酬率</div>
+                        <div class="text-xs text-gray-500 mt-1">每投入1元，產生3.2元價值</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-600 mb-2">85%</div>
+                        <div class="text-sm text-gray-600">成本控制率</div>
+                        <div class="text-xs text-gray-500 mt-1">實際成本控制在預算的85%</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-purple-600 mb-2">92%</div>
+                        <div class="text-sm text-gray-600">資源利用率</div>
+                        <div class="text-xs text-gray-500 mt-1">各項資源得到有效利用</div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h4 class="font-semibold text-gray-800 mb-3">成本分析詳情</h4>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">人力成本</span>
+                            <div class="flex items-center">
+                                <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 65%"></div>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">65%</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">場地設備</span>
+                            <div class="flex items-center">
+                                <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                                    <div class="bg-green-600 h-2 rounded-full" style="width: 20%"></div>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">20%</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">材料費用</span>
+                            <div class="flex items-center">
+                                <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                                    <div class="bg-purple-600 h-2 rounded-full" style="width: 15%"></div>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">15%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 改进建议和未来规划 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 改进建议 -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">改進建議</h3>
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-lightbulb text-yellow-500 mt-1 mr-3"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">提升參與度</div>
+                            <div class="text-sm text-gray-600">加強宣傳推廣，優化活動時間安排</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-lightbulb text-yellow-500 mt-1 mr-3"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">成本優化</div>
+                            <div class="text-sm text-gray-600">尋求贊助合作，降低單項活動成本</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-lightbulb text-yellow-500 mt-1 mr-3"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">質量提升</div>
+                            <div class="text-sm text-gray-600">加強活動策劃，提升服務質量</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 未来规划 -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">未來規劃</h3>
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-rocket text-blue-500 mt-1 mr-3"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">短期目標 (1-3個月)</div>
+                            <div class="text-sm text-gray-600">提升活動滿意度至4.8分，參與度增長15%</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-rocket text-blue-500 mt-1 mr-3"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">中期目標 (3-6個月)</div>
+                            <div class="text-sm text-gray-600">建立活動品牌，擴大影響力範圍</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-rocket text-blue-500 mt-1 mr-3"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">長期目標 (6-12個月)</div>
+                            <div class="text-sm text-gray-600">成為社區文化活動中心，服務更多人群</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 活動參與度趨勢图表
+        const activityParticipationCtx = document.getElementById('activityParticipationChart').getContext('2d');
+        new Chart(activityParticipationCtx, {
+            type: 'line',
+            data: {
+                labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                datasets: [{
+                    label: '參與人次',
+                    data: [1200, 1350, 1420, 1580, 1680, 1856],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: '活動場次',
+                    data: [18, 20, 22, 21, 23, 24],
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        beginAtZero: true,
+                        max: 2000
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        beginAtZero: true,
+                        max: 30,
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+
+        // 各類型活動績效对比图表
+        const activityTypeCtx = document.getElementById('activityTypeChart').getContext('2d');
+        new Chart(activityTypeCtx, {
+            type: 'radar',
+            data: {
+                labels: ['靈命培育', '教育培訓', '敬拜讚美', '關懷事工', '團契活動', '宣教事工'],
+                datasets: [{
+                    label: '參與度',
+                    data: [95, 88, 92, 78, 85, 82],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    pointBackgroundColor: 'rgb(59, 130, 246)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(59, 130, 246)'
+                }, {
+                    label: '滿意度',
+                    data: [4.9, 4.7, 4.8, 4.6, 4.5, 4.4],
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                    pointBackgroundColor: 'rgb(34, 197, 94)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(34, 197, 94)'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    </script>
+
+<script src="../../../js/church_data_bridge.js"></script>
+<script src="../../js/cm_research_snapshot.js"></script>
+<script>document.addEventListener("DOMContentLoaded",function(){if(window.CMResearchSnapshot)CMResearchSnapshot.initPage();});</script>
+
+</body>
+</html>

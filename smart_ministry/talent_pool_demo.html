@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智慧事奉 · 人才池（DEMO）</title>
+  <style>
+    body { font-family: "Noto Sans TC", "Microsoft YaHei", sans-serif; background: #f4f6fb; color: #1e293b; margin: 0; padding: 20px; font-size: 14px; line-height: 1.5; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 1.35rem; color: #4338ca; margin-bottom: 0.35rem; }
+    .banner { background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 12px 14px; border-radius: 8px; margin-bottom: 1rem; font-weight: 600; }
+    .sub { color: #64748b; font-size: 0.85rem; margin-bottom: 1rem; }
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .controls select, .controls button {
+      padding: 6px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      background: #fff;
+      color: #1f2937;
+    }
+    .status { font-size: 0.82rem; color: #334155; margin-bottom: 10px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+    .status.warn { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
+    .card { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06); margin-bottom: 0.75rem; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    th { background: #f8fafc; color: #475569; font-weight: 600; }
+    .tags span { display: inline-block; background: #eef2ff; color: #4338ca; padding: 2px 8px; border-radius: 4px; margin: 2px 4px 2px 0; font-size: 0.78rem; }
+    .scores { font-size: 0.82rem; color: #334155; }
+    button { background: #4f46e5; color: #fff; border: none; padding: 0.4rem 0.75rem; border-radius: 6px; font-size: 0.82rem; cursor: pointer; white-space: nowrap; }
+    button:hover { background: #4338ca; }
+    .detail { display: none; background: #f8fafc; padding: 12px; margin: 0 -1rem -1rem; border-radius: 0 0 10px 10px; border-top: 1px solid #e2e8f0; }
+    .detail.open { display: block; }
+    .detail h4 { margin: 0 0 8px 0; font-size: 0.9rem; color: #0f172a; }
+    .detail ol { margin: 0; padding-left: 1.2rem; }
+    .detail li { margin-bottom: 6px; }
+    .hint { margin-top: 10px; color: #475569; font-size: 0.88rem; }
+    tr.row-open td { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>人才池 · DEMO</h1>
+    <div class="banner">此頁為 Demo / 原型池。可切換顯示本機 GiftProfile（主線資料）或 DEMO fixtures。</div>
+    <p class="sub">資料來源可選：<code>smart_ministry_gift_profiles</code>（本機）或 <code>DEMO_GIFT_FIXTURES</code>（fallback）。配對引擎：<code>matching_demo.js</code>。</p>
+    <div class="controls">
+      <label for="sourceMode">資料來源：</label>
+      <select id="sourceMode">
+        <option value="auto">Auto（優先本機，否則DEMO）</option>
+        <option value="local">本機 smart_ministry_gift_profiles</option>
+        <option value="demo">DEMO_GIFT_FIXTURES</option>
+      </select>
+      <button type="button" id="reloadBtn">重新載入</button>
+    </div>
+    <div id="sourceStatus" class="status"></div>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>personId</th>
+            <th>topGiftIds</th>
+            <th>主要恩賜分數（最高 3 向度）</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="demo_gift_fixtures.js"></script>
+  <script src="matching_demo.js"></script>
+  <script>
+    (function () {
+      var GIFT_PROFILE_STORAGE_KEY = "smart_ministry_gift_profiles";
+      var demoFixtures = typeof DEMO_GIFT_FIXTURES !== "undefined" ? DEMO_GIFT_FIXTURES : [];
+      var roles = typeof DEMO_ROLE_DEFINITIONS !== "undefined" ? DEMO_ROLE_DEFINITIONS : [];
+      var currentFixtures = [];
+      var currentSource = "demo";
+
+      function loadLocalGiftProfiles() {
+        try {
+          var raw = localStorage.getItem(GIFT_PROFILE_STORAGE_KEY);
+          if (!raw) return [];
+          var parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return [];
+          return parsed.filter(function (row) {
+            return row && typeof row === "object" && row.scores && typeof row.scores === "object";
+          });
+        } catch (err) {
+          console.warn("loadLocalGiftProfiles failed", err);
+          return [];
+        }
+      }
+
+      function pickFixtures() {
+        var mode = document.getElementById("sourceMode").value;
+        var localRows = loadLocalGiftProfiles();
+        if (mode === "local") {
+          currentSource = "local";
+          currentFixtures = localRows;
+          return;
+        }
+        if (mode === "demo") {
+          currentSource = "demo";
+          currentFixtures = demoFixtures;
+          return;
+        }
+        // auto
+        if (localRows.length > 0) {
+          currentSource = "local";
+          currentFixtures = localRows;
+        } else {
+          currentSource = "demo";
+          currentFixtures = demoFixtures;
+        }
+      }
+
+      function topNScores(scores, n) {
+        var entries = Object.keys(scores || {}).map(function (k) {
+          return { k: k, v: scores[k] };
+        });
+        entries.sort(function (a, b) {
+          return b.v - a.v;
+        });
+        return entries.slice(0, n);
+      }
+
+      function formatTopScores(scores) {
+        return topNScores(scores, 3)
+          .map(function (e) {
+            return e.k + " " + e.v;
+          })
+          .join(" · ");
+      }
+
+      function buildHintSentence(scores) {
+        var top2 = topNScores(scores, 2).map(function (e) {
+          return e.k;
+        });
+        if (!top2.length) return "可參考下方各崗位配對分數。";
+        return "因為你的 " + top2.join(" / ") + " 較高，可優先參考下方配對分數較高的崗位。";
+      }
+
+      function renderRow(fp, idx) {
+        var tr = document.createElement("tr");
+        tr.id = "row-" + idx;
+        var tags = (fp.topGiftIds || [])
+          .map(function (t) {
+            return "<span>" + t + "</span>";
+          })
+          .join("");
+        tr.innerHTML =
+          "<td><code>" +
+          fp.personId +
+          "</code></td>" +
+          '<td class="tags">' +
+          tags +
+          "</td>" +
+          '<td class="scores">' +
+          formatTopScores(fp.scores) +
+          "</td>" +
+          '<td><button type="button" id="btn-' +
+          idx +
+          '">查看配對建議</button></td>';
+        return tr;
+      }
+
+      function renderDetail(fp, idx) {
+        var tr = document.createElement("tr");
+        tr.id = "detail-" + idx;
+        tr.className = "detail-row";
+        tr.style.display = "none";
+        var td = document.createElement("td");
+        td.colSpan = 4;
+        td.style.padding = "0";
+        td.style.borderBottom = "1px solid #e2e8f0";
+        var matches = matchPersonToRoles(fp, roles);
+        var top3 = matches.slice(0, 3);
+        var ol = "<ol>";
+        top3.forEach(function (m) {
+          ol += "<li><strong>" + m.name + "</strong> — " + m.score + " 分</li>";
+        });
+        ol += "</ol>";
+        td.innerHTML =
+          '<div class="detail" id="panel-' +
+          idx +
+          '">' +
+          "<h4>配對建議（示範崗位 · 前 3 名）</h4>" +
+          ol +
+          '<p class="hint">' +
+          buildHintSentence(fp.scores) +
+          "</p>" +
+          "</div>";
+        tr.appendChild(td);
+        return tr;
+      }
+
+      function render() {
+        pickFixtures();
+        var tbody = document.getElementById("tbody");
+        tbody.innerHTML = "";
+        currentFixtures.forEach(function (fp, idx) {
+          tbody.appendChild(renderRow(fp, idx));
+          tbody.appendChild(renderDetail(fp, idx));
+          (function (i) {
+            document.getElementById("btn-" + i).addEventListener("click", function () {
+              var panel = document.getElementById("panel-" + i);
+              var drow = document.getElementById("detail-" + i);
+              var row = document.getElementById("row-" + i);
+              var open = panel.classList.contains("open");
+              document.querySelectorAll(".detail.open").forEach(function (el) {
+                el.classList.remove("open");
+              });
+              document.querySelectorAll(".detail-row").forEach(function (r) {
+                r.style.display = "none";
+              });
+              document.querySelectorAll("tr.row-open").forEach(function (r) {
+                r.classList.remove("row-open");
+              });
+              if (!open) {
+                panel.classList.add("open");
+                drow.style.display = "table-row";
+                row.classList.add("row-open");
+              }
+            });
+          })(idx);
+        });
+        var statusEl = document.getElementById("sourceStatus");
+        if (currentSource === "local") {
+          statusEl.className = "status";
+          statusEl.innerHTML = "目前顯示：<strong>本機 GiftProfile</strong>（" + currentFixtures.length + " 筆，key=<code>" + GIFT_PROFILE_STORAGE_KEY + "</code>）";
+        } else {
+          statusEl.className = "status warn";
+          statusEl.innerHTML = "目前顯示：<strong>DEMO fixtures</strong>（" + currentFixtures.length + " 筆）。若要主線資料，請先完成主問卷並產生本機 GiftProfile。";
+        }
+      }
+
+      document.getElementById("reloadBtn").addEventListener("click", render);
+      document.getElementById("sourceMode").addEventListener("change", render);
+      document.addEventListener("DOMContentLoaded", render);
+    })();
+  </script>
+</body>
+</html>

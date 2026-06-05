@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>植堂计划管理 · Church Planting | Church Ministry</title>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+.header { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 15px 20px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 15px; }
+.card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; background: #e74c3c; color: white; margin: 5px; }
+table { width: 100%; border-collapse: collapse; }
+table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+table th { background: #f8f9fa; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+.modal.active { display: flex; }
+.modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; position: relative; }
+.modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+.form-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }</style></head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+<div class="header"><h1>🏛️ 植堂计划管理</h1></div>
+<div class="container">
+    <div class="card"><h3 style="margin-bottom:15px;">🌱 植堂项目</h3>
+        <button class="btn" onclick="showAddModal()">➕ 新增项目</button>
+        <table id="table"><thead><tr><th>地点</th><th>负责人</th><th>预算</th><th>进度</th><th>操作</th></tr></thead><tbody></tbody></table>
+    </div>
+</div>
+<div id="modal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+<script>
+let projects = [];
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('plantingData');
+    if (saved) projects = JSON.parse(saved);
+    if (projects.length === 0) loadDemo();
+    render();
+});
+function loadDemo() {
+    projects = [{id:1,location:'北区新社区',leader:'李牧师',budget:500000,progress:40},{id:2,location:'东区工业区',leader:'王传道',budget:300000,progress:20}];
+    localStorage.setItem('plantingData', JSON.stringify(projects));
+    render();
+}
+function render() {
+    document.querySelector('#table tbody').innerHTML = projects.map(p => `<tr><td>${p.location}</td><td>${p.leader}</td><td>$${p.budget.toLocaleString()}</td><td>${p.progress}%</td><td><button class="btn" style="padding:6px 12px;" onclick="del(${p.id})">删除</button></td></tr>`).join('');
+}
+function showModal(title, content) {
+    document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;margin-bottom:20px;">${title}</div>${content}`;
+    document.getElementById('modal').classList.add('active');
+}
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+function showAddModal() {
+    showModal('➕ 新增植堂项目', `<div class="form-group"><label>地点</label><input id="loc" class="form-input"></div><div class="form-group"><label>负责人</label><input id="leader" class="form-input"></div><div class="form-group"><label>预算</label><input type="number" id="budget" class="form-input"></div><button class="btn" onclick="add()">确定</button>`);
+}
+function add() {
+    projects.push({id:Date.now(),location:document.getElementById('loc').value,leader:document.getElementById('leader').value,budget:parseInt(document.getElementById('budget').value),progress:0});
+    localStorage.setItem('plantingData', JSON.stringify(projects));
+    render();
+    closeModal();
+    alert('✅ 已添加！');
+}
+function del(id) {
+    if (confirm('删除？')) {
+        projects = projects.filter(p => p.id !== id);
+        localStorage.setItem('plantingData', JSON.stringify(projects));
+        render();
+    }
+}
+</script>
+</body>
+</html>

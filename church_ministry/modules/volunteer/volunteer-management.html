@@ -1,0 +1,731 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>義工管理 · Volunteer Management | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">義工管理</h1>
+        
+        <!-- 統計概覽 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">總義工數</h3>
+                <p class="text-3xl font-bold text-blue-600" id="totalVolunteers">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">活躍義工</h3>
+                <p class="text-3xl font-bold text-green-600" id="activeVolunteers">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">本月服務時數</h3>
+                <p class="text-3xl font-bold text-purple-600" id="monthlyHours">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">待安排服務</h3>
+                <p class="text-3xl font-bold text-orange-600" id="pendingServices">0</p>
+            </div>
+        </div>
+
+        <!-- 主要功能區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 義工列表 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold">義工列表</h3>
+                            <button onclick="showAddVolunteerModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                新增義工
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="volunteersList" class="space-y-4">
+                            <!-- 義工列表將在這裡動態生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 側邊欄 -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">快速操作</h4>
+                    <button onclick="showServiceAssignmentModal()" class="w-full bg-green-600 text-white py-3 px-4 rounded hover:bg-green-700 mb-3">
+                        安排服務
+                    </button>
+                    <button onclick="showHoursRecordModal()" class="w-full bg-yellow-600 text-white py-3 px-4 rounded hover:bg-yellow-700 mb-3">
+                        記錄時數
+                    </button>
+                    <button onclick="showTrainingModal()" class="w-full bg-purple-600 text-white py-3 px-4 rounded hover:bg-purple-700 mb-3">
+                        培訓記錄
+                    </button>
+                    <button onclick="exportVolunteerData()" class="w-full bg-gray-600 text-white py-3 px-4 rounded hover:bg-gray-700">
+                        匯出數據
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">最近服務</h4>
+                    <div id="recentServices">
+                        <!-- 最近服務將在這裡動態生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增義工模態框 -->
+    <div id="volunteerModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold" id="volunteerModalTitle">新增義工</h3>
+                </div>
+                <form id="volunteerForm" class="px-6 py-4">
+                    <input type="hidden" id="volunteerId">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+                            <input type="text" id="volunteerName" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">電話</label>
+                            <input type="tel" id="volunteerPhone" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">電子郵件</label>
+                            <input type="email" id="volunteerEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">專長技能</label>
+                            <input type="text" id="volunteerSkills" placeholder="用逗號分隔多個技能" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">狀態</label>
+                            <select id="volunteerStatus" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="active">活躍</option>
+                                <option value="inactive">非活躍</option>
+                                <option value="training">培訓中</option>
+                                <option value="suspended">暫停</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">加入日期</label>
+                            <input type="date" id="volunteerJoinDate" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">備註</label>
+                            <textarea id="volunteerNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                    </div>
+                </form>
+                <div class="px-6 py-4 border-t flex justify-end space-x-3">
+                    <button onclick="closeVolunteerModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50">取消</button>
+                    <button onclick="saveVolunteer()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 安排服務模態框 -->
+    <div id="serviceAssignmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold">安排服務</h3>
+                </div>
+                <form id="serviceAssignmentForm" class="px-6 py-4">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">選擇義工</label>
+                            <select id="serviceVolunteerId" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">請選擇義工</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">服務類型</label>
+                            <input type="text" id="serviceType" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">服務日期</label>
+                            <input type="date" id="serviceDate" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">預計時數</label>
+                            <input type="number" id="serviceHours" min="0.5" step="0.5" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">備註</label>
+                            <textarea id="serviceNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                    </div>
+                </form>
+                <div class="px-6 py-4 border-t flex justify-end space-x-3">
+                    <button onclick="closeServiceAssignmentModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50">取消</button>
+                    <button onclick="saveServiceAssignment()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">確認安排</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 記錄時數模態框 -->
+    <div id="hoursRecordModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold">記錄時數</h3>
+                </div>
+                <form id="hoursRecordForm" class="px-6 py-4">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">選擇義工</label>
+                            <select id="hoursVolunteerId" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">請選擇義工</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">服務日期</label>
+                            <input type="date" id="hoursDate" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">服務時數</label>
+                            <input type="number" id="hoursAmount" min="0.5" step="0.5" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">服務類型</label>
+                            <input type="text" id="hoursServiceType" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">備註</label>
+                            <textarea id="hoursNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                    </div>
+                </form>
+                <div class="px-6 py-4 border-t flex justify-end space-x-3">
+                    <button onclick="closeHoursRecordModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50">取消</button>
+                    <button onclick="saveHoursRecord()" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">保存記錄</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 培訓記錄模態框 -->
+    <div id="trainingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold">培訓記錄</h3>
+                </div>
+                <form id="trainingForm" class="px-6 py-4">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">選擇義工</label>
+                            <select id="trainingVolunteerId" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">請選擇義工</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">培訓主題</label>
+                            <input type="text" id="trainingTopic" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">培訓日期</label>
+                            <input type="date" id="trainingDate" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">培訓時數</label>
+                            <input type="number" id="trainingHours" min="0.5" step="0.5" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">培訓講師</label>
+                            <input type="text" id="trainingInstructor" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">培訓內容</label>
+                            <textarea id="trainingContent" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                    </div>
+                </form>
+                <div class="px-6 py-4 border-t flex justify-end space-x-3">
+                    <button onclick="closeTrainingModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50">取消</button>
+                    <button onclick="saveTraining()" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">保存記錄</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 基本數據結構
+        let volunteers = [];
+        let services = [];
+        let hours = [];
+        let training = [];
+
+        // 頁面載入
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            loadDemoData();
+            renderData();
+        });
+
+        // 載入數據
+        function loadData() {
+            volunteers = JSON.parse(localStorage.getItem('volunteerData')) || [];
+            services = JSON.parse(localStorage.getItem('volunteerServices')) || [];
+            hours = JSON.parse(localStorage.getItem('volunteerHours')) || [];
+            training = JSON.parse(localStorage.getItem('volunteerTraining')) || [];
+        }
+
+        // 保存數據
+        function saveData() {
+            localStorage.setItem('volunteerData', JSON.stringify(volunteers));
+            localStorage.setItem('volunteerServices', JSON.stringify(services));
+            localStorage.setItem('volunteerHours', JSON.stringify(hours));
+            localStorage.setItem('volunteerTraining', JSON.stringify(training));
+        }
+
+        // 載入演示數據
+        function loadDemoData() {
+            if (volunteers.length === 0) {
+                volunteers = [
+                    {
+                        id: '1',
+                        name: '張弟兄',
+                        phone: '0912-345-678',
+                        email: 'zhang@example.com',
+                        skills: ['音響', '攝影'],
+                        status: 'active',
+                        joinDate: '2023-01-15',
+                        totalHours: 120,
+                        notes: '主日崇拜音響義工'
+                    },
+                    {
+                        id: '2',
+                        name: '李姊妹',
+                        phone: '0923-456-789',
+                        email: 'li@example.com',
+                        skills: ['兒童', '接待'],
+                        status: 'active',
+                        joinDate: '2023-03-20',
+                        totalHours: 85,
+                        notes: '兒童主日學義工'
+                    },
+                    {
+                        id: '3',
+                        name: '王弟兄',
+                        phone: '0934-567-890',
+                        email: 'wang@example.com',
+                        skills: ['清潔', '維護'],
+                        status: 'inactive',
+                        joinDate: '2022-08-10',
+                        totalHours: 45,
+                        notes: '教會清潔維護'
+                    }
+                ];
+            }
+
+            if (services.length === 0) {
+                services = [
+                    {
+                        id: '1',
+                        volunteerId: '1',
+                        volunteerName: '張弟兄',
+                        serviceType: '音響',
+                        date: '2024-01-14',
+                        hours: 3,
+                        status: 'completed',
+                        notes: '主日崇拜音響服務'
+                    }
+                ];
+            }
+
+            if (hours.length === 0) {
+                hours = [
+                    {
+                        id: '1',
+                        volunteerId: '1',
+                        volunteerName: '張弟兄',
+                        date: '2024-01-14',
+                        hours: 3,
+                        serviceType: '音響',
+                        notes: '主日崇拜'
+                    }
+                ];
+            }
+
+            saveData();
+        }
+
+        // 渲染數據
+        function renderData() {
+            renderVolunteersList();
+            renderRecentServices();
+            updateStatistics();
+        }
+
+        // 渲染義工列表
+        function renderVolunteersList() {
+            const container = document.getElementById('volunteersList');
+            if (volunteers.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">暫無義工記錄</p>';
+                return;
+            }
+
+            container.innerHTML = volunteers.map(volunteer => `
+                <div class="border rounded-lg p-4 bg-white">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <h4 class="font-semibold text-lg">${volunteer.name}</h4>
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(volunteer.status)}">
+                                    ${getStatusText(volunteer.status)}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                                <div><span class="font-medium">電話:</span> ${volunteer.phone}</div>
+                                <div><span class="font-medium">電子郵件:</span> ${volunteer.email}</div>
+                                <div><span class="font-medium">專長:</span> ${volunteer.skills.join(', ')}</div>
+                                <div><span class="font-medium">總服務時數:</span> ${volunteer.totalHours}小時</div>
+                            </div>
+                            ${volunteer.notes ? `<div class="mt-2 text-sm text-gray-500">備註：${volunteer.notes}</div>` : ''}
+                        </div>
+                        <div class="flex space-x-2 ml-4">
+                            <button onclick="editVolunteer('${volunteer.id}')" class="text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-300 rounded hover:bg-blue-50">編輯</button>
+                            <button onclick="deleteVolunteer('${volunteer.id}')" class="text-red-600 hover:text-red-800 px-3 py-1 border border-red-300 rounded hover:bg-red-50">刪除</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染最近服務
+        function renderRecentServices() {
+            const container = document.getElementById('recentServices');
+            if (services.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">暫無服務記錄</p>';
+                return;
+            }
+
+            const recent = services
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 3);
+
+            container.innerHTML = recent.map(service => `
+                <div class="border-l-4 border-green-500 pl-3 mb-3">
+                    <h5 class="font-medium text-sm">${service.volunteerName}</h5>
+                    <p class="text-xs text-gray-600">${service.serviceType} - ${service.date}</p>
+                    <p class="text-xs text-gray-600">${service.hours}小時</p>
+                </div>
+            `).join('');
+        }
+
+        // 更新統計
+        function updateStatistics() {
+            document.getElementById('totalVolunteers').textContent = volunteers.length;
+            document.getElementById('activeVolunteers').textContent = volunteers.filter(v => v.status === 'active').length;
+            
+            // 計算本月服務時數
+            const now = new Date();
+            const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            const monthlyHours = hours
+                .filter(h => h.date.startsWith(currentMonth))
+                .reduce((sum, h) => sum + h.hours, 0);
+            
+            document.getElementById('monthlyHours').textContent = monthlyHours;
+            
+            // 計算待安排服務
+            const pendingServices = services.filter(s => s.status === 'pending').length;
+            document.getElementById('pendingServices').textContent = pendingServices;
+        }
+
+        // 獲取狀態顏色
+        function getStatusColor(status) {
+            switch (status) {
+                case 'active': return 'bg-green-100 text-green-800';
+                case 'inactive': return 'bg-gray-100 text-gray-800';
+                case 'training': return 'bg-blue-100 text-blue-800';
+                case 'suspended': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        // 獲取狀態文字
+        function getStatusText(status) {
+            switch (status) {
+                case 'active': return '活躍';
+                case 'inactive': return '非活躍';
+                case 'training': return '培訓中';
+                case 'suspended': return '暫停';
+                default: return '未知';
+            }
+        }
+
+        // 基本功能函數
+        function showAddVolunteerModal() {
+            document.getElementById('volunteerModalTitle').textContent = '新增義工';
+            document.getElementById('volunteerForm').reset();
+            document.getElementById('volunteerId').value = '';
+            document.getElementById('volunteerModal').classList.remove('hidden');
+        }
+
+        function editVolunteer(id) {
+            const volunteerItem = volunteers.find(v => v.id === id);
+            if (volunteerItem) {
+                document.getElementById('volunteerModalTitle').textContent = '編輯義工';
+                document.getElementById('volunteerId').value = volunteerItem.id;
+                document.getElementById('volunteerName').value = volunteerItem.name;
+                document.getElementById('volunteerPhone').value = volunteerItem.phone;
+                document.getElementById('volunteerEmail').value = volunteerItem.email;
+                document.getElementById('volunteerSkills').value = volunteerItem.skills.join(', ');
+                document.getElementById('volunteerStatus').value = volunteerItem.status;
+                document.getElementById('volunteerJoinDate').value = volunteerItem.joinDate;
+                document.getElementById('volunteerNotes').value = volunteerItem.notes || '';
+                document.getElementById('volunteerModal').classList.remove('hidden');
+            }
+        }
+
+        function deleteVolunteer(id) {
+            if (confirm('確定要刪除這個義工記錄嗎？')) {
+                volunteers = volunteers.filter(v => v.id !== id);
+                saveData();
+                renderData();
+            }
+        }
+
+        function closeVolunteerModal() {
+            document.getElementById('volunteerModal').classList.add('hidden');
+        }
+
+        function saveVolunteer() {
+            const volunteerId = document.getElementById('volunteerId').value;
+            const volunteerName = document.getElementById('volunteerName').value;
+            const volunteerPhone = document.getElementById('volunteerPhone').value;
+            const volunteerEmail = document.getElementById('volunteerEmail').value;
+            const volunteerSkills = document.getElementById('volunteerSkills').value.split(',').map(s => s.trim()).filter(s => s);
+            const volunteerStatus = document.getElementById('volunteerStatus').value;
+            const volunteerJoinDate = document.getElementById('volunteerJoinDate').value;
+            const volunteerNotes = document.getElementById('volunteerNotes').value;
+
+            if (!volunteerName || !volunteerPhone || !volunteerEmail || !volunteerSkills.length || !volunteerStatus || !volunteerJoinDate) {
+                alert('請填寫所有必填欄位！');
+                return;
+            }
+
+            if (volunteerId) { // 編輯模式
+                const index = volunteers.findIndex(v => v.id === volunteerId);
+                if (index !== -1) {
+                    volunteers[index] = {
+                        id: volunteerId,
+                        name: volunteerName,
+                        phone: volunteerPhone,
+                        email: volunteerEmail,
+                        skills: volunteerSkills,
+                        status: volunteerStatus,
+                        joinDate: volunteerJoinDate,
+                        totalHours: volunteers[index].totalHours,
+                        notes: volunteerNotes
+                    };
+                }
+            } else { // 新增模式
+                volunteers.push({
+                    id: Date.now().toString(),
+                    name: volunteerName,
+                    phone: volunteerPhone,
+                    email: volunteerEmail,
+                    skills: volunteerSkills,
+                    status: volunteerStatus,
+                    joinDate: volunteerJoinDate,
+                    totalHours: 0,
+                    notes: volunteerNotes
+                });
+            }
+            saveData();
+            renderData();
+            closeVolunteerModal();
+        }
+
+        function showServiceAssignmentModal() {
+            document.getElementById('serviceVolunteerId').innerHTML = '<option value="">請選擇義工</option>';
+            volunteers.filter(v => v.status === 'active').forEach(volunteer => {
+                const option = document.createElement('option');
+                option.value = volunteer.id;
+                option.textContent = `${volunteer.name} (${volunteer.skills.join(', ')})`;
+                document.getElementById('serviceVolunteerId').appendChild(option);
+            });
+            document.getElementById('serviceAssignmentForm').reset();
+            document.getElementById('serviceDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('serviceAssignmentModal').classList.remove('hidden');
+        }
+
+        function closeServiceAssignmentModal() {
+            document.getElementById('serviceAssignmentModal').classList.add('hidden');
+        }
+
+        function saveServiceAssignment() {
+            const volunteerId = document.getElementById('serviceVolunteerId').value;
+            const serviceType = document.getElementById('serviceType').value;
+            const serviceDate = document.getElementById('serviceDate').value;
+            const serviceHours = parseFloat(document.getElementById('serviceHours').value);
+            const serviceNotes = document.getElementById('serviceNotes').value;
+
+            if (!volunteerId || !serviceType || !serviceDate || !serviceHours) {
+                alert('請填寫所有必填欄位！');
+                return;
+            }
+
+            const newService = {
+                id: Date.now().toString(),
+                volunteerId: volunteerId,
+                volunteerName: volunteers.find(v => v.id === volunteerId).name,
+                serviceType: serviceType,
+                date: serviceDate,
+                hours: serviceHours,
+                status: 'pending',
+                notes: serviceNotes
+            };
+
+            services.push(newService);
+            saveData();
+            renderData();
+            closeServiceAssignmentModal();
+        }
+
+        function showHoursRecordModal() {
+            document.getElementById('hoursVolunteerId').innerHTML = '<option value="">請選擇義工</option>';
+            volunteers.forEach(volunteer => {
+                const option = document.createElement('option');
+                option.value = volunteer.id;
+                option.textContent = `${volunteer.name} (${volunteer.skills.join(', ')})`;
+                document.getElementById('hoursVolunteerId').appendChild(option);
+            });
+            document.getElementById('hoursRecordForm').reset();
+            document.getElementById('hoursDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('hoursRecordModal').classList.remove('hidden');
+        }
+
+        function closeHoursRecordModal() {
+            document.getElementById('hoursRecordModal').classList.add('hidden');
+        }
+
+        function saveHoursRecord() {
+            const volunteerId = document.getElementById('hoursVolunteerId').value;
+            const hoursDate = document.getElementById('hoursDate').value;
+            const hoursAmount = parseFloat(document.getElementById('hoursAmount').value);
+            const hoursServiceType = document.getElementById('hoursServiceType').value;
+            const hoursNotes = document.getElementById('hoursNotes').value;
+
+            if (!volunteerId || !hoursDate || !hoursAmount || !hoursServiceType) {
+                alert('請填寫所有必填欄位！');
+                return;
+            }
+
+            const newHours = {
+                id: Date.now().toString(),
+                volunteerId: volunteerId,
+                volunteerName: volunteers.find(v => v.id === volunteerId).name,
+                date: hoursDate,
+                hours: hoursAmount,
+                serviceType: hoursServiceType,
+                notes: hoursNotes
+            };
+
+            hours.push(newHours);
+            
+            // 更新義工總服務時數
+            const volunteerIndex = volunteers.findIndex(v => v.id === volunteerId);
+            if (volunteerIndex !== -1) {
+                volunteers[volunteerIndex].totalHours += hoursAmount;
+            }
+            
+            saveData();
+            renderData();
+            closeHoursRecordModal();
+        }
+
+        function showTrainingModal() {
+            document.getElementById('trainingVolunteerId').innerHTML = '<option value="">請選擇義工</option>';
+            volunteers.forEach(volunteer => {
+                const option = document.createElement('option');
+                option.value = volunteer.id;
+                option.textContent = `${volunteer.name} (${volunteer.skills.join(', ')})`;
+                document.getElementById('trainingVolunteerId').appendChild(option);
+            });
+            document.getElementById('trainingForm').reset();
+            document.getElementById('trainingDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('trainingModal').classList.remove('hidden');
+        }
+
+        function closeTrainingModal() {
+            document.getElementById('trainingModal').classList.add('hidden');
+        }
+
+        function saveTraining() {
+            const volunteerId = document.getElementById('trainingVolunteerId').value;
+            const trainingTopic = document.getElementById('trainingTopic').value;
+            const trainingDate = document.getElementById('trainingDate').value;
+            const trainingHours = parseFloat(document.getElementById('trainingHours').value);
+            const trainingInstructor = document.getElementById('trainingInstructor').value;
+            const trainingContent = document.getElementById('trainingContent').value;
+
+            if (!volunteerId || !trainingTopic || !trainingDate || !trainingHours || !trainingInstructor || !trainingContent) {
+                alert('請填寫所有必填欄位！');
+                return;
+            }
+
+            const newTraining = {
+                id: Date.now().toString(),
+                volunteerId: volunteerId,
+                volunteerName: volunteers.find(v => v.id === volunteerId).name,
+                topic: trainingTopic,
+                date: trainingDate,
+                hours: trainingHours,
+                instructor: trainingInstructor,
+                content: trainingContent
+            };
+
+            training.push(newTraining);
+            saveData();
+            renderData();
+            closeTrainingModal();
+        }
+
+        function exportVolunteerData() {
+            // 創建CSV內容
+            let csvContent = "姓名,電話,電子郵件,專長技能,狀態,加入日期,總服務時數,備註
+";
+            
+            volunteers.forEach(volunteer => {
+                const row = [
+                    volunteer.name,
+                    volunteer.phone,
+                    volunteer.email,
+                    volunteer.skills.join('; '),
+                    getStatusText(volunteer.status),
+                    volunteer.joinDate,
+                    volunteer.totalHours,
+                    volunteer.notes || ''
+                ].map(field => `"${field}"`).join(',');
+                csvContent += row + '
+';
+            });
+            
+            // 創建下載連結
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `義工管理數據_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

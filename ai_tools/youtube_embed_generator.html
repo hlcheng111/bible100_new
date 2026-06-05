@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>YouTube嵌入代码生成器</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="assets/js/lab-frame-nav.js"></script>
+</head>
+<body bgcolor="#FFFFFF" text="#333333">
+
+<center>
+<table width="90%" border="1" cellspacing="0" cellpadding="8">
+  <tr>
+    <td bgcolor="#E8F5E8">
+      <h2>🎬 YouTube嵌入代码生成器</h2>
+      
+      <p><b>输入YouTube链接：</b></p>
+      <input type="text" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=VIDEO_ID" 
+             style="width:80%; padding:8px; font-size:12pt; border:1px solid #ccc;">
+      
+      <p><b>选择嵌入类型：</b></p>
+      <input type="radio" name="embedType" value="single" checked> 单个视频<br>
+      <input type="radio" name="embedType" value="responsive"> 响应式嵌入<br>
+      <input type="radio" name="embedType" value="playlist"> 播放列表<br>
+      
+      <p><b>尺寸设置：</b></p>
+      <input type="number" id="width" value="560" style="width:80px;"> x 
+      <input type="number" id="height" value="315" style="width:80px;">
+      
+      <br><br>
+      <button onclick="generateCode()" style="background:#4CAF50; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-size:12pt;">生成嵌入代码</button>
+      
+      <p><b>生成的代码：</b></p>
+      <textarea id="generatedCode" rows="8" cols="80" style="width:100%; font-family:monospace; font-size:10pt; border:1px solid #ccc;"></textarea>
+      
+      <br>
+      <button onclick="copyCode()" style="background:#2196F3; color:white; border:none; padding:8px 16px; border-radius:3px; cursor:pointer;">复制代码</button>
+      
+      <p><b>预览效果：</b></p>
+      <div id="preview" style="border:1px solid #ccc; padding:10px; background:#f9f9f9;">
+        点击"生成嵌入代码"后，预览将显示在这里
+      </div>
+    </td>
+  </tr>
+</table>
+</center>
+
+<script>
+function generateCode() {
+  var url = document.getElementById('youtubeUrl').value;
+  var embedType = document.querySelector('input[name="embedType"]:checked').value;
+  var width = document.getElementById('width').value;
+  var height = document.getElementById('height').value;
+  
+  // 提取视频ID
+  var videoId = extractVideoId(url);
+  if (!videoId) {
+    alert('请输入有效的YouTube链接！');
+    return;
+  }
+  
+  var code = '';
+  
+  if (embedType === 'single') {
+    code = '<iframe width="' + width + '" height="' + height + '" src="https://www.youtube.com/embed/' + videoId + '" frameborder="0" allowfullscreen></iframe>';
+  } else if (embedType === 'responsive') {
+    code = '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="https://www.youtube.com/embed/' + videoId + '" frameborder="0" allowfullscreen></iframe></div>';
+  } else if (embedType === 'playlist') {
+    // 假设是播放列表，需要提取播放列表ID
+    var playlistId = extractPlaylistId(url);
+    if (playlistId) {
+      code = '<iframe width="' + width + '" height="' + height + '" src="https://www.youtube.com/embed/videoseries?list=' + playlistId + '" frameborder="0" allowfullscreen></iframe>';
+    } else {
+      code = '<iframe width="' + width + '" height="' + height + '" src="https://www.youtube.com/embed/' + videoId + '" frameborder="0" allowfullscreen></iframe>';
+    }
+  }
+  
+  document.getElementById('generatedCode').value = code;
+  
+  // 显示预览
+  if (embedType === 'responsive') {
+    document.getElementById('preview').innerHTML = code;
+  } else {
+    document.getElementById('preview').innerHTML = code;
+  }
+}
+
+function extractVideoId(url) {
+  var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  var match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+function extractPlaylistId(url) {
+  var regExp = /[?&]list=([^#&?]*)/;
+  var match = url.match(regExp);
+  return match ? match[1] : null;
+}
+
+function copyCode() {
+  var code = document.getElementById('generatedCode').value;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(function() {
+      alert('代码已复制到剪贴板！');
+    });
+  } else {
+    // 备用方法
+    document.getElementById('generatedCode').select();
+    document.execCommand('copy');
+    alert('代码已复制到剪贴板！');
+  }
+}
+</script>
+
+</body>
+</html>

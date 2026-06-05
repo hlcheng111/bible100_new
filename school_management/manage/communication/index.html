@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>溝通管理 - Communication</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>💬 溝通管理</h1>
+        <p>家長溝通、公告欄、內部訊息</p>
+        <details>
+            <summary>📋 誰會用到？典型情境？</summary>
+            <div><p><b>誰會用到？</b> 行政、班導、家長聯絡人</p>
+            <p><b>典型情境</b> 發送家長通知、公告欄張貼、內部訊息傳遞</p>
+            <p><b>下一步</b> 點下方按鈕進入各功能；資料即時儲存於 SchoolMasterDatabase</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📊 統計</div>
+        <div class="stats-row">
+            <div class="stat-pill"><div class="stat-num" id="statNotices">0</div><div class="stat-label">公告數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statMessages">0</div><div class="stat-label">訊息數</div></div>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">快速操作</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="parent.html" class="module-btn" style="background:#27ae60;">👪 家長溝通</a>
+            <a href="notices.html" class="module-btn">📢 公告欄</a>
+            <a href="messaging.html" class="module-btn">✉️ 內部訊息</a>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📢 最近公告</div>
+        <div id="noticesList"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">✉️ 最近訊息</div>
+        <div id="messagesList"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+            if (db.ensureSeedFull) db.ensureSeedFull();
+
+            const notices = (db.data.communication && db.data.communication.notices) || [];
+            const messages = (db.data.communication && db.data.communication.messages) || [];
+
+            document.getElementById('statNotices').textContent = notices.length;
+            document.getElementById('statMessages').textContent = messages.length;
+
+            const noticeRows = notices.slice(-10).reverse().map(n =>
+                '<tr><td>' + (n.title || '—') + '</td><td>' + (n.scope || '—') + '</td><td>' + (n.createdAt || '').slice(0, 16) + '</td></tr>'
+            ).join('');
+            document.getElementById('noticesList').innerHTML = noticeRows.length
+                ? '<table class="module-table"><thead><tr><th>標題</th><th>範圍</th><th>時間</th></tr></thead><tbody>' + noticeRows + '</tbody></table>'
+                : '<div class="empty-state">尚無公告，請至 <a href="notices.html">公告欄</a> 新增</div>';
+
+            const msgRows = messages.slice(-10).reverse().map(m =>
+                '<tr><td>' + (m.toUser || m.to_user || '—') + '</td><td>' + (m.content || '').slice(0, 40) + (m.content && m.content.length > 40 ? '…' : '') + '</td><td>' + (m.channel || '—') + '</td><td>' + (m.createdAt || m.created_at || '').slice(0, 16) + '</td></tr>'
+            ).join('');
+            document.getElementById('messagesList').innerHTML = msgRows.length
+                ? '<table class="module-table"><thead><tr><th>收件人</th><th>內容</th><th>頻道</th><th>時間</th></tr></thead><tbody>' + msgRows + '</tbody></table>'
+                : '<div class="empty-state">尚無訊息，請至 <a href="parent.html">家長溝通</a> 或 <a href="messaging.html">內部訊息</a> 發送</div>';
+        })();
+    </script>
+</body>
+</html>

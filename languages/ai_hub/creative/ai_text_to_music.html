@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 文字轉音樂 - BibleQ&A Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .tool-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+        
+        .tool-card h3 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .tool-card .icon {
+            font-size: 2.5rem;
+            margin-right: 15px;
+        }
+        
+        .tool-card p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+        
+        .tool-card .features {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+        
+        .tool-card .features li {
+            padding: 8px 0;
+            color: #555;
+            position: relative;
+            padding-left: 25px;
+            font-size: 1rem;
+        }
+        
+        .tool-card .features li:before {
+            content: "🎵";
+            position: absolute;
+            left: 0;
+        }
+        
+        .tool-card .actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-block;
+            text-align: center;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #ecf0f1;
+            color: #2c3e50;
+        }
+        
+        .btn-secondary:hover {
+            background: #d5dbdb;
+        }
+        
+        .demo-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 40px 0;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        
+        .demo-section h2 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .demo-form {
+            display: grid;
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .music-preview {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .music-preview h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .audio-player {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+        
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: white;
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .tool-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← 返回 AI 中心</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🎵 AI 文字轉音樂</h1>
+            <p>為聖經內容創作背景音樂和音效</p>
+        </div>
+        
+        <div class="tool-grid">
+            <div class="tool-card">
+                <h3><span class="icon">🎼</span>Suno AI 集成</h3>
+                <p>使用先進的 Suno AI 技術，將您的文字描述轉化為高質量的音樂作品，為聖經故事增添情感色彩。</p>
+                <ul class="features">
+                    <li>多種音樂風格</li>
+                    <li>情感色彩匹配</li>
+                    <li>高質量音頻</li>
+                    <li>可下載音頻</li>
+                </ul>
+                <div class="actions">
+                    <a href="#" class="btn btn-primary">開始創作</a>
+                    <a href="#" class="btn btn-secondary">音樂庫</a>
+                </div>
+            </div>
+            
+            <div class="tool-card">
+                <h3><span class="icon">🎭</span>情感色彩匹配</h3>
+                <p>根據聖經內容的情感基調，自動生成相匹配的音樂風格和氛圍，讓音樂與內容完美融合。</p>
+                <ul class="features">
+                    <li>智能情感分析</li>
+                    <li>風格自動匹配</li>
+                    <li>氛圍營造</li>
+                    <li>節奏調節</li>
+                </ul>
+                <div class="actions">
+                    <a href="#" class="btn btn-primary">情感分析</a>
+                    <a href="#" class="btn btn-secondary">風格預覽</a>
+                </div>
+            </div>
+            
+            <div class="tool-card">
+                <h3><span class="icon">🎪</span>多種音樂風格</h3>
+                <p>從古典聖樂到現代流行，從輕柔背景到激昂讚美，提供豐富多樣的音樂風格選擇。</p>
+                <ul class="features">
+                    <li>古典聖樂</li>
+                    <li>現代讚美</li>
+                    <li>輕柔背景</li>
+                    <li>民族特色</li>
+                </ul>
+                <div class="actions">
+                    <a href="#" class="btn btn-primary">風格選擇</a>
+                    <a href="#" class="btn btn-secondary">試聽樣本</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>🎵 開始創作您的聖經音樂</h2>
+            <form class="demo-form">
+                <div class="form-group">
+                    <label for="prompt">描述您想要的音樂：</label>
+                    <textarea 
+                        id="prompt" 
+                        rows="4" 
+                        placeholder="例如：為大衛王戰勝歌利亞的故事創作一首充滿勇氣和信心的背景音樂，需要激昂的節奏和勝利的氛圍..."
+                    ></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="style">選擇音樂風格：</label>
+                    <select id="style">
+                        <option value="classical">古典聖樂</option>
+                        <option value="modern-praise">現代讚美</option>
+                        <option value="soft-background">輕柔背景</option>
+                        <option value="epic-orchestral">史詩交響</option>
+                        <option value="folk-traditional">民族傳統</option>
+                        <option value="electronic">電子音樂</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="emotion">情感基調：</label>
+                    <select id="emotion">
+                        <option value="joyful">喜樂歡快</option>
+                        <option value="peaceful">平靜安詳</option>
+                        <option value="majestic">莊嚴神聖</option>
+                        <option value="courageous">勇敢堅定</option>
+                        <option value="contemplative">沉思默想</option>
+                        <option value="triumphant">勝利凱旋</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="duration">音樂時長：</label>
+                    <select id="duration">
+                        <option value="30">30秒</option>
+                        <option value="60">1分鐘</option>
+                        <option value="120">2分鐘</option>
+                        <option value="300">5分鐘</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="generate-btn">🎵 生成音樂</button>
+            </form>
+        </div>
+        
+        <div class="music-preview">
+            <h3>🎧 音樂預覽</h3>
+            <p>生成的音樂將在這裡播放，您可以試聽並下載</p>
+            <audio controls class="audio-player">
+                <source src="#" type="audio/mpeg">
+                您的瀏覽器不支持音頻播放。
+            </audio>
+            <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+                點擊播放按鈕試聽生成的音樂
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2024 BibleQ&A Hub - AI 功能中心</p>
+        </div>
+    </div>
+</body>
+</html>

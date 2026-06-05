@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小组事工完整系统 - Small Groups Ministry · Small Groups Integrated | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../../../js/persistence_provider.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
+    <link rel="stylesheet" href="../../css/module_onboarding.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f0f2f5; color: #333; font-size: 12px; }
+        
+        /* 顶部导航栏 */
+        .header { background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; padding: 15px 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header-nav { margin-bottom: 8px; }
+        .header-nav a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 12px; margin-right: 12px; }
+        .header-nav a:hover { text-decoration: underline; }
+        .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+        
+        /* 标签页 */
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; transition: all 0.3s; }
+        .tab.active { background: white; color: #27ae60; font-weight: 600; }
+        .tab:hover:not(.active) { background: rgba(255,255,255,0.3); }
+        
+        /* 容器 */
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* 统计卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid; }
+        .stat-card.green { border-color: #27ae60; }
+        .stat-card.blue { border-color: #3498db; }
+        .stat-card.orange { border-color: #e67e22; }
+        .stat-card.purple { border-color: #9b59b6; }
+        .stat-card.teal { border-color: #1abc9c; }
+        .stat-card.red { border-color: #e74c3c; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
+        .stat-label { font-size: 10px; color: #7f8c8d; }
+        
+        /* 卡片 */
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #2c3e50; border-left: 4px solid #27ae60; padding-left: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        
+        /* 按钮 */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #e67e22; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-info { background: #3498db; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        
+        /* 表格 */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        table tr:hover { background: #f8f9fa; }
+        
+        /* 表单 */
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        
+        /* 模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #7f8c8d; }
+        
+        /* 标签 */
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; margin-right: 5px; }
+        .tag.youth { background: #e3f2fd; color: #0d47a1; }
+        .tag.family { background: #fce4ec; color: #880e4f; }
+        .tag.workplace { background: #fff3e0; color: #e65100; }
+        .tag.senior { background: #f3e5f5; color: #4a148c; }
+        .tag.active { background: #d4edda; color: #155724; }
+        .tag.full { background: #f8d7da; color: #721c24; }
+        
+        /* 小组卡片 */
+        .group-card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #27ae60; margin-bottom: 15px; }
+        .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .group-name { font-weight: 600; font-size: 14px; }
+        .group-leader { font-size: 11px; color: #7f8c8d; margin-bottom: 8px; }
+        .group-stats { display: flex; gap: 15px; font-size: 11px; color: #7f8c8d; }
+        .group-actions { margin-top: 10px; }
+        
+        /* 进度条 */
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #27ae60 0%, #229954 100%); }
+        
+        /* 列表项 */
+        .list-item { padding: 10px; margin-bottom: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid transparent; }
+        .list-item-title { font-weight: 600; font-size: 11px; margin-bottom: 3px; }
+        .list-item-meta { font-size: 9px; color: #7f8c8d; }
+        
+        /* 消息提示 */
+        .message { position: fixed; top: 80px; right: 20px; padding: 12px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1001; animation: slideIn 0.3s; font-size: 12px; }
+        .message.success { background: #27ae60; color: white; }
+        .message.error { background: #e74c3c; color: white; }
+        .message.info { background: #3498db; color: white; }
+        @keyframes slideIn { from { transform: translateX(300px); } to { transform: translateX(0); } }
+        
+        /* 搜索框 */
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
+        
+        /* 空状态 */
+        .empty-state { text-align: center; padding: 60px 20px; color: #95a5a6; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
+        .empty-state-text { font-size: 14px; }
+        
+        /* 倍增树 */
+        .multiplication-tree { padding: 20px; }
+        .tree-node { background: #f8f9fa; border: 2px solid #27ae60; border-radius: 8px; padding: 15px; margin: 10px; display: inline-block; position: relative; }
+        .tree-node.child { border-color: #3498db; margin-left: 40px; }
+        .tree-node-title { font-weight: 600; margin-bottom: 5px; }
+        .tree-node-meta { font-size: 10px; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
+        <div class="header-nav"><a href="../../dashboard.html">⛪ 教會事工中心</a><a href="../../activities-overview.html">🎯 A 模組總覽</a></div>
+        <h1>🏠 小组事工完整系统</h1>
+        <details style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,0.15);border-radius:8px;font-size:11px;">
+            <summary style="cursor:pointer;font-weight:600;">📋 功能與使用說明</summary>
+            <div style="margin-top:8px;opacity:0.95;">
+                <div style="font-weight:600;margin-bottom:4px;">此頁是為誰而設？</div>
+                <p style="margin:0 0 10px;">為小組牧者、區長、小組長，管理小組列表、成員與聚會。</p>
+                <div style="font-weight:600;margin-bottom:4px;">有什麼功能？</div>
+                <ul style="margin:0 0 10px;padding-left:18px;line-height:1.5;">
+                    <li><b>總覽</b>：小組數、成員數、出席率、倍增數</li>
+                    <li><b>小組列表</b>：新增／編輯小組、搜尋</li>
+                    <li><b>成員管理</b>、<b>聚會管理</b>、<b>倍增追蹤</b>、<b>數據分析</b></li>
+                    <li><b>目標·進度·成果</b>：設定年度目標（小組數、出席率）、記錄成果，數據回傳 A 模組總覽</li>
+                </ul>
+                <div style="font-weight:600;margin-bottom:4px;">如何入手？</div>
+                <ol style="margin:0;padding-left:18px;line-height:1.5;">
+                    <li>切換至「小組列表」→「➕ 新增小組」建立小組</li>
+                    <li>於「成員管理」將會友加入小組</li>
+                    <li>在「目標·進度·成果」分頁設定目標、更新進度、記錄見證</li>
+                </ol>
+                <p class="member-id-principle" style="margin-top:10px;">跨模組原則：小組與組員以 <code>groupId</code>、<code>memberId</code> 對齊 <code>churchMasterDatabase</code>；與 <a href="../members/member-integrated.html#tab-groups" style="color:#4f46e5;">會友 · 小組歸屬</a> 同一套鍵值，不重複維護名單。</p>
+            </div>
+        </details>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 总览</button>
+            <button class="tab" onclick="switchTab('groups')">🏠 小组列表</button>
+            <button class="tab" onclick="switchTab('members')">👥 成员管理</button>
+            <button class="tab" onclick="switchTab('meetings')">📅 聚会管理</button>
+            <button class="tab" onclick="switchTab('multiplication')">📈 倍增追踪</button>
+            <button class="tab" onclick="switchTab('analysis')">📊 数据分析</button>
+            <button class="tab" onclick="switchTab('goals')">🎯 目標·進度·成果</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 标签页1：总览 -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>總覽小組數、成員、出席與倍增指標。<br>
+                <strong>適合誰用：</strong>區牧、小組長、牧者。<br>
+                <strong>如何開始：</strong>① 先 <a href="../../load_central_member_seed.html">載入試用會友</a> ② 「小組列表」建組 ③ 「成員管理」以 <code>memberId</code> 加入組員。<br>
+                <span class="data-source-note">本機小組資料；與會友主檔透過 memberId／groupId 同步敘述。</span>
+            </div>
+            <div class="module-links">
+                <strong>跨模組快速連結（同一 memberId）</strong>
+                <ul>
+                    <li><a href="../members/member-integrated.html#tab-groups">會友 · 小組歸屬</a> — 官方指派</li>
+                    <li><a href="../members/member-integrated.html#tab-members">會友檔案</a></li>
+                    <li><a href="../support/visitation.html">探訪關懷</a></li>
+                    <li><a href="../members/member-integrated.html#tab-growth">成長追蹤</a></li>
+                </ul>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card green"><div class="stat-num" id="stat-groups">0</div><div class="stat-label">小组总数</div></div>
+                <div class="stat-card blue"><div class="stat-num" id="stat-members">0</div><div class="stat-label">总成员</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-avg-size">0</div><div class="stat-label">平均规模</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-meetings">0</div><div class="stat-label">本月聚会</div></div>
+                <div class="stat-card teal"><div class="stat-num" id="stat-attendance">0%</div><div class="stat-label">出席率</div></div>
+                <div class="stat-card red"><div class="stat-num" id="stat-multiplied">0</div><div class="stat-label">倍增数</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 小组类型分布</div><canvas id="categoryChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 小组规模分布</div><canvas id="sizeChart"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title">🏆 本月活跃小组 TOP 5</div>
+                <div id="topGroups"></div>
+            </div>
+        </div>
+        
+        <!-- 标签页2：小组列表 -->
+        <div id="tab-groups" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>建立與維護小組主檔（<code>groupId</code>）。<br>
+                <strong>適合誰用：</strong>區牧、小組長。<br>
+                <strong>如何開始：</strong>① 「新增小組」② 填寫區域／類型 ③ 至「成員管理」加人。<br>
+                <span class="data-source-note">小組列表與會友系統 fellowship.groups 敘事一致。</span>
+            </div>
+            <div class="card">
+                <div class="card-title">🏠 小组管理</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="search-box" style="flex: 1; margin: 0 10px 0 0;">
+                        <input type="text" id="groupSearch" placeholder="🔍 搜索小组（名称/组长）" onkeyup="filterGroups()">
+                    </div>
+                    <button class="btn btn-primary" onclick="showAddGroupModal()">➕ 新增小组</button>
+                    <button class="btn btn-info" onclick="exportGroups()">📤 导出数据</button>
+                </div>
+                <div id="groupsList"></div>
+            </div>
+        </div>
+        
+        <!-- 标签页3：成员管理 -->
+        <div id="tab-members" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>將會友加入小組、轉組；每位成員對應 <code>memberId</code>。<br>
+                <strong>適合誰用：</strong>小組長、區牧。<br>
+                <strong>如何開始：</strong>① 「添加成員」選會友 ② 「轉組」 ③ 與 <a href="../members/member-integrated.html#tab-groups">會友 · 小組歸屬</a> 核對。<br>
+                <span class="data-source-note">組員名單應與會友主檔一致，勿另存獨立姓名表。</span>
+            </div>
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="stat-card blue"><div class="stat-num" id="stat-total-members">0</div><div class="stat-label">总成员</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-leaders">0</div><div class="stat-label">组长数</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-new-members">0</div><div class="stat-label">本月新增</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-active-rate">0%</div><div class="stat-label">活跃率</div></div>
+            </div>
+            <div class="card">
+                <div class="card-title">👥 成员列表</div>
+                <button class="btn btn-primary" onclick="showAddMemberModal()">➕ 添加成员</button>
+                <button class="btn btn-success" onclick="transferMember()">🔄 转组</button>
+                <table id="membersTable">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>所属小组</th>
+                            <th>角色</th>
+                            <th>加入日期</th>
+                            <th>出席次数</th>
+                            <th>出席率</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 标签页4：聚会管理 -->
+        <div id="tab-meetings" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>記錄聚會與出席，連結小組 <code>groupId</code>。<br>
+                <strong>適合誰用：</strong>小組長、書記。<br>
+                <strong>如何開始：</strong>① 「記錄聚會」② 填出席 ③ 匯出核對。<br>
+                <span class="data-source-note">聚會紀錄存本模組；出席人數應對應 memberId 名單。</span>
+            </div>
+            <div class="card">
+                <div class="card-title">📅 聚会记录</div>
+                <button class="btn btn-primary" onclick="showAddMeetingModal()">➕ 记录聚会</button>
+                <button class="btn btn-info" onclick="exportMeetings()">📤 导出记录</button>
+                <a class="btn btn-success" href="group-report-copilot.html" style="text-decoration:none;display:inline-block;">🎙️ 小組回報 Copilot</a>
+                <table id="meetingsTable">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>小组</th>
+                            <th>主题</th>
+                            <th>出席人数</th>
+                            <th>出席率</th>
+                            <th>主领</th>
+                            <th>备注</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">📈 本周聚会计划</div>
+                    <div id="weeklyMeetings"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📊 月度出席统计</div>
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 标签页5：倍增追踪 -->
+        <div id="tab-multiplication" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>追蹤小組倍增歷史與母／子 <code>groupId</code> 關係。<br>
+                <strong>適合誰用：</strong>區牧、小組牧養同工。<br>
+                <strong>如何開始：</strong>① 「記錄倍增」② 檢視家譜樹 ③ 新組長以 memberId 標示。<br>
+                <span class="data-source-note">倍增資料為本模組延伸；組長仍對齊會友主檔。</span>
+            </div>
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="stat-card green"><div class="stat-num" id="stat-parent-groups">0</div><div class="stat-label">母小组</div></div>
+                <div class="stat-card blue"><div class="stat-num" id="stat-child-groups">0</div><div class="stat-label">子小组</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-ready">0</div><div class="stat-label">可倍增</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-mult-rate">0%</div><div class="stat-label">倍增率</div></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📈 倍增历史</div>
+                <button class="btn btn-primary" onclick="showMultiplyModal()">➕ 记录倍增</button>
+                <button class="btn btn-success" onclick="recommendMultiply()">🤖 倍增建议</button>
+                <table id="multiplicationTable">
+                    <thead>
+                        <tr>
+                            <th>倍增日期</th>
+                            <th>母小组</th>
+                            <th>子小组</th>
+                            <th>新组长</th>
+                            <th>原因</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <div class="card-title">🌳 倍增家谱树</div>
+                <div id="multiplicationTree" class="multiplication-tree"></div>
+            </div>
+        </div>
+        
+        <!-- 标签页6：数据分析 -->
+        <div id="tab-analysis" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>以圖表檢視小組健康度、成長與警訊。<br>
+                <strong>適合誰用：</strong>牧者、區牧。<br>
+                <strong>如何開始：</strong>① 確認前幾頁已有資料 ② 檢視圖表 ③ 與會友分析交叉閱讀。<br>
+                <span class="data-source-note">分析為本模組匯總；進階報表可接 API。</span>
+            </div>
+            <div class="module-links">
+                <strong>跨模組快速連結</strong>
+                <ul>
+                    <li><a href="../members/member-integrated.html#tab-analysis">會友 · 資料分析</a></li>
+                    <li><a href="../support/visitation.html">探訪關懷</a></li>
+                    <li><a href="../members/member-integrated.html#tab-growth">成長追蹤</a></li>
+                </ul>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 小组健康度</div><canvas id="healthChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 增长趋势</div><canvas id="growthChart"></canvas></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">⏰ 聚会时间分布</div><canvas id="timeChart"></canvas></div>
+                <div class="card"><div class="card-title">⚠️ 需要关注</div><div id="warningList"></div></div>
+            </div>
+        </div>
+        <!-- 标签页7：目標·進度·成果（A 模組） -->
+        <div id="tab-goals" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>小組事工年度目標、進度與見證，回傳 A 模組總覽。<br>
+                <strong>適合誰用：</strong>小組牧者、核心同工。<br>
+                <strong>如何開始：</strong>① 新增目標 ② 更新進度 ③ 記錄成果。<br>
+                <span class="data-source-note">與其他整合頁 A 模組區塊同構。</span>
+            </div>
+            <div class="card">
+                <div class="card-title">🎯 年度／季度目標</div>
+                <p style="font-size:11px;color:#7f8c8d;margin-bottom:12px;">設定小組事工的目標與達成值，追蹤進度並記錄成果與見證。</p>
+                <button class="btn btn-primary" onclick="showAddGoalModalG()">➕ 新增目標</button>
+                <div id="goalsListG" style="margin-top:15px;"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📋 成果與見證</div>
+                <button class="btn btn-success" onclick="showAddOutcomeModalG()">➕ 新增成果／見證</button>
+                <div id="outcomesListG" style="margin-top:15px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        function storageGet(key) {
+            try {
+                if (window.PersistenceProvider && typeof window.PersistenceProvider.getInstance === 'function') {
+                    return window.PersistenceProvider.getInstance().getItem(key);
+                }
+            } catch (e) {}
+            return localStorage.getItem(key);
+        }
+
+        function storageSet(key, value) {
+            try {
+                if (window.PersistenceProvider && typeof window.PersistenceProvider.getInstance === 'function') {
+                    window.PersistenceProvider.getInstance().setItem(key, value);
+                    return true;
+                }
+            } catch (e) {}
+            try {
+                localStorage.setItem(key, value);
+                return true;
+            } catch (e2) {
+                return false;
+            }
+        }
+
+        // ========================================
+        // 核心数据结构（父子数据库设计）
+        // ========================================
+        let data = {
+            // 父表：小组
+            groups: [],
+            
+            // 子表1：小组成员（关联会友memberId）
+            groupMembers: [],
+            
+            // 子表2：聚会记录
+            meetings: [],
+            
+            // 子表3：出席记录
+            attendance: [],
+            
+            // 子表4：倍增记录
+            multiplication: []
+        };
+        
+        let charts = {};
+        
+        // ========================================
+        // 初始化
+        // ========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            if (data.groups.length === 0) {
+                if (confirm('👋 欢迎使用小组事工系统！\n\n是否载入示例数据进行体验？')) {
+                    loadDemo();
+                }
+            }
+            renderAll();
+        });
+        
+        // ========================================
+        // 数据管理
+        // ========================================
+        function loadData() {
+            const saved = storageGet('smallGroupsSystemData');
+            if (saved) {
+                try {
+                    data = JSON.parse(saved);
+                    console.log('✅ 已加载数据:', data.groups.length, '个小组');
+                } catch (e) {
+                    console.error('❌ 数据加载失败:', e);
+                }
+            }
+        }
+        
+        function saveData() {
+            try {
+                if (!storageSet('smallGroupsSystemData', JSON.stringify(data))) throw new Error('storage_write_failed');
+                console.log('💾 数据已保存');
+                return true;
+            } catch (e) {
+                console.error('❌ 数据保存失败:', e);
+                showMessage('数据保存失败！', 'error');
+                return false;
+            }
+        }
+        
+        function loadDemo() {
+            // 生成小组数据
+            const groupNames = ['青年小组A', '夫妇小组B', '职场小组C', '长者小组D', '学生小组E', '单身小组F'];
+            const categories = ['youth', 'family', 'workplace', 'senior', 'youth', 'youth'];
+            const leaders = ['张弟兄', '李姊妹', '王弟兄', '赵长老', '陈姊妹', '刘弟兄'];
+            
+            data.groups = groupNames.map((name, i) => ({
+                id: i + 1,
+                name: name,
+                category: categories[i],
+                leaderId: i + 1,  // 👈 关联会友memberId
+                leaderName: leaders[i],
+                meetingDay: ['周六', '周五', '周三', '周四', '周五', '周六'][i],
+                meetingTime: ['19:00', '20:00', '19:30', '15:00', '19:00', '20:30'][i],
+                location: ['教会', '家庭', '办公室', '教会', '家庭', '教会'][i],
+                capacity: 15,
+                status: 'active',
+                establishedDate: `2023-0${i + 1}-15`
+            }));
+            
+            // 生成小组成员（关联会友memberId）
+            let memberId = 1;
+            data.groups.forEach(group => {
+                const memberCount = Math.floor(Math.random() * 5) + 8; // 8-12人
+                for (let i = 0; i < memberCount; i++) {
+                    data.groupMembers.push({
+                        id: memberId,
+                        groupId: group.id,
+                        memberId: memberId,  // 👈 关联会友系统
+                        memberName: `成员${memberId}`,
+                        role: i === 0 ? 'leader' : 'member',
+                        joinDate: `2024-0${Math.floor(Math.random() * 6) + 1}-15`
+                    });
+                    memberId++;
+                }
+            });
+            
+            // 生成聚会记录（最近3个月）
+            data.groups.forEach(group => {
+                for (let i = 0; i < 12; i++) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - (i * 7));
+                    const members = data.groupMembers.filter(gm => gm.groupId === group.id);
+                    const attendCount = Math.floor(Math.random() * 3) + (members.length - 3);
+                    
+                    data.meetings.push({
+                        id: data.meetings.length + 1,
+                        groupId: group.id,
+                        date: date.toISOString().split('T')[0],
+                        topic: ['圣经查经', '主题分享', '祷告会', '团契活动'][i % 4],
+                        attendance: attendCount,
+                        capacity: members.length,
+                        leader: group.leaderName,
+                        notes: '聚会顺利'
+                    });
+                }
+            });
+            
+            // 生成倍增记录
+            data.multiplication = [
+                {id: 1, date: '2024-03-15', parentGroupId: 1, childGroupId: 5, newLeaderId: 5, newLeaderName: '陈姊妹', reason: '人数达到18人'},
+                {id: 2, date: '2024-06-20', parentGroupId: 2, childGroupId: 6, newLeaderId: 6, newLeaderName: '刘弟兄', reason: '区域扩展'}
+            ];
+            
+            saveData();
+            renderAll();
+            showMessage('✅ 示例数据已载入！包含6个小组、60+成员、72次聚会记录', 'success');
+        }
+        
+        // ========================================
+        // 标签页切换
+        // ========================================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            if (tabName === 'overview') renderOverview();
+            if (tabName === 'groups') renderGroupsTab();
+            if (tabName === 'members') renderMembersTab();
+            if (tabName === 'meetings') renderMeetingsTab();
+            if (tabName === 'multiplication') renderMultiplicationTab();
+            if (tabName === 'analysis') renderAnalysisTab();
+            if (tabName === 'goals') { loadAModuleDataG(); renderGoalsListG(); renderOutcomesListG(); }
+        }
+        
+        // A 模組：目標·進度·成果（church_ministry_a_groups）
+        const A_MODULE_KEY_G = 'church_ministry_a_groups';
+        let aModuleG = { goals: [], outcomes: [] };
+        function loadAModuleDataG() {
+            try {
+                const raw = storageGet(A_MODULE_KEY_G);
+                aModuleG = raw ? JSON.parse(raw) : { goals: [], outcomes: [] };
+                if (!aModuleG.goals) aModuleG.goals = []; if (!aModuleG.outcomes) aModuleG.outcomes = [];
+            } catch (e) { aModuleG = { goals: [], outcomes: [] }; }
+        }
+        function saveAModuleDataG() {
+            try { return storageSet(A_MODULE_KEY_G, JSON.stringify(aModuleG)); } catch (e) { return false; }
+        }
+        function renderGoalsListG() {
+            const el = document.getElementById('goalsListG'); if (!el) return;
+            if (aModuleG.goals.length === 0) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎯</div><div class="empty-state-text">暫無目標，點擊「新增目標」開始設定。</div></div>'; return; }
+            el.innerHTML = aModuleG.goals.map(g => {
+                const current = g.currentValue != null ? Number(g.currentValue) : 0;
+                const target = g.targetValue != null ? Number(g.targetValue) : 100;
+                const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+                return `<div class="list-item" style="display:flex;justify-content:space-between;align-items:center;"><div><div class="list-item-title">${g.title || '未命名目標'}</div><div class="list-item-meta">${g.period || ''} · 目標：${g.targetValue || '-'} ${g.targetUnit || ''} · 目前：${current}</div><div class="progress-bar" style="margin-top:6px;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#27ae60,#2ecc71);"></div></div></div><div><button class="btn btn-sm btn-primary" onclick="editGoalProgressG(${g.id})">更新進度</button> <button class="btn btn-sm btn-danger" onclick="deleteAModuleGoalG(${g.id})">刪除</button></div></div>`;
+            }).join('');
+        }
+        function renderOutcomesListG() {
+            const el = document.getElementById('outcomesListG'); if (!el) return;
+            if (aModuleG.outcomes.length === 0) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">暫無成果或見證記錄。</div></div>'; return; }
+            el.innerHTML = aModuleG.outcomes.map(o => `<div class="list-item"><div class="list-item-title">${o.type === '見證' ? '💬' : '📌'} ${o.title || '未命名'}</div><div class="list-item-meta">${o.date || ''} ${o.description ? ' · ' + (o.description.substring(0, 60) + (o.description.length > 60 ? '…' : '')) : ''}</div><button class="btn btn-sm btn-danger" style="margin-top:6px;" onclick="deleteAModuleOutcomeG(${o.id})">刪除</button></div>`).join('');
+        }
+        function showAddGoalModalG() {
+            const id = (aModuleG.goals.length ? Math.max(...aModuleG.goals.map(g => g.id)) : 0) + 1;
+            showModal('新增目標', `<div class="form-group"><label class="form-label">目標名稱 *</label><input type="text" id="goalTitleG" class="form-input" placeholder="例：本年度小組倍增 2 組"></div><div class="form-group"><label class="form-label">期別</label><input type="text" id="goalPeriodG" class="form-input" placeholder="例：2025 年度"></div><div class="form-group"><label class="form-label">目標數值</label><input type="number" id="goalTargetG" class="form-input"></div><div class="form-group"><label class="form-label">單位</label><input type="text" id="goalUnitG" class="form-input" placeholder="組、人、場"></div><div class="form-group"><label class="form-label">目前數值</label><input type="number" id="goalCurrentG" class="form-input" placeholder="0"></div><button class="btn btn-primary" onclick="saveNewGoalG(${id})">儲存</button>`);
+        }
+        function saveNewGoalG(id) {
+            aModuleG.goals.push({ id, title: document.getElementById('goalTitleG')?.value?.trim() || '未命名目標', period: document.getElementById('goalPeriodG')?.value?.trim() || '', targetValue: document.getElementById('goalTargetG')?.value, targetUnit: document.getElementById('goalUnitG')?.value?.trim() || '', currentValue: document.getElementById('goalCurrentG')?.value || 0 }); saveAModuleDataG(); closeModal(); renderGoalsListG(); showMessage('目標已新增', 'success');
+        }
+        function editGoalProgressG(id) {
+            const g = aModuleG.goals.find(x => x.id === id); if (!g) return;
+            const current = prompt('請輸入目前數值', g.currentValue != null ? g.currentValue : ''); if (current === null) return;
+            g.currentValue = current; saveAModuleDataG(); renderGoalsListG(); showMessage('進度已更新', 'success');
+        }
+        function deleteAModuleGoalG(id) {
+            if (!confirm('確定刪除此目標？')) return; aModuleG.goals = aModuleG.goals.filter(x => x.id !== id); saveAModuleDataG(); renderGoalsListG(); showMessage('已刪除', 'success');
+        }
+        function showAddOutcomeModalG() {
+            const id = (aModuleG.outcomes.length ? Math.max(...aModuleG.outcomes.map(o => o.id)) : 0) + 1;
+            showModal('新增成果／見證', `<div class="form-group"><label class="form-label">標題 *</label><input type="text" id="outcomeTitleG" class="form-input"></div><div class="form-group"><label class="form-label">類型</label><select id="outcomeTypeG" class="form-select"><option value="成果">成果</option><option value="見證">見證</option><option value="報告">報告</option></select></div><div class="form-group"><label class="form-label">日期</label><input type="date" id="outcomeDateG" class="form-input" value="${new Date().toISOString().split('T')[0]}"></div><div class="form-group"><label class="form-label">簡述</label><textarea id="outcomeDescG" class="form-textarea"></textarea></div><button class="btn btn-primary" onclick="saveNewOutcomeG(${id})">儲存</button>`);
+        }
+        function saveNewOutcomeG(id) {
+            aModuleG.outcomes.push({ id, title: document.getElementById('outcomeTitleG')?.value?.trim() || '未命名', type: document.getElementById('outcomeTypeG')?.value || '成果', date: document.getElementById('outcomeDateG')?.value || new Date().toISOString().split('T')[0], description: document.getElementById('outcomeDescG')?.value?.trim() || '' }); saveAModuleDataG(); closeModal(); renderOutcomesListG(); showMessage('已新增', 'success');
+        }
+        function deleteAModuleOutcomeG(id) {
+            if (!confirm('確定刪除此筆記錄？')) return; aModuleG.outcomes = aModuleG.outcomes.filter(x => x.id !== id); saveAModuleDataG(); renderOutcomesListG(); showMessage('已刪除', 'success');
+        }
+        
+        // ========================================
+        // 渲染所有
+        // ========================================
+        function renderAll() {
+            renderOverview();
+        }
+        
+        // ========================================
+        // 标签页1：总览
+        // ========================================
+        function renderOverview() {
+            document.getElementById('stat-groups').textContent = data.groups.length;
+            document.getElementById('stat-members').textContent = data.groupMembers.length;
+            
+            const avgSize = data.groups.length > 0 ? Math.round(data.groupMembers.length / data.groups.length) : 0;
+            document.getElementById('stat-avg-size').textContent = avgSize;
+            
+            const thisMonth = new Date().getMonth();
+            const thisMonthMeetings = data.meetings.filter(m => new Date(m.date).getMonth() === thisMonth).length;
+            document.getElementById('stat-meetings').textContent = thisMonthMeetings;
+            
+            const totalCapacity = data.meetings.reduce((sum, m) => sum + m.capacity, 0);
+            const totalAttendance = data.meetings.reduce((sum, m) => sum + m.attendance, 0);
+            const attendanceRate = totalCapacity > 0 ? Math.round((totalAttendance / totalCapacity) * 100) : 0;
+            document.getElementById('stat-attendance').textContent = attendanceRate + '%';
+            
+            document.getElementById('stat-multiplied').textContent = data.multiplication.length;
+            
+            // 小组类型分布饼图
+            const categoryCount = {};
+            data.groups.forEach(g => {
+                if (!categoryCount[g.category]) categoryCount[g.category] = 0;
+                categoryCount[g.category]++;
+            });
+            
+            const catNames = {youth: '青年', family: '家庭', workplace: '职场', senior: '长者'};
+            const categoryCtx = document.getElementById('categoryChart');
+            if (charts.category) charts.category.destroy();
+            charts.category = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryCount).map(k => catNames[k] || k),
+                    datasets: [{
+                        data: Object.values(categoryCount),
+                        backgroundColor: ['#3498db', '#f5576c', '#e67e22', '#9b59b6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            
+            // 小组规模分布柱状图
+            const sizeRanges = {'<5人': 0, '5-10人': 0, '10-15人': 0, '15+人': 0};
+            data.groups.forEach(g => {
+                const size = data.groupMembers.filter(gm => gm.groupId === g.id).length;
+                if (size < 5) sizeRanges['<5人']++;
+                else if (size < 10) sizeRanges['5-10人']++;
+                else if (size < 15) sizeRanges['10-15人']++;
+                else sizeRanges['15+人']++;
+            });
+            
+            const sizeCtx = document.getElementById('sizeChart');
+            if (charts.size) charts.size.destroy();
+            charts.size = new Chart(sizeCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(sizeRanges),
+                    datasets: [{
+                        label: '小组数',
+                        data: Object.values(sizeRanges),
+                        backgroundColor: '#27ae60'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // 本月活跃小组TOP5
+            renderTopGroups();
+        }
+        
+        function renderTopGroups() {
+            const thisMonth = new Date().getMonth();
+            const groupStats = data.groups.map(g => {
+                const meetings = data.meetings.filter(m => 
+                    m.groupId === g.id && new Date(m.date).getMonth() === thisMonth
+                );
+                return {group: g, meetingCount: meetings.length};
+            }).sort((a, b) => b.meetingCount - a.meetingCount).slice(0, 5);
+            
+            const html = groupStats.map((gs, i) => `
+                <div class="list-item">
+                    <div class="list-item-title">🏆 ${i + 1}. ${gs.group.name}</div>
+                    <div class="list-item-meta">组长：${gs.group.leaderName} | 本月聚会：${gs.meetingCount}次</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('topGroups').innerHTML = html || '<div class="empty-state-text">暂无数据</div>';
+        }
+        
+        // ========================================
+        // 标签页2：小组列表
+        // ========================================
+        function renderGroupsTab() {
+            const searchTerm = (document.getElementById('groupSearch')?.value || '').toLowerCase();
+            const filtered = data.groups.filter(g => 
+                g.name.toLowerCase().includes(searchTerm) ||
+                g.leaderName.toLowerCase().includes(searchTerm)
+            );
+            
+            const html = filtered.map(g => {
+                const members = data.groupMembers.filter(gm => gm.groupId === g.id);
+                const recentMeetings = data.meetings.filter(m => {
+                    const diff = (new Date() - new Date(m.date)) / (1000*60*60*24);
+                    return m.groupId === g.id && diff <= 30;
+                });
+                const fillRate = Math.round((members.length / g.capacity) * 100);
+                
+                return `<div class="group-card">
+                    <div class="group-header">
+                        <div>
+                            <div class="group-name">${g.name} <span class="tag ${g.category}">${{youth:'青年',family:'家庭',workplace:'职场',senior:'长者'}[g.category]}</span></div>
+                            <div class="group-leader">👤 组长：${g.leaderName}</div>
+                        </div>
+                        <div>
+                            <span class="tag ${fillRate >= 100 ? 'full' : 'active'}">${members.length}/${g.capacity}人</span>
+                        </div>
+                    </div>
+                    <div class="group-stats">
+                        <span>📅 ${g.meetingDay} ${g.meetingTime}</span>
+                        <span>📍 ${g.location}</span>
+                        <span>🔢 本月聚会：${recentMeetings.length}次</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${fillRate}%"></div>
+                    </div>
+                    <div class="group-actions">
+                        <button class="btn btn-info btn-sm" onclick="viewGroup(${g.id})">查看详情</button>
+                        <button class="btn btn-warning btn-sm" onclick="editGroup(${g.id})">编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteGroup(${g.id})">删除</button>
+                    </div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('groupsList').innerHTML = html || '<div class="empty-state-text">暂无小组</div>';
+        }
+        
+        function filterGroups() {
+            renderGroupsTab();
+        }
+        
+        function showAddGroupModal() {
+            showModal('➕ 新增小组', `
+                <div class="form-group">
+                    <label class="form-label">小组名称 *</label>
+                    <input type="text" id="groupName" class="form-input" placeholder="例如：青年小组A">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">类别 *</label>
+                    <select id="groupCategory" class="form-select">
+                        <option value="youth">青年</option>
+                        <option value="family">家庭</option>
+                        <option value="workplace">职场</option>
+                        <option value="senior">长者</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">组长</label>
+                    <input type="text" id="groupLeader" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">聚会时间</label>
+                    <input type="text" id="meetingTime" class="form-input" placeholder="例如：周六 19:00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">聚会地点</label>
+                    <input type="text" id="location" class="form-input" placeholder="例如：教会">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">容量</label>
+                    <input type="number" id="capacity" class="form-input" value="15">
+                </div>
+                <button class="btn btn-primary" onclick="saveGroup()">保存</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function saveGroup() {
+            const newGroup = {
+                id: data.groups.length + 1,
+                name: document.getElementById('groupName').value,
+                category: document.getElementById('groupCategory').value,
+                leaderName: document.getElementById('groupLeader').value,
+                leaderId: 0,
+                meetingDay: document.getElementById('meetingTime').value.split(' ')[0] || '周六',
+                meetingTime: document.getElementById('meetingTime').value.split(' ')[1] || '19:00',
+                location: document.getElementById('location').value,
+                capacity: parseInt(document.getElementById('capacity').value),
+                status: 'active',
+                establishedDate: new Date().toISOString().split('T')[0]
+            };
+            
+            if (!newGroup.name) {
+                showMessage('请填写小组名称！', 'error');
+                return;
+            }
+            
+            data.groups.push(newGroup);
+            saveData();
+            renderGroupsTab();
+            renderOverview();
+            closeModal();
+            showMessage('✅ 小组已添加', 'success');
+        }
+        
+        function viewGroup(id) {
+            const group = data.groups.find(g => g.id === id);
+            const members = data.groupMembers.filter(gm => gm.groupId === id);
+            showMessage(`查看小组：${group.name}，成员：${members.length}人`, 'info');
+        }
+        
+        function editGroup(id) {
+            showMessage('编辑小组功能开发中...', 'info');
+        }
+        
+        function deleteGroup(id) {
+            if (!confirm('确定删除此小组？\n\n将同时删除相关成员和聚会记录')) return;
+            data.groups = data.groups.filter(g => g.id !== id);
+            data.groupMembers = data.groupMembers.filter(gm => gm.groupId !== id);
+            data.meetings = data.meetings.filter(m => m.groupId !== id);
+            saveData();
+            renderGroupsTab();
+            renderOverview();
+            showMessage('✅ 小组已删除', 'success');
+        }
+        
+        function exportGroups() {
+            const dataStr = JSON.stringify({groups: data.groups, members: data.groupMembers}, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `小组数据_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showMessage('✅ 数据已导出', 'success');
+        }
+        
+        // ========================================
+        // 标签页3：成员管理
+        // ========================================
+        function renderMembersTab() {
+            document.getElementById('stat-total-members').textContent = data.groupMembers.length;
+            const leaders = data.groupMembers.filter(gm => gm.role === 'leader').length;
+            document.getElementById('stat-leaders').textContent = leaders;
+            
+            const thisMonth = new Date().getMonth();
+            const newMembers = data.groupMembers.filter(gm => new Date(gm.joinDate).getMonth() === thisMonth).length;
+            document.getElementById('stat-new-members').textContent = newMembers;
+            
+            document.getElementById('stat-active-rate').textContent = '85%';  // 示例数据
+            
+            const tbody = document.querySelector('#membersTable tbody');
+            tbody.innerHTML = data.groupMembers.map(gm => {
+                const group = data.groups.find(g => g.id === gm.groupId);
+                return `<tr>
+                    <td>${gm.memberName}</td>
+                    <td>${group?.name || '-'}</td>
+                    <td><span class="tag ${gm.role === 'leader' ? 'active' : ''}">${gm.role === 'leader' ? '组长' : '成员'}</span></td>
+                    <td>${gm.joinDate}</td>
+                    <td>12</td>
+                    <td>85%</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="editMember(${gm.id})">编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="removeMember(${gm.id})">移除</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        
+        function showAddMemberModal() {
+            showMessage('➕ 添加成员功能开发中...', 'info');
+        }
+        
+        function transferMember() {
+            showMessage('🔄 转组功能开发中...', 'info');
+        }
+        
+        function editMember(id) {
+            showMessage('编辑成员功能开发中...', 'info');
+        }
+        
+        function removeMember(id) {
+            if (!confirm('确定移除此成员？')) return;
+            data.groupMembers = data.groupMembers.filter(gm => gm.id !== id);
+            saveData();
+            renderMembersTab();
+            showMessage('✅ 成员已移除', 'success');
+        }
+        
+        // ========================================
+        // 标签页4：聚会管理
+        // ========================================
+        function renderMeetingsTab() {
+            const tbody = document.querySelector('#meetingsTable tbody');
+            tbody.innerHTML = data.meetings.slice(0, 20).map(m => {
+                const group = data.groups.find(g => g.id === m.groupId);
+                const rate = m.capacity > 0 ? Math.round((m.attendance / m.capacity) * 100) : 0;
+                return `<tr>
+                    <td>${m.date}</td>
+                    <td>${group?.name || '-'}</td>
+                    <td>${m.topic}</td>
+                    <td>${m.attendance}/${m.capacity}</td>
+                    <td>${rate}%</td>
+                    <td>${m.leader}</td>
+                    <td>${m.notes}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteMeeting(${m.id})">删除</button></td>
+                </tr>`;
+            }).join('');
+            
+            renderWeeklyMeetings();
+            renderAttendanceChart();
+        }
+        
+        function renderWeeklyMeetings() {
+            const today = new Date();
+            const weekMeetings = data.meetings.filter(m => {
+                const diff = (new Date(m.date) - today) / (1000*60*60*24);
+                return diff >= 0 && diff <= 7;
+            });
+            
+            const html = weekMeetings.length > 0
+                ? weekMeetings.map(m => {
+                    const group = data.groups.find(g => g.id === m.groupId);
+                    return `<div class="list-item">
+                        <div class="list-item-title">${m.date} - ${group?.name}</div>
+                        <div class="list-item-meta">${m.topic} | ${m.leader}</div>
+                    </div>`;
+                }).join('')
+                : '<div class="empty-state-text">本周暂无聚会安排</div>';
+            
+            document.getElementById('weeklyMeetings').innerHTML = html;
+        }
+        
+        function renderAttendanceChart() {
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
+            const attendanceData = months.map((m, i) => {
+                const monthMeetings = data.meetings.filter(meeting => new Date(meeting.date).getMonth() === i);
+                const totalAttendance = monthMeetings.reduce((sum, m) => sum + m.attendance, 0);
+                return totalAttendance;
+            });
+            
+            const ctx = document.getElementById('attendanceChart');
+            if (charts.attendance) charts.attendance.destroy();
+            charts.attendance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '总出席人数',
+                        data: attendanceData,
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39,174,96,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+        
+        function showAddMeetingModal() {
+            showModal('➕ 记录聚会', `
+                <div class="form-group">
+                    <label class="form-label">小组 *</label>
+                    <select id="meetingGroupId" class="form-select">
+                        ${data.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">日期 *</label>
+                    <input type="date" id="meetingDate" class="form-input" value="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">主题</label>
+                    <input type="text" id="meetingTopic" class="form-input" placeholder="例如：圣经查经">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">出席人数 *</label>
+                    <input type="number" id="meetingAttendance" class="form-input" value="10">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <textarea id="meetingNotes" class="form-textarea"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="saveMeeting()">保存</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function saveMeeting() {
+            const groupId = parseInt(document.getElementById('meetingGroupId').value);
+            const group = data.groups.find(g => g.id === groupId);
+            const members = data.groupMembers.filter(gm => gm.groupId === groupId);
+            
+            const newMeeting = {
+                id: data.meetings.length + 1,
+                groupId: groupId,
+                date: document.getElementById('meetingDate').value,
+                topic: document.getElementById('meetingTopic').value,
+                attendance: parseInt(document.getElementById('meetingAttendance').value),
+                capacity: members.length,
+                leader: group.leaderName,
+                notes: document.getElementById('meetingNotes').value
+            };
+            
+            data.meetings.push(newMeeting);
+            saveData();
+            renderMeetingsTab();
+            closeModal();
+            showMessage('✅ 聚会记录已添加', 'success');
+        }
+        
+        function deleteMeeting(id) {
+            if (!confirm('确定删除此聚会记录？')) return;
+            data.meetings = data.meetings.filter(m => m.id !== id);
+            saveData();
+            renderMeetingsTab();
+            showMessage('✅ 聚会记录已删除', 'success');
+        }
+        
+        function exportMeetings() {
+            const dataStr = JSON.stringify(data.meetings, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `聚会记录_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showMessage('✅ 聚会记录已导出', 'success');
+        }
+        
+        // ========================================
+        // 标签页5：倍增追踪
+        // ========================================
+        function renderMultiplicationTab() {
+            const parentGroups = [...new Set(data.multiplication.map(m => m.parentGroupId))];
+            document.getElementById('stat-parent-groups').textContent = parentGroups.length;
+            document.getElementById('stat-child-groups').textContent = data.multiplication.length;
+            
+            // 计算可倍增的小组（规模>15人）
+            const ready = data.groups.filter(g => {
+                const size = data.groupMembers.filter(gm => gm.groupId === g.id).length;
+                return size >= 15;
+            }).length;
+            document.getElementById('stat-ready').textContent = ready;
+            
+            const multRate = data.groups.length > 0 ? Math.round((data.multiplication.length / data.groups.length) * 100) : 0;
+            document.getElementById('stat-mult-rate').textContent = multRate + '%';
+            
+            const tbody = document.querySelector('#multiplicationTable tbody');
+            tbody.innerHTML = data.multiplication.map(m => {
+                const parent = data.groups.find(g => g.id === m.parentGroupId);
+                const child = data.groups.find(g => g.id === m.childGroupId);
+                return `<tr>
+                    <td>${m.date}</td>
+                    <td>${parent?.name || '-'}</td>
+                    <td>${child?.name || '-'}</td>
+                    <td>${m.newLeaderName}</td>
+                    <td>${m.reason}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteMultiplication(${m.id})">删除</button></td>
+                </tr>`;
+            }).join('');
+            
+            renderMultiplicationTree();
+        }
+        
+        function renderMultiplicationTree() {
+            const tree = data.multiplication.map(m => {
+                const parent = data.groups.find(g => g.id === m.parentGroupId);
+                const child = data.groups.find(g => g.id === m.childGroupId);
+                return `
+                    <div style="margin-bottom: 20px;">
+                        <div class="tree-node">
+                            <div class="tree-node-title">🏠 ${parent?.name || '-'}</div>
+                            <div class="tree-node-meta">组长：${parent?.leaderName}</div>
+                        </div>
+                        <div style="display: inline-block; width: 40px; text-align: center; font-size: 20px;">→</div>
+                        <div class="tree-node child">
+                            <div class="tree-node-title">🏠 ${child?.name || '-'}</div>
+                            <div class="tree-node-meta">组长：${m.newLeaderName} | ${m.date}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('multiplicationTree').innerHTML = tree || '<div class="empty-state-text">暂无倍增记录</div>';
+        }
+        
+        function showMultiplyModal() {
+            showMessage('➕ 记录倍增功能开发中...', 'info');
+        }
+        
+        function recommendMultiply() {
+            const ready = data.groups.filter(g => {
+                const size = data.groupMembers.filter(gm => gm.groupId === g.id).length;
+                return size >= 15;
+            });
+            
+            if (ready.length > 0) {
+                showMessage(`🤖 推荐倍增：${ready.map(g => g.name).join('、')} 已达到倍增条件`, 'success');
+            } else {
+                showMessage('暂无小组达到倍增条件（规模≥15人）', 'info');
+            }
+        }
+        
+        function deleteMultiplication(id) {
+            if (!confirm('确定删除此倍增记录？')) return;
+            data.multiplication = data.multiplication.filter(m => m.id !== id);
+            saveData();
+            renderMultiplicationTab();
+            showMessage('✅ 倍增记录已删除', 'success');
+        }
+        
+        // ========================================
+        // 标签页6：数据分析
+        // ========================================
+        function renderAnalysisTab() {
+            // 小组健康度雷达图
+            const ctx1 = document.getElementById('healthChart');
+            if (charts.health) charts.health.destroy();
+            charts.health = new Chart(ctx1, {
+                type: 'radar',
+                data: {
+                    labels: ['出席率', '聚会频率', '成员增长', '领袖培养', '倍增意愿'],
+                    datasets: [{
+                        label: '健康度',
+                        data: [85, 90, 75, 70, 80],
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39,174,96,0.2)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+            
+            // 增长趋势折线图
+            const ctx2 = document.getElementById('growthChart');
+            if (charts.growth) charts.growth.destroy();
+            charts.growth = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    datasets: [{
+                        label: '小组数',
+                        data: [4, 4, 5, 5, 6, 6],
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39,174,96,0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // 聚会时间分布柱状图
+            const ctx3 = document.getElementById('timeChart');
+            if (charts.time) charts.time.destroy();
+            charts.time = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    datasets: [{
+                        label: '小组数',
+                        data: [0, 0, 1, 1, 2, 2, 0],
+                        backgroundColor: '#27ae60'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            renderWarningList();
+        }
+        
+        function renderWarningList() {
+            // 找出需要关注的小组（最近30天未聚会）
+            const today = new Date();
+            const warnings = [];
+            
+            data.groups.forEach(g => {
+                const recentMeetings = data.meetings.filter(m => {
+                    const diff = (today - new Date(m.date)) / (1000*60*60*24);
+                    return m.groupId === g.id && diff <= 30;
+                });
+                
+                if (recentMeetings.length === 0) {
+                    warnings.push(g);
+                }
+            });
+            
+            const html = warnings.length > 0
+                ? '<div style="color: #e74c3c; font-weight: bold; margin-bottom: 10px;">⚠️ 以下小组最近30天未聚会：</div>' +
+                  warnings.map(g => `<div class="list-item" style="border-left-color: #e74c3c;">
+                    <div class="list-item-title">${g.name}</div>
+                    <div class="list-item-meta">组长：${g.leaderName} | 建议：联系组长了解情况</div>
+                  </div>`).join('')
+                : '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">所有小组状态正常</div></div>';
+            
+            document.getElementById('warningList').innerHTML = html;
+        }
+        
+        // ========================================
+        // 工具函数
+        // ========================================
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `
+                <div class="modal-header">${title}</div>
+                ${content}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        function showMessage(text, type = 'success') {
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            document.body.appendChild(msg);
+            
+            setTimeout(() => {
+                msg.remove();
+            }, 3000);
+        }
+        
+        window.onclick = (e) => {
+            if (e.target.id === 'modal') closeModal();
+        };
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

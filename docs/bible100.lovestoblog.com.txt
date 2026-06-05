@@ -1,0 +1,465 @@
+《Bible100 模块简介》
+
+bible100.lovestoblog.com/
+
+
+---
+
+## 1. 网站的目的、意义与布局
+
+### 平台宗旨
+Bible100 是一个多语言、多模块的圣经学习与教会事工平台，目标是让初信者、查经小组、教会团队都能在同一个网站完成：
+- 多版本圣经阅读与深度研读；
+- 教会成员与事奉管理；
+- AI 辅助内容（问答、课件、灵修）；
+- 学校/课程管理、诗歌敬拜等延伸功能。
+
+### 页面布局（主页 `index.html`）
+1. **Topbar 顶部导航**  
+   - 左侧显示“圣经百步四宝 Bible100_4 Treasures”品牌。  
+   - 中间/右侧是一排按钮：  
+     - 语言切换（中文、英文、越南语、印尼语、儿童、进阶）。  
+     - 核心模块入口（教会事工、圣经研读、AI 工具、学校管理、智慧事奉、目录搜索等）。  
+   - 点击语言按钮，会在右侧主内容框架显示该语言的介绍页。
+
+2. **Sidebar Frame 侧栏（左侧 iframe）**  
+   - 根据所选语言或模块，载入对应侧栏页面。例如：  
+     - 语言模式：显示该语言的旧约/新约章节目录、四宝课程、帮助页等。  
+     - 圣经研读模块：显示章节导航、工具列表。  
+   - 侧栏内的链接都是超链接（用户偏好），点击后右侧内容区会打开目标页面。
+
+3. **Content Frame 内容区（右侧 iframe）**  
+   - 显示具体的章节、课程、工具或管理页面。  
+   - 由于是 iframe，用户在侧栏中点的任何链接会在此区加载，不会跳出主页框架。  
+   - 右上角有脚本自动修正图片路径，保障旧资料也能正常显示。
+
+### 模块概览（从 Topbar 进入）
+- **圣经研读**：综合解读、词典、串珠、时间线、版本对照等研读工具。  
+- **教会事工**：会员、敬拜、小组、志工、教育、财务等六大系统。  
+- **AI 工具**：AI 问答、教学计划、文本生成等辅助工具。  
+- **学校管理**：学生、课程、教师、财务、进度追踪等。  
+- **智慧事奉**：AI 问卷系统，帮助信徒找到适合的事奉岗位。  
+- **导航中心**：全站索引、文档中心、部署报告等。
+
+---
+
+## 2. 建站以来遇到的最大问题
+
+1. **数据加载与解密**  
+   - 综合解读数据库使用过期或加密格式，导致内容无法正常显示。  
+   - 为此花了大量时间整合旧版解密脚本（XOR、Base64、Caesar 等），并加入 `universal-data-loader.js`。  
+   - 即便如此，有些注释或串珠 JSON 仍因控制字符损坏而无法成功解析。
+
+2. **旧图片路径兼容**  
+   - 早期页面使用 “file://My Webs/...” 等 FrontPage 旧路径，本地浏览器无法识别。  
+   - 解决方式：编写 `image_path_rewriter.js`，在 iframe 载入后统一将旧路径改写到 `languages/images/` 下的新版目录。  
+   - 但由于文件量极大，少数图片仍需人工修正（如你刚协助处理的越南语页面）。
+
+3. **根目录资料凌乱**  
+   - 建站过程中生成了大量报告、测试页散落于根目录，用户难以快速找到重点文件。  
+   - 目前临时放在 `_temp_reports/` 下，但仍未完全整理进 `docs/`。  
+   - 这也是后续要做的文件结构归档任务。
+
+---
+
+## 3. 后续未完成的计划与工作
+
+1. **统一文档中心**  
+   - 将 `_temp_reports/` 中的用户指南、测试报告、项目说明迁入 `docs/`，建立“模块导览 + 操作手册”合集。  
+   - 目标是让新手只看一个 `docs/guides/module_overview.md` 就能了解所有模块。
+
+2. **数据库修复与补全**  
+   - 继续清理数据源（特别是损坏的 JSON），确保串珠、词典、注释都能加载。  
+   - 研究可行的替代数据或重新导入流程。
+
+3. **模块说明补齐**  
+   - 目前只有 “智慧事奉” 有完整 README，其它模块需要补写简介与使用说明（如 `bible_study/README.md`、`ai_tools/README.md` 等）。
+
+4. **根目录整洁化**  
+   - 彻底整理根目录，只保留必要的入口文件与脚本，其余归档到 `docs/` 或 `archive/`。  
+   - 遵守“测试或临时文件不留在根目录”的规则。
+
+5. **跨模块整合测试**  
+   - 完成教会事工 ↔ 学校管理 ↔ 智慧事奉的数据互通，将会员资料统一引用。  
+   - 补充自动化测试脚本，确保未来修改不会破坏现有功能。
+
+---
+
+以上内容可以直接作为“面向小白的简介”。如需将其整理成正式文档，建议放在 `docs/guides/` 目录，方便后续更新与分享。
+
+
+=======================================================
+
+《Bible100 模块简介》，
+
+涵盖 `bible100_new/` 下主要目录的目标与功能说明。你可以将它保存为 `docs/guides/module_overview.md` 或其他合适位置。
+
+---
+
+# Bible100 平台主要模块简介
+
+## 1. `index.html`（主控制台）
+- **目标**：充当平台的统一入口与导航中枢。
+- **功能**：
+  - 顶部语言切换（CN/EN/VI/ID/CH/AD）与核心模块快捷按钮。
+  - 左侧 iframe 载入对应模块侧栏，右侧 iframe 展示主内容。
+  - 内置 `MainFrameManager` 负责 iframe 之间的安全通信与导航。
+  - 自动执行图片路径重写脚本，兼容旧版 FrontPage 资源。
+
+## 2. `languages/`（多语言内容库）
+- **目标**：为六种语言版本提供完整的圣经学习页面与资源。
+- **功能**：
+  - 语言首页、旧约 / 新约章节、四宝课程、AI 工具等页面。
+  - `image_path_rewriter.js` 统一本地图片路径，使旧版资源在现代环境正常显示。
+  - 支持桌面端与移动端的响应式布局，确保语言内容一致呈现。
+
+## 3. `bible_study/`（圣经研读模块）
+- **目标**：提供深入的研读工具与数据支持。
+- **功能**：
+  - 多种阅读器：综合解读、词典、串珠、统一阅读器、时间线等。
+  - 核心脚本 `js/universal-data-loader.js` 负责加载 JSON/DB 数据、处理多种解密与异常。
+  - 支持收藏、搜索、版本切换等扩展功能。
+  - 与 `data/` 目录中 33 个数据库协同运作。
+
+## 4. `ai_tools/`（AI 工具中心）
+- **目标**：整合 AI 辅助功能，辅助灵修与教学。
+- **功能**：
+  - AI 问答、课程规划、文本生成、影音辅助等子工具页面。
+  - 标准化的侧边栏导航与仪表板，方便快速访问。
+  - 可扩展的工具目录（`tools/`）与组件化结构。
+
+## 5. `church_ministry/`（教会事工管理）
+- **目标**：管理教会成员与六大核心事工体系。
+- **功能**：
+  - 会员、敬拜、小组、志工、教育、财务等模块的整合页面。
+  - `js/church-master-database.js` 定义统一数据库结构，`church-core-linking.js` 负责成员资料关联。
+  - 与 `data/church/members.json` 等数据文件联动，呈现完整数据视图。
+
+## 6. `school_management/`（学校管理系统）
+- **目标**：服务于教会或圣经学校的课程与学生管理。
+- **功能**：
+  - 学生、课程、教师、财务、进度追踪等功能页面。
+  - 支持导入导出、资料整合，以及与教会模块共享数据的潜力。
+  - 配套脚本与工具（如 `database_integration.html`）协助测试整合流程。
+
+## 7. `smart_ministry/`（智慧事奉）
+- **目标**：利用 AI/数据分析协助信徒找到合适的事奉岗位。
+- **功能**：
+  - 多阶段问卷、属灵恩赐评估、技能匹配与配对结果可视化。
+  - 详细说明见 `smart_ministry/README.md`。
+  - 核心脚本：`js/matching_algorithm.js`（配对算法）、`js/database.js`（数据管理）。
+
+## 8. `hymn_management/`（诗歌管理）
+- **目标**：集中管理赞美诗歌、播放列表与相关资源。
+- **功能**：
+  - 诗歌仪表板、侧边栏与播放列表页面。
+  - 未来可扩展为曲谱、歌词、多媒体的统一资料库。
+
+## 9. `nav_hub/`（导航与文档集成）
+- **目标**：提供全站导航、搜索与文档索引。
+- **功能**：
+  - 导航仪表板、文档中心、部署报告、使用说明等页面。
+  - 作为知识库与内部文档的可视化入口，引用多份测试、部署文件。
+
+## 10. `data/`（数据库与原始资料）
+- **目标**：存放所有结构化数据、数据库、JSON、资源文件。
+- **功能**：
+  - `bibles/`、`commentaries/`、`crossrefs/` 等用于研读的数据库。
+  - `church/`、`school/`、`smart_ministry/` 等模块所需的数据源。
+  - 提供 33 个关键数据库文件，是平台稳定性的核心。
+
+## 11. `css/` 与 `js/`（全局样式与脚本）
+- **目标**：维护统一的前端风格与脚本工具。
+- **功能**：
+  - `css/unified_module_styles.css` 统一模块配色与布局。
+  - `js/` 中包含导航、报告生成、数据库工具等通用脚本，供各模块调用。
+
+## 12. 其他目录
+- `tests/`：测试页面或脚本。
+- `tools/`：PowerShell / Python 工具脚本（如全站检查、数据库诊断）。
+- `alternatives/`、`archive/`：历史或备选版本的页面。
+- `_temp_reports/`：近期生成的测试报告、用户指南、部署文档等。
+
+---
+
+如需落地使用，只需将以上内容保存到一个 Markdown 文件，即可成为《Bible100 模块导览》，并可进一步扩展为线上文档或帮助中心。
+
+
+==========================================
+
+
+Here’s the English version of the overview:
+
+---
+
+## 1. Platform Purpose, Meaning, and Layout
+
+### Mission
+Bible100 is a multi-language, multi-module platform designed to support Bible study and church ministries. It helps new believers, study groups, and ministry teams accomplish:
+
+- Multi-version Bible reading and in-depth study  
+- Church member and ministry management  
+- AI-assisted content (Q&A, lesson plans, devotionals)  
+- School/course management, hymn resources, and more
+
+### Page Layout (homepage `index.html`)
+1. **Topbar**  
+   - Left: “Bible100 Four Treasures” branding.  
+   - Center/Right: Buttons for:  
+     - Language switching (CN/EN/VI/ID/CH/AD)  
+     - Core modules (Church Ministry, Bible Study, AI Tools, School Management, Smart Ministry, Navigation/Search)  
+   - Clicking a language button displays that language’s intro page in the content frame.
+
+2. **Sidebar Frame (left iframe)**  
+   - Shows navigation for the chosen language/module:  
+     - Language mode: Old/New Testament chapters, “Four Treasures,” Help pages, etc.  
+     - Bible Study mode: chapter navigation, tool list  
+   - All sidebar entries are hyperlinks (per user preference) that open in the content frame.
+
+3. **Content Frame (right iframe)**  
+   - Displays chapters, lessons, tools, and management pages.  
+   - Because it’s an iframe, navigation stays inside the main layout.  
+   - Includes scripts that auto-fix legacy image paths so older resources display correctly.
+
+### Module Overview (Topbar shortcuts)
+- **Bible Study**: Commentary, dictionary, cross-reference, timeline, unified reader, etc.  
+- **Church Ministry**: Members, worship, small groups, volunteers, education, finance.  
+- **AI Tools**: AI Q&A, lesson planning, text generation, media helpers.  
+- **School Management**: Students, courses, teachers, finance, progress tracking.  
+- **Smart Ministry**: AI-based questionnaire matching believers with ministry roles.  
+- **Navigation Hub**: Site-wide index, documentation center, deployment reports.
+
+---
+
+## 2. Major Challenges Encountered
+
+1. **Data loading and decryption**  
+   - Commentary databases used outdated or encrypted formats; content failed to render.  
+   - Integrated legacy decryption methods (XOR/Base64/Caesar) into `universal-data-loader.js`.  
+   - Some JSON files still contain control-character corruption, especially cross-reference/dictionary data.
+
+2. **Legacy image paths**  
+   - Early pages relied on `file://My Webs/...` FrontPage paths that modern browsers reject.  
+   - Implemented `image_path_rewriter.js` to remap old paths to `languages/images/`.  
+   - Due to huge file counts, a few images still require manual fixes (e.g. the Vietnamese page you just updated).
+
+3. **Cluttered root directory**  
+   - Numerous reports and test pages accumulated in the root over time, making navigation difficult.  
+   - Currently staged in `_temp_reports/`, but still need to be reorganized under `docs/`.  
+   - Remains a to-do item in the file-cleanup effort.
+
+---
+
+## 3. Outstanding Plans and Work
+
+1. **Unified documentation hub**  
+   - Move reports/user guides from `_temp_reports/` into `docs/`, creating a “Module Overview + User Manual” set.  
+   - Goal: one document such as `docs/guides/module_overview.md` should brief any newcomer.
+
+2. **Database repair and completion**  
+   - Continue cleaning data sources (especially corrupted JSON) to restore cross-reference/dictionary files.  
+   - Evaluate re-importing or sourcing replacement content.
+
+3. **Module README coverage**  
+   - Only “Smart Ministry” currently has a full README.  
+   - Need to add similar guides for `bible_study/`, `ai_tools/`, `church_ministry/`, `school_management/`, etc.
+
+4. **Root-directory hygiene**  
+   - Finish relocating non-essential files so the root only holds key entry points and scripts.  
+   - Adhere to the rule: test or temporary files should not live in the root.
+
+5. **Cross-module integration testing**  
+   - Complete data sharing among Church Ministry ↔ School Management ↔ Smart Ministry.  
+   - Add automated regression tests to protect existing functionality.
+
+---
+
+Feel free to store this in `docs/guides/module_overview_en.md` (or your preferred location) so newcomers can read it directly.
+
+
+==========================================
+
+
+
+## 1. Mục tiêu, ý nghĩa và bố cục của nền tảng 
+(Platform Purpose, Meaning, and Layout)
+
+### Sứ mạng (Mission)
+Bible100 là một nền tảng đa ngôn ngữ và đa mô-đun hỗ trợ học Kinh Thánh và quản trị hội thánh. Mục tiêu của hệ thống là giúp tân tín hữu, các nhóm học Kinh Thánh và ban ngành hội thánh có thể:
+
+- Đọc và nghiên cứu Kinh Thánh với nhiều bản dịch song song  
+- Quản lý hội viên và các mục vụ  
+- Khai thác nội dung do AI hỗ trợ (Hỏi & Đáp, giáo án, tĩnh nguyện)  
+- Quản lý trường/lớp, tài liệu thánh ca và nhiều chức năng mở rộng khác
+
+### Bố cục trang chủ (`index.html`) (Page Layout)
+1. **Thanh trên cùng (Topbar)**  
+   - Bên trái hiển thị thương hiệu “Bible100 Four Treasures”.  
+   - Phần giữa/phải là các nút:  
+     - Chuyển ngôn ngữ (CN/EN/VI/ID/CH/AD)  
+     - Lối vào các mô-đun chính (Mục vụ Hội Thánh, Nghiên cứu Kinh Thánh, Công cụ AI, Quản lý Trường, Bộ phận Thông minh, Trung tâm Điều hướng)  
+   - Khi nhấn ngôn ngữ, phần nội dung bên phải sẽ hiển thị trang giới thiệu tương ứng.
+
+2. **Khung bên trái (Sidebar Frame)**  
+   - Hiển thị bộ điều hướng của ngôn ngữ/mô-đun đã chọn:  
+     - Chế độ ngôn ngữ: danh mục Cựu Ước/Tân Ước, khóa học “Bốn Kho Báu”, trang Trợ giúp…  
+     - Chế độ nghiên cứu: danh sách chương, công cụ nghiên cứu  
+   - Tất cả đường link đều mở trong khung nội dung bên phải theo yêu cầu của người dùng.
+
+3. **Khung nội dung (Content Frame)**  
+   - Trình bày chương Kinh Thánh, bài học, công cụ hoặc trang quản trị.  
+  - Vì là iframe, người dùng luôn ở trong bố cục chính khi duyệt nội dung.  
+   - Có script tự động chỉnh lại đường dẫn hình ảnh cũ để tài nguyên legacy hiển thị đúng.
+
+### Tổng quan mô-đun (Module Overview)
+- **Nghiên cứu Kinh Thánh (Bible Study)**: Chú giải, từ điển, đối chiếu, dòng thời gian, trình đọc hợp nhất...  
+- **Mục vụ Hội Thánh (Church Ministry)**: Hội viên, thờ phượng, nhóm nhỏ, tình nguyện, giáo dục, tài chính.  
+- **Công cụ AI (AI Tools)**: Hỏi & Đáp, xây dựng giáo án, sinh văn bản, công cụ đa phương tiện.  
+- **Quản lý Trường (School Management)**: Học viên, khóa học, giáo viên, tài chính, theo dõi tiến độ.  
+- **Bộ phận Thông minh (Smart Ministry)**: Bảng câu hỏi AI, gợi ý vị trí phục vụ.  
+- **Trung tâm Điều hướng (Navigation Hub)**: Chỉ mục toàn site, trung tâm tài liệu, báo cáo triển khai.
+
+---
+
+## 2. Thách thức lớn nhất từng gặp 
+(Major Challenges Encountered)
+
+1. **Tải dữ liệu và giải mã (Data Loading & Decryption)**  
+   - Nhiều dữ liệu chú giải dùng định dạng cũ hoặc đã mã hóa nên không hiển thị được.  
+   - Đã tích hợp các phương pháp giải mã legacy (XOR/Base64/Caesar) vào `universal-data-loader.js`.  
+   - Một số JSON vẫn hỏng do ký tự điều khiển, đặc biệt là nhánh đối chiếu và từ điển.
+
+2. **Đường dẫn hình ảnh legacy (Legacy Image Paths)**  
+   - Các trang cũ dựa vào đường dẫn dạng `file://My Webs/...`, trình duyệt hiện đại không hỗ trợ.  
+   - Script `image_path_rewriter.js` đã được viết để chuyển đổi sang thư mục `languages/images/`.  
+   - Vì số lượng ảnh rất lớn, vẫn cần chỉnh tay vài trường hợp (như trang tiếng Việt bạn vừa cập nhật).
+
+3. **Rối ren ở thư mục gốc (Root Directory Clutter)**  
+   - Nhiều báo cáo và trang thử nghiệm phát sinh trong quá trình phát triển khiến khó tìm tài liệu quan trọng.  
+   - Hiện tạm dồn về `_temp_reports/`, nhưng vẫn cần chuyển hẳn sang `docs/`.  
+   - Đây vẫn là việc cần hoàn tất trong kế hoạch dọn dẹp.
+
+---
+
+## 3. Kế hoạch và công việc chưa hoàn thành 
+(Outstanding Plans and Work)
+
+1. **Trung tâm tài liệu hợp nhất (Unified Documentation Hub)**  
+   - Di chuyển báo cáo/hướng dẫn từ `_temp_reports/` vào `docs/`, tạo bộ “Tổng quan mô-đun + Sổ tay người dùng”.  
+   - Mục tiêu: chỉ cần đọc một tài liệu như `docs/guides/module_overview.md` là người mới hiểu được hệ thống.
+
+2. **Sửa chữa và bổ sung dữ liệu (Database Repair & Completion)**  
+   - Tiếp tục làm sạch nguồn dữ liệu, đặc biệt là các JSON hỏng, để phần đối chiếu/từ điển hoạt động bình thường.  
+   - Xem xét nhập lại dữ liệu hoặc thay bằng nguồn khác nếu cần.
+
+3. **Bổ sung README cho mô-đun (Module README Coverage)**  
+   - Hiện chỉ “Smart Ministry” có README đầy đủ.  
+   - Cần thêm các mô tả tương tự cho `bible_study/`, `ai_tools/`, `church_ministry/`, `school_management/`...
+
+4. **Dọn dẹp thư mục gốc (Root Directory Hygiene)**  
+   - Hoàn thiện việc di dời file, giữ lại những tập tin cốt lõi và script cần thiết ở gốc.  
+   - Tuân thủ quy tắc: không để file thử nghiệm/tạm thời trong thư mục gốc.
+
+5. **Kiểm thử tích hợp liên mô-đun (Cross-Module Integration Testing)**  
+   - Hoàn tất chia sẻ dữ liệu giữa Mục vụ Hội Thánh ↔ Quản lý Trường ↔ Bộ phận Thông minh.  
+   - Bổ sung bài kiểm thử tự động để tránh việc sửa đổi làm hỏng chức năng hiện có.
+
+---
+
+Bạn có thể lưu bản dịch này tại `docs/guides/module_overview_vi.md` (hoặc vị trí bạn muốn) để hỗ trợ người dùng mới.
+
+
+
+========================================
+
+
+## 1. Tujuan, makna, dan tata letak platform 
+(Platform Purpose, Meaning, and Layout)
+
+### Misi (Mission)
+Bible100 adalah platform multi-bahasa dan multi-modul yang mendukung pembelajaran Alkitab serta pelayanan gereja. Platform ini membantu petobat baru, kelompok PA, dan tim pelayanan untuk:
+
+- Membaca dan mempelajari Alkitab dalam berbagai terjemahan secara paralel  
+- Mengelola anggota jemaat dan pelayanan  
+- Memanfaatkan konten berbasis AI (Tanya Jawab, rencana pelajaran, renungan)  
+- Mengelola sekolah/kelas, lagu rohani, dan fitur lanjutan lainnya
+
+### Tata letak halaman utama (`index.html`) (Page Layout)
+1. **Bilah atas (Topbar)**  
+   - Sebelah kiri menampilkan merek “Bible100 Four Treasures”.  
+   - Bagian tengah/kanan berisi tombol:  
+     - Pilihan bahasa (CN/EN/VI/ID/CH/AD)  
+     - Pintasan modul utama (Pelayanan Gereja, Studi Alkitab, Alat AI, Manajemen Sekolah, Pelayanan Cerdas, Pusat Navigasi)  
+   - Ketika bahasa dipilih, bingkai konten di sisi kanan menampilkan halaman pengantar bahasa tersebut.
+
+2. **Bingkai sisi kiri (Sidebar Frame)**  
+   - Menunjukkan navigasi untuk bahasa/modul yang dipilih:  
+     - Mode bahasa: daftar pasal PL/PB, kursus “Empat Harta”, halaman bantuan, dll.  
+     - Mode studi: daftar pasal dan alat studi Alkitab  
+   - Semua tautan dibuka di bingkai konten kanan sesuai preferensi pengguna.
+
+3. **Bingkai konten (Content Frame)**  
+   - Menampilkan pasal Alkitab, pelajaran, alat, atau halaman administrasi.  
+   - Karena berbentuk iframe, pengguna tetap berada dalam tata letak utama saat menjelajah.  
+   - Memuat skrip untuk mengoreksi jalur gambar lama agar sumber daya lama tetap tampil.
+
+### Ikhtisar modul (Module Overview)
+- **Studi Alkitab (Bible Study)**: komentar, kamus, referensi silang, garis waktu, pembaca terpadu, dll.  
+- **Pelayanan Gereja (Church Ministry)**: anggota, ibadah, kelompok kecil, relawan, pendidikan, keuangan.  
+- **Alat AI (AI Tools)**: Tanya Jawab AI, rencana pelajaran, generasi teks, alat multimedia.  
+- **Manajemen Sekolah (School Management)**: siswa, mata pelajaran, guru, keuangan, pemantauan kemajuan.  
+- **Pelayanan Cerdas (Smart Ministry)**: kuesioner AI untuk rekomendasi bidang pelayanan.  
+- **Pusat Navigasi (Navigation Hub)**: indeks situs, pusat dokumentasi, laporan deployment.
+
+---
+
+## 2. Tantangan terbesar yang pernah dihadapi 
+(Major Challenges Encountered)
+
+1. **Pemrosesan data dan dekripsi (Data Loading & Decryption)**  
+   - Banyak data komentar memakai format lama atau terenkripsi sehingga gagal ditampilkan.  
+   - Metode dekripsi warisan (XOR/Base64/Caesar) telah digabungkan ke dalam `universal-data-loader.js`.  
+   - Beberapa file JSON masih rusak oleh karakter kontrol, khususnya untuk referensi silang dan kamus.
+
+2. **Jalur gambar lama (Legacy Image Paths)**  
+   - Halaman lama memakai jalur `file://My Webs/...` yang tidak didukung browser modern.  
+   - Skrip `image_path_rewriter.js` dibuat untuk mengalihkan ke folder `languages/images/`.  
+   - Karena jumlah gambar sangat besar, masih ada beberapa jalur yang harus diperbaiki manual (contoh: halaman bahasa Vietnam yang baru diperbarui).
+
+3. **Kerapian direktori akar (Root Directory Clutter)**  
+   - Banyak laporan dan halaman uji coba menumpuk di direktori akar sehingga sulit menemukan file penting.  
+   - Saat ini dipindah sementara ke `_temp_reports/`, tetapi masih perlu direlokasi ke `docs/`.  
+   - Ini masih bagian dari pekerjaan pembersihan yang harus diselesaikan.
+
+---
+
+## 3. Rencana dan pekerjaan yang belum selesai
+ (Outstanding Plans and Work)
+
+1. **Pusat dokumentasi terpadu (Unified Documentation Hub)**  
+   - Memindahkan laporan/panduan dari `_temp_reports/` ke `docs/`, membuat paket “Ringkasan modul + Panduan pengguna”.  
+   - Targetnya: cukup membaca satu berkas seperti `docs/guides/module_overview.md` untuk memahami sistem.
+
+2. **Perbaikan dan pengayaan basis data (Database Repair & Completion)**  
+   - Terus membersihkan sumber data, terutama JSON rusak, agar referensi silang dan kamus berfungsi kembali.  
+   - Menilai kemungkinan impor ulang data atau menggantinya dengan sumber lain bila perlu.
+
+3. **README modul (Module README Coverage)**  
+   - Saat ini hanya “Pelayanan Cerdas” yang memiliki README lengkap.  
+   - Perlu menambahkan deskripsi serupa untuk `bible_study/`, `ai_tools/`, `church_ministry/`, `school_management/`, dan modul lainnya.
+
+4. **Kerapian direktori akar (Root Directory Hygiene)**  
+   - Menyelesaikan relokasi file sehingga direktori akar hanya menyimpan file inti dan skrip penting.  
+   - Menegakkan aturan: file uji coba/temporer tidak boleh disimpan di akar.
+
+5. **Pengujian integrasi lintas modul (Cross-Module Integration Testing)**  
+   - Menyelesaikan integrasi data antara Pelayanan Gereja ↔ Manajemen Sekolah ↔ Pelayanan Cerdas.  
+   - Menambahkan pengujian otomatis agar perubahan ke depan tidak merusak fungsi yang sudah ada.
+
+---
+
+Silakan simpan terjemahan Indonesia ini, misalnya di `docs/guides/module_overview_id.md`, agar pengguna berbahasa Indonesia bisa memahami platform dengan cepat.
+
+
+=================================
+

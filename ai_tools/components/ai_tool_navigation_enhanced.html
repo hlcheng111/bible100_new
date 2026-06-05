@@ -1,0 +1,250 @@
+<!-- 增強版AI工具導航組件 -->
+<div style="background: #F8F8F8; padding: 15px 20px; border-bottom: 1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+    
+    <!-- 左側導航 -->
+    <div style="display: flex; gap: 20px; align-items: center;">
+      <a href="../../index_v5.html" target="_top" class="nav-link">← 返回主站（多語）</a>
+      <a href="../../index.html" target="_top" class="nav-link">← 返回中文首頁</a>
+      <a href="../index.html" target="_top" class="nav-link">← 返回 AI 工具目錄</a>
+    </div>
+    
+    <!-- 中間工具導航 -->
+    <div style="display: flex; gap: 15px; align-items: center;">
+      <button onclick="navigateToPrevious()" class="nav-button" id="prevButton" disabled>
+        ← 上一頁
+      </button>
+      <div class="tool-indicator" id="toolIndicator">
+        <span id="currentToolIndex">1</span> / <span id="totalTools">8</span>
+      </div>
+      <button onclick="navigateToNext()" class="nav-button" id="nextButton">
+        下一頁 →
+      </button>
+    </div>
+    
+    <!-- 右側工具鏈接 -->
+    <div style="display: flex; gap: 15px; align-items: center;">
+      <a href="../pages/ai_text_to_image.html" class="tool-link" data-tool="image">🎨 文轉圖</a>
+      <a href="../pages/ai_text_to_speech.html" class="tool-link" data-tool="speech">🎤 文轉音</a>
+      <a href="../pages/ai_text_to_music.html" class="tool-link" data-tool="music">🎵 文轉樂</a>
+      <a href="../tools/ai_text_to_video.html" class="tool-link" data-tool="video">🎬 文轉影</a>
+      <a href="../functions/ai_lesson_design.html" class="tool-link" data-tool="lesson">📚 課程設計</a>
+      <a href="../pages/ai_quiz_generator.html" class="tool-link" data-tool="quiz">🎯 測驗生成</a>
+      <a href="../functions/ai_ask_homework_new.html" class="tool-link" data-tool="homework">📝 作業助手</a>
+      <a href="../tools/ai_media_embed_new.html" class="tool-link" data-tool="media">🎥 多媒體</a>
+    </div>
+  </div>
+  
+  <!-- 進度條 -->
+  <div style="margin-top: 10px;">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 12.5%;"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .nav-link {
+    text-decoration: none;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+  }
+  
+  .nav-link:hover {
+    background: #e0e0e0;
+    color: #333;
+  }
+  
+  .nav-button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+  
+  .nav-button:hover:not(:disabled) {
+    background: #45a049;
+    transform: translateY(-1px);
+  }
+  
+  .nav-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  
+  .tool-indicator {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    min-width: 60px;
+    text-align: center;
+  }
+  
+  .tool-link {
+    text-decoration: none;
+    color: #2E7D32;
+    font-size: 12px;
+    padding: 6px 10px;
+    background: #E8F5E8;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  
+  .tool-link:hover {
+    background: #C8E6C9;
+    transform: translateY(-1px);
+  }
+  
+  .tool-link.active {
+    background: #4CAF50;
+    color: white;
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #e0e0e0;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #45a049);
+    transition: width 0.3s ease;
+  }
+  
+  /* 響應式設計 */
+  @media (max-width: 768px) {
+    .nav-container {
+      flex-direction: column !important;
+      gap: 10px !important;
+    }
+    
+    .nav-left, .nav-center, .nav-right {
+      justify-content: center !important;
+      flex-wrap: wrap !important;
+    }
+    
+    .tool-link {
+      font-size: 10px;
+      padding: 4px 8px;
+    }
+  }
+</style>
+
+<script>
+// 工具導航配置
+const aiTools = [
+    { key: 'image', name: '文轉圖', url: '../pages/ai_text_to_image.html' },
+    { key: 'speech', name: '文轉音', url: '../pages/ai_text_to_speech.html' },
+    { key: 'music', name: '文轉樂', url: '../pages/ai_text_to_music.html' },
+    { key: 'video', name: '文轉影', url: '../tools/ai_text_to_video.html' },
+    { key: 'lesson', name: '課程設計', url: '../functions/ai_lesson_design.html' },
+    { key: 'quiz', name: '測驗生成', url: '../pages/ai_quiz_generator.html' },
+    { key: 'homework', name: '作業助手', url: '../functions/ai_ask_homework_new.html' },
+    { key: 'media', name: '多媒體', url: '../tools/ai_media_embed_new.html' }
+];
+
+// 獲取當前工具索引
+function getCurrentToolIndex() {
+    const currentPath = window.location.pathname;
+    const currentFile = currentPath.split('/').pop();
+    
+    for (let i = 0; i < aiTools.length; i++) {
+        if (aiTools[i].url.includes(currentFile)) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+// 更新導航狀態
+function updateNavigationState() {
+    const currentIndex = getCurrentToolIndex();
+    const prevButton = document.getElementById('prevButton');
+    const nextButton = document.getElementById('nextButton');
+    const currentToolIndex = document.getElementById('currentToolIndex');
+    const totalTools = document.getElementById('totalTools');
+    const progressFill = document.getElementById('progressFill');
+    
+    // 更新按鈕狀態
+    prevButton.disabled = currentIndex === 0;
+    nextButton.disabled = currentIndex === aiTools.length - 1;
+    
+    // 更新指示器
+    currentToolIndex.textContent = currentIndex + 1;
+    totalTools.textContent = aiTools.length;
+    
+    // 更新進度條
+    const progress = ((currentIndex + 1) / aiTools.length) * 100;
+    progressFill.style.width = progress + '%';
+    
+    // 更新工具鏈接狀態
+    document.querySelectorAll('.tool-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    const currentToolLink = document.querySelector(`[data-tool="${aiTools[currentIndex].key}"]`);
+    if (currentToolLink) {
+        currentToolLink.classList.add('active');
+    }
+}
+
+// 導航到上一頁
+function navigateToPrevious() {
+    const currentIndex = getCurrentToolIndex();
+    if (currentIndex > 0) {
+        const prevTool = aiTools[currentIndex - 1];
+        window.location.href = prevTool.url;
+    }
+}
+
+// 導航到下一頁
+function navigateToNext() {
+    const currentIndex = getCurrentToolIndex();
+    if (currentIndex < aiTools.length - 1) {
+        const nextTool = aiTools[currentIndex + 1];
+        window.location.href = nextTool.url;
+    }
+}
+
+// 鍵盤導航支持
+document.addEventListener('keydown', function(event) {
+    if (event.altKey) {
+        if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            navigateToPrevious();
+        } else if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            navigateToNext();
+        }
+    }
+});
+
+// 頁面載入時更新導航狀態
+document.addEventListener('DOMContentLoaded', function() {
+    updateNavigationState();
+    
+    // 添加工具提示
+    document.querySelectorAll('.tool-link').forEach(link => {
+        link.title = `Alt + ← 上一頁 | Alt + → 下一頁`;
+    });
+    
+    document.getElementById('prevButton').title = 'Alt + ← 上一頁';
+    document.getElementById('nextButton').title = 'Alt + → 下一頁';
+});
+</script>

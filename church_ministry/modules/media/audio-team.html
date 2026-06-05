@@ -1,0 +1,731 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音响团队管理系统 - 专业版 · Audio Team | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+        .header { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; padding: 15px 20px; }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
+        .tab.active { background: white; color: #e67e22; font-weight: 600; }
+        .container { max-width: 1800px; margin: 0 auto; padding: 15px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; border-left: 4px solid #e67e22; padding-left: 10px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 15px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #e67e22; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; }
+        .stat-label { font-size: 10px; color: #7f8c8d; margin-top: 5px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #7f8c8d; }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .equipment-card { background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #e67e22; margin-bottom: 10px; }
+        .status-good { background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+        .status-repair { background: #fff3cd; color: #856404; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+        .status-broken { background: #f8d7da; color: #721c24; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div class="header">
+        <h1>🎚️ 音响团队管理系统</h1>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 总览</button>
+            <button class="tab" onclick="switchTab('members')">👥 同工管理</button>
+            <button class="tab" onclick="switchTab('equipment')">🎛️ 设备管理</button>
+            <button class="tab" onclick="switchTab('schedule')">📅 排班表</button>
+            <button class="tab" onclick="switchTab('maintenance')">🔧 维护记录</button>
+            <button class="tab" onclick="switchTab('training')">📚 培训资料</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Overview -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-num" id="s1">0</div><div class="stat-label">音响同工</div></div>
+                <div class="stat-card"><div class="stat-num" id="s2">0</div><div class="stat-label">设备总数</div></div>
+                <div class="stat-card"><div class="stat-num" id="s3">0</div><div class="stat-label">本月服事</div></div>
+                <div class="stat-card"><div class="stat-num" id="s4">0</div><div class="stat-label">待维修</div></div>
+                <div class="stat-card"><div class="stat-num" id="s5">0%</div><div class="stat-label">设备良好率</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">📊 同工服事统计</div>
+                    <canvas id="memberChart"></canvas>
+                </div>
+                <div class="card">
+                    <div class="card-title">🎛️ 设备状态分布</div>
+                    <canvas id="equipmentChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📅 本周排班</div>
+                <table id="weekScheduleTable">
+                    <thead><tr><th>日期</th><th>活动</th><th>调音师</th><th>助手</th><th>备注</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Members -->
+        <div id="tab-members" class="tab-content">
+            <div class="card">
+                <div class="card-title">👥 音响同工管理</div>
+                <button class="btn btn-primary" onclick="showAddMemberModal()">➕ 新增同工</button>
+                <button class="btn btn-success" onclick="exportMembers()">📤 导出名单</button>
+                <table id="membersTable">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>专长</th>
+                            <th>技能等级</th>
+                            <th>联系电话</th>
+                            <th>本年服事</th>
+                            <th>最后服事</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Equipment -->
+        <div id="tab-equipment" class="tab-content">
+            <div class="card">
+                <div class="card-title">🎛️ 设备清单管理</div>
+                <button class="btn btn-primary" onclick="showAddEquipmentModal()">➕ 新增设备</button>
+                <button class="btn btn-success" onclick="exportEquipment()">📤 导出清单</button>
+                <div class="grid-3" style="margin-top:15px;">
+                    <div style="background:#d4edda;padding:15px;border-radius:8px;text-align:center;">
+                        <div style="font-size:24px;font-weight:bold;color:#155724;" id="goodCount">0</div>
+                        <div style="font-size:11px;color:#155724;margin-top:5px;">正常设备</div>
+                    </div>
+                    <div style="background:#fff3cd;padding:15px;border-radius:8px;text-align:center;">
+                        <div style="font-size:24px;font-weight:bold;color:#856404;" id="repairCount">0</div>
+                        <div style="font-size:11px;color:#856404;margin-top:5px;">待维修</div>
+                    </div>
+                    <div style="background:#f8d7da;padding:15px;border-radius:8px;text-align:center;">
+                        <div style="font-size:24px;font-weight:bold;color:#721c24;" id="brokenCount">0</div>
+                        <div style="font-size:11px;color:#721c24;margin-top:5px;">已损坏</div>
+                    </div>
+                </div>
+                <div id="equipmentList" style="margin-top:20px;"></div>
+            </div>
+        </div>
+        
+        <!-- Schedule -->
+        <div id="tab-schedule" class="tab-content">
+            <div class="card">
+                <div class="card-title">📅 服事排班表</div>
+                <button class="btn btn-primary" onclick="showAddScheduleModal()">➕ 新增排班</button>
+                <button class="btn btn-success" onclick="autoSchedule()">🤖 智能排班</button>
+                <table id="scheduleTable">
+                    <thead><tr><th>日期</th><th>活动</th><th>调音师</th><th>助手1</th><th>助手2</th><th>备注</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Maintenance -->
+        <div id="tab-maintenance" class="tab-content">
+            <div class="card">
+                <div class="card-title">🔧 设备维护记录</div>
+                <button class="btn btn-primary" onclick="showAddMaintenanceModal()">➕ 新增维护记录</button>
+                <table id="maintenanceTable">
+                    <thead><tr><th>日期</th><th>设备</th><th>问题描述</th><th>处理方式</th><th>费用</th><th>负责人</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Training -->
+        <div id="tab-training" class="tab-content">
+            <div class="card">
+                <div class="card-title">📚 音响培训资料</div>
+                <div style="line-height:2;">
+                    <h4 style="margin:15px 0 10px 0;color:#e67e22;">📖 基础教程</h4>
+                    <div style="padding:12px;background:#f8f9fa;border-radius:6px;margin-bottom:8px;cursor:pointer;" onclick="openTutorial(1)">
+                        📘 第1课：调音台基础操作
+                    </div>
+                    <div style="padding:12px;background:#f8f9fa;border-radius:6px;margin-bottom:8px;cursor:pointer;" onclick="openTutorial(2)">
+                        📙 第2课：话筒使用与位置
+                    </div>
+                    <div style="padding:12px;background:#f8f9fa;border-radius:6px;margin-bottom:8px;cursor:pointer;" onclick="openTutorial(3)">
+                        📗 第3课：音效调整技巧
+                    </div>
+                    
+                    <h4 style="margin:15px 0 10px 0;color:#e67e22;">🎬 视频教学</h4>
+                    <div style="padding:12px;background:#f8f9fa;border-radius:6px;margin-bottom:8px;">
+                        🎥 调音台操作演示（15分钟）
+                    </div>
+                    <div style="padding:12px;background:#f8f9fa;border-radius:6px;margin-bottom:8px;">
+                        🎥 常见问题处理（20分钟）
+                    </div>
+                    
+                    <h4 style="margin:15px 0 10px 0;color:#e67e22;">📋 操作手册</h4>
+                    <button class="btn btn-primary" onclick="downloadManual()">📥 下载完整操作手册PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        let data = {
+            members: [],
+            equipment: [],
+            schedule: [],
+            maintenance: []
+        };
+        let charts = {};
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            if (data.members.length === 0) {
+                loadDemo();
+            } else {
+                renderAll();
+            }
+        });
+        
+        function loadData() {
+            const saved = localStorage.getItem('audioTeamData');
+            if (saved) data = JSON.parse(saved);
+        }
+        
+        function saveData() {
+            localStorage.setItem('audioTeamData', JSON.stringify(data));
+        }
+        
+        function loadDemo() {
+            data.members = [
+                {id:1, name:'王弟兄', specialty:'调音台', level:'高级', phone:'0912-001', count:28, lastService:'2025-10-06'},
+                {id:2, name:'李姊妹', specialty:'音效处理', level:'中级', phone:'0912-002', count:15, lastService:'2025-09-29'},
+                {id:3, name:'张弟兄', specialty:'话筒管理', level:'初级', phone:'0912-003', count:8, lastService:'2025-09-22'},
+                {id:4, name:'陈弟兄', specialty:'综合', level:'高级', phone:'0912-004', count:32, lastService:'2025-10-06'}
+            ];
+            
+            data.equipment = [
+                {id:1, name:'调音台', brand:'Yamaha', model:'MG16XU', purchaseDate:'2020-05-15', status:'good', location:'主堂', lastMaintenance:'2025-08-15'},
+                {id:2, name:'主音箱（左）', brand:'JBL', model:'SRX815P', purchaseDate:'2019-03-20', status:'good', location:'主堂', lastMaintenance:'2025-07-20'},
+                {id:3, name:'主音箱（右）', brand:'JBL', model:'SRX815P', purchaseDate:'2019-03-20', status:'good', location:'主堂', lastMaintenance:'2025-07-20'},
+                {id:4, name:'无线话筒（1）', brand:'Shure', model:'SM58', purchaseDate:'2021-01-10', status:'repair', location:'主堂', lastMaintenance:'2025-09-01'},
+                {id:5, name:'监听音箱', brand:'Behringer', model:'B112D', purchaseDate:'2020-08-25', status:'good', location:'主堂', lastMaintenance:'2025-08-10'}
+            ];
+            
+            data.schedule = [
+                {id:1, date:'2025-10-13', event:'主日崇拜（第一堂）', engineer:'王弟兄', assistant1:'张弟兄', assistant2:'李姊妹', notes:''},
+                {id:2, date:'2025-10-13', event:'主日崇拜（第二堂）', engineer:'陈弟兄', assistant1:'李姊妹', assistant2:'张弟兄', notes:''},
+                {id:3, date:'2025-10-16', event:'周三祷告会', engineer:'王弟兄', assistant1:'张弟兄', assistant2:'', notes:''},
+                {id:4, date:'2025-10-20', event:'主日崇拜', engineer:'陈弟兄', assistant1:'李姊妹', assistant2:'', notes:''}
+            ];
+            
+            data.maintenance = [
+                {id:1, date:'2025-09-01', equipment:'无线话筒（1）', issue:'接收不稳定', solution:'更换电池、清洁接口', cost:200, person:'王弟兄'},
+                {id:2, date:'2025-08-15', equipment:'调音台', issue:'定期保养', solution:'清洁、检查线路', cost:0, person:'陈弟兄'}
+            ];
+            
+            saveData();
+            renderAll();
+        }
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+            
+            if (tab === 'overview') renderOverview();
+        }
+        
+        function renderAll() {
+            renderOverview();
+            renderMembers();
+            renderEquipment();
+            renderSchedule();
+            renderMaintenance();
+        }
+        
+        function renderOverview() {
+            document.getElementById('s1').textContent = data.members.length;
+            document.getElementById('s2').textContent = data.equipment.length;
+            document.getElementById('s3').textContent = data.schedule.filter(s => new Date(s.date).getMonth() === new Date().getMonth()).length;
+            document.getElementById('s4').textContent = data.equipment.filter(e => e.status === 'repair').length;
+            const goodRate = data.equipment.length > 0 ? Math.round((data.equipment.filter(e => e.status === 'good').length / data.equipment.length) * 100) : 0;
+            document.getElementById('s5').textContent = goodRate + '%';
+            
+            // Member Chart
+            const ctx1 = document.getElementById('memberChart');
+            if (charts.memberChart) charts.memberChart.destroy();
+            charts.memberChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: data.members.map(m => m.name),
+                    datasets: [{
+                        label: '服事次数',
+                        data: data.members.map(m => m.count),
+                        backgroundColor: 'rgba(230, 126, 34, 0.7)'
+                    }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+            
+            // Equipment Chart
+            const ctx2 = document.getElementById('equipmentChart');
+            if (charts.equipmentChart) charts.equipmentChart.destroy();
+            const statusCount = {
+                good: data.equipment.filter(e => e.status === 'good').length,
+                repair: data.equipment.filter(e => e.status === 'repair').length,
+                broken: data.equipment.filter(e => e.status === 'broken').length
+            };
+            charts.equipmentChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['正常', '待维修', '已损坏'],
+                    datasets: [{
+                        data: [statusCount.good, statusCount.repair, statusCount.broken],
+                        backgroundColor: ['#27ae60', '#f39c12', '#e74c3c']
+                    }]
+                }
+            });
+            
+            // Week Schedule
+            const today = new Date();
+            const weekSchedule = data.schedule.filter(s => {
+                const diff = (new Date(s.date) - today) / (1000*60*60*24);
+                return diff >= 0 && diff <= 7;
+            });
+            document.querySelector('#weekScheduleTable tbody').innerHTML = weekSchedule.map(s => `
+                <tr>
+                    <td>${s.date}</td>
+                    <td>${s.event}</td>
+                    <td>${s.engineer}</td>
+                    <td>${s.assistant1}</td>
+                    <td>${s.notes || '-'}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" style="text-align:center;color:#7f8c8d;">本周暂无排班</td></tr>';
+        }
+        
+        function renderMembers() {
+            document.querySelector('#membersTable tbody').innerHTML = data.members.map(m => `
+                <tr>
+                    <td>${m.name}</td>
+                    <td>${m.specialty}</td>
+                    <td>${m.level}</td>
+                    <td>${m.phone}</td>
+                    <td>${m.count}次</td>
+                    <td>${m.lastService}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editMember(${m.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteMember(${m.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderEquipment() {
+            document.getElementById('goodCount').textContent = data.equipment.filter(e => e.status === 'good').length;
+            document.getElementById('repairCount').textContent = data.equipment.filter(e => e.status === 'repair').length;
+            document.getElementById('brokenCount').textContent = data.equipment.filter(e => e.status === 'broken').length;
+            
+            document.getElementById('equipmentList').innerHTML = data.equipment.map(e => `
+                <div class="equipment-card">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+                        <div>
+                            <div style="font-size:14px;font-weight:600;margin-bottom:5px;">${e.name}</div>
+                            <div style="font-size:11px;color:#7f8c8d;">${e.brand} ${e.model}</div>
+                        </div>
+                        <span class="status-${e.status}">${getStatusText(e.status)}</span>
+                    </div>
+                    <div style="font-size:11px;color:#555;">
+                        📍 位置：${e.location} · 
+                        📅 购买：${e.purchaseDate} · 
+                        🔧 维护：${e.lastMaintenance}
+                    </div>
+                    <div style="margin-top:10px;">
+                        <button class="btn btn-sm btn-primary" onclick="editEquipment(${e.id})">编辑</button>
+                        <button class="btn btn-sm btn-success" onclick="markMaintenance(${e.id})">记录维护</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEquipment(${e.id})">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderSchedule() {
+            document.querySelector('#scheduleTable tbody').innerHTML = data.schedule.map(s => `
+                <tr>
+                    <td>${s.date}</td>
+                    <td>${s.event}</td>
+                    <td>${s.engineer}</td>
+                    <td>${s.assistant1}</td>
+                    <td>${s.assistant2 || '-'}</td>
+                    <td>${s.notes || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSchedule(${s.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderMaintenance() {
+            document.querySelector('#maintenanceTable tbody').innerHTML = data.maintenance.map(m => `
+                <tr>
+                    <td>${m.date}</td>
+                    <td>${m.equipment}</td>
+                    <td>${m.issue}</td>
+                    <td>${m.solution}</td>
+                    <td>$${m.cost}</td>
+                    <td>${m.person}</td>
+                </tr>
+            `).join('');
+        }
+        
+        function getStatusText(status) {
+            return {good:'✅ 正常', repair:'⚠️ 待修', broken:'❌ 损坏'}[status];
+        }
+        
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;font-weight:600;margin-bottom:20px;color:#2c3e50;">${title}</div>${content}`;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        function showAddMemberModal() {
+            showModal('➕ 新增音响同工', `
+                <div class="form-group">
+                    <label class="form-label">姓名</label>
+                    <input type="text" id="mName" class="form-input" placeholder="例如：王弟兄">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">专长</label>
+                    <select id="mSpecialty" class="form-select">
+                        <option>调音台操作</option>
+                        <option>音效处理</option>
+                        <option>话筒管理</option>
+                        <option>综合技能</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">技能等级</label>
+                    <select id="mLevel" class="form-select">
+                        <option>初级</option>
+                        <option>中级</option>
+                        <option>高级</option>
+                        <option>资深</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">联系电话</label>
+                    <input type="text" id="mPhone" class="form-input" placeholder="0912-000-000">
+                </div>
+                <button class="btn btn-primary" onclick="addMember()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addMember() {
+            const member = {
+                id: Date.now(),
+                name: document.getElementById('mName').value,
+                specialty: document.getElementById('mSpecialty').value,
+                level: document.getElementById('mLevel').value,
+                phone: document.getElementById('mPhone').value,
+                count: 0,
+                lastService: ''
+            };
+            if (!member.name) return alert('请填写姓名');
+            data.members.push(member);
+            saveData();
+            renderAll();
+            closeModal();
+            alert('✅ 同工已添加！');
+        }
+        
+        function deleteMember(id) {
+            if (confirm('确定删除此同工？')) {
+                data.members = data.members.filter(m => m.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+        
+        function showAddEquipmentModal() {
+            showModal('➕ 新增音响设备', `
+                <div class="form-group">
+                    <label class="form-label">设备名称</label>
+                    <input type="text" id="eName" class="form-input" placeholder="例如：调音台">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">品牌</label>
+                    <input type="text" id="eBrand" class="form-input" placeholder="例如：Yamaha">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">型号</label>
+                    <input type="text" id="eModel" class="form-input" placeholder="例如：MG16XU">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">购买日期</label>
+                    <input type="date" id="ePurchase" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">设备状态</label>
+                    <select id="eStatus" class="form-select">
+                        <option value="good">✅ 正常</option>
+                        <option value="repair">⚠️ 待维修</option>
+                        <option value="broken">❌ 已损坏</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">存放位置</label>
+                    <input type="text" id="eLocation" class="form-input" value="主堂">
+                </div>
+                <button class="btn btn-primary" onclick="addEquipment()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addEquipment() {
+            const equipment = {
+                id: Date.now(),
+                name: document.getElementById('eName').value,
+                brand: document.getElementById('eBrand').value,
+                model: document.getElementById('eModel').value,
+                purchaseDate: document.getElementById('ePurchase').value,
+                status: document.getElementById('eStatus').value,
+                location: document.getElementById('eLocation').value,
+                lastMaintenance: new Date().toISOString().split('T')[0]
+            };
+            if (!equipment.name) return alert('请填写设备名称');
+            data.equipment.push(equipment);
+            saveData();
+            renderAll();
+            closeModal();
+            alert('✅ 设备已添加！');
+        }
+        
+        function deleteEquipment(id) {
+            if (confirm('确定删除此设备？')) {
+                data.equipment = data.equipment.filter(e => e.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+        
+        function showAddScheduleModal() {
+            showModal('➕ 新增服事排班', `
+                <div class="form-group">
+                    <label class="form-label">服事日期</label>
+                    <input type="date" id="sDate" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">活动名称</label>
+                    <input type="text" id="sEvent" class="form-input" placeholder="例如：主日崇拜">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">调音师</label>
+                    <select id="sEngineer" class="form-select">
+                        ${data.members.map(m => `<option>${m.name}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">助手1</label>
+                    <select id="sAssistant1" class="form-select">
+                        <option value="">无</option>
+                        ${data.members.map(m => `<option>${m.name}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">助手2</label>
+                    <select id="sAssistant2" class="form-select">
+                        <option value="">无</option>
+                        ${data.members.map(m => `<option>${m.name}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <input type="text" id="sNotes" class="form-input" placeholder="特殊说明">
+                </div>
+                <button class="btn btn-primary" onclick="addSchedule()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addSchedule() {
+            const schedule = {
+                id: Date.now(),
+                date: document.getElementById('sDate').value,
+                event: document.getElementById('sEvent').value,
+                engineer: document.getElementById('sEngineer').value,
+                assistant1: document.getElementById('sAssistant1').value,
+                assistant2: document.getElementById('sAssistant2').value,
+                notes: document.getElementById('sNotes').value
+            };
+            if (!schedule.date || !schedule.event) return alert('请填写完整信息');
+            data.schedule.push(schedule);
+            saveData();
+            renderAll();
+            closeModal();
+            alert('✅ 排班已添加！');
+        }
+        
+        function deleteSchedule(id) {
+            if (confirm('确定删除此排班？')) {
+                data.schedule = data.schedule.filter(s => s.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+        
+        function showAddMaintenanceModal() {
+            showModal('➕ 新增维护记录', `
+                <div class="form-group">
+                    <label class="form-label">维护日期</label>
+                    <input type="date" id="mainDate" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">设备</label>
+                    <select id="mainEquip" class="form-select">
+                        ${data.equipment.map(e => `<option>${e.name}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">问题描述</label>
+                    <textarea id="mainIssue" class="form-textarea"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">处理方式</label>
+                    <textarea id="mainSolution" class="form-textarea"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">费用（元）</label>
+                    <input type="number" id="mainCost" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">负责人</label>
+                    <input type="text" id="mainPerson" class="form-input">
+                </div>
+                <button class="btn btn-primary" onclick="addMaintenance()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addMaintenance() {
+            const maintenance = {
+                id: Date.now(),
+                date: document.getElementById('mainDate').value,
+                equipment: document.getElementById('mainEquip').value,
+                issue: document.getElementById('mainIssue').value,
+                solution: document.getElementById('mainSolution').value,
+                cost: parseInt(document.getElementById('mainCost').value),
+                person: document.getElementById('mainPerson').value
+            };
+            if (!maintenance.date) return alert('请填写日期');
+            data.maintenance.push(maintenance);
+            saveData();
+            renderAll();
+            closeModal();
+            alert('✅ 维护记录已添加！');
+        }
+        
+        function autoSchedule() {
+            if (data.members.length < 2) {
+                return alert('⚠️ 同工人数不足，请先添加同工！');
+            }
+            if (confirm('🤖 智能排班将自动生成未来4周的服事安排。\n\n是否继续？')) {
+                const sundays = [];
+                const today = new Date();
+                for (let i = 0; i < 4; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() + ((7 - date.getDay()) % 7) + (i * 7));
+                    sundays.push(date.toISOString().split('T')[0]);
+                }
+                
+                sundays.forEach((date, i) => {
+                    data.schedule.push({
+                        id: Date.now() + i,
+                        date: date,
+                        event: '主日崇拜',
+                        engineer: data.members[i % data.members.length].name,
+                        assistant1: data.members[(i + 1) % data.members.length].name,
+                        assistant2: '',
+                        notes: '自动排班'
+                    });
+                });
+                
+                saveData();
+                renderSchedule();
+                alert('✅ 智能排班完成！已生成未来4周排班计划。');
+            }
+        }
+        
+        function exportMembers() {
+            const csv = '姓名,专长,技能等级,联系电话,本年服事次数,最后服事日期\n' + 
+                data.members.map(m => `${m.name},${m.specialty},${m.level},${m.phone},${m.count},${m.lastService}`).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'}));
+            a.download = '音响同工名单.csv';
+            a.click();
+            alert('✅ 名单已导出！');
+        }
+        
+        function exportEquipment() {
+            const csv = '设备名称,品牌,型号,购买日期,状态,位置,最后维护\n' + 
+                data.equipment.map(e => `${e.name},${e.brand},${e.model},${e.purchaseDate},${getStatusText(e.status)},${e.location},${e.lastMaintenance}`).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'}));
+            a.download = '音响设备清单.csv';
+            a.click();
+            alert('✅ 清单已导出！');
+        }
+        
+        function markMaintenance(id) {
+            const equipment = data.equipment.find(e => e.id === id);
+            equipment.lastMaintenance = new Date().toISOString().split('T')[0];
+            equipment.status = 'good';
+            saveData();
+            renderEquipment();
+            renderOverview();
+            alert('✅ 已标记为已维护！');
+        }
+        
+        function openTutorial(num) {
+            alert(`📖 打开教程 ${num}\n\n（此处可链接到实际教程文档或视频）`);
+        }
+        
+        function downloadManual() {
+            alert('📥 下载音响操作手册\n\n（实际部署时可链接PDF文件）');
+        }
+    </script>
+</body>
+</html>

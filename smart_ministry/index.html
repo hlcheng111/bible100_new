@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="color-scheme" content="light">
+    <title>智慧事奉中心 - Smart Ministry Center</title>
+    <link rel="stylesheet" href="../css/module_shell.css">
+</head>
+<body class="module-shell">
+    <header class="shell-toolbar" role="banner">
+        <button type="button" id="shellMenuBtn" class="shell-menu-btn" aria-controls="shellSidebarWrap"
+            aria-expanded="false" aria-label="開啟導覽選單">☰</button>
+        <span class="shell-title">智慧事奉 Smart Ministry</span>
+        <a href="../index_v5.html" class="shell-home-link" id="shellHomeLink">總站</a>
+    </header>
+
+    <div id="shellBackdrop" class="shell-backdrop" hidden aria-hidden="true"></div>
+
+    <div class="shell-body">
+        <div id="shellSidebarWrap" class="shell-sidebar-wrap">
+            <iframe id="sidebarFrame" class="sidebar-frame" title="智慧事奉側欄" src="sidebar.html"></iframe>
+        </div>
+        <!-- TODO: 圖解建議：此橫列旁可加「模組路線圖」小圖（會友 ↓ 牧者工具） -->
+        <div class="shell-main">
+            <nav class="shell-landing-hint" aria-label="智慧事奉快速導覽">
+                <strong>會友／成員：</strong>
+                <a href="landing.html#quick-start" target="contentFrame">快速開始</a>
+                <span class="shell-hint-sep">·</span>
+                <a href="registration.html" target="contentFrame">註冊</a>
+                <span class="shell-hint-sep">·</span>
+                <a href="spiritual_gifts.html" target="contentFrame">恩賜測驗</a>
+                <span class="shell-hint-sep">|</span>
+                <strong>牧者／同工：</strong>
+                <a href="guide_for_leaders.html" target="contentFrame">使用指南</a>
+                <span class="shell-hint-sep">·</span>
+                <a href="talent_skill_unified.html" target="contentFrame">人才技能</a>
+                <span class="shell-hint-sep">·</span>
+                <a href="talent_ministry_matching.html" target="contentFrame">人才事工配對</a>
+                <span class="shell-hint-sep">·</span>
+                <a href="../church_planning/church-planning-index.html" target="_top">教會規劃</a>
+            </nav>
+            <div class="shell-content">
+                <iframe id="contentFrame" name="contentFrame" title="智慧事奉內容" src="landing.html#quick-start"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            function bust(url) {
+                if (!url) return url;
+                var hash = '';
+                var h = url.indexOf('#');
+                if (h >= 0) {
+                    hash = url.slice(h);
+                    url = url.slice(0, h);
+                }
+                var sep = url.indexOf('?') >= 0 ? '&' : '?';
+                return url + sep + 'v=' + Date.now() + hash;
+            }
+
+            function loadContentInFrame(url) {
+                var iframe = document.getElementById('contentFrame');
+                if (iframe && url) iframe.src = bust(url);
+            }
+
+            function shouldUseContentOnlyMode() {
+                try {
+                    var params = new URLSearchParams(window.location.search || '');
+                    return params.get('shell') === 'content-only' || params.get('contentOnly') === '1';
+                } catch (err) {
+                    return false;
+                }
+            }
+
+            function checkIfInIframe() {
+                if (window !== window.top && shouldUseContentOnlyMode()) {
+                    document.body.classList.add('in-iframe');
+                }
+            }
+
+            window.addEventListener('message', function (event) {
+                var d = event.data;
+                if (!d || typeof d !== 'object') return;
+                if (d.type === 'navigate' && d.url) {
+                    loadContentInFrame(d.url);
+                    return;
+                }
+                if (d.type === 'bible100-shell') {
+                    var sb = d.sidebarUrl || '';
+                    var cf = d.contentUrl || '';
+                    var sbf = document.getElementById('sidebarFrame');
+                    var cff = document.getElementById('contentFrame');
+                    if (sb && sbf) sbf.src = bust(sb);
+                    if (cf && cff) cff.src = bust(cf);
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                checkIfInIframe();
+                var sb = document.getElementById('sidebarFrame');
+                if (sb && sb.src.indexOf('?') < 0 && sb.src.indexOf('sidebar.html') >= 0) {
+                    sb.src = bust('sidebar.html');
+                }
+                var home = document.getElementById('shellHomeLink');
+                if (home && window !== window.top) {
+                    home.setAttribute('target', '_top');
+                }
+            });
+        })();
+    </script>
+    <script src="../js/module_shell.js"></script>
+    <script src="../js/shell_contract.js"></script>
+    <script>
+        if (window.B100ShellContract && typeof window.B100ShellContract.validate === 'function') {
+            window.B100ShellContract.validate('smart_ministry/index.html');
+        }
+    </script>
+    <script src="../js/module_navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var frame = document.getElementById('contentFrame');
+            if (!frame) return;
+            window.loadContent = function (url) {
+                if (!url) return;
+                var hash = '';
+                var h = url.indexOf('#');
+                if (h >= 0) {
+                    hash = url.slice(h);
+                    url = url.slice(0, h);
+                }
+                var sep = url.indexOf('?') >= 0 ? '&' : '?';
+                frame.src = url + sep + 'v=' + Date.now() + hash;
+            };
+        });
+    </script>
+    <div id="global-tools-root"></div>
+    <script src="../js/global-tools.js"></script>
+</body>
+</html>

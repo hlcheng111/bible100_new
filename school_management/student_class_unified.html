@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生分班管理 - Student-Class（真實資料）</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial; background: #f5f6fa; color: #2c3e50; font-size: 11px; }
+        .topbar { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar h1 { font-size: 18px; font-weight: 600; }
+        .topbar-actions button { margin-left: 8px; padding: 6px 12px; border: none; background: white; color: #e67e22; border-radius: 4px; cursor: pointer; font-size: 10px; }
+        .intro { background: #fef5e7; padding: 8px 12px; font-size: 10px; color: #2c3e50; border-left: 4px solid #e67e22; margin: 0 10px 8px; border-radius: 0 4px 4px 0; }
+        .intro strong { color: #d35400; }
+        .stats { display: flex; gap: 10px; padding: 10px; background: white; }
+        .stat { flex: 1; text-align: center; padding: 10px; background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; border-radius: 4px; }
+        .stat-num { font-size: 20px; font-weight: bold; }
+        .stat-label { font-size: 9px; opacity: 0.9; }
+        .main { display: flex; height: calc(100vh - 120px); gap: 10px; padding: 10px; }
+        .panel { background: white; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
+        .panel-left, .panel-right { flex: 1; }
+        .panel-center { width: 320px; background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; }
+        .panel-header { padding: 10px 12px; background: rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: 600; font-size: 12px; display: flex; justify-content: space-between; }
+        .panel-center .panel-header { background: rgba(255,255,255,0.1); }
+        .panel-body { flex: 1; overflow-y: auto; padding: 10px; }
+        .search-box { margin-bottom: 8px; }
+        .search-box input { width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px; }
+        .item { padding: 8px 10px; margin-bottom: 4px; background: #f8f9fa; border-radius: 3px; cursor: pointer; border-left: 3px solid transparent; }
+        .item:hover { background: #e9ecef; }
+        .item.selected { background: #fdebd0; border-left-color: #e67e22; }
+        .item.linked { border-left-color: #27ae60; }
+        .item-title { font-weight: 600; font-size: 11px; margin-bottom: 3px; }
+        .item-meta { font-size: 9px; color: #7f8c8d; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 8px; font-weight: 500; margin-left: 4px; }
+        .badge-orange { background: #fdebd0; color: #af601a; }
+        .badge-green { background: #d5f4e6; color: #196f3d; }
+        .badge-red { background: #fadbd8; color: #922b21; }
+        .center-stat { background: rgba(255,255,255,0.15); padding: 15px; border-radius: 4px; margin-bottom: 10px; text-align: center; }
+        .center-stat-num { font-size: 28px; font-weight: bold; }
+        .center-stat-label { font-size: 10px; }
+        .center-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .center-actions button { padding: 10px; border: none; background: white; color: #e67e22; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .center-info { background: rgba(255,255,255,0.1); padding: 12px; border-radius: 4px; margin-top: 15px; font-size: 10px; text-align: left; }
+        .capacity-bar { background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; margin: 5px 0; overflow: hidden; }
+        .capacity-fill { height: 100%; background: #27ae60; transition: width 0.3s; }
+        .capacity-fill.warning { background: #f39c12; }
+        .capacity-fill.full { background: #e74c3c; }
+        .empty { text-align: center; padding: 40px 20px; color: #95a5a6; font-size: 10px; }
+        .msg { position: fixed; top: 60px; right: 20px; padding: 10px 15px; background: #27ae60; color: white; border-radius: 4px; font-size: 11px; z-index: 1000; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateX(300px); } to { transform: translateX(0); } }
+        .msg.error { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>🏫 学生分班管理</h1>
+        <div class="topbar-actions">
+            <button onclick="autoBalance()">⚖️ 智能平衡</button>
+            <button onclick="batchAssign()">📋 批量分班</button>
+            <button onclick="exportClassList()">📤 导出名单</button>
+            <a href="dashboard.html" target="contentFrame" style="padding:6px 12px;background:#fff;color:#e67e22;border-radius:4px;text-decoration:none;font-size:10px;border:1px solid #e67e22;">🏠 返回</a>
+        </div>
+    </div>
+
+    <div class="intro"><strong>用途：</strong>管理學生與班級的對應關係。左選學生、右選班級，中間操作分配／轉班／移出。適用於開學分班、轉班、查詢班級名單。</div>
+
+    <div class="stats">
+        <div class="stat"><div class="stat-num" id="totalStudents">0</div><div class="stat-label">学生总数</div></div>
+        <div class="stat"><div class="stat-num" id="totalClasses">0</div><div class="stat-label">班级总数</div></div>
+        <div class="stat"><div class="stat-num" id="assignedStudents">0</div><div class="stat-label">已分班</div></div>
+        <div class="stat"><div class="stat-num" id="unassignedStudents">0</div><div class="stat-label">未分班</div></div>
+    </div>
+
+    <div class="main">
+        <div class="panel panel-left">
+            <div class="panel-header"><span>👨‍🎓 学生列表</span><span class="badge badge-orange" id="studentCount">0</span></div>
+            <div class="panel-body">
+                <div class="search-box"><input type="text" id="studentSearch" placeholder="🔍 搜索学生" onkeyup="filterStudents()"></div>
+                <div id="studentList"></div>
+            </div>
+        </div>
+
+        <div class="panel panel-center">
+            <div class="panel-header"><span>🔗 分班管理</span></div>
+            <div class="panel-body">
+                <div class="center-stat"><div class="center-stat-num" id="currentClass">-</div><div class="center-stat-label">当前班级</div></div>
+                <div class="center-actions">
+                    <button onclick="assignClass()">➕ 分配班级</button>
+                    <button onclick="transferClass()">🔄 转班</button>
+                    <button onclick="removeFromClass()">➖ 移出班级</button>
+                    <button onclick="viewClassmates()">👁️ 查看同学</button>
+                </div>
+                <div class="center-info" id="selectedInfo" style="display:none;">
+                    <h4>当前选择</h4>
+                    <div id="selectedStudentInfo"></div>
+                    <div id="selectedClassInfo"></div>
+                </div>
+                <div class="center-info"><h4>💡 使用提示</h4><ul style="list-style:none; padding:0; font-size:9px;"><li style="padding:2px 0;">1. 左侧选择学生</li><li style="padding:2px 0;">2. 右侧选择班级</li><li style="padding:2px 0;">3. 点击"分配班级"</li><li style="padding:2px 0;">4. 绿边框=已分班</li></ul></div>
+            </div>
+        </div>
+
+        <div class="panel panel-right">
+            <div class="panel-header"><span>🏫 班级列表</span><span class="badge badge-green" id="classCount">0</span></div>
+            <div class="panel-body">
+                <div class="search-box"><input type="text" id="classSearch" placeholder="🔍 搜索班级" onkeyup="filterClasses()"></div>
+                <div id="classList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/school-master-database.js"></script>
+    <script>
+        let selectedStudent = null;
+        let selectedClass = null;
+
+        function getDB() {
+            return window.schoolDB && window.schoolDB.data ? window.schoolDB.data : null;
+        }
+
+        function getStudents() { const d = getDB(); return d ? (d.students || []) : []; }
+        function getClasses() { const d = getDB(); return d && d.class ? (d.class.classes || []) : []; }
+        function getClassStudents() { const d = getDB(); return d && d.class ? (d.class.classStudents || []) : []; }
+        function getTeachers() { const d = getDB(); return d ? (d.teachers || []) : []; }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.schoolDB && typeof window.schoolDB.ensureSeedFull === 'function') {
+                window.schoolDB.ensureSeedFull();
+            }
+            loadData();
+        });
+
+        function loadData() {
+            renderStudents();
+            renderClasses();
+            updateStats();
+        }
+
+        function renderStudents() {
+            const students = getStudents();
+            const search = (document.getElementById('studentSearch').value || '').toLowerCase();
+            const filtered = students.filter(s => String(s.name || '').toLowerCase().includes(search));
+            const classStudents = getClassStudents();
+            const list = document.getElementById('studentList');
+            
+            list.innerHTML = filtered.length === 0 ? '<div class="empty">尚無學生，請先至儀表板載入示範資料</div>' :
+                filtered.map(s => {
+                    const assignment = classStudents.find(cs => cs.studentId === s.id);
+                    const isSelected = selectedStudent && selectedStudent.id === s.id;
+                    return `<div class="item ${assignment ? 'linked' : ''} ${isSelected ? 'selected' : ''}" onclick="selectStudent(${s.id})">
+                        <div class="item-title">${s.name || '—'} ${assignment ? '<span class="badge badge-green">已分班</span>' : ''}</div>
+                        <div class="item-meta">${s.grade || ''} | ${s.gender || ''}</div>
+                    </div>`;
+                }).join('');
+
+            document.getElementById('studentCount').textContent = filtered.length;
+        }
+
+        function renderClasses() {
+            const classes = getClasses();
+            const search = (document.getElementById('classSearch').value || '').toLowerCase();
+            const filtered = classes.filter(c => String(c.name || '').toLowerCase().includes(search));
+            const classStudents = getClassStudents();
+            const teachers = getTeachers();
+            const list = document.getElementById('classList');
+            
+            list.innerHTML = filtered.length === 0 ? '<div class="empty">尚無班級，請先至儀表板載入示範資料</div>' :
+                filtered.map(c => {
+                    const count = classStudents.filter(cs => cs.classId === c.id).length;
+                    const capacity = c.capacity || 40;
+                    const percent = Math.min((count / capacity) * 100, 100);
+                    const isSelected = selectedClass && selectedClass.id === c.id;
+                    const t = teachers.find(t => t.id === c.teacherId);
+                    
+                    let statusBadge = '';
+                    if (percent >= 100) statusBadge = '<span class="badge badge-red">滿班</span>';
+                    else if (percent >= 90) statusBadge = '<span class="badge badge-orange">接近滿</span>';
+                    else if (count > 0) statusBadge = `<span class="badge badge-green">${count}人</span>`;
+                    
+                    return `<div class="item ${isSelected ? 'selected' : ''}" onclick="selectClass(${c.id})">
+                        <div class="item-title">${c.name || '—'} ${statusBadge}</div>
+                        <div class="item-meta">${t ? t.name : '無班主任'} | ${count}/${capacity}人</div>
+                        <div class="capacity-bar"><div class="capacity-fill ${percent >= 100 ? 'full' : percent >= 90 ? 'warning' : ''}" style="width:${percent}%"></div></div>
+                    </div>`;
+                }).join('');
+
+            document.getElementById('classCount').textContent = filtered.length;
+        }
+
+        function selectStudent(id) {
+            selectedStudent = getStudents().find(s => s.id === id);
+            renderStudents();
+            updateInfo();
+        }
+
+        function selectClass(id) {
+            selectedClass = getClasses().find(c => c.id === id);
+            renderClasses();
+            updateInfo();
+        }
+
+        function updateInfo() {
+            const info = document.getElementById('selectedInfo');
+            if (!selectedStudent && !selectedClass) {
+                info.style.display = 'none';
+                document.getElementById('currentClass').textContent = '-';
+                return;
+            }
+
+            info.style.display = 'block';
+            document.getElementById('selectedStudentInfo').innerHTML = selectedStudent ? 
+                `<p><strong>学生:</strong> ${selectedStudent.name} (${selectedStudent.grade})</p>` : '';
+            document.getElementById('selectedClassInfo').innerHTML = selectedClass ? 
+                `<p><strong>班级:</strong> ${selectedClass.name}</p>` : '';
+
+            if (selectedStudent) {
+                const cs = getClassStudents().find(cs => cs.studentId === selectedStudent.id);
+                const cls = cs ? getClasses().find(c => c.id === cs.classId) : null;
+                document.getElementById('currentClass').textContent = cls ? cls.name : (cs ? '已分班' : '未分班');
+            }
+        }
+
+        function assignClass() {
+            if (!selectedStudent || !selectedClass) {
+                msg('請先選擇學生和班級', 'error');
+                return;
+            }
+
+            if (!window.schoolDB) return msg('資料庫未載入', 'error');
+
+            const classStudents = getClassStudents();
+            const count = classStudents.filter(cs => cs.classId === selectedClass.id).length;
+            const capacity = selectedClass.capacity || 40;
+
+            if (count >= capacity) {
+                if (!confirm('該班級已滿，確定繼續分配嗎？')) return;
+            }
+
+            const existing = classStudents.find(cs => cs.studentId === selectedStudent.id);
+            if (existing) {
+                window.schoolDB.delete('class.classStudents', existing.id);
+            }
+            window.schoolDB.insert('class.classStudents', {
+                studentId: selectedStudent.id,
+                classId: selectedClass.id
+            });
+
+            msg('分班成功');
+            renderStudents();
+            renderClasses();
+            updateStats();
+            updateInfo();
+        }
+
+        function transferClass() {
+            if (!selectedStudent) {
+                msg('請先選擇學生', 'error');
+                return;
+            }
+
+            const classStudents = getClassStudents();
+            const current = classStudents.find(cs => cs.studentId === selectedStudent.id);
+            if (!current) {
+                msg('該學生未分班，請使用「分配班級」', 'error');
+                return;
+            }
+
+            if (!selectedClass) {
+                msg('請選擇目標班級', 'error');
+                return;
+            }
+
+            if (!window.schoolDB) return msg('資料庫未載入', 'error');
+
+            window.schoolDB.delete('class.classStudents', current.id);
+            window.schoolDB.insert('class.classStudents', {
+                studentId: selectedStudent.id,
+                classId: selectedClass.id
+            });
+
+            msg('轉班成功');
+            renderStudents();
+            renderClasses();
+            updateStats();
+        }
+
+        function removeFromClass() {
+            if (!selectedStudent) {
+                msg('請先選擇學生', 'error');
+                return;
+            }
+
+            if (!window.schoolDB) return msg('資料庫未載入', 'error');
+
+            const classStudents = getClassStudents();
+            const current = classStudents.find(cs => cs.studentId === selectedStudent.id);
+            if (current) {
+                window.schoolDB.delete('class.classStudents', current.id);
+            }
+            msg('已移出班級');
+            renderStudents();
+            renderClasses();
+            updateStats();
+        }
+
+        function viewClassmates() {
+            if (!selectedClass) {
+                msg('請先選擇班級', 'error');
+                return;
+            }
+
+            const classStudents = getClassStudents().filter(cs => cs.classId === selectedClass.id);
+            const students = getStudents();
+            const classList = classStudents.map(cs => students.find(s => s.id === cs.studentId)).filter(s => s);
+            
+            if (classList.length === 0) {
+                alert(`${selectedClass.name} 暫無學生`);
+                return;
+            }
+
+            let info = `${selectedClass.name} 學生名單 (${classList.length}人):\n\n`;
+            classList.forEach((s, i) => {
+                info += `${i+1}. ${s.name} (${s.gender || '—'})\n`;
+            });
+            alert(info);
+        }
+
+        function autoBalance() {
+            const students = getStudents();
+            const classes = getClasses();
+            
+            if (students.length === 0 || classes.length === 0) {
+                msg('需要先有學生和班級資料', 'error');
+                return;
+            }
+
+            if (!window.schoolDB) return msg('資料庫未載入', 'error');
+            if (!confirm('確定要自動平衡分班嗎？\n系統將均衡分配學生到各班級')) return;
+
+            const toRemove = [...getClassStudents()];
+            toRemove.forEach(cs => {
+                window.schoolDB.delete('class.classStudents', cs.id);
+            });
+
+            students.forEach((student, i) => {
+                const targetClass = classes[i % classes.length];
+                window.schoolDB.insert('class.classStudents', {
+                    studentId: student.id,
+                    classId: targetClass.id
+                });
+            });
+
+            msg('自動分班完成');
+            renderStudents();
+            renderClasses();
+            updateStats();
+        }
+
+        function batchAssign() {
+            msg('批量分班功能開發中...');
+        }
+
+        function exportClassList() {
+            const data = {
+                generatedAt: new Date().toISOString(),
+                students: getStudents(),
+                classes: getClasses(),
+                assignments: getClassStudents()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `class_list_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+
+            msg('名單已匯出');
+        }
+
+        function updateStats() {
+            const students = getStudents();
+            const classes = getClasses();
+            const assignments = getClassStudents();
+
+            document.getElementById('totalStudents').textContent = students.length;
+            document.getElementById('totalClasses').textContent = classes.length;
+            document.getElementById('assignedStudents').textContent = assignments.length;
+            document.getElementById('unassignedStudents').textContent = students.length - assignments.length;
+        }
+
+        function filterStudents() { renderStudents(); }
+        function filterClasses() { renderClasses(); }
+
+        function msg(text, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `msg ${type === 'error' ? 'error' : ''}`;
+            div.textContent = text;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

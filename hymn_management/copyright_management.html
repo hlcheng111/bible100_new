@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>版权管理 - Hymn Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-bottom: 20px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .stat-card .number { font-size: 36px; font-weight: bold; margin-bottom: 5px; }
+        .stat-card .label { font-size: 14px; opacity: 0.9; }
+        .toolbar { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+        .btn { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; }
+        .btn:hover { background: #2980b9; }
+        .copyright-table { width: 100%; border-collapse: collapse; background: white; }
+        .copyright-table th, .copyright-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ecf0f1; }
+        .copyright-table th { background: #34495e; color: white; font-weight: bold; }
+        .copyright-table tr:hover { background: #f8f9fa; }
+        .status { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .status.valid { background: #d4edda; color: #155724; }
+        .status.expiring { background: #fff3cd; color: #856404; }
+        .status.expired { background: #f8d7da; color: #721c24; }
+        .status.unknown { background: #e2e3e5; color: #383d41; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .filter-bar select, .filter-bar input { padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+        .filter-bar input { flex: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>©️ 版权管理</h1>
+
+        <div class="stats">
+            <div class="stat-card" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+                <div class="number" id="totalHymns">0</div>
+                <div class="label">总诗歌数</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+                <div class="number" id="withCopyright">0</div>
+                <div class="label">有版权信息</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
+                <div class="number" id="needReview">0</div>
+                <div class="label">待审核</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                <div class="number" id="expiring">0</div>
+                <div class="label">即将过期</div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn" onclick="loadData()">🔄 刷新数据</button>
+            <button class="btn" onclick="exportReport()">📥 导出报告</button>
+            <button class="btn" onclick="checkCompliance()">✔️ 合规性检查</button>
+        </div>
+
+        <div class="filter-bar">
+            <select id="statusFilter" onchange="filterData()">
+                <option value="all">全部状态</option>
+                <option value="valid">有效</option>
+                <option value="expiring">即将过期</option>
+                <option value="expired">已过期</option>
+                <option value="unknown">未知</option>
+            </select>
+            <input type="text" id="searchInput" placeholder="搜索诗歌标题、作者或版权方..." onkeyup="filterData()">
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="copyright-table">
+                <thead>
+                    <tr>
+                        <th>诗歌标题</th>
+                        <th>编号</th>
+                        <th>词曲作者</th>
+                        <th>版权所有方</th>
+                        <th>授权状态</th>
+                        <th>使用范围</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="copyrightTableBody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #7f8c8d;">
+                            暂无数据，请先在诗歌编辑器中添加诗歌
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let hymns = [];
+        let filteredHymns = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+
+        function loadData() {
+            hymns = JSON.parse(localStorage.getItem('hymns') || '[]');
+            filteredHymns = hymns;
+            updateStats();
+            displayData();
+        }
+
+        function updateStats() {
+            document.getElementById('totalHymns').textContent = hymns.length;
+            document.getElementById('withCopyright').textContent = hymns.filter(h => h.copyright).length;
+            document.getElementById('needReview').textContent = hymns.filter(h => !h.copyright).length;
+            document.getElementById('expiring').textContent = 0; // Placeholder
+        }
+
+        function displayData() {
+            const tbody = document.getElementById('copyrightTableBody');
+            
+            if (filteredHymns.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #7f8c8d;">没有找到匹配的诗歌</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredHymns.map(hymn => {
+                const status = getCopyrightStatus(hymn);
+                return `
+                    <tr>
+                        <td><strong>${hymn.title}</strong></td>
+                        <td>${hymn.number || '-'}</td>
+                        <td>${hymn.author || '未知'}</td>
+                        <td>${hymn.copyright || '未提供'}</td>
+                        <td><span class="status ${status.class}">${status.label}</span></td>
+                        <td>教会内部使用</td>
+                        <td>
+                            <button class="btn" style="padding: 5px 12px; font-size: 12px;" onclick="editCopyright(${hymn.id})">编辑</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getCopyrightStatus(hymn) {
+            if (!hymn.copyright) {
+                return { class: 'unknown', label: '未知' };
+            }
+            // Simple validation
+            return { class: 'valid', label: '有效' };
+        }
+
+        function filterData() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredHymns = hymns.filter(hymn => {
+                const matchesSearch = !searchText || 
+                    hymn.title.toLowerCase().includes(searchText) ||
+                    (hymn.author && hymn.author.toLowerCase().includes(searchText)) ||
+                    (hymn.copyright && hymn.copyright.toLowerCase().includes(searchText));
+
+                const status = getCopyrightStatus(hymn);
+                const matchesStatus = statusFilter === 'all' || status.class === statusFilter;
+
+                return matchesSearch && matchesStatus;
+            });
+
+            displayData();
+        }
+
+        function editCopyright(id) {
+            alert('请在诗歌编辑器中编辑诗歌的版权信息。');
+            window.location.href = 'hymn_editor.html';
+        }
+
+        function checkCompliance() {
+            const noCopyright = hymns.filter(h => !h.copyright);
+            
+            if (noCopyright.length === 0) {
+                alert('✅ 合规性检查通过！\n\n所有诗歌都已提供版权信息。');
+                return;
+            }
+
+            const message = `⚠️ 发现 ${noCopyright.length} 首诗歌缺少版权信息：\n\n` +
+                noCopyright.slice(0, 10).map(h => `• ${h.title}`).join('\n') +
+                (noCopyright.length > 10 ? `\n... 以及其他 ${noCopyright.length - 10} 首` : '') +
+                '\n\n请补充完整的版权信息。';
+
+            alert(message);
+        }
+
+        function exportReport() {
+            if (hymns.length === 0) {
+                alert('暂无数据可导出');
+                return;
+            }
+
+            const report = hymns.map(hymn => ({
+                标题: hymn.title,
+                编号: hymn.number || '',
+                作者: hymn.author || '',
+                版权信息: hymn.copyright || '未提供',
+                类别: hymn.category || ''
+            }));
+
+            const dataStr = JSON.stringify(report, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            const exportFileDefaultName = `copyright_report_${new Date().toISOString().split('T')[0]}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            alert('✅ 版权报告已导出！');
+        }
+    </script>
+</body>
+</html>
+

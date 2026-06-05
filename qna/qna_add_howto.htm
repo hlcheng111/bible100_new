@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>如何加入新網站或新難題</title>
+<style>
+body { margin: 0; padding: 16px; font-family: Microsoft JhengHei, Arial, sans-serif; font-size: 11pt; line-height: 1.6; background: #f9f9f9; }
+.container { max-width: 900px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; }
+h1 { color: #2a7; border-bottom: 3px solid #2a7; padding-bottom: 8px; }
+h2 { color: #17a2b8; margin-top: 24px; border-left: 4px solid #17a2b8; padding-left: 12px; }
+h3 { color: #555; margin-top: 20px; }
+code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: Consolas, monospace; }
+pre { background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; }
+.method { margin: 20px 0; padding: 16px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #28a745; }
+.method h3 { margin-top: 0; color: #28a745; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>如何加入新網站或新難題</h1>
+
+<div class="method">
+<h3>方法一：僅顯示新網站入口（最簡單，無需跑腳本）</h3>
+<p>適用於：只想在「二層：來源」選單中加入新網站連結，不需要可搜尋的難題目錄。</p>
+<ol>
+  <li>開啟 <code>qna_nav_config.js</code></li>
+  <li>在 <code>sources</code> 陣列中加入一筆，例如：</li>
+</ol>
+<pre>{
+  "id": "新來源id",
+  "label": "顯示名稱",
+  "category": "A",   // A=聖經書卷, B=神學教義, C=信徒教會
+  "sidebar": "qna_list_auto.htm",  // 或專屬的 qna_list_xxx.htm
+  "landing": "https://新網站網址/",
+  "lang": ["zh"],    // 或 ["en","zh"]
+  "zh_url": "https://中文版網址/"  // 若有中文版
+}</pre>
+<p>完成後重新整理頁面即可看到新網站。</p>
+</div>
+
+<div class="method">
+<h3>方法二：加入可搜尋的難題目錄（需執行腳本）</h3>
+<p>適用於：希望新網站的難題出現在左側欄，可被搜尋。</p>
+<ol>
+  <li><strong>在 qna02.htm 加入區塊</strong>（建議加在 <code>&lt;/body&gt;</code> 前）：</li>
+</ol>
+<pre>&lt;hr&gt;
+&lt;h2&gt;新網站名稱&lt;/h2&gt;
+&lt;p&gt;
+&lt;a href="https://新網站/題目1.htm"&gt;題目1&lt;/a&gt;&lt;br&gt;
+&lt;a href="https://新網站/題目2.htm"&gt;題目2&lt;/a&gt;&lt;br&gt;
+...
+&lt;/p&gt;</pre>
+<p><strong>注意</strong>：<code>&lt;h2&gt;</code> 內的文字必須與 <code>links_merged.json</code> 的某個 <code>sources[].label</code> 完全一致，否則解析器會略過。</p>
+<ol start="2">
+  <li><strong>執行腳本</strong>（在專案根目錄）：</li>
+</ol>
+<pre>python scripts/parse_qna02_to_json.py
+python scripts/build_qna_list.py</pre>
+<ol start="3">
+  <li>重新整理瀏覽器，即可看到新難題出現在目錄中。</li>
+</ol>
+</div>
+
+<div class="method">
+<h3>方法三：手動編輯 qna_list_auto.htm（不建議）</h3>
+<p>可直接編輯 <code>qna_list_auto.htm</code>，但下次執行 <code>build_qna_list.py</code> 時會被覆蓋。</p>
+<p>僅適用於：暫時測試，或確定不再執行 build 腳本。</p>
+</div>
+
+<h2>📝 分類對照</h2>
+<ul>
+  <li><strong>A（聖經書卷難題）</strong>：經文疑難、矛盾、背景等</li>
+  <li><strong>B（神學教義難題）</strong>：辯道、護教、神學問答</li>
+  <li><strong>C（信徒教會難題）</strong>：信仰、生活、教會實務</li>
+</ul>
+
+<h2>💡 提示</h2>
+<ul>
+  <li>若新網站有專屬的目錄頁（如 <code>qna_list_chineseapologetics.htm</code>），可在 <code>sidebar</code> 欄位指定該檔案</li>
+  <li>若沒有專屬目錄頁，使用 <code>qna_list_auto.htm</code> 即可（會顯示所有來源）</li>
+  <li>支援多語言的網站，可設定 <code>lang: ["en","zh"]</code> 並提供 <code>zh_url</code>，系統會自動顯示語言選譯連結</li>
+</ul>
+
+<p style="text-align: center; margin-top: 32px;">
+<a href="qna_landing.htm" target="main">← 返回主說明</a> | 
+<a href="qna_index_4layer.html" target="_top">返回四層導航</a>
+</p>
+</div>
+</body>
+</html>

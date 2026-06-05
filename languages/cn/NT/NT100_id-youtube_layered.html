@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 BibleProject Indonesian - 分層卡片展示</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 40px; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+
+        /* 自動生成工具 */
+        .generator-tool { background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 25px; border-radius: 15px; margin-bottom: 40px; }
+        .generator-title { font-size: 1.3rem; margin-bottom: 15px; text-align: center; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group select { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; }
+        .generate-btn { width: 100%; padding: 12px; background: #FF6B35; color: white; border: none; border-radius: 20px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        .generate-btn:hover { background: #e55a2e; }
+
+        /* 分類區域 */
+        .category-section { margin-bottom: 40px; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .category-header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; font-size: 1.3rem; font-weight: bold; text-align: center; }
+        .category-content { padding: 25px; }
+
+        /* 系列卡片 */
+        .series-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .series-card { border: 2px solid #e1e5e9; border-radius: 12px; padding: 20px; background: white; cursor: pointer; transition: all 0.3s ease; }
+        .series-card:hover { border-color: #667eea; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15); }
+        .series-card.expanded { border-color: #4CAF50; background: #f8fff8; }
+        .series-title { font-size: 1.1rem; font-weight: bold; color: #333; margin-bottom: 8px; }
+        .series-subtitle { color: #666; font-size: 0.9rem; margin-bottom: 12px; }
+        .series-stats { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .video-count { background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+        .expand-btn { background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 0.8rem; }
+        .expand-btn:hover { background: #45a049; }
+        .collapse-btn { background: #f44336; }
+
+        /* 視頻網格 - 8格布局 */
+        .videos-container { display: none; margin-top: 15px; padding-top: 15px; border-top: 2px solid #e1e5e9; }
+        .videos-container.active { display: block; }
+        .videos-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
+        .video-card { border: 1px solid #e1e5e9; border-radius: 8px; overflow: hidden; background: white; transition: all 0.3s ease; min-height: 160px; }
+        .video-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); border-color: #667eea; }
+        .video-image { width: 100%; height: 70px; position: relative; overflow: hidden; }
+        .video-thumbnail { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        .play-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255, 0, 0, 0.8); color: white; border: none; border-radius: 50%; width: 25px; height: 25px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .video-embed { width: 100%; height: 70px; border: none; }
+        .video-info { padding: 8px; }
+        .video-title { font-size: 0.7rem; font-weight: bold; color: #333; margin-bottom: 4px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .video-duration { font-size: 0.6rem; color: #666; }
+
+        /* 響應式設計 */
+        @media (max-width: 1400px) { .videos-grid { grid-template-columns: repeat(6, 1fr); } }
+        @media (max-width: 1200px) { .videos-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 900px) { .videos-grid { grid-template-columns: repeat(3, 1fr); } .series-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { body { padding: 10px; } .videos-grid { grid-template-columns: repeat(2, 1fr); } .header h1 { font-size: 1.8rem; } }
+        @media (max-width: 400px) { .videos-grid { grid-template-columns: 1fr; } }
+
+        /* 標籤選單樣式 */
+        .tabs-layout { margin-bottom: 20px; }
+        .tabs { display: flex; border-bottom: 2px solid #e1e5e9; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab { padding: 12px 24px; background: none; border: none; cursor: pointer; font-size: 1rem; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s; white-space: nowrap; }
+        .tab.active { color: #667eea; border-bottom-color: #667eea; }
+        .tab:hover { color: #667eea; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .success-message { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 6px; margin: 10px 0; display: none; }
+        .error-message { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 6px; margin: 10px 0; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 BibleProject Indonesian</h1>
+            <p>聖經項目 - 印尼語 YouTube播放列表</p>
+            <p style="font-size: 0.9rem; margin-top: 10px; opacity: 0.9;">分層卡片展示 - 8格網格布局</p>
+        </div>
+
+        <!-- 主要內容區域 - 標籤選單型式 -->
+        <div class="category-section">
+            <div class="category-header">📺 BibleProject Indonesian 播放列表</div>
+            <div class="category-content">
+                <!-- 標籤選單 -->
+                <div class="tabs-layout">
+                    <div class="tabs">
+                        <button class="tab active" onclick="showTab(event, 'bible-study')">聖經研讀</button>
+                        <button class="tab" onclick="showTab(event, 'book-series')">書卷系列</button>
+                        <button class="tab" onclick="showTab(event, 'theme-series')">主題系列</button>
+                    </div>
+
+                    <!-- 聖經研讀標籤內容 -->
+                    <div id="bible-study" class="tab-content active">
+                        <div class="series-grid">
+                            <!-- 如何讀聖經系列 -->
+                            <div class="series-card" onclick="toggleVideos(this, 'how-to-read')">
+                                <div class="series-title">如何讀聖經系列</div>
+                                <div class="series-subtitle">Seri Bagaimana Membaca Alkitab</div>
+                                <div class="series-stats">
+                                    <span class="video-count">📺 19部</span>
+                                    <button class="expand-btn">展開觀看</button>
+                                </div>
+                                <div class="videos-container" id="how-to-read-videos">
+                                    <div class="videos-grid" id="how-to-read-grid"></div>
+                                </div>
+                            </div>
+
+                            <!-- 單字研究系列 -->
+                            <div class="series-card" onclick="toggleVideos(this, 'word-study')">
+                                <div class="series-title">單字研究系列</div>
+                                <div class="series-subtitle">Studi Kata</div>
+                                <div class="series-stats">
+                                    <span class="video-count">📺 2部</span>
+                                    <button class="expand-btn">展開觀看</button>
+                                </div>
+                                <div class="videos-container" id="word-study-videos">
+                                    <div class="videos-grid" id="word-study-grid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 書卷系列標籤內容 -->
+                    <div id="book-series" class="tab-content">
+                        <div class="series-grid">
+                            <!-- 路加-使徒行傳系列 -->
+                            <div class="series-card" onclick="toggleVideos(this, 'luke-acts')">
+                                <div class="series-title">路加-使徒行傳</div>
+                                <div class="series-subtitle">Seri Lukas-Kisah Para Rasul</div>
+                                <div class="series-stats">
+                                    <span class="video-count">📺 10部</span>
+                                    <button class="expand-btn">展開觀看</button>
+                                </div>
+                                <div class="videos-container" id="luke-acts-videos">
+                                    <div class="videos-grid" id="luke-acts-grid"></div>
+                                </div>
+                            </div>
+
+                            <!-- 智慧書系列 -->
+                            <div class="series-card" onclick="toggleVideos(this, 'wisdom')">
+                                <div class="series-title">智慧書系列</div>
+                                <div class="series-subtitle">Seri Kitab Hikmat</div>
+                                <div class="series-stats">
+                                    <span class="video-count">📺 3部</span>
+                                    <button class="expand-btn">展開觀看</button>
+                                </div>
+                                <div class="videos-container" id="wisdom-videos">
+                                    <div class="videos-grid" id="wisdom-grid"></div>
+                                </div>
+                            </div>
+
+                            <!-- 律法書系列 -->
+                            <div class="series-card" onclick="toggleVideos(this, 'torah')">
+                                <div class="series-title">律法書系列</div>
+                                <div class="series-subtitle">Seri Kitab Taurat</div>
+                                <div class="series-stats">
+                                    <span class="video-count">📺 5部</span>
+                                    <button class="expand-btn">展開觀看</button>
+                                </div>
+                                <div class="videos-container" id="torah-videos">
+                                    <div class="videos-grid" id="torah-grid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 主題系列標籤內容 -->
+                    <div id="theme-series" class="tab-content">
+                        <div class="series-grid">
+                            <!-- 降臨節系列 -->
+                            <div class="series-card" onclick="toggleVideos(this, 'advent')">
+                                <div class="series-title">降臨節系列</div>
+                                <div class="series-subtitle">Seri Adven</div>
+                                <div class="series-stats">
+                                    <span class="video-count">📺 8部</span>
+                                    <button class="expand-btn">展開觀看</button>
+                                </div>
+                                <div class="videos-container" id="advent-videos">
+                                    <div class="videos-grid" id="advent-grid"></div>
+                                </div>
+                            </div>
+
+                            <!-- 示瑪系列 -->
+                            <div class="series-card" onclick="toggleVideos(this, 'shema')">
+                                <div class="series-title">示瑪系列</div>
+                                <div class="series-subtitle">Seri Shema</div>
+                                <div class="series-stats">
+                                    <span class="video-count">📺 4部</span>
+                                    <button class="expand-btn">展開觀看</button>
+                                </div>
+                                <div class="videos-container" id="shema-videos">
+                                    <div class="videos-grid" id="shema-grid"></div>
+                                </div>
+                            </div>
+
+                            <!-- 惡言系列 -->
+                            <div class="series-card" onclick="toggleVideos(this, 'bad-words')">
+                                <div class="series-title">惡言系列</div>
+                                <div class="series-subtitle">Seri Kata-kata Buruk</div>
+                                <div class="series-stats">
+                                    <span class="video-count">📺 5部</span>
+                                    <button class="expand-btn">展開觀看</button>
+                                </div>
+                                <div class="videos-container" id="bad-words-videos">
+                                    <div class="videos-grid" id="bad-words-grid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 自動生成工具 - 移到最後 -->
+        <div class="generator-tool">
+            <h2 class="generator-title">📚 添加新的YouTube播放列表</h2>
+            <div class="input-group">
+                <label for="playlistUrl">🔗 YouTube播放列表網址：</label>
+                <input type="url" id="playlistUrl" placeholder="https://www.youtube.com/playlist?list=...">
+            </div>
+            <div class="input-group">
+                <label for="categorySelect">📂 選擇分類：</label>
+                <select id="categorySelect">
+                    <option value="bible-study">聖經研讀</option>
+                    <option value="book-series">書卷系列</option>
+                    <option value="theme-series">主題系列</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="seriesName">📝 系列名稱（可選）：</label>
+                <input type="text" id="seriesName" placeholder="留空將自動提取播放列表標題">
+            </div>
+            <button class="generate-btn" onclick="generatePlaylistCards()">🚀 自動生成並添加到頁面</button>
+            <div id="successMessage" class="success-message"></div>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+    </div>
+
+    <script>
+        // 播放列表數據庫
+        const playlistDatabase = {
+            'how-to-read': {
+                listId: 'PL-T20gptDCBizZ78togUMqem9fWtayEV8',
+                videos: [
+                    { id: 'd8EOCZKJS4Y', title: 'Bagaimana Membaca Alkitab: Desain Sastra', duration: '5:12' },
+                    { id: 'VhmlJBUIoLk', title: 'Bagaimana Membaca Alkitab: Narasi Alkitab', duration: '6:15' },
+                    { id: 'GQI72THyO5I', title: 'Bagaimana Membaca Alkitab: Puisi Alkitab', duration: '8:45' },
+                    { id: 'VjMaRUhNj-0', title: 'Bagaimana Membaca Alkitab: Hukum Alkitab', duration: '7:32' },
+                    { id: 'oEXTdXKJ_-Q', title: 'Bagaimana Membaca Alkitab: Sastra Hikmat Alkitab', duration: '6:28' },
+                    { id: 'WQRKb7jjW5k', title: 'Bagaimana Membaca Alkitab: Sastra Apokaliptik', duration: '9:12' },
+                    { id: 'URgpTEXY6zs', title: 'Bagaimana Membaca Alkitab: Injil', duration: '5:45' },
+                    { id: 'AjAVKAjAhNM', title: 'Bagaimana Membaca Alkitab: Perumpamaan', duration: '4:18' },
+                    { id: 'RazrfGz_F2M', title: 'Bagaimana Membaca Alkitab: Surat-surat', duration: '6:52' },
+                    { id: 'ZFJ1rqy3e7w', title: 'Bagaimana Membaca Alkitab: Kata-kata Yesus', duration: '7:15' },
+                    { id: 'P8pmVhJGWzw', title: 'Bagaimana Membaca Alkitab: Teks Sulit', duration: '8:30' },
+                    { id: 'k0BWlvnBmIE', title: 'Bagaimana Membaca Alkitab: Konteks Sejarah', duration: '5:55' },
+                    { id: 'VQmlmKRC_jk', title: 'Bagaimana Membaca Alkitab: Konteks Sastra', duration: '6:42' },
+                    { id: 'Mo8hZ3cLyqA', title: 'Bagaimana Membaca Alkitab: Tema Alkitab', duration: '7:28' },
+                    { id: 'Zy2AQlK6C5k', title: 'Bagaimana Membaca Alkitab: Perjanjian', duration: '9:15' },
+                    { id: 'F4isSyennFo', title: 'Bagaimana Membaca Alkitab: Kerajaan Allah', duration: '6:38' },
+                    { id: 'fqZ9b3JRqQY', title: 'Bagaimana Membaca Alkitab: Roh Allah', duration: '8:22' },
+                    { id: 'Qa6cCy9Jqhs', title: 'Bagaimana Membaca Alkitab: Mesianik', duration: '7:05' },
+                    { id: 'BWJhOJzjS10', title: 'Bagaimana Membaca Alkitab: Keselamatan', duration: '6:18' }
+                ]
+            },
+            'word-study': {
+                listId: 'PL-T20gptDCBhRYQk27MObgLZXNJaOF9cu',
+                videos: [
+                    { id: 'fow__qqQylI', title: 'Studi Kata: Berkat', duration: '6:45' },
+                    { id: 'Jyn6xVeWy3w', title: 'Studi Kata: Shalom', duration: '5:32' }
+                ]
+            },
+            'luke-acts': {
+                listId: 'PL-T20gptDCBigd47UgBxjDxBVsl2CYctV',
+                videos: [
+                    { id: 'fmeHRAhG240', title: 'Lukas-Kisah Para Rasul Bagian 1', duration: '8:15' },
+                    { id: 'HIRNdveLnJI', title: 'Lukas-Kisah Para Rasul Bagian 2', duration: '7:42' },
+                    { id: 'JQX2YbFMdoQ', title: 'Lukas-Kisah Para Rasul Bagian 3', duration: '6:58' },
+                    { id: 'Z-17KxpjL0Q', title: 'Lukas-Kisah Para Rasul Bagian 4', duration: '9:22' },
+                    { id: 'CGbNw855ksw', title: 'Lukas-Kisah Para Rasul Bagian 5', duration: '7:35' },
+                    { id: 'JQX2YbFMdoQ', title: 'Lukas-Kisah Para Rasul Bagian 6', duration: '8:48' },
+                    { id: 'Z-17KxpjL0Q', title: 'Lukas-Kisah Para Rasul Bagian 7', duration: '6:25' },
+                    { id: 'CGbNw855ksw', title: 'Lukas-Kisah Para Rasul Bagian 8', duration: '7:12' },
+                    { id: 'JQX2YbFMdoQ', title: 'Lukas-Kisah Para Rasul Bagian 9', duration: '5:55' },
+                    { id: 'Z-17KxpjL0Q', title: 'Lukas-Kisah Para Rasul Bagian 10', duration: '8:38' }
+                ]
+            },
+            'wisdom': {
+                listId: 'PL-T20gptDCBiTHFRJx2Mz7G1umWBEIM5h',
+                videos: [
+                    { id: 'n7CqWxmyCPg', title: 'Kitab Hikmat: Amsal', duration: '7:25' },
+                    { id: 'lrsQ1tc-2wk', title: 'Kitab Hikmat: Pengkhotbah', duration: '6:48' },
+                    { id: 'WiBnDHj4pEE', title: 'Kitab Hikmat: Ayub', duration: '8:15' }
+                ]
+            },
+            'torah': {
+                listId: 'PL-T20gptDCBgASXWSjElOHDkjjOrTtNSp',
+                videos: [
+                    { id: 'TWMhcg83AWg', title: 'Taurat: Kejadian 1-11', duration: '9:32' },
+                    { id: 'F4isSyennFo', title: 'Taurat: Kejadian 12-50', duration: '8:15' },
+                    { id: 'jH_aojNJM3E', title: 'Taurat: Keluaran 1-18', duration: '7:45' },
+                    { id: 'oNpTha80yyE', title: 'Taurat: Keluaran 19-40', duration: '6:52' },
+                    { id: 'IVbnciQYMiM', title: 'Taurat: Imamat', duration: '8:28' }
+                ]
+            },
+            'advent': {
+                listId: 'PL-T20gptDCBjUu-moKzqtj1V4zN50KDgM',
+                videos: [
+                    { id: 'zuF-YBz213I', title: 'Adven: Harapan', duration: '5:45' },
+                    { id: 'Zy2AQlK6C5k', title: 'Adven: Damai', duration: '6:18' },
+                    { id: 'fqZ9b3JRqQY', title: 'Adven: Sukacita', duration: '5:32' },
+                    { id: 'Qa6cCy9Jqhs', title: 'Adven: Kasih', duration: '6:45' },
+                    { id: 'BWJhOJzjS10', title: 'Adven: Kelahiran Yesus', duration: '7:15' },
+                    { id: 'VQmlmKRC_jk', title: 'Adven: Inkarnasi', duration: '8:22' },
+                    { id: 'Mo8hZ3cLyqA', title: 'Adven: Emmanuel', duration: '6:38' },
+                    { id: 'k0BWlvnBmIE', title: 'Adven: Terang Dunia', duration: '7:05' }
+                ]
+            },
+            'shema': {
+                listId: 'PL-T20gptDCBjH92bbjI0ObGyWLS7lgY8x',
+                videos: [
+                    { id: 'i4zJsDiuIK8', title: 'Shema: Dengarlah Israel', duration: '8:45' },
+                    { id: 'VhmlJBUIoLk', title: 'Shema: Satu Allah', duration: '7:32' },
+                    { id: 'GQI72THyO5I', title: 'Shema: Mengasihi Allah', duration: '6:28' },
+                    { id: 'VjMaRUhNj-0', title: 'Shema: Hati dan Jiwa', duration: '9:12' }
+                ]
+            },
+            'bad-words': {
+                listId: 'PL-T20gptDCBiq3fef-EY7sqi2mwQuyB8U',
+                videos: [
+                    { id: 'guWpNyF4gjE', title: 'Kata-kata Buruk: Definisi', duration: '6:15' },
+                    { id: 'oEXTdXKJ_-Q', title: 'Kata-kata Buruk: Dampak', duration: '7:48' },
+                    { id: 'WQRKb7jjW5k', title: 'Kata-kata Buruk: Alternatif', duration: '5:52' },
+                    { id: 'URgpTEXY6zs', title: 'Kata-kata Buruk: Penyembuhan', duration: '8:25' },
+                    { id: 'AjAVKAjAhNM', title: 'Kata-kata Buruk: Transformasi', duration: '6:38' }
+                ]
+            }
+        };
+
+        // 切換視頻顯示
+        function toggleVideos(card, seriesId) {
+            const container = card.querySelector('.videos-container');
+            const btn = card.querySelector('.expand-btn');
+            const grid = document.getElementById(seriesId + '-grid');
+
+            if (container.classList.contains('active')) {
+                container.classList.remove('active');
+                card.classList.remove('expanded');
+                btn.textContent = '展開觀看';
+                btn.classList.remove('collapse-btn');
+            } else {
+                container.classList.add('active');
+                card.classList.add('expanded');
+                btn.textContent = '收合';
+                btn.classList.add('collapse-btn');
+
+                if (grid.children.length === 0) {
+                    loadVideos(seriesId, grid);
+                }
+            }
+        }
+
+        // 載入視頻卡片
+        function loadVideos(seriesId, grid) {
+            const series = playlistDatabase[seriesId];
+            if (!series) return;
+
+            series.videos.forEach(video => {
+                const videoCard = createVideoCard(video);
+                grid.appendChild(videoCard);
+            });
+        }
+
+        // 創建視頻卡片
+        function createVideoCard(video) {
+            const card = document.createElement('div');
+            card.className = 'video-card';
+
+            card.innerHTML = `
+                <div class="video-image" onclick="playVideo(this, '${video.id}')">
+                    <img src="https://img.youtube.com/vi/${video.id}/maxresdefault.jpg"
+                         alt="${video.title}" class="video-thumbnail">
+                    <button class="play-overlay">▶</button>
+                </div>
+                <div class="video-info">
+                    <div class="video-title">${video.title}</div>
+                    <div class="video-duration">${video.duration}</div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // 播放視頻
+        function playVideo(element, videoId) {
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+            iframe.className = 'video-embed';
+            iframe.frameBorder = '0';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+            iframe.allowFullscreen = true;
+
+            element.innerHTML = '';
+            element.appendChild(iframe);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '✕';
+            closeBtn.style.cssText = `position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 10px; z-index: 10;`;
+            closeBtn.onclick = function(e) { e.stopPropagation(); restoreVideo(element, videoId); };
+            element.appendChild(closeBtn);
+        }
+
+        function restoreVideo(element, videoId) {
+            element.innerHTML = `<img src="https://img.youtube.com/vi/${videoId}/maxresdefault.jpg" alt="YouTube Video" class="video-thumbnail"><button class="play-overlay">▶</button>`;
+            element.onclick = function() { playVideo(element, videoId); };
+        }
+
+        // 自動生成播放列表功能
+        async function generatePlaylistCards() {
+            const playlistUrl = document.getElementById('playlistUrl').value.trim();
+            const category = document.getElementById('categorySelect').value;
+            const customName = document.getElementById('seriesName').value.trim();
+
+            const successMsg = document.getElementById('successMessage');
+            const errorMsg = document.getElementById('errorMessage');
+
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            if (!playlistUrl) {
+                showError('請輸入YouTube播放列表網址！');
+                return;
+            }
+
+            const listMatch = playlistUrl.match(/[&?]list=([^&]+)/);
+            if (!listMatch) {
+                showError('無效的播放列表網址！請確認網址格式正確。');
+                return;
+            }
+
+            const listId = listMatch[1];
+
+            try {
+                showSuccess(`正在處理播放列表 ${listId}...`);
+
+                const mockPlaylist = {
+                    title: customName || '新增播放列表',
+                    videoCount: Math.floor(Math.random() * 20) + 1,
+                    videos: generateMockVideos(5)
+                };
+
+                addPlaylistToCategory(category, mockPlaylist, listId);
+                showSuccess(`✅ 成功添加播放列表"${mockPlaylist.title}"到${getCategoryName(category)}分類！包含${mockPlaylist.videoCount}個視頻。`);
+
+                document.getElementById('playlistUrl').value = '';
+                document.getElementById('seriesName').value = '';
+
+            } catch (error) {
+                showError('生成播放列表時發生錯誤：' + error.message);
+            }
+        }
+
+        function generateMockVideos(count) {
+            const videos = [];
+            for (let i = 1; i <= count; i++) {
+                videos.push({
+                    id: `mock_${Date.now()}_${i}`,
+                    title: `新視頻 ${i}`,
+                    duration: `${Math.floor(Math.random() * 10) + 3}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`
+                });
+            }
+            return videos;
+        }
+
+        // 標籤切換功能
+        function showTab(event, tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function addPlaylistToCategory(category, playlist, listId) {
+            const categoryContainer = document.getElementById(category).querySelector('.series-grid');
+            const seriesId = `custom_${Date.now()}`;
+
+            const seriesCard = document.createElement('div');
+            seriesCard.className = 'series-card';
+            seriesCard.onclick = function() { toggleVideos(this, seriesId); };
+
+            seriesCard.innerHTML = `
+                <div class="series-title">${playlist.title}</div>
+                <div class="series-subtitle">自定義播放列表</div>
+                <div class="series-stats">
+                    <span class="video-count">📺 ${playlist.videoCount}部</span>
+                    <button class="expand-btn">展開觀看</button>
+                </div>
+                <div class="videos-container" id="${seriesId}-videos">
+                    <div class="videos-grid" id="${seriesId}-grid"></div>
+                </div>
+            `;
+
+            categoryContainer.appendChild(seriesCard);
+
+            playlistDatabase[seriesId] = { listId: listId, videos: playlist.videos };
+        }
+
+        function getCategoryName(category) {
+            const names = { 'bible-study': '聖經研讀', 'book-series': '書卷系列', 'theme-series': '主題系列' };
+            return names[category] || category;
+        }
+
+        function showSuccess(message) {
+            const successMsg = document.getElementById('successMessage');
+            successMsg.textContent = message;
+            successMsg.style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科目管理 · Subjects</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f6fb; color: #333; font-size: 12px; padding: 16px; }
+        .header { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(52,152,219,0.25); }
+        .header h1 { font-size: 18px; margin-bottom: 8px; }
+        .header p { font-size: 11px; opacity: 0.9; }
+        details { margin-top: 10px; padding: 10px 14px; background: rgba(255,255,255,0.12); border-radius: 8px; font-size: 11px; }
+        summary { cursor: pointer; font-weight: 600; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #3498db; border-left: 4px solid #3498db; padding-left: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f8fafc; font-weight: 600; }
+        tr:hover { background: #f9fafb; }
+        .btn { display: inline-block; padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; text-decoration: none; margin-right: 6px; }
+        .btn:hover { background: #2980b9; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #9ca3af; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📚 科目管理 · Subjects</h1>
+        <p>從課程中彙總的科目／類別</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <p style="margin-top:8px;"><b>此頁是為誰而設？</b> 主日學負責人、課程規劃同工。</p>
+            <p><b>有什麼功能？</b> 科目一覽、各科目課程數、匯出。</p>
+            <p><b>如何入手？</b> 科目由課程的 subject 欄位彙總，請先載入示範資料。</p>
+        </details>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📖 科目列表（依課程彙總） <button class="btn" onclick="exportData()" style="float:right;">📤 匯出 JSON</button></div>
+        <div id="subjectList"></div>
+    </div>
+
+    <a href="../../dashboard.html" class="btn">返回儀表板</a> <a href="index.html" class="btn">班級資料</a> <a href="../courses/index.html" class="btn">課程管理</a> <a href="../../portal/index.html" class="btn" style="background:#27ae60;">學員報名入口</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        function loadSubjects() {
+            if (!window.schoolDB) {
+                document.getElementById('subjectList').innerHTML = '<div class="empty-state">請先載入 SchoolMasterDatabase</div>';
+                return;
+            }
+            if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+
+            const courses = window.schoolDB.data.courses || [];
+            const bySubject = {};
+            courses.forEach(c => {
+                const sub = c.subject || c.name || '未分類';
+                if (!bySubject[sub]) bySubject[sub] = [];
+                bySubject[sub].push(c);
+            });
+
+            const subjects = Object.entries(bySubject).sort((a, b) => b[1].length - a[1].length);
+
+            let html = '';
+            if (subjects.length === 0) {
+                html = '<div class="empty-state">尚無科目，請先至儀表板載入示範資料。</div>';
+            } else {
+                html = '<table><thead><tr><th>#</th><th>科目</th><th>課程數</th><th>課程範例</th><th>操作</th></tr></thead><tbody>';
+                subjects.forEach(([name, list], i) => {
+                    const samples = list.slice(0, 3).map(c => c.name).join('、');
+                    const subEnc = encodeURIComponent(name);
+                    html += '<tr><td>' + (i + 1) + '</td><td>' + name + '</td><td>' + list.length + '</td><td>' + (samples || '—') + '</td><td><a href="../courses/index.html?subject=' + subEnc + '" class="btn" style="padding:4px 10px;font-size:10px;">查看課程</a> <a href="../../portal/index.html" class="btn" style="padding:4px 10px;font-size:10px;background:#27ae60;">報名註冊</a></td></tr>';
+                });
+                html += '</tbody></table>';
+            }
+            document.getElementById('subjectList').innerHTML = html;
+        }
+
+        function exportData() {
+            if (!window.schoolDB) return alert('無資料可匯出');
+            const courses = window.schoolDB.data.courses || [];
+            const bySubject = {};
+            courses.forEach(c => {
+                const sub = c.subject || c.name || '未分類';
+                if (!bySubject[sub]) bySubject[sub] = [];
+                bySubject[sub].push({ name: c.name, code: c.code, credits: c.credits });
+            });
+            const data = { generatedAt: new Date().toISOString(), subjects: bySubject };
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+            a.download = 'subjects_' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSubjects);
+    </script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>營運自動化控制台 · CRM Automation</title>
+  <link rel="stylesheet" href="../assets/css/lab-shell.css">
+  <script src="../../js/cloud_config.js"></script>
+  <script src="../../js/crm_intent_router.js"></script>
+  <script src="../../js/data_trust_badge.js"></script>
+  <script src="../assets/js/lab-frame-nav.js"></script>
+  <style>
+    body { margin: 0; font-family: "Microsoft YaHei", sans-serif; background: #f8fafc; color: #0f172a; font-size: 13px; }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 16px; }
+    .hero { background: linear-gradient(135deg, #0f766e, #0369a1); color: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+    .hero h1 { margin: 0 0 6px; font-size: 18px; }
+    .hero p { margin: 0; font-size: 12px; opacity: 0.92; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+    textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 100px; }
+    .btn { padding: 8px 14px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 12px; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-success { background: #059669; color: #fff; }
+    .btn-mic { background: #7c3aed; color: #fff; }
+    .btn-mic.listening { background: #dc2626; }
+    .btn-mic.hidden { display: none; }
+    .mono { font-family: ui-monospace, monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; min-height: 200px; width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
+    .hint { font-size: 11px; color: #64748b; line-height: 1.5; }
+    .intent-pick { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-top: 8px; }
+    nav.lab-context-nav { margin-bottom: 12px; }
+    .mode-banner {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .mode-pill {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .mode-pill strong { display: block; font-size: 12px; color: #0f172a; margin-bottom: 4px; }
+    .mode-pill.ok strong { color: #047857; }
+    .mode-pill.warn strong { color: #b45309; }
+    .mode-pill.off strong { color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="lab-context-nav" aria-label="模組脈絡">
+      <a href="javascript:void(0)" onclick="labNav('ai_lab_landing.html'); return false;">🔭 Lab 總覽</a>
+      <a href="javascript:void(0)" onclick="labNav('pages/crm_automation_console.html'); return false;" aria-current="page">⚙️ 營運自動化</a>
+      <a href="javascript:void(0)" onclick="if(window.parent&amp;&amp;window.parent.applyMode){window.parent.applyMode('church');} return false;">⛪ 教會事工</a>
+    </nav>
+
+    <header class="hero">
+      <h1>⚙️ CRM 意圖中樞（HITL）</h1>
+      <p>文字／語音 → Intent JSON → <strong>只預填</strong>工具表單 · 不自動儲存 · 不自動通知</p>
+    </header>
+
+    <div id="dataTrustMount"></div>
+
+    <section class="mode-banner" aria-label="目前能力說明">
+      <div class="mode-pill warn">
+        <strong>文字解析</strong>
+        本機<strong>規則 demo</strong>（關鍵字），非 Gemini 真理解。請人工核對 Intent 再預填。
+      </div>
+      <div class="mode-pill warn" id="pillSpeech">
+        <strong>語音輸入</strong>
+        <span id="pillSpeechDetail">偵測中…</span>
+      </div>
+      <div class="mode-pill ok">
+        <strong>寫入</strong>
+        <code>prefill_only</code>：只開表單並預填，<strong>不自動儲存</strong>到 localStorage。
+      </div>
+      <div class="mode-pill off">
+        <strong>通知</strong>
+        尚未串 LINE／WhatsApp／簡訊 API。義工排班僅可<strong>產生邀請文字</strong>，請人手複製發送。
+      </div>
+    </section>
+
+    <section class="card">
+      <label for="crmIntentText"><strong>1) 說出或輸入需求</strong></label>
+      <textarea id="crmIntentText" placeholder="例：王弟兄下週不能守門請找代班；他最近壓力大請牧者關心。"></textarea>
+      <div class="row">
+        <button type="button" class="btn btn-mic hidden" id="btnMic">🎤 語音</button>
+        <div>
+          <button type="button" class="btn btn-primary" id="btnParse">2) 解析 Intent</button>
+          <div id="trustParseNotice"></div>
+        </div>
+      </div>
+      <p id="micStatus" class="hint" style="margin-top:8px;"></p>
+    </section>
+
+    <section class="card">
+      <strong>3) Intent 信封（bible100_crm_intent_v2）</strong>
+      <textarea id="intentJson" class="mono" placeholder="解析後顯示…"></textarea>
+      <div id="intentPicker"></div>
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <button type="button" class="btn btn-success" id="btnPrefill">4) 開啟表單並預填（不儲存）</button>
+          <div id="trustPrefillNotice"></div>
+        </div>
+      </div>
+      <p id="applyStatus" class="hint" style="margin-top:10px;"></p>
+    </section>
+
+    <section class="card hint">
+      <strong>一條路捷徑（不解析、只開工具）</strong>
+      <div class="row" id="crmToolQuickLinks" style="margin-top:8px;"></div>
+      <p class="hint" style="margin-top:6px;">A3 財務為<strong>可選</strong>；未使用 CRM 記帳的教會可略過，不影響會友／探訪／排班。</p>
+    </section>
+
+    <section class="card hint">
+      <strong>支援 target_tool</strong>
+      <ul style="margin:6px 0 0;padding-left:18px;">
+        <li><code>volunteer_shift.create</code> → 義工排班 form</li>
+        <li><code>ministry_matching.suggest</code> → 排班 form（CTV 區）</li>
+        <li><code>pastoral_alert.create</code> → 探訪工作桌</li>
+        <li><code>visitation_followup.create</code> → 探訪跟進 form</li>
+        <li><code>finance_reconciliation.create</code> → 財務對帳 form（可選）</li>
+      </ul>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      if (window.DataTrustBadge) {
+        DataTrustBadge.renderDataTrustBadge({
+          mount: 'dataTrustMount',
+          position: 'top',
+          source_key: 'bible100_crm_intent_v2',
+          source_label_zh: 'CRM 意圖解析（營運自動化）',
+          count: '—',
+          write_behavior: 'prefill_only',
+          notify_behavior: 'none',
+          data_state: 'disconnected',
+          show_clear_demo: false
+        });
+        DataTrustBadge.renderActionTrustNotice({
+          mount: 'trustParseNotice',
+          write_behavior: 'read_only',
+          notify_behavior: 'none',
+          requires_human_confirmation: true,
+          risk_hint: '規則 demo 解析'
+        });
+        DataTrustBadge.renderActionTrustNotice({
+          mount: 'trustPrefillNotice',
+          write_behavior: 'prefill_only',
+          notify_behavior: 'none',
+          requires_human_confirmation: true
+        });
+      }
+
+      var micBtn = document.getElementById('btnMic');
+      var micStatus = document.getElementById('micStatus');
+      var selectedIntentIdx = 0;
+      var isFile = window.location && window.location.protocol === 'file:';
+      var hasSpeech = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+      var pillSpeech = document.getElementById('pillSpeechDetail');
+      if (pillSpeech) {
+        if (isFile) {
+          pillSpeech.textContent = 'file:// 無法用麥克風；請改文字，或改用 localhost／HTTPS。';
+        } else if (hasSpeech) {
+          pillSpeech.textContent = '瀏覽器 SpeechRecognition（Chrome 等）；按 🎤 後仍需按「解析」。';
+        } else {
+          pillSpeech.textContent = '此瀏覽器不支援；請用文字輸入。';
+        }
+      }
+
+      if (hasSpeech && !isFile) {
+        micBtn.classList.remove('hidden');
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        var recognition = new SR();
+        recognition.lang = 'zh-TW';
+        recognition.onresult = function (ev) {
+          document.getElementById('crmIntentText').value = (document.getElementById('crmIntentText').value + ' ' + ev.results[0][0].transcript).trim();
+          micBtn.classList.remove('listening');
+          micStatus.textContent = '語音已寫入（請按解析）';
+        };
+        recognition.onerror = function () {
+          micBtn.classList.remove('listening');
+          micStatus.textContent = '語音失敗，請改文字輸入';
+        };
+        recognition.onend = function () { micBtn.classList.remove('listening'); };
+        micBtn.onclick = function () {
+          micBtn.classList.add('listening');
+          micStatus.textContent = '聆聽中…';
+          try { recognition.start(); } catch (e) { micStatus.textContent = String(e); }
+        };
+      } else {
+        micStatus.textContent = isFile
+          ? '語音需在 localhost／HTTPS 使用；file:// 請直接輸入文字。'
+          : '此瀏覽器不支援語音，請用文字輸入。';
+      }
+
+      function renderIntentPicker(doc) {
+        var host = document.getElementById('intentPicker');
+        var intents = (doc && doc.intents) || [];
+        if (!intents.length) { host.innerHTML = ''; return; }
+        host.innerHTML = intents.map(function (it, i) {
+          return '<label class="intent-pick"><input type="radio" name="pickIntent" value="' + i + '"' + (i === 0 ? ' checked' : '') + '> ' +
+            (it.target_tool || '') + ' · 信心 ' + (it.confidence != null ? it.confidence : '—') +
+            (it.risk_flags && it.risk_flags.length ? ' · ⚠️ ' + it.risk_flags.join(',') : '') + '</label>';
+        }).join('');
+        host.querySelectorAll('input[name=pickIntent]').forEach(function (r) {
+          r.addEventListener('change', function () { selectedIntentIdx = Number(r.value); });
+        });
+      }
+
+      var quickHost = document.getElementById('crmToolQuickLinks');
+      if (quickHost && Bible100CrmIntent.listAvailableTools) {
+        quickHost.innerHTML = Bible100CrmIntent.listAvailableTools().map(function (t) {
+          var label = t.label + (t.optional ? '（可選）' : '');
+          return '<button type="button" class="btn" data-url="../../' + t.index_url + '">' + label + '</button>';
+        }).join('');
+        quickHost.querySelectorAll('button[data-url]').forEach(function (btn) {
+          btn.onclick = function () { navigateParentTo(btn.getAttribute('data-url')); };
+        });
+      }
+
+      document.getElementById('btnParse').onclick = function () {
+        var raw = document.getElementById('crmIntentText').value;
+        var doc = Bible100CrmIntent.parseTextOffline(raw, { channel: hasSpeech ? 'text_or_voice' : 'text' });
+        document.getElementById('intentJson').value = JSON.stringify(doc, null, 2);
+        selectedIntentIdx = 0;
+        renderIntentPicker(doc);
+        document.getElementById('applyStatus').textContent = '已解析 ' + (doc.intents || []).length + ' 個 intent（僅預填，不寫入）';
+      };
+
+      function navigateParentTo(url) {
+        try {
+          if (window.parent && window.parent.document) {
+            var cf = window.parent.document.getElementById('contentFrame');
+            if (cf) {
+              cf.src = url.indexOf('?') >= 0 ? url : url + '?v=' + Date.now();
+              return true;
+            }
+          }
+        } catch (e) {}
+        window.location.href = url;
+        return false;
+      }
+
+      document.getElementById('btnPrefill').onclick = function () {
+        var status = document.getElementById('applyStatus');
+        try {
+          var doc = JSON.parse(document.getElementById('intentJson').value);
+          var route = Bible100CrmIntent.routeForPrefill(doc, selectedIntentIdx);
+          if (!route.ok) {
+            status.textContent = route.error || '路由失敗';
+            return;
+          }
+          var url = '../../' + route.form_url;
+          var q = [];
+          if (route.prefill.member_id) q.push('member_id=' + encodeURIComponent(route.prefill.member_id));
+          if (q.length) url += (url.indexOf('?') >= 0 ? '&' : '?') + q.join('&');
+          navigateParentTo(url);
+          setTimeout(function () {
+            try {
+              var cf = window.parent.document.getElementById('contentFrame');
+              var target = cf && cf.contentWindow ? cf.contentWindow : window.parent;
+              Bible100CrmIntent.postPrefillToFrame(target, route.prefill, route.form_url);
+            } catch (e2) {
+              Bible100CrmIntent.postPrefillToFrame(window, route.prefill, route.form_url);
+            }
+          }, 600);
+          status.textContent = '✅ 已導向「' + route.tool_label + '」並預填；請在表單人工核對後再儲存。';
+        } catch (e) {
+          status.textContent = '錯誤：' + e.message;
+        }
+      };
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>教會版 PDCA｜一步步填寫</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="../js/persistence_provider.js"></script>
+  <script src="js/church_toolkit.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;800;900&display=swap');
+    body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(165deg, #f5f3ff 0%, #fafafa 45%, #fffbeb 100%); }
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      body { background: #fff; }
+      .print-report-header {
+        border-bottom: 2px solid #111827;
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+      }
+      .keep-with-act { break-inside: avoid; page-break-inside: avoid; }
+      .governance-compare-grid { grid-template-columns: 1fr 1fr !important; }
+      .gc-delta-chip {
+        background: #fff !important;
+        color: #111827 !important;
+        border: 2px solid #111827 !important;
+      }
+      .gc-card {
+        border: 1.5px solid #111827 !important;
+        background: #fff !important;
+      }
+    }
+    .print-only { display: none; }
+    .pdca-tab-btn { padding: 0.65rem 1rem; font-weight: 800; font-size: 0.8rem; border-bottom: 3px solid transparent; cursor: pointer; border-radius: 10px 10px 0 0; }
+    .pdca-tab-active { border-bottom-color: #7c3aed; color: #5b21b6; background: #fff; }
+    .diag-line { border-left: 4px solid #7c3aed; padding-left: 0.75rem; margin-bottom: 0.65rem; font-size: 0.9rem; }
+    .governance-compare-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr;
+      align-items: stretch;
+    }
+    @media (min-width: 680px) {
+      .governance-compare-grid { grid-template-columns: 1fr auto 1fr; }
+    }
+    .gc-card {
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 10px 12px;
+    }
+    .gc-k {
+      margin: 0 0 4px;
+      font-size: 11px;
+      color: #475569;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+    .gc-v {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    .gc-v-sub {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: #334155;
+    }
+    .gc-delta-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 0;
+    }
+    .gc-delta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      border: 1px solid transparent;
+    }
+    .gc-up { color: #166534; background: #dcfce7; border-color: #86efac; }
+    .gc-down { color: #991b1b; background: #fee2e2; border-color: #fca5a5; }
+    .gc-flat { color: #334155; background: #e2e8f0; border-color: #cbd5e1; }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen">
+<div id="app" class="min-h-screen pb-12">
+  <nav class="no-print sticky top-0 z-50 border-b border-violet-200 bg-white/95 shadow-sm backdrop-blur">
+    <div class="max-w-2xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+      <h1 class="text-base font-black text-violet-800">教會版 PDCA</h1>
+      <div class="flex flex-wrap gap-2 text-xs font-bold">
+        <a href="index_plan.html" class="bg-slate-600 text-white px-3 py-1.5 rounded-full no-underline">主索引</a>
+        <a href="cta-os-tool-report.html?tool=pdca" class="bg-indigo-700 text-white px-3 py-1.5 rounded-full no-underline">CTA-OS 統一報告</a>
+        <span v-if="planStep < 5" class="bg-violet-100 text-violet-900 px-3 py-1.5 rounded-full">Step {{ planStep + 1 }} / 6</span>
+        <span v-else class="bg-emerald-100 text-emerald-900 px-3 py-1.5 rounded-full">報告 · 3 分頁</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-2xl mx-auto px-4 py-6">
+    <p class="no-print text-sm font-bold text-violet-900 mb-4 border-l-4 border-violet-500 pl-3 bg-violet-50 rounded-r-lg py-2">
+      <strong>首屏一句話：</strong>本頁<strong>只</strong>幫團隊做<strong>PDCA 行動迴顧</strong>。<strong>不做</strong>會友打分；細節在下方各步驟。
+    </p>
+    <p class="no-print text-xs font-bold text-indigo-950 mb-4 border-l-4 border-indigo-400 pl-3 bg-indigo-50 rounded-r-lg py-2">
+      <strong>RACI · Check 助手：</strong>執行遇衝突、延遲或權責不清時，可先跑
+      <a href="planning/raci-reflection.html" class="text-indigo-800 underline font-bold">planning／RACI 反思</a>
+      （<code class="text-indigo-900">chp2026-raci-diagnostic-v1</code>），再把摘要貼入本頁 Check／Act。
+    </p>
+    <!-- 0 開始 -->
+    <div v-if="planStep === 0" class="bg-white rounded-2xl border border-violet-100 shadow-lg p-6 md:p-8">
+      <p class="text-xs text-slate-600 mb-4 leading-relaxed">追蹤「做了之後學到什麼」，非診斷打分；資料存本機 <code class="text-violet-800">chp2026-pdca-log</code>（由舊鍵自動遷移）。可空白按步驟走到報告。</p>
+      <label class="block text-sm font-bold text-slate-700 mb-1">對齊焦點（可選）</label>
+      <select v-model="c.linkedFocusSource" @change="applyPdcaLink" class="w-full border rounded-xl p-3 mb-4 text-base">
+        <option value="none">不指定／自行填寫</option>
+        <option v-for="o in pdcaLinkOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+      </select>
+      <p v-if="c.linkedFocusLabel" class="text-xs text-indigo-700 font-bold mb-4">已選：{{ c.linkedFocusLabel }}</p>
+      <label class="block text-sm font-bold text-slate-700 mb-1">事工／節期名稱（可空）</label>
+      <input v-model="c.ministryContext" type="text" class="w-full border rounded-xl p-3 mb-4 text-base" placeholder="例：聖誕節期、門訓專案…" />
+      <label class="block text-sm font-bold text-slate-700 mb-1">本季聚焦一句（可空）</label>
+      <textarea v-model="seasonLine" rows="2" class="w-full border rounded-xl p-3 mb-6 text-base" placeholder="可空"></textarea>
+      <button type="button" @click="goNext" class="w-full py-4 rounded-xl bg-violet-600 text-white font-black text-lg shadow-lg hover:bg-violet-700">下一步：Plan 計畫</button>
+    </div>
+
+    <!-- 1 Plan -->
+    <div v-if="planStep === 1" class="bg-white rounded-2xl border border-blue-100 shadow-lg p-6 md:p-8">
+      <h2 class="text-lg font-black text-blue-900 mb-1">Plan 計畫</h2>
+      <p class="text-xs text-slate-500 mb-4">請盡量寫「幾個行動＋誰＋時間」；可全空。</p>
+      <label class="block text-sm font-bold mb-1">問題／背景（可空）</label>
+      <textarea v-model="c.planProblem" rows="2" class="w-full border rounded-xl p-2 mb-4"></textarea>
+      <div v-for="(row, i) in c.planRows" :key="'pr'+i" class="border border-slate-200 rounded-xl p-3 mb-3 bg-slate-50/80">
+        <p class="text-xs font-black text-blue-900 mb-2">行動 {{ i + 1 }}</p>
+        <label class="block text-sm font-bold mb-1">行動內容</label>
+        <textarea v-model="row.action" rows="2" class="w-full border rounded-xl p-2 mb-2"></textarea>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div><label class="block text-xs font-bold mb-1">負責人（職分／角色）</label><input v-model="row.ownerRole" type="text" class="w-full border rounded-xl p-2" placeholder="例：牧師、小組長、行政同工" /></div>
+          <div><label class="block text-xs font-bold mb-1">預計時間／里程碑</label><input v-model="row.eta" type="text" class="w-full border rounded-xl p-2" placeholder="例：四月底、主日前兩週" /></div>
+        </div>
+        <button v-if="c.planRows.length > 1" type="button" @click="removePlanRow(i)" class="mt-2 text-xs font-bold text-rose-600">移除此行</button>
+      </div>
+      <button type="button" @click="addPlanRow" class="mb-4 text-sm font-bold text-violet-700">＋ 新增一行行動</button>
+      <div class="flex gap-3">
+        <button type="button" @click="goPrev" class="flex-1 py-3 rounded-xl border-2 border-slate-200 font-bold text-slate-700">上一步</button>
+        <button type="button" @click="goNext" class="flex-1 py-3 rounded-xl bg-violet-600 text-white font-black">下一步</button>
+      </div>
+    </div>
+
+    <!-- 2 Do -->
+    <div v-if="planStep === 2" class="bg-white rounded-2xl border border-amber-100 shadow-lg p-6 md:p-8">
+      <h2 class="text-lg font-black text-amber-900 mb-1">Do 執行</h2>
+      <p class="text-xs text-slate-500 mb-4">對應上一頁每一行計畫，標記狀態；可全空。</p>
+      <div v-for="(row, i) in c.planRows" :key="'dr'+i" class="border border-amber-200 rounded-xl p-3 mb-3 bg-amber-50/50">
+        <p class="text-xs font-bold text-amber-900 mb-1">行動 {{ i + 1 }}：{{ row.action || '（未填）' }}</p>
+        <label class="block text-sm font-bold mb-1">完成度</label>
+        <select v-model="c.doRows[i].status" class="w-full border rounded-xl p-2 mb-2">
+          <option value="">未選</option>
+          <option value="done">完成</option>
+          <option value="partial">部分</option>
+          <option value="none">未做</option>
+        </select>
+        <label class="block text-sm font-bold mb-1">實際發生了什麼／調整（一行）</label>
+        <input v-model="c.doRows[i].actualNote" type="text" class="w-full border rounded-xl p-2" placeholder="例：延期兩週、改由執事接手" />
+      </div>
+      <label class="block text-sm font-bold mb-1">整體執行紀要（可空）</label>
+      <textarea v-model="c.doProgressNotes" rows="3" class="w-full border rounded-xl p-2 mb-3"></textarea>
+      <label class="block text-sm font-bold mb-1">紅綠燈</label>
+      <select v-model="c.doTrafficLight" class="w-full border rounded-xl p-3 mb-6">
+        <option value="green">綠 · 正常</option>
+        <option value="yellow">黃 · 需關注</option>
+        <option value="red">紅 · 滯後</option>
+      </select>
+      <div class="flex gap-3">
+        <button type="button" @click="goPrev" class="flex-1 py-3 rounded-xl border-2 border-slate-200 font-bold">上一步</button>
+        <button type="button" @click="goNext" class="flex-1 py-3 rounded-xl bg-violet-600 text-white font-black">下一步</button>
+      </div>
+    </div>
+
+    <!-- 3 Check -->
+    <div v-if="planStep === 3" class="bg-white rounded-2xl border border-teal-100 shadow-lg p-6 md:p-8">
+      <h2 class="text-lg font-black text-teal-900 mb-1">Check 檢核</h2>
+      <p class="text-xs text-slate-500 mb-4">可全空。</p>
+
+      <section
+        v-if="c.baselineCapturedAt || currentHealthOverall != null || currentA1ServiceSat != null"
+        class="mb-5 p-4 rounded-xl border border-teal-200 bg-teal-50/70 text-sm space-y-2"
+      >
+        <h3 class="text-sm font-black text-teal-900">系統健康與 A1 滿意度對照</h3>
+        <p class="text-[11px] text-slate-600 leading-relaxed">
+          讀取本機最新 <code class="text-[10px]">chp2026-health-result</code> 與 A1（<code class="text-[10px]">chp2026-a1-health-results</code>），對比進入本輪 PDCA 當下自動快照的基線。
+        </p>
+        <p>
+          <strong>計畫開始時</strong> NCD 內部均分：{{
+            c.baselineOverallNormalized != null ? Number(c.baselineOverallNormalized).toFixed(2) : '（未快照）'
+          }}
+        </p>
+        <p>
+          <strong>目前最新</strong> NCD 內部均分：{{ currentHealthOverall != null ? currentHealthOverall.toFixed(2) : '—' }}
+        </p>
+        <p v-if="healthOverallDeltaText" class="text-teal-900 text-xs font-bold">{{ healthOverallDeltaText }}</p>
+        <p>
+          <strong>計畫開始時</strong> A1 服事滿意度（內部 1–5）：{{
+            c.baselineServiceSatisfaction != null ? Number(c.baselineServiceSatisfaction).toFixed(2) : '（未快照）'
+          }}
+        </p>
+        <p>
+          <strong>目前最新</strong> A1 服事滿意度：{{ currentA1ServiceSat != null ? currentA1ServiceSat.toFixed(2) : '—' }}
+        </p>
+        <p
+          v-if="serviceSatDropWarning"
+          class="text-rose-800 font-bold border border-rose-200 bg-rose-50 rounded-lg p-2 text-xs leading-relaxed"
+        >
+          警告：執行期間服事滿意度相對基線下降，請檢視 Act 決策是否過度壓縮養成／替補，並必要時啟動牧養校準。
+        </p>
+      </section>
+
+      <label class="block text-sm font-bold mb-1">看見的果效／觀察（含團隊情緒、關係）</label>
+      <textarea v-model="c.checkOutcome" rows="3" class="w-full border rounded-xl p-2 mb-3"></textarea>
+      <label class="block text-sm font-bold mb-1">補充：事實／數據（可空）</label>
+      <textarea v-model="c.checkEvidence" rows="2" class="w-full border rounded-xl p-2 mb-3"></textarea>
+      <label class="block text-sm font-bold mb-1">落差與原因</label>
+      <textarea v-model="c.checkGap" rows="2" class="w-full border rounded-xl p-2 mb-3"></textarea>
+      <label class="block text-sm font-bold mb-1">本季節奏健康度 1–5（1＝透支混亂，5＝可持續）</label>
+      <select v-model="likertSel" class="w-full border rounded-xl p-3 mb-2">
+        <option value="">未選</option>
+        <option v-for="n in 5" :key="n" :value="String(n)">{{ n }}</option>
+      </select>
+      <p class="text-xs text-slate-600 mb-2">報告會用此分數生成一句節奏解讀。</p>
+      <label class="block text-sm font-bold mb-1">為何給這個節奏分數？（可空）</label>
+      <textarea v-model="c.checkRhythmNote" rows="2" class="w-full border rounded-xl p-2 mb-6"></textarea>
+      <div class="flex gap-3">
+        <button type="button" @click="goPrev" class="flex-1 py-3 rounded-xl border-2 border-slate-200 font-bold">上一步</button>
+        <button type="button" @click="goNext" class="flex-1 py-3 rounded-xl bg-violet-600 text-white font-black">下一步</button>
+      </div>
+    </div>
+
+    <!-- 4 Act -->
+    <div v-if="planStep === 4" class="bg-white rounded-2xl border border-rose-100 shadow-lg p-6 md:p-8">
+      <h2 class="text-lg font-black text-rose-900 mb-1">Act 處置</h2>
+      <p class="text-xs text-slate-500 mb-4">分三類決定，利於下一輪 Plan；可全空。</p>
+      <label class="block text-sm font-bold mb-1 text-emerald-900">要保留的做法</label>
+      <textarea v-model="c.actKeep" rows="2" class="w-full border rounded-xl p-2 mb-3 border-emerald-200"></textarea>
+      <label class="block text-sm font-bold mb-1 text-amber-900">要調整的做法</label>
+      <textarea v-model="c.actAdjust" rows="2" class="w-full border rounded-xl p-2 mb-3 border-amber-200"></textarea>
+      <label class="block text-sm font-bold mb-1 text-slate-700">要暫停／停止的做法</label>
+      <textarea v-model="c.actStop" rows="2" class="w-full border rounded-xl p-2 mb-3"></textarea>
+      <label class="block text-sm font-bold mb-1">下一輪必改摘要（可空，供 AI 一句帶過）</label>
+      <textarea v-model="c.actMustChange" rows="2" class="w-full border rounded-xl p-2 mb-3"></textarea>
+      <label class="block text-sm font-bold mb-1">負責人</label>
+      <input v-model="c.actOwner" type="text" class="w-full border rounded-xl p-3 mb-3" />
+      <label class="block text-sm font-bold mb-1">預計完成（文字即可）</label>
+      <input v-model="c.actDueDate" type="text" class="w-full border rounded-xl p-3 mb-4" />
+      <label class="flex items-center gap-2 text-sm font-bold mb-6">
+        <input type="checkbox" v-model="c.actStandardize" class="w-4 h-4" /> 納入標準流程／SOP
+      </label>
+      <div class="flex gap-3">
+        <button type="button" @click="goPrev" class="flex-1 py-3 rounded-xl border-2 border-slate-200 font-bold">上一步</button>
+        <button type="button" @click="goNext" class="flex-1 py-3 rounded-xl bg-violet-600 text-white font-black">查看報告</button>
+      </div>
+    </div>
+
+    <!-- 5 報告 + 3 分頁（對齊 Hub：報告／教導／AI） -->
+    <div v-if="planStep === 5" class="rounded-2xl border border-slate-200 bg-slate-100/80 shadow-lg overflow-hidden print:border-0 print:bg-white print:shadow-none">
+      <div class="no-print flex flex-wrap gap-0 border-b border-slate-200 bg-slate-50 px-2 pt-2">
+        <button type="button" @click="reportTab = 'report'" :class="['pdca-tab-btn', reportTab === 'report' ? 'pdca-tab-active' : 'text-slate-500']">📊 PDCA 報告</button>
+        <button type="button" @click="reportTab = 'standard'" :class="['pdca-tab-btn', reportTab === 'standard' ? 'pdca-tab-active' : 'text-slate-500']">📖 教導原則</button>
+        <button type="button" @click="reportTab = 'ai'" :class="['pdca-tab-btn', reportTab === 'ai' ? 'pdca-tab-active' : 'text-slate-500']">🤖 AI 跟進</button>
+      </div>
+
+      <div class="bg-white p-6 md:p-8 print:p-4">
+        <!-- Tab 1：報告（列印只出這一頁） -->
+        <div v-show="reportTab === 'report'" id="pdca-report">
+          <div class="print-only print-report-header">
+            <h2 class="text-lg font-black text-slate-900">教會治理執行報告 (OFFICIAL GOVERNANCE REPORT)</h2>
+            <p class="text-xs text-slate-700 mt-1">列印時間：{{ generatedAt }}</p>
+          </div>
+          <h2 class="text-xl font-black text-slate-900 mb-2">PDCA 一頁報告</h2>
+          <p class="text-xs text-slate-500 mb-6">{{ generatedAt }}</p>
+
+          <section class="mb-5 border border-violet-100 rounded-xl p-4 bg-violet-50/80">
+            <h3 class="text-sm font-black text-violet-900 mb-2">四句式牧養診斷<span class="text-slate-500 font-normal text-xs">（規則生成）</span></h3>
+            <div class="text-sm space-y-2">
+              <div class="diag-line"><strong>現況：</strong>{{ fourDiag.current }}</div>
+              <div class="diag-line"><strong>風險：</strong>{{ fourDiag.risk }}</div>
+              <div class="diag-line"><strong>根因／張力：</strong>{{ fourDiag.root }}</div>
+              <div class="diag-line"><strong>下一步：</strong>{{ fourDiag.next }}</div>
+            </div>
+          </section>
+
+          <section class="mb-5 h-56">
+            <h3 class="text-sm font-black text-slate-800 mb-2">四階段 · 填寫完整度（柱狀圖）</h3>
+            <p class="text-xs text-slate-500 mb-2">僅表示「是否有可討論的內容」，不是靈性評分。</p>
+            <canvas id="pdcaStageChart"></canvas>
+          </section>
+
+          <section class="mb-5 h-56">
+            <h3 class="text-sm font-black text-indigo-800 mb-2">治理趨勢看板（快照趨勢）</h3>
+            <p class="text-xs text-slate-500 mb-2">每次進入本頁會自動保存一筆快照，供季度對比。</p>
+            <canvas id="pdcaTrendChart"></canvas>
+          </section>
+
+          <section class="mb-5 border border-indigo-100 rounded-xl p-4 bg-indigo-50/40">
+            <h3 class="text-sm font-black text-indigo-900 mb-2">Plan vs Actual（目標達成率分析）</h3>
+            <p class="text-sm mb-1"><strong>Plan 目標均值：</strong>{{ planTargetDisplay }}</p>
+            <p class="text-sm mb-1"><strong>Actual 實際值：</strong>{{ actualMetricDisplay }}</p>
+            <p class="text-sm mb-1"><strong>落差：</strong>{{ planActualGapDisplay }}</p>
+            <p v-if="planActualNeedsAdjust" class="mt-2 text-xs font-bold text-rose-800 border border-rose-200 bg-rose-50 rounded-lg p-2">
+              目標（P）與結果（A）落差超過 20%，需重新評估執行策略（Do）。
+            </p>
+          </section>
+
+          <section class="mb-5 border-b border-slate-100 pb-4">
+            <h3 class="text-sm font-black text-violet-800 mb-2">情境</h3>
+            <p v-if="c.linkedFocusSource !== 'none' && c.linkedFocusLabel" class="text-xs text-indigo-800 font-bold mb-2">對齊焦點：{{ c.linkedFocusLabel }}（來源：{{ linkSourceLabel }}）</p>
+            <p class="text-sm whitespace-pre-wrap">{{ show(c.ministryContext) }}</p>
+            <p class="text-sm mt-2"><span class="font-bold">本季聚焦：</span>{{ show(seasonLine) }}</p>
+          </section>
+          <section class="mb-5 border-b border-slate-100 pb-4">
+            <h3 class="text-sm font-black text-blue-800 mb-2">Plan</h3>
+            <p class="text-sm"><span class="font-bold">背景：</span>{{ show(c.planProblem) }}</p>
+            <div v-for="(row, i) in c.planRows" :key="'rep'+i" class="mt-2 text-sm border-l-2 border-blue-200 pl-2">
+              <span class="font-bold">行動 {{ i + 1 }}</span> {{ show(row.action) }}／<span class="font-bold">負責</span> {{ show(row.ownerRole) }}／<span class="font-bold">時間</span> {{ show(row.eta) }}
+            </div>
+          </section>
+          <section class="mb-5 border-b border-slate-100 pb-4">
+            <h3 class="text-sm font-black text-amber-800 mb-2">Do</h3>
+            <div v-for="(row, i) in c.planRows" :key="'dorep'+i" class="text-sm mb-2 border-l-2 border-amber-200 pl-2">
+              <span class="font-bold">行動 {{ i + 1 }}</span> 狀態：{{ doStatusLabel(c.doRows[i] && c.doRows[i].status) }} · {{ show(c.doRows[i] && c.doRows[i].actualNote) }}
+            </div>
+            <p class="text-sm whitespace-pre-wrap mt-2">{{ show(c.doProgressNotes) }}</p>
+            <p class="text-sm mt-2"><span class="font-bold">紅綠燈：</span>{{ trafficLabel(c.doTrafficLight) }}</p>
+          </section>
+          <section class="mb-5 border-b border-slate-100 pb-4">
+            <h3 class="text-sm font-black text-teal-800 mb-2">Check</h3>
+            <p class="text-sm"><span class="font-bold">果效／觀察：</span>{{ show(c.checkOutcome) }}</p>
+            <p class="text-sm mt-1"><span class="font-bold">事實／數據：</span>{{ show(c.checkEvidence) }}</p>
+            <p class="text-sm mt-1"><span class="font-bold">落差：</span>{{ show(c.checkGap) }}</p>
+            <p class="text-sm mt-2"><span class="font-bold">節奏健康度：</span>{{ likertSel === '' ? dash : likertSel }}/5 — {{ rhythmInterpretText }}</p>
+            <p v-if="(c.checkRhythmNote || '').trim()" class="text-sm mt-1"><span class="font-bold">節奏說明：</span>{{ show(c.checkRhythmNote) }}</p>
+          </section>
+
+          <section class="mb-5 border-b border-slate-100 pb-4 keep-with-act">
+            <h3 class="text-sm font-black text-indigo-900 mb-2">治理成效對照區塊 (Governance Impact Comparison)</h3>
+            <div class="governance-compare-grid">
+              <div class="gc-card">
+                <p class="gc-k">啟動時 (Baseline)</p>
+                <p class="gc-v">健康標度：{{ baselineOverallDisplay }}</p>
+                <p class="gc-v-sub">服事滿意度：{{ baselineSatDisplay }}</p>
+              </div>
+              <div class="gc-delta-wrap">
+                <span :class="['gc-delta-chip', overallDeltaClass]">
+                  {{ overallDeltaArrow }} 健康 {{ overallDeltaDisplay }}
+                </span>
+              </div>
+              <div class="gc-card">
+                <p class="gc-k">評估時 (Current)</p>
+                <p class="gc-v">健康標度：{{ currentOverallDisplay }}</p>
+                <p class="gc-v-sub">服事滿意度：{{ currentSatDisplay }}</p>
+              </div>
+            </div>
+            <div class="mt-2 governance-compare-grid">
+              <div class="gc-card">
+                <p class="gc-k">滿意度變化 (Delta)</p>
+                <p class="gc-v-sub">
+                  <span :class="['gc-delta-chip', satDeltaClass]">{{ satDeltaArrow }} 滿意度 {{ satDeltaDisplay }}</span>
+                </p>
+              </div>
+              <div class="gc-card" style="grid-column: 1 / -1;">
+                <p class="gc-k">治理判讀</p>
+                <p class="gc-v-sub">{{ governanceDeltaNote }}</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="mb-2 keep-with-act">
+            <h3 class="text-sm font-black text-rose-800 mb-2">Act</h3>
+            <p class="text-sm"><span class="font-bold">保留：</span>{{ show(c.actKeep) }}</p>
+            <p class="text-sm mt-1"><span class="font-bold">調整：</span>{{ show(c.actAdjust) }}</p>
+            <p class="text-sm mt-1"><span class="font-bold">暫停／停止：</span>{{ show(c.actStop) }}</p>
+            <p class="text-sm mt-1"><span class="font-bold">必改摘要：</span>{{ show(c.actMustChange) }}</p>
+            <p class="text-sm mt-1"><span class="font-bold">負責人：</span>{{ show(c.actOwner) }}</p>
+            <p class="text-sm mt-1"><span class="font-bold">期限：</span>{{ show(c.actDueDate) }}</p>
+            <p class="text-sm mt-1"><span class="font-bold">標準化：</span>{{ c.actStandardize ? '是' : '否' }}</p>
+          </section>
+        </div>
+
+        <!-- Tab 2：教導原則 -->
+        <div v-show="reportTab === 'standard'" class="no-print text-sm text-slate-700 leading-relaxed space-y-4">
+          <h2 class="text-lg font-black text-indigo-800 border-b border-indigo-200 pb-2">📖 教導原則：四套工具怎麼接起來</h2>
+          <ol class="list-decimal ml-5 space-y-2 mb-4">
+            <li><strong>健康診斷：</strong>{{ suiteTeach.health }}</li>
+            <li><strong>SWOT：</strong>{{ suiteTeach.swot }}</li>
+            <li><strong>SMART：</strong>{{ suiteTeach.smart }}</li>
+            <li><strong>PDCA（本頁）：</strong>{{ suiteTeach.pdca }}</li>
+          </ol>
+          <h3 class="font-black text-violet-900">PDCA 書寫要點</h3>
+          <p class="text-slate-600"><strong>與 SWOT 和而不同：</strong>SWOT 盤點內外局勢；PDCA 追<strong>學習循環</strong>— 同一輪裡，神要教會學什麼功課？</p>
+          <p class="text-slate-600"><strong>與 SMART 和而不同：</strong>SMART 把目標變可守；PDCA 問「執行後我們是否更認識自己的軟弱與神的供應」。</p>
+          <ul class="list-disc ml-5 space-y-2">
+            <li><strong>Plan</strong>：盡量拆成「幾個行動＋負責職分＋時間」，必要時多行；背景一句話說清為何現在做。</li>
+            <li><strong>Do</strong>：對每一行計畫標記完成度與實際調整，讓 Check 有跡可循。</li>
+            <li><strong>Check</strong>：同時看果效／關係與「節奏健康度」1–5，避免只看忙碌。</li>
+            <li><strong>Act</strong>：分<strong>保留／調整／停止</strong>三類，下一輪 Plan 才有清晰起點。</li>
+            <li>衝突時：先禱告與聆聽，再走「說話技巧」；策略不能繞過牧養。</li>
+          </ul>
+        </div>
+
+        <!-- Tab 3：AI 跟進（本頁不代送，請複製到 ChatGPT／Claude 等） -->
+        <div v-show="reportTab === 'ai'" class="no-print space-y-4">
+          <h2 class="text-lg font-black text-indigo-800 border-b border-indigo-200 pb-2">🤖 PDCA · AI 跟進提示</h2>
+          <p class="text-sm text-slate-600">請自行複製下方文字到信任的 AI；勿貼個資或會友姓名。</p>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm whitespace-pre-wrap select-all font-mono leading-relaxed">{{ aiPromptText }}</div>
+          <p class="text-xs text-slate-500">提示內容已帶入您本輪表單摘要（未填處會顯示「未填寫」）。</p>
+        </div>
+
+        <div class="no-print mt-8 flex flex-col sm:flex-row gap-3 border-t border-slate-100 pt-6">
+          <button type="button" @click="goPrev" class="flex-1 py-3 rounded-xl border-2 border-slate-200 font-bold">返回修改</button>
+          <button type="button" @click="goStep0" class="flex-1 py-3 rounded-xl border-2 border-violet-300 text-violet-800 font-bold">從頭再填一輪</button>
+          <button type="button" @click="downloadPdcaPdf" class="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-black">下載 PDF</button>
+          <button type="button" @click="exportGovernanceReport" class="flex-1 py-3 rounded-xl border-2 border-indigo-300 bg-indigo-50 text-indigo-900 font-black">導出至治理報告</button>
+          <button type="button" @click="doPrint" class="flex-1 py-3 rounded-xl bg-slate-800 text-white font-black">列印</button>
+          <button type="button" @click="sharePdcaReport" class="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-black">分享到 WhatsApp</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+const PDCA_KEY =
+  (window.ChurchToolkit && ChurchToolkit.STORAGE_KEYS && ChurchToolkit.STORAGE_KEYS.PDCA) || 'chp2026-pdca-log';
+const PDCA_KEY_LEGACY =
+  (window.ChurchToolkit && ChurchToolkit.STORAGE_KEYS && ChurchToolkit.STORAGE_KEYS.PDCA_LEGACY) ||
+  'chp2026-pdca-v1';
+const PDCA_SNAPSHOT_KEY = 'chp2026-pdca-snapshots';
+const WIZARD_CYCLE_ID = 'pdca-wizard-main';
+
+function loadSnapshots() {
+  try {
+    var raw = localStorage.getItem(PDCA_SNAPSHOT_KEY);
+    if (!raw) return [];
+    var arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveSnapshots(arr) {
+  localStorage.setItem(PDCA_SNAPSHOT_KEY, JSON.stringify(arr || []));
+}
+
+function emptyCycle() {
+  var t = new Date().toISOString();
+  return {
+    id: WIZARD_CYCLE_ID,
+    createdAt: t,
+    updatedAt: t,
+    ministryContext: '',
+    relatedDimensions: [],
+    linkedSmartGoalId: null,
+    planProblem: '',
+    planGoal: '',
+    planResources: '',
+    planMetricsHow: '',
+    planTimeline: '',
+    planRows: [{ action: '', ownerRole: '', eta: '' }],
+    doRows: [{ status: '', actualNote: '' }],
+    doProgressNotes: '',
+    doBudgetUsedPercent: null,
+    doTrafficLight: 'green',
+    doMilestonePercent: null,
+    checkGoalMetLikert: null,
+    checkResourceLikert: null,
+    checkTeamMoraleLikert: null,
+    checkOutcome: '',
+    checkEvidence: '',
+    checkGap: '',
+    checkChaosMoment: '',
+    checkRhythmScore: null,
+    checkRhythmNote: '',
+    actKeep: '',
+    actAdjust: '',
+    actStop: '',
+    actMustChange: '',
+    actOwner: '',
+    actDueDate: '',
+    actStandardize: false,
+    actNextCycleNote: '',
+    linkedFocusSource: 'none',
+    linkedFocusLabel: '',
+    baselineOverallNormalized: null,
+    baselineServiceSatisfaction: null,
+    baselineCapturedAt: null
+  };
+}
+
+function loadPdca() {
+  try {
+    var raw = localStorage.getItem(PDCA_KEY);
+    var fromLegacy = false;
+    if (!raw) {
+      raw = localStorage.getItem(PDCA_KEY_LEGACY);
+      fromLegacy = !!raw;
+    }
+    if (!raw) return null;
+    var p = JSON.parse(raw);
+    if (p.version !== 1) return null;
+    if (fromLegacy) savePdca(p);
+    return p;
+  } catch (e) {
+    return null;
+  }
+}
+
+function savePdca(payload) {
+  localStorage.setItem(PDCA_KEY, JSON.stringify(payload));
+}
+
+function normalizeCycle(c) {
+  var base = emptyCycle();
+  var o = Object.assign(base, c || {});
+  if (!Array.isArray(o.planRows) || !o.planRows.length) {
+    o.planRows = [
+      {
+        action: o.planGoal || '',
+        ownerRole: '',
+        eta: o.planTimeline || ''
+      }
+    ];
+  }
+  if (!Array.isArray(o.doRows)) o.doRows = [];
+  while (o.doRows.length < o.planRows.length) {
+    o.doRows.push({ status: '', actualNote: '' });
+  }
+  return o;
+}
+
+function pickOrCreateCycle(parsed) {
+  if (!parsed || !Array.isArray(parsed.cycles)) return emptyCycle();
+  var found = parsed.cycles.filter(function (x) { return x && x.id === WIZARD_CYCLE_ID; })[0];
+  if (found) return normalizeCycle(Object.assign({}, found, { id: WIZARD_CYCLE_ID }));
+  return emptyCycle();
+}
+
+createApp({
+  data: function () {
+    var parsed = loadPdca();
+    var c = pickOrCreateCycle(parsed);
+    var seasonLine = (parsed && parsed.seasonFocusLines && parsed.seasonFocusLines[0]) ? parsed.seasonFocusLines[0] : '';
+    var rhythm =
+      c.checkRhythmScore != null && c.checkRhythmScore >= 1 && c.checkRhythmScore <= 5
+        ? c.checkRhythmScore
+        : c.checkGoalMetLikert != null && c.checkGoalMetLikert >= 1 && c.checkGoalMetLikert <= 5
+          ? c.checkGoalMetLikert
+          : null;
+    var likertSel = rhythm != null ? String(rhythm) : '';
+    return {
+      planStep: 0,
+      seasonLine: seasonLine,
+      likertSel: likertSel,
+      c: c,
+      dash: '（未填寫）',
+      generatedAt: '',
+      reportTab: 'report'
+    };
+  },
+  mounted: function () {
+    this.touchGeneratedAt();
+    this.saveSnapshot();
+    if (this.planStep === 5) {
+      var self = this;
+      this.$nextTick(function () {
+        self.renderPdcaChart();
+        self.renderTrendChart();
+      });
+    }
+  },
+  watch: {
+    planStep: function (v) {
+      if (v === 2) {
+        while (this.c.doRows.length < this.c.planRows.length) {
+          this.c.doRows.push({ status: '', actualNote: '' });
+        }
+      }
+    }
+  },
+  computed: {
+    fourDiag: function () {
+      return ChurchToolkit.fourSentencePdca({
+        cycle: this.c,
+        trafficLabel: this.trafficLabel(this.c.doTrafficLight)
+      });
+    },
+    suiteTeach: function () {
+      return ChurchToolkit.TOOL_SUITE_TEACHING;
+    },
+    pdcaLinkOptions: function () {
+      var out = [];
+      var smartLab = ChurchToolkit.getSmartFocusLabel && ChurchToolkit.getSmartFocusLabel();
+      if (smartLab) {
+        out.push({ value: "smart", label: "SMART 焦點：" + String(smartLab).slice(0, 40) });
+      }
+      try {
+        var raw = localStorage.getItem("chp2026-swot-v1");
+        if (raw) {
+          var sw = JSON.parse(raw);
+          if (sw && sw.meta && sw.meta.focus && String(sw.meta.focus).trim()) {
+            out.push({ value: "swot", label: "SWOT 聚焦：" + String(sw.meta.focus).slice(0, 40) });
+          }
+        }
+      } catch (e) {}
+      var h = ChurchToolkit.loadHealthResult();
+      if (h && h.worstCat) {
+        out.push({ value: "health", label: "健康診斷最弱維：" + h.worstCat });
+      }
+      return out;
+    },
+    linkSourceLabel: function () {
+      var m = { smart: "SMART", swot: "SWOT", health: "健康診斷", none: "—" };
+      return m[this.c.linkedFocusSource] || "—";
+    },
+    rhythmInterpretText: function () {
+      var n = this.likertSel === "" ? null : Number(this.likertSel);
+      if (n == null || !Number.isFinite(n)) return "（未選節奏分）";
+      if (n <= 2) return "節奏偏緊：宜明確減量、替補或延後非核心線。";
+      if (n === 3) return "節奏尚可：仍有調整空間，建議固定檢核日。";
+      return "節奏相對健康：可把學習轉成下一輪「保留／調整」清單。";
+    },
+    pdcaStageData: function () {
+      var c = this.c;
+      function tr(s) {
+        return (s || "").trim();
+      }
+      var planRows = Array.isArray(c.planRows) ? c.planRows : [];
+      var planN = planRows.filter(function (r) {
+        return r && tr(r.action);
+      }).length;
+      var p = planN
+        ? Math.min(4, planN + (tr(c.planProblem) ? 1 : 0))
+        : [c.planProblem, c.planGoal, c.planMetricsHow, c.planTimeline].filter(function (x) {
+            return tr(x);
+          }).length;
+      var planPct = Math.round((p / 4) * 100);
+      var doHasRow =
+        Array.isArray(c.doRows) &&
+        c.doRows.some(function (d) {
+          return d && tr(d.status);
+        });
+      var doPct = doHasRow ? 78 : tr(c.doProgressNotes) ? 72 : 22;
+      if (c.doTrafficLight === "red") doPct = Math.min(100, doPct + 15);
+      if (c.doTrafficLight === "yellow") doPct = Math.min(100, doPct + 8);
+      var chk =
+        tr(c.checkOutcome || c.checkEvidence).length > 12 &&
+        this.likertSel !== "" &&
+        tr(c.checkGap).length > 5
+          ? 88
+          : tr(c.checkOutcome) || tr(c.checkEvidence) || tr(c.checkGap)
+            ? 52
+            : 18;
+      var actPct =
+        (tr(c.actKeep) || tr(c.actAdjust) || tr(c.actStop)) && tr(c.actOwner)
+          ? 92
+          : tr(c.actAdjust) || tr(c.actMustChange)
+            ? 58
+            : 24;
+      return {
+        labels: ["Plan", "Do", "Check", "Act"],
+        data: [planPct, doPct, chk, actPct]
+      };
+    },
+    aiPromptText: function () {
+      var r = function (s) {
+        var t = (s || '').trim();
+        return t ? t : '（未填寫）';
+      };
+      var c = this.c;
+      var lk = this.likertSel === '' ? '（未選）' : this.likertSel;
+      return (
+        '請扮演熟諳華人教會處境的顧問。以下是我們一輪事工 PDCA 的紀錄（可有空欄）。請協助：\n' +
+        '1）指出 Check 是否足夠「有事實依據」；若不足請建議可補的指標或訪談問題。\n' +
+        '2）把 Act 的「必改」拆成下輪 Plan 可執行的 2～3 個小步驟，並提醒要避免的過載。\n' +
+        '3）若紅綠燈為黃或紅，請先談止血與分工，再談擴張。\n\n' +
+        '—— 紀錄開始 ——\n' +
+        '【情境】' +
+        r(c.ministryContext) +
+        '\n【對齊焦點】' +
+        (c.linkedFocusLabel ? r(c.linkedFocusLabel) + '（' + this.linkSourceLabel + '）' : '（未指定）') +
+        '\n【本季聚焦】' +
+        r(this.seasonLine) +
+        '\n\n【Plan】\n背景：' +
+        r(c.planProblem) +
+        '\n行動列：' +
+        (Array.isArray(c.planRows)
+          ? c.planRows
+              .map(function (row, i) {
+                return (
+                  i +
+                  1 +
+                  '. ' +
+                  r(row && row.action) +
+                  ' | 負責：' +
+                  r(row && row.ownerRole) +
+                  ' | 時間：' +
+                  r(row && row.eta)
+                );
+              })
+              .join('；')
+          : '') +
+        '\n\n【Do】\n' +
+        (Array.isArray(c.planRows)
+          ? c.planRows
+              .map(function (row, i) {
+                var d = (c.doRows && c.doRows[i]) || {};
+                return (
+                  i +
+                  1 +
+                  '. 狀態：' +
+                  r(d.status) +
+                  ' 調整：' +
+                  r(d.actualNote)
+                );
+              })
+              .join('\n')
+          : '') +
+        '\n紀要：' +
+        r(c.doProgressNotes) +
+        '\n紅綠燈：' +
+        this.trafficLabel(c.doTrafficLight) +
+        '\n\n【Check】\n節奏 1–5：' +
+        lk +
+        '\n果效觀察：' +
+        r(c.checkOutcome) +
+        '\n事實／數據：' +
+        r(c.checkEvidence) +
+        '\n落差：' +
+        r(c.checkGap) +
+        '\n節奏說明：' +
+        r(c.checkRhythmNote) +
+        '\n\n【Act】\n保留：' +
+        r(c.actKeep) +
+        '\n調整：' +
+        r(c.actAdjust) +
+        '\n暫停／停止：' +
+        r(c.actStop) +
+        '\n必改摘要：' +
+        r(c.actMustChange) +
+        '\n負責人：' +
+        r(c.actOwner) +
+        '\n期限：' +
+        r(c.actDueDate) +
+        '\n標準化 SOP：' +
+        (c.actStandardize ? '是' : '否') +
+        '\n—— 紀錄結束 ——'
+      );
+    },
+    currentHealthOverall: function () {
+      var h = ChurchToolkit.loadHealthResult();
+      return h && h.overallNormalized != null ? Number(h.overallNormalized) : null;
+    },
+    currentA1ServiceSat: function () {
+      try {
+        var raw = localStorage.getItem('chp2026-a1-health-results');
+        if (!raw) return null;
+        var o = JSON.parse(raw);
+        var v = o && o.memberSignals && o.memberSignals.serviceSatisfaction;
+        return v != null && isFinite(Number(v)) ? Number(v) : null;
+      } catch (e) {
+        return null;
+      }
+    },
+    healthOverallDeltaText: function () {
+      var b = this.c.baselineOverallNormalized;
+      var cur = this.currentHealthOverall;
+      if (b == null || cur == null) return '';
+      var d = cur - Number(b);
+      if (Math.abs(d) < 0.05) return '與基線相近（變化 ' + d.toFixed(2) + '）。';
+      return '相對基線變化：' + (d >= 0 ? '+' : '') + d.toFixed(2) + '。';
+    },
+    serviceSatDropWarning: function () {
+      var b = this.c.baselineServiceSatisfaction;
+      var cur = this.currentA1ServiceSat;
+      if (b == null || cur == null) return false;
+      return cur < Number(b) - 0.01;
+    },
+    baselineOverallDisplay: function () {
+      return this.c.baselineOverallNormalized != null ? Number(this.c.baselineOverallNormalized).toFixed(2) : '—';
+    },
+    currentOverallDisplay: function () {
+      return this.currentHealthOverall != null ? Number(this.currentHealthOverall).toFixed(2) : '—';
+    },
+    baselineSatDisplay: function () {
+      return this.c.baselineServiceSatisfaction != null ? Number(this.c.baselineServiceSatisfaction).toFixed(2) : '—';
+    },
+    currentSatDisplay: function () {
+      return this.currentA1ServiceSat != null ? Number(this.currentA1ServiceSat).toFixed(2) : '—';
+    },
+    overallDeltaValue: function () {
+      if (this.c.baselineOverallNormalized == null || this.currentHealthOverall == null) return null;
+      return Number(this.currentHealthOverall) - Number(this.c.baselineOverallNormalized);
+    },
+    satDeltaValue: function () {
+      if (this.c.baselineServiceSatisfaction == null || this.currentA1ServiceSat == null) return null;
+      return Number(this.currentA1ServiceSat) - Number(this.c.baselineServiceSatisfaction);
+    },
+    overallDeltaArrow: function () {
+      var d = this.overallDeltaValue;
+      if (d == null || Math.abs(d) < 0.01) return '→';
+      return d > 0 ? '↑' : '↓';
+    },
+    satDeltaArrow: function () {
+      var d = this.satDeltaValue;
+      if (d == null || Math.abs(d) < 0.01) return '→';
+      return d > 0 ? '↑' : '↓';
+    },
+    overallDeltaDisplay: function () {
+      var d = this.overallDeltaValue;
+      if (d == null) return '—';
+      return (d >= 0 ? '+' : '') + d.toFixed(2);
+    },
+    satDeltaDisplay: function () {
+      var d = this.satDeltaValue;
+      if (d == null) return '—';
+      return (d >= 0 ? '+' : '') + d.toFixed(2);
+    },
+    overallDeltaClass: function () {
+      var d = this.overallDeltaValue;
+      if (d == null || Math.abs(d) < 0.01) return 'gc-flat';
+      return d > 0 ? 'gc-up' : 'gc-down';
+    },
+    satDeltaClass: function () {
+      var d = this.satDeltaValue;
+      if (d == null || Math.abs(d) < 0.01) return 'gc-flat';
+      return d > 0 ? 'gc-up' : 'gc-down';
+    },
+    governanceDeltaNote: function () {
+      var od = this.overallDeltaValue;
+      var sd = this.satDeltaValue;
+      if (od == null && sd == null) return '資料不足，請先完成基線快照與 A1 最新資料。';
+      if ((od != null && od < -0.01) || (sd != null && sd < -0.01)) {
+        return '整體趨勢出現下降：需啟動牧養介入，並檢視 Act 的減法與資源重配。';
+      }
+      if ((od != null && od > 0.01) || (sd != null && sd > 0.01)) {
+        return '顯示正向成長：可保留有效做法，並以小步快跑擴大可複製流程。';
+      }
+      return '大致持平：建議持續觀察一輪，並補強 Check 的量化證據。';
+    },
+    planTargetPercent: function () {
+      try {
+        var goalsRaw = localStorage.getItem('chp2026_default_goals');
+        var goals = [];
+        if (goalsRaw) {
+          var parsed = JSON.parse(goalsRaw);
+          goals = Array.isArray(parsed) ? parsed : (Array.isArray(parsed && parsed.goals) ? parsed.goals : []);
+        } else if (window.LongTermPipeline && LongTermPipeline.loadGoals) {
+          var gs = LongTermPipeline.loadGoals();
+          goals = Array.isArray(gs && gs.goals) ? gs.goals : [];
+        }
+        var vals = goals.map(function (g) {
+          var txt = (g && g.smart && g.smart.m) ? String(g.smart.m) : '';
+          var m = txt.match(/(\d{1,3})\s*%/);
+          return m ? Number(m[1]) : null;
+        }).filter(function (n) { return Number.isFinite(n); });
+        if (!vals.length) return 70;
+        return Number((vals.reduce(function (s, n) { return s + n; }, 0) / vals.length).toFixed(1));
+      } catch (e) {
+        return 70;
+      }
+    },
+    actualMetricPercent: function () {
+      try {
+        var db = JSON.parse(localStorage.getItem('memberSystemData') || 'null') || {};
+        var attendance = Array.isArray(db.attendance) ? db.attendance : [];
+        if (!attendance.length) return null;
+        var present = attendance.filter(function (x) { return !!(x && x.present); }).length;
+        return Number(((present / attendance.length) * 100).toFixed(1));
+      } catch (e) {
+        return null;
+      }
+    },
+    planActualGapPercent: function () {
+      if (this.actualMetricPercent == null) return null;
+      return Number((this.planTargetPercent - this.actualMetricPercent).toFixed(1));
+    },
+    planTargetDisplay: function () {
+      return this.planTargetPercent.toFixed(1) + '%';
+    },
+    actualMetricDisplay: function () {
+      return this.actualMetricPercent == null ? '—（尚無 attendance）' : this.actualMetricPercent.toFixed(1) + '%';
+    },
+    planActualGapDisplay: function () {
+      if (this.planActualGapPercent == null) return '—';
+      return (this.planActualGapPercent >= 0 ? '+' : '') + this.planActualGapPercent.toFixed(1) + '%';
+    },
+    planActualNeedsAdjust: function () {
+      return this.planActualGapPercent != null && this.planActualGapPercent > 20;
+    }
+  },
+  methods: {
+    touchGeneratedAt: function () {
+      this.generatedAt = new Date().toLocaleString('zh-TW');
+    },
+    show: function (s) {
+      var t = (s || '').trim();
+      return t ? t : this.dash;
+    },
+    trafficLabel: function (v) {
+      if (v === 'yellow') return '黃 · 需關注';
+      if (v === 'red') return '紅 · 滯後';
+      return '綠 · 正常';
+    },
+    doStatusLabel: function (s) {
+      var m = { done: '完成', partial: '部分', none: '未做' };
+      return m[s] || '—';
+    },
+    addPlanRow: function () {
+      this.c.planRows.push({ action: '', ownerRole: '', eta: '' });
+      this.c.doRows.push({ status: '', actualNote: '' });
+    },
+    removePlanRow: function (i) {
+      if (this.c.planRows.length <= 1) return;
+      this.c.planRows.splice(i, 1);
+      this.c.doRows.splice(i, 1);
+    },
+    persist: function () {
+      var rv =
+        this.likertSel === '' || this.likertSel == null ? null : Number(this.likertSel);
+      this.c.checkRhythmScore = rv;
+      this.c.checkGoalMetLikert = rv;
+      this.c.updatedAt = new Date().toISOString();
+      var parsed = loadPdca();
+      var otherCycles = [];
+      if (parsed && Array.isArray(parsed.cycles)) {
+        otherCycles = parsed.cycles.filter(function (x) { return x && x.id !== WIZARD_CYCLE_ID; });
+      }
+      var smartGoals = parsed && Array.isArray(parsed.smartGoals) ? parsed.smartGoals : [];
+      var s2 = parsed && Array.isArray(parsed.seasonFocusLines) ? parsed.seasonFocusLines.slice() : ['', '', ''];
+      s2[0] = this.seasonLine;
+      var payload = {
+        version: 1,
+        seasonFocusLines: [s2[0] || '', s2[1] || '', s2[2] || ''],
+        smartGoals: smartGoals,
+        cycles: [this.c].concat(otherCycles)
+      };
+      savePdca(payload);
+    },
+    applyPdcaLink: function () {
+      var v = this.c.linkedFocusSource;
+      this.c.linkedFocusLabel = "";
+      if (!v || v === "none") {
+        this.persist();
+        return;
+      }
+      if (v === "smart") {
+        var lab = ChurchToolkit.getSmartFocusLabel && ChurchToolkit.getSmartFocusLabel();
+        if (lab) {
+          this.c.linkedFocusLabel = lab;
+          if (!String(this.seasonLine || "").trim()) {
+            this.seasonLine = "對齊 SMART：" + String(this.c.linkedFocusLabel).slice(0, 120);
+          }
+        }
+      } else if (v === "swot") {
+        try {
+          var sw = JSON.parse(localStorage.getItem("chp2026-swot-v1"));
+          if (sw && sw.meta && sw.meta.focus) {
+            this.c.linkedFocusLabel = sw.meta.focus;
+            if (!String(this.seasonLine || "").trim()) {
+              this.seasonLine = "對齊 SWOT：" + String(sw.meta.focus).slice(0, 120);
+            }
+          }
+        } catch (e) {}
+      } else if (v === "health") {
+        var h = ChurchToolkit.loadHealthResult();
+        if (h && h.worstCat) {
+          this.c.linkedFocusLabel = "健康診斷最弱範疇：" + h.worstCat;
+          if (!String(this.seasonLine || "").trim()) {
+            this.seasonLine = "對齊健康診斷，優先關注「" + h.worstCat + "」。";
+          }
+        }
+      }
+      this.persist();
+    },
+    captureBaselineIfNeeded: function () {
+      var c = this.c;
+      if (c.baselineCapturedAt) return;
+      var h = ChurchToolkit.loadHealthResult();
+      if (h && h.overallNormalized != null) c.baselineOverallNormalized = Number(h.overallNormalized);
+      try {
+        var raw = localStorage.getItem('chp2026-a1-health-results');
+        if (raw) {
+          var o = JSON.parse(raw);
+          var v = o && o.memberSignals && o.memberSignals.serviceSatisfaction;
+          if (v != null && isFinite(Number(v))) c.baselineServiceSatisfaction = Number(v);
+        }
+      } catch (e) {}
+      c.baselineCapturedAt = new Date().toISOString();
+    },
+    inferDecisionType: function () {
+      var keep = String(this.c.actKeep || '').trim();
+      var adjust = String(this.c.actAdjust || '').trim();
+      var stop = String(this.c.actStop || '').trim();
+      if (stop && !adjust && !keep) return 'stop';
+      if (adjust) return 'adjust';
+      if (keep && !adjust && !stop) return 'keep';
+      if (keep || stop) return 'mixed';
+      return 'unspecified';
+    },
+    appendResolutionSnapshot: function (trigger) {
+      if (!ChurchToolkit.appendResolutionLog) return;
+      var entry = {
+        source: 'pdca',
+        trigger: trigger || 'manual',
+        cycleId: this.c.id,
+        ministryContext: this.c.ministryContext || '',
+        linkedFocusLabel: this.c.linkedFocusLabel || '',
+        overallNormalized: this.currentHealthOverall,
+        baselineOverallNormalized: this.c.baselineOverallNormalized,
+        baselineServiceSatisfaction: this.c.baselineServiceSatisfaction,
+        currentServiceSatisfaction: this.currentA1ServiceSat,
+        overallDelta: this.overallDeltaValue,
+        satisfactionDelta: this.satDeltaValue,
+        decisionType: this.inferDecisionType(),
+        act: {
+          keep: this.c.actKeep || '',
+          adjust: this.c.actAdjust || '',
+          stop: this.c.actStop || '',
+          mustChange: this.c.actMustChange || '',
+          owner: this.c.actOwner || '',
+          dueDate: this.c.actDueDate || ''
+        }
+      };
+      ChurchToolkit.appendResolutionLog(entry);
+    },
+    exportGovernanceReport: function () {
+      var smart = ChurchToolkit.loadSmartState && ChurchToolkit.loadSmartState();
+      var smartSummary = null;
+      if (smart && smart.version === 2 && Array.isArray(smart.plans)) {
+        smartSummary = smart.plans.map(function (p) {
+          var s = p.scores || {};
+          var keys = ['S_clarity', 'M_measurability', 'A_feasibility', 'R_relevance', 'T_time_fit', 'Care_health'];
+          var filled = keys.filter(function (k) {
+            return s[k] != null && s[k] !== '';
+          }).length;
+          return { name: p.name || '', smartScoreFieldsFilled: filled, outOf: 6 };
+        });
+      }
+      var resolutions = [];
+      try {
+        var resKey =
+          (ChurchToolkit.STORAGE_KEYS && ChurchToolkit.STORAGE_KEYS.RESOLUTION_LOG) || 'chp2026-resolution-log';
+        var rr = localStorage.getItem(resKey);
+        if (rr) {
+          var parsed = JSON.parse(rr);
+          if (Array.isArray(parsed)) resolutions = parsed.slice(-5);
+        }
+      } catch (e) {}
+      var bundle = {
+        version: 1,
+        savedAt: new Date().toISOString(),
+        pdca: {
+          cycleId: this.c.id,
+          ministryContext: this.c.ministryContext,
+          linkedFocusLabel: this.c.linkedFocusLabel,
+          baselineOverallNormalized: this.c.baselineOverallNormalized,
+          baselineServiceSatisfaction: this.c.baselineServiceSatisfaction,
+          currentOverallNormalized: this.currentHealthOverall,
+          currentServiceSatisfaction: this.currentA1ServiceSat,
+          act: {
+            keep: this.c.actKeep,
+            adjust: this.c.actAdjust,
+            stop: this.c.actStop,
+            mustChange: this.c.actMustChange,
+            owner: this.c.actOwner,
+            dueDate: this.c.actDueDate,
+            standardize: this.c.actStandardize
+          }
+        },
+        smartSummary: smartSummary,
+        recentResolutionSnapshots: resolutions
+      };
+      try {
+        localStorage.setItem('chp2026-governance-report-bundle', JSON.stringify(bundle));
+      } catch (e) {}
+      window.alert(
+        '已寫入本機 chp2026-governance-report-bundle（Act 摘要、SMART 欄位完成度、最近決議快照），可搭配 strategy_logic／AI 總結使用。'
+      );
+    },
+    goNext: function () {
+      var prev = this.planStep;
+      if (this.planStep === 0) this.captureBaselineIfNeeded();
+      if (this.planStep === 1) {
+        while (this.c.doRows.length < this.c.planRows.length) {
+          this.c.doRows.push({ status: '', actualNote: '' });
+        }
+      }
+      this.persist();
+      if (this.planStep < 5) this.planStep++;
+      if (prev === 4 && this.planStep === 5) {
+        this.appendResolutionSnapshot('generate-report');
+      }
+      if (this.planStep === 5) {
+        this.reportTab = 'report';
+        this.touchGeneratedAt();
+        this.saveSnapshot();
+        var self = this;
+        this.$nextTick(function () {
+          self.renderPdcaChart();
+          self.renderTrendChart();
+        });
+      }
+    },
+    renderPdcaChart: function () {
+      var d = this.pdcaStageData;
+      if (!window.ChurchToolkit || !document.getElementById('pdcaStageChart')) return;
+      ChurchToolkit.renderBarChart('pdcaStageChart', {
+        data: {
+          labels: d.labels,
+          datasets: [
+            {
+              label: '完整度',
+              data: d.data,
+              backgroundColor: ['#2563eb', '#d97706', '#0d9488', '#e11d48'],
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, max: 100, ticks: { callback: function (v) { return v + '%'; } } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    },
+    renderTrendChart: function () {
+      var cvs = document.getElementById('pdcaTrendChart');
+      if (!cvs || typeof Chart === 'undefined') return;
+      var snaps = loadSnapshots().slice(-12);
+      if (!snaps.length) return;
+      var labels = snaps.map(function (s) { return String(s.date || '').slice(5); });
+      var health = snaps.map(function (s) { return s.overall != null ? Number(s.overall) : null; });
+      var sat = snaps.map(function (s) { return s.serviceSat != null ? Number(s.serviceSat) : null; });
+      if (this._trendChart && typeof this._trendChart.destroy === 'function') {
+        this._trendChart.destroy();
+      }
+      this._trendChart = new Chart(cvs, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: '健康標度', data: health, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.12)', tension: 0.25 },
+            { label: '服事滿意度', data: sat, borderColor: '#db2777', backgroundColor: 'rgba(219,39,119,0.12)', tension: 0.25 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { min: 1, max: 5 } }
+        }
+      });
+    },
+    saveSnapshot: function () {
+      var today = new Date().toISOString().slice(0, 10);
+      var snaps = loadSnapshots();
+      var row = {
+        date: today,
+        overall: this.currentHealthOverall != null ? Number(this.currentHealthOverall.toFixed(2)) : null,
+        serviceSat: this.currentA1ServiceSat != null ? Number(this.currentA1ServiceSat.toFixed(2)) : null,
+        planTarget: this.planTargetPercent,
+        actualMetric: this.actualMetricPercent
+      };
+      if (snaps.length && snaps[snaps.length - 1].date === today) {
+        snaps[snaps.length - 1] = row;
+      } else {
+        snaps.push(row);
+      }
+      saveSnapshots(snaps.slice(-36));
+    },
+    downloadPdcaPdf: function () {
+      this.reportTab = 'report';
+      var self = this;
+      this.$nextTick(function () {
+        ChurchToolkit.downloadPdf('pdca-report', 'PDCA_church_report.pdf');
+      });
+    },
+    goPrev: function () {
+      this.persist();
+      if (this.planStep > 0) this.planStep--;
+    },
+    goStep0: function () {
+      this.persist();
+      this.c = emptyCycle();
+      this.seasonLine = '';
+      this.likertSel = '';
+      this.planStep = 0;
+      this.persist();
+    },
+    doPrint: function () {
+      this.reportTab = 'report';
+      this.appendResolutionSnapshot('print-report');
+      this.$nextTick(function () {
+        window.print();
+      });
+    },
+    sharePdcaReport: function () {
+      var fd = this.fourDiag;
+      var text = [
+        '【教會版 PDCA 摘要】',
+        '情境：' + this.show(this.c.ministryContext),
+        'Plan 行動：' + (this.c.planRows && this.c.planRows[0] ? this.show(this.c.planRows[0].action) : this.show(this.c.planGoal)),
+        'Do 紅綠燈：' + this.trafficLabel(this.c.doTrafficLight),
+        'Check 節奏：' + (this.likertSel || '—') + '/5',
+        'Act 調整：' + this.show(this.c.actAdjust),
+        'Act 停止：' + this.show(this.c.actStop),
+        '下一步：' + fd.next.slice(0, 200)
+      ].join('\n');
+      if (navigator.share) {
+        navigator.share({ title: 'PDCA 摘要', text: text }).catch(function () {});
+        return;
+      }
+      var wa = 'https://wa.me/?text=' + encodeURIComponent(text);
+      window.open(wa, '_blank');
+    }
+  }
+}).mount('#app');
+</script>
+<script src="js/cta_os_runtime.js"></script>
+<script src="js/cta_os_bridge.js"></script>
+<script>
+  CTAOSBridge.initPage({
+    toolId: 'pdca',
+    reportAnchor: '#app .max-w-4xl',
+    watchStorage: ['chp2026-pdca-log', 'chp2026-pdca-v1', 'chp2026-health-result'],
+    pollMs: 5000,
+    fab: true
+  });
+</script>
+</body>
+</html>

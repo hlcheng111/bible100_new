@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>发展计划管理 · Development Plan | Church Ministry</title>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+.header { background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; padding: 15px 20px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 15px; }
+.card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; background: #27ae60; color: white; margin: 5px; }
+table { width: 100%; border-collapse: collapse; }
+table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+table th { background: #f8f9fa; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+.modal.active { display: flex; }
+.modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; position: relative; }
+.modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+.form-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }</style></head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header"><h1>📋 发展计划管理</h1></div>
+<div class="container">
+    <div class="card"><h3 style="margin-bottom:15px;">🎯 发展计划</h3>
+        <button class="btn" onclick="showAddModal()">➕ 新增计划</button>
+        <table id="table"><thead><tr><th>计划名称</th><th>时间范围</th><th>目标</th><th>进度</th><th>操作</th></tr></thead><tbody></tbody></table>
+    </div>
+</div>
+<div id="modal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+<script>
+let plans = [];
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('devPlanData');
+    if (saved) plans = JSON.parse(saved);
+    if (plans.length === 0) loadDemo();
+    render();
+});
+function loadDemo() {
+    plans = [{id:1,name:'3年倍增计划',period:'2025-2027',goal:'会友300→600',progress:30},{id:2,name:'植堂计划',period:'2026',goal:'建立2个分堂',progress:15}];
+    localStorage.setItem('devPlanData', JSON.stringify(plans));
+    render();
+}
+function render() {
+    document.querySelector('#table tbody').innerHTML = plans.map(p => `<tr><td>${p.name}</td><td>${p.period}</td><td>${p.goal}</td><td>${p.progress}%</td><td><button class="btn" style="padding:6px 12px;" onclick="del(${p.id})">删除</button></td></tr>`).join('');
+}
+function showModal(title, content) {
+    document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;margin-bottom:20px;">${title}</div>${content}`;
+    document.getElementById('modal').classList.add('active');
+}
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+function showAddModal() {
+    showModal('➕ 新增计划', `<div class="form-group"><label>名称</label><input id="name" class="form-input"></div><div class="form-group"><label>时间</label><input id="period" class="form-input"></div><div class="form-group"><label>目标</label><input id="goal" class="form-input"></div><button class="btn" onclick="add()">确定</button>`);
+}
+function add() {
+    plans.push({id:Date.now(),name:document.getElementById('name').value,period:document.getElementById('period').value,goal:document.getElementById('goal').value,progress:0});
+    localStorage.setItem('devPlanData', JSON.stringify(plans));
+    render();
+    closeModal();
+    alert('✅ 已添加！');
+}
+function del(id) {
+    if (confirm('删除？')) {
+        plans = plans.filter(p => p.id !== id);
+        localStorage.setItem('devPlanData', JSON.stringify(plans));
+        render();
+    }
+}
+</script>
+</body>
+</html>

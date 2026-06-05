@@ -1,0 +1,756 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>AI 文生图工具与创意图像生成</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: "Microsoft YaHei", Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header { background: rgba(255,255,255,0.95); color: #2c3e50; padding: 30px; border-radius: 20px; margin-bottom: 20px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+    .tool-section { background: rgba(255,255,255,0.95); border-radius: 20px; padding: 25px; margin: 20px 0; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+    .tool-section h2 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 15px; margin-bottom: 20px; }
+    .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; margin: 20px 0; }
+    .tool-card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: all 0.3s ease; border-left: 5px solid #3498db; }
+    .tool-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+    .tool-card h3 { color: #34495e; margin-top: 0; font-size: 1.3em; }
+    .tool-card h4 { color: #2c3e50; margin: 15px 0 10px 0; }
+    .status-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.9em; font-weight: bold; margin-bottom: 15px; }
+    .status-online { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status-premium { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 25px; border: none; border-radius: 25px; cursor: pointer; text-decoration: none; display: inline-block; margin: 8px; font-weight: bold; transition: all 0.3s ease; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+    .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .btn-warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .btn-premium { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #8b4513; }
+    .prompt-examples { background: #f8f9fa; border-left: 5px solid #007bff; padding: 20px; margin: 20px 0; border-radius: 10px; }
+    .prompt-examples h4 { color: #007bff; margin-top: 0; }
+    .feature-list { list-style: none; padding: 0; }
+    .feature-list li { padding: 8px 0; border-bottom: 1px solid #eee; }
+    .feature-list li:before { content: "🎨 "; color: #e74c3c; font-weight: bold; }
+    .progress-container { background: #ecf0f1; border-radius: 15px; height: 25px; margin: 15px 0; overflow: hidden; }
+    .progress-fill { background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; transition: width 0.5s ease; border-radius: 15px; }
+    .comparison-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .comparison-table th, .comparison-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    .comparison-table th { background: #f8f9fa; font-weight: bold; }
+    .comparison-table tr:nth-child(even) { background: #f9f9f9; }
+    .usage-tips { background: #e8f5e8; border-radius: 15px; padding: 20px; margin: 20px 0; }
+    .usage-tips h4 { color: #27ae60; margin-top: 0; }
+    .demo-section { background: #fff3cd; border-radius: 15px; padding: 20px; margin: 20px 0; }
+    .demo-section h4 { color: #856404; margin-top: 0; }
+    .image-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+    .image-item { background: #f8f9fa; border-radius: 10px; padding: 15px; text-align: center; border: 2px solid #e9ecef; }
+    .image-item img { max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 10px; }
+    .prompt-input { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; margin: 10px 0; }
+    .prompt-input:focus { outline: none; border-color: #3498db; }
+    .style-presets { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+    .style-preset { background: #e9ecef; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: all 0.3s ease; }
+    .style-preset:hover { background: #3498db; color: white; }
+    .style-preset.active { background: #3498db; color: white; }
+  </style>
+    <link rel="stylesheet" href="../../js/toc-styles.css">
+    <style>
+    /* 動態目錄樣式 */
+    .toc-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 300px;
+        max-height: 80vh;
+        background: white;
+        border: 2px solid #2e7d32;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        overflow-y: auto;
+        font-size: 12px;
+        font-family: "Microsoft YaHei", "SimSun", Arial, sans-serif;
+    }
+    .toc-header {
+        background: #2e7d32;
+        color: white;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-weight: bold;
+        border-radius: 6px 6px 0 0;
+        user-select: none;
+    }
+    .toc-toggle {
+        float: right;
+        transition: transform 0.3s ease;
+    }
+    .toc-toggle.rotated {
+        transform: rotate(180deg);
+    }
+    .toc-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        background: #f8f9fa;
+    }
+    .toc-content.show {
+        max-height: 75vh;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #2e7d32 #f8f9fa;
+    }
+    .toc-content.show::-webkit-scrollbar {
+        width: 6px;
+    }
+    .toc-content.show::-webkit-scrollbar-track {
+        background: #f8f9fa;
+        border-radius: 3px;
+    }
+    .toc-content.show::-webkit-scrollbar-thumb {
+        background: #2e7d32;
+        border-radius: 3px;
+    }
+    .toc-content.show::-webkit-scrollbar-thumb:hover {
+        background: #1b5e20;
+    }
+    .toc-item {
+        display: block;
+        padding: 6px 12px;
+        color: #333;
+        text-decoration: none;
+        border-bottom: 1px solid #e0e0e0;
+        transition: background-color 0.2s ease;
+    }
+    .toc-item:hover {
+        background-color: #e8f5e8;
+        color: #2e7d32;
+    }
+    .toc-item.h1 { font-weight: bold; padding-left: 12px; }
+    .toc-item.h2 { padding-left: 20px; }
+    .toc-item.h3 { padding-left: 28px; font-size: 11px; }
+    .toc-item.h4 { padding-left: 36px; font-size: 11px; }
+    .toc-item.h5 { padding-left: 44px; font-size: 10px; }
+    .toc-item.h6 { padding-left: 52px; font-size: 10px; }
+    @media (max-width: 768px) {
+        .toc-container {
+            width: 250px;
+            right: 10px;
+            top: 10px;
+        }
+    }
+    </style>
+<script src="../../../scripts/image_path_rewriter.js"></script>
+</head>
+<body>
+<!-- 動態目錄 -->
+<div class="toc-container" id="tocContainer">
+    <div class="toc-header" onclick="toggleTOC()">
+        目錄 <span class="toc-toggle">▼</span>
+    </div>
+    <div class="toc-content" id="tocContent">
+        <!-- 目錄內容將由JavaScript動態生成 -->
+    </div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1>🎨 AI 文生图工具与创意图像生成</h1>
+    <p>将圣经故事转化为视觉艺术，让学习更加生动有趣！</p>
+  </div>
+
+  <!-- 工具状态概览 -->
+  <div class="tool-section">
+    <h2>📊 AI图像生成工具概览</h2>
+    <div class="tool-grid">
+      <div class="tool-card">
+        <span class="status-badge status-online">✅ 免费使用</span>
+        <h3>🌟 DALL-E 3 (OpenAI)</h3>
+        <p><strong>推荐指数：</strong>⭐⭐⭐⭐⭐</p>
+        <p><strong>图像质量：</strong>超高清，细节丰富</p>
+        <p><strong>中文支持：</strong>优秀</p>
+        <p><strong>免费额度：</strong>每天15次</p>
+        <a href="https://openai.com/dall-e-2" target="_blank" class="btn">立即使用</a>
+      </div>
+      
+      <div class="tool-card">
+        <span class="status-badge status-premium">💎 高级功能</span>
+        <h3>🎭 Midjourney</h3>
+        <p><strong>推荐指数：</strong>⭐⭐⭐⭐⭐</p>
+        <p><strong>图像质量：</strong>艺术感强，风格多样</p>
+        <p><strong>中文支持：</strong>良好</p>
+        <p><strong>费用：</strong>$10/月起</p>
+        <a href="https://www.midjourney.com" target="_blank" class="btn btn-premium">高级版</a>
+      </div>
+      
+      <div class="tool-card">
+        <span class="status-badge status-online">✅ 免费使用</span>
+        <h3>🔧 Stable Diffusion</h3>
+        <p><strong>推荐指数：</strong>⭐⭐⭐⭐</p>
+        <p><strong>图像质量：</strong>高质量，可定制</p>
+        <p><strong>中文支持：</strong>一般</p>
+        <p><strong>免费额度：</strong>无限制</p>
+        <a href="https://stability.ai" target="_blank" class="btn">立即使用</a>
+      </div>
+      
+      <div class="tool-card">
+        <span class="status-badge status-online">✅ 免费使用</span>
+        <h3>🎨 Canva AI</h3>
+        <p><strong>推荐指数：</strong>⭐⭐⭐⭐</p>
+        <p><strong>图像质量：</strong>实用性强，适合设计</p>
+        <p><strong>中文支持：</strong>优秀</p>
+        <p><strong>免费额度：</strong>每天50次</p>
+        <a href="https://www.canva.com" target="_blank" class="btn">立即使用</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 核心工具深度体验 -->
+  <div class="tool-section">
+    <h2>🎯 核心AI图像工具深度体验</h2>
+    
+    <div class="tool-card">
+      <h3>🌟 DALL-E 3 - 最佳图像质量选择</h3>
+      <p><strong>为什么选择DALL-E 3：</strong></p>
+      <ul class="feature-list">
+        <li>图像质量最高，细节表现力强</li>
+        <li>理解能力超强，能准确理解复杂描述</li>
+        <li>支持多种艺术风格和画风</li>
+        <li>安全过滤，内容适合所有年龄段</li>
+        <li>支持图像编辑和变体生成</li>
+      </ul>
+      
+      <div class="prompt-examples">
+        <h4>💡 推荐Prompt示例 - 圣经故事场景</h4>
+        <p><strong>创世记场景：</strong>"A beautiful, peaceful garden scene with lush greenery, flowing rivers, and diverse animals living in harmony. Soft, warm lighting, photorealistic style, suitable for children's Bible story illustration."</p>
+        <p><strong>挪亚方舟：</strong>"A majestic wooden ark floating on calm waters, with pairs of animals visible through windows. Dramatic sky with rainbow, children's book illustration style, warm colors, safe and friendly atmosphere."</p>
+        <p><strong>大卫与歌利亚：</strong>"A young shepherd boy with sling facing a giant warrior, dramatic lighting, epic fantasy art style, suitable for children, no violence, inspiring and courageous mood."</p>
+      </div>
+      
+      <h4>🎨 风格预设推荐：</h4>
+      <div class="style-presets">
+        <span class="style-preset">儿童插画风格</span>
+        <span class="style-preset">水彩画风格</span>
+        <span class="style-preset">卡通风格</span>
+        <span class="style-preset">古典油画风格</span>
+        <span class="style-preset">现代插画风格</span>
+      </div>
+    </div>
+    
+    <div class="tool-card">
+      <h3>🎭 Midjourney - 艺术创作专家</h3>
+      <p><strong>Midjourney的独特优势：</strong></p>
+      <ul class="feature-list">
+        <li>艺术感极强，适合创意表达</li>
+        <li>支持多种艺术风格和流派</li>
+        <li>图像构图和色彩搭配优秀</li>
+        <li>适合制作海报、封面等宣传材料</li>
+        <li>支持高分辨率输出</li>
+      </ul>
+      
+      <div class="prompt-examples">
+        <h4>💡 推荐Prompt示例 - 艺术风格创作</h4>
+        <p><strong>古典风格：</strong>"Biblical scene of Moses parting the Red Sea, classical oil painting style, dramatic lighting, epic composition, Renaissance art, detailed, masterpiece quality"</p>
+        <p><strong>现代插画：</strong>"Jesus teaching children, modern illustration style, warm colors, friendly atmosphere, educational book illustration, clean lines, accessible design"</p>
+        <p><strong>抽象艺术：</strong>"Spiritual journey concept, abstract art style, flowing lines, spiritual symbols, meditation theme, peaceful colors, modern minimalist design"</p>
+      </div>
+      
+      <h4>🎨 艺术风格参数：</h4>
+      <div class="style-presets">
+        <span class="style-preset">--ar 16:9</span>
+        <span class="style-preset">--v 6</span>
+        <span class="style-preset">--q 2</span>
+        <span class="style-preset">--s 750</span>
+        <span class="style-preset">--c 0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 课程专用图像生成 -->
+  <div class="tool-section">
+    <h2>📚 课程专用图像生成配置</h2>
+    
+    <div class="tool-card">
+      <h3>📖 旧约历史 (OT) 专用图像生成</h3>
+      <div class="progress-container">
+        <div class="progress-fill" style="width: 90%;"></div>
+      </div>
+      <p><strong>开发进度：</strong>90% 完成</p>
+      
+      <h4>🎯 专用图像类型：</h4>
+      <ul class="feature-list">
+        <li><strong>历史场景重现：</strong>古代近东的历史场景和建筑</li>
+        <li><strong>地理环境图：</strong>圣经地理的可视化表现</li>
+        <li><strong>人物肖像：</strong>圣经人物的形象设计</li>
+        <li><strong>事件插图：</strong>重要历史事件的场景重现</li>
+        <li><strong>文化背景：</strong>古代文化习俗的视觉表现</li>
+      </ul>
+      
+      <h4>💡 具体应用示例：</h4>
+      <div class="demo-section">
+        <p><strong>创世记系列：</strong></p>
+        <ul>
+          <li>创世记1章：神创造世界的过程图</li>
+          <li>创世记2章：伊甸园的美丽场景</li>
+          <li>创世记3章：亚当夏娃在园中（无犯罪场景）</li>
+          <li>创世记6-9章：挪亚方舟的建造和航行</li>
+        </ul>
+        
+        <p><strong>出埃及记系列：</strong></p>
+        <ul>
+          <li>摩西在燃烧的荆棘前</li>
+          <li>十灾的象征性表现</li>
+          <li>红海分开的壮观场景</li>
+          <li>西奈山颁布律法</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="tool-card">
+      <h3>🆕 新约历史 (NT) 专用图像生成</h3>
+      <div class="progress-container">
+        <div class="progress-fill" style="width: 85%;"></div>
+      </div>
+      <p><strong>开发进度：</strong>85% 完成</p>
+      
+      <h4>🎯 专用图像类型：</h4>
+      <ul class="feature-list">
+        <li><strong>耶稣生平场景：</strong>耶稣重要时刻的视觉重现</li>
+        <li><strong>使徒行传地图：</strong>保罗宣教旅程的可视化</li>
+        <li><strong>早期教会场景：</strong>教会聚会和活动场景</li>
+        <li><strong>希腊罗马文化：</strong>新约时代的文化背景</li>
+        <li><strong>信仰象征：</strong>基督教信仰的视觉符号</li>
+      </ul>
+      
+      <h4>💡 具体应用示例：</h4>
+      <div class="demo-section">
+        <p><strong>耶稣生平系列：</strong></p>
+        <ul>
+          <li>耶稣诞生在马槽</li>
+          <li>耶稣受洗</li>
+          <li>耶稣呼召门徒</li>
+          <li>耶稣行神迹</li>
+          <li>耶稣教导众人</li>
+        </ul>
+        
+        <p><strong>使徒行传系列：</strong></p>
+        <ul>
+          <li>五旬节圣灵降临</li>
+          <li>保罗在大马士革路上</li>
+          <li>保罗在雅典传道</li>
+          <li>早期教会聚会</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="tool-card">
+      <h3>💎 信仰四宝 (T4) 专用图像生成</h3>
+      <div class="progress-container">
+        <div class="progress-fill" style="width: 95%;"></div>
+      </div>
+      <p><strong>开发进度：</strong>95% 完成</p>
+      
+      <h4>🎯 专用图像类型：</h4>
+      <ul class="feature-list">
+        <li><strong>经文可视化：</strong>重要经文的视觉表现</li>
+        <li><strong>祷告场景：</strong>祷告和敬拜的场景</li>
+        <li><strong>信仰象征：</strong>基督教信仰的视觉符号</li>
+        <li><strong>灵修场景：</strong>个人灵修和成长</li>
+        <li><strong>教会生活：</strong>教会活动和团契</li>
+      </ul>
+      
+      <h4>💡 具体应用示例：</h4>
+      <div class="demo-section">
+        <p><strong>约翰福音3:16系列：</strong></p>
+        <ul>
+          <li>神爱世界的表现</li>
+          <li>独生子的概念</li>
+          <li>信心的表现</li>
+          <li>永生的象征</li>
+        </ul>
+        
+        <p><strong>主祷文系列：</strong></p>
+        <ul>
+          <li>天父的形象</li>
+          <li>神的国降临</li>
+          <li>日用的饮食</li>
+          <li>免我们的债</li>
+          <li>不叫我们遇见试探</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 工具对比表 -->
+  <div class="tool-section">
+    <h2>📊 AI图像工具详细对比表</h2>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>功能特性</th>
+          <th>DALL-E 3</th>
+          <th>Midjourney</th>
+          <th>Stable Diffusion</th>
+          <th>Canva AI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>图像质量</strong></td>
+          <td>⭐⭐⭐⭐⭐ 超高清</td>
+          <td>⭐⭐⭐⭐⭐ 艺术感强</td>
+          <td>⭐⭐⭐⭐ 高质量</td>
+          <td>⭐⭐⭐⭐ 实用性强</td>
+        </tr>
+        <tr>
+          <td><strong>理解能力</strong></td>
+          <td>⭐⭐⭐⭐⭐ 超强</td>
+          <td>⭐⭐⭐⭐ 强</td>
+          <td>⭐⭐⭐ 一般</td>
+          <td>⭐⭐⭐⭐ 良好</td>
+        </tr>
+        <tr>
+          <td><strong>艺术风格</strong></td>
+          <td>⭐⭐⭐⭐⭐ 多样</td>
+          <td>⭐⭐⭐⭐⭐ 超多样</td>
+          <td>⭐⭐⭐⭐ 多样</td>
+          <td>⭐⭐⭐ 有限</td>
+        </tr>
+        <tr>
+          <td><strong>免费额度</strong></td>
+          <td>每天15次</td>
+          <td>$10/月起</td>
+          <td>无限制</td>
+          <td>每天50次</td>
+        </tr>
+        <tr>
+          <td><strong>生成速度</strong></td>
+          <td>⭐⭐⭐⭐ 快</td>
+          <td>⭐⭐⭐⭐ 快</td>
+          <td>⭐⭐⭐⭐⭐ 超快</td>
+          <td>⭐⭐⭐⭐⭐ 超快</td>
+        </tr>
+        <tr>
+          <td><strong>中文支持</strong></td>
+          <td>⭐⭐⭐⭐⭐ 优秀</td>
+          <td>⭐⭐⭐⭐ 良好</td>
+          <td>⭐⭐⭐ 一般</td>
+          <td>⭐⭐⭐⭐⭐ 优秀</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 使用技巧 -->
+  <div class="tool-section">
+    <h2>💡 使用技巧与最佳实践</h2>
+    
+    <div class="usage-tips">
+      <h4>🎯 Prompt工程技巧</h4>
+      <ol>
+        <li><strong>明确描述：</strong>详细描述想要的内容、风格、色彩、构图</li>
+        <li><strong>风格指定：</strong>明确指定艺术风格，如"水彩画风格"、"古典油画"</li>
+        <li><strong>质量要求：</strong>添加质量词汇，如"高清"、"细节丰富"、"专业品质"</li>
+        <li><strong>安全过滤：</strong>避免暴力、不当内容，确保适合所有年龄段</li>
+        <li><strong>迭代优化：</strong>根据生成结果调整Prompt</li>
+      </ol>
+    </div>
+    
+    <div class="usage-tips">
+      <h4>🚀 效率提升技巧</h4>
+      <ul class="feature-list">
+        <li>保存常用的Prompt模板，快速调用</li>
+        <li>使用风格预设，快速应用特定风格</li>
+        <li>批量生成多个变体，选择最佳结果</li>
+        <li>结合多个工具，发挥各自优势</li>
+        <li>建立个人图像库，积累优质素材</li>
+      </ul>
+    </div>
+    
+    <div class="usage-tips">
+      <h4>⚠️ 注意事项</h4>
+      <ul class="feature-list">
+        <li>AI生成的内容需要人工审核和编辑</li>
+        <li>注意版权问题，避免商业用途的侵权</li>
+        <li>保持内容的准确性和适当性</li>
+        <li>合理使用免费额度，避免过度依赖</li>
+        <li>结合传统设计工具，提升最终效果</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 创意应用建议 -->
+  <div class="tool-section">
+    <h2>🚀 创意应用与教学建议</h2>
+    
+    <div class="tool-card">
+      <h3>🌟 创新应用方向</h3>
+      <ul class="feature-list">
+        <li><strong>个性化学习材料：</strong>根据学习者年龄和兴趣生成定制图像</li>
+        <li><strong>互动式学习：</strong>AI生成图像配合互动问题</li>
+        <li><strong>多语言支持：</strong>为不同语言版本生成相应图像</li>
+        <li><strong>创意写作辅助：</strong>图像激发写作灵感</li>
+        <li><strong>记忆辅助：</strong>视觉化帮助记忆圣经内容</li>
+      </ul>
+    </div>
+    
+    <div class="tool-card">
+      <h3>📈 开发优先级排序</h3>
+      <div class="progress-container">
+        <div class="progress-fill" style="width: 80%;"></div>
+      </div>
+      <p><strong>当前阶段：</strong>基础图像生成功能 (80%)</p>
+      
+      <h4>🔄 开发计划：</h4>
+      <ol>
+        <li><strong>第一阶段：</strong>完善基础图像生成，建立图像库 (90%)</li>
+        <li><strong>第二阶段：</strong>开发课程专用图像生成器 (95%)</li>
+        <li><strong>第三阶段：</strong>集成到学习平台，实现智能推荐 (100%)</li>
+        <li><strong>第四阶段：</strong>探索AR/VR图像应用 (未来)</li>
+      </ol>
+    </div>
+    
+    <div class="tool-card">
+      <h3>🎓 教学应用建议</h3>
+      
+      <h4>👤 个人学习应用：</h4>
+      <ul class="feature-list">
+        <li>生成个人灵修日记的配图</li>
+        <li>制作经文记忆卡片</li>
+        <li>设计个人学习计划的可视化</li>
+        <li>创作信仰主题的社交媒体内容</li>
+      </ul>
+      
+      <h4>�� 小组学习应用：</h4>
+      <ul class="feature-list">
+        <li>制作小组讨论的视觉材料</li>
+        <li>设计团队活动的宣传海报</li>
+        <li>创建小组学习的进度图表</li>
+        <li>制作分享会的演示材料</li>
+      </ul>
+      
+      <h4>👨‍🏫 教学使用应用：</h4>
+      <ul class="feature-list">
+        <li>制作课程教材的插图</li>
+        <li>设计教学活动的视觉指导</li>
+        <li>创建学生作业的示例图像</li>
+        <li>制作教学评估的视觉材料</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 实时Prompt生成器 -->
+  <div class="tool-section">
+    <h2>🎨 实时Prompt生成器</h2>
+    
+    <div class="tool-card">
+      <h3>💡 智能Prompt助手</h3>
+      <p>输入您的需求，AI助手将为您生成专业的Prompt：</p>
+      
+      <textarea class="prompt-input" id="userInput" placeholder="例如：我需要一张创世记第1章神创造世界的图片，适合10岁儿童观看，水彩画风格..."></textarea>
+      
+      <div class="style-presets">
+        <span class="style-preset active">儿童插画</span>
+        <span class="style-preset">古典油画</span>
+        <span class="style-preset">现代插画</span>
+        <span class="style-preset">水彩画</span>
+        <span class="style-preset">卡通风格</span>
+      </div>
+      
+      <button class="btn btn-success" onclick="generatePrompt()">生成专业Prompt</button>
+      
+      <div id="generatedPrompt" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; display: none;">
+        <h4>🎯 生成的Prompt：</h4>
+        <p id="promptText"></p>
+        <button class="btn btn-warning" onclick="copyPrompt()">复制Prompt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 返回链接 -->
+  <div class="tool-section" style="text-align: center;">
+    <a href="javascript:history.back()" class="btn btn-success">← 返回目录</a>
+    <a href="ai_agent_apps_improved.html" class="btn btn-warning">AI工具总览</a>
+    <a href="ai_ask_homework_improved.html" class="btn btn-premium">AI问功课工具</a>
+  </div>
+</div>
+
+<script>
+// 风格预设选择
+document.querySelectorAll('.style-preset').forEach(preset => {
+  preset.addEventListener('click', function() {
+    document.querySelectorAll('.style-preset').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// 生成Prompt功能
+function generatePrompt() {
+  const userInput = document.getElementById('userInput').value;
+  const selectedStyle = document.querySelector('.style-preset.active').textContent;
+  
+  if (!userInput.trim()) {
+    alert('请输入您的需求描述！');
+    return;
+  }
+  
+  // 根据用户输入和选择的风格生成Prompt
+  let generatedPrompt = '';
+  
+  if (userInput.includes('创世记') || userInput.includes('创造')) {
+    generatedPrompt = `A beautiful and peaceful scene of ${userInput}, ${selectedStyle} style, suitable for children, warm and inviting atmosphere, no violence, educational and inspiring, high quality, detailed, masterpiece quality --ar 16:9 --v 6`;
+  } else if (userInput.includes('耶稣') || userInput.includes('新约')) {
+    generatedPrompt = `A gentle and inspiring scene of ${userInput}, ${selectedStyle} style, peaceful atmosphere, suitable for all ages, spiritual and uplifting, high quality, detailed, professional illustration --ar 16:9 --v 6`;
+  } else {
+    generatedPrompt = `A beautiful and meaningful scene of ${userInput}, ${selectedStyle} style, suitable for Bible study, educational and inspiring, high quality, detailed, professional quality --ar 16:9 --v 6`;
+  }
+  
+  document.getElementById('promptText').textContent = generatedPrompt;
+  document.getElementById('generatedPrompt').style.display = 'block';
+}
+
+// 复制Prompt功能
+function copyPrompt() {
+  const promptText = document.getElementById('promptText').textContent;
+  navigator.clipboard.writeText(promptText).then(() => {
+    alert('Prompt已复制到剪贴板！');
+  }).catch(err => {
+    console.error('复制失败:', err);
+    // 备用复制方法
+    const textArea = document.createElement('textarea');
+    textArea.value = promptText;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert('Prompt已复制到剪贴板！');
+  });
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('AI文生图工具页面加载完成！');
+  
+  // 添加页面交互效果
+  const toolCards = document.querySelectorAll('.tool-card');
+  toolCards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-5px)';
+      this.style.transition = 'transform 0.3s ease';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  });
+  
+  // 添加进度条动画
+  const progressBars = document.querySelectorAll('.progress-fill');
+  progressBars.forEach(bar => {
+    const width = bar.style.width;
+    bar.style.width = '0%';
+    setTimeout(() => {
+      bar.style.width = width;
+    }, 500);
+  });
+});
+</script>
+
+    <script src="../../js/toc-generator.js"></script>
+    <script>
+    // 動態目錄功能
+    function generateTOC() {
+        const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        const tocContent = document.getElementById('tocContent');
+        
+        if (!tocContent || headings.length < 2) {
+            const tocContainer = document.getElementById('tocContainer');
+            if (tocContainer) {
+                tocContainer.style.display = 'none';
+            }
+            return;
+        }
+        
+        let tocHTML = '';
+        headings.forEach((heading, index) => {
+            const id = 'heading-' + index;
+            heading.id = id;
+            const level = parseInt(heading.tagName.charAt(1));
+            const text = heading.textContent.trim();
+            if (text.length < 2) return;
+            tocHTML += `<a href="#${id}" class="toc-item h${level}">${text}</a>`;
+        });
+        
+        tocContent.innerHTML = tocHTML;
+        
+        document.querySelectorAll('.toc-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = this.getAttribute('href');
+                smoothScrollTo(target);
+            });
+        });
+    }
+
+    function toggleTOC() {
+        const content = document.getElementById('tocContent');
+        const toggle = document.querySelector('.toc-toggle');
+        
+        if (content && toggle) {
+            content.classList.toggle('show');
+            toggle.classList.toggle('rotated');
+        }
+    }
+
+    function smoothScrollTo(target) {
+        const element = document.querySelector(target);
+        if (element) {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }
+
+    function handleResize() {
+        const toc = document.getElementById('tocContainer');
+        if (toc) {
+            if (window.innerWidth < 768) {
+                toc.style.width = '250px';
+                toc.style.right = '10px';
+            } else {
+                toc.style.width = '300px';
+                toc.style.right = '20px';
+            }
+        }
+    }
+
+    function checkPageLength() {
+        const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        const pageHeight = document.body.scrollHeight;
+        const viewportHeight = window.innerHeight;
+        
+        return headings.length >= 2 && pageHeight > viewportHeight * 1.2;
+    }
+
+    function initTOC() {
+        if (checkPageLength()) {
+            generateTOC();
+            handleResize();
+        } else {
+            const tocContainer = document.getElementById('tocContainer');
+            if (tocContainer) {
+                tocContainer.style.display = 'none';
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initTOC);
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('load', initTOC);
+    </script>
+
+<!-- smart_tools 頂部工具箱 (由 inject_smart_header.py 注入) -->
+<script>window.localConfig = window.localConfig || {};</script>
+<script src="../../../js/smart_tools.js"></script>
+
+</body>
+</html>
+
+
+
+

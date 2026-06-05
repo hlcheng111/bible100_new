@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>屬靈階段漏斗 · Spiritual Stage Funnel | Church Ministry</title>
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    body { margin: 0; font-family: var(--cm-font, "Microsoft YaHei", sans-serif); background: #f6f7fb; font-size: 13px; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 1rem 1.25rem 2rem; }
+    h1 { font-size: 1.2rem; color: #4338ca; margin: 0 0 0.5rem; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #f8fafc; }
+  </style>
+</head>
+<body class="cm-research-page">
+  <nav class="cm-back-bar" aria-label="區域導覽">
+    <a class="cm-back-bar__link" href="../../dashboard.html">⛪ 返回教會事工</a>
+    <a class="cm-back-bar__link" href="index.html">研究索引</a>
+    <span class="cm-back-bar__muted">屬靈階段漏斗</span>
+  </nav>
+  <p class="cm-data-banner" role="status"><strong>資料來源：</strong><span id="cm-data-source-line">讀取中…</span></p>
+  <div class="wrap">
+    <h1>屬靈旅程階段漏斗（教會級）</h1>
+    <p style="color:#64748b;font-size:12px;margin:0 0 1rem;">依 <code>spiritual_journey_stage</code> 統計；階段定義見 <code>church_crm_constants.js</code>。</p>
+    <div class="card"><canvas id="funnelChart" height="120"></canvas></div>
+    <div class="card">
+      <table id="funnelTable"><thead><tr><th>階段</th><th>人數</th><th>佔比</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+  <script src="../../../js/church_crm_constants.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../js/cm_research_snapshot.js"></script>
+  <script>
+    (function () {
+      if (window.CMResearchSnapshot) CMResearchSnapshot.initPage({ shortDataSource: true });
+      var B = window.ChurchDataBridge;
+      if (!B || !B.getSpiritualStageFunnel) return;
+      var funnel = B.getSpiritualStageFunnel();
+      var tbody = document.querySelector('#funnelTable tbody');
+      var labels = [];
+      var counts = [];
+      (funnel.stages || []).forEach(function (s) {
+        var pct = funnel.total ? Math.round((s.count / funnel.total) * 1000) / 10 : 0;
+        labels.push(s.label_zh);
+        counts.push(s.count);
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + s.label_zh + '</td><td>' + s.count + '</td><td>' + pct + '%</td>';
+        tbody.appendChild(tr);
+      });
+      if (typeof Chart !== 'undefined') {
+        new Chart(document.getElementById('funnelChart'), {
+          type: 'bar',
+          data: { labels: labels, datasets: [{ label: '人數', data: counts, backgroundColor: '#6366f1' }] },
+          options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

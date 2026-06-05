@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CTA-OS 統一報告中心</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="js/cta_os_bridge.css">
+  <script src="js/cta_os_runtime.js"></script>
+  <script src="js/cta_os_bridge.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <main class="max-w-5xl mx-auto p-4 md:p-6">
+    <header class="mb-6">
+      <p class="text-xs font-semibold text-indigo-700">
+        <a class="underline" href="assessment-os-hub.html">CTA-OS 分層中心</a> ·
+        <a class="underline" href="index_plan.html">主索引</a>
+      </p>
+      <h1 class="text-2xl md:text-3xl font-black mt-2">CTA-OS 統一報告中心</h1>
+      <p id="toolLabel" class="text-sm text-slate-600 mt-2">自動讀取各工具本機最新 CTV 結果（無需手調）。</p>
+    </header>
+
+    <section id="cta-os-report-host" class="rounded-xl border bg-white p-4 mb-4"></section>
+
+    <p class="text-xs text-slate-500">
+      若此頁為空，請先回到對應工具頁完成測評並按「生成 CTA-OS 報告」或等待自動同步，再返回此處按「重新讀取」。
+    </p>
+  </main>
+
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var toolId = q.get("tool") || "generic";
+      var host = document.getElementById("cta-os-report-host");
+      var panel = CTAOSBridge.ensureReportPanel(host);
+      document.getElementById("toolLabel").textContent =
+        "來源工具：" + (CTAOSBridge.TOOL_META[toolId] ? CTAOSBridge.TOOL_META[toolId].name : toolId);
+
+      function render(report) {
+        if (!report) {
+          panel.querySelector('[data-cta-field="source-note"]').textContent =
+            "尚無本機 CTV 紀錄。請先到工具頁完成測評。";
+          return;
+        }
+        CTAOSBridge.renderReport(panel, report);
+      }
+
+      var last = CTAOSRuntime.readLastReport();
+      if (toolId !== "generic" && CTAOSBridge.TOOL_META[toolId]) {
+        var fresh = CTAOSBridge.generate(toolId);
+        render(fresh || last);
+      } else {
+        render(last);
+      }
+
+      panel.querySelector('[data-cta-action="refresh"]').addEventListener("click", function () {
+        if (toolId !== "generic" && CTAOSBridge.TOOL_META[toolId]) {
+          render(CTAOSBridge.generate(toolId));
+        } else {
+          render(CTAOSRuntime.readLastReport());
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

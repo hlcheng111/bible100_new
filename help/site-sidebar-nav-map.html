@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 本檔在 help/：連結仍以「自 bible100_new/」寫法維護，解析時對齊專案根 -->
+  <base href="../">
+  <title>側欄導覽地圖（左樹＋預覽）· 工具總覽</title>
+  <style>
+    :root { --bd: #cfd8e6; --bg: #f5f7fb; --h: #0b5fa5; }
+    body { font-family: "Segoe UI", "Microsoft JhengHei", sans-serif; font-size: 13px; line-height: 1.45; margin: 0; padding: 16px; background: var(--bg); color: #1a1a1a; }
+    body.has-map-shell { padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+    .map-topbar {
+      flex-shrink: 0; background: var(--h); color: #fff; padding: 8px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+      border-bottom: 3px solid #2aa5ff; font-size: 12px;
+    }
+    .map-topbar strong { font-size: 13px; }
+    .map-topbar a { color: #fff; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+    .map-shell { display: flex; flex: 1; min-height: 280px; height: min(58vh, 560px); border-bottom: 2px solid #9cc3f5; }
+    .tree-pane {
+      width: 286px; min-width: 180px; max-width: 44vw; overflow: auto; -webkit-overflow-scrolling: touch;
+      background: #eef6ff; border-right: 2px solid #2aa5ff; padding: 8px 10px 12px; flex-shrink: 0; font-size: 11.5px;
+    }
+    .tree-pane .design-callout {
+      border-left: 4px solid var(--h); background: #e8f4fc; padding: 8px 10px; margin: 0 0 10px; border-radius: 0 8px 8px 0; font-size: 11px; line-height: 1.45;
+    }
+    .tree-pane details { margin-bottom: 6px; border: 1px solid var(--bd); border-radius: 8px; background: #fff; padding: 0 8px 6px; }
+    .tree-pane details details { margin-top: 4px; border-style: dashed; }
+    .tree-pane summary { cursor: pointer; font-weight: 700; color: #0a4a7a; padding: 8px 4px; font-size: 11px; }
+    .tree-pane .tree-links { display: flex; flex-direction: column; gap: 3px 0; padding: 0 4px 6px; }
+    .tree-pane .tree-links a {
+      color: #0d47a1; text-decoration: none; padding: 3px 6px; border-radius: 4px; font-size: 11px; word-break: break-word;
+    }
+    .tree-pane .tree-links a:hover { background: #e3f2fd; text-decoration: underline; }
+    .preview-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #f0f4f8; }
+    #previewFrame { flex: 1; width: 100%; min-height: 160px; border: 0; background: #fff; }
+    .map-tables-drawer { flex-shrink: 0; margin: 0; padding: 0 0 20px; background: var(--bg); }
+    .map-tables-drawer > summary {
+      list-style: none; cursor: pointer; padding: 12px 16px; margin: 10px 12px 0; background: #fff; font-weight: 700; color: var(--h);
+      border: 1px solid var(--bd); border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.06);
+    }
+    .map-tables-drawer > summary::-webkit-details-marker { display: none; }
+    .map-tables-drawer[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; border-bottom: none; }
+    .map-tables-drawer .tables-inner { padding: 0 12px 16px; max-height: min(42vh, 480px); overflow: auto; border: 1px solid var(--bd); border-top: none; margin: 0 12px; background: #fff; border-radius: 0 0 10px 10px; }
+    @media (max-width: 720px) {
+      .map-shell { flex-direction: column; height: auto; min-height: 0; max-height: none; }
+      .tree-pane { width: 100%; max-width: none; border-right: none; border-bottom: 2px solid #2aa5ff; max-height: 40vh; }
+      .preview-wrap { min-height: 220px; height: 38vh; }
+      .map-tables-drawer .tables-inner { max-height: 55vh; }
+    }
+    .wrap { max-width: 1280px; margin: 0 auto; }
+    h1 { font-size: 1.35rem; color: var(--h); margin: 0 0 8px; }
+    .lead { background: #fff; border: 1px solid var(--bd); border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; }
+    .lead code { background: #eef2f7; padding: 2px 6px; border-radius: 4px; font-size: 0.88em; }
+    .toc { margin: 12px 0; display: flex; flex-wrap: wrap; gap: 8px; }
+    .toc a { color: var(--h); }
+    h2 { font-size: 1.1rem; color: #123; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #cfe2f7; scroll-margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; font-size: 11.5px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    th, td { border: 1px solid var(--bd); padding: 8px 10px; vertical-align: top; }
+    th { background: #e8f1fb; text-align: left; font-weight: 600; color: #0a4a7a; }
+    tr:nth-child(even) td { background: #fafbfd; }
+    .mod { font-weight: 600; color: #1565c0; white-space: nowrap; }
+    .path { font-family: ui-monospace, Consolas, monospace; font-size: 10.5px; word-break: break-all; color: #333; }
+    .file { color: #6a1b9a; }
+    .note { color: #555; font-size: 10.5px; }
+    caption { caption-side: top; text-align: left; font-weight: 600; margin-bottom: 8px; color: #444; }
+
+    .muted { color: #666; font-size: 0.92em; font-weight: normal; }
+    .table-toolbar { margin: 12px 0 18px; padding: 10px 12px; background: #fff; border: 1px solid var(--bd); border-radius: 8px; font-size: 13px; }
+    .table-toolbar label { cursor: pointer; user-select: none; }
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--bd); background: #fff; }
+    .table-scroll table { margin-bottom: 0; min-width: 640px; box-shadow: none; }
+    a.cell-link, a.path-link { color: #0d47a1; text-decoration: underline; text-underline-offset: 2px; }
+    a.path-link { font-family: ui-monospace, Consolas, monospace; font-size: 10.5px; word-break: break-all; }
+    .mod-entry { line-height: 1.5; }
+    .mod-entry a { font-size: 11px; white-space: nowrap; }
+    .sticky-mod { min-width: 6.5rem; vertical-align: top; }
+    @media (max-width: 768px) {
+      body:not(.show-extras) th.col-extra,
+      body:not(.show-extras) td.col-extra { display: none; }
+    }
+    .table-scroll thead th:first-child,
+    .table-scroll tbody td.sticky-mod,
+    .table-scroll tbody td.mod-sticky { position: sticky; left: 0; z-index: 2; box-shadow: 3px 0 6px -2px rgba(0,0,0,.1); }
+    .table-scroll thead th:first-child { background: #e8f1fb; z-index: 3; }
+    .table-scroll tbody td.sticky-mod,
+    .table-scroll tbody td.mod-sticky { background: #fff; z-index: 1; }
+    .table-scroll tr:nth-child(even) td.sticky-mod,
+    .table-scroll tr:nth-child(even) td.mod-sticky { background: #fafbfd; }
+
+  </style>
+</head>
+<body class="has-map-shell">
+<header class="map-topbar">
+  <strong>側欄導覽地圖</strong>
+  <span class="muted" style="color:#e3f2fd;font-size:10px;">左欄可摺疊 · 點連結 → 右欄單一 iframe 預覽（五層語意：頂欄兩層在 index_v5，側欄巢狀摺疊）</span>
+  <a href="../archive/20260507_root_wave2/../archive/20260507_root_wave2/SITE_側欄三層選單_去向.html" target="_blank" rel="noopener noreferrer">根目錄 SITE 原版</a>
+  <a href="index_v5.html" target="_blank" rel="noopener noreferrer">index_v5 殼</a>
+</header>
+<div class="map-shell">
+  <aside class="tree-pane" id="treePane" aria-label="巢狀捷徑">
+    <div class="design-callout">
+      <strong>動線：</strong>五層巢狀導覽樹 + 單一內容 iframe；中間節點可為 landing 或再鑽下一層。此左欄為<strong>代表連結</strong>；細目請展開下方完整表。
+    </div>
+    <details open>
+      <summary>總站 / index</summary>
+      <div class="tree-links">
+        <a href="index.html" target="previewFrame">index.html</a>
+        <a href="languages/index_cn.html" target="previewFrame">languages/index_cn.html</a>
+        <a href="church_ministry/dashboard.html" target="previewFrame">教會事工儀表板</a>
+        <a href="nav_hub/omni_entry.html" target="previewFrame">統一搜尋入口</a>
+      </div>
+    </details>
+    <details>
+      <summary>church_ministry</summary>
+      <div class="tree-links">
+        <a href="church_ministry/sidebar.html" target="previewFrame">sidebar.html</a>
+        <a href="church_ministry/dashboard.html" target="previewFrame">dashboard</a>
+        <a href="help/global-tools.htm" target="previewFrame">全站工具說明</a>
+        <a href="../church_ministry/people/people_list.html" target="previewFrame">人員總覽</a>
+        <a href="church_ministry/activities-overview.html" target="previewFrame">事工與專案</a>
+      </div>
+    </details>
+    <details>
+      <summary>school_management</summary>
+      <div class="tree-links">
+        <a href="school_management/sidebar.html" target="previewFrame">sidebar</a>
+        <a href="school_management/dashboard.html" target="previewFrame">dashboard</a>
+        <a href="school_management/portal/index.html" target="previewFrame">學員入口 portal</a>
+        <a href="school_management/unified_management.html" target="previewFrame">統一管理</a>
+      </div>
+    </details>
+    <details>
+      <summary>disciple_dynamics</summary>
+      <div class="tree-links">
+        <a href="disciple_dynamics/sidebar.html" target="previewFrame">sidebar</a>
+        <a href="disciple_dynamics/dashboard.html" target="previewFrame">dashboard</a>
+        <a href="help/global-tools.htm" target="previewFrame">全站工具</a>
+        <a href="disciple_dynamics/g/barnabas_guide.html" target="previewFrame">巴拿巴手冊 landing</a>
+      </div>
+    </details>
+    <details>
+      <summary>bible_study</summary>
+      <div class="tree-links">
+        <a href="bible_study/sidebar.html" target="previewFrame">sidebar</a>
+        <a href="bible_study/comprehensive_exegesis_reader.html" target="previewFrame">研經註釋</a>
+        <a href="bible_study/reader.html" target="previewFrame">聖經閱讀</a>
+        <a href="bible_study/OT/index.html" target="previewFrame">舊約索引</a>
+      </div>
+    </details>
+    <details>
+      <summary>ai_tools</summary>
+      <div class="tree-links">
+        <a href="ai_tools/sidebar.html" target="previewFrame">sidebar</a>
+        <a href="ai_tools/dashboard.html" target="previewFrame">dashboard</a>
+        <a href="help/global-tools.htm" target="previewFrame">全站工具</a>
+      </div>
+    </details>
+    <details>
+      <summary>smart_ministry</summary>
+      <div class="tree-links">
+        <a href="smart_ministry/sidebar.html" target="previewFrame">sidebar</a>
+        <a href="smart_ministry/dashboard.html" target="previewFrame">dashboard</a>
+        <a href="smart_ministry/ai_smart_ministry_overview.html" target="previewFrame">智慧事奉總覽</a>
+      </div>
+    </details>
+    <details>
+      <summary>hymn_management</summary>
+      <div class="tree-links">
+        <a href="hymn_management/sidebar.html" target="previewFrame">sidebar（詩集 UI）</a>
+        <a href="hymn_management/dashboard.html" target="previewFrame">dashboard</a>
+      </div>
+    </details>
+  </aside>
+  <div class="preview-wrap">
+    <iframe id="previewFrame" name="previewFrame" title="內容預覽" src="help/global-tools.htm"></iframe>
+  </div>
+</div>
+
+<details class="map-tables-drawer" id="full-tables">
+  <summary>展開：完整七大模組對照表（列內連結會載入上方預覽 iframe）</summary>
+  <div class="wrap tables-inner">
+  <h1 style="margin-top:12px;">完整對照表 · 七大模組（與 SITE 同源）</h1>
+  <p class="note" style="margin:0 0 12px;font-size:12px;background:#e8f5e9;border:1px solid #a5d6a7;padding:10px 12px;border-radius:8px;">
+    <strong>工具總覽版（<code>help/site-sidebar-nav-map.html</code>）：</strong>僅使用<strong>相對於專案根</strong>的路徑（無 <code>file:///</code>）。若「相對路徑」欄<strong>只有一個</strong> <code>a.path-link</code>，則該列前方尚未帶連結的第1～3層純文字（如「全站工具」）會自動連到同一目標，可不必再點路徑欄。
+    <a href="../archive/20260507_root_wave2/../archive/20260507_root_wave2/SITE_側欄三層選單_去向.html" target="_blank" rel="noopener noreferrer" style="margin-left:8px;font-weight:600;">另開根目錄原版頁</a>
+  </p>
+  <div class="lead">
+    <p><strong>依據：</strong>各模組實際 <code>sidebar.html</code>（或等效側欄）結構手動對照；<strong>不含</strong> <code>languages/</code>（總站語言側欄下次再盤）。</p>
+    <p><strong>連結寫法：</strong>下表路徑均以專案根 <code>bible100_new/</code> 為準（相對 URL）；本頁透過 <code>&lt;base href="../"&gt;</code> 對齊該根目錄，可自本機或站台任意層級子路徑佈署時仍正確解析。</p>
+    <p><strong>原「頁面量級」欄：</strong>改為本頁<strong>不列</strong>；若需估工作量，請用 <code>_inventory_html_exclude_languages.txt</code> 或依「備註」。</p>
+    <p><strong>建議動作：</strong>儘量寫明<strong>併入的畫面／Tab 名稱</strong>（北極星藍圖用語）。</p>
+    <p><strong>可點連結：</strong>「第3層」與「相對路徑」欄對有實檔之頁為直接開檔；分類列標註 <span class="muted">無獨立 html</span> 者僅為側欄 <code>&lt;summary&gt;</code>／區塊標題。單一目標之列並已為第1～3層補上連結者，見頁首綠框說明。</p>
+    <p class="table-toolbar"><label><input type="checkbox" id="toggleExtras"> 顯示延伸欄（現況角色／建議歸宿／建議動作／備註）</label>
+    <span class="muted" style="margin-left:10px;display:inline-block;">窄螢幕可關閉減少擋位；設定會記在瀏覽器。</span></p>
+  </div>
+
+  <nav class="toc">
+    <a href="#mod-root">總站 index</a>
+    <a href="#mod-church">church_ministry</a>
+    <a href="#mod-school">school_management</a>
+    <a href="#mod-dd">disciple_dynamics</a>
+    <a href="#mod-bible">bible_study</a>
+    <a href="#mod-ai">ai_tools</a>
+    <a href="#mod-smart">smart_ministry</a>
+    <a href="#mod-hymn">hymn_management</a>
+    <a href="nav_hub/omni_entry.html" style="font-weight:600;">統一搜尋入口（新）</a>
+  </nav>
+
+  <h2 id="mod-root">總站 <code>index.html</code>（無單一 sidebar 檔）</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>模組／入口</th><th>第1層</th><th>第2層</th><th>第3層（葉）</th><th>相對路徑（自 bible100_new/）</th><th class="col-extra">現況角色</th><th class="col-extra">建議歸宿</th><th class="col-extra">建議動作（具體）</th><th class="col-extra">備註</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mod mod-sticky" rowspan="3"><a class="cell-link" href="index.html">index.html</a><br><span class="muted">總站入口</span></td>
+        <td>頂欄模組</td>
+        <td>—</td>
+        <td><a class="cell-link" href="church_ministry/dashboard.html">教會事工</a> <span class="muted">（側欄＋儀表板）</span></td>
+        <td class="path"><a class="path-link" href="church_ministry/sidebar.html">church_ministry/sidebar.html</a> ＋ <a class="path-link" href="church_ministry/dashboard.html">church_ministry/dashboard.html</a> <span class="muted">（<code>openChurchMinistry()</code>）</span></td>
+        <td class="col-extra">總壳切換子模組 iframe</td>
+        <td class="col-extra">基礎設施 → 模組切換器</td>
+        <td class="col-extra"><strong>改</strong>：收成「核心二」單一入口列；側欄改 context-aware</td>
+        <td class="col-extra">側欄檔見 church_ministry 表</td>
+      </tr>
+      <tr>
+        <td>頂欄模組</td>
+        <td>—</td>
+        <td>學校管理／門訓／AI 等</td>
+        <td class="path"><a class="path-link" href="school_management/sidebar.html">school_management/sidebar.html</a> · <a class="path-link" href="disciple_dynamics/sidebar.html">disciple_dynamics/sidebar.html</a> · <a class="path-link" href="ai_tools/sidebar.html">ai_tools/sidebar.html</a>…</td>
+        <td class="col-extra">同上</td>
+        <td class="col-extra">核心二／核心三</td>
+        <td class="col-extra"><strong>併</strong>：與「教育門訓」「AI 中心」敘事對齊，減少頂欄重複藥丸鈕</td>
+        <td class="col-extra">各模組細目見下表</td>
+      </tr>
+      <tr>
+        <td>語言切換</td>
+        <td>—</td>
+        <td>CN / EN / VN…</td>
+        <td class="path"><a class="path-link" href="languages/index_cn.html">languages/index_cn.html</a> 等 <span class="muted">（sidebarFrame）</span></td>
+        <td class="col-extra">百步教材與多語首屏</td>
+        <td class="col-extra">（本階段保留）</td>
+        <td class="col-extra"><strong>留</strong>：下次專案再盤；動線可改「先語言後系列」</td>
+        <td class="col-extra">依你指示本表不展開 languages 樹</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="mod-church"><code>church_ministry/</code> 側欄三層（<code>sidebar.html</code>）</h2>
+  <div class="table-scroll">
+  <table>
+    <caption>來源：<code>church_ministry/sidebar.html</code> · <code>base target="contentFrame"</code> · 每列「第3層」與「相對路徑」可點進實際功能頁。</caption>
+    <thead><tr><th>模組</th><th>第1層</th><th>第2層</th><th>第3層</th><th>相對路徑</th><th class="col-extra">現況角色</th><th class="col-extra">建議歸宿</th><th class="col-extra">建議動作（具體）</th><th class="col-extra">備註</th></tr></thead>
+    <tbody>
+<tr><td rowspan="78" class="sticky-mod mod-entry">
+<strong>church_ministry</strong><br>
+<a href="church_ministry/index.html">index.html</a><br>
+<a href="church_ministry/dashboard.html">dashboard</a><br>
+<a href="church_ministry/sidebar.html">sidebar</a>
+</td><td>全站工具</td><td>—</td><td><a class="cell-link" href="help/global-tools.htm">全站工具說明</a></td><td><a class="path-link" href="help/global-tools.htm">help/global-tools.htm</a></td><td class="col-extra">翻譯／送AI／收藏</td><td class="col-extra">基礎設施</td><td class="col-extra">留；併入全局說明</td><td class="col-extra">跨模組</td></tr>
+<tr><td>教會事工核心</td><td>—</td><td><a class="cell-link" href="church_ministry/dashboard.html">儀表板 SPAC</a></td><td><a class="path-link" href="church_ministry/dashboard.html">church_ministry/dashboard.html</a></td><td class="col-extra">會員／事工總覽</td><td class="col-extra">核心二 教牧戰情</td><td class="col-extra">改 → 戰情卡片</td><td class="col-extra">—</td></tr>
+<tr><td>教會事工核心</td><td>—</td><td><a class="cell-link" href="../church_ministry/people/people_list.html">人員總覽</a></td><td><a class="path-link" href="../church_ministry/people/people_list.html">../church_ministry/people/people_list.html</a></td><td class="col-extra">會友列表</td><td class="col-extra">核心二</td><td class="col-extra">併 → 會友 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>教會事工核心</td><td>—</td><td><a class="cell-link" href="church_ministry/activities-overview.html">事工與專案</a></td><td><a class="path-link" href="church_ministry/activities-overview.html">church_ministry/activities-overview.html</a></td><td class="col-extra">活動總覽</td><td class="col-extra">核心二</td><td class="col-extra">併 → 本週事工</td><td class="col-extra">—</td></tr>
+<tr><td>學校／門訓／AI</td><td>—</td><td><a class="cell-link" href="school_management/dashboard.html">學校管理</a></td><td><a class="path-link" href="school_management/dashboard.html">school_management/dashboard.html</a></td><td class="col-extra">跳轉子模組</td><td class="col-extra">核心二</td><td class="col-extra">改 → 站內路由</td><td class="col-extra">原 _blank</td></tr>
+<tr><td>學校／門訓／AI</td><td>—</td><td><a class="cell-link" href="disciple_dynamics/dashboard.html">門訓動力站</a></td><td><a class="path-link" href="disciple_dynamics/dashboard.html">disciple_dynamics/dashboard.html</a></td><td class="col-extra">跳轉門訓</td><td class="col-extra">核心二</td><td class="col-extra">併 → 門訓敘事</td><td class="col-extra">—</td></tr>
+<tr><td>學校／門訓／AI</td><td>—</td><td><a class="cell-link" href="ai_tools/dashboard.html">AI 智慧事奉</a></td><td><a class="path-link" href="ai_tools/dashboard.html">ai_tools/dashboard.html</a></td><td class="col-extra">跳轉 AI 台</td><td class="col-extra">核心三</td><td class="col-extra">併 → AI 工具庫</td><td class="col-extra">—</td></tr>
+<tr><td>A. 敬拜及音樂 <span class="muted">(無獨立 html)</span></td><td>1. 敬拜管理 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/worship/pulpit-ministry.html">講壇事奉</a></td><td><a class="path-link" href="church_ministry/modules/worship/pulpit-ministry.html">church_ministry/modules/worship/pulpit-ministry.html</a></td><td class="col-extra">事工頁</td><td class="col-extra">核心二 敬拜</td><td class="col-extra">併 → 敬拜 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>A. 敬拜及音樂 <span class="muted">(無獨立 html)</span></td><td>1. 敬拜管理 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/worship/sermon-notes-admin.html">講道筆記模板</a></td><td><a class="path-link" href="church_ministry/modules/worship/sermon-notes-admin.html">church_ministry/modules/worship/sermon-notes-admin.html</a></td><td class="col-extra">事工頁</td><td class="col-extra">核心二 敬拜</td><td class="col-extra">併 → 敬拜 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>A. 敬拜及音樂 <span class="muted">(無獨立 html)</span></td><td>1. 敬拜管理 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/worship/hospitality.html">招待事奉</a></td><td><a class="path-link" href="church_ministry/modules/worship/hospitality.html">church_ministry/modules/worship/hospitality.html</a></td><td class="col-extra">事工頁</td><td class="col-extra">核心二 敬拜</td><td class="col-extra">併 → 敬拜 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>A. 敬拜及音樂 <span class="muted">(無獨立 html)</span></td><td>2. 音樂與詩歌 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/worship/worship-integrated.html">敬拜事工完整系統</a></td><td><a class="path-link" href="church_ministry/modules/worship/worship-integrated.html">church_ministry/modules/worship/worship-integrated.html</a></td><td class="col-extra">子功能</td><td class="col-extra">核心二</td><td class="col-extra">併 → 敬拜 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>A. 敬拜及音樂 <span class="muted">(無獨立 html)</span></td><td>2. 音樂與詩歌 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/worship/worship-team-management.html">敬拜團隊</a></td><td><a class="path-link" href="church_ministry/modules/worship/worship-team-management.html">church_ministry/modules/worship/worship-team-management.html</a></td><td class="col-extra">子功能</td><td class="col-extra">核心二</td><td class="col-extra">併 → 敬拜 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>A. 敬拜及音樂 <span class="muted">(無獨立 html)</span></td><td>2. 音樂與詩歌 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/worship/choir-team.html">詩班團隊</a></td><td><a class="path-link" href="church_ministry/modules/worship/choir-team.html">church_ministry/modules/worship/choir-team.html</a></td><td class="col-extra">子功能</td><td class="col-extra">核心二</td><td class="col-extra">併 → 敬拜 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>A. 敬拜及音樂 <span class="muted">(無獨立 html)</span></td><td>2. 音樂與詩歌 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/worship/instrument-team.html">器樂團隊</a></td><td><a class="path-link" href="church_ministry/modules/worship/instrument-team.html">church_ministry/modules/worship/instrument-team.html</a></td><td class="col-extra">子功能</td><td class="col-extra">核心二</td><td class="col-extra">併 → 敬拜 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>A. 敬拜及音樂 <span class="muted">(無獨立 html)</span></td><td>2. 音樂與詩歌 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/worship/congregational-songs.html">會眾詩歌</a></td><td><a class="path-link" href="church_ministry/modules/worship/congregational-songs.html">church_ministry/modules/worship/congregational-songs.html</a></td><td class="col-extra">子功能</td><td class="col-extra">核心二</td><td class="col-extra">併 → 敬拜 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>A. 敬拜及音樂 <span class="muted">(無獨立 html)</span></td><td>2. 音樂與詩歌 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/worship/sheet-music.html">樂譜管理</a></td><td><a class="path-link" href="church_ministry/modules/worship/sheet-music.html">church_ministry/modules/worship/sheet-music.html</a></td><td class="col-extra">子功能</td><td class="col-extra">核心二</td><td class="col-extra">併 → 敬拜 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>A. 敬拜及音樂 <span class="muted">(無獨立 html)</span></td><td>3. 影音製作 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/media/audio-team.html">音響團隊</a></td><td><a class="path-link" href="church_ministry/modules/media/audio-team.html">church_ministry/modules/media/audio-team.html</a></td><td class="col-extra">媒體事工</td><td class="col-extra">核心二</td><td class="col-extra">併 → 媒體</td><td class="col-extra">—</td></tr>
+<tr><td>A. 敬拜及音樂 <span class="muted">(無獨立 html)</span></td><td>3. 影音製作 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/media/live-streaming.html">視頻直播</a></td><td><a class="path-link" href="church_ministry/modules/media/live-streaming.html">church_ministry/modules/media/live-streaming.html</a></td><td class="col-extra">媒體事工</td><td class="col-extra">核心二</td><td class="col-extra">併 → 媒體</td><td class="col-extra">—</td></tr>
+<tr><td>B. 牧養及小組 <span class="muted">(無獨立 html)</span></td><td>1. 團契與小組 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/fellowship/small-groups-integrated.html">小組事工完整系統</a></td><td><a class="path-link" href="church_ministry/modules/fellowship/small-groups-integrated.html">church_ministry/modules/fellowship/small-groups-integrated.html</a></td><td class="col-extra">團契／小組</td><td class="col-extra">核心二</td><td class="col-extra">併 → 牧養 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>B. 牧養及小組 <span class="muted">(無獨立 html)</span></td><td>1. 團契與小組 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/fellowship/fellowship-management.html">團契管理</a></td><td><a class="path-link" href="church_ministry/modules/fellowship/fellowship-management.html">church_ministry/modules/fellowship/fellowship-management.html</a></td><td class="col-extra">團契／小組</td><td class="col-extra">核心二</td><td class="col-extra">併 → 牧養 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>B. 牧養及小組 <span class="muted">(無獨立 html)</span></td><td>1. 團契與小組 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/fellowship/small-groups.html">小組事工</a></td><td><a class="path-link" href="church_ministry/modules/fellowship/small-groups.html">church_ministry/modules/fellowship/small-groups.html</a></td><td class="col-extra">團契／小組</td><td class="col-extra">核心二</td><td class="col-extra">併 → 牧養 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>B. 牧養及小組 <span class="muted">(無獨立 html)</span></td><td>1. 團契與小組 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/development/small-group-multiplication.html">小組倍增計劃</a></td><td><a class="path-link" href="church_ministry/modules/development/small-group-multiplication.html">church_ministry/modules/development/small-group-multiplication.html</a></td><td class="col-extra">團契／小組</td><td class="col-extra">核心二</td><td class="col-extra">併 → 牧養 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>B. 牧養及小組 <span class="muted">(無獨立 html)</span></td><td>2. 關懷事工 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/support/visitation.html">探訪關懷（執行／排程）</a></td><td><a class="path-link" href="church_ministry/modules/support/visitation.html">church_ministry/modules/support/visitation.html</a></td><td class="col-extra">關懷</td><td class="col-extra">核心二</td><td class="col-extra">併 → 關懷 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>B. 牧養及小組 <span class="muted">(無獨立 html)</span></td><td>2. 關懷事工 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/development/congregation-care.html">會眾關懷 · 年度計劃</a></td><td><a class="path-link" href="church_ministry/modules/development/congregation-care.html">church_ministry/modules/development/congregation-care.html</a></td><td class="col-extra">計劃看板</td><td class="col-extra">核心二</td><td class="col-extra">併 → 關懷 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>B. 牧養及小組 <span class="muted">(無獨立 html)</span></td><td>3. 領袖培育 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/development/leadership-training.html">領袖培訓策略</a></td><td><a class="path-link" href="church_ministry/modules/development/leadership-training.html">church_ministry/modules/development/leadership-training.html</a></td><td class="col-extra">策略</td><td class="col-extra">核心二</td><td class="col-extra">併 → 門訓交叉</td><td class="col-extra">—</td></tr>
+<tr><td>B. 牧養及小組 <span class="muted">(無獨立 html)</span></td><td>4. 青年事工 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/development/youth-ministry-dev.html">青年事工發展</a></td><td><a class="path-link" href="church_ministry/modules/development/youth-ministry-dev.html">church_ministry/modules/development/youth-ministry-dev.html</a></td><td class="col-extra">青年</td><td class="col-extra">核心二</td><td class="col-extra">併 → 事工 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>C. 聖經及教育 <span class="muted">(無獨立 html)</span></td><td>1. 靈命培育 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/education/education-integrated.html">教育事工完整系統</a></td><td><a class="path-link" href="church_ministry/modules/education/education-integrated.html">church_ministry/modules/education/education-integrated.html</a></td><td class="col-extra">整合</td><td class="col-extra">核心二</td><td class="col-extra">併 → 基督教教育 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>C. 聖經及教育 <span class="muted">(無獨立 html)</span></td><td>1. 靈命培育 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/education/spiritual-growth.html">靈命培育</a></td><td><a class="path-link" href="church_ministry/modules/education/spiritual-growth.html">church_ministry/modules/education/spiritual-growth.html</a></td><td class="col-extra">培育</td><td class="col-extra">核心二</td><td class="col-extra">併 → 同上</td><td class="col-extra">education 目錄</td></tr>
+<tr><td>C. 聖經及教育 <span class="muted">(無獨立 html)</span></td><td>1. 靈命培育 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/development/spiritual-growth.html">靈命成長追蹤</a></td><td><a class="path-link" href="church_ministry/modules/development/spiritual-growth.html">church_ministry/modules/development/spiritual-growth.html</a></td><td class="col-extra">追蹤</td><td class="col-extra">核心二</td><td class="col-extra">併 → 同上</td><td class="col-extra">development 目錄</td></tr>
+<tr><td>C. 聖經及教育 <span class="muted">(無獨立 html)</span></td><td>2. 主日學與兒童 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/education/sunday-school.html">主日學</a></td><td><a class="path-link" href="church_ministry/modules/education/sunday-school.html">church_ministry/modules/education/sunday-school.html</a></td><td class="col-extra">主日學</td><td class="col-extra">核心二</td><td class="col-extra">併 → 與 school 對齊</td><td class="col-extra">—</td></tr>
+<tr><td>C. 聖經及教育 <span class="muted">(無獨立 html)</span></td><td>2. 主日學與兒童 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/checkins/check-ins.html">兒童報到 Check-Ins</a></td><td><a class="path-link" href="church_ministry/modules/checkins/check-ins.html">church_ministry/modules/checkins/check-ins.html</a></td><td class="col-extra">報到</td><td class="col-extra">核心二</td><td class="col-extra">併 → 同上</td><td class="col-extra">—</td></tr>
+<tr><td>C. 聖經及教育 <span class="muted">(無獨立 html)</span></td><td>3. 培訓與門徒 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/education/training-programs.html">培訓課程</a></td><td><a class="path-link" href="church_ministry/modules/education/training-programs.html">church_ministry/modules/education/training-programs.html</a></td><td class="col-extra">課程</td><td class="col-extra">核心二</td><td class="col-extra">併 → disciple_dynamics 互鏈</td><td class="col-extra">—</td></tr>
+<tr><td>C. 聖經及教育 <span class="muted">(無獨立 html)</span></td><td>3. 培訓與門徒 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/development/discipleship-training.html">門徒培訓管理</a></td><td><a class="path-link" href="church_ministry/modules/development/discipleship-training.html">church_ministry/modules/development/discipleship-training.html</a></td><td class="col-extra">門訓</td><td class="col-extra">核心二</td><td class="col-extra">併 → 同上</td><td class="col-extra">—</td></tr>
+<tr><td>C. 聖經及教育 <span class="muted">(無獨立 html)</span></td><td>3. 培訓與門徒 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/development/leadership-development.html">領導力培養</a></td><td><a class="path-link" href="church_ministry/modules/development/leadership-development.html">church_ministry/modules/development/leadership-development.html</a></td><td class="col-extra">領導力</td><td class="col-extra">核心二</td><td class="col-extra">併 → 同上</td><td class="col-extra">—</td></tr>
+<tr><td>C. 聖經及教育 <span class="muted">(無獨立 html)</span></td><td>4. 發展計劃 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/development/development-plan.html">發展計劃管理</a></td><td><a class="path-link" href="church_ministry/modules/development/development-plan.html">church_ministry/modules/development/development-plan.html</a></td><td class="col-extra">計劃</td><td class="col-extra">核心二</td><td class="col-extra">併 → 戰情專案</td><td class="col-extra">—</td></tr>
+<tr><td>D. 外展及佈道差傳 <span class="muted">(區塊標題無獨立 html)</span></td><td>1. 社區與宣教 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/expansion/community-assessment.html">社區需求調研</a></td><td><a class="path-link" href="church_ministry/modules/expansion/community-assessment.html">church_ministry/modules/expansion/community-assessment.html</a></td><td class="col-extra">外展</td><td class="col-extra">核心二</td><td class="col-extra">併 → 外展 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>D. 外展及佈道差傳 <span class="muted">(區塊標題無獨立 html)</span></td><td>1. 社區與宣教 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/expansion/mission-opportunities.html">宣教機會探索</a></td><td><a class="path-link" href="church_ministry/modules/expansion/mission-opportunities.html">church_ministry/modules/expansion/mission-opportunities.html</a></td><td class="col-extra">外展</td><td class="col-extra">核心二</td><td class="col-extra">併 → 外展 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>D. 外展及佈道差傳 <span class="muted">(區塊標題無獨立 html)</span></td><td>1. 社區與宣教 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/expansion/new-ministry-planning.html">新事工規劃</a></td><td><a class="path-link" href="church_ministry/modules/expansion/new-ministry-planning.html">church_ministry/modules/expansion/new-ministry-planning.html</a></td><td class="col-extra">外展</td><td class="col-extra">核心二</td><td class="col-extra">併 → 外展 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>D. 外展及佈道差傳 <span class="muted">(區塊標題無獨立 html)</span></td><td>1. 社區與宣教 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/expansion/outreach-strategy.html">外展策略</a></td><td><a class="path-link" href="church_ministry/modules/expansion/outreach-strategy.html">church_ministry/modules/expansion/outreach-strategy.html</a></td><td class="col-extra">外展</td><td class="col-extra">核心二</td><td class="col-extra">併 → 外展 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>D. 外展及佈道差傳 <span class="muted">(區塊標題無獨立 html)</span></td><td>2. 植堂與分堂 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/expansion/church-planting.html">植堂計劃管理</a></td><td><a class="path-link" href="church_ministry/modules/expansion/church-planting.html">church_ministry/modules/expansion/church-planting.html</a></td><td class="col-extra">植堂</td><td class="col-extra">核心二</td><td class="col-extra">併 → 外展 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>D. 外展及佈道差傳 <span class="muted">(區塊標題無獨立 html)</span></td><td>2. 植堂與分堂 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/expansion/branch-management.html">分堂管理</a></td><td><a class="path-link" href="church_ministry/modules/expansion/branch-management.html">church_ministry/modules/expansion/branch-management.html</a></td><td class="col-extra">植堂</td><td class="col-extra">核心二</td><td class="col-extra">併 → 外展 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>D. 外展及佈道差傳 <span class="muted">(區塊標題無獨立 html)</span></td><td>2. 植堂與分堂 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/expansion/mission-expansion.html">宣教拓展</a></td><td><a class="path-link" href="church_ministry/modules/expansion/mission-expansion.html">church_ministry/modules/expansion/mission-expansion.html</a></td><td class="col-extra">植堂</td><td class="col-extra">核心二</td><td class="col-extra">併 → 外展 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>D. 外展及佈道差傳 <span class="muted">(區塊標題無獨立 html)</span></td><td>3. 跨文化／新媒體／創新 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/expansion/cross-cultural.html">跨文化事工</a></td><td><a class="path-link" href="church_ministry/modules/expansion/cross-cultural.html">church_ministry/modules/expansion/cross-cultural.html</a></td><td class="col-extra">創新</td><td class="col-extra">核心二</td><td class="col-extra">併 → 外展 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>D. 外展及佈道差傳 <span class="muted">(區塊標題無獨立 html)</span></td><td>3. 跨文化／新媒體／創新 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/innovation/new-media.html">新媒體事工</a></td><td><a class="path-link" href="church_ministry/modules/innovation/new-media.html">church_ministry/modules/innovation/new-media.html</a></td><td class="col-extra">創新</td><td class="col-extra">核心二</td><td class="col-extra">併 → 外展 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>D. 外展及佈道差傳 <span class="muted">(區塊標題無獨立 html)</span></td><td>3. 跨文化／新媒體／創新 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/innovation/innovation-projects.html">創新項目</a></td><td><a class="path-link" href="church_ministry/modules/innovation/innovation-projects.html">church_ministry/modules/innovation/innovation-projects.html</a></td><td class="col-extra">創新</td><td class="col-extra">核心二</td><td class="col-extra">併 → 外展 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>D. 外展及佈道差傳 <span class="muted">(區塊標題無獨立 html)</span></td><td>3. 跨文化／新媒體／創新 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/innovation/technology-integration.html">科技應用</a></td><td><a class="path-link" href="church_ministry/modules/innovation/technology-integration.html">church_ministry/modules/innovation/technology-integration.html</a></td><td class="col-extra">創新</td><td class="col-extra">核心二</td><td class="col-extra">併 → 外展 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>E. 社會服務 <span class="muted">(無獨立 html)</span></td><td>1. 志工事工 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/volunteer/volunteer-integrated.html">志工事工完整系統</a></td><td><a class="path-link" href="church_ministry/modules/volunteer/volunteer-integrated.html">church_ministry/modules/volunteer/volunteer-integrated.html</a></td><td class="col-extra">志工</td><td class="col-extra">核心二</td><td class="col-extra">併 → 志工 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>E. 社會服務 <span class="muted">(無獨立 html)</span></td><td>2. 社區服務 <span class="muted">(僅 summary)</span></td><td>（規劃中占位）</td><td>—</td><td class="col-extra">占位</td><td class="col-extra">—</td><td class="col-extra">除 或 即將推出</td><td class="col-extra">側欄無 href</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>1. 會員與財政 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/dashboard.html">儀表板</a></td><td><a class="path-link" href="church_ministry/dashboard.html">church_ministry/dashboard.html</a></td><td class="col-extra">重複入口</td><td class="col-extra">核心二</td><td class="col-extra">併 → 戰情</td><td class="col-extra">與上方重複</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>1. 會員與財政 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="../church_ministry/people/people_list.html">人員總覽</a></td><td><a class="path-link" href="../church_ministry/people/people_list.html">../church_ministry/people/people_list.html</a></td><td class="col-extra">重複</td><td class="col-extra">核心二</td><td class="col-extra">併 → 會友 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>1. 會員與財政 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/members/member-integrated.html">會友事工</a></td><td><a class="path-link" href="church_ministry/modules/members/member-integrated.html">church_ministry/modules/members/member-integrated.html</a></td><td class="col-extra">會友</td><td class="col-extra">核心二</td><td class="col-extra">併 → 行政 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>1. 會員與財政 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/finance/finance-integrated.html">財務事工</a></td><td><a class="path-link" href="church_ministry/modules/finance/finance-integrated.html">church_ministry/modules/finance/finance-integrated.html</a></td><td class="col-extra">財務</td><td class="col-extra">核心二</td><td class="col-extra">併 → 行政 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>2. 財務與資產 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/administration/financial-management.html">財務管理</a></td><td><a class="path-link" href="church_ministry/modules/administration/financial-management.html">church_ministry/modules/administration/financial-management.html</a></td><td class="col-extra">財務</td><td class="col-extra">核心二</td><td class="col-extra">併 → 行政 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>2. 財務與資產 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/equipment/equipment-management.html">設備管理</a></td><td><a class="path-link" href="church_ministry/modules/equipment/equipment-management.html">church_ministry/modules/equipment/equipment-management.html</a></td><td class="col-extra">設備</td><td class="col-extra">核心二</td><td class="col-extra">併 → 行政 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>2. 財務與資產 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/library/library-management.html">圖書管理</a></td><td><a class="path-link" href="church_ministry/modules/library/library-management.html">church_ministry/modules/library/library-management.html</a></td><td class="col-extra">圖書</td><td class="col-extra">核心二</td><td class="col-extra">併 → 行政 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>2. 財務與資產 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/community-overview.html">社群與捐款人</a></td><td><a class="path-link" href="church_ministry/community-overview.html">church_ministry/community-overview.html</a></td><td class="col-extra">社群</td><td class="col-extra">核心二</td><td class="col-extra">併 → 行政 Tab</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>3. 研究與統計 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/research/member-statistics.html">會眾統計</a></td><td><a class="path-link" href="church_ministry/modules/research/member-statistics.html">church_ministry/modules/research/member-statistics.html</a></td><td class="col-extra">統計</td><td class="col-extra">核心二</td><td class="col-extra">併 → 戰情圖表</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>3. 研究與統計 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/research/ministry-performance.html">事工成效</a></td><td><a class="path-link" href="church_ministry/modules/research/ministry-performance.html">church_ministry/modules/research/ministry-performance.html</a></td><td class="col-extra">統計</td><td class="col-extra">核心二</td><td class="col-extra">併 → 戰情圖表</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>3. 研究與統計 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/research/growth-trends.html">增長趨勢</a></td><td><a class="path-link" href="church_ministry/modules/research/growth-trends.html">church_ministry/modules/research/growth-trends.html</a></td><td class="col-extra">統計</td><td class="col-extra">核心二</td><td class="col-extra">併 → 戰情圖表</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>3. 研究與統計 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/research/engagement-analysis.html">參與度分析</a></td><td><a class="path-link" href="church_ministry/modules/research/engagement-analysis.html">church_ministry/modules/research/engagement-analysis.html</a></td><td class="col-extra">統計</td><td class="col-extra">核心二</td><td class="col-extra">併 → 戰情圖表</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>4. 媒體與科技 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/media/video-production.html">影片製作</a></td><td><a class="path-link" href="church_ministry/modules/media/video-production.html">church_ministry/modules/media/video-production.html</a></td><td class="col-extra">媒體</td><td class="col-extra">核心二</td><td class="col-extra">併 → 媒體</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>4. 媒體與科技 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/tech/ai-assistant.html?v=2">AI 助手</a></td><td><a class="path-link" href="church_ministry/modules/tech/ai-assistant.html?v=2">church_ministry/modules/tech/ai-assistant.html?v=2</a></td><td class="col-extra">科技</td><td class="col-extra">核心二／三</td><td class="col-extra">併 → AI／媒體</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>4. 媒體與科技 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/tech/smart-recommendation.html?v=2">數位事工</a></td><td><a class="path-link" href="church_ministry/modules/tech/smart-recommendation.html?v=2">church_ministry/modules/tech/smart-recommendation.html?v=2</a></td><td class="col-extra">科技</td><td class="col-extra">核心二</td><td class="col-extra">併 → 媒體</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>4. 媒體與科技 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/innovation/digital-transformation.html">數位化轉型</a></td><td><a class="path-link" href="church_ministry/modules/innovation/digital-transformation.html">church_ministry/modules/innovation/digital-transformation.html</a></td><td class="col-extra">創新</td><td class="col-extra">核心二</td><td class="col-extra">併 → 行政</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>5. 工具與支援 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/support/smart-reminders.html">智能提醒系統</a></td><td><a class="path-link" href="church_ministry/modules/support/smart-reminders.html">church_ministry/modules/support/smart-reminders.html</a></td><td class="col-extra">工具</td><td class="col-extra">核心二</td><td class="col-extra">併 → 行政／管理員</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>5. 工具與支援 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/support/workflow.html">Workflow 跟進流程</a></td><td><a class="path-link" href="church_ministry/modules/support/workflow.html">church_ministry/modules/support/workflow.html</a></td><td class="col-extra">工具</td><td class="col-extra">核心二</td><td class="col-extra">併 → 行政／管理員</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>5. 工具與支援 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/theme-settings.html">Church Center 主題</a></td><td><a class="path-link" href="church_ministry/theme-settings.html">church_ministry/theme-settings.html</a></td><td class="col-extra">工具</td><td class="col-extra">核心二</td><td class="col-extra">併 → 行政／管理員</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>5. 工具與支援 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/custom-page-editor.html">會眾入口自訂頁面</a></td><td><a class="path-link" href="church_ministry/custom-page-editor.html">church_ministry/custom-page-editor.html</a></td><td class="col-extra">工具</td><td class="col-extra">核心二</td><td class="col-extra">併 → 行政／管理員</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>5. 工具與支援 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/innovation/technology-apps.html">新技術應用</a></td><td><a class="path-link" href="church_ministry/modules/innovation/technology-apps.html">church_ministry/modules/innovation/technology-apps.html</a></td><td class="col-extra">支援</td><td class="col-extra">核心二</td><td class="col-extra">併 → 管理員</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>5. 工具與支援 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/innovation/smart-tools-dev.html">智能工具開發</a></td><td><a class="path-link" href="church_ministry/modules/innovation/smart-tools-dev.html">church_ministry/modules/innovation/smart-tools-dev.html</a></td><td class="col-extra">支援</td><td class="col-extra">核心二</td><td class="col-extra">併 → 管理員</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>5. 工具與支援 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/innovation/best-practices.html">最佳實踐研究</a></td><td><a class="path-link" href="church_ministry/modules/innovation/best-practices.html">church_ministry/modules/innovation/best-practices.html</a></td><td class="col-extra">支援</td><td class="col-extra">核心二</td><td class="col-extra">併 → 管理員</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>5. 工具與支援 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/support/technical-support.html">技術支援</a></td><td><a class="path-link" href="church_ministry/modules/support/technical-support.html">church_ministry/modules/support/technical-support.html</a></td><td class="col-extra">支援</td><td class="col-extra">核心二</td><td class="col-extra">併 → 管理員</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>5. 工具與支援 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/modules/support/help-documentation.html">幫助文檔</a></td><td><a class="path-link" href="church_ministry/modules/support/help-documentation.html">church_ministry/modules/support/help-documentation.html</a></td><td class="col-extra">支援</td><td class="col-extra">核心二</td><td class="col-extra">併 → 管理員</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>6. 行政管理 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/vision_and_plan.html">願景與藍圖</a></td><td><a class="path-link" href="church_ministry/vision_and_plan.html">church_ministry/vision_and_plan.html</a></td><td class="col-extra">戰略</td><td class="col-extra">核心二</td><td class="col-extra">併 → 戰情</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>6. 行政管理 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/roadmap-overview.html">路線圖總覽</a></td><td><a class="path-link" href="church_ministry/roadmap-overview.html">church_ministry/roadmap-overview.html</a></td><td class="col-extra">路線圖</td><td class="col-extra">核心二</td><td class="col-extra">併 → 戰情</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>6. 行政管理 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/ministry_core.html">事工總覽</a></td><td><a class="path-link" href="church_ministry/ministry_core.html">church_ministry/ministry_core.html</a></td><td class="col-extra">總覽</td><td class="col-extra">核心二</td><td class="col-extra">併 → 戰情</td><td class="col-extra">—</td></tr>
+<tr><td>行政支援 <span class="muted">(無獨立 html)</span></td><td>6. 行政管理 <span class="muted">(僅 summary)</span></td><td><a class="cell-link" href="church_ministry/ai-and-compliance.html">AI 決策與合規</a></td><td><a class="path-link" href="church_ministry/ai-and-compliance.html">church_ministry/ai-and-compliance.html</a></td><td class="col-extra">合規</td><td class="col-extra">核心二</td><td class="col-extra">移 → 管理員選單</td><td class="col-extra">種子頁類比</td></tr>
+<tr><td>返回</td><td>—</td><td><a class="cell-link" href="index.html">返回主頁</a></td><td><a class="path-link" href="index.html">index.html</a></td><td class="col-extra">回總站</td><td class="col-extra">基礎設施</td><td class="col-extra">留</td><td class="col-extra">target=_parent 於實際側欄</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="mod-school"><code>school_management/</code> 側欄（<code>sidebar.html</code>）</h2>
+  <div class="table-scroll">
+  <table>
+    <caption>結構多為「區塊標題 → 單層連結」；第2層以「—」表示</caption>
+    <thead><tr><th>模組</th><th>第1層</th><th>第2層</th><th>第3層</th><th>相對路徑</th><th class="col-extra">現況角色</th><th class="col-extra">建議歸宿</th><th class="col-extra">建議動作（具體）</th><th class="col-extra">備註</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="5" class="sticky-mod mod-entry"><strong>school_management</strong><br>
+      <a href="school_management/index.html">index</a> · <a href="school_management/dashboard.html">dashboard</a><br>
+      <a href="school_management/sidebar.html">sidebar</a></td><td>學員入口</td><td>—</td><td><a class="cell-link" href="school_management/portal/index.html">課程／繳費／成績／報名</a></td><td><a class="path-link" href="school_management/portal/index.html">school_management/portal/index.html</a></td><td class="col-extra">會眾／學生視角</td><td class="col-extra">核心二</td><td class="col-extra"><strong>留</strong> → 「我的學習」主 Tab（與教牧入口分離）</td><td class="col-extra">—</td></tr>
+      <tr><td>統一管理</td><td>—</td><td><a class="cell-link" href="school_management/unified_management.html">選課／授課／分班</a></td><td><a class="path-link" href="school_management/unified_management.html">school_management/unified_management.html</a></td><td class="col-extra">同工統一操作</td><td class="col-extra">核心二</td><td class="col-extra"><strong>改</strong> → 與 manage/*_tabs 二選一主入口，避免重複</td><td class="col-extra">—</td></tr>
+      <tr><td>模組（單頁多 Tab）</td><td>—</td><td>學生／課程／教師／班級／成績／財務／溝通／活動／系統</td><td class="path"><a class="path-link" href="school_management/manage/students_tabs.html">school_management/manage/students_tabs.html</a> … <a class="path-link" href="school_management/manage/system_tabs.html">school_management/manage/system_tabs.html</a></td><td class="col-extra">行政細項</td><td class="col-extra">核心二</td><td class="col-extra"><strong>併</strong> → 「學校後台」單頁多 Tab（現狀已接近，僅收斂入口）</td><td class="col-extra">9 條並列</td></tr>
+      <tr><td>跨模組整合</td><td>—</td><td>門訓／AI／智慧事奉／說明</td><td class="path"><a class="path-link" href="disciple_dynamics/dashboard.html">disciple_dynamics/dashboard.html</a> 等</td><td class="col-extra">外連模組</td><td class="col-extra">核心二／三</td><td class="col-extra"><strong>改</strong> → 站內路由取代 <code>_blank</code>（可選）</td><td class="col-extra">—</td></tr>
+      <tr><td>—</td><td>—</td><td><a class="cell-link" href="school_management/dashboard.html">返回儀表板</a></td><td><a class="path-link" href="school_management/dashboard.html">school_management/dashboard.html</a></td><td class="col-extra">模組 home</td><td class="col-extra">核心二</td><td class="col-extra"><strong>留</strong> → 教育門訓總 hub</td><td class="col-extra">—</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="mod-dd"><code>disciple_dynamics/</code> 側欄三層（<code>sidebar.html</code>）</h2>
+  <div class="table-scroll">
+  <table>
+    <caption>第3層為「系列」：每系列下為 Landing + ch01～chNN 靜態課程頁（路徑模式相同）</caption>
+    <thead><tr><th>模組</th><th>第1層</th><th>第2層</th><th>第3層（系列）</th><th>相對路徑（模式）</th><th class="col-extra">現況角色</th><th class="col-extra">建議歸宿</th><th class="col-extra">建議動作（具體）</th><th class="col-extra">備註</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="8" class="sticky-mod mod-entry"><strong>disciple_dynamics</strong><br>
+      <a href="disciple_dynamics/index.html">index</a> · <a href="disciple_dynamics/dashboard.html">dashboard</a><br>
+      <a href="disciple_dynamics/sidebar.html">sidebar</a></td><td>全站工具</td><td>—</td><td><a class="cell-link" href="help/global-tools.htm">全站工具說明</a></td><td><a class="path-link" href="help/global-tools.htm">help/global-tools.htm</a></td><td class="col-extra">同前</td><td class="col-extra">基礎設施</td><td class="col-extra"><strong>留</strong></td><td class="col-extra">—</td></tr>
+      <tr><td>培訓總覽與資源</td><td>—</td><td>總覽／training 清單／錨點</td><td class="path"><a class="path-link" href="disciple_dynamics/dashboard.html">disciple_dynamics/dashboard.html</a> · <a class="path-link" href="training/training_overview.html">training/training_overview.html</a></td><td class="col-extra">門訓入口</td><td class="col-extra">核心二</td><td class="col-extra"><strong>併</strong> → 「門訓與教育」與 school 入口並列</td><td class="col-extra">—</td></tr>
+      <tr><td>C 教義</td><td>基要真理</td><td>全系列（Landing + ch01–ch12）</td><td class="path"><a class="path-link" href="disciple_dynamics/c/doctrine_basics.html">disciple_dynamics/c/doctrine_basics.html</a>、<code>c/doctrine_basics_chNN.html</code></td><td class="col-extra">課程內容</td><td class="col-extra">核心二 門訓資產</td><td class="col-extra"><strong>留</strong> 檔案；<strong>改</strong> 側欄為「系列摺疊＋進度」</td><td class="col-extra">12 課</td></tr>
+      <tr><td>C 教義</td><td>防備辯駁異端</td><td>全系列</td><td class="path"><code>disciple_dynamics/c/doctrine_heresy*.html</code></td><td class="col-extra">課程</td><td class="col-extra">核心二</td><td class="col-extra">同上</td><td class="col-extra">12 課</td></tr>
+      <tr><td>D 基督徒生活</td><td>基督化家庭／僕人素質／屬靈爭戰／雅各書</td><td>各系列 Landing + ch01–ch12</td><td class="path"><code>disciple_dynamics/d/christian_family*.html</code> 等</td><td class="col-extra">課程</td><td class="col-extra">核心二</td><td class="col-extra">同上</td><td class="col-extra">每系列 12 課為主</td></tr>
+      <tr><td>E 教會</td><td>教會管理／林前／教會史上下／面面觀上下／尼希米</td><td>各系列 Landing + chNN</td><td class="path"><code>disciple_dynamics/e/church_management*.html</code> 等</td><td class="col-extra">課程</td><td class="col-extra">核心二</td><td class="col-extra">同上</td><td class="col-extra">教會史冊數課不同</td></tr>
+      <tr><td>F 研經講道</td><td>查經技巧上／下／講道入門</td><td>各系列 chNN</td><td class="path"><code>disciple_dynamics/f/bss1*.html</code> 等</td><td class="col-extra">課程</td><td class="col-extra">核心二 ＋ 與 <strong>核心一</strong> Bible Studio 互鏈</td><td class="col-extra"><strong>改</strong>：從課程頁一鍵開「研讀主控台」同書卷</td><td class="col-extra">bss1 含 ch13–14</td></tr>
+      <tr><td>G 巴拿巴手冊</td><td>（一）～（五）</td><td>各冊子頁</td><td class="path"><a class="path-link" href="disciple_dynamics/g/barnabas_guide.html">disciple_dynamics/g/barnabas_guide.html</a> <span class="muted">（冊子見 <code>barnabas_1.html</code> 等）</span></td><td class="col-extra">課程</td><td class="col-extra">核心二</td><td class="col-extra"><strong>留</strong>；側欄與 F 類同優化</td><td class="col-extra">細節見原 sidebar</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="mod-bible"><code>bible_study/</code> 側欄三層（<code>sidebar.html</code>）</h2>
+  <div class="table-scroll">
+  <table>
+    <caption>「聖經書卷」為 第1層舊約/新約 → 第2層分組 → 第3層各書或 landing</caption>
+    <thead><tr><th>模組</th><th>第1層</th><th>第2層</th><th>第3層</th><th>相對路徑</th><th class="col-extra">現況角色</th><th class="col-extra">建議歸宿</th><th class="col-extra">建議動作（具體）</th><th class="col-extra">備註</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="13" class="sticky-mod mod-entry"><strong>bible_study</strong><br>
+      <a href="bible_study/index.html">index</a> · <a href="bible_study/sidebar.html">sidebar</a></td><td>（置頂）</td><td>—</td><td><a class="cell-link" href="bible_study/comprehensive_exegesis_reader.html?book=%E5%89%B5%E4%B8%96%E8%A8%98&amp;chapter=1">進入聖經研讀中心</a></td><td><a class="path-link" href="bible_study/comprehensive_exegesis_reader.html?book=%E5%89%B5%E4%B8%96%E8%A8%98&amp;chapter=1">bible_study/comprehensive_exegesis_reader.html?…</a></td><td class="col-extra">預設研經入口</td><td class="col-extra">核心一 Bible Studio</td><td class="col-extra"><strong>併</strong> → 主控台「預設右欄＝註釋」狀態</td><td class="col-extra">—</td></tr>
+      <tr><td>主功能列</td><td>—</td><td><a class="cell-link" href="bible_study/reader.html">聖經閱讀</a></td><td><a class="path-link" href="bible_study/reader.html">bible_study/reader.html</a></td><td class="col-extra">純閱讀</td><td class="col-extra">核心一</td><td class="col-extra"><strong>併</strong> → Studio <strong>左欄「經文」</strong>主 pane</td><td class="col-extra">—</td></tr>
+      <tr><td>主功能列</td><td>—</td><td><a class="cell-link" href="bible_study/comprehensive_exegesis_reader.html">研經註釋</a></td><td><a class="path-link" href="bible_study/comprehensive_exegesis_reader.html">bible_study/comprehensive_exegesis_reader.html</a></td><td class="col-extra">CMC 綜合解讀</td><td class="col-extra">核心一</td><td class="col-extra"><strong>併</strong> → Studio <strong>右欄「註釋」</strong></td><td class="col-extra">—</td></tr>
+      <tr><td>主功能列</td><td>—</td><td><a class="cell-link" href="bible_study/parallel_mode_v2.html">譯本對照</a></td><td><a class="path-link" href="bible_study/parallel_mode_v2.html">bible_study/parallel_mode_v2.html</a></td><td class="col-extra">多譯本</td><td class="col-extra">核心一</td><td class="col-extra"><strong>併</strong> → Studio 右欄「對照」；<strong>除</strong> v3 重複入口</td><td class="col-extra">—</td></tr>
+      <tr><td>主功能列</td><td>—</td><td><a class="cell-link" href="bible_study/_landing/versions.html#multilang">多語言版本 landing</a></td><td><a class="path-link" href="bible_study/_landing/versions.html#multilang">bible_study/_landing/versions.html#multilang</a></td><td class="col-extra">版本說明</td><td class="col-extra">核心一</td><td class="col-extra"><strong>併</strong> → 「資料來源／版本」設定側欄</td><td class="col-extra">—</td></tr>
+      <tr><td>主功能列</td><td>—</td><td><a class="cell-link" href="bible_study/search_reader.html">全文搜尋</a></td><td><a class="path-link" href="bible_study/search_reader.html">bible_study/search_reader.html</a></td><td class="col-extra">搜尋</td><td class="col-extra">核心一</td><td class="col-extra"><strong>改</strong> → 與全站 Omni-Search 共用引擎（長期）</td><td class="col-extra">—</td></tr>
+      <tr><td>聖經版本</td><td>中文版本</td><td>和合本 Strong／呂振中</td><td class="path"><a class="path-link" href="bible_study/external_bible_reader.html">bible_study/external_bible_reader.html</a><span class="muted">?source=…</span></td><td class="col-extra">外站 iframe 讀經</td><td class="col-extra">核心一</td><td class="col-extra"><strong>留</strong>；收進 Studio「版本選擇器」</td><td class="col-extra">—</td></tr>
+      <tr><td>聖經版本</td><td>英文版本</td><td>KJV／NIV landing</td><td class="path"><a class="path-link" href="bible_study/versions/kjv.html">bible_study/versions/kjv.html</a> · <a class="path-link" href="bible_study/versions/niv.html">niv.html</a></td><td class="col-extra">版本介紹＋外連</td><td class="col-extra">核心一</td><td class="col-extra"><strong>併</strong> → 視覺圖書館或版本中心</td><td class="col-extra">—</td></tr>
+      <tr><td>聖經版本</td><td>多語言</td><td>越／印／緬</td><td class="path"><a class="path-link" href="bible_study/external_bible_reader.html?source=vietchristian">bible_study/external_bible_reader.html?source=vietchristian</a> <span class="muted">等</span></td><td class="col-extra">外站讀經</td><td class="col-extra">核心一</td><td class="col-extra">同上</td><td class="col-extra">—</td></tr>
+      <tr><td>聖經書卷</td><td>舊約 → 律法／歷史／詩歌／大小先知</td><td>各卷 query 或 OT index</td><td class="path"><a class="path-link" href="bible_study/comprehensive_exegesis_reader.html?book=%E5%89%B5%E4%B8%96%E8%A8%98&amp;chapter=1">範例：創世記 ch1</a> · <a class="path-link" href="bible_study/OT/index.html">bible_study/OT/index.html</a></td><td class="col-extra">66 卷捷徑</td><td class="col-extra">核心一</td><td class="col-extra"><strong>改</strong> → 書卷選擇改「動態面板」；<strong>留</strong> 所有 query 連結可繼續用</td><td class="col-extra">側欄過長問題由此緩解</td></tr>
+      <tr><td>聖經書卷</td><td>新約 → 福音／行傳／保羅／一般／啟示錄</td><td>同上模式</td><td class="path"><a class="path-link" href="bible_study/NT/index.html">bible_study/NT/index.html</a> <span class="muted">＋ reader query</span></td><td class="col-extra">同上</td><td class="col-extra">核心一</td><td class="col-extra">同上</td><td class="col-extra">—</td></tr>
+      <tr><td>聖經地理歷史</td><td>（<code>geography_history_data.js</code> 動態類別）</td><td>各子連結</td><td class="path"><a class="path-link" href="bible_study/_landing/geography_history.html">bible_study/_landing/geography_history.html</a> <span class="muted">＋ JS 注入</span></td><td class="col-extra">時間軸／地圖／考古</td><td class="col-extra">核心一 <strong>視覺圖書館</strong></td><td class="col-extra"><strong>併</strong> → 「Visual Bible」單一入口的第一分區</td><td class="col-extra">第三層依資料檔變動</td></tr>
+      <tr><td>—</td><td>—</td><td><a class="cell-link" href="help/global-tools.htm">全站工具說明</a></td><td><a class="path-link" href="help/global-tools.htm">help/global-tools.htm</a></td><td class="col-extra">說明</td><td class="col-extra">基礎設施</td><td class="col-extra"><strong>留</strong></td><td class="col-extra">—</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="mod-ai"><code>ai_tools/</code> 側欄（<code>sidebar.html</code>）</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>模組</th><th>第1層</th><th>第2層</th><th>第3層</th><th>相對路徑</th><th class="col-extra">現況角色</th><th class="col-extra">建議歸宿</th><th class="col-extra">建議動作（具體）</th><th class="col-extra">備註</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="9" class="sticky-mod mod-entry"><strong>ai_tools</strong><br>
+      <a href="ai_tools/index.html">index</a> · <a href="ai_tools/dashboard.html">dashboard</a><br>
+      <a href="ai_tools/sidebar.html">sidebar</a></td><td>全站工具</td><td>—</td><td><a class="cell-link" href="help/global-tools.htm">說明</a></td><td><a class="path-link" href="help/global-tools.htm">help/global-tools.htm</a></td><td class="col-extra">同前</td><td class="col-extra">基礎設施</td><td class="col-extra"><strong>留</strong></td><td class="col-extra">—</td></tr>
+      <tr><td>儀表板</td><td>—</td><td><a class="cell-link" href="ai_tools/dashboard.html">總覽</a>／<a class="cell-link" href="ai_tools/index.html">AI 工具首頁</a></td><td class="path"><a class="path-link" href="ai_tools/dashboard.html">ai_tools/dashboard.html</a> · <a class="path-link" href="ai_tools/index.html">ai_tools/index.html</a></td><td class="col-extra">模組 hub</td><td class="col-extra">核心三</td><td class="col-extra"><strong>改</strong> → 「AI 設定、教學、進階工具」總台</td><td class="col-extra">—</td></tr>
+      <tr><td>導覽中心</td><td>—</td><td>AI 平台／媒體工具導覽</td><td class="path"><a class="path-link" href="ai_tools/_landing/ai_platforms.html">ai_tools/_landing/ai_platforms.html</a> · <a class="path-link" href="ai_tools/_landing/media_tools.html">media_tools.html</a></td><td class="col-extra">教學導覽</td><td class="col-extra">核心三</td><td class="col-extra"><strong>併</strong> → 「Prompt 教學與平台說明」區塊</td><td class="col-extra">—</td></tr>
+      <tr><td>教學函數</td><td>—</td><td>課程設計等</td><td class="path"><a class="path-link" href="ai_tools/functions/ai_lesson_design.html">ai_tools/functions/ai_lesson_design.html</a> <span class="muted">等 4 頁</span></td><td class="col-extra">教學向工具</td><td class="col-extra">核心三</td><td class="col-extra"><strong>併</strong> → 全局 FAB「教學場景」預設動作庫</td><td class="col-extra">4 頁</td></tr>
+      <tr><td>聖經教學</td><td>—</td><td><a class="cell-link" href="ai_tools/tools/bible_prompt_generator.html">聖經 Prompt 生成器</a></td><td><a class="path-link" href="ai_tools/tools/bible_prompt_generator.html">ai_tools/tools/bible_prompt_generator.html</a></td><td class="col-extra">經文上下文 prompt</td><td class="col-extra">核心三 ＋ 核心一</td><td class="col-extra"><strong>併</strong> → 與 Bible Studio「匯出給 AI」同一資料層</td><td class="col-extra">—</td></tr>
+      <tr><td>核心智能</td><td>details</td><td>問答／測驗等</td><td class="path"><a class="path-link" href="ai_tools/pages/ai_qa_system.html">ai_tools/pages/ai_qa_system.html</a> <span class="muted">等</span></td><td class="col-extra">AI 功能頁</td><td class="col-extra">核心三</td><td class="col-extra"><strong>併</strong> → FAB 快捷；本側欄保留進階入口</td><td class="col-extra">4 頁</td></tr>
+      <tr><td>創作工具</td><td>details</td><td>創作總覽等</td><td class="path"><a class="path-link" href="ai_tools/tools/creative_tools_landing.html">ai_tools/tools/creative_tools_landing.html</a> <span class="muted">等</span></td><td class="col-extra">多媒體</td><td class="col-extra">核心三（第二階段）</td><td class="col-extra"><strong>留</strong>；標示「進階／耗額度」</td><td class="col-extra">—</td></tr>
+      <tr><td>媒體與嵌入</td><td>details</td><td>YouTube／嵌入等</td><td class="path"><a class="path-link" href="ai_tools/tools/youtube_media_embed_tool.html">ai_tools/tools/youtube_media_embed_tool.html</a> <span class="muted">等</span></td><td class="col-extra">媒體剪輯輔助</td><td class="col-extra">核心三 或 核心二 媒體 Tab</td><td class="col-extra"><strong>併</strong> → 媒體事工同源入口</td><td class="col-extra">—</td></tr>
+      <tr><td>快速連結</td><td>—</td><td><a class="cell-link" href="index.html">返回主頁</a></td><td><a class="path-link" href="index.html">index.html</a> <span class="muted">parent</span></td><td class="col-extra">導航</td><td class="col-extra">基礎設施</td><td class="col-extra"><strong>留</strong></td><td class="col-extra">—</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="mod-smart"><code>smart_ministry/</code> 側欄（<code>sidebar.html</code>）</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>模組</th><th>第1層</th><th>第2層</th><th>第3層</th><th>相對路徑</th><th class="col-extra">現況角色</th><th class="col-extra">建議歸宿</th><th class="col-extra">建議動作（具體）</th><th class="col-extra">備註</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="7" class="sticky-mod mod-entry"><strong>smart_ministry</strong><br>
+      <a href="smart_ministry/index.html">index</a> · <a href="smart_ministry/dashboard.html">dashboard</a><br>
+      <a href="smart_ministry/sidebar.html">sidebar</a></td><td>全站工具</td><td>—</td><td><a class="cell-link" href="help/global-tools.htm">說明</a></td><td><a class="path-link" href="help/global-tools.htm">help/global-tools.htm</a></td><td class="col-extra">同前</td><td class="col-extra">基礎設施</td><td class="col-extra"><strong>留</strong></td><td class="col-extra">—</td></tr>
+      <tr><td>總覽</td><td>—</td><td>總覽／路線圖／AI 工具</td><td class="path"><a class="path-link" href="smart_ministry/ai_smart_ministry_overview.html">smart_ministry/ai_smart_ministry_overview.html</a> · <a class="path-link" href="smart_ministry/_landing/ai_smart_ministry.html">_landing/ai_smart_ministry.html</a> · <a class="path-link" href="ai_tools/dashboard.html">ai_tools/dashboard.html</a></td><td class="col-extra">事奉路線與導流</td><td class="col-extra">核心三</td><td class="col-extra"><strong>併</strong> → 與 <code>ai_tools</code> <strong>同一「AI 事奉中心」側欄</strong>，避免兩套紫色敘事</td><td class="col-extra">—</td></tr>
+      <tr><td>智慧事奉核心</td><td>—</td><td>人才技能／配對／儀表板等</td><td class="path"><a class="path-link" href="smart_ministry/talent_skill_unified.html">smart_ministry/talent_skill_unified.html</a> <span class="muted">等</span></td><td class="col-extra">恩賜／配對</td><td class="col-extra">核心三</td><td class="col-extra"><strong>改</strong> → 加隱私與同意；<strong>併</strong> → 「事工報名」與教會 core 連動</td><td class="col-extra">敏感資料</td></tr>
+      <tr><td>人才吸納中心</td><td>—</td><td>註冊／問卷等</td><td class="path"><a class="path-link" href="smart_ministry/registration.html">smart_ministry/registration.html</a> <span class="muted">等</span></td><td class="col-extra">資料收集</td><td class="col-extra">核心三 ＋ 核心二</td><td class="col-extra"><strong>併</strong> → 教牧戰情「新人／報名」待辦來源</td><td class="col-extra">—</td></tr>
+      <tr><td>AI 智能配對</td><td>—</td><td>恩賜測試／MBTI 等</td><td class="path"><a class="path-link" href="smart_ministry/spiritual_gifts.html">smart_ministry/spiritual_gifts.html</a> <span class="muted">等</span></td><td class="col-extra">測評</td><td class="col-extra">核心三</td><td class="col-extra"><strong>改</strong> → 明示儲存位置（本機／伺服器）；牧者審閱流程</td><td class="col-extra">—</td></tr>
+      <tr><td>人才發展追踪</td><td>—</td><td>成長／評估等</td><td class="path"><a class="path-link" href="smart_ministry/talent_tracking.html">smart_ministry/talent_tracking.html</a> <span class="muted">等</span></td><td class="col-extra">HR 向追踪</td><td class="col-extra">核心二（同工）為主</td><td class="col-extra"><strong>併</strong> → 教牧「同工」Tab</td><td class="col-extra">—</td></tr>
+      <tr><td>模組連接</td><td>—</td><td>教會事工／返回主頁</td><td class="path"><a class="path-link" href="church_ministry/dashboard.html">church_ministry/dashboard.html</a> · <a class="path-link" href="index.html">index.html</a></td><td class="col-extra">跨模組</td><td class="col-extra">基礎設施</td><td class="col-extra"><strong>留</strong>；將來改單一路由器</td><td class="col-extra">—</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="mod-hymn"><code>hymn_management/</code> 側欄（<code>sidebar.html</code>）</h2>
+  <div class="table-scroll">
+  <table>
+    <caption>此側欄以表單／篩選為主，非傳統「多層 href 樹」</caption>
+    <thead><tr><th>模組</th><th>第1層</th><th>第2層</th><th>第3層</th><th>相對路徑／行為</th><th class="col-extra">現況角色</th><th class="col-extra">建議歸宿</th><th class="col-extra">建議動作（具體）</th><th class="col-extra">備註</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="3" class="sticky-mod mod-entry"><strong>hymn_management</strong><br>
+      <a href="hymn_management/index.html">index</a> · <a href="hymn_management/dashboard.html">dashboard</a><br>
+      <a href="hymn_management/sidebar.html">sidebar</a></td><td>詩集選擇</td><td>—</td><td>下拉 5 本詩集</td><td class="path"><a class="path-link" href="hymn_management/sidebar.html">hymn_management/sidebar.html</a> <span class="muted">（<code>select#hymnalSelect</code> → postMessage）</span></td><td class="col-extra">篩選詩歌</td><td class="col-extra">敬拜衛星 或 核心一延伸</td><td class="col-extra"><strong>留</strong>；與教會「敬拜」Tab <strong>互鏈</strong></td><td class="col-extra">無單一「第3層 html」</td></tr>
+      <tr><td>分類篩選／搜尋／統計</td><td>—</td><td>checkbox／輸入框</td><td class="path"><span class="muted">同上（JS 驅動）</span></td><td class="col-extra">篩選</td><td class="col-extra">同上</td><td class="col-extra"><strong>改</strong> → 與 Omni-Search 可選整合「詩歌」類結果</td><td class="col-extra">—</td></tr>
+      <tr><td>快速鏈接</td><td>—</td><td><a class="cell-link" href="hymn_management/dashboard.html">儀表板</a></td><td><a class="path-link" href="hymn_management/dashboard.html">hymn_management/dashboard.html</a></td><td class="col-extra">模組 hub</td><td class="col-extra">敬拜衛星</td><td class="col-extra"><strong>留</strong></td><td class="col-extra">其餘為 javascript: 偽協議</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p class="note" style="margin-top:24px;"><strong>未展開之模組</strong>（<code>nav_hub/</code>、<code>search/</code>、<code>tools/tools-overview-sidebar.html</code>、<code>congregation/</code>）：多由總站「工具總覽」或程式呼叫載入；結構類似「區塊＋連結」。建議歸宿：<strong>併入 Omni-Search ＋ 功能地圖</strong>。若需要，可再開第二張表逐 href 列出。</p>
+  <p class="note">文件版本：2026-05-02 — 頁首新增<strong>左巢狀摺疊捷徑＋右欄單一 iframe 預覽</strong>；七大表收於上方摺疊區，表內連結預設載入預覽框。先前：2026-03-28（可點連結、窄螢幕可摺延伸欄、模組欄附 index／dashboard／sidebar）· 與 <code>SITE_功能頁去向_排除languages.md</code> 互補。<code>church_ministry</code> 列可由 <code>_gen_sidebar_table.py</code> 重產 tbody 片段後併入。</p>
+</div>
+</details>
+
+<script>
+(function () {
+  var inner = document.querySelector('.tables-inner');
+  if (!inner) return;
+  inner.addEventListener('click', function (e) {
+    var a = e.target.closest('a');
+    if (!a) return;
+    var href = a.getAttribute('href');
+    if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+    if (a.target === '_blank' || a.target === '_top' || a.target === '_parent') return;
+    if (a.getAttribute('target') === 'previewFrame') return;
+    var fr = document.getElementById('previewFrame');
+    if (!fr) return;
+    e.preventDefault();
+    fr.src = a.href;
+  });
+})();
+</script>
+<script>
+(function () {
+  function escAttr(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+  document.querySelectorAll('.table-scroll table tbody tr').forEach(function (tr) {
+    var pathCell = tr.querySelector('td.path');
+    if (!pathCell) return;
+    var links = pathCell.querySelectorAll('a.path-link[href]');
+    if (links.length !== 1) return;
+    var href = links[0].getAttribute('href');
+    if (!href || href.indexOf('javascript:') === 0) return;
+    var tds = [].slice.call(tr.querySelectorAll('td'));
+    var pi = tds.indexOf(pathCell);
+    if (pi < 0) return;
+    for (var i = 0; i < pi; i++) {
+      var td = tds[i];
+      if (td.classList.contains('col-extra')) continue;
+      if (td.querySelector('a[href]')) continue;
+      var raw = (td.textContent || '').replace(/\u00a0/g, ' ').trim();
+      if (!raw || raw === '—' || raw === '-') continue;
+      td.innerHTML = '<a class="cell-link" href="' + escAttr(href) + '">' + td.innerHTML + '</a>';
+    }
+  });
+})();
+</script>
+<script>
+(function () {
+  var cb = document.getElementById('toggleExtras');
+  if (!cb) return;
+  function apply() { document.body.classList.toggle('show-extras', cb.checked); }
+  cb.addEventListener('change', function () {
+    apply();
+    try { localStorage.setItem('sidebarMapShowExtras', cb.checked ? '1' : '0'); } catch (e) {}
+  });
+  var stored = null;
+  try { stored = localStorage.getItem('sidebarMapShowExtras'); } catch (e) {}
+  if (stored === '1' || stored === '0')
+    cb.checked = stored === '1';
+  else
+    cb.checked = window.matchMedia('(min-width: 769px)').matches;
+  apply();
+})();
+</script>
+
+</body>
+</html>

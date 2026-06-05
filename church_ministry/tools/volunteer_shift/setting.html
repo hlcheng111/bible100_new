@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>義工智能排班 · 設定</title>
+  <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <link rel="stylesheet" href="_shared.css">
+  <script src="../../../js/church_auth.js"></script>
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="tool.js"></script>
+</head>
+<body class="cm-tool-page">
+  <nav class="cm-back-bar">
+    <a class="cm-back-bar__link" href="index.html">← 義工智能排班</a>
+  </nav>
+  <header class="cm-tool-hero">
+    <h1>⚙️ 設定</h1>
+    <p>工作流開關 · 權限 · 相關模組連結</p>
+  </header>
+  <nav class="cm-tool-nav" aria-label="工具分頁" id="toolNav"></nav>
+  <main class="cm-tool-main">
+    <section class="cm-card">
+      <p class="cm-muted">目前角色：<strong id="roleLabel">—</strong></p>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin:12px 0;">
+        <input type="checkbox" id="optDefaultSunday" checked> 預設班次名稱「主日崇拜」
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin:12px 0;">
+        <input type="checkbox" id="optHitl" checked disabled> 通知僅 HITL 複製稿（強制，不可關閉）
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin:12px 0;">
+        <input type="checkbox" id="optShowCtv"> 表單頁優先顯示 CTV 候選
+      </label>
+      <button type="button" class="cm-btn cm-btn-primary" id="btnSaveSettings">儲存本機設定</button>
+      <p id="settingStatus" class="cm-muted" style="margin-top:10px;"></p>
+    </section>
+    <section class="cm-card">
+      <h2 style="font-size:14px;margin:0 0 8px;">相關模組</h2>
+      <p style="line-height:1.8;margin:0;">
+        <a href="../../modules/volunteer/volunteer-integrated.html" target="_parent">志工事工（完整）</a> ·
+        <a href="../../../smart_ministry/talent_ministry_matching.html" target="_parent">事奉配對</a> ·
+        <a href="../../../church_planning/planning/raci-reflection.html" target="_parent">RACI 角色反思</a> ·
+        <a href="../../../ai_tools/pages/crm_automation_console.html" target="_parent">營運自動化控制台</a>
+      </p>
+      <p class="cm-muted" style="margin-top:10px;">雲端 USE_API：<code id="useApiFlag">false</code> · 同步佇列見總站 ⚡ 抽屜</p>
+    </section>
+    <section class="cm-card">
+      <h2 style="font-size:14px;margin:0 0 8px;">tool.meta.json 契約</h2>
+      <pre class="cm-muted" style="font-size:10px;overflow:auto;">bridge.read: getVolunteerShiftSummary, listVolunteerShifts, listShiftCandidates
+bridge.write: saveVolunteerShift, promoteAssignmentToShift</pre>
+    </section>
+  </main>
+  <script>
+    document.getElementById('toolNav').innerHTML = VolunteerShiftTool.renderToolNav('setting');
+    var SETTINGS_KEY = 'volunteer_shift_settings_v1';
+    document.getElementById('useApiFlag').textContent = (window.CHURCH_CLOUD_CONFIG && CHURCH_CLOUD_CONFIG.USE_API) ? 'true' : 'false';
+    document.getElementById('roleLabel').textContent = (window.ChurchAuth && ChurchAuth.getRole) ? (ChurchAuth.getRole() || 'offline-open') : 'offline-open';
+    try {
+      var saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+      if (saved.default_sunday != null) document.getElementById('optDefaultSunday').checked = !!saved.default_sunday;
+      if (saved.show_ctv != null) document.getElementById('optShowCtv').checked = !!saved.show_ctv;
+    } catch (e) {}
+    document.getElementById('btnSaveSettings').onclick = function () {
+      try {
+        if (window.ChurchAuth && ChurchAuth.assertCan) ChurchAuth.assertCan('crm.admin');
+      } catch (e) {
+        document.getElementById('settingStatus').textContent = '需 admin 權限（離線模式通常可略過）';
+      }
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+        default_sunday: document.getElementById('optDefaultSunday').checked,
+        show_ctv: document.getElementById('optShowCtv').checked,
+        hitl_only: true,
+        updated_at: new Date().toISOString()
+      }));
+      document.getElementById('settingStatus').textContent = '✅ 已儲存';
+    };
+  </script>
+</body>
+</html>

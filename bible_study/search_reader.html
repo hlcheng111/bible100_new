@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖經搜索閱讀器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 頂部狀態欄 */
+        .status-bar {
+            background: #000;
+            color: white;
+            padding: 4px 15px;
+            font-size: 11px;
+            height: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 搜索欄 */
+        .search-bar {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 500px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .search-options {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-option {
+            padding: 5px 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .search-option.active {
+            background: white;
+            color: #3498db;
+        }
+
+        /* 搜索結果 */
+        .search-results {
+            padding: 20px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .result-item {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .result-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .result-reference {
+            color: #9b59b6;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .result-version {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+
+        .result-text {
+            line-height: 1.8;
+            margin-bottom: 8px;
+        }
+
+        .highlight {
+            background: #f1c40f;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .result-context {
+            color: #7f8c8d;
+            font-size: 12px;
+            font-style: italic;
+        }
+
+        /* 搜索統計 */
+        .search-stats {
+            background: #ecf0f1;
+            padding: 10px 20px;
+            border-bottom: 1px solid #bdc3c7;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        /* 無結果提示 */
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+
+        .no-results h3 {
+            margin-bottom: 10px;
+            color: #95a5a6;
+        }
+
+        /* 載入中 */
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 底部工具欄 */
+        .bottom-toolbar {
+            background: #9b59b6;
+            color: white;
+            padding: 8px 15px;
+            height: 50px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .tool-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .tool-item:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .tool-icon {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .tool-label {
+            font-size: 10px;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .search-input {
+                font-size: 14px;
+                padding: 10px 15px;
+            }
+
+            .search-options {
+                gap: 5px;
+            }
+
+            .search-option {
+                padding: 3px 8px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="index.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回聖經研讀中心</a></div>
+    <!-- 頂部狀態欄 -->
+    <div class="status-bar">
+        <div class="status-left">
+            <span>11:04</span>
+            <span>📶</span>
+        </div>
+        <div class="status-right">
+            <span>0.28 KB/s</span>
+            <span>📶</span>
+            <span>Vo LTE</span>
+            <span>4G+</span>
+            <span>🔋 90%</span>
+        </div>
+    </div>
+
+    <!-- 搜索欄 -->
+    <div class="search-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="搜索經文、關鍵詞或經文引用（如：約3:16）" />
+        <div class="search-options">
+            <span class="search-option active" data-version="all">全部版本</span>
+            <span class="search-option" data-version="faith">信望愛</span>
+            <span class="search-option" data-version="cuv">和合本</span>
+            <span class="search-option" data-version="kjv">KJV</span>
+            <span class="search-option" data-version="niv">NIV</span>
+        </div>
+    </div>
+
+    <!-- 搜索統計 -->
+    <div class="search-stats" id="searchStats" style="display: none;">
+        <span id="resultCount">0</span> 個結果
+    </div>
+
+    <!-- 搜索結果 -->
+    <div class="search-results" id="searchResults">
+        <div class="no-results">
+            <h3>🔍 開始搜索</h3>
+            <p>輸入關鍵詞或經文引用來搜索聖經內容</p>
+        </div>
+    </div>
+
+    <!-- 底部工具欄 -->
+    <div class="bottom-toolbar">
+        <div class="tool-item" onclick="goToReader()">
+            <div class="tool-icon">📖</div>
+            <div class="tool-label">閱讀</div>
+        </div>
+        <div class="tool-item active">
+            <div class="tool-icon">🔍</div>
+            <div class="tool-label">搜索</div>
+        </div>
+        <div class="tool-item">
+            <div class="tool-icon">📝</div>
+            <div class="tool-label">筆記</div>
+        </div>
+        <div class="tool-item">
+            <div class="tool-icon">⭐</div>
+            <div class="tool-label">收藏</div>
+        </div>
+        <div class="tool-item">
+            <div class="tool-icon">🌍</div>
+            <div class="tool-label">原文</div>
+        </div>
+        <div class="tool-item">
+            <div class="tool-icon">💬</div>
+            <div class="tool-label">註解</div>
+        </div>
+    </div>
+
+    <script>
+        let searchTimeout;
+        let currentVersion = 'all';
+
+        const VERSION_FILES = {
+            'faith': '../data/bibles/信望爱(和合本).json',
+            'cuv': '../data/bibles/和合本.json',
+            'kjv': '../data/bibles/kjv.json',
+            'niv': '../data/bibles/niv.json'
+        };
+        const BOOK_NAMES = {
+            1:'創世記',2:'出埃及記',3:'利未記',4:'民數記',5:'申命記',6:'約書亞記',7:'士師記',8:'路得記',
+            9:'撒母耳記上',10:'撒母耳記下',11:'列王紀上',12:'列王紀下',13:'歷代志上',14:'歷代志下',15:'以斯拉記',
+            16:'尼希米記',17:'以斯帖記',18:'約伯記',19:'詩篇',20:'箴言',21:'傳道書',22:'雅歌',23:'以賽亞書',
+            24:'耶利米書',25:'耶利米哀歌',26:'以西結書',27:'但以理書',28:'何西阿書',29:'約珥書',30:'阿摩司書',
+            31:'俄巴底亞書',32:'約拿書',33:'彌迦書',34:'那鴻書',35:'哈巴谷書',36:'西番雅書',37:'哈該書',38:'撒迦利亞書',
+            39:'瑪拉基書',40:'馬太福音',41:'馬可福音',42:'路加福音',43:'約翰福音',44:'使徒行傳',45:'羅馬書',
+            46:'哥林多前書',47:'哥林多後書',48:'加拉太書',49:'以弗所書',50:'腓立比書',51:'歌羅西書',
+            52:'帖撒羅尼迦前書',53:'帖撒羅尼迦後書',54:'提摩太前書',55:'提摩太後書',56:'提多書',57:'腓利門書',
+            58:'希伯來書',59:'雅各書',60:'彼得前書',61:'彼得後書',62:'約翰一書',63:'約翰二書',64:'約翰三書',65:'猶大書',66:'啟示錄'
+        };
+        const KJV_BOOK_NAMES = ['Genesis','Exodus','Leviticus','Numbers','Deuteronomy','Joshua','Judges','Ruth',
+            '1 Samuel','2 Samuel','1 Kings','2 Kings','1 Chronicles','2 Chronicles','Ezra','Nehemiah','Esther',
+            'Job','Psalms','Proverbs','Ecclesiastes','Song of Solomon','Isaiah','Jeremiah','Lamentations',
+            'Ezekiel','Daniel','Hosea','Joel','Amos','Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah',
+            'Haggai','Zechariah','Malachi','Matthew','Mark','Luke','John','Acts','Romans','1 Corinthians',
+            '2 Corinthians','Galatians','Ephesians','Philippians','Colossians','1 Thessalonians','2 Thessalonians',
+            '1 Timothy','2 Timothy','Titus','Philemon','Hebrews','James','1 Peter','2 Peter','1 John','2 John','3 John','Jude','Revelation'];
+
+        function init() {
+            console.log('聖經搜索閱讀器初始化...');
+            setupEventListeners();
+            var params = new URLSearchParams(window.location.search);
+            var q = params.get('q');
+            if (q) {
+                document.getElementById('searchInput').value = q;
+                performSearch(q);
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', function() {
+                const query = this.value.trim();
+                if (query.length > 1) {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => performSearch(query), 300);
+                } else {
+                    showNoResults();
+                }
+            });
+            document.querySelectorAll('.search-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.search-option').forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                    currentVersion = this.dataset.version;
+                    const query = document.getElementById('searchInput').value.trim();
+                    if (query.length > 1) performSearch(query);
+                });
+            });
+        }
+
+        async function performSearch(query) {
+            showLoading();
+            try {
+                let results = [];
+                const versions = currentVersion === 'all' ? ['faith','cuv','kjv','niv'] : [currentVersion];
+                for (const v of versions) {
+                    const r = await searchInVersion(v, query);
+                    results = results.concat(r);
+                }
+                results.sort((a,b)=>(a.book-b.book)||(a.chapter-b.chapter)||(a.verse-b.verse));
+                displayResults(results);
+            } catch (e) {
+                console.error('搜索失敗:', e);
+                showError('搜索失敗。請透過「啟動聖經研讀.bat」開啟以取得完整功能。');
+            }
+        }
+
+        // 全局快取，防止重複載入龐大的 JSON，解決效能瓶頸
+        const biblesCache = {};
+
+        async function searchInVersion(version, query) {
+            const path = VERSION_FILES[version];
+            if (!path) return [];
+            
+            let data = biblesCache[version];
+            
+            if (!data) {
+                try {
+                    const url = path + (path.includes('?') ? '&' : '?') + 't=' + Date.now();
+                    const res = await fetch(url);
+                    if (!res.ok) {
+                        console.warn(`[搜尋引擎] 載入 ${path} 失敗 (狀態碼: ${res.status})。請確認檔名大小寫與伺服器是否存在。`);
+                        return [];
+                    }
+                    
+                    // 防錯：自訂解析器以處理有 BOM 或 UTF-16 殘留的 JSON 檔
+                    const buffer = await res.arrayBuffer();
+                    const view = new Uint8Array(buffer);
+                    let text = '';
+                    
+                    if (buffer.byteLength >= 2 && view[0] === 0xFF && view[1] === 0xFE) {
+                        text = new TextDecoder('utf-16le').decode(buffer.slice(2));
+                    } else if (buffer.byteLength >= 2 && view[0] === 0xFE && view[1] === 0xFF) {
+                        text = new TextDecoder('utf-16be').decode(buffer.slice(2));
+                    } else if (buffer.byteLength >= 4 && view[0] === 0x7B && view[1] === 0x00) {
+                        text = new TextDecoder('utf-16le').decode(buffer);
+                    } else {
+                        text = new TextDecoder('utf-8').decode(buffer);
+                    }
+                    
+                    text = text.trim().replace(/^\uFEFF/, '').replace(/\0/g, '');
+                    
+                    if (text.startsWith('<')) {
+                        console.error(`[搜尋引擎] 伺服器回傳 HTML (404頁面)，檔案不存在: ${path}`);
+                        return [];
+                    }
+
+                    const json = JSON.parse(text);
+
+                    // 相容不同的 JSON 結構
+                    if (json?.Bible?.data) {
+                        data = json.Bible.data;
+                    } else if (json?.data) {
+                        data = json.data;
+                    } else if (Array.isArray(json)) {
+                        data = json;
+                    } else if (json?.books) {
+                        console.warn(`[搜尋引擎] 偵測到未支援的壓縮 JSON 結構`);
+                    }
+
+                    if (!data || data.length === 0) {
+                        console.warn(`[搜尋引擎] 版本 ${version} 的 JSON 無法解析出有效的章節陣列`);
+                        return [];
+                    }
+                    
+                    // 寫入快取
+                    biblesCache[version] = data;
+
+                } catch (e) {
+                    console.error(`[搜尋引擎] 版本 ${version} 解析發生嚴重錯誤:`, e);
+                    return [];
+                }
+            }
+
+            try {
+                const isEn = version === 'kjv' || version === 'niv';
+                const bookNames = isEn ? KJV_BOOK_NAMES : BOOK_NAMES;
+                const results = [];
+                const limit = 20;
+
+                // 支援多關鍵字搜尋 (例如: 神 愛)
+                const keywords = query.toLowerCase().split(/\s+/).filter(k => k);
+
+                for (const item of data) {
+                    if (results.length >= limit) break;
+                    
+                    const text = (item.Scripture || item.scripture || '').replace(/<[^>]+>/g, '');
+                    if (!text) continue;
+                    
+                    const textLower = text.toLowerCase();
+                    
+                    // 必須包含所有的輸入關鍵字
+                    const isMatch = keywords.every(k => textLower.includes(k));
+                    if (!isMatch) continue;
+
+                    const bookId = item.Book || item.book;
+                    results.push({
+                        book: bookId,
+                        chapter: item.Chapter || item.chapter,
+                        verse: item.Verse || item.verse,
+                        text: text,
+                        bookName: bookNames[bookId] || ('Book'+bookId),
+                        version: version
+                    });
+                }
+                return results;
+            } catch (e) {
+                console.error(`[搜尋引擎] 版本 ${version} 搜尋過程發生錯誤:`, e);
+                return [];
+            }
+        }
+
+        // 顯示搜索結果
+        function displayResults(results) {
+            const container = document.getElementById('searchResults');
+            const stats = document.getElementById('searchStats');
+
+            if (results.length === 0) {
+                showNoResults();
+                stats.style.display = 'none';
+                return;
+            }
+
+            // 更新統計
+            document.getElementById('resultCount').textContent = results.length;
+            stats.style.display = 'block';
+
+            // 生成結果HTML
+            let html = '';
+            results.forEach(result => {
+                const highlightedText = highlightText(result.text, document.getElementById('searchInput').value);
+                html += `
+                    <div class="result-item" onclick="goToVerse(${result.book}, ${result.chapter}, ${result.verse})">
+                        <div class="result-header">
+                            <span class="result-reference">${result.bookName} ${result.chapter}:${result.verse}</span>
+                            <span class="result-version">${getVersionName(result.version)}</span>
+                        </div>
+                        <div class="result-text">${highlightedText}</div>
+                        <div class="result-context">${result.bookName} 第${result.chapter}章</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 高亮搜索關鍵詞
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // 獲取版本名稱
+        function getVersionName(version) {
+            const names = {
+                'faith': '信望愛(和合本)',
+                'cuv': '和合本',
+                'kjv': 'KJV',
+                'niv': 'NIV'
+            };
+            return names[version] || version;
+        }
+
+        // 顯示載入中
+        function showLoading() {
+            const container = document.getElementById('searchResults');
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>搜索中...</p>
+                </div>
+            `;
+        }
+
+        // 顯示無結果
+        function showNoResults() {
+            const container = document.getElementById('searchResults');
+            container.innerHTML = `
+                <div class="no-results">
+                    <h3>🔍 沒有找到結果</h3>
+                    <p>請嘗試其他關鍵詞或檢查拼寫</p>
+                </div>
+            `;
+        }
+
+        // 顯示錯誤
+        function showError(message) {
+            const container = document.getElementById('searchResults');
+            container.innerHTML = `
+                <div class="no-results">
+                    <h3>❌ 搜索出錯</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        function goToVerse(book, chapter, verse) {
+            const bookNames = BOOK_NAMES;
+            const name = bookNames[book] || ('Book'+book);
+            const url = `../data/bibles/bible_reader_final.html?book=${encodeURIComponent(name)}&chapter=${chapter}`;
+            if (window.parent && window.parent !== window && window.parent.document.getElementById('contentFrame')) {
+                window.parent.document.getElementById('contentFrame').src = url;
+            } else {
+                window.location.href = url;
+            }
+        }
+
+        function goToReader() {
+            const url = '../data/bibles/bible_reader_final.html';
+            if (window.parent && window.parent !== window && window.parent.document.getElementById('contentFrame')) {
+                window.parent.document.getElementById('contentFrame').src = url;
+            } else {
+                window.location.href = url;
+            }
+        }
+
+        // 頁面載入完成後初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

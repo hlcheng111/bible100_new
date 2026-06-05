@@ -1,0 +1,123 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>志工管理統計報表 · Volunteer Reports | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">志工管理統計報表</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-blue-600" id="totalVolunteers">0</div>
+                <div class="text-sm text-gray-600">總志工數</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-green-600" id="activeVolunteers">0</div>
+                <div class="text-sm text-gray-600">活躍志工</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-purple-600" id="totalHours">0</div>
+                <div class="text-sm text-gray-600">總服務時數</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-orange-600" id="avgHours">0</div>
+                <div class="text-sm text-gray-600">平均時數/人</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">志工績效排名</h3>
+            <div id="performanceList" class="space-y-2"></div>
+        </div>
+
+        <div class="mt-6 flex space-x-4">
+            <button onclick="exportReport()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                <i class="fas fa-download mr-2"></i>匯出報表
+            </button>
+            <button onclick="printReport()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-print mr-2"></i>列印報表
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatistics();
+            renderPerformanceList();
+        });
+
+        function updateStatistics() {
+            const volunteers = JSON.parse(localStorage.getItem('volunteers')) || [];
+            const serviceRecords = JSON.parse(localStorage.getItem('serviceRecords')) || [];
+            
+            const totalVolunteers = volunteers.length;
+            const activeVolunteers = volunteers.filter(v => v.status === 'active').length;
+            const totalHours = serviceRecords.reduce((sum, record) => sum + (record.hours || 0), 0);
+            const avgHours = activeVolunteers > 0 ? Math.round(totalHours / activeVolunteers * 10) / 10 : 0;
+            
+            document.getElementById('totalVolunteers').textContent = totalVolunteers;
+            document.getElementById('activeVolunteers').textContent = activeVolunteers;
+            document.getElementById('totalHours').textContent = totalHours;
+            document.getElementById('avgHours').textContent = avgHours;
+        }
+
+        function renderPerformanceList() {
+            const volunteers = JSON.parse(localStorage.getItem('volunteers')) || [];
+            const serviceRecords = JSON.parse(localStorage.getItem('serviceRecords')) || [];
+            
+            const performance = volunteers.map(volunteer => {
+                const volunteerRecords = serviceRecords.filter(r => r.volunteerId === volunteer.id);
+                const totalHours = volunteerRecords.reduce((sum, r) => sum + (r.hours || 0), 0);
+                return { ...volunteer, totalHours };
+            }).sort((a, b) => b.totalHours - a.totalHours);
+
+            const container = document.getElementById('performanceList');
+            container.innerHTML = performance.slice(0, 10).map((volunteer, index) => `
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                            ${index + 1}
+                        </span>
+                        <span class="font-medium">${volunteer.name}</span>
+                        <span class="text-sm text-gray-500">${volunteer.status === 'active' ? '活躍' : '非活躍'}</span>
+                    </div>
+                    <span class="text-blue-600 font-semibold">${volunteer.totalHours} 小時</span>
+                </div>
+            `).join('');
+        }
+
+        function exportReport() {
+            const volunteers = JSON.parse(localStorage.getItem('volunteers')) || [];
+            const serviceRecords = JSON.parse(localStorage.getItem('serviceRecords')) || [];
+            
+            const performance = volunteers.map(volunteer => {
+                const volunteerRecords = serviceRecords.filter(r => r.volunteerId === volunteer.id);
+                const totalHours = volunteerRecords.reduce((sum, r) => sum + (r.hours || 0), 0);
+                return [volunteer.name, volunteer.status, totalHours];
+            });
+
+            const csvContent = ['姓名,狀態,總時數
+', ...performance.map(row => row.join(',') + '
+')].join('');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `志工管理報表_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function printReport() {
+            window.print();
+        }
+    </script>
+</body>
+</html>

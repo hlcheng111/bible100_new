@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>聖經一百步 - 智慧型主控台</title>
+    <style>
+        /* 1. 延用您原有的基礎佈局 */
+        body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: sans-serif; }
+        
+        /* 頂部導航 (Topbar) */
+        .topbar { height: 60px; background: #2c3e50; color: white; display: flex; align-items: center; padding: 0 20px; }
+
+        /* 中間容器：Sidebar + Content + AI Panel */
+        .main-wrapper { display: flex; flex: 1; overflow: hidden; }
+
+        /* 左側選單 (Sidebar) */
+        .sidebar { width: 250px; background: #f8f9fa; border-right: 1px solid #ddd; overflow-y: auto; padding: 15px; }
+        .sidebar a { display: block; padding: 10px; color: #333; text-decoration: none; border-bottom: 1px solid #eee; }
+        .sidebar a:hover { background: #eef7f2; color: #27ae60; }
+
+        /* 中央內容區 (Iframe) */
+        .content-area { flex: 1; position: relative; background: #fff; }
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* --- 🚀 重點：右側智慧 AI 面板 (可收合) --- */
+        #ai-assistant {
+            width: 350px;
+            background: #fff;
+            border-left: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            transition: 0.3s;
+            position: relative;
+        }
+        /* 收合狀態 */
+        #ai-assistant.collapsed { width: 40px; }
+        #ai-assistant.collapsed .ai-content { display: none; }
+
+        /* 切換開關按鈕 */
+        .toggle-btn {
+            position: absolute; left: -20px; top: 50%;
+            width: 20px; height: 60px; background: #27ae60; color: white;
+            cursor: pointer; border-radius: 5px 0 0 5px;
+            display: flex; align-items: center; justify-content: center; font-size: 12px;
+        }
+
+        .ai-tabs { display: flex; background: #eee; }
+        .tab-btn { flex: 1; padding: 12px; border: none; cursor: pointer; font-weight: bold; }
+        .tab-btn.active { background: #fff; color: #27ae60; border-top: 3px solid #27ae60; }
+        
+        .ai-content { padding: 15px; flex: 1; overflow-y: auto; }
+        .ai-panel { display: none; }
+        .ai-panel.active { display: block; }
+
+        .video-box { position: relative; padding-bottom: 56.25%; height: 0; background: #000; border-radius: 5px; overflow: hidden; }
+        .video-box iframe { position: absolute; top:0; left:0; width:100%; height:100%; border:0; }
+    </style>
+  <script src="../assets/js/lab-frame-nav.js"></script>
+</head>
+<body>
+
+    <div class="topbar">
+        <h2 style="margin:0;">聖經一百步 Bible100</h2>
+        <span style="margin-left: 20px; font-size: 0.9em; opacity: 0.8;">| 智慧型拼裝教室模式</span>
+    </div>
+
+    <div class="main-wrapper">
+        <div class="sidebar">
+            <h4>📖 新約章節</h4>
+            <a href="javascript:void(0)" onclick="loadLesson('Step 20', '20', 'Baptism')">第 20 步：耶穌受洗</a>
+            <a href="javascript:void(0)" onclick="loadLesson('Step 45', '45', 'Mission')">第 45 步：保羅宣教</a>
+            </div>
+
+        <div class="content-area">
+            <iframe id="main-frame" src="about:blank"></iframe>
+        </div>
+
+        <div id="ai-assistant">
+            <div class="toggle-btn" onclick="toggleAI()">◀<br>A<br>I</div>
+            <div class="ai-content-wrap">
+                <div class="ai-tabs">
+                    <button class="tab-btn active" onclick="switchAITab(event, 'tab-v')">🎬 影音</button>
+                    <button class="tab-btn" onclick="switchAITab(event, 'tab-a')">🤖 AI</button>
+                    <button class="tab-btn" onclick="switchAITab(event, 'tab-q')">📝 測驗</button>
+                </div>
+                <div class="ai-content">
+                    <div id="tab-v" class="ai-panel active">
+                        <div class="video-box">
+                            <iframe id="ai-video" src="" allowfullscreen></iframe>
+                        </div>
+                        <p id="video-title" style="font-weight:bold; margin-top:10px;">請選擇章節</p>
+                    </div>
+                    <div id="tab-a" class="ai-panel">
+                        <div style="background:#eef7f2; padding:10px; border-radius:5px;">
+                            <strong>AI 智慧事奉 (OIA)</strong>
+                            <p id="ai-step-info" style="font-size:0.9em; color:#666;">針對目前章節生成指令</p>
+                            <button onclick="generatePrompt()" style="width:100%; padding:10px; background:#27ae60; color:white; border:none; border-radius:4px; cursor:pointer;">✨ 生成教案指令</button>
+                            <textarea id="ai-prompt" style="width:100%; height:100px; margin-top:10px;"></textarea>
+                        </div>
+                    </div>
+                    <div id="tab-q" class="ai-panel">
+                        <div id="quiz-box">正在加載測驗...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // 智慧同步數據 (模擬數據庫)
+    const bibleDatabase = {
+        "20": { video: "S2p6I_vM6cI", quiz: "聖靈降臨時像什麼？", aiHint: "耶穌受洗的神學意義" },
+        "45": { video: "f9S3_G6-q9U", quiz: "保羅第一次宣教出發地？", aiHint: "初期教會的擴展" }
+    };
+
+    let currentStepID = "";
+
+    // 1. 載入教材邏輯
+    function loadLesson(title, id, fileTag) {
+        currentStepID = id;
+        // 模擬載入您原本的 HTML
+        document.getElementById('main-frame').src = `https://bible100.lovestoblog.com/languages/cn/OT/chapters/chapter${id}.html`;
+        
+        // 2. 自動同步 AI 面板
+        const data = bibleDatabase[id];
+        if(data) {
+            document.getElementById('ai-video').src = `https://www.youtube.com/embed/${data.video}`;
+            document.getElementById('video-title').innerText = title;
+            document.getElementById('ai-step-info').innerText = `主題：${title}`;
+            document.getElementById('quiz-box').innerText = `問題：${data.quiz}`;
+        }
+    }
+
+    // 3. AI 面板收合
+    function toggleAI() {
+        document.getElementById('ai-assistant').classList.toggle('collapsed');
+    }
+
+    // 4. Tab 切換
+    function switchAITab(evt, tabId) {
+        document.querySelectorAll('.ai-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    }
+
+    // 5. 生成指令
+    function generatePrompt() {
+        const data = bibleDatabase[currentStepID];
+        const prompt = `你是一位專家。請針對 ${data.aiHint} 提供 OIA 教學大綱。`;
+        document.getElementById('ai-prompt').value = prompt;
+    }
+</script>
+</body>
+</html>

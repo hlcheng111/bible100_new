@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Central Member DB Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <main class="max-w-7xl mx-auto p-4 md:p-6">
+    <header class="bg-white border border-slate-200 rounded-xl p-4 mb-4">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <h1 class="text-xl font-bold">Central Member DB</h1>
+        <div class="flex gap-2">
+          <button id="btn-seed" class="px-3 py-2 rounded bg-blue-600 text-white text-sm font-semibold">一鍵同步/重刷測試資料</button>
+          <a class="px-3 py-2 rounded border text-sm" href="../index_v5.html">返回總入口</a>
+        </div>
+      </div>
+      <p id="seed-status" class="text-sm text-slate-600 mt-2"></p>
+    </header>
+
+    <section id="stats" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4"></section>
+
+    <section class="bg-white border border-slate-200 rounded-xl p-4">
+      <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+        <h2 class="font-semibold">會友清單</h2>
+        <input id="q" class="border rounded px-3 py-1.5 text-sm min-w-[220px]" placeholder="搜尋姓名 / 技能 / 恩賜">
+      </div>
+      <div class="overflow-auto border rounded">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-100">
+            <tr class="text-left">
+              <th class="p-2">ID</th>
+              <th class="p-2">姓名</th>
+              <th class="p-2">性別</th>
+              <th class="p-2">屬靈階段</th>
+              <th class="p-2">恩賜</th>
+              <th class="p-2">技能</th>
+              <th class="p-2">服事負載</th>
+              <th class="p-2">training_credits</th>
+              <th class="p-2">操作</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="../js/church_data_bridge_phase1.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/persistence_provider.js"></script>
+  <script src="../js/central_member_db.js"></script>
+  <script>
+    (function () {
+      if (!window.CentralMemberDB) return;
+
+      var state = { members: [], assignments: [] };
+
+      function stageOf(m) {
+        var age = Number(m.age || 0);
+        if (age < 18) return "Seeker";
+        if (age < 28) return "NewBeliever";
+        if (age < 45) return "Disciple";
+        return "Leader";
+      }
+
+      function load() {
+        var db = CentralMemberDB.get() || {};
+        state.members = Array.isArray(db.members) ? db.members : [];
+        state.assignments = Array.isArray(db.ministryAssignments) ? db.ministryAssignments : [];
+      }
+
+      function renderStats() {
+        var members = state.members;
+        var male = members.filter(function (m) { return String(m.gender || "") === "男"; }).length;
+        var female = members.filter(function (m) { return String(m.gender || "") === "女"; }).length;
+        var stages = {};
+        members.forEach(function (m) {
+          var s = stageOf(m);
+          stages[s] = (stages[s] || 0) + 1;
+        });
+        var ministryRate = members.length ? Math.round((state.assignments.length / members.length) * 100) : 0;
+        document.getElementById("stats").innerHTML =
+          card("總會友", members.length) +
+          card("男女比", male + " : " + female) +
+          card("屬靈階段", Object.keys(stages).map(function (k) { return k + " " + stages[k]; }).join(" / ")) +
+          card("服事率", ministryRate + "%");
+      }
+
+      function card(title, val) {
+        return '<article class="bg-white border border-slate-200 rounded-xl p-3">' +
+          '<div class="text-xs text-slate-500">' + title + '</div>' +
+          '<div class="text-lg font-bold mt-1">' + val + '</div>' +
+          '</article>';
+      }
+
+      function loadIndexMap() {
+        var map = {};
+        state.assignments.forEach(function (a) {
+          if (!a || !a.memberId) return;
+          map[a.memberId] = (map[a.memberId] || 0) + 1;
+        });
+        return map;
+      }
+
+      function renderRows() {
+        var q = String(document.getElementById("q").value || "").trim().toLowerCase();
+        var loadMap = loadIndexMap();
+        var currentChurchId = (function () {
+          try {
+            var params = new URLSearchParams(window.location.search || "");
+            return params.get("church_id") || window.CURRENT_CHURCH_ID || "default";
+          } catch (e) {
+            return "default";
+          }
+        })();
+        var list = state.members.filter(function (m) {
+          if (!q) return true;
+          return [m.name, m.skills, m.gifts].join(" ").toLowerCase().indexOf(q) >= 0;
+        });
+        document.getElementById("rows").innerHTML = list.map(function (m) {
+          var credits = Number(m.training_credits || 0);
+          var loadIdx = Number(loadMap[m.id] || 0);
+          return "<tr class='border-t'>" +
+            "<td class='p-2'>" + m.id + "</td>" +
+            "<td class='p-2'>" + esc(m.name) + "</td>" +
+            "<td class='p-2'>" + esc(m.gender || "") + "</td>" +
+            "<td class='p-2'>" + stageOf(m) + "</td>" +
+            "<td class='p-2'>" + esc(m.gifts || "") + "</td>" +
+            "<td class='p-2'>" + esc(m.skills || "") + "</td>" +
+            "<td class='p-2'>" + loadIdx + "</td>" +
+            "<td class='p-2 font-semibold'>" + credits + "</td>" +
+            "<td class='p-2'><a class='inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-cyan-300 text-cyan-700 hover:bg-cyan-50' href='../church_planning/a1-health-entry.html?id=" + m.id + "&church_id=" + encodeURIComponent(currentChurchId) + "'>🩺 診斷/Survey</a></td>" +
+            "</tr>";
+        }).join("");
+      }
+
+      function esc(v) {
+        var d = document.createElement("div");
+        d.textContent = String(v == null ? "" : v);
+        return d.innerHTML;
+      }
+
+      document.getElementById("btn-seed").addEventListener("click", function () {
+        var result = CentralMemberDB.loadSeedIfEmpty({ force: true });
+        document.getElementById("seed-status").textContent = result.message || "完成";
+        if (window.ChurchDataBridge && typeof window.ChurchDataBridge.triggerDataSync === "function") {
+          try { window.ChurchDataBridge.triggerDataSync("central_member_db_seed_refresh"); } catch (e) {}
+        }
+        load(); renderStats(); renderRows();
+      });
+      document.getElementById("q").addEventListener("input", renderRows);
+
+      load();
+      renderStats();
+      renderRows();
+    })();
+  </script>
+</body>
+</html>
+

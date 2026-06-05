@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>屬靈恩賜測驗 · Spiritual gifts</title>
+  <style>
+    body { font-family: "Noto Sans TC", "Microsoft YaHei", Arial, sans-serif; background: #f6f7fb; color: #333; font-size: 11px; margin: 0; padding: 16px; }
+    .header { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); color: #fff; padding: 16px; border-radius: 8px; margin-bottom: 14px; text-align: center; }
+    .header h1 { font-size: 18px; margin: 0 0 6px 0; }
+    .header p { font-size: 11px; margin: 0; opacity: 0.95; line-height: 1.45; }
+    .test-container { background: #fff; padding: 14px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); max-width: 1200px; margin: 0 auto; }
+    .progress-bar { background: #e5e7eb; border-radius: 10px; height: 12px; margin-bottom: 10px; overflow: hidden; }
+    .progress-fill { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); height: 100%; width: 0%; transition: width 0.3s ease; }
+    .progress-meta { text-align: center; margin-bottom: 14px; font-size: 11px; color: #64748b; }
+    .progress-meta--in-grid {
+      width: 100%;
+      margin-top: 0;
+      margin-bottom: 10px;
+      padding: 0 2px;
+    }
+    .step-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .step-tab {
+      border: 1px solid #d1d5db;
+      background: #fff;
+      color: #475569;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .step-tab.active { background: #ede9fe; border-color: #7c3aed; color: #5b21b6; }
+    .step-tab .step-sub { display: block; font-size: 10px; opacity: 0.82; margin-top: 2px; }
+    .step-note {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #f59e0b;
+      background: #fffbeb;
+      color: #92400e;
+      font-size: 11px;
+      display: none;
+    }
+    .step-note.error {
+      border-color: #ef4444;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+    .question-grid { display: grid; gap: 8px; }
+    .q-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #7c3aed;
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .q-item.missing { border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.12) inset; }
+    .q-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+      line-height: 1.35;
+      flex: 1 1 auto;
+    }
+    .q-scale {
+      display: flex;
+      flex: 0 0 auto;
+      gap: 6px;
+      align-items: stretch;
+    }
+    .pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      min-width: 26px;
+      padding: 2px 5px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.2;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .pill:hover { border-color: #7c3aed; background: #f5f3ff; }
+    .pill input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; pointer-events: none; }
+    .pill.selected,
+    .pill.survey-pill--on,
+    .pill:has(input:checked) {
+      background: #ede9fe;
+      border-color: #6d28d9;
+      color: #4c1d95;
+      font-weight: 700;
+    }
+    .survey-global-meta { text-align: center; font-size: 11px; color: #64748b; margin: 0 0 10px; }
+    .scale-legend-wrap--global { margin-bottom: 10px; }
+    .sg-report { text-align: left; max-width: 920px; margin: 0 auto; }
+    .sg-report-title { font-size: 18px; color: #5b21b6; margin: 0 0 12px; text-align: center; }
+    .sg-report-section { margin-bottom: 18px; }
+    .sg-report-h3 { font-size: 13px; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin: 0 0 8px; }
+    .sg-report-lead { font-size: 12px; line-height: 1.55; color: #334155; margin: 0 0 8px; }
+    .sg-report-meta { font-size: 10px; color: #64748b; margin: 0; }
+    .sg-report-provisional {
+      max-width: 640px; margin: 0 auto 14px; padding: 10px 12px; border: 1px solid #f59e0b;
+      background: #fffbeb; color: #92400e; border-radius: 8px; font-size: 11px;
+    }
+    .sg-report-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    .sg-report-table th, .sg-report-table td { border: 1px solid #e2e8f0; padding: 8px 6px; vertical-align: top; }
+    .sg-report-table th { background: #f8fafc; text-align: left; color: #475569; }
+    .sg-row-top { background: #faf5ff; }
+    .sg-strength-high { color: #166534; font-weight: 700; }
+    .sg-strength-mid { color: #92400e; font-weight: 600; }
+    .sg-strength-low { color: #64748b; }
+    .sg-report-list { margin: 0; padding-left: 1.2rem; font-size: 11px; line-height: 1.5; color: #334155; }
+    .sg-report-list li { margin-bottom: 6px; }
+    .sg-report-safeguard {
+      margin-top: 16px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1;
+      background: #f8fafc; font-size: 11px; line-height: 1.55; color: #475569;
+    }
+    .sg-report-foot { font-size: 10px; color: #64748b; margin: 10px 0 0; }
+    .sg-report-actions { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .sg-report-linkbtn { text-decoration: none; display: inline-block; }
+    .navigation { display: flex; justify-content: space-between; gap: 8px; margin-top: 20px; }
+    .btn { padding: 9px 16px; border: none; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); color: #fff; }
+    .btn-secondary { background: #64748b; color: #fff; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-top: 20px; text-align: center; }
+    .gift-title { font-size: 20px; font-weight: bold; color: #5b21b6; margin-bottom: 10px; }
+    .nav-row { text-align: center; margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .nav-row a { color: #5b21b6; text-decoration: none; font-weight: 600; padding: 10px 16px; border: 2px solid #7c3aed; border-radius: 6px; font-size: 11px; }
+    .nav-row a:hover { background: #7c3aed; color: #fff; }
+    .meta { font-size: 10px; color: #64748b; margin-top: 12px; text-align: center; }
+    .scale-legend-wrap {
+      margin-bottom: 12px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: 10px;
+      color: #475569;
+      line-height: 1.5;
+    }
+    .scale-legend-wrap .scale-legend-title { font-weight: 700; color: #334155; margin-right: 6px; }
+    .scale-legend-wrap .scale-legend-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; justify-content: flex-start; }
+    .scale-legend-wrap .scale-legend-sep { color: #cbd5e1; user-select: none; }
+    .scale-legend-wrap .scale-progress-inline { margin-left: auto; color: #64748b; font-size: 10px; }
+    .scale-legend-wrap--above-q1 { width: 100%; margin-bottom: 8px; }
+    @media (max-width: 760px) {
+      .q-item { flex-direction: column; align-items: stretch; }
+      .q-scale { flex-wrap: wrap; justify-content: flex-start; }
+      .pill { min-width: 26px; }
+      .step-tab { flex: 1 1 calc(50% - 8px); }
+    }
+  </style>
+</head>
+<body>
+  <!-- TODO: 圖解建議：頁首區增設小 icon 區（恩賜／建造身體／與牧者同行）；與量表圖例呼應 -->
+  <div class="header">
+    <h1>屬靈恩賜測驗</h1>
+    <p>Spiritual gifts · 聖靈分賜恩賜，為要建造基督的身體（林前 12:7）<br>結果存於本機瀏覽器，供恩賜與技能統整、事奉配對參考；請與牧者禱告分辨。</p>
+  </div>
+
+  <div class="test-container">
+    <div class="scale-legend-wrap scale-legend-wrap--global" role="note" aria-label="評分說明">
+      <div class="scale-legend-row">
+        <span class="scale-legend-title">評分（與全站健康問卷量表一致）</span>
+        <span><strong>1</strong>＝完全不像我</span>
+        <span class="scale-legend-sep">·</span>
+        <span><strong>2–4</strong>＝程度漸進</span>
+        <span class="scale-legend-sep">·</span>
+        <span><strong>5</strong>＝非常像我</span>
+      </div>
+      <p style="margin:8px 0 0;font-size:10px;color:#64748b;line-height:1.45;">請依直覺作答：沒有「標準答案」，也不代表屬靈好壞；結果供與牧者／小組長分辨恩賜與服事方向。</p>
+    </div>
+    <div id="surveyProgressLine" class="survey-global-meta" aria-live="polite"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div id="stepTabs" class="step-tabs"></div>
+    <div id="stepNotice" class="step-note"></div>
+    <div id="questionContainer"></div>
+    <div class="navigation">
+      <button type="button" id="prevBtn" class="btn btn-secondary" onclick="previousStep()">上一頁</button>
+      <button type="button" id="nextBtn" class="btn btn-primary" onclick="nextStep()">下一頁</button>
+      <button type="button" id="previewBtn" class="btn btn-secondary" onclick="previewResults()">先看暫時結果</button>
+      <button type="button" id="submitBtn" class="btn btn-primary" onclick="submitSurvey()">查看完整結果</button>
+    </div>
+  </div>
+
+  <p class="meta">與舊版 <code>assessment.html</code> 同一導向；儲存鍵與試作頁 <code>test04_spiritual_gifts_grok.html</code> 相容。</p>
+
+  <div class="nav-row">
+    <a href="landing.html#journey" target="contentFrame">回智慧事奉首頁</a>
+    <a href="talent_skill_unified.html" target="contentFrame">← 恩賜與技能統整</a>
+    <a href="talent_ministry_matching.html" target="contentFrame">事奉配對工作台 →</a>
+  </div>
+
+  <script src="../church_planning/js/survey_ui_common.js"></script>
+  <script src="js/spiritual_gifts_report.js"></script>
+  <script>
+    var SURVEY_STORAGE = 'bible100_smart_ministry_';
+
+    var questions = [
+      { id: 1, text: '我在查經或教導時，能清楚說明聖經真理，讓人容易明白。', gift: 'teaching' },
+      { id: 2, text: '我喜歡準備教材或帶領查經小組。', gift: 'teaching' },
+      { id: 3, text: '別人常說我的講解很有幫助。', gift: 'teaching' },
+      { id: 4, text: '我能把複雜的屬靈道理用簡單的話解釋清楚。', gift: 'teaching' },
+      { id: 5, text: '教導主日學或小組課程讓我很有滿足感。', gift: 'teaching' },
+      { id: 6, text: '我很自然地與未信主的朋友分享福音。', gift: 'evangelism' },
+      { id: 7, text: '我喜歡參與佈道或街頭福音活動。', gift: 'evangelism' },
+      { id: 8, text: '看到人決志信主，我會非常喜樂。', gift: 'evangelism' },
+      { id: 9, text: '我能用生活見證吸引人認識基督。', gift: 'evangelism' },
+      { id: 10, text: '我常為失喪的靈魂禱告並主動邀請他們來教會。', gift: 'evangelism' },
+      { id: 11, text: '我擅長用神的話語鼓勵灰心或軟弱的肢體。', gift: 'exhortation' },
+      { id: 12, text: '別人常找我談心事，因為我能給予正面建議。', gift: 'exhortation' },
+      { id: 13, text: '我在小組中喜歡帶領大家彼此建造。', gift: 'exhortation' },
+      { id: 14, text: '我的話語常使人重新得力、繼續前進。', gift: 'exhortation' },
+      { id: 15, text: '我享受幫助人建立正確的信仰生活。', gift: 'exhortation' },
+      { id: 16, text: '我很容易感受到別人的痛苦，並想安慰他們。', gift: 'mercy' },
+      { id: 17, text: '我喜歡探訪醫院、老人院或有需要的人。', gift: 'mercy' },
+      { id: 18, text: '看到人受苦，我會忍不住想幫助。', gift: 'mercy' },
+      { id: 19, text: '我願意花時間陪伴哀傷或軟弱的肢體。', gift: 'mercy' },
+      { id: 20, text: '關懷事工讓我感到這是神呼召我的地方。', gift: 'mercy' },
+      { id: 21, text: '我喜歡在幕後默默幫助教會活動順利進行。', gift: 'serving' },
+      { id: 22, text: '準備茶水、佈置會場或打掃讓我很有喜樂。', gift: 'serving' },
+      { id: 23, text: '別人需要實際幫助時，我會立刻動手。', gift: 'serving' },
+      { id: 24, text: '我享受用實際行動支持事工。', gift: 'serving' },
+      { id: 25, text: '我認為服事是榮耀神的最好方式。', gift: 'serving' },
+      { id: 26, text: '我很會組織活動、安排時間表與資源。', gift: 'administration' },
+      { id: 27, text: '教會行政或事工協調工作適合我。', gift: 'administration' },
+      { id: 28, text: '我喜歡把事情安排得井井有條。', gift: 'administration' },
+      { id: 29, text: '我能清楚看見事工需要並推動執行。', gift: 'administration' },
+      { id: 30, text: '行政工作讓我感到這是神給我的恩賜。', gift: 'administration' },
+      { id: 31, text: '我樂意將金錢、時間或資源奉獻給神的事工。', gift: 'giving' },
+      { id: 32, text: '看到教會或宣教需要，我會慷慨回應。', gift: 'giving' },
+      { id: 33, text: '奉獻讓我感到很大的喜樂與自由。', gift: 'giving' },
+      { id: 34, text: '我相信神會使用我的奉獻成就大事。', gift: 'giving' },
+      { id: 35, text: '我常為教會財務或資源供應禱告。', gift: 'giving' },
+      { id: 36, text: '我在禱告中常領受到神的明確信息。', gift: 'prophecy' },
+      { id: 37, text: '我敢於用神的話語指出當下的問題。', gift: 'prophecy' },
+      { id: 38, text: '我的分享常帶出神的提醒或方向。', gift: 'prophecy' },
+      { id: 39, text: '我能分辨屬靈光景並說出真理。', gift: 'prophecy' },
+      { id: 40, text: '先知性服事讓我感到與神更親近。', gift: 'prophecy' }
+    ];
+
+    var QUESTION_GROUPS = [
+      { id: 'g1', title: '教導與宣講', questionIds: [1, 2, 3, 4, 5, 6, 7, 8] },
+      { id: 'g2', title: '關係與牧養', questionIds: [9, 10, 11, 12, 13, 14, 15, 16] },
+      { id: 'g3', title: '憐憫與服事', questionIds: [17, 18, 19, 20, 21, 22, 23, 24] },
+      { id: 'g4', title: '治理與奉獻', questionIds: [25, 26, 27, 28, 29, 30, 31, 32] },
+      { id: 'g5', title: '奉獻與先知', questionIds: [33, 34, 35, 36, 37, 38, 39, 40] }
+    ];
+    /** 僅用於 title 提示（題旁只顯示數字） */
+    var SCALE_HINTS = {
+      1: '1＝完全不像我',
+      2: '2',
+      3: '3（介於兩端之間）',
+      4: '4',
+      5: '5＝非常像我'
+    };
+    var currentStep = 0;
+    var answersById = {};
+
+    function setStepNotice(text, isError) {
+      var el = document.getElementById('stepNotice');
+      if (!text) {
+        el.style.display = 'none';
+        el.classList.remove('error');
+        el.textContent = '';
+        return;
+      }
+      el.style.display = 'block';
+      el.textContent = text;
+      if (isError) el.classList.add('error');
+      else el.classList.remove('error');
+    }
+
+    function getQuestionsForStep(stepIdx) {
+      var group = QUESTION_GROUPS[stepIdx] || QUESTION_GROUPS[0];
+      return questions.filter(function (q) {
+        return group.questionIds.indexOf(q.id) !== -1;
+      });
+    }
+
+    function stepMissingCount(stepIdx) {
+      return getQuestionsForStep(stepIdx).filter(function (q) {
+        return answersById[q.id] == null;
+      }).length;
+    }
+
+    function allMissingQuestionIds() {
+      return questions.filter(function (q) {
+        return answersById[q.id] == null;
+      }).map(function (q) {
+        return q.id;
+      });
+    }
+
+    function questionStepIndex(questionId) {
+      for (var i = 0; i < QUESTION_GROUPS.length; i++) {
+        if (QUESTION_GROUPS[i].questionIds.indexOf(questionId) !== -1) return i;
+      }
+      return 0;
+    }
+
+    function updateProgress() {
+      var answeredCount = Object.keys(answersById).length;
+      var progress = (answeredCount / questions.length) * 100;
+      document.getElementById('progressFill').style.width = progress + '%';
+      if (typeof SurveyUiCommon !== 'undefined') {
+        SurveyUiCommon.updateSurveyProgress({
+          targetElement: 'surveyProgressLine',
+          totalQuestions: questions.length,
+          answeredCount: answeredCount,
+          template: '已答 {answered}／總 {total} 題 · 步驟 ' + (currentStep + 1) + '／' + QUESTION_GROUPS.length
+        });
+      } else {
+        document.getElementById('surveyProgressLine').textContent =
+          '已答 ' + answeredCount + '／總 ' + questions.length + ' 題 · 步驟 ' + (currentStep + 1) + '／' + QUESTION_GROUPS.length;
+      }
+    }
+
+    /** 第一步題列上方小提示（全卷圖例已在容器頂端） */
+    function renderScaleLegendHtml() {
+      return '<p class="progress-meta progress-meta--in-grid" style="margin:0 0 8px;color:#64748b;">請點選 1–5；可隨時用上方步驟鈕返回修改。</p>';
+    }
+
+    function renderProgressMetaHtml() {
+      return '';
+    }
+
+    function renderStepTabs() {
+      var tabsEl = document.getElementById('stepTabs');
+      tabsEl.innerHTML = QUESTION_GROUPS.map(function (g, idx) {
+        var miss = stepMissingCount(idx);
+        var sub = miss > 0 ? ('未答 ' + miss + ' 題') : '已完成';
+        return '<button type="button" class="step-tab ' + (idx === currentStep ? 'active' : '') + '" onclick="goToStep(' + idx + ')">' +
+          '步驟 ' + (idx + 1) + '/' + QUESTION_GROUPS.length + '：' + g.title +
+          '<span class="step-sub">' + sub + '</span>' +
+          '</button>';
+      }).join('');
+    }
+
+    function renderCurrentStep() {
+      var stepQuestions = getQuestionsForStep(currentStep);
+      var html = '<div class="question-grid">';
+      var isFirstStep = stepQuestions.length && stepQuestions[0].id === 1;
+      if (isFirstStep) {
+        html += renderScaleLegendHtml();
+      }
+      if (!isFirstStep) {
+        html += renderProgressMetaHtml();
+      }
+      stepQuestions.forEach(function (q) {
+        html += '<div class="q-item" data-qid="' + q.id + '">' +
+          '<div class="q-title">Q' + q.id + '. ' + q.text + '</div>' +
+          '<div class="q-scale" role="radiogroup" aria-label="問題 ' + q.id + ' 評分">';
+        for (var score = 1; score <= 5; score++) {
+          var checked = answersById[q.id] === score ? 'checked' : '';
+          html += '<label class="pill" title="' + SCALE_HINTS[score].replace(/"/g, '&quot;') + '">' +
+            '<input type="radio" name="q' + q.id + '" value="' + score + '" ' + checked + ' onclick="setAnswer(' + q.id + ',' + score + ')">' +
+            '<span>' + score + '</span>' +
+            '</label>';
+        }
+        html += '</div></div>';
+      });
+      html += '</div>';
+      var qHost = document.getElementById('questionContainer');
+      qHost.innerHTML = html;
+      if (typeof SurveyUiCommon !== 'undefined') {
+        SurveyUiCommon.bindLikertPillRadiogroups(qHost);
+      }
+      updateProgress();
+      renderStepTabs();
+      updateNavigation();
+    }
+
+    function setAnswer(questionId, score) {
+      answersById[questionId] = score;
+      renderCurrentStep();
+    }
+
+    function updateNavigation() {
+      document.getElementById('prevBtn').disabled = currentStep === 0;
+      document.getElementById('nextBtn').disabled = currentStep === QUESTION_GROUPS.length - 1;
+    }
+
+    function goToStep(stepIdx) {
+      var miss = stepMissingCount(currentStep);
+      if (miss > 0) setStepNotice('本頁仍有 ' + miss + ' 題未完成，稍後可回來補。', false);
+      else setStepNotice('', false);
+      currentStep = stepIdx;
+      renderCurrentStep();
+    }
+
+    function nextStep() {
+      if (currentStep >= QUESTION_GROUPS.length - 1) return;
+      goToStep(currentStep + 1);
+    }
+
+    function previousStep() {
+      if (currentStep <= 0) return;
+      goToStep(currentStep - 1);
+    }
+
+    function scrollToMissingQuestion(questionId) {
+      var target = document.querySelector('.q-item[data-qid="' + questionId + '"]');
+      if (!target) return;
+      target.classList.add('missing');
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function submitSurvey() {
+      var missing = allMissingQuestionIds();
+      if (missing.length > 0) {
+        var firstMissing = missing[0];
+        currentStep = questionStepIndex(firstMissing);
+        renderCurrentStep();
+        setStepNotice('尚有 ' + missing.length + ' 題未填，請補完以取得完整分析。', true);
+        scrollToMissingQuestion(firstMissing);
+        return;
+      }
+      setStepNotice('', false);
+      showResults({ provisional: false, missingCount: 0 });
+    }
+
+    function previewResults() {
+      var missing = allMissingQuestionIds();
+      showResults({ provisional: missing.length > 0, missingCount: missing.length });
+    }
+
+    function showResults(opts) {
+      opts = opts || { provisional: false, missingCount: 0 };
+      var giftScores = { teaching: 0, evangelism: 0, exhortation: 0, mercy: 0, serving: 0, administration: 0, giving: 0, prophecy: 0 };
+      questions.forEach(function (q) {
+        if (answersById[q.id]) giftScores[q.gift] += answersById[q.id];
+      });
+      var sortedGifts = Object.keys(giftScores).sort(function (a, b) { return giftScores[b] - giftScores[a]; }).slice(0, 3);
+      try {
+        localStorage.setItem(SURVEY_STORAGE + 'survey_spiritual_gifts', JSON.stringify({
+          topGifts: sortedGifts,
+          scores: giftScores,
+          savedAt: new Date().toISOString()
+        }));
+        var profile = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_profile') || '{}');
+        profile.spiritual_gifts = sortedGifts;
+        localStorage.setItem(SURVEY_STORAGE + 'survey_profile', JSON.stringify(profile));
+      } catch (err) {}
+
+      var qBox = document.getElementById('questionContainer');
+      if (typeof SpiritualGiftsReport !== 'undefined' && SpiritualGiftsReport.renderSpiritualGiftsReport) {
+        SpiritualGiftsReport.renderSpiritualGiftsReport(qBox, {
+          giftScores: giftScores,
+          provisional: opts.provisional,
+          missingCount: opts.missingCount,
+          topN: 3
+        });
+      } else {
+        qBox.innerHTML = '<div class="result-card"><p>無法載入報告模組，請確認已引入 spiritual_gifts_report.js</p></div>';
+      }
+      document.querySelector('.navigation').style.display = 'none';
+      document.getElementById('stepTabs').style.display = 'none';
+      document.querySelector('.progress-bar').style.display = 'none';
+      var pg = document.getElementById('surveyProgressLine');
+      if (pg) pg.style.display = 'none';
+      setStepNotice('', false);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      renderCurrentStep();
+    });
+  </script>
+</body>
+</html>

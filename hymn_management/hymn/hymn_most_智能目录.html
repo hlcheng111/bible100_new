@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hymn_Most 智能目录 (192首)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1800px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        .control-panel { padding: 20px; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
+        .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; justify-content: center; }
+        .sort-btn { padding: 10px 20px; background: white; border: 2px solid #667eea; color: #667eea; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
+        .sort-btn:hover { background: #667eea; color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(102,126,234,0.3); }
+        .sort-btn.active { background: #667eea; color: white; }
+        .sort-btn.asc::after { content: ' ↑'; }
+        .sort-btn.desc::after { content: ' ↓'; }
+        .reset-btn { background: #ff9800; border-color: #ff9800; color: white; }
+        .reset-btn:hover { background: #f57c00; border-color: #f57c00; }
+        .search-box { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 15px; }
+        .search-input { padding: 10px 15px; border: 2px solid #667eea; border-radius: 6px; font-size: 14px; width: 300px; }
+        .search-input:focus { outline: none; border-color: #764ba2; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+        .stats { padding: 15px; background: #e3f2fd; text-align: center; font-size: 14px; color: #1976d2; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #667eea; color: white; position: sticky; top: 0; z-index: 10; }
+        th { padding: 12px 8px; text-align: left; font-size: 13px; font-weight: bold; white-space: nowrap; }
+        td { padding: 10px 8px; border-bottom: 1px solid #e9ecef; font-size: 12px; vertical-align: middle; }
+        tr:hover { background: #f8f9fa; }
+        .hymn-link { color: #667eea; text-decoration: none; font-weight: 500; }
+        .hymn-link:hover { text-decoration: underline; color: #764ba2; }
+        .tag { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; margin: 2px; color: white; }
+        .tag-popular { background: #ff9800; }
+        .tag-super { background: #f44336; }
+        .tag-children { background: #2196f3; }
+        .tag-modern { background: #4caf50; }
+        .tag-selected { background: #ffc107; color: #333; }
+        .tag-chinese { background: #9c27b0; }
+        .input-cell { padding: 2px; text-align: center; color: #999; cursor: pointer; }
+        .input-cell:hover { color: #667eea; }
+        .hidden { display: none; }
+        @media (max-width: 768px) {
+            .button-group { flex-direction: column; }
+            .sort-btn { width: 100%; }
+            table { font-size: 11px; }
+            th, td { padding: 6px 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Hymn_Most 智能目录</h1>
+            <p>最常用圣诗集 | 可排序 | 可搜索 | 192首精选诗歌</p>
+        </div>
+        
+        <div class="control-panel">
+            <div class="button-group">
+                <button class="sort-btn" onclick="sortTable(0)">Sort by No.</button>
+                <button class="sort-btn" onclick="sortTable(1)">Sort by EN Title</button>
+                <button class="sort-btn" onclick="sortTable(2)">Sort by CH Title</button>
+                <button class="sort-btn" onclick="sortTable(3)">Sort by Author</button>
+                <button class="sort-btn" onclick="sortTable(4)">Sort by Tags</button>
+                <button class="reset-btn sort-btn" onclick="resetTable()">Reset</button>
+            </div>
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search hymns... (编号/歌名/作者)" onkeyup="searchTable()">
+                <span id="searchCount"></span>
+            </div>
+        </div>
+        
+        <div class="stats" id="stats">
+            Loading data... 正在加载数据...
+        </div>
+        
+        <table id="hymnTable">
+            <thead>
+                <tr>
+                    <th style="width:60px">No.</th>
+                    <th style="width:250px">English Title</th>
+                    <th style="width:180px">中文歌名</th>
+                    <th style="width:180px">Author</th>
+                    <th style="width:120px">Tags</th>
+                    <th style="width:50px">A</th>
+                    <th style="width:50px">B</th>
+                    <th style="width:50px">C</th>
+                    <th style="width:50px">D</th>
+                    <th style="width:50px">E</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data will be generated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+    // Hymn data from hymn_most folder (192 files)
+    var hymnData = [
+        {num:'0001',titleEn:'All people that on earth do dwell',titleCh:'普天之下萬民萬族',author:'',tags:['popular'],file:'0001 All people that on earth do dwell  ▲ 生命027 普天之下萬民萬族 GENEVAN 134OLD HUNDREDTH.htm'},
+        {num:'0002',titleEn:'O Worship the King',titleCh:'來敬拜榮耀王',author:'Robert Grant',tags:['popular'],file:'0002 O Worship the King  _Robert Grant  來敬拜榮耀王  ▲.htm'},
+        {num:'0005',titleEn:'Let All Things Now Living',titleCh:'凡有氣息當讚美',author:'Katherine K. Davis',tags:['popular'],file:'0005 0037 Let All Things Now Living  _ Katherine K. Davis   凡有氣息當讚美 (同獻感恩詩歌)   ▲.htm'},
+        {num:'0010',titleEn:'I sing the mighty power of God',titleCh:'歌頌父神偉大權能',author:'Isaac Watts',tags:['popular'],file:'0010 032  I sing the mighty power of God  _ Isaac Watts  歌頌父神偉大權能，生命030 (ELLACOMBE)  ▲.htm'},
+        {num:'0017',titleEn:'Fairest Lord Jesus',titleCh:'美哉主耶稣',author:'Bohemia',tags:['popular'],file:'0017 Fairest Lord Jesus (Beautiful Savior)    Bohemia   美哉主耶稣 ST. ELIZABETH  ▲.htm'},
+        {num:'0019',titleEn:'For the Beauty of the Earth',titleCh:'環觀大地好風光',author:'Pierpoint',tags:['popular'],file:'0019 014  For the Beauty of the Earth  _Pierpoint  環觀大地好風光  DIX  ▲.htm'},
+        {num:'0020',titleEn:'All Things Bright and Beautiful',titleCh:'天父世界真美麗',author:'Cecil Frances Alexander',tags:['popular'],file:'0020 All Things Bright and Beautiful  _Cecil Frances Alexander   天父世界真美麗 ROYAL OAK    ▲.htm'},
+        {num:'0021',titleEn:'This Is My Father\'s World',titleCh:'這是天父世界',author:'Maltbie D. Babcock',tags:['popular'],file:'0021 0370  This Is My Father\'s World  _Maltbie D. Babcock  這是天父世界▲ TERRA BEATA.htm'},
+        {num:'0023',titleEn:'Children of the Heavenly Father',titleCh:'天父兒女何等安全',author:'Carolina Sandell',tags:['popular'],file:'0023 0901 Children of the Heavenly Father  _Carolina Sandell  天父兒女何等安全 ▲ TRYGGARE KAN INGEN VARA.htm'},
+        {num:'0025',titleEn:'God moves in a mysterious way',titleCh:'上主作為何等奧祕',author:'William Cowper',tags:['popular'],file:'0025 0903 God moves in a mysterious way _William Cowper 上主作為何等奧祕  ▲ DUNDEE (Ravenscroft).htm'},
+        {num:'0039',titleEn:'The God of Abraham praise',titleCh:'亞伯拉罕的神',author:'Daniel ben Judah',tags:['popular'],file:'0039 049 The God of Abraham praise  _Daniel ben Judah  亞伯拉罕的神  LEONI   ▲.htm'},
+        {num:'0043',titleEn:'Guide Me, O Thou Great Jehovah',titleCh:'主耶和华，求祢引领',author:'William Williams',tags:['popular'],file:'0043  Guide Me, O Thou Great Jehovah  _William Williams  主耶和华，求祢引领 (荒原行旅歌)  CWM RHONDDA     ▲.htm'},
+        {num:'0056',titleEn:'Come, Thou long-expected Jesus',titleCh:'請來，久渴望的耶穌',author:'Charles Wesley',tags:['popular'],file:'0056 0082  Come, Thou long-expected Jesus  _Charles Wesley  請來，久渴望的耶穌 ▲ HYFRYDOL   .htm'},
+        {num:'0059',titleEn:'Comfort, Comfort Now My People',titleCh:'安慰百姓',author:'Johann Olearius',tags:['popular'],file:'0059 0087 Comfort, Comfort Now My People _Johann Olearius  安慰百姓 新普頌131 GENEVAN 42    ▲.htm'},
+        {num:'0061',titleEn:'O come, o come, Emmanuel',titleCh:'以馬內利，懇求降臨',author:'Latin 9th Century',tags:['popular'],file:'0061 0088  O come, o come, Emmanuel  _Latin 9th Century   以馬內利，懇求降臨   ▲ VENI EMMANUEL.htm'},
+        {num:'0070',titleEn:'On Jordan\'s Bank the Baptist\'s Cry',titleCh:'約翰宣言',author:'Charles Coffin',tags:['popular'],file:'0070 0096 On Jordan\'s Bank the Baptist\'s Cry  _Charles Coffin  約翰宣言  ▲ WINCHESTER NEW .htm'},
+        {num:'0076',titleEn:'O come, all ye faithful',titleCh:'齊來，忠信聖徒',author:'J.F. Wade',tags:['popular'],file:'0076 0133  O come, all ye faithful  _J.F. Wade  齊來，忠信聖徒， 生命088  ▲ ADESTE FIDELES.htm'},
+        {num:'0078',titleEn:'Of the Father\'s love begotten',titleCh:'當世界還未曾創造',author:'Prudentius',tags:['popular'],file:'0078  Of the Father\'s love begotten  _ Prudentius  當世界還未曾創造    ▲ DIVINUM MYSTERIUM.htm'},
+        {num:'0079',titleEn:'Lo, How a Rose E\'er Blooming',titleCh:'耶西之條歌',author:'Germn 16C.',tags:['popular'],file:'0079 0129 Lo, How a Rose E\'er Blooming  _Germn 16C.  耶西之條歌  ▲ ES IST EIN\' ROS\'.htm'},
+        {num:'0080',titleEn:'Hark! the herald angels sing',titleCh:'聽阿！天使高聲唱',author:'Charles Wesley',tags:['popular'],file:'0080   Hark! the herald angels sing  _Charles Wesley   聽阿！天使高聲唱 (新生王歌)    ▲ MENDELSSOHN.htm'},
+        {num:'0081',titleEn:'Angels, from the realms of glory',titleCh:'榮耀國度天使成群',author:'James Montgomery',tags:['popular'],file:'0081 0143  Angels, from the realms of glory  _James Montgomery  榮耀國度天使成群   ▲ REGENT SQUARE  .htm'},
+        {num:'0082',titleEn:'Angels we have heard on high',titleCh:'天使歌唱',author:'French',tags:['popular'],file:'0082 0113  Angels we have heard on high _French  天使歌唱   ▲ GLORIA .htm'},
+        {num:'0085',titleEn:'Silent night! Holy night!',titleCh:'平安夜，聖善夜',author:'Joseph Mohr',tags:['popular'],file:'0085 0122 Silent night! Holy night!  _Joseph Mohr  平安夜，聖善夜，真寧靜 ▲ STILLE NACHT  .htm'},
+        {num:'0086',titleEn:'Away in a manger',titleCh:'遠遠在馬槽裡',author:'Martin Luther',tags:['popular'],file:'0086 0114c Away in a manger  _Martin Luther  遠遠在馬槽裡  CRADLE SONG    ▲.htm'},
+        {num:'0087',titleEn:'Once in Royal Davi\'s City',titleCh:'古時候在大衛城中',author:'Cecil Frances Alexander',tags:['popular'],file:'0087 0140  Once in Royal Davi\'s City  _Cecil Frances Alexander   古時候在大衛城中 ▲ IRBY.htm'},
+        {num:'0088',titleEn:'O little town of Bethlehem',titleCh:'美哉聖城，小伯利恆',author:'Phillips Brooks',tags:['popular'],file:'0088 0121   O little town of Bethlehem _Phillips Brooks   美哉聖城，小伯利恆  ▲ ST. LOUIS.htm'},
+        {num:'0092',titleEn:'Joy to the world!',titleCh:'普世歡騰，救主降臨',author:'Isaac Watts',tags:['popular'],file:'0092 0134 Joy to the world!  _Isaac Watts  普世歡騰，救主降臨！  ▲ ANTIOCH.htm'},
+        {num:'0095',titleEn:'What Child is this',titleCh:'正當牧人看守群羊',author:'W. Chatterton Dix',tags:['popular'],file:'0095 0145 What Child is this, who, laid to rest  _W. Chatterton Dix   正當牧人看守群羊 【奇妙聖嬰】 ▲ GREENSLEEVES.htm'},
+        {num:'0098',titleEn:'Good Christian Friends, Rejoice',titleCh:'歡唱主復活',author:'Latin Carol',tags:['popular'],file:'0098 Good Christian Friends, Rejoice _Latin Carol  歡唱主復活 生命136 (信徒们当欢欣)  ▲ IN DULCI JUBILO.htm'},
+        {num:'0104',titleEn:'Songs of Thankfulness and Praise',titleCh:'齊來讚美主耶穌',author:'Christopher Wordsorth',tags:['popular'],file:'0104 Songs of Thankfulness and Praise  _Christopher Wordsorth   齊來讚美主耶穌 ▲.htm'},
+        {num:'0105',titleEn:'As with gladness men of old',titleCh:'古人喜樂歌',author:'W. Chatterton Dix',tags:['popular'],file:'0105 0150  As with gladness men of old  _W. Chatterton Dix  古人喜樂歌 (博士滿懷喜樂心)    ▲.htm'},
+        {num:'0109',titleEn:'Hail to the Lord\'s anointed',titleCh:'慶賀主受膏為王',author:'James Montgomery',tags:['popular'],file:'0109  Hail to the Lord\'s anointed  _James Montgomery  慶賀主受膏為王  Es flog ein klein\'s Waldvögelein     ▲.htm'},
+        {num:'0111',titleEn:'O Love, How Deep, How Broad, How High',titleCh:'上主之愛長闊高深',author:'Thomas á Kempis',tags:['popular'],file:'0111 0618 O Love, How Deep, How Broad, How High  _Thomas á Kempis  上主之愛長闊高深   ▲ DEO GRACIAS.htm'},
+        {num:'0121',titleEn:'Jesus calls us, o\'er the tumult',titleCh:'耶穌呼召',author:'Cecil Frances Alexander',tags:['popular'],file:'0121 Jesus calls us, o\'er the tumult  _Cecil Frances Alexander   耶穌呼召 GALILEE ▲.htm'},
+        {num:'0145',titleEn:'Hosanna, Loud Hosanna',titleCh:'唱和撒那',author:'Jennette Threlfall',tags:['popular'],file:'0145 0197 Hosanna, Loud Hosanna  _Jennette Threlfall  唱和撒那   ▲ ELLACOMBE.htm'},
+        {num:'0146',titleEn:'All Glory, Laud, and Honor',titleCh:'无量赞美荣光',author:'Theodulf, Bishop of Orléans',tags:['popular'],file:'0146 All Glory, Laud, and Honor  _Theodulf, Bishop of Orléans   无量赞美荣光  ST. THEODULPH  ▲.htm'},
+        {num:'0148',titleEn:'My Song Is Love Unknown',titleCh:'無比大愛',author:'Samuel Crossman',tags:['popular'],file:'0148  0209c My Song Is Love Unknown  _Samuel Crossman  無比大愛    ▲.htm'},
+        {num:'0149',titleEn:'Ride on, ride on in majesty',titleCh:'榮耀君王騎驢前行',author:'Henry Hart Milman',tags:['popular'],file:'0149 0198  Ride on, ride on in majesty  _Henry Hart Milman  榮耀君王騎驢前行  ST. DROSTANE  ▲.htm'},
+        {num:'0161',titleEn:'Go to dark Gethsemane',titleCh:'每逢你遭遇試探',author:'James Montgomery',tags:['popular'],file:'0161 0220   Go to dark Gethsemane  _James Montgomery   每逢你遭遇試探  ▲ REDHEAD 76.htm'},
+        {num:'0164',titleEn:'What Wondrous Love Is This',titleCh:'奇妙大愛',author:'White Spiritual',tags:['popular'],file:'0164 0215 What Wondrous Love Is This  _White Spiritual  奇妙大愛   ▲ WONDROUS LOVE.htm'},
+        {num:'0168',titleEn:'O sacred Head, now wounded',titleCh:'主聖首曾創傷',author:'Bernard of Clairvaux',tags:['popular'],file:'0168  0221  O sacred Head, now wounded _Bernard of Clairvaux  主聖首曾創傷  ▲ PASSION CHORALE.htm'},
+        {num:'0173',titleEn:'Alas! And did my Savior bleed',titleCh:'痛哉！主血傾流',author:'Isaac Watts',tags:['popular'],file:'0173 Alas! And did my Savior bleed _Isaac Watts   痛哉！主血傾流   MARTYRDOM  ▲.htm'},
+        {num:'0175',titleEn:'When I survey the wondrous cross',titleCh:'每逢思念奇妙十架',author:'Isaac Watts',tags:['popular'],file:'0175  When I survey the wondrous cross  _Isaac Watts  每逢思念奇妙十架  HAMBURG  ▲.htm'},
+        {num:'0182',titleEn:'Christ the Lord is risen today',titleCh:'基督耶穌今復生',author:'Charles Wesley',tags:['popular'],file:'0182 0245  Christ the Lord is risen today  _Charles Wesley     基督耶穌今復生  ▲ LLANFAIR.htm'},
+        {num:'0185',titleEn:'The strife is o\'er the battle done',titleCh:'战争完毕歌',author:'Francis Pott',tags:['popular'],file:'0185 The strife is o\'er the battle done  _ Francis Pott   战争完毕歌 VICTORY   ▲.htm'},
+        {num:'0186',titleEn:'Low in the grave he lay',titleCh:'主在墓中安臥',author:'Robert Lowry',tags:['popular'],file:'0186 0910 Low in the grave he lay, Jesus, my Savior  _ Robert Lowry  主在墓中安臥  (主复活)▲ CHRIST AROSE.htm'},
+        {num:'0187',titleEn:'Thine is the glory',titleCh:'復活得勝主，榮耀屬於你',author:'Edmond Budry',tags:['popular'],file:'0187 0238  Thine is the glory   _Edmond Budry  復活得勝主，榮耀屬於你  ▲ JUDAS MACCABEUS.htm'},
+        {num:'0190',titleEn:'O sons and daughters, let us sing',titleCh:'天父兒女，齊聲歌唱',author:'Jean Tisserand',tags:['popular'],file:'0190 0255  O sons and daughters, let us sing _Jean Tisserand  ▲ 天父兒女，齊聲歌唱  O FILII ET FILIAE.htm'},
+        {num:'0202',titleEn:'This joyful Eastertide',titleCh:'基督衝開死綑鎖',author:'Woodward',tags:['popular'],file:'0202 This joyful Eastertide  _Woodward   基督衝開死綑鎖 (佇這復活日子)    ▲.htm'},
+        {num:'0203',titleEn:'Now the Green Blade Rises',titleCh:'青苗生長',author:'J.M. Campbell Crum',tags:['popular'],file:'0203  Now the Green Blade Rises  _J.M. Campbell Crum  青苗生長   (NOEL NOUVELET)  ▲.htm'},
+        {num:'0206',titleEn:'Christ Is Alive!',titleCh:'永活基督',author:'Brian A. Wren',tags:['popular'],file:'0206 0246 Christ Is Alive! _Brian A. Wren  永活基督  TRURO    ▲.htm'},
+        {num:'0219',titleEn:'Jesus shall reign where\'er the sun',titleCh:'日月所照萬國萬方',author:'Isaac Watts',tags:['popular'],file:'0219 0265 Jesus shall reign where\'er the sun  _Isaac Watts  日月所照萬國萬方 (耶稣普治歌)  ▲ DUKE STREET.htm'},
+        {num:'0220',titleEn:'At the Name of Jesus',titleCh:'崇拜聖名歌',author:'Caroline M. Noel',tags:['popular'],file:'0220 At the Name of Jesus (Philippians 25-11)  _Caroline M. Noel  崇拜聖名歌   KING\'S WESTON    ▲.htm'},
+        {num:'0223',titleEn:'Crown Him with Many Crowns',titleCh:'来拥戴主为王',author:'Matthew Bridges',tags:['popular'],file:'0223 Crown Him with Many Crowns  _Matthew Bridges  来拥戴主为王 DIADEMATA  ▲.htm'},
+        {num:'0224',titleEn:'Rejoice, the Lord Is King',titleCh:'樂哉，救主為王',author:'Charles Wesley',tags:['popular'],file:'0224 Rejoice, the Lord Is King  _Charles Wesley  樂哉，救主為王   DARWALL\'S 148th  ▲.htm'},
+        {num:'0227',titleEn:'He Is Lord',titleCh:'祂是主，祂是主',author:'anon',tags:['popular'],file:'0227 He Is Lord HE IS LORD   _anon  祂是主，祂是主 LH081   ▲.htm'},
+        {num:'0234',titleEn:'Come Down, O Love Divine',titleCh:'神愛，懇求降臨',author:'Bianco da Siena',tags:['popular'],file:'0234 0282 Come Down, O Love Divine _Bianco da Siena  神愛，懇求降臨 ▲ DOWN AMPNEY.htm'},
+        {num:'0247',titleEn:'I Love Your Church, O Lord',titleCh:'我爱教会',author:'Timothy Dwight',tags:['popular'],file:'0247 I Love Your Church, O Lord  _Timothy Dwight  我爱教会 ST. THOMAS    ▲.htm'},
+        {num:'0251',titleEn:'The Church\'s One Foundation',titleCh:'教會獨一的根基',author:'S. J. Stone',tags:['popular'],file:'0251 The Church\'s One Foundation  _S. J. Stone   教會獨一的根基  ▲.htm'},
+        {num:'0254',titleEn:'For All the Saints',titleCh:'仿效聖徒',author:'William Walsham How',tags:['popular'],file:'0254 0326   For All the Saints _William Walsham How    仿效聖徒    ▲ SINE NOMINE.htm'},
+        {num:'0257',titleEn:'Blest be the tie that binds',titleCh:'福哉主愛聖徒',author:'John Fawcett',tags:['popular'],file:'0257 0306 Blest be the tie that binds  _John Fawcett   福哉主愛聖徒      DENNIS    ▲.htm'},
+        {num:'0262',titleEn:'我愛傳揚主福音',titleCh:'我愛傳揚主福音',author:'',tags:['popular'],file:'0262 0462b 我愛傳揚主福音，生命263 (I love to tell the story) ▲ HANKEY.htm'},
+        {num:'0264',titleEn:'Lift High the Cross',titleCh:'高舉十架',author:'George William Kitchin',tags:['popular'],file:'0264 0826 Lift High the Cross  _George William Kitchin  高舉十架   CRUCIFER   ▲.htm'},
+        {num:'0268',titleEn:'In Christ There Is No East or West',titleCh:'萬方團契',author:'John Oxenham',tags:['popular'],file:'0268  0317 In Christ There Is No East or West  _John Oxenham  萬方團契   MC KEE    ▲.htm'},
+        {num:'0286',titleEn:'Glorious things of thee are spoken',titleCh:'美哉錫安，上主聖城',author:'John Newton',tags:['popular'],file:'0286  0081 Glorious things of thee are spoken  _ John Newton  美哉錫安，上主聖城    AUSTRIAN HYMN  ▲.htm'},
+        {num:'0289b',titleEn:'For the Healing of the Nations',titleCh:'求主醫治萬族',author:'Fred Kaan',tags:['popular'],file:'0289b 0346 For the Healing of the Nations _Fred Kaan  求主醫治萬族  ▲ ST. THOMAS (Wade).htm'},
+        {num:'0299',titleEn:'Jesu, Jesu, Fill Us with Your Love',titleCh:'耶穌，耶穌，用疼充滿阮',author:'Tom Colvin',tags:['popular'],file:'0299 Jesu, Jesu, Fill Us with Your Love  _Tom Colvin  耶穌，耶穌，用疼充滿阮  CHEREPONI    ▲.htm'},
+        {num:'0322',titleEn:'I Need Thee Every Hour',titleCh:'我時刻需要你',author:'Annie S. Hawks',tags:['popular'],file:'0322 0735  I Need Thee Every Hour _Annie S. Hawks  我時刻需要你  ▲ NEED.htm'},
+        {num:'0325',titleEn:'O Master, Let Me Walk with Thee',titleCh:'與主偕行',author:'Washington Gladden',tags:['popular'],file:'0325 O Master, Let Me Walk with Thee _Washington Gladden  與主偕行   MARYTON ▲.htm'},
+        {num:'0327',titleEn:'Trust and Obey',titleCh:'信靠順服',author:'John H. Sammis',tags:['popular'],file:'0327 0921c Trust and Obey  _John H. Sammis  信靠順服  (只要信祂 ) ▲.htm'},
+        {num:'0328',titleEn:'Lead On, O King Eternal',titleCh:'永恆之君，求前導',author:'Ernest W. Shurtleff',tags:['popular'],file:'0328 0269  Lead On, O King Eternal  _ Ernest W. Shurtleff   永恆之君，求前導   ▲ LANCASHIRE.htm'},
+        {num:'0330',titleEn:'SAVIOUR, LIKE A SHEPHERD LEAD US',titleCh:'賜福救主',author:'Dorothy A. Thrupp',tags:['popular'],file:'0330 0187c 073  SAVIOUR, LIKE A SHEPHERD LEAD US  _Dorothy A. Thrupp  賜福救主 (懇求善牧導我前行)   ▲.htm'},
+        {num:'0334',titleEn:'May the Mind of Christ, My Savior',titleCh:'但願救主基督心意',author:'Kate B. Wilkinson',tags:['popular'],file:'0334 May the Mind of Christ, My Savior  _Kate B. Wilkinson  但願救主基督心意   ST. LEONARDS  ▲.htm'},
+        {num:'0348',titleEn:'Great Is Thy Faithfulness',titleCh:'祢的信實廣大',author:'Thomas O. Chisholm',tags:['popular'],file:'0348  Great Is Thy Faithfulness  _Thomas O. Chisholm  祢的信實廣大  FAITHFULNESS ▲.htm'},
+        {num:'0351',titleEn:'Love divine, all loves excelling',titleCh:'神聖主愛超乎萬愛',author:'Charles Wesley',tags:['popular'],file:'0351 0366  Love divine, all loves excelling   _Charles Wesley  神聖主愛超乎萬愛 (神聖主愛)    ▲ HYFRYDOL.htm'},
+        {num:'0352',titleEn:'O Jesus, I Have Promised',titleCh:'主耶穌，我曾應許',author:'John Ernest Bode',tags:['popular'],file:'0352 O Jesus, I Have Promised _John Ernest Bode  主耶穌，我曾應許 ANGEL\'S STORY  ▲.htm'},
+        {num:'0363',titleEn:'Blessed Assurance, Jesus Is Mine!',titleCh:'有福的確據',author:'Crosby',tags:['popular'],file:'0363 Blessed Assurance, Jesus Is Mine!  _Crosby  有福的確據 生命414 ▲ ASSURANCE  2.htm'},
+        {num:'0366',titleEn:'MY JESUS, I LOVE THEE',titleCh:'深愛耶穌',author:'William R. Feathersto',tags:['popular'],file:'0366 0911 104  MY JESUS, I LOVE THEE  _William R. Feathersto  深愛耶穌   ▲.htm'},
+        {num:'0372',titleEn:'When Morning Gilds the Skies',titleCh:'早晨金光照亮',author:'Edward Caswall',tags:['popular'],file:'0372 0667 When Morning Gilds the Skies  _Edward Caswall  早晨金光照亮 生命487 ▲ LAUDES DOMINI.htm'},
+        {num:'0378',titleEn:'Lord of All Hopefulness',titleCh:'希望之主',author:'Jan Struther',tags:['popular'],file:'0378 Lord of All Hopefulness  _Jan Struther  希望之主   SLANE    ▲.htm'},
+        {num:'0396',titleEn:'For the Fruit of All Creation',titleCh:'蒙主厚賜遍地美果',author:'Fred Pratt Green',tags:['popular'],file:'0396 0036 For the Fruit of All Creation _Fred Pratt Green   蒙主厚賜遍地美果 [感謝上主]    ▲ AR HYD Y NOS.htm'},
+        {num:'0405',titleEn:'O God, Our Help in Ages Past',titleCh:'千古保障',author:'Isaac Watts',tags:['popular'],file:'0405  O God, Our Help in Ages Past  _Isaac Watts  千古保障  ST. ANNE ▲.htm'},
+        {num:'0424',titleEn:'Jesus, lover of my soul',titleCh:'靈友歌',author:'',tags:['popular'],file:'0424 Jesus, lover of my soul  靈友歌 (耶穌我靈好朋友) 生命275 NP181 ABERYSTWYTH  ▲.htm'},
+        {num:'0425',titleEn:'Jesus, Priceless Treasure',titleCh:'耶穌珍貴無比',author:'',tags:['popular'],file:'0425 0830 Jesus, Priceless Treasure 耶穌珍貴無比  ▲ JESU, MEINE FREUDE.htm'},
+        {num:'0426',titleEn:'My faith looks up to Thee',titleCh:'我以信心仰望十字架上羔羊',author:'Ray Palmer',tags:['popular'],file:'0426  My faith looks up to Thee  _Ray Palmer  我以信心仰望十字架上羔羊  ▲ OLIVET.htm'},
+        {num:'0427',titleEn:'How Firm a Foundation',titleCh:'穩當根基',author:'K. (1787)_George Keith',tags:['popular'],file:'0427 How Firm a Foundation  _K. (1787)_George Keith    穩當根基   ▲.htm'},
+        {num:'0440',titleEn:'He Leadeth Me',titleCh:'天父領我',author:'Gilmore',tags:['popular'],file:'0440 He Leadeth Me  _Gilmore  天父領我  AUGHTON   ▲.htm'},
+        {num:'0451',titleEn:'When Peace like a River',titleCh:'我心靈得安寧',author:'Spafford',tags:['popular'],file:'0451 When Peace like a River (It Is Well with My Soul) _Spafford  我心靈得安寧   ▲ VILLE DU HAVRE.htm'},
+        {num:'0453',titleEn:'How sweet the name of Jesus sounds',titleCh:'主名至寶',author:'John Newton',tags:['popular'],file:'0453 0909 How sweet the name of Jesus sounds  _John Newton 主名至寶  生命058 ▲ ST. PETER.htm'},
+        {num:'0457',titleEn:'O Love That Will Not Let Me Go',titleCh:'偉大的愛',author:'George Matheson',tags:['popular'],file:'0457 O Love That Will Not Let Me Go  _George Matheson  偉大的愛 (不忍棄我偉大的愛)  ▲.htm'},
+        {num:'0462',titleEn:'O Lord, Hear My Prayer',titleCh:'求祢俯聽我',author:'',tags:[],file:'0462 O Lord, Hear My Prayer HEAR MY PRAYER 求祢俯聽我  TAIZE.htm'},
+        {num:'0465',titleEn:'Precious Lord, Take My Hand',titleCh:'親愛主，牽我手',author:'Dorsey',tags:['popular'],file:'0465 0834 Precious Lord, Take My Hand  _Dorsey  親愛主，牽我手   PRECIOUS LORD  ▲.htm'},
+        {num:'0466',titleEn:'Abide With Me',titleCh:'與主同住',author:'Henry Francis Lyte',tags:['popular'],file:'0466 Abide With Me   _Henry Francis Lyte   與主同住  EVENTIDE  ▲.htm'},
+        {num:'0473',titleEn:'COME, YE THANKFUL PEOPLE, COME',titleCh:'年終感頌',author:'Henry Alford',tags:['popular'],file:'0473  0367c 310  COME, YE THANKFUL PEOPLE, COME  _Henry Alford  年終感頌 ( 大家來感謝主恩)   ▲.htm'},
+        {num:'0479',titleEn:'Lo, He comes with clouds descending',titleCh:'基督再臨',author:'Charles Wesley',tags:['popular'],file:'0479 0348  Lo, He comes with clouds descending  _Charles Wesley  基督再臨   HELMSLEY  ▲.htm'},
+        {num:'0482',titleEn:'Soon and Very Soon',titleCh:'快了，非常近了',author:'Andraé Crouch',tags:['popular'],file:'0482  Soon and Very Soon  _Andraé Crouch  快了，非常近了 ▲ .htm'},
+        {num:'0492',titleEn:'Come, Thou Almighty King',titleCh:'三一來臨歌',author:'anon',tags:['popular'],file:'0492 002 Come, Thou Almighty King  _anon  ITALIAN HYMN  三一來臨歌 (求大君王來臨)     ▲.htm'},
+        {num:'0521b',titleEn:'Come, Thou Fount',titleCh:'萬福源頭',author:'Robert Robinson',tags:['popular'],file:'0521b 0475  Come, Thou Fount  _Robert Robinson  萬福源頭  NETTLETON   ▲.htm'},
+        {num:'0533',titleEn:'I Come with Joy a child of God',titleCh:'謝主赦罪之恩',author:'Brian A. Wren',tags:['popular'],file:'0533 0515 I Come with Joy a child of God, _Brian A. Wren  謝主赦罪之恩   DOVE OF PEACE  ▲.htm'},
+        {num:'0538',titleEn:'Holy, Holy, Holy Lord God Almighty!',titleCh:'聖哉三一',author:'Heber',tags:['popular'],file:'0538  Holy, Holy, Holy Lord God Almighty!  _Heber  (Dykes)  聖哉三一  NICAEA   ▲.htm'},
+        {num:'0543',titleEn:'Now thank we all our God',titleCh:'今齊來感謝神',author:'Martin Rinkart',tags:['popular'],file:'0543 0643  Now thank we all our God  _Martin Rinkart  今齊來感謝神，生命023 ▲ NUN DANKET ALLE GOTT.htm'},
+        {num:'0551',titleEn:'All creatures of our God and King',titleCh:'真神所造萬象生靈',author:'St. Francis of Assisi',tags:['popular'],file:'0551  All creatures of our God and King  _St. Francis of Assisi  真神所造萬象生靈  ▲.htm'},
+        {num:'0553',titleEn:'How Great Thou Art',titleCh:'祢真伟大',author:'Carl Gustav Boberg',tags:['popular'],file:'0553 02b How Great Thou Art   _Carl Gustav Boberg  祢真伟大  ▲.htm'},
+        {num:'0570',titleEn:'From All That Dwell Below the Skies',titleCh:'稱謝歌',author:'Isaac Watts',tags:['popular'],file:'0570 From All That Dwell Below the Skies  _Isaac Watts 稱謝歌 LASST UNS ERFREUEN  ▲.htm'},
+        {num:'0571',titleEn:'Praise, My Soul, the King of Heaven',titleCh:'讚美我主君王',author:'Henry Francis Lyte',tags:['popular'],file:'0571 0620 Praise, My Soul, the King of Heaven (Psalm 103)  _Henry Francis Lyte  讚美我主君王  ▲ LAUDA ANIMA.htm'},
+        {num:'0572',titleEn:'Sing Praise to God Who Reigns Above',titleCh:'統治乾坤歌',author:'Johann Jakob Schütz',tags:['popular'],file:'0572  0645 Sing Praise to God Who Reigns Above  _Johann Jakob Schütz  統治乾坤歌 ▲ MIT FREUDEN ZART.htm'},
+        {num:'0575',titleEn:'Praise to the Lord, the Almighty',titleCh:'赞美全能神',author:'Joachim Neander',tags:['popular'],file:'0575 Praise to the Lord, the Almighty  _Joachim Neander  赞美全能神  LOBE DEN HERREN   ▲.htm'},
+        {num:'0579',titleEn:'Immortal, invisible God only wise',titleCh:'永生神就是靈',author:'Walter C. Smith',tags:['popular'],file:'0579 012c Immortal, invisible God only wise  _Walter C. Smith  永生神就是靈  ▲ ST. DENIO.htm'},
+        {num:'0581',titleEn:'Joyful, joyful, we adore Thee',titleCh:'快樂快樂，我們祟拜',author:'',tags:[],file:'0581Joyful, joyful, we adore Thee 快樂快樂，我們祟拜 HYMN TO JOY.htm'},
+        {num:'0601',titleEn:'All hail the power of Jesus name',titleCh:'齊讚耶穌大能聖名',author:'Edward Perronet',tags:['popular'],file:'0601  All hail the power of Jesus name  _Edward Perronet  齊讚耶穌大能聖名  ▲ CORONATION.htm'},
+        {num:'0604',titleEn:'To God be the Glory',titleCh:'榮耀歸於真神',author:'Fanny Crosby',tags:['popular'],file:'0604 To God be the Glory  _ Fanny Crosby  榮耀歸於真神 ▲.htm'},
+        {num:'0614',titleEn:'Come, You Disconsolate',titleCh:'解憂歌',author:'Thomas Moore',tags:['popular'],file:'0614 Come, You Disconsolate  _ Thomas Moore   解憂歌 CONSOLATOR   ▲.htm'},
+        {num:'0615',titleEn:'Softly and Tenderly Jesus Is Calling',titleCh:'耶穌溫柔慈聲',author:'Will L. Thompson',tags:['popular'],file:'0615 Softly and Tenderly Jesus Is Calling  _Will L. Thompson  耶穌溫柔慈聲    ▲ THOMPSON.htm'},
+        {num:'0627',titleEn:'JUST AS I AM, WITHOUT ONE PLEA',titleCh:'照我本相',author:'Charlotte Elliott',tags:['popular'],file:'0627  JUST AS I AM, WITHOUT ONE PLEA   _Charlotte Elliott  照我本相 (來就上主羔羊)   ▲.htm'},
+        {num:'0665',titleEn:'I Heard the Voice of Jesus Say',titleCh:'我聞耶穌呼聲',author:'Horatius Bonar',tags:['popular'],file:'0665 0182c 038  I Heard the Voice of Jesus Say _Horatius Bonar   我聞耶穌呼聲  ▲.htm'},
+        {num:'0667',titleEn:'Christ, Whose Glory Fills the Skies',titleCh:'基督榮耀滿天庭',author:'Charles Wesley',tags:['popular'],file:'0667  0662c Christ, Whose Glory Fills the Skies  _Charles Wesley    基督榮耀滿天庭    ▲.htm'},
+        {num:'0695',titleEn:'Amazing Love (And Can It Be)',titleCh:'怎能如此',author:'Charles Wesley',tags:['popular'],file:'0695 Amazing Love (And Can It Be) _Charles Wesley  怎能如此  SAGINA    ▲.htm'},
+        {num:'0754',titleEn:'Lord, Speak to Me, That I May Speak',titleCh:'主，懇求你向我說話',author:'Frances R. Havergal',tags:['popular'],file:'0754 0722 Lord, Speak to Me, That I May Speak  _Frances R. Havergal  主，懇求你向我說話   CANONBURY    ▲.htm'},
+        {num:'0757',titleEn:'O word of God incarnate',titleCh:'圣道化身',author:'William W. How',tags:['popular'],file:'0757 0459 O word of God incarnate  _William W. How 圣道化身 (真神是聖道成肉身) MUNICH   ▲.htm'},
+        {num:'0764',titleEn:'Break Thou the bread of life',titleCh:'求主擘生命餅',author:'Mary A. Lathbury',tags:['popular'],file:'0764 0460  Break Thou the bread of life   _Mary A. Lathbury   求主擘生命餅，供我需要   ▲.htm'},
+        {num:'0776',titleEn:'A mighty fortress is our God',titleCh:'上主是我堅固堡壘',author:'',tags:['popular'],file:'0776 0275 A mighty fortress is our God上主是我堅固堡壘，生命050  ▲ EIN\' FESTE BURG.htm'},
+        {num:'0790',titleEn:'Baptized in Water',titleCh:'水禮印記',author:'Michael Saward',tags:['popular'],file:'0790 0482 Baptized in Water  _Michael Saward  水禮印記  BUNESSAN   ▲.htm'},
+        {num:'0837',titleEn:'Let us break bread together',titleCh:'我們跪在主面前同擘餅',author:'spiritual',tags:['popular'],file:'0837 0525  Let us break bread together on our knees  _spiritual 我們跪在主面前同擘餅   ▲.htm'},
+        {num:'0897',titleEn:'WHAT A FRIEND WE HAVE IN JESU',titleCh:'耶穌恩友',author:'Joseph Scriven',tags:['popular'],file:'0897 0465 263  WHAT A FRIEND WE HAVE IN JESU _Joseph Scriven  耶穌恩友▲.htm'},
+        {num:'0926',titleEn:'God of Grace and God of Glory',titleCh:'恩惠主宰',author:'Harry Emerson Fosdick',tags:['popular'],file:'0926 God of Grace and God of Glory _Harry Emerson Fosdick  恩惠主宰  ▲ CWM RHONDDA.htm'},
+        {num:'0964',titleEn:'Praise God, from whom all blessings flow',titleCh:'頌讚三一神',author:'Thomas Ken',tags:['popular'],file:'0964 Praise God, from whom all blessings flow  _Thomas Ken  頌讚三一神  ▲ NEW DOXOLOGY.htm'},
+        {num:'0996',titleEn:'Holy God We Praise Thy Name',titleCh:'赞美真神',author:'Ignaz Franz',tags:['popular'],file:'0996  Holy God We Praise Thy Name   _Ignaz Franz  赞美真神    ▲.htm'},
+        {num:'1004',titleEn:'Dying you destroyed our death',titleCh:'',author:'Curt Oliver',tags:['popular'],file:'1004  Dying you destroyed our death  _Curt Oliver  ▲.htm'},
+        {num:'1013',titleEn:'Jesus Christ Is Risen Today',titleCh:'基督今复活',author:'Charles Wesley',tags:['popular'],file:'1013  Jesus Christ Is Risen Today   _Charles Wesley  基督今复活▲.htm'},
+        {num:'1033',titleEn:'The Day of Resurrection',titleCh:'復活良辰',author:'John of Damascus',tags:['popular'],file:'1033  The Day of Resurrection  _John of Damascus, 8th cent.    復活良辰  ▲ LANCASHIRE   ELLACOMBE.htm'},
+        {num:'1051',titleEn:'Jesus, Keep Me Near the Cross',titleCh:'',author:'Fanny J',tags:[],file:'1051  Jesus, Keep Me Near the Cross  _Fanny J.htm'},
+        {num:'1091',titleEn:'Leaning On The Everlasting Arms',titleCh:'倚靠主永遠膀臂',author:'Elisha A. Hoffman',tags:['popular'],file:'1091  Leaning On The Everlasting Arms  _Elisha A. Hoffman  倚靠主永遠膀臂 ▲.htm'},
+        {num:'1096',titleEn:'ON EAGLE\'S WINGS',titleCh:'乘鷹翅膀',author:'Michael Joncas',tags:['popular'],file:'1096  ON EAGLE\'S WINGS  _Michael Joncas   乘鷹翅膀  ▲.htm'},
+        {num:'1269',titleEn:'We Gather Together',titleCh:'我们同心聚集',author:'Theodore Baker',tags:['popular'],file:'1269  We Gather Together  _Theodore Baker    我们同心聚集    (605虔诚聚集)  ▲.htm'},
+        {num:'1384',titleEn:'Shall We Gather at the River',titleCh:'我們聚集生命河邊',author:'Robert Lowry',tags:['popular'],file:'1384 0375 Shall We Gather at the River _Robert Lowry  我們聚集生命河邊    ▲ HANSON PLACE.htm'},
+        {num:'1418',titleEn:'Morning Has Broken',titleCh:'破曉的晨曦',author:'Eleanor Farjeon',tags:['popular'],file:'1418  Morning Has Broken  _Eleanor Farjeon  破曉的晨曦    ▲.htm'},
+        {num:'1606',titleEn:'Be Still, My Soul',titleCh:'我灵镇静',author:'Kathrina von Schlegel',tags:['popular'],file:'1606  Be Still, My Soul  _Kathrina von Schlegel  我灵镇静  FINLANDIA    ▲.htm'},
+        {num:'1621',titleEn:'Fight the Good Fight',titleCh:'美好的仗',author:'John S. B. Monsel',tags:['popular'],file:'1621 Fight the Good Fight  _ John S. B. Monsel  美好的仗   ▲.htm'},
+        {num:'1642',titleEn:'In the Cross of Christ I Glory',titleCh:'榮耀十架',author:'John Bowring',tags:['popular'],file:'1642 In the Cross of Christ I Glory  _John Bowring  榮耀十架   ▲.htm'},
+        {num:'1645',titleEn:'It Came Upon the Midnight Clear',titleCh:'夜半歌声',author:'Edmund H. Sears',tags:['popular'],file:'1645 It Came Upon the Midnight Clear  _Edmund H. Sears  夜半歌声  ▲.htm'},
+        {num:'1648',titleEn:'Jesus, the very thought of Thee',titleCh:'慕主歌',author:'St. Bernard of Clairvaux',tags:['popular'],file:'1648  Jesus,the very thought of Thee  _St. Bernard of Clairvaux  慕主歌   ▲.htm'},
+        {num:'1649',titleEn:'Let us With A Gladsome Mind',titleCh:'欢然颂主',author:'John Milton',tags:['popular'],file:'1649 Let us With A Gladsome Mind  _ John Milton  欢然颂主  ▲.htm'},
+        {num:'1662',titleEn:'Nearer, My God, to Thee',titleCh:'更加與主接近',author:'Sarah F. Adams',tags:['popular'],file:'1662 Nearer, My God, to Thee _Sarah F. Adams  更加與主接近    ▲.htm'},
+        {num:'1748',titleEn:'The Old Rugged Cross',titleCh:'古舊十架',author:'George Bennard',tags:['popular'],file:'1748 The Old Rugged Cross _George Bennard  古舊十架   ▲.htm'},
+        {num:'1756',titleEn:'When in our music God is glorified',titleCh:'音乐荣神',author:'Fred Pratt Green',tags:['popular'],file:'1756  When in our music God is glorified  _Fred Pratt Green  音乐荣神 ▲.htm'},
+        {num:'1785',titleEn:'Stand Up, And Bless The Lord',titleCh:'站起，称颂真神',author:'Montgomery',tags:['popular'],file:'1785    Stand Up, And Bless The Lord _蒙哥馬利 Montgomery   015站起，称颂真神    ▲.htm'},
+        {num:'1788',titleEn:'Praise The Lord! Ye Heavens, Adore Him',titleCh:'诸天赞美',author:'Edward Osler',tags:['popular'],file:'1788    Praise The Lord! Ye Heavens, Adore Him  _Edward Osler  024诸天赞美     ▲  HYFRYDOL.htm'},
+        {num:'1848',titleEn:'O, How I Love Jesus',titleCh:'何等爱耶稣',author:'Whitfield, Frederick',tags:['popular','chinese'],file:'1848    O, How I Love Jesus  _Whitfield, Frederick   213何等爱耶稣  [華]   ▲.htm'},
+        {num:'1951',titleEn:'Soldiers Of Christ, Arise',titleCh:'基督精兵奋起',author:'Wesley, C.',tags:['popular'],file:'1951    Soldiers Of Christ, Arise _Wesley, C.   523基督精兵奋起 ▲.htm'},
+        {num:'LX1787',titleEn:'Let All The World In Every Corner Sing',titleCh:'普天下都来颂扬',author:'Herbert',tags:['popular'],file:'LX1787    Let All The World In Every Corner Sing _Herbert,   023普天下都来颂扬   ▲.htm'},
+        {num:'LX1915',titleEn:'I Thine, O Lord (Draw Me Nearer)',titleCh:'',author:'Fanny Crosby',tags:['popular'],file:'LX1915    I Thine, O Lord  (Draw Me Nearer) _Fanny Crosby  ▲.htm'}
+    ];
+    
+    // Total: 128 key hymns included (representing the most popular hymns from hymn_most folder)
+    
+    var allData = [];
+    var filteredData = [];
+    var sortCol = -1;
+    var sortDir = 'asc';
+    var originalData = [];
+    
+    function init() {
+        // Load all 192 files from hymn_most folder
+        loadHymnData();
+        originalData = [...allData];
+        filteredData = [...allData];
+        renderTable();
+        updateStats();
+    }
+    
+    function loadHymnData() {
+        // For now using sample data. Will be replaced with complete 192 entries
+        allData = hymnData.map(function(item, index) {
+            return {
+                num: item.num || ('000' + (index + 1)).slice(-4),
+                titleEn: item.titleEn || extractEnglishTitle(item.file),
+                titleCh: item.titleCh || extractChineseTitle(item.file),
+                author: item.author || extractAuthor(item.file),
+                tags: item.tags || [],
+                file: item.file,
+                hymnalA: '',
+                hymnalB: '',
+                hymnalC: '',
+                hymnalD: '',
+                hymnalE: ''
+            };
+        });
+    }
+    
+    function extractEnglishTitle(filename) {
+        var match = filename.match(/^\d+\s+(.+?)(?:_|[\u4e00-\u9fff])/);
+        return match ? match[1].trim() : '';
+    }
+    
+    function extractChineseTitle(filename) {
+        var match = filename.match(/([\u4e00-\u9fff]+)/);
+        return match ? match[1] : '';
+    }
+    
+    function extractAuthor(filename) {
+        var match = filename.match(/_\s*([A-Za-z\s,\.]+?)(?:\s+[\u4e00-\u9fff]|\s+\d)/);
+        return match ? match[1].trim() : '';
+    }
+    
+    function sortTable(col) {
+        if (sortCol === col) {
+            sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortCol = col;
+            sortDir = 'asc';
+        }
+        
+        var cols = ['num', 'titleEn', 'titleCh', 'author', 'tags'];
+        var key = cols[col];
+        
+        filteredData.sort(function(a, b) {
+            var aVal = a[key];
+            var bVal = b[key];
+            
+            if (col === 0) {
+                aVal = parseInt(aVal) || 0;
+                bVal = parseInt(bVal) || 0;
+            } else if (Array.isArray(aVal)) {
+                aVal = aVal.join(',');
+                bVal = bVal.join(',');
+            }
+            
+            if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+            return 0;
+        });
+        
+        updateButtons();
+        renderTable();
+    }
+    
+    function resetTable() {
+        filteredData = [...originalData];
+        sortCol = -1;
+        sortDir = 'asc';
+        document.getElementById('searchInput').value = '';
+        updateButtons();
+        renderTable();
+        updateStats();
+    }
+    
+    function searchTable() {
+        var query = document.getElementById('searchInput').value.toLowerCase();
+        
+        if (!query) {
+            filteredData = [...allData];
+        } else {
+            filteredData = allData.filter(function(item) {
+                return item.num.toLowerCase().includes(query) ||
+                       item.titleEn.toLowerCase().includes(query) ||
+                       item.titleCh.includes(query) ||
+                       item.author.toLowerCase().includes(query) ||
+                       item.tags.join(',').toLowerCase().includes(query);
+            });
+        }
+        
+        renderTable();
+        updateStats();
+    }
+    
+    function renderTable() {
+        var tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        
+        filteredData.forEach(function(item) {
+            var tr = document.createElement('tr');
+            
+            // Number
+            var td1 = document.createElement('td');
+            td1.textContent = item.num;
+            tr.appendChild(td1);
+            
+            // English Title (with link)
+            var td2 = document.createElement('td');
+            var link = document.createElement('a');
+            link.href = 'hymn_most/' + encodeFileName(item.file);
+            link.className = 'hymn-link';
+            link.textContent = item.titleEn;
+            link.target = '_blank';
+            td2.appendChild(link);
+            tr.appendChild(td2);
+            
+            // Chinese Title
+            var td3 = document.createElement('td');
+            td3.textContent = item.titleCh;
+            tr.appendChild(td3);
+            
+            // Author
+            var td4 = document.createElement('td');
+            td4.textContent = item.author;
+            tr.appendChild(td4);
+            
+            // Tags
+            var td5 = document.createElement('td');
+            item.tags.forEach(function(tag) {
+                var span = document.createElement('span');
+                span.className = 'tag tag-' + tag;
+                span.textContent = getTagLabel(tag);
+                td5.appendChild(span);
+            });
+            tr.appendChild(td5);
+            
+            // Hymnal columns (A-E)
+            for(var i = 0; i < 5; i++) {
+                var td = document.createElement('td');
+                td.className = 'input-cell';
+                td.textContent = '-';
+                td.title = 'Click to add';
+                tr.appendChild(td);
+            }
+            
+            tbody.appendChild(tr);
+        });
+    }
+    
+    function encodeFileName(filename) {
+        // Proper URL encoding for the file path
+        return encodeURIComponent(filename).replace(/%20/g, '%20');
+    }
+    
+    function getTagLabel(tag) {
+        var labels = {
+            'popular': '⭐推荐',
+            'super': '🏆特推',
+            'children': '👶儿童',
+            'modern': '💎现代',
+            'selected': '✨精选',
+            'chinese': '🇨🇳华人'
+        };
+        return labels[tag] || tag;
+    }
+    
+    function updateButtons() {
+        var buttons = document.querySelectorAll('.sort-btn:not(.reset-btn)');
+        buttons.forEach(function(btn, index) {
+            btn.classList.remove('active', 'asc', 'desc');
+            if (index === sortCol) {
+                btn.classList.add('active', sortDir);
+            }
+        });
+    }
+    
+    function updateStats() {
+        var stats = document.getElementById('stats');
+        stats.innerHTML = '📊 Total: ' + allData.length + ' hymns | Displaying: ' + filteredData.length + ' hymns';
+    }
+    
+    window.onload = init;
+    </script>
+</body>
+</html>
+

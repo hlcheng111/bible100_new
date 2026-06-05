@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>財務報表 - Finance Reports</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>📋 財務報表 · Finance Reports</h1>
+        <p>繳費概覽、收支現金流、月度簡表、匯出</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 財務、行政、主日學負責人。</p>
+            <p><b>有什麼功能？</b> 繳費統計、收支現金流、月度簡表、匯出 JSON。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📊 概覽</div>
+        <div class="stats-row">
+            <div class="stat-pill"><div class="stat-num" id="statPaid">0</div><div class="stat-label">已繳筆數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statUnpaid">0</div><div class="stat-label">未繳筆數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statIncome">0</div><div class="stat-label">總收入</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statExpense">0</div><div class="stat-label">總支出</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statNet">0</div><div class="stat-label">淨額</div></div>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📅 月度簡表</div>
+        <pre id="mon" style="background:#f8f9fa;padding:16px;border-radius:8px;overflow:auto;font-size:11px;"></pre>
+    </div>
+
+    <div class="module-card">
+        <button class="module-btn module-btn-secondary" id="btnExport">📤 匯出 JSON</button>
+        <button class="module-btn module-btn-secondary" onclick="window.print();return false;">🖨️ 列印</button>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+            if (db.ensureSeedFull) db.ensureSeedFull();
+
+            const payments = (db.data.finance && db.data.finance.payments) || [];
+            const tx = (db.data.finance && db.data.finance.transactions) || [];
+
+            const paid = payments.filter(p => p.status === 'paid').length;
+            const all = payments.length;
+            const unpaid = all - paid;
+            const income = tx.filter(t => t.type === 'income').reduce((a, b) => a + (b.amount || 0), 0);
+            const expense = tx.filter(t => t.type === 'expense').reduce((a, b) => a + Math.abs(b.amount || 0), 0);
+            const net = income - expense;
+
+            document.getElementById('statPaid').textContent = paid;
+            document.getElementById('statUnpaid').textContent = unpaid;
+            document.getElementById('statIncome').textContent = income.toLocaleString();
+            document.getElementById('statExpense').textContent = expense.toLocaleString();
+            document.getElementById('statNet').textContent = net.toLocaleString();
+
+            const map = {};
+            tx.forEach(t => {
+                const m = (t.at || t.createdAt || '').toString().slice(0, 7) || '未知';
+                map[m] = map[m] || { income: 0, expense: 0 };
+                if (t.type === 'income') map[m].income += (t.amount || 0);
+                else map[m].expense += Math.abs(t.amount || 0);
+            });
+            document.getElementById('mon').textContent = JSON.stringify(map, null, 2);
+
+            document.getElementById('btnExport').onclick = function() {
+                const data = { summary: { fees: { paid, all, unpaid }, cashflow: { income, expense, net } }, monthly: map };
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+                a.download = 'finance_reports_' + new Date().toISOString().slice(0, 10) + '.json';
+                a.click();
+            };
+        })();
+    </script>
+</body>
+</html>

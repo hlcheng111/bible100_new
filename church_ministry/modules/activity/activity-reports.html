@@ -1,0 +1,212 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活動管理統計報表 · Activity Reports | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">活動管理統計報表</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-blue-600" id="totalActivities">0</div>
+                <div class="text-sm text-gray-600">總活動數</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-green-600" id="ongoingActivities">0</div>
+                <div class="text-sm text-gray-600">進行中活動</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-purple-600" id="totalParticipants">0</div>
+                <div class="text-sm text-gray-600">總參與者</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <div class="text-3xl font-bold text-orange-600" id="completionRate">0%</div>
+                <div class="text-sm text-gray-600">完成率</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">活動類型分布</h3>
+                <div id="typeDistribution" class="space-y-2"></div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">月度活動趨勢</h3>
+                <div id="monthlyTrend" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">活動列表</h3>
+            <div id="activitiesList" class="space-y-2"></div>
+        </div>
+
+        <div class="mt-6 flex space-x-4">
+            <button onclick="exportReport()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                <i class="fas fa-download mr-2"></i>匯出報表
+            </button>
+            <button onclick="printReport()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-print mr-2"></i>列印報表
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatistics();
+            renderTypeDistribution();
+            renderMonthlyTrend();
+            renderActivitiesList();
+        });
+
+        function updateStatistics() {
+            const activities = JSON.parse(localStorage.getItem('activities')) || [];
+            const participants = JSON.parse(localStorage.getItem('activityParticipants')) || [];
+            
+            const totalActivities = activities.length;
+            const ongoingActivities = activities.filter(a => a.status === 'ongoing').length;
+            const completedActivities = activities.filter(a => a.status === 'completed').length;
+            const totalParticipants = participants.length;
+            const completionRate = totalActivities > 0 ? Math.round((completedActivities / totalActivities) * 100) : 0;
+            
+            document.getElementById('totalActivities').textContent = totalActivities;
+            document.getElementById('ongoingActivities').textContent = ongoingActivities;
+            document.getElementById('totalParticipants').textContent = totalParticipants;
+            document.getElementById('completionRate').textContent = completionRate + '%';
+        }
+
+        function renderTypeDistribution() {
+            const activities = JSON.parse(localStorage.getItem('activities')) || [];
+            
+            const typeStats = {};
+            activities.forEach(activity => {
+                typeStats[activity.type] = (typeStats[activity.type] || 0) + 1;
+            });
+
+            const container = document.getElementById('typeDistribution');
+            container.innerHTML = Object.entries(typeStats).map(([type, count]) => `
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span class="font-medium">${getTypeName(type)}</span>
+                    <span class="text-blue-600 font-semibold">${count} 個活動</span>
+                </div>
+            `).join('');
+        }
+
+        function renderMonthlyTrend() {
+            const activities = JSON.parse(localStorage.getItem('activities')) || [];
+            
+            const monthlyData = {};
+            activities.forEach(activity => {
+                const month = new Date(activity.startDate).getMonth();
+                monthlyData[month] = (monthlyData[month] || 0) + 1;
+            });
+
+            const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            
+            const container = document.getElementById('monthlyTrend');
+            container.innerHTML = monthNames.map((monthName, index) => {
+                const count = monthlyData[index] || 0;
+                return `
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="font-medium">${monthName}</span>
+                        <span class="text-green-600 font-semibold">${count} 個活動</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderActivitiesList() {
+            const activities = JSON.parse(localStorage.getItem('activities')) || [];
+            
+            const container = document.getElementById('activitiesList');
+            container.innerHTML = activities.map(activity => `
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-4">
+                        <span class="font-medium">${activity.name}</span>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(activity.status)}">
+                            ${getStatusName(activity.status)}
+                        </span>
+                        <span class="text-sm text-gray-500">${getTypeName(activity.type)}</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-600">${activity.participants || 0} 參與者</span>
+                        <span class="text-sm text-gray-600">${formatDate(activity.startDate)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getTypeName(type) {
+            const names = {
+                'worship': '崇拜活動',
+                'fellowship': '團契活動',
+                'education': '教育活動',
+                'outreach': '外展活動',
+                'social': '社交活動'
+            };
+            return names[type] || type;
+        }
+
+        function getStatusName(status) {
+            const names = {
+                'planned': '已規劃',
+                'ongoing': '進行中',
+                'completed': '已完成',
+                'cancelled': '已取消'
+            };
+            return names[status] || status;
+        }
+
+        function getStatusBadgeClass(status) {
+            const classes = {
+                'planned': 'bg-yellow-100 text-yellow-800',
+                'ongoing': 'bg-green-100 text-green-800',
+                'completed': 'bg-blue-100 text-blue-800',
+                'cancelled': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-TW');
+        }
+
+        function exportReport() {
+            const activities = JSON.parse(localStorage.getItem('activities')) || [];
+            
+            const csvContent = ['活動名稱,類型,狀態,參與者數,開始日期,負責人
+', 
+                ...activities.map(activity => [
+                    activity.name,
+                    getTypeName(activity.type),
+                    getStatusName(activity.status),
+                    activity.participants || 0,
+                    formatDate(activity.startDate),
+                    activity.organizer || ''
+                ].join(',') + '
+')
+            ].join('');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `活動管理報表_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function printReport() {
+            window.print();
+        }
+    </script>
+</body>
+</html>

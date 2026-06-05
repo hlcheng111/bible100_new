@@ -1,0 +1,100 @@
+{
+  "schema_version": "bible100_crm_intent_v1",
+  "request_id": "req_20260603_001",
+  "source": {
+    "channel": "voice",
+    "raw_text": "王弟兄下週不能守門，請找同組有人代班，他最近工作壓力大要牧者關心",
+    "locale": "zh-Hant",
+    "operator_member_id": "42",
+    "church_id": "default"
+  },
+  "parsed": {
+    "confidence": 0.86,
+    "entities": [
+      { "type": "member", "member_id": null, "name_guess": "王弟兄", "role_guess": "volunteer" }
+    ],
+    "intents": [
+      {
+        "intent": "volunteer.leave_request",
+        "tool_id": "volunteer_shift",
+        "priority": "normal",
+        "payload": {
+          "member_id": "101",
+          "shift_date": "2026-06-10",
+          "reason": "personal",
+          "needs_replacement": true
+        }
+      },
+      {
+        "intent": "pastoral.risk_flag",
+        "tool_id": "visitation_followup",
+        "priority": "high",
+        "payload": {
+          "member_id": "101",
+          "risk_tags": ["stress", "work_pressure"],
+          "suggested_action": "pastor_callback_within_48h"
+        }
+      },
+      {
+        "intent": "talent.match_replacement",
+        "tool_id": "volunteer_shift",
+        "priority": "normal",
+        "payload": {
+          "ministry_id": "usher_team",
+          "exclude_member_ids": ["101"],
+          "ctv_weights": { "capability": 0.4, "time": 0.35, "vision": 0.25 },
+          "max_candidates": 5
+        }
+      }
+    ]
+  },
+  "routing": {
+    "write_base": {
+      "person_key": "member_id",
+      "operations": [
+        {
+          "bridge": "ChurchDataBridge",
+          "method": "appendPastoralEvent",
+          "args": {
+            "member_id": "101",
+            "event_type": "risk_note",
+            "summary": "工作壓力 · 需關懷"
+          }
+        }
+      ]
+    },
+    "smart_ministry": {
+      "operations": [
+        {
+          "api": "SmartMinistryCanonical",
+          "method": "suggestMatchesForMinistry",
+          "args": { "ministry_id": "usher_team", "exclude_talent_ids": ["101"] }
+        }
+      ]
+    },
+    "notifications": {
+      "mode": "hitl",
+      "drafts": [
+        {
+          "audience_role": "group_leader",
+          "channel": "copy_snippet",
+          "text": "【代班】下週守門需代班，系統已列出 5 位 CTV 候選，請人工邀請。"
+        },
+        {
+          "audience_role": "pastor",
+          "channel": "workbench_alert",
+          "text": "王弟兄（101）壓力標記：建議 48 小時內關懷。"
+        }
+      ],
+      "queue": {
+        "enqueue_phase1": true,
+        "trigger_events": ["volunteer_shift_change", "pastoral_risk_high"]
+      }
+    }
+  },
+  "human_review": {
+    "required": true,
+    "confirmed_by": null,
+    "confirmed_at": null
+  }
+}

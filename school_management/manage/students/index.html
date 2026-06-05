@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生資料 - Student Info</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>👨‍🎓 學生資料 · Student List</h1>
+        <p>學生列表、搜尋、新增、匯入匯出</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 註冊組、班導、行政同工。</p>
+            <p><b>有什麼功能？</b> 學生列表、搜尋、新增、批量匯入 CSV、匯出 JSON/CSV。</p>
+            <p><b>如何入手？</b> 資料來自 SchoolMasterDatabase，首次使用請先至儀表板載入示範資料。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">🔍 搜尋</div>
+        <input type="text" id="kw" class="module-input" placeholder="姓名／聯絡／班級" style="width:200px;">
+        <button class="module-btn" id="doSearch">搜尋</button>
+        <button class="module-btn module-btn-secondary" id="reset">重置</button>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📋 學生列表 <small id="sum" style="color:#6b7280;font-weight:normal;"></small></div>
+        <div id="list"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">➕ 新增學生</div>
+        <form id="addForm">
+            <div class="module-form-row"><label>姓名</label><input name="name" class="module-input" required></div>
+            <div class="module-form-row"><label>性別</label><select name="gender" class="module-input"><option>男</option><option>女</option></select></div>
+            <div class="module-form-row"><label>班級ID</label><input name="class_id" class="module-input" value="1" size="4"></div>
+            <div class="module-form-row"><label>聯絡</label><input name="contact" class="module-input"></div>
+            <button type="submit" class="module-btn">新增</button>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📥 批量匯入（CSV：name,gender,class_id,contact）</div>
+        <p><a href="templates/students_template.csv" download class="module-btn">⬇️ 下載 CSV 範本</a></p>
+        <input type="file" id="fileCsv" accept=".csv" style="margin:10px 0;">
+        <button class="module-btn" id="importBtn">匯入</button>
+    </div>
+
+    <div>
+        <button class="module-btn" id="exportJson">📤 匯出 JSON</button>
+        <button class="module-btn" id="exportCsv">📤 匯出 CSV</button>
+        <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+    </div>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            let page = 1;
+            const pageSize = 20;
+            let keyword = '';
+
+            function getStudents() {
+                if (!window.schoolDB || !window.schoolDB.data) return [];
+                if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+                return window.schoolDB.data.students || [];
+            }
+
+            function render() {
+                const all = getStudents();
+                const filtered = keyword ? all.filter(r =>
+                    Object.keys(r).some(k => String(r[k] ?? '').toLowerCase().includes(keyword.toLowerCase()))
+                ) : all;
+                const total = filtered.length;
+                const pages = Math.max(1, Math.ceil(total / pageSize));
+                if (page > pages) page = pages;
+                const start = (page - 1) * pageSize;
+                const items = filtered.slice(start, start + pageSize);
+
+                document.getElementById('sum').textContent = '共 ' + total + ' 筆，第 ' + page + '/' + pages + ' 頁';
+                const rows = items.map(s => '<tr><td>' + s.id + '</td><td>' + (s.name || '') + '</td><td>' + (s.gender || '') + '</td><td>' + (s.class_id || '') + '</td><td>' + (s.contact || '') + '</td></tr>').join('');
+                const pager = '<div style="margin-top:10px;">' + Array.from({ length: pages }, (_, i) => i + 1).map(i => '<a href="#" onclick="page=' + i + ';render();return false;" class="module-btn" style="padding:4px 8px;margin:0 2px;">' + i + '</a>').join('') + '</div>';
+                document.getElementById('list').innerHTML = '<table class="module-table"><thead><tr><th>ID</th><th>姓名</th><th>性別</th><th>班級</th><th>聯絡</th></tr></thead><tbody>' + (rows || '<tr><td colspan="5" class="empty-state">無資料</td></tr>') + '</tbody></table>' + pager;
+            }
+
+            document.getElementById('addForm').onsubmit = function(e) {
+                e.preventDefault();
+                const f = new FormData(this);
+                if (!window.schoolDB) return alert('資料庫未載入');
+                window.schoolDB.insert('students', { name: f.get('name'), gender: f.get('gender'), class_id: +(f.get('class_id') || 1), contact: f.get('contact'), status: 'active' });
+                this.reset();
+                render();
+            };
+
+            document.getElementById('doSearch').onclick = function(e) { e.preventDefault(); keyword = document.getElementById('kw').value.trim(); page = 1; render(); };
+            document.getElementById('reset').onclick = function(e) { e.preventDefault(); document.getElementById('kw').value = ''; keyword = ''; page = 1; render(); };
+
+            document.getElementById('importBtn').onclick = function(e) {
+                e.preventDefault();
+                const f = document.getElementById('fileCsv').files && document.getElementById('fileCsv').files[0];
+                if (!f) return alert('請先選擇 CSV 檔案');
+                const r = new FileReader();
+                r.onload = function() {
+                    const lines = r.result.trim().split(/\r?\n/);
+                    const head = lines.shift().split(',');
+                    const idx = h => head.findIndex(x => x.trim().toLowerCase() === h.toLowerCase());
+                    let ok = 0;
+                    lines.forEach(line => {
+                        if (!line.trim()) return;
+                        const c = line.split(',').map(x => x.replace(/^"|"$/g, ''));
+                        if (!window.schoolDB) return;
+                        window.schoolDB.insert('students', { name: c[idx('name')] || '', gender: c[idx('gender')] || '男', class_id: +(c[idx('class_id')] || 1), contact: c[idx('contact')] || '', status: 'active' });
+                        ok++;
+                    });
+                    alert('已匯入：' + ok + ' 筆');
+                    render();
+                };
+                r.readAsText(f, 'utf-8');
+            };
+
+            document.getElementById('exportJson').onclick = function(e) {
+                e.preventDefault();
+                const data = getStudents();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+                a.download = 'students_export.json';
+                a.click();
+            };
+
+            document.getElementById('exportCsv').onclick = function(e) {
+                e.preventDefault();
+                const rows = getStudents();
+                if (!rows.length) return alert('無資料可匯出');
+                const cols = ['id', 'name', 'gender', 'class_id', 'contact', 'status'];
+                const head = cols.join(',');
+                const body = rows.map(r => cols.map(k => '"' + String(r[k] ?? '').replace(/"/g, '""') + '"').join(',')).join('\n');
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([head + '\n' + body], { type: 'text/csv' }));
+                a.download = 'students_export.csv';
+                a.click();
+            };
+
+            if (window.schoolDB && window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+            render();
+        })();
+    </script>
+</body>
+</html>

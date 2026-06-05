@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數據庫結構分析器 - Bible100</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .result { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .warning { border-left-color: #ffc107; background: #fff3cd; }
+        .info { border-left-color: #17a2b8; background: #d1ecf1; }
+        pre { white-space: pre-wrap; word-wrap: break-word; max-height: 400px; overflow-y: auto; background: #f1f1f1; padding: 10px; border-radius: 4px; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #0056b3; }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        h1 { color: #333; text-align: center; }
+        h3 { color: #495057; margin-top: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; font-weight: bold; }
+        .loading { background: #e3f2fd; color: #1976d2; }
+        .complete { background: #d4edda; color: #155724; }
+        .failed { background: #f8d7da; color: #721c24; }
+        .path-note { font-size: 12px; color: #666; margin: 10px 0; padding: 8px; background: #fff3cd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 聖經數據庫結構分析器</h1>
+        <p>分析 SQLite 數據庫結構（表、欄位、樣本）。Bible100 研讀模組維護工具。</p>
+        <div class="path-note">📁 預設讀取 <code>data/bibles/</code> 或 <code>data/cj/</code> 下的 .db 檔案。若無 <code>data/bibles</code> 請先建立並放入聖經 .db。</div>
+        <div class="status loading" id="status">準備開始分析...</div>
+        <button class="btn" onclick="startAnalysis()">開始分析數據庫</button>
+        <button class="btn btn-success" onclick="exportResults()">導出分析結果</button>
+        <button class="btn btn-warning" onclick="clearResults()">清除結果</button>
+        <div id="results"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/sql-wasm.js"></script>
+    <script>
+        let analysisResults = {};
+        const DATA_BASE = '../../data';
+        const DB_CANDIDATES = [
+            DATA_BASE + '/bibles/信望愛(和合本).db',
+            DATA_BASE + '/bibles/和合本.db',
+            DATA_BASE + '/cj/启导本圣经注释.db',
+            DATA_BASE + '/cj/精读本圣经注释.db'
+        ];
+
+        async function startAnalysis() {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            let dbPath = null;
+            for (const path of DB_CANDIDATES) {
+                try {
+                    const r = await fetch(path);
+                    if (r.ok) { dbPath = path; break; }
+                } catch (e) {}
+            }
+            if (!dbPath) {
+                status.textContent = '❌ 未找到可用的 .db 檔案';
+                status.className = 'status failed';
+                addResult('error', '❌ 無法載入數據庫', '請確認 data/bibles/ 或 data/cj/ 下存在 .db 檔案，且透過 HTTP 提供（例如用 Live Server 開啟）。');
+                return;
+            }
+            try {
+                status.textContent = '步驟1: 載入 SQLite.js...';
+                status.className = 'status loading';
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/${file}`
+                });
+                addResult('success', '✅ SQLite.js 載入成功', 'WebAssembly SQLite 引擎已準備就緒');
+                status.textContent = '步驟2: 載入數據庫...';
+                const response = await fetch(dbPath);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                const arrayBuffer = await response.arrayBuffer();
+                addResult('success', '✅ 數據庫載入成功', `路徑: ${dbPath}，大小: ${(arrayBuffer.byteLength / 1024 / 1024).toFixed(2)} MB`);
+                status.textContent = '步驟3: 解析並分析...';
+                const db = new SQL.Database(new Uint8Array(arrayBuffer));
+                addResult('success', '✅ 解析成功', '');
+                await analyzeDatabase(db);
+                status.textContent = '✅ 分析完成！';
+                status.className = 'status complete';
+                db.close();
+            } catch (error) {
+                status.textContent = '❌ 分析失敗';
+                status.className = 'status failed';
+                addResult('error', '❌ 錯誤', error.message);
+                console.error('分析失敗:', error);
+            }
+        }
+
+        async function analyzeDatabase(db) {
+            addResult('info', '🔍 開始分析數據庫結構', '');
+            const tablesResult = db.exec("SELECT name FROM sqlite_master WHERE type='table';");
+            if (!tablesResult[0] || !tablesResult[0].values) {
+                addResult('error', '❌ 無表', '數據庫可能損壞或加密');
+                return;
+            }
+            const tableNames = tablesResult[0].values.map(row => row[0]);
+            addResult('success', '📋 發現表', tableNames.join(', '));
+            analysisResults.tables = tableNames;
+            for (const tableName of tableNames) {
+                addResult('info', `🔍 表: ${tableName}`, '');
+                const schemaResult = db.exec(`PRAGMA table_info(${tableName});`);
+                if (schemaResult[0]) {
+                    const cols = schemaResult[0].columns;
+                    const vals = schemaResult[0].values;
+                    const schemaInfo = vals.map((row, i) => `${cols[1]}: ${row[1]} (${row[2]})`).join(', ');
+                    addResult('success', `📊 ${tableName} 結構`, schemaInfo);
+                    analysisResults[tableName] = { schema: schemaInfo };
+                }
+                const countResult = db.exec(`SELECT COUNT(*) FROM ${tableName};`);
+                if (countResult[0] && countResult[0].values) {
+                    const rowCount = countResult[0].values[0][0];
+                    addResult('info', `📈 ${tableName} 行數`, rowCount.toLocaleString());
+                    if (analysisResults[tableName]) analysisResults[tableName].rowCount = rowCount;
+                }
+                const sampleResult = db.exec(`SELECT * FROM ${tableName} LIMIT 3;`);
+                if (sampleResult[0] && sampleResult[0].values.length) {
+                    addResult('info', `📄 ${tableName} 樣本`, sampleResult[0].values.map(row => JSON.stringify(row)).join('\n'));
+                }
+            }
+            generateQuerySuggestions();
+        }
+
+        function generateQuerySuggestions() {
+            addResult('info', '💡 查詢建議', '可依表結構使用 SELECT * FROM 表名 WHERE ... 查詢經文或註釋。');
+        }
+
+        function addResult(type, title, content) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<h3>${title}</h3><pre>${content || ''}</pre>`;
+            results.appendChild(div);
+        }
+
+        function exportResults() {
+            const dataStr = JSON.stringify(analysisResults, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bible_database_analysis.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            analysisResults = {};
+            document.getElementById('status').textContent = '準備開始分析...';
+            document.getElementById('status').className = 'status loading';
+        }
+    </script>
+</body>
+</html>

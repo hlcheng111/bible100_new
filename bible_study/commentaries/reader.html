@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>综合解读 - 通用注释阅读器</title>
+<style>
+body{font-family:"Microsoft YaHei",Arial,sans-serif;margin:0;background:#f7f7fb;color:#111}
+.top{display:flex;gap:8px;align-items:center;padding:10px 12px;background:#0b5fa5;color:#fff;position:sticky;top:0}
+.a{color:#fff;text-decoration:none;background:#2aa5ff;padding:6px 10px;border-radius:4px}
+.wrap{padding:12px;max-width:1100px;margin:0 auto}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+input,button{font-size:12px;padding:6px 8px} button{cursor:pointer}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{border-bottom:1px solid #e5e7eb;padding:8px;text-align:left;vertical-align:top}
+th{background:#eef6ff;color:#0b5fa5}.note{color:#555;font-size:12px}
+.pill{background:#eef6ff;color:#0b5fa5;padding:2px 6px;border-radius:999px;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="a" href="../index.html">← 返回研读</a>
+  <div>综合解读 / 通用注释阅读器 <span id="dbName" class="pill"></span></div>
+</div>
+<div class="wrap">
+  <div class="row">
+    <label>資料庫(.db): <input id="db" style="min-width:320px"></label>
+    <button id="load">載入</button>
+    <button id="autoFSL">载入：丰盛生命研读本</button>
+    <button id="autoZZSJ">载入：串珠圣经注释</button>
+    <span class="note">相對路徑，如 ../../data/commentaries/丰盛生命研读本.db</span>
+  </div>
+  <div class="row">
+    <input id="kw" placeholder="關鍵字，例如：亞伯拉罕" style="min-width:240px">
+    <button id="doSearch">搜尋</button>
+    <input id="refBook" placeholder="Book/卷或名" style="width:140px">
+    <input id="refChap" placeholder="章" style="width:60px">
+    <input id="refVerse" placeholder="節" style="width:60px">
+    <button id="doRef">按經節查詢</button>
+    <button id="exportCsv">導出CSV</button>
+    <button id="exportJson">導出JSON</button>
+  </div>
+  <div class="row">
+    <div>偵測表：<span id="tableInfo" class="pill"></span> | 內容列：<span id="contentInfo" class="pill"></span> | 經節列：<span id="refInfo" class="pill"></span></div>
+  </div>
+  <div id="grid"></div>
+</div>
+
+<script src="../js/sql-wasm.js"></script>
+<script src="../js/commentary_loader.js"></script>
+<script>
+const $=id=>document.getElementById(id), grid=$('grid');
+function q(p,d=''){const u=new URL(location.href); return u.searchParams.get(p)||d;}
+async function openDB(p){try{
+  await CommentaryLoader.open(p); $('dbName').textContent=p.split('/').pop();
+  const b=CommentaryLoader.schema?.best;
+  $('tableInfo').textContent=b?b.table:'—';
+  $('contentInfo').textContent=b?b.contentCol:'—';
+  $('refInfo').textContent=(b?.bookCol||'—')+'/'+(b?.chapCol||'—')+'/'+(b?.verseCol||'—');
+  render(CommentaryLoader.selectAll(200));
+}catch(e){ grid.innerHTML=`<div class="note">❌ 載入失敗：${e.message}</div>`;}}
+function render(rows){ if(!rows||!rows.length){grid.innerHTML=`<div class="note">無資料</div>`;return;}
+  const cols=Object.keys(rows[0]); const head='<tr>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr>';
+  const body=rows.map(r=>'<tr>'+cols.map(c=>`<td>${escapeHtml(String(r[c]??''))}</td>`).join('')+'</tr>').join('');
+  grid.innerHTML=`<table>${head}${body}</table>`;
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
+$('doSearch').onclick=()=>{const k=$('kw').value.trim(); if(!k) return; render(CommentaryLoader.search(k,500));};
+$('doRef').onclick=()=>{const b=$('refBook').value.trim(),c=parseInt($('refChap').value,10),v=parseInt($('refVerse').value,10);
+  if(!b||!c||!v){alert('請輸入 Book/章/節'); return;}
+  const rows=CommentaryLoader.getByRef(isNaN(+b)?b:+b,c,v); if(!rows.length) alert('未匹配到經節'); render(rows); };
+$('exportCsv').onclick=()=>{const rows=CommentaryLoader.selectAll(2000); if(!rows.length) return; const cols=Object.keys(rows[0]);
+  const csv=[cols.join(',')].concat(rows.map(r=>cols.map(c=>`"${String(r[c]??'').replace(/"/g,'""')}"`).join(','))).join('
+');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='commentary_export.csv'; a.click(); };
+$('exportJson').onclick=()=>{const rows=CommentaryLoader.selectAll(2000);
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(rows,null,2)],{type:'application/json'})); a.download='commentary_export.json'; a.click(); };
+$('load').onclick=()=> openDB($('db').value.trim());
+$('autoFSL').onclick=()=>{const p='../../data/commentaries/丰盛生命研读本.db'; $('db').value=p; openDB(p);};
+$('autoZZSJ').onclick=()=>{const p='../../data/commentaries/串珠圣经注释.db'; $('db').value=p; openDB(p);};
+(function init(){const db=q('db'); if(db){const p=db.includes('/')?db:('../../data/commentaries/'+db); $('db').value=p; openDB(p);}
+else{$('db').value='../../data/commentaries/丰盛生命研读本.db';}})();
+</script>
+</body></html>

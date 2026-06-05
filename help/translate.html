@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" translate="yes">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>翻譯助手 · 開啟要翻譯的頁面</title>
+  <style>
+    body { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; margin: 24px; max-width: 620px; line-height: 1.6; color: #333; }
+    h1 { font-size: 1.25rem; color: #0b5fa5; }
+    .back { display: inline-block; margin-bottom: 1em; color: #0b5fa5; text-decoration: none; }
+    .back:hover { text-decoration: underline; }
+    .lead { color: #555; margin-bottom: 1em; font-size: 0.95rem; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; }
+    input[type="url"], input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 14px;
+      border: 1px solid #0b5fa5;
+      border-radius: 8px;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+    }
+    input:focus { outline: none; border-color: #2aa5ff; box-shadow: 0 0 0 2px rgba(42,165,255,0.2); }
+    .btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .btn {
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 0;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-primary { background: #0f766e; color: #fff; }
+    .btn-primary:hover { background: #0d9488; color: #fff; }
+    .btn-immersive { background: #0b5fa5; color: #fff; }
+    .btn-google { background: #4285f4; color: #fff; }
+    .note { margin-top: 20px; padding: 12px; background: #f0f7ff; border-radius: 8px; font-size: 13px; color: #555; }
+    .warn { margin-bottom: 16px; padding: 12px 14px; background: #fff3e0; border-left: 4px solid #e65100; border-radius: 0 8px 8px 0; font-size: 13px; color: #333; }
+    .warn code { background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; }
+    .tip { margin-bottom: 16px; padding: 12px 14px; background: #ecfdf5; border-left: 4px solid #059669; border-radius: 0 8px 8px 0; font-size: 13px; }
+    ol { margin: 8px 0 0; padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <a href="javascript:history.back()" class="back">← 返回</a>
+  <h1>翻譯助手</h1>
+  <p class="lead">本頁是<strong>啟動器</strong>，不是被翻譯的內容頁。沉浸式翻譯／Google 翻譯擴充<strong>無法翻譯本頁本身</strong>，請先開啟「要翻譯的那個網址」，再對該分頁使用擴充或下方按鈕。</p>
+
+  <div class="tip" role="note">
+    <strong>推薦做法（擴充相容）：</strong>
+    <ol>
+      <li>下方貼上要翻譯的 <code>http://</code> 或 <code>https://</code> 網址</li>
+      <li>按 <strong>「在新分頁開啟原頁」</strong></li>
+      <li>在<strong>新分頁</strong>點瀏覽器上的沉浸式翻譯／Google 翻譯擴充</li>
+    </ol>
+  </div>
+
+  <div class="warn" role="alert">
+    <strong>file:// 無法翻譯：</strong> 若用本機檔案路徑開 Bible100，翻譯服務讀不到檔案。請改 <code>http://localhost:埠號/...</code> 啟動靜態伺服器後，再貼該網址。
+  </div>
+
+  <label for="trans-url">要翻譯的網址</label>
+  <input type="url" id="trans-url" placeholder="https://... 或 http://localhost:..." autocomplete="off">
+
+  <div class="btns">
+    <button type="button" class="btn btn-primary" id="btn-open-page">在新分頁開啟原頁（給擴充用）</button>
+    <button type="button" class="btn btn-immersive" id="btn-immersive">沉浸式翻譯（網頁版）</button>
+    <button type="button" class="btn btn-google" id="btn-google">Google 翻譯（網頁版）</button>
+  </div>
+
+  <p class="note">「網頁版」會在翻譯服務的網站內載入你的 URL；若失敗，請改用「新分頁開啟原頁」+ 瀏覽器擴充。CRM 旅程頁大標題已附英譯；全文小語種可翻譯原頁內容。</p>
+
+  <script>
+    (function () {
+      var input = document.getElementById("trans-url");
+      var params = new URLSearchParams(window.location.search);
+      var urlParam = params.get("url");
+      if (urlParam) {
+        try { input.value = decodeURIComponent(urlParam); } catch (e) { input.value = urlParam; }
+      }
+
+      function getUrl() {
+        var v = (input.value || "").trim();
+        if (!v) return null;
+        if (/^file:\/\//i.test(v)) {
+          alert("file:// 無法用於翻譯。請改貼 http://localhost/... 網址。");
+          return null;
+        }
+        if (!/^https?:\/\//i.test(v)) v = "https://" + v;
+        return v;
+      }
+
+      document.getElementById("btn-open-page").addEventListener("click", function () {
+        var u = getUrl();
+        if (!u) { alert("請先貼上要翻譯的網址（http/https）"); return; }
+        window.open(u, "_blank", "noopener,noreferrer");
+      });
+      document.getElementById("btn-immersive").addEventListener("click", function () {
+        var u = getUrl();
+        if (!u) { alert("請先貼上要翻譯的網址"); return; }
+        window.open("https://immersivetranslate.com/translate?url=" + encodeURIComponent(u), "_blank", "noopener");
+      });
+      document.getElementById("btn-google").addEventListener("click", function () {
+        var u = getUrl();
+        if (!u) { alert("請先貼上要翻譯的網址"); return; }
+        window.open("https://translate.google.com/translate?sl=auto&tl=zh-TW&u=" + encodeURIComponent(u), "_blank", "noopener");
+      });
+    })();
+  </script>
+</body>
+</html>

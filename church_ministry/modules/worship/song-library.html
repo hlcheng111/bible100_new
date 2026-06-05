@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>詩歌庫 Song Library · Song Library | Church Ministry</title>
+    <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="content-container">
+        <div class="page-header">
+            <h1>📚 詩歌庫 Song Library</h1>
+            <p>教會詩歌資源管理系統</p>
+        </div>
+
+        <div class="breadcrumb">
+            <a href="../../../index.html">🏠 主頁</a> > 
+            <a href="../../index.html">⛪ 教會事工</a> > 
+            <a href="../../_landing/worship.html">🎼 崇拜事工</a> > 
+            <span style="font-weight: bold;">📚 詩歌庫</span>
+        </div>
+
+        <div class="card" style="border-left:4px solid #4338ca;margin-bottom:15px;">
+            <div class="card-header">📋 本頁角色</div>
+            <p style="font-size:12px;line-height:1.55;margin:0;">全教會<strong>詩歌主檔索引</strong>：搜尋、篩選、自訂新增、匯出 CSV。與 <a href="congregational-songs.html">會眾詩歌</a>（主日選歌／使用次數）、<a href="sheet-music.html">樂譜管理</a>（檔案與練習）分工；敬拜整合頁之「詩歌庫」tab 為排程視角。</p>
+        </div>
+
+        <!-- 搜索和篩選 -->
+        <div class="card">
+            <div class="card-header">🔍 搜索詩歌</div>
+            <div class="form-group">
+                <label class="form-label">詩歌名稱或編號</label>
+                <input type="text" id="songSearchKw" class="form-control" placeholder="輸入詩歌名稱、編號或關鍵字">
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div class="form-group">
+                    <label class="form-label">詩歌類別</label>
+                    <select id="songCatFilter" class="form-control">
+                        <option>全部類別</option>
+                        <option>敬拜讚美</option>
+                        <option>感恩頌讚</option>
+                        <option>禱告祈求</option>
+                        <option>聖誕詩歌</option>
+                        <option>復活節詩歌</option>
+                        <option>福音詩歌</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">語言</label>
+                    <select id="songLangFilter" class="form-control">
+                        <option>全部語言</option>
+                        <option>中文（繁體）</option>
+                        <option>中文（簡體）</option>
+                        <option>英文</option>
+                        <option>雙語</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">詩歌本</label>
+                    <select id="songHymnalFilter" class="form-control">
+                        <option>全部詩本</option>
+                        <option>讚美之泉</option>
+                        <option>天韻詩歌</option>
+                        <option>新歌頌揚</option>
+                        <option>聖詩</option>
+                        <option>短歌集</option>
+                    </select>
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="renderSongTable()">🔍 搜索</button>
+            <button type="button" class="btn btn-secondary" onclick="resetSongFilters()">🔄 重置</button>
+        </div>
+
+        <!-- 詩歌列表 -->
+        <div class="card">
+            <div class="card-header">🎵 詩歌列表（預設＋自訂合併）</div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>編號</th>
+                        <th>詩歌名稱</th>
+                        <th>類別</th>
+                        <th>詩歌本</th>
+                        <th>語言</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="songTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- 快速操作 -->
+        <div class="card">
+            <div class="card-header">⚡ 快速操作</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+                <button class="btn btn-success" onclick="showAddSongModal()">➕ 新增詩歌</button>
+                <button class="btn btn-info" onclick="createPlaylist()">📋 創建播放列表</button>
+                <button class="btn btn-primary" onclick="showStatistics()">📊 詩歌統計</button>
+                <button class="btn btn-secondary" onclick="exportSongs()">📥 導出詩歌</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增詩歌模態框 -->
+    <div id="addSongModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%;">
+            <h3 style="margin-bottom: 20px; font-size: 20px;">新增詩歌</h3>
+            <form id="songForm" onsubmit="saveSong(event)">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">詩歌名稱</label>
+                    <input type="text" id="songName" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">類別</label>
+                    <input type="text" id="category" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">詩集</label>
+                    <input type="text" id="hymnal" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">語言</label>
+                    <select id="language" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="中文">中文</option>
+                        <option value="英文">英文</option>
+                        <option value="粵語">粵語</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-success" style="flex: 1;">保存</button>
+                    <button type="button" onclick="closeAddSongModal()" class="btn btn-secondary" style="flex: 1;">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let customSongs = [];
+
+        // 加載自定義詩歌
+        var SEED_SONG_ROWS = [
+            { number: '001', name: '奇異恩典', category: '敬拜讚美', hymnal: '聖詩', language: '中英雙語', seed: true },
+            { number: '025', name: '讚美之泉', category: '感恩頌讚', hymnal: '讚美之泉', language: '中文', seed: true },
+            { number: '103', name: '主禱文', category: '禱告祈求', hymnal: '短歌集', language: '中文', seed: true },
+            { number: '205', name: '如鹿渴慕溪水', category: '敬拜讚美', hymnal: '新歌頌揚', language: '中文', seed: true }
+        ];
+
+        function loadCustomSongs() {
+            const saved = localStorage.getItem('song_library_custom');
+            customSongs = saved ? JSON.parse(saved) : [];
+        }
+
+        function getMergedSongList() {
+            loadCustomSongs();
+            return SEED_SONG_ROWS.map(function (r) {
+                return { number: r.number, name: r.name, category: r.category, hymnal: r.hymnal, language: r.language, seed: true };
+            }).concat(customSongs.map(function (s) {
+                return { number: String(s.number), name: s.name, category: s.category, hymnal: s.hymnal, language: s.language, seed: false, id: s.id };
+            }));
+        }
+
+        function renderSongTable() {
+            var kw = (document.getElementById('songSearchKw') && document.getElementById('songSearchKw').value || '').trim().toLowerCase();
+            var cat = document.getElementById('songCatFilter') && document.getElementById('songCatFilter').value;
+            var lang = document.getElementById('songLangFilter') && document.getElementById('songLangFilter').value;
+            var hym = document.getElementById('songHymnalFilter') && document.getElementById('songHymnalFilter').value;
+            var rows = getMergedSongList().filter(function (r) {
+                if (kw && !String(r.name + r.number).toLowerCase().includes(kw)) return false;
+                if (cat && cat !== '全部類別' && r.category !== cat) return false;
+                if (lang && lang !== '全部語言' && r.language !== lang) return false;
+                if (hym && hym !== '全部詩本' && r.hymnal !== hym) return false;
+                return true;
+            });
+            var tb = document.getElementById('songTableBody');
+            if (!tb) return;
+            function escAttr(s) {
+                return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+            }
+            tb.innerHTML = rows.map(function (r) {
+                return '<tr><td>' + escAttr(r.number) + '</td><td>' + escAttr(r.name) + '</td><td>' + escAttr(r.category) + '</td><td>' + escAttr(r.hymnal) + '</td><td>' + escAttr(r.language) + '</td><td>' +
+                    '<button type="button" class="btn btn-sm btn-info" data-title="' + escAttr(r.name) + '" onclick="alert(this.dataset.title)">查看</button> ' +
+                    '<button type="button" class="btn btn-sm btn-primary" onclick="alert(\'已加入播放清單（示意）\')">播放</button>' +
+                    (r.seed ? '' : ' <button type="button" class="btn btn-sm btn-secondary" onclick="deleteCustomSong(' + r.id + ')">刪自訂</button>') +
+                    '</td></tr>';
+            }).join('');
+        }
+
+        function resetSongFilters() {
+            if (document.getElementById('songSearchKw')) document.getElementById('songSearchKw').value = '';
+            ['songCatFilter', 'songLangFilter', 'songHymnalFilter'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.selectedIndex = 0;
+            });
+            renderSongTable();
+        }
+
+        function deleteCustomSong(id) {
+            if (!confirm('刪除此筆自訂詩歌？')) return;
+            customSongs = customSongs.filter(function (s) { return s.id !== id; });
+            saveToStorage();
+            renderSongTable();
+        }
+
+        // 保存到存儲
+        function saveToStorage() {
+            localStorage.setItem('song_library_custom', JSON.stringify(customSongs));
+        }
+
+        // 顯示新增詩歌模態框
+        function showAddSongModal() {
+            document.getElementById('addSongModal').style.display = 'flex';
+        }
+
+        // 關閉模態框
+        function closeAddSongModal() {
+            document.getElementById('addSongModal').style.display = 'none';
+            document.getElementById('songForm').reset();
+        }
+
+        // 保存詩歌
+        function saveSong(event) {
+            event.preventDefault();
+            
+            const song = {
+                id: Date.now(),
+                number: customSongs.length + 300,
+                name: document.getElementById('songName').value,
+                category: document.getElementById('category').value,
+                hymnal: document.getElementById('hymnal').value,
+                language: document.getElementById('language').value,
+                createdAt: new Date().toISOString()
+            };
+
+            customSongs.push(song);
+            saveToStorage();
+            closeAddSongModal();
+            alert('✅ 詩歌已添加！\n\n詩歌編號：' + song.number + '\n名稱：' + song.name + '\n\n您可以在列表中查看新增的詩歌。');
+            loadCustomSongs();
+            renderSongTable();
+        }
+
+        // 創建播放列表
+        function createPlaylist() {
+            const count = customSongs.length + 10; // 預設詩歌 + 自定義詩歌
+            alert('✅ 播放列表功能\n\n當前詩歌庫共有 ' + count + ' 首詩歌。\n\n您可以：\n• 選擇詩歌加入播放列表\n• 按類別篩選\n• 導出播放列表\n\n自定義播放列表功能已就緒！');
+        }
+
+        // 顯示統計
+        function showStatistics() {
+            const total = customSongs.length + 10;
+            const worship = customSongs.filter(s => s.category.includes('敬拜')).length + 5;
+            const hymn = total - worship;
+            
+            alert('📊 詩歌庫統計\n\n總詩歌數：' + total + ' 首\n敬拜讚美：' + worship + ' 首\n傳統詩歌：' + hymn + ' 首\n\n語言分布：\n• 中文：' + (total - 2) + ' 首\n• 英文：2 首');
+        }
+
+        // 導出詩歌（預設＋自訂合併）
+        function exportSongs() {
+            var rows = getMergedSongList();
+            const csvContent = '編號,詩歌名稱,類別,詩集,語言,來源\n' +
+                rows.map(function (r) {
+                    return [r.number, r.name, r.category, r.hymnal, r.language, r.seed ? '預設' : '自訂'].join(',');
+                }).join('\n');
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', '詩歌庫_' + new Date().toISOString().split('T')[0] + '.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            alert('✅ 已匯出 ' + rows.length + ' 筆');
+        }
+
+        // 頁面載入時初始化，空時自動載入示範
+        function loadDemoSongs() {
+            customSongs = [
+                {id:1, number:301, name:'奇異恩典', category:'敬拜讚美', hymnal:'聖詩', language:'中英雙語', createdAt:new Date().toISOString()},
+                {id:2, number:302, name:'讚美之泉', category:'感恩頌讚', hymnal:'讚美之泉', language:'中文', createdAt:new Date().toISOString()},
+                {id:3, number:303, name:'如鹿渴慕', category:'敬拜讚美', hymnal:'讚美之泉', language:'中文', createdAt:new Date().toISOString()},
+                {id:4, number:304, name:'主愛長存', category:'敬拜讚美', hymnal:'新歌頌揚', language:'中文', createdAt:new Date().toISOString()},
+                {id:5, number:305, name:'恩典之路', category:'感恩頌讚', hymnal:'讚美之泉', language:'中文', createdAt:new Date().toISOString()}
+            ];
+            saveToStorage();
+        }
+        loadCustomSongs();
+        if (customSongs.length === 0) loadDemoSongs();
+        renderSongTable();
+    </script>
+    <script src="../../../js/module_navigation.js"></script>
+</body>
+</html>
+

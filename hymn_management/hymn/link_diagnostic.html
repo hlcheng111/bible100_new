@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>聖詩鏈接診斷工具</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+            font-size: 12px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #0b5fa5;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .diagnostic-results {
+            margin: 20px 0;
+        }
+        
+        .link-item {
+            margin: 5px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        
+        .link-item.local {
+            background: #e8f5e8;
+            border-color: #4caf50;
+        }
+        
+        .link-item.external {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+        
+        .link-item.invalid {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+        
+        .link-type {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .link-url {
+            color: #0066cc;
+            word-break: break-all;
+        }
+        
+        .status {
+            float: right;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .status.valid {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .status.invalid {
+            background: #f44336;
+            color: white;
+        }
+        
+        .status.checking {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: #0b5fa5;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .stats {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 聖詩鏈接診斷工具</h1>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="startDiagnostic()">開始診斷</button>
+            <button class="btn btn-success" onclick="clearResults()">清除結果</button>
+        </div>
+        
+        <div class="stats" id="stats">
+            <strong>統計信息：</strong>
+            <div id="statsContent">等待診斷...</div>
+        </div>
+        
+        <div class="diagnostic-results" id="results">
+            <p>點擊「開始診斷」按鈕來檢查所有聖詩鏈接的狀態。</p>
+        </div>
+    </div>
+
+    <script>
+        let diagnosticResults = [];
+        
+        async function startDiagnostic() {
+            console.log('開始診斷聖詩鏈接...');
+            document.getElementById('results').innerHTML = '<p>正在診斷鏈接，請稍候...</p>';
+            
+            // 載入 default_simple_sort_fixed.html 來分析鏈接
+            try {
+                const response = await fetch('./default_simple_sort_fixed.html');
+                const htmlContent = await response.text();
+                
+                // 解析HTML內容，提取所有鏈接
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlContent, 'text/html');
+                const links = doc.querySelectorAll('a[href]');
+                
+                console.log(`找到 ${links.length} 個鏈接`);
+                
+                diagnosticResults = [];
+                let validCount = 0;
+                let invalidCount = 0;
+                let localCount = 0;
+                let externalCount = 0;
+                
+                for (let i = 0; i < Math.min(links.length, 100); i++) { // 限制檢查前100個鏈接
+                    const link = links[i];
+                    const href = link.getAttribute('href');
+                    const text = link.textContent.trim();
+                    
+                    if (!href) continue;
+                    
+                    const result = {
+                        text: text,
+                        url: href,
+                        type: '',
+                        status: 'checking'
+                    };
+                    
+                    // 分類鏈接類型
+                    if (href.includes('hymn_') && !href.startsWith('http')) {
+                        result.type = 'local';
+                        localCount++;
+                        
+                        // 檢查本地文件是否存在
+                        try {
+                            const fileResponse = await fetch(href);
+                            if (fileResponse.ok) {
+                                result.status = 'valid';
+                                validCount++;
+                            } else {
+                                result.status = 'invalid';
+                                invalidCount++;
+                            }
+                        } catch (error) {
+                            result.status = 'invalid';
+                            invalidCount++;
+                        }
+                    } else if (href.startsWith('http')) {
+                        result.type = 'external';
+                        externalCount++;
+                        result.status = 'valid'; // 假設外部鏈接有效
+                        validCount++;
+                    } else {
+                        result.type = 'other';
+                        result.status = 'invalid';
+                        invalidCount++;
+                    }
+                    
+                    diagnosticResults.push(result);
+                }
+                
+                displayResults();
+                updateStats(validCount, invalidCount, localCount, externalCount);
+                
+            } catch (error) {
+                console.error('診斷失敗:', error);
+                document.getElementById('results').innerHTML = '<p style="color: red;">診斷失敗: ' + error.message + '</p>';
+            }
+        }
+        
+        function displayResults() {
+            const resultsDiv = document.getElementById('results');
+            
+            if (diagnosticResults.length === 0) {
+                resultsDiv.innerHTML = '<p>沒有找到鏈接</p>';
+                return;
+            }
+            
+            let html = '<h3>診斷結果：</h3>';
+            
+            diagnosticResults.forEach((result, index) => {
+                const statusClass = result.status;
+                const typeClass = result.type;
+                
+                html += `
+                    <div class="link-item ${typeClass}">
+                        <span class="link-type">[${result.type.toUpperCase()}]</span>
+                        <span class="link-url">${result.url}</span>
+                        <span class="status ${statusClass}">${result.status.toUpperCase()}</span>
+                        <br>
+                        <small>文本: "${result.text}"</small>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        function updateStats(valid, invalid, local, external) {
+            const total = valid + invalid;
+            const statsContent = document.getElementById('statsContent');
+            
+            statsContent.innerHTML = `
+                <div>總鏈接數: ${total}</div>
+                <div>有效鏈接: ${valid} (${Math.round(valid/total*100)}%)</div>
+                <div>無效鏈接: ${invalid} (${Math.round(invalid/total*100)}%)</div>
+                <div>本地聖詩鏈接: ${local}</div>
+                <div>外部鏈接: ${external}</div>
+            `;
+        }
+        
+        function clearResults() {
+            diagnosticResults = [];
+            document.getElementById('results').innerHTML = '<p>點擊「開始診斷」按鈕來檢查所有聖詩鏈接的狀態。</p>';
+            document.getElementById('statsContent').innerHTML = '等待診斷...';
+        }
+    </script>
+</body>
+</html>

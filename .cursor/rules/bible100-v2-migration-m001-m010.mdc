@@ -1,0 +1,55 @@
+---
+description: Bible100 V2.2 遷移藍圖 M-001～M-010（舊主線→新主線，可停可回頭）
+globs: bible100_new/**/*
+alwaysApply: false
+---
+
+# 遷移藍圖（M‑001～M‑010）
+
+每一步可停、可回頭、可跳過；與 `bible100-v2-preset-v1` / `v2` / `v3` 搭配使用。
+
+## M‑001：凍結舊主線 canonical
+
+- Smart Ministry、問卷、AI Lab 全部保持 localStorage canonical。
+- 不做任何上雲。
+- 產出 localStorage 結構文件（與 `docs/DATA_CONTRACT_v0.1.md` 對齊）。
+
+## M‑002：建立 Sheets SSOT（12 分頁組）
+
+- `courses`、`registrations`、`navigation_map`、`qna_sources`、`qna_items`、`bible_versions`、`hymns`、`playlists`、`playlist_items`、`ai_tools_config`、`planning_kpi`、`planning_swot`、`planning_smart`、`planning_pdca`、`planning_health`、`ministry_logs`、`members`。
+- 表頭凍結；與 B‑C 欄位表一致。
+
+## M‑003：建立 API（getCourseList…）
+
+- 先 **只讀** API，不寫入。
+- 前端仍可用舊資料；新 API 供並行驗收。
+
+## M‑004：導覽與工具列改成 Sheets 驅動
+
+- `navigation_map` → 導覽。
+- `ai_tools_config` → AI 工具列。
+
+## M‑005：報名寫入 Sheets（postFormWebhook）
+
+- `form_response_id` 冪等。
+- 不影響舊站問卷與 canonical。
+
+## M‑006：建立 ministry_logs（錯誤／重試）
+
+- 所有 API 錯誤寫入 log；含 schema 缺欄類錯誤。
+
+## M‑007：建立 planning_kpi（堂會級）
+
+- 主表＋ `SWOT` / `SMART` / `PDCA` / `Health` 子表；`getPlanningKpi` 組裝 JSON。
+
+## M‑008：建立 localStorage ↔ Sheets 映射表
+
+- 見規則檔 `bible100-v2-bridge-localstorage-sheets.mdc`；避免雙 SSOT。
+
+## M‑009：建立「去識別匯出」流程（Smart Ministry → Sheets）
+
+- 白名單欄位；不含 raw 問卷。
+
+## M‑010：最終合併（可選）
+
+- 若未來要把 Smart Ministry 全上雲，才啟用；需獨立專案審查與 v3 預設。

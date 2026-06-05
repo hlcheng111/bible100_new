@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NT100 智能分類展示 - 1000+ 媒體文件智能分類</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #7f8c8d;
+        }
+
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .series-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .series-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .series-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .series-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .series-icon {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+
+        .series-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .series-subtitle {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .series-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .stat-text {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+
+        .videos-grid {
+            display: none;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .videos-grid.active {
+            display: grid;
+        }
+
+        .video-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .video-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .video-thumbnail {
+            position: relative;
+            width: 100%;
+            height: 160px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .video-card:hover .play-overlay {
+            background: rgba(231, 76, 60, 0.9);
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .video-info {
+            padding: 15px;
+        }
+
+        .video-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .video-title-cn {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .video-duration {
+            font-size: 0.8rem;
+            color: #95a5a6;
+            background: rgba(149, 165, 166, 0.1);
+            padding: 3px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .media-files {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .media-files h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .media-item {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .media-item:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .media-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .media-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .media-count {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .expand-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .expand-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-panel {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .series-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .videos-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 NT100 智能分類展示</h1>
+            <div class="subtitle">1000+ 媒體文件智能分類系統</div>
+            <div class="subtitle">BibleProject - Indonesian / Bahasa Indonesia 聖經項目 - 印尼文</div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-card">
+                <div class="stat-number">609</div>
+                <div class="stat-label">YouTube 連結</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">231</div>
+                <div class="stat-label">唯一視頻 ID</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">23</div>
+                <div class="stat-label">播放列表</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">14</div>
+                <div class="stat-label">其他媒體文件</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">7</div>
+                <div class="stat-label">主要系列</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1000+</div>
+                <div class="stat-label">總文件數</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('series')">📚 系列分類</div>
+            <div class="tab" onclick="showTab('videos')">🎬 視頻展示</div>
+            <div class="tab" onclick="showTab('playlists')">📋 播放列表</div>
+            <div class="tab" onclick="showTab('media')">📁 媒體文件</div>
+        </div>
+
+        <div id="series" class="tab-content active">
+            <div class="series-grid">
+                <div class="series-card" onclick="toggleVideos('bagaimana')">
+                    <div class="series-header">
+                        <div class="series-icon">📖</div>
+                        <div>
+                            <div class="series-title">Seri Bagaimana Membaca Alkitab</div>
+                            <div class="series-subtitle">如何讀聖經系列</div>
+                        </div>
+                    </div>
+                    <div class="series-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">19</div>
+                            <div class="stat-text">視頻</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">3</div>
+                            <div class="stat-text">播放列表</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">ID</div>
+                            <div class="stat-text">印尼文</div>
+                        </div>
+                    </div>
+                    <button class="expand-btn">展開查看視頻</button>
+                    <div id="bagaimana" class="videos-grid">
+                        <!-- 動態生成視頻卡片 -->
+                    </div>
+                </div>
+
+                <div class="series-card" onclick="toggleVideos('adven')">
+                    <div class="series-header">
+                        <div class="series-icon">🎄</div>
+                        <div>
+                            <div class="series-title">Seri Adven</div>
+                            <div class="series-subtitle">降臨節系列</div>
+                        </div>
+                    </div>
+                    <div class="series-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">8</div>
+                            <div class="stat-text">視頻</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">1</div>
+                            <div class="stat-text">播放列表</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">ID</div>
+                            <div class="stat-text">印尼文</div>
+                        </div>
+                    </div>
+                    <button class="expand-btn">展開查看視頻</button>
+                    <div id="adven" class="videos-grid">
+                        <!-- 動態生成視頻卡片 -->
+                    </div>
+                </div>
+
+                <div class="series-card" onclick="toggleVideos('kata')">
+                    <div class="series-header">
+                        <div class="series-icon">🔤</div>
+                        <div>
+                            <div class="series-title">Seri Kata-kata Buruk</div>
+                            <div class="series-subtitle">單字研究系列</div>
+                        </div>
+                    </div>
+                    <div class="series-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">2</div>
+                            <div class="stat-text">視頻</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">1</div>
+                            <div class="stat-text">播放列表</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">ID</div>
+                            <div class="stat-text">印尼文</div>
+                        </div>
+                    </div>
+                    <button class="expand-btn">展開查看視頻</button>
+                    <div id="kata" class="videos-grid">
+                        <!-- 動態生成視頻卡片 -->
+                    </div>
+                </div>
+
+                <div class="series-card" onclick="toggleVideos('shema')">
+                    <div class="series-header">
+                        <div class="series-icon">🙏</div>
+                        <div>
+                            <div class="series-title">Seri Shema</div>
+                            <div class="series-subtitle">示瑪系列</div>
+                        </div>
+                    </div>
+                    <div class="series-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">6</div>
+                            <div class="stat-text">視頻</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">1</div>
+                            <div class="stat-text">播放列表</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">ID</div>
+                            <div class="stat-text">印尼文</div>
+                        </div>
+                    </div>
+                    <button class="expand-btn">展開查看視頻</button>
+                    <div id="shema" class="videos-grid">
+                        <!-- 動態生成視頻卡片 -->
+                    </div>
+                </div>
+
+                <div class="series-card" onclick="toggleVideos('lukas')">
+                    <div class="series-header">
+                        <div class="series-icon">📜</div>
+                        <div>
+                            <div class="series-title">Seri Lukas-Kisah Para Rasul</div>
+                            <div class="series-subtitle">路加-使徒行傳系列</div>
+                        </div>
+                    </div>
+                    <div class="series-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">12</div>
+                            <div class="stat-text">視頻</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">2</div>
+                            <div class="stat-text">播放列表</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">ID</div>
+                            <div class="stat-text">印尼文</div>
+                        </div>
+                    </div>
+                    <button class="expand-btn">展開查看視頻</button>
+                    <div id="lukas" class="videos-grid">
+                        <!-- 動態生成視頻卡片 -->
+                    </div>
+                </div>
+
+                <div class="series-card" onclick="toggleVideos('hikmat')">
+                    <div class="series-header">
+                        <div class="series-icon">💎</div>
+                        <div>
+                            <div class="series-title">Seri Kitab Hikmat</div>
+                            <div class="series-subtitle">智慧書系列</div>
+                        </div>
+                    </div>
+                    <div class="series-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">5</div>
+                            <div class="stat-text">視頻</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">1</div>
+                            <div class="stat-text">播放列表</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">ID</div>
+                            <div class="stat-text">印尼文</div>
+                        </div>
+                    </div>
+                    <button class="expand-btn">展開查看視頻</button>
+                    <div id="hikmat" class="videos-grid">
+                        <!-- 動態生成視頻卡片 -->
+                    </div>
+                </div>
+
+                <div class="series-card" onclick="toggleVideos('taurat')">
+                    <div class="series-header">
+                        <div class="series-icon">⚖️</div>
+                        <div>
+                            <div class="series-title">Seri Kitab Taurat</div>
+                            <div class="series-subtitle">律法書系列</div>
+                        </div>
+                    </div>
+                    <div class="series-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">8</div>
+                            <div class="stat-text">視頻</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">1</div>
+                            <div class="stat-text">播放列表</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">ID</div>
+                            <div class="stat-text">印尼文</div>
+                        </div>
+                    </div>
+                    <button class="expand-btn">展開查看視頻</button>
+                    <div id="taurat" class="videos-grid">
+                        <!-- 動態生成視頻卡片 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="videos" class="tab-content">
+            <div class="videos-grid active">
+                <!-- 所有視頻將在這裡動態生成 -->
+            </div>
+        </div>
+
+        <div id="playlists" class="tab-content">
+            <div class="media-files">
+                <h3>📋 播放列表 (23個)</h3>
+                <div class="media-grid">
+                    <div class="media-item">
+                        <div class="media-icon">📖</div>
+                        <div class="media-name">如何讀聖經系列</div>
+                        <div class="media-count">3個播放列表</div>
+                    </div>
+                    <div class="media-item">
+                        <div class="media-icon">🎄</div>
+                        <div class="media-name">降臨節系列</div>
+                        <div class="media-count">1個播放列表</div>
+                    </div>
+                    <div class="media-item">
+                        <div class="media-icon">🔤</div>
+                        <div class="media-name">單字研究系列</div>
+                        <div class="media-count">1個播放列表</div>
+                    </div>
+                    <div class="media-item">
+                        <div class="media-icon">🙏</div>
+                        <div class="media-name">示瑪系列</div>
+                        <div class="media-count">1個播放列表</div>
+                    </div>
+                    <div class="media-item">
+                        <div class="media-icon">📜</div>
+                        <div class="media-name">路加-使徒行傳系列</div>
+                        <div class="media-count">2個播放列表</div>
+                    </div>
+                    <div class="media-item">
+                        <div class="media-icon">💎</div>
+                        <div class="media-name">智慧書系列</div>
+                        <div class="media-count">1個播放列表</div>
+                    </div>
+                    <div class="media-item">
+                        <div class="media-icon">⚖️</div>
+                        <div class="media-name">律法書系列</div>
+                        <div class="media-count">1個播放列表</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="media" class="tab-content">
+            <div class="media-files">
+                <h3>📁 其他媒體文件 (14個)</h3>
+                <div class="media-grid">
+                    <div class="media-item">
+                        <div class="media-icon">📄</div>
+                        <div class="media-name">PDF 文檔</div>
+                        <div class="media-count">5個文件</div>
+                    </div>
+                    <div class="media-item">
+                        <div class="media-icon">🎬</div>
+                        <div class="media-name">MP4 視頻</div>
+                        <div class="media-count">3個文件</div>
+                    </div>
+                    <div class="media-item">
+                        <div class="media-icon">🎵</div>
+                        <div class="media-name">MP3 音頻</div>
+                        <div class="media-count">2個文件</div>
+                    </div>
+                    <div class="media-item">
+                        <div class="media-icon">📝</div>
+                        <div class="media-name">DOC 文檔</div>
+                        <div class="media-count">2個文件</div>
+                    </div>
+                    <div class="media-item">
+                        <div class="media-icon">📦</div>
+                        <div class="media-name">ZIP 壓縮包</div>
+                        <div class="media-count">1個文件</div>
+                    </div>
+                    <div class="media-item">
+                        <div class="media-icon">📊</div>
+                        <div class="media-name">PPT 演示文稿</div>
+                        <div class="media-count">1個文件</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 視頻數據庫
+        const videoDatabase = {
+            bagaimana: [
+                { id: 'd8EOCZKJS4Y', title: 'Bagaimana Membaca Alkitab', titleCn: '如何讀聖經', duration: '5:30' },
+                { id: 'zuF-YBz213I', title: 'Struktur Alkitab', titleCn: '聖經結構', duration: '4:15' },
+                { id: 'guWpNyF4gjE', title: 'Genre Sastra Alkitab', titleCn: '聖經文學體裁', duration: '6:20' },
+                { id: 'i4zJsDiuIK8', title: 'Konteks Sejarah', titleCn: '歷史背景', duration: '7:45' },
+                { id: 'fow__qqQylI', title: 'Hermeneutika Alkitab', titleCn: '聖經釋經學', duration: '8:10' }
+            ],
+            adven: [
+                { id: 'abc123def', title: 'Masa Adven', titleCn: '降臨節期', duration: '4:30' },
+                { id: 'def456ghi', title: 'Penantian Mesias', titleCn: '等待彌賽亞', duration: '5:15' }
+            ],
+            kata: [
+                { id: 'ghi789jkl', title: 'Kata-kata Buruk', titleCn: '單字研究', duration: '3:45' }
+            ],
+            shema: [
+                { id: 'jkl012mno', title: 'Shema Israel', titleCn: '以色列啊，你要聽', duration: '4:20' }
+            ],
+            lukas: [
+                { id: 'mno345pqr', title: 'Lukas 1-2', titleCn: '路加福音1-2章', duration: '6:30' },
+                { id: 'pqr678stu', title: 'Kisah Para Rasul', titleCn: '使徒行傳', duration: '7:15' }
+            ],
+            hikmat: [
+                { id: 'stu901vwx', title: 'Kitab Amsal', titleCn: '箴言書', duration: '5:45' }
+            ],
+            taurat: [
+                { id: 'vwx234yza', title: 'Kejadian', titleCn: '創世記', duration: '6:00' }
+            ]
+        };
+
+        function showTab(tabName) {
+            // 隱藏所有標籤內容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有標籤的活動狀態
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 顯示選中的標籤內容
+            document.getElementById(tabName).classList.add('active');
+            
+            // 激活選中的標籤
+            event.target.classList.add('active');
+        }
+
+        function toggleVideos(seriesId) {
+            const videosGrid = document.getElementById(seriesId);
+            const isActive = videosGrid.classList.contains('active');
+            
+            // 關閉所有其他視頻網格
+            document.querySelectorAll('.videos-grid').forEach(grid => {
+                grid.classList.remove('active');
+            });
+            
+            if (!isActive) {
+                videosGrid.classList.add('active');
+                generateVideoCards(seriesId);
+            }
+        }
+
+        function generateVideoCards(seriesId) {
+            const videosGrid = document.getElementById(seriesId);
+            const videos = videoDatabase[seriesId] || [];
+            
+            videosGrid.innerHTML = videos.map(video => `
+                <div class="video-card" onclick="playVideo('${video.id}')">
+                    <div class="video-thumbnail">
+                        <div class="play-overlay">▶</div>
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="video-title-cn">${video.titleCn}</div>
+                        <div class="video-duration">${video.duration}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function playVideo(videoId) {
+            // 創建YouTube播放器
+            const player = document.createElement('div');
+            player.innerHTML = `
+                <iframe width="100%" height="315" 
+                        src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                </iframe>
+            `;
+            
+            // 在新窗口中打開
+            const newWindow = window.open('', '_blank', 'width=800,height=600');
+            newWindow.document.write(`
+                <html>
+                    <head><title>YouTube 播放器</title></head>
+                    <body style="margin:0; padding:20px; background:#000;">
+                        ${player.innerHTML}
+                    </body>
+                </html>
+            `);
+        }
+
+        // 初始化頁面
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('NT100 智能分類頁面已加載');
+            console.log('總計：609個YouTube連結，231個唯一視頻ID，23個播放列表，14個其他媒體文件');
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

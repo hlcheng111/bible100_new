@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人才技能管理 - Smart Ministry</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial; background: #f5f6fa; color: #2c3e50; font-size: 11px; }
+        .topbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+        .topbar h1 { font-size: 18px; font-weight: 600; }
+        .topbar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-end; max-width: 100%; }
+        .topbar-actions button { padding: 6px 12px; border: none; background: white; color: #667eea; border-radius: 4px; cursor: pointer; font-size: 10px; }
+        .topbar-actions button.btn-stub { background: rgba(255,255,255,0.35); color: rgba(255,255,255,0.95); cursor: not-allowed; opacity: 0.85; }
+        .topbar-actions .plan-pill {
+            display: inline-flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 32px;
+            padding: 5px 10px;
+            border: 1px dashed rgba(255,255,255,0.65);
+            border-radius: 5px;
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+            font-size: 9px;
+            line-height: 1.35;
+            white-space: nowrap;
+        }
+        .topbar-actions .plan-pill small { opacity: 0.9; font-size: 8px; }
+        .topbar-actions a.btn-outline { padding: 6px 12px; background: transparent; color: white; border: 1px solid rgba(255,255,255,0.6); border-radius: 4px; font-size: 10px; text-decoration: none; }
+        .topbar-actions a.btn-outline:hover { background: rgba(255,255,255,0.15); }
+        .page-note { margin: 0 10px 0; padding: 8px 12px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; font-size: 10px; color: #78350f; line-height: 1.5; }
+        .page-note a { color: #4338ca; font-weight: 600; }
+        .stats { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; background: white; }
+        .stat { flex: 1; text-align: center; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 4px; }
+        .stat-num { font-size: 20px; font-weight: bold; }
+        .stat-label { font-size: 9px; opacity: 0.9; }
+        .main { display: flex; flex-direction: row; height: calc(100vh - 220px); min-height: 280px; gap: 10px; padding: 10px; }
+        .panel { background: white; border-radius: 4px; border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+        .panel-left, .panel-right { flex: 1; min-width: 0; }
+        .panel-center { width: 300px; flex-shrink: 0; max-width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .step-strip { font-size: 10px; color: #475569; padding: 6px 10px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; }
+        .step-strip strong { color: #334155; }
+        @media (max-width: 960px) {
+            .main { flex-direction: column; height: auto; min-height: 420px; }
+            .panel-left { order: 1; min-height: 200px; }
+            .panel-center { order: 2; width: 100%; min-height: auto; }
+            .panel-right { order: 3; min-height: 200px; }
+        }
+        .panel-header { padding: 10px 12px; background: rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: 600; font-size: 12px; display: flex; justify-content: space-between; }
+        .panel-center .panel-header { background: rgba(255,255,255,0.1); }
+        .panel-body { flex: 1; overflow-y: auto; padding: 10px; }
+        .search-box input { width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px; margin-bottom: 8px; }
+        .item { padding: 8px 10px; margin-bottom: 4px; background: #f8f9fa; border-radius: 3px; cursor: pointer; border-left: 3px solid transparent; }
+        .item:hover { background: #e9ecef; }
+        .item.selected { background: #ede9fe; border-left-color: #667eea; }
+        .item.linked { border-left-color: #27ae60; }
+        .item-title { font-weight: 600; font-size: 11px; margin-bottom: 3px; }
+        .item-meta { font-size: 9px; color: #7f8c8d; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 8px; font-weight: 500; margin-left: 4px; }
+        .badge-purple { background: #ede9fe; color: #5b21b6; }
+        .badge-green { background: #d5f4e6; color: #196f3d; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .center-stat { background: rgba(255,255,255,0.15); padding: 15px; border-radius: 4px; margin-bottom: 10px; text-align: center; }
+        .center-stat-num { font-size: 28px; font-weight: bold; }
+        .center-stat-label { font-size: 10px; }
+        .center-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .center-actions button { padding: 10px; border: none; background: white; color: #667eea; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .center-info { background: rgba(255,255,255,0.1); padding: 12px; border-radius: 4px; margin-top: 15px; font-size: 10px; text-align: left; }
+        .center-report {
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.22);
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 10px;
+            line-height: 1.55;
+            text-align: left;
+            display: none;
+        }
+        .center-report h4 { margin: 0 0 6px 0; font-size: 11px; }
+        .center-report .meta { font-size: 9px; opacity: 0.9; margin-top: 6px; }
+        .skill-level { display: inline-block; }
+        .star { color: #f1c40f; font-size: 10px; }
+        .empty { text-align: center; padding: 40px 20px; color: #95a5a6; font-size: 10px; }
+        .msg { position: fixed; top: 60px; right: 20px; padding: 10px 15px; background: #27ae60; color: white; border-radius: 4px; font-size: 11px; z-index: 1000; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateX(300px); } to { transform: translateX(0); } }
+        .msg.error { background: #e74c3c; }
+        .center-coach { background: rgba(255,255,255,0.2); border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; font-size: 10px; line-height: 1.55; border: 1px solid rgba(255,255,255,0.25); }
+        .center-coach strong { font-size: 11px; }
+        .center-coach .coach-warn { color: #fef08a; font-weight: 600; }
+        .center-sub { font-size: 9px; opacity: 0.9; margin-top: 6px; text-align: center; }
+        .rec-box { background: rgba(255,255,255,0.12); border-radius: 6px; padding: 10px; margin-top: 10px; font-size: 10px; }
+        .rec-box h4 { font-size: 10px; margin: 0 0 8px 0; opacity: 0.95; }
+        .rec-list { list-style: none; padding: 0; margin: 0 0 8px 0; max-height: 88px; overflow-y: auto; }
+        .rec-list li { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+        .rec-list li:last-child { border-bottom: none; }
+        .btn-rec-all { width: 100%; padding: 8px; border: 1px dashed rgba(255,255,255,0.5); background: rgba(255,255,255,0.15); color: white; border-radius: 4px; cursor: pointer; font-size: 10px; }
+        .btn-rec-all:hover { background: rgba(255,255,255,0.25); }
+        .stat.stat-warn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .stat.stat-warn .stat-num { text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+        .badge-warn { background: #fef3c7; color: #92400e; font-size: 7px; vertical-align: middle; }
+        .badge-ok { background: #d1fae5; color: #065f46; font-size: 7px; vertical-align: middle; font-weight: 600; }
+        .stat.stat-ok { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .stat-tagged-pct { display: block; font-size: 11px; font-weight: 700; margin-top: 4px; opacity: 0.95; }
+        .filter-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 9px; color: #475569; flex-wrap: wrap; }
+        .filter-row input { accent-color: #667eea; }
+        .filter-row label { cursor: pointer; user-select: none; }
+        .item .linked-only { font-size: 8px; color: #b45309; margin-left: 4px; }
+        .gifts-strip { margin: 0 10px 8px; padding: 8px 12px; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 6px; font-size: 10px; color: #5b21b6; line-height: 1.5; display: none; }
+        .gifts-strip strong { color: #4c1d95; }
+        .gifts-strip a { color: #4338ca; font-weight: 600; }
+        .left-guide { margin-bottom: 8px; font-size: 9px; color: #64748b; }
+        .list-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px; }
+        .list-tools .btn-mini { padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; color: #334155; font-size: 9px; cursor: pointer; }
+        .column-panel {
+            display: none;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #f8fafc;
+            padding: 8px;
+            margin-bottom: 8px;
+            font-size: 9px;
+        }
+        .column-panel.open { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+        .column-panel label { display: flex; align-items: center; gap: 5px; cursor: pointer; color: #334155; }
+        .talent-table-wrap { display: block; }
+        .talent-table { width: 100%; border-collapse: collapse; font-size: 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+        .talent-table th, .talent-table td { padding: 7px 8px; border-bottom: 1px solid #eef2f7; text-align: left; vertical-align: top; }
+        .talent-table th { background: #f8fafc; color: #334155; font-weight: 700; }
+        .talent-table tr { cursor: pointer; }
+        .talent-table tr:hover { background: #f8fafc; }
+        .talent-table tr.selected-row { background: #ede9fe; }
+        .th-sort {
+            border: none;
+            background: transparent;
+            color: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .sort-mark { color: #64748b; font-size: 9px; }
+        .talent-mobile-list { display: none; }
+        .talent-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fff;
+            padding: 8px 9px;
+            margin-bottom: 7px;
+            cursor: pointer;
+        }
+        .talent-card.selected { border-color: #a78bfa; background: #f5f3ff; }
+        .talent-card .line1 { font-size: 11px; font-weight: 700; color: #1f2937; margin-bottom: 3px; display: flex; justify-content: space-between; gap: 8px; }
+        .talent-card .line2 { font-size: 9px; color: #64748b; line-height: 1.45; }
+        .talent-card .line3 { margin-top: 6px; text-align: right; font-size: 9px; color: #4f46e5; font-weight: 600; }
+        @media (max-width: 760px) {
+            .talent-table-wrap { display: none; }
+            .talent-mobile-list { display: block; }
+        }
+        .stats-visual {
+            margin: 0 10px 10px;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px 16px;
+        }
+        .stats-visual .metric-label {
+            font-size: 10px;
+            color: #475569;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .metric-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .metric-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #7c3aed 0%, #5b21b6 100%);
+            transition: width 0.25s ease;
+        }
+        .metric-bar-fill--avg { background: linear-gradient(90deg, #0d9488 0%, #0f766e 100%); }
+        .howto-box {
+            margin: 0 10px 10px;
+            padding: 12px 14px;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            font-size: 10px;
+            color: #14532d;
+            line-height: 1.55;
+        }
+        .howto-box strong { color: #166534; }
+        .howto-box ol { margin: 8px 0 0; padding-left: 1.2rem; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>🌟 人才技能管理</h1>
+        <div class="topbar-actions">
+            <button type="button" onclick="generateSample()">🎲 生成示例数据</button>
+            <button type="button" onclick="clearAllData()">🗑️ 清空数据</button>
+            <span class="plan-pill" title="規劃中：綜合問卷／恩賜／MBTI／已連結技能，產出能力摘要與崗位契合說明">
+                🤖 AI评估（规划中）
+                <small>v1: 能力摘要 + 缺口建議</small>
+            </span>
+            <span class="plan-pill" title="規劃中：依恩賜與技能缺口，建議下一季目標、課程／導師與再訓練時程">
+                📈 成长路径（规划中）
+                <small>v1: 季度目標 + 培訓路徑</small>
+            </span>
+            <a class="btn-outline" href="landing.html#journey" title="AI 智慧事奉路線圖 · Journey map">🗺️ 路線圖</a>
+            <a class="btn-outline" href="docs/RENOVATION_PLAN.md" target="_blank" rel="noopener" title="智慧事奉重修計劃">📖 重修計劃</a>
+            <a class="btn-outline" href="spiritual_gifts.html" target="contentFrame" title="40 題屬靈恩賜測驗，結果寫入本機與本頁摘要">🙏 屬靈恩賜測驗</a>
+            <a class="btn-outline" href="talent_ministry_matching.html" title="與事工崗位配對（下次將與本頁資料打通）">🎯 人才事工配對</a>
+            <button type="button" onclick="exportTalent()">📤 导出JSON</button>
+            <button type="button" onclick="exportTalentCsv()">📊 导出CSV</button>
+            <button type="button" onclick="location.href='dashboard.html'">🏠 返回</button>
+        </div>
+    </div>
+    <!-- TODO: 圖解建議：人物卡（左）→ 技能 tag 雲（右）→ 中間箭頭與「儲存連結」 -->
+    <p class="page-note"><strong>說明：</strong>技能主檔仍為 <code>bible100_smart_ministry_skills</code>；<strong>人才↔技能映射之正式來源為 canonical</strong> <code>bible100_smart_ministry_main.talent_skill</code>（與 <a href="talent_ministry_matching.html">人才事工配對</a> 同一命名空間，見 <a href="docs/SMART_MINISTRY_DATA_RULES.md">SMART_MINISTRY_DATA_RULES.md</a>）。屬靈恩賜測驗請用 <a href="spiritual_gifts.html" target="contentFrame">spiritual_gifts.html</a>（與試作頁相同儲存鍵）。窄螢幕三欄<strong>直向堆疊</strong>。<br><strong>v1 已上線：</strong>可直接按「🤖 生成 AI評估 v1」「📈 生成 成長路徑 v1」，結果會寫入 canonical assessments 並可在 <a href="talent_tracking.html">人才發展追踪</a> 時間線查看。<br><strong>v2 規劃中：</strong>恩賜／技能雷達、季度路徑模板、導師配對。詳見 <a href="docs/RENOVATION_PLAN.md" target="_blank" rel="noopener">RENOVATION_PLAN.md</a>。</p>
+
+    <div class="howto-box" role="region" aria-label="三步使用說明">
+      <strong>如何使用（路線圖第 2 步 · 與牧者禱告分辨並行）</strong>
+      <ol>
+        <li><strong>① 選人：</strong>在左欄搜尋或點選一位信徒（頁面載入後會自動選第一位，方便立即看到內容）。</li>
+        <li><strong>② 看已有技能：</strong>中欄顯示此人已連結的技能；可在右欄勾選「只看此人已連結」快速檢視。</li>
+        <li><strong>③ 新增並儲存：</strong>在右欄技能庫勾選項目 → 中欄按「添加技能」寫入映射（非自動派工，僅更新檔案）。</li>
+      </ol>
+      <p style="margin:8px 0 0;font-size:9px;color:#15803d;">整體進度見下方統計「已標註人數／人均技能」。</p>
+    </div>
+
+    <script type="text/plain" id="wireframe-talent-skill-flow" data-note="Mermaid 備份：操作流程">
+flowchart LR
+  P[選擇信徒 左側名單] --> S[選擇技能 右側技能列表]
+  S --> L[建立連結 儲存到人才技能表]
+  L --> D[儀表板數據更新 人數/技能數/人均技能]
+classDef node fill:#ecfeff,stroke:#0e7490,color:#111
+class P,S,L,D node
+    </script>
+
+    <!-- TODO: 圖解建議：頂部統計區旁可補「教會全景」資訊圖（與人均技能目標對齊） -->
+    <div class="stats">
+        <div class="stat"><div class="stat-num" id="totalTalents">0</div><div class="stat-label">人才总数</div></div>
+        <div class="stat"><div class="stat-num" id="totalSkills">0</div><div class="stat-label">技能总数</div></div>
+        <div class="stat"><div class="stat-num" id="totalMappings">0</div><div class="stat-label">技能映射</div></div>
+        <div class="stat" id="avgSkillsStat"><div class="stat-num" id="avgSkills">0</div><div class="stat-label">人均技能<span id="avgGoalHint" style="display:block;font-size:8px;opacity:0.85;margin-top:2px;">目標≥3</span></div></div>
+        <div class="stat stat-warn" id="belowTargetStat" style="display:none;"><div class="stat-num" id="belowTargetCount">0</div><div class="stat-label">未達標人數</div></div>
+        <div class="stat" id="taggedStat"><div class="stat-num"><span id="taggedWithSkills">0</span> / <span id="taggedTotalTalents">0</span></div><div class="stat-label">已標註人數<span style="display:block;font-size:8px;opacity:0.88;margin-top:2px;">至少1項技能映射</span></div><span class="stat-tagged-pct" id="taggedPct">0%</span></div>
+    </div>
+
+    <div class="stats-visual" aria-hidden="true">
+        <div>
+            <!-- TODO: 圖解建議：簡單 progress bar 表示已標註比例（與上列數字同源） -->
+            <div class="metric-label"><span>已標註人數比例</span><span id="barTaggedPctLabel">0%</span></div>
+            <div class="metric-bar"><div id="barTaggedFill" class="metric-bar-fill" style="width:0%;"></div></div>
+        </div>
+        <div>
+            <div class="metric-label"><span>人均技能（目標 <span id="barAvgGoalNum">3</span>）</span><span id="barAvgPctLabel">0%</span></div>
+            <div class="metric-bar"><div id="barAvgFill" class="metric-bar-fill metric-bar-fill--avg" style="width:0%;"></div></div>
+        </div>
+    </div>
+
+    <div id="giftsStrip" class="gifts-strip" role="status" aria-live="polite"></div>
+
+    <div class="step-strip"><strong>操作順序：</strong>① 左側選人才 → ② 右側勾選技能（可多選）→ ③ 中間按「添加技能」建立映射。</div>
+    <div class="main">
+        <div class="panel panel-left">
+            <div class="panel-header"><span>① 選人（人才清單）</span><span class="badge badge-purple" id="talentCount">0</span></div>
+            <div class="panel-body">
+                <div class="left-guide">可按表頭排序；點列可選人，右側再勾技能。</div>
+                <div class="search-box"><input type="text" id="talentSearch" placeholder="🔍 搜索人才" onkeyup="filterTalents()"></div>
+                <div class="list-tools">
+                    <span style="font-size:9px;color:#64748b;">桌面表格／手機卡片</span>
+                    <button type="button" class="btn-mini" onclick="toggleColumnPanel()">顯示欄位</button>
+                </div>
+                <div id="columnPanel" class="column-panel">
+                    <label><input type="checkbox" checked onchange="toggleTalentColumn('name')"> 姓名</label>
+                    <label><input type="checkbox" checked onchange="toggleTalentColumn('personId')"> personId</label>
+                    <label><input type="checkbox" checked onchange="toggleTalentColumn('gift')"> 恩賜</label>
+                    <label><input type="checkbox" checked onchange="toggleTalentColumn('skillsCount')"> 技能數</label>
+                </div>
+                <div id="talentList"></div>
+            </div>
+        </div>
+
+        <div class="panel panel-center">
+            <div class="panel-header"><span>② 此人 · 已連結與操作</span></div>
+            <div class="panel-body">
+                <div class="center-coach" id="centerCoach">請先在左側選擇一位人才；或按「生成示例数据」載入示範資料。</div>
+                <div class="center-stat">
+                    <div class="center-stat-num" id="linkedSkillCount">0</div>
+                    <div class="center-stat-label">已連結技能（此人）</div>
+                    <div class="center-sub" id="pickedLine">本次在右側勾選：<strong id="pickedCount">0</strong> 項（按「添加技能」寫入）</div>
+                </div>
+                <div class="rec-box" id="recBox" style="display:none;">
+                    <h4>💡 依恩賜與缺口的推薦（可一鍵勾到右側選取）</h4>
+                    <ul class="rec-list" id="recList"></ul>
+                    <button type="button" class="btn-rec-all" id="btnRecAll" onclick="selectAllRecommended()">一鍵全選推薦技能</button>
+                </div>
+                <div class="center-actions">
+                    <button type="button" onclick="addSkill()">➕ 添加技能</button>
+                    <button type="button" onclick="removeSkill()">➖ 移除技能</button>
+                    <button type="button" onclick="viewProfile()">👁️ 查看档案</button>
+                    <button type="button" onclick="recommendSkills()" title="依恩賜／類別規則，非 AI">💡 智能推荐（規則）</button>
+                    <button type="button" onclick="generateAiAssessmentV1()" title="v1 規則版：依恩賜+技能映射產出摘要">🤖 生成 AI評估 v1</button>
+                    <button type="button" onclick="buildGrowthPathV1()" title="v1 規則版：產生 30/60/90 天路徑">📈 生成 成長路徑 v1</button>
+                </div>
+                <div class="center-info" id="selectedInfo" style="display:none;">
+                    <h4>当前选择</h4>
+                    <div id="selectedTalentInfo"></div>
+                    <div id="selectedSkillInfo"></div>
+                </div>
+                <div class="center-report" id="aiAssessmentBox"></div>
+                <div class="center-report" id="growthPathBox"></div>
+                <div class="center-info"><h4>💡 提示</h4><ul style="list-style:none; padding:0; font-size:9px;"><li style="padding:2px 0;">1. 左选人才</li><li style="padding:2px 0;">2. 右选技能（多选）</li><li style="padding:2px 0;">3. 点击"添加技能"</li><li style="padding:2px 0;">4. 右欄可「只看已連結」方便移除</li></ul></div>
+            </div>
+        </div>
+
+        <div class="panel panel-right">
+            <div class="panel-header"><span>③ 從技能庫新增</span><span class="badge badge-green" id="skillCount">0</span></div>
+            <div class="panel-body">
+                <div class="filter-row">
+                    <label><input type="checkbox" id="filterOnlyLinked" onchange="onFilterOnlyLinkedChange()"> 只看此人已連結技能</label>
+                </div>
+                <div class="search-box"><input type="text" id="skillSearch" placeholder="🔍 搜索技能" onkeyup="filterSkills()"></div>
+                <div id="skillList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="report_columns.js"></script>
+    <script src="../js/unified_module_database.js"></script>
+    <script src="../js/smart_ministry_canonical_store.js"></script>
+    <script>
+        // 統一資料庫：強制 localStorage（queryData 為 async，不可當陣列用）
+        const unifiedDB = new UnifiedModuleDatabase('smart_ministry');
+        unifiedDB.useJSON = true;
+
+        const db = {
+            createTable: function() { /* no-op for localStorage mode */ },
+            insert: function(table, data) { return unifiedDB.saveToLocalStorage(table, data); },
+            select: function(table, conditions = {}) { return unifiedDB.queryFromJSON(table, conditions, {}); },
+            delete: function(table, id) {
+                const existing = unifiedDB.queryFromJSON(table, {}, {});
+                const filtered = existing.filter(function(item) { return item.id !== id; });
+                try {
+                    localStorage.setItem(unifiedDB.storagePrefix + table, JSON.stringify(filtered));
+                    return { success: true };
+                } catch (e) {
+                    console.error(e);
+                    return { success: false };
+                }
+            }
+        };
+        var C = null;
+        function canonicalTalentKey(t) {
+            if (!t) return '';
+            if (t.talent_id != null && t.talent_id !== '') return String(t.talent_id);
+            return String(t.id);
+        }
+        function talentPersonId(t) {
+            if (!t) return '-';
+            if (t.talent_id != null && t.talent_id !== '') return String(t.talent_id);
+            if (t.personId != null && t.personId !== '') return String(t.personId);
+            return String(t.id);
+        }
+        function mirrorTalentsToCanonical() {
+            if (!C) return;
+            (db.select('talents') || []).forEach(function(t) {
+                C.saveOrUpdateTalent({
+                    talent_id: String(t.talent_id != null ? t.talent_id : t.id),
+                    name: t.name,
+                    mbti: t.mbti,
+                    gift: t.gift,
+                    phone: t.phone,
+                    id: t.id
+                });
+            });
+        }
+        let selectedTalent = null;
+        let selectedSkills = [];
+        let talentSort = { key: 'name', dir: 'asc' };
+        let visibleCols = { name: true, personId: true, gift: true, skillsCount: true };
+        /** 人均至少連結技能數（牧者一眼辨識待補齊） */
+        const MIN_SKILLS_TARGET = 3;
+        /** 恩賜 → 優先推薦的技能名稱（與示例資料對齊，可擴充） */
+        const GIFT_SKILL_HINTS = {
+            '教导': ['讲道', '教导', '音乐'],
+            '行政': ['管理', '技术', '写作'],
+            '服事': ['音乐', '辅导', '管理'],
+            '怜悯': ['辅导', '音乐', '写作'],
+            '传福音': ['讲道', '教导', '写作']
+        };
+        /** 恩賜 → 優先技能分類 */
+        const GIFT_CATEGORY_HINTS = {
+            '教导': ['教育', '属灵'],
+            '行政': ['支持'],
+            '服事': ['艺术', '支持'],
+            '怜悯': ['支持', '艺术'],
+            '传福音': ['属灵', '教育']
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            C = window.SmartMinistryCanonical;
+            C.migrateLegacyToCanonical();
+            initDB();
+            loadData();
+            mirrorTalentsToCanonical();
+            maybeSelectFromQuery();
+            selectFirstTalentIfNone();
+        });
+
+        /** 無 URL 參數時預選第一位人才，避免空白畫面 */
+        function selectFirstTalentIfNone() {
+            if (selectedTalent) return;
+            var list = db.select('talents') || [];
+            if (list.length > 0) selectTalent(list[0].id);
+        }
+        window.addEventListener('pageshow', function () { refreshGiftsStrip(); });
+
+        function initDB() {
+            db.createTable('talents', { name: 'string', mbti: 'string', gift: 'string', phone: 'string' });
+            db.createTable('skills', { name: 'string', category: 'string', level: 'string' });
+        }
+
+        /** 問卷或外部頁跳轉：talent_skill_unified.html?newId=人才id */
+        function maybeSelectFromQuery() {
+            var params = new URLSearchParams(window.location.search);
+            var nid = params.get('newId');
+            if (!nid) return;
+            var list = db.select('talents') || [];
+            var found = list.find(function(t) { return String(t.id) === String(nid); });
+            if (found) {
+                selectTalent(found.id);
+                msg('已選中剛建立的人才，可於右側添加技能');
+            }
+        }
+
+        function loadData() {
+            if ((db.select('talents') || []).length === 0) generateSample();
+            mirrorTalentsToCanonical();
+            renderTalents();
+            renderSkills();
+            updateStats();
+            updateInfo();
+            document.getElementById('filterOnlyLinked').disabled = !selectedTalent;
+            refreshGiftsStrip();
+        }
+
+        var GIFT_NAMES_ZH = { teaching: '教導', evangelism: '傳福音', exhortation: '勸勉', mercy: '憐憫', serving: '服事', administration: '治理', giving: '施捨', prophecy: '先知' };
+
+        function refreshGiftsStrip() {
+            var el = document.getElementById('giftsStrip');
+            if (!el) return;
+            var raw = null;
+            try {
+                raw = localStorage.getItem('bible100_smart_ministry_survey_spiritual_gifts');
+            } catch (e) { raw = null; }
+            if (!raw) {
+                el.style.display = 'none';
+                el.innerHTML = '';
+                return;
+            }
+            var data;
+            try { data = JSON.parse(raw); } catch (e2) { el.style.display = 'none'; el.innerHTML = ''; return; }
+            var top = (data && data.topGifts) ? data.topGifts : [];
+            if (!top.length) {
+                el.style.display = 'none';
+                el.innerHTML = '';
+                return;
+            }
+            var zh = top.map(function (k) { return GIFT_NAMES_ZH[k] || k; }).join('、');
+            var when = data.savedAt ? '（' + String(data.savedAt).slice(0, 10) + '）' : '';
+            el.style.display = 'block';
+            el.innerHTML = '<strong>本機屬靈恩賜測驗摘要' + when + '：</strong>前三項為「' + zh + '」。可 <a href="spiritual_gifts.html" target="contentFrame">重新測驗</a> 或調整右側技能映射。';
+        }
+
+        function generateSample() {
+            ['张三', '李四', '王五', '赵六', '陈七'].forEach((name, i) => {
+                db.insert('talents', {
+                    name: name,
+                    mbti: ['ENFJ', 'INTJ', 'ESFP', 'ISTJ', 'ENFP'][i],
+                    gift: ['教导', '行政', '服事', '怜悯', '传福音'][i],
+                    phone: `138${String(i).padStart(8, '0')}`
+                });
+            });
+
+            ['讲道', '教导', '音乐', '辅导', '管理', '技术', '设计', '写作'].forEach((name, i) => {
+                db.insert('skills', {
+                    name: name,
+                    category: ['属灵', '教育', '艺术', '支持'][i % 4],
+                    level: ['初级', '中级', '高级'][i % 3]
+                });
+            });
+
+            msg('示例数据已生成');
+        }
+
+        function countLinksForTalent(talentId) {
+            var row = (db.select('talents') || []).find(function(x) { return String(x.id) === String(talentId); });
+            if (!row || !C) return 0;
+            return C.listTalentSkills(canonicalTalentKey(row)).length;
+        }
+
+        function toggleColumnPanel() {
+            var panel = document.getElementById('columnPanel');
+            panel.classList.toggle('open');
+        }
+
+        function toggleTalentColumn(key) {
+            visibleCols[key] = !visibleCols[key];
+            var enabledCount = Object.keys(visibleCols).filter(function(k) { return visibleCols[k]; }).length;
+            if (enabledCount === 0) visibleCols.name = true;
+            renderTalents();
+        }
+
+        function setTalentSort(key) {
+            if (talentSort.key === key) {
+                talentSort.dir = talentSort.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                talentSort.key = key;
+                talentSort.dir = 'asc';
+            }
+            renderTalents();
+        }
+
+        function sortIndicator(key) {
+            if (talentSort.key !== key) return '↕';
+            return talentSort.dir === 'asc' ? '↑' : '↓';
+        }
+
+        function getTalentSortValue(row, links) {
+            if (talentSort.key === 'name') return String(row.name || '').toLowerCase();
+            if (talentSort.key === 'gift') return String(row.gift || '').toLowerCase();
+            if (talentSort.key === 'personId') return talentPersonId(row).toLowerCase();
+            if (talentSort.key === 'skillsCount') return Number(links);
+            return String(row.name || '').toLowerCase();
+        }
+
+        function renderTalents() {
+            const talents = db.select('talents') || [];
+            const search = (document.getElementById('talentSearch').value || '').toLowerCase();
+            const filtered = talents
+                .filter(function(t) {
+                    return String(t.name || '').toLowerCase().includes(search) ||
+                        talentPersonId(t).toLowerCase().includes(search) ||
+                        String(t.gift || '').toLowerCase().includes(search);
+                })
+                .map(function(t) {
+                    return { row: t, links: countLinksForTalent(t.id) };
+                });
+
+            filtered.sort(function(a, b) {
+                var av = getTalentSortValue(a.row, a.links);
+                var bv = getTalentSortValue(b.row, b.links);
+                if (typeof av === 'number' && typeof bv === 'number') {
+                    return talentSort.dir === 'asc' ? av - bv : bv - av;
+                }
+                if (av < bv) return talentSort.dir === 'asc' ? -1 : 1;
+                if (av > bv) return talentSort.dir === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('talentList').innerHTML = '<div class="empty">无人才</div>';
+                document.getElementById('talentCount').textContent = 0;
+                return;
+            }
+
+            var headerCells = '';
+            if (visibleCols.name) headerCells += '<th><button type="button" class="th-sort" onclick="setTalentSort(\'name\')">姓名 <span class="sort-mark">' + sortIndicator('name') + '</span></button></th>';
+            if (visibleCols.personId) headerCells += '<th><button type="button" class="th-sort" onclick="setTalentSort(\'personId\')">personId <span class="sort-mark">' + sortIndicator('personId') + '</span></button></th>';
+            if (visibleCols.gift) headerCells += '<th><button type="button" class="th-sort" onclick="setTalentSort(\'gift\')">恩賜 <span class="sort-mark">' + sortIndicator('gift') + '</span></button></th>';
+            if (visibleCols.skillsCount) headerCells += '<th><button type="button" class="th-sort" onclick="setTalentSort(\'skillsCount\')">技能數 <span class="sort-mark">' + sortIndicator('skillsCount') + '</span></button></th>';
+
+            var tableRows = filtered.map(function(item) {
+                var t = item.row;
+                var n = item.links;
+                var isSelected = selectedTalent && String(selectedTalent.id) === String(t.id);
+                var statusTag = '';
+                if (talents.length > 0) {
+                    if (n >= MIN_SKILLS_TARGET) {
+                        statusTag = '<span class="badge badge-ok">已達標</span>';
+                    } else if (n > 0) {
+                        statusTag = '<span class="badge badge-warn">未達標</span>';
+                    }
+                }
+                var cells = '';
+                if (visibleCols.name) cells += '<td><strong>' + (t.name || '-') + '</strong> ' + statusTag + '</td>';
+                if (visibleCols.personId) cells += '<td><code>' + talentPersonId(t) + '</code></td>';
+                if (visibleCols.gift) cells += '<td>' + (t.gift || '-') + '</td>';
+                if (visibleCols.skillsCount) cells += '<td>' + n + '</td>';
+                return '<tr class="' + (isSelected ? 'selected-row' : '') + '" onclick="selectTalent(' + JSON.stringify(t.id) + ')">' + cells + '</tr>';
+            }).join('');
+
+            var cardRows = filtered.map(function(item) {
+                var t = item.row;
+                var n = item.links;
+                var isSelected = selectedTalent && String(selectedTalent.id) === String(t.id);
+                return '<div class="talent-card ' + (isSelected ? 'selected' : '') + '" onclick="selectTalent(' + JSON.stringify(t.id) + ')">' +
+                    '<div class="line1"><span>' + (t.name || '-') + '</span><span>' + n + ' 技能</span></div>' +
+                    '<div class="line2">personId: ' + talentPersonId(t) + '</div>' +
+                    '<div class="line2">恩賜: ' + (t.gift || '-') + ' · MBTI: ' + (t.mbti || '-') + '</div>' +
+                    '<div class="line3">點擊選擇此人才</div>' +
+                    '</div>';
+            }).join('');
+
+            document.getElementById('talentList').innerHTML =
+                '<div class="talent-table-wrap"><table class="talent-table"><thead><tr>' + headerCells + '</tr></thead><tbody>' + tableRows + '</tbody></table></div>' +
+                '<div class="talent-mobile-list">' + cardRows + '</div>';
+
+            document.getElementById('talentCount').textContent = filtered.length;
+        }
+
+        function getLinkedSkillIdsForTalent(talentId) {
+            var row = (db.select('talents') || []).find(function(x) { return String(x.id) === String(talentId); });
+            if (!row || !C) return [];
+            return C.listTalentSkills(canonicalTalentKey(row)).map(function(r) { return r.skill_id_ref; });
+        }
+
+        function renderSkills() {
+            const skills = db.select('skills') || [];
+            const search = (document.getElementById('skillSearch').value || '').toLowerCase();
+            const onlyLinked = document.getElementById('filterOnlyLinked').checked && selectedTalent;
+            const linkedIds = selectedTalent ? getLinkedSkillIdsForTalent(selectedTalent.id) : [];
+            function isIdLinked(sid) {
+                return linkedIds.some(function(lid) { return String(lid) === String(sid); });
+            }
+
+            let filtered = skills.filter(function(s) { return s.name.toLowerCase().includes(search); });
+            if (onlyLinked) {
+                filtered = filtered.filter(function(s) { return isIdLinked(s.id); });
+            }
+
+            document.getElementById('skillList').innerHTML = filtered.length === 0 ? '<div class="empty">' + (onlyLinked ? '此人尚無已連結技能' : '无技能') + '</div>' :
+                filtered.map(s => {
+                    const isSelected = selectedSkills.some(ss => ss.id === s.id);
+                    const isLinked = isIdLinked(s.id);
+                    return `<div class="item ${isSelected ? 'selected' : ''}" onclick='toggleSkill(${JSON.stringify(s.id)})'>
+                        <div class="item-title">${s.name} <span class="badge badge-blue">${s.category}</span>${isLinked ? '<span class="linked-only">已連結</span>' : ''}</div>
+                        <div class="item-meta">${s.level || '中级'}</div>
+                    </div>`;
+                }).join('');
+
+            document.getElementById('skillCount').textContent = filtered.length;
+        }
+
+        function onFilterOnlyLinkedChange() {
+            const cb = document.getElementById('filterOnlyLinked');
+            if (!selectedTalent) {
+                cb.checked = false;
+                msg('請先選擇人才', 'error');
+                return;
+            }
+            renderSkills();
+        }
+
+        function selectTalent(id) {
+            selectedTalent = (db.select('talents') || []).find(function(t) { return String(t.id) === String(id); });
+            document.getElementById('filterOnlyLinked').disabled = !selectedTalent;
+            renderTalents();
+            renderSkills();
+            updateInfo();
+        }
+
+        function toggleSkill(id) {
+            const skill = (db.select('skills') || []).find(function(s) { return String(s.id) === String(id); });
+            if (!skill) return;
+            const idx = selectedSkills.findIndex(function(s) { return String(s.id) === String(id); });
+            idx > -1 ? selectedSkills.splice(idx, 1) : selectedSkills.push(skill);
+            renderSkills();
+            updateInfo();
+        }
+
+        /** 規則式推薦：恩賜對應技能名 + 分類加權，排除已連結，最多 5 個 */
+        function computeRecommendedSkills(talent) {
+            if (!talent) return [];
+            const all = db.select('skills') || [];
+            const linkedSet = {};
+            getLinkedSkillIdsForTalent(talent.id).forEach(function(id) { linkedSet[String(id)] = true; });
+            const gift = (talent.gift || '').trim();
+            const nameHints = GIFT_SKILL_HINTS[gift] || [];
+            const catHints = GIFT_CATEGORY_HINTS[gift] || [];
+
+            const candidates = all.filter(function(s) { return !linkedSet[String(s.id)]; });
+            const scored = candidates.map(function(s) {
+                var score = 0;
+                if (nameHints.indexOf(s.name) !== -1) score += 10;
+                if (catHints.indexOf(s.category) !== -1) score += 5;
+                if (gift && s.name && s.name.indexOf(gift) !== -1) score += 3;
+                return { s: s, score: score };
+            });
+            scored.sort(function(a, b) { return b.score - a.score; });
+            var positive = scored.filter(function(x) { return x.score > 0; }).map(function(x) { return x.s; }).slice(0, 5);
+            if (positive.length >= 3) return positive;
+            var pad = candidates.filter(function(s) {
+                return positive.every(function(p) { return p.id !== s.id; });
+            }).slice(0, 5 - positive.length);
+            return positive.concat(pad).slice(0, 5);
+        }
+
+        function updateCenterCoach() {
+            const el = document.getElementById('centerCoach');
+            if (!selectedTalent) {
+                el.innerHTML = '請先在左側<strong>選擇一位人才</strong>；或按「生成示例数据」載入示範資料。';
+                document.getElementById('recBox').style.display = 'none';
+                document.getElementById('pickedLine').style.display = 'none';
+                return;
+            }
+            document.getElementById('pickedLine').style.display = 'block';
+            const n = countLinksForTalent(selectedTalent.id);
+            const rec = computeRecommendedSkills(selectedTalent);
+            const names = rec.map(function(s) { return s.name; }).slice(0, 4);
+            const suggestText = names.length ? names.join('、') : '（技能庫已滿或無合適推薦）';
+            var html = '已選：<strong>' + selectedTalent.name + '</strong>｜已連結 <strong>' + n + '</strong> 項技能。';
+            if (n >= MIN_SKILLS_TARGET) {
+                html += ' <span style="color:#bbf7d0;font-weight:600;">已達人均目標，可前往「人才事工配對」精調。</span>';
+            } else {
+                html += ' <span class="coach-warn">未達人均目標（' + MIN_SKILLS_TARGET + '項），建議補齊。</span>';
+            }
+            html += '<br>建議補強：<strong>' + suggestText + '</strong>（依恩賜與技能庫規則，非 AI）。';
+            el.innerHTML = html;
+
+            const recBox = document.getElementById('recBox');
+            if (rec.length === 0) {
+                recBox.style.display = 'none';
+            } else {
+                recBox.style.display = 'block';
+                var ul = document.getElementById('recList');
+                ul.innerHTML = rec.map(function(s) {
+                    return '<li><span>' + s.name + ' <small style="opacity:0.8">(' + (s.category || '') + ')</small></span></li>';
+                }).join('');
+            }
+        }
+
+        function selectAllRecommended() {
+            if (!selectedTalent) {
+                msg('请先选择人才', 'error');
+                return;
+            }
+            const rec = computeRecommendedSkills(selectedTalent);
+            if (rec.length === 0) {
+                msg('無可推薦的未連結技能', 'error');
+                return;
+            }
+            var map = {};
+            selectedSkills.forEach(function(s) { map[s.id] = true; });
+            rec.forEach(function(s) { if (!map[s.id]) { selectedSkills.push(s); map[s.id] = true; } });
+            renderSkills();
+            updateInfo();
+            msg('已將 ' + rec.length + ' 項推薦加入右側勾選');
+        }
+
+        function updateInfo() {
+            const info = document.getElementById('selectedInfo');
+            document.getElementById('pickedCount').textContent = selectedSkills.length;
+
+            if (!selectedTalent) {
+                info.style.display = 'none';
+                document.getElementById('linkedSkillCount').textContent = '0';
+                document.getElementById('pickedLine').style.display = 'none';
+                document.getElementById('aiAssessmentBox').style.display = 'none';
+                document.getElementById('growthPathBox').style.display = 'none';
+                updateCenterCoach();
+                return;
+            }
+
+            const linkedN = countLinksForTalent(selectedTalent.id);
+            document.getElementById('linkedSkillCount').textContent = linkedN;
+            document.getElementById('pickedLine').style.display = 'block';
+
+            info.style.display = 'block';
+            document.getElementById('selectedTalentInfo').innerHTML =
+                '<p><strong>人才:</strong> ' + selectedTalent.name + ' (' + selectedTalent.gift + ')</p>';
+            document.getElementById('selectedSkillInfo').innerHTML = selectedSkills.length > 0 ?
+                '<p><strong>本次勾選:</strong> ' + selectedSkills.map(function(s) { return s.name; }).join(', ') + '</p>' :
+                '<p><strong>本次勾選:</strong> 無（在右側點技能以添加）</p>';
+            updateCenterCoach();
+        }
+
+        function addSkill() {
+            if (!selectedTalent) {
+                msg('请先选择人才', 'error');
+                return;
+            }
+
+            if (selectedSkills.length === 0) {
+                msg('请至少选择一项技能', 'error');
+                return;
+            }
+
+            let count = 0;
+            selectedSkills.forEach(skill => {
+                var r = C.addTalentSkillLink(canonicalTalentKey(selectedTalent), Object.assign({}, skill, {
+                    skill_code: skill.name,
+                    level: skill.level || '中级'
+                }));
+                if (r && r.success) count++;
+            });
+
+            msg(`添加成功: ${count} 项技能`);
+            selectedSkills = [];
+            renderTalents();
+            renderSkills();
+            updateStats();
+            updateInfo();
+        }
+
+        function removeSkill() {
+            if (!selectedTalent) {
+                msg('请先选择人才', 'error');
+                return;
+            }
+
+            if (selectedSkills.length === 0) {
+                if (confirm('确定要移除该人才的所有技能吗？')) {
+                    C.clearTalentSkills(canonicalTalentKey(selectedTalent));
+                    msg('已移除所有技能');
+                }
+            } else {
+                selectedSkills.forEach(skill => {
+                    C.removeTalentSkillLink(canonicalTalentKey(selectedTalent), skill.id);
+                });
+                msg(`已移除 ${selectedSkills.length} 项技能`);
+                selectedSkills = [];
+            }
+
+            renderTalents();
+            renderSkills();
+            updateStats();
+            updateInfo();
+        }
+
+        function viewProfile() {
+            if (!selectedTalent) {
+                msg('请先选择人才', 'error');
+                return;
+            }
+
+            const linkRows = C.listTalentSkills(canonicalTalentKey(selectedTalent));
+            const skills = linkRows.map(function(r) {
+                var sid = r.skill_id_ref;
+                return (db.select('skills') || []).find(function(s) { return String(s.id) === String(sid); });
+            }).filter(Boolean);
+            let info = `${selectedTalent.name} 的技能档案：\n\n`;
+            info += `MBTI: ${selectedTalent.mbti}\n`;
+            info += `属灵恩赐: ${selectedTalent.gift}\n\n`;
+            info += `技能列表 (${skills.length}项):\n`;
+            skills.forEach(s => {
+                info += `• ${s.name} (${s.category}) - ${s.level}\n`;
+            });
+            
+            alert(info);
+        }
+
+        function recommendSkills() {
+            if (!selectedTalent) {
+                msg('请先选择人才', 'error');
+                return;
+            }
+            const rec = computeRecommendedSkills(selectedTalent);
+            if (rec.length === 0) {
+                msg('该人才已連結所有技能或技能庫為空', 'error');
+                return;
+            }
+            selectedSkills = rec.slice();
+            renderSkills();
+            updateInfo();
+            msg('已依規則選取 ' + selectedSkills.length + ' 項技能（可再按「添加技能」）');
+        }
+
+        function generateAiAssessmentV1() {
+            if (!selectedTalent) {
+                msg('请先选择人才', 'error');
+                return;
+            }
+            var links = C.listTalentSkills(canonicalTalentKey(selectedTalent));
+            var skillNames = links.map(function(x) { return x.skill_name || x.skill_code; }).filter(Boolean);
+            var rec = computeRecommendedSkills(selectedTalent);
+            var readiness = Math.min(100, 40 + (links.length * 15) + (selectedTalent.mbti && selectedTalent.mbti.charAt(0) === 'E' ? 8 : 4));
+            var level = readiness >= 85 ? '高' : (readiness >= 70 ? '中' : '基礎');
+            var strengths = skillNames.length ? skillNames.slice(0, 4).join('、') : '目前尚未建立技能映射';
+            var gaps = rec.length ? rec.map(function(x) { return x.name; }).slice(0, 3).join('、') : '暫無明顯缺口';
+            var summary = {
+                readiness: readiness,
+                level: level,
+                linkedSkills: links.length,
+                gift: selectedTalent.gift || ''
+            };
+            var html = '<h4>🤖 AI 評估 v1（規則版）</h4>' +
+                '<div><strong>人才：</strong>' + (selectedTalent.name || '-') + ' ｜ <strong>恩賜：</strong>' + (selectedTalent.gift || '-') + '</div>' +
+                '<div><strong>事奉準備度：</strong>' + readiness + '/100（' + level + '）</div>' +
+                '<div><strong>目前優勢：</strong>' + strengths + '</div>' +
+                '<div><strong>建議補強：</strong>' + gaps + '</div>' +
+                '<div class="meta">規則：恩賜 + 已連結技能數 + MBTI 外向傾向（僅作輔助參考）</div>';
+            var box = document.getElementById('aiAssessmentBox');
+            box.innerHTML = html;
+            box.style.display = 'block';
+            C.attachAssessmentToTalent(canonicalTalentKey(selectedTalent), 'ai_assessment_v1', {
+                linkedSkills: links,
+                recommendedSkills: rec
+            }, summary);
+            msg('已生成 AI 評估 v1，並寫入 canonical assessments');
+        }
+
+        function buildGrowthPathV1() {
+            if (!selectedTalent) {
+                msg('请先选择人才', 'error');
+                return;
+            }
+            var links = C.listTalentSkills(canonicalTalentKey(selectedTalent));
+            var rec = computeRecommendedSkills(selectedTalent);
+            var plan30 = links.length < MIN_SKILLS_TARGET
+                ? '30天：先補齊 ' + Math.max(0, MIN_SKILLS_TARGET - links.length) + ' 項核心技能映射，完成一次小型服事任務。'
+                : '30天：在現有崗位連續服事 2-4 次，紀錄回饋與代禱事項。';
+            var plan60 = '60天：聚焦補強技能（建議：' + (rec.map(function(x) { return x.name; }).slice(0, 2).join('、') || '無') + '），並安排一次同工陪跑。';
+            var plan90 = '90天：與牧者/組長回顧配對結果，決定維持、調整或擴展事奉角色。';
+            var html = '<h4>📈 成長路徑 v1（30/60/90）</h4>' +
+                '<div><strong>30天：</strong>' + plan30 + '</div>' +
+                '<div><strong>60天：</strong>' + plan60 + '</div>' +
+                '<div><strong>90天：</strong>' + plan90 + '</div>' +
+                '<div class="meta">路徑依恩賜與技能映射生成，建議搭配 talent_tracking 持續追蹤。</div>';
+            var box = document.getElementById('growthPathBox');
+            box.innerHTML = html;
+            box.style.display = 'block';
+            C.attachAssessmentToTalent(canonicalTalentKey(selectedTalent), 'growth_path_v1', {
+                linkedSkillCount: links.length,
+                recommendedSkills: rec
+            }, {
+                stage30: plan30,
+                stage60: plan60,
+                stage90: plan90
+            });
+            msg('已生成 成長路徑 v1，並寫入 canonical assessments');
+        }
+
+        function exportTalent() {
+            const st = C.getStore();
+            const data = {
+                talents: db.select('talents'),
+                skills: db.select('skills'),
+                talent_skill_canonical: st.talent_skill,
+                schema_version: st.schema_version
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `talent_skills_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+
+            msg('数据已导出');
+        }
+
+        function exportTalentCsv() {
+            const talents = db.select('talents') || [];
+            const linkRows = C ? C.getStore().talent_skill : [];
+            const skillMap = {};
+            (db.select('skills') || []).forEach(function(s) { skillMap[String(s.id)] = s; });
+            const talentByCanonical = {};
+            talents.forEach(function(t) { talentByCanonical[canonicalTalentKey(t)] = t; });
+
+            const header = (window.SMART_MINISTRY_REPORT_COLUMNS && window.SMART_MINISTRY_REPORT_COLUMNS.SKILL) || [
+                '姓名',
+                'personId',
+                '主要恩賜',
+                'MBTI',
+                '崗位',
+                '配對分數',
+                '狀態',
+                '來源',
+                '時間',
+                '技能名稱',
+                '技能分類',
+                '技能等級'
+            ];
+
+            const rows = linkRows.map(function(link) {
+                const t = talentByCanonical[String(link.talent_id)] || {};
+                const sk = skillMap[String(link.skill_id_ref)] || {};
+                return [
+                    t.name || '',
+                    talentPersonId(t),
+                    t.gift || '',
+                    t.mbti || '',
+                    '',
+                    '',
+                    'skill_linked',
+                    link.source || 'canonical_talent_skill',
+                    link.updated_at || link.created_at || '',
+                    link.skill_name || sk.name || link.skill_code || '',
+                    sk.category || link.category || '',
+                    sk.level || link.level || ''
+                ];
+            });
+
+            if (!rows.length) {
+                msg('尚無技能映射資料可匯出', 'error');
+                return;
+            }
+
+            const csv = [header].concat(rows).map(function(r) {
+                return r.map(function(v) {
+                    const text = String(v == null ? '' : v).replace(/"/g, '""');
+                    return '"' + text + '"';
+                }).join(',');
+            }).join('\n');
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'talent_skill_export_' + new Date().toISOString().slice(0, 10) + '.csv';
+            a.click();
+            msg('CSV 已匯出（欄位對齊配對報表）');
+        }
+
+        function clearAllData() {
+            if (!confirm('确定要清空所有数据吗？此操作不可恢复！')) return;
+            
+            // 清空 localStorage
+            const talents = db.select('talents') || [];
+            const skills = db.select('skills') || [];
+            talents.forEach(t => db.delete('talents', t.id));
+            skills.forEach(s => db.delete('skills', s.id));
+            try {
+                localStorage.removeItem('bible100_smart_ministry_main');
+                localStorage.removeItem('smart_ministry_canonical_migrated_v1');
+            } catch (e) {}
+            
+            // 刷新显示
+            selectedTalent = null;
+            selectedSkills = [];
+            document.getElementById('filterOnlyLinked').checked = false;
+            document.getElementById('filterOnlyLinked').disabled = true;
+            loadData();
+            
+            msg('所有数据已清空');
+        }
+
+        function updateStats() {
+            const talents = db.select('talents') || [];
+            const skills = db.select('skills') || [];
+            const mappings = C ? C.getStore().talent_skill : [];
+            var below = 0;
+            talents.forEach(function(t) {
+                if (countLinksForTalent(t.id) < MIN_SKILLS_TARGET) below++;
+            });
+            var avg = talents.length > 0 ? (mappings.length / talents.length) : 0;
+            var withAnySkill = 0;
+            talents.forEach(function(t) {
+                if (countLinksForTalent(t.id) > 0) withAnySkill++;
+            });
+            var tagPct = talents.length > 0 ? Math.round((withAnySkill / talents.length) * 100) : 0;
+
+            document.getElementById('totalTalents').textContent = talents.length;
+            document.getElementById('totalSkills').textContent = skills.length;
+            document.getElementById('totalMappings').textContent = mappings.length;
+            document.getElementById('avgSkills').textContent = talents.length > 0 ? avg.toFixed(1) : 0;
+
+            document.getElementById('taggedWithSkills').textContent = withAnySkill;
+            document.getElementById('taggedTotalTalents').textContent = talents.length;
+            document.getElementById('taggedPct').textContent = talents.length > 0 ? tagPct + '%' : '—';
+
+            var barTag = document.getElementById('barTaggedFill');
+            var barAvg = document.getElementById('barAvgFill');
+            var barTagLbl = document.getElementById('barTaggedPctLabel');
+            var barAvgLbl = document.getElementById('barAvgPctLabel');
+            if (barTag) barTag.style.width = (talents.length > 0 ? tagPct : 0) + '%';
+            if (barTagLbl) barTagLbl.textContent = talents.length > 0 ? tagPct + '%' : '—';
+            var avgBarPct = talents.length > 0 ? Math.min(100, Math.round((avg / MIN_SKILLS_TARGET) * 100)) : 0;
+            if (barAvg) barAvg.style.width = avgBarPct + '%';
+            if (barAvgLbl) barAvgLbl.textContent = talents.length > 0 ? avgBarPct + '%（對目標 ' + MIN_SKILLS_TARGET + '）' : '—';
+
+            var tagEl = document.getElementById('taggedStat');
+            if (talents.length > 0 && tagPct >= 100) {
+                tagEl.classList.add('stat-ok');
+            } else {
+                tagEl.classList.remove('stat-ok');
+            }
+
+            var avgEl = document.getElementById('avgSkillsStat');
+            if (talents.length > 0 && avg < MIN_SKILLS_TARGET) {
+                avgEl.classList.add('stat-warn');
+            } else {
+                avgEl.classList.remove('stat-warn');
+            }
+
+            var bstat = document.getElementById('belowTargetStat');
+            if (talents.length > 0 && below > 0) {
+                bstat.style.display = '';
+                document.getElementById('belowTargetCount').textContent = below;
+            } else {
+                bstat.style.display = 'none';
+            }
+        }
+
+        function filterTalents() { renderTalents(); }
+        function filterSkills() { renderSkills(); }
+
+        function msg(text, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `msg ${type === 'error' ? 'error' : ''}`;
+            div.textContent = text;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

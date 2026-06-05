@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>聖詩管理系統 - 主頁面</title>
+  <style type="text/css">
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Microsoft YaHei", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background:#f6f7fb;
+      font-size: 12px;
+    }
+
+    /* Topbar */
+    .topbar {
+      position: fixed;
+      top:0;
+      left:0;
+      right:0;
+      height:55px;
+      background:#0b5fa5;
+      color:#fff;
+      border-bottom:3px solid #2aa5ff;
+      z-index:999;
+    }
+
+    .topbar-inner {
+      display: table;
+      width:100%;
+      height:55px;
+    }
+
+    .brand {
+      display: table-cell;
+      vertical-align: middle;
+      padding-left:14px;
+      font-weight:bold;
+      font-size:13px;
+    }
+
+    .back-link {
+      display: table-cell;
+      vertical-align: middle;
+      text-align:right;
+      padding-right:10px;
+    }
+
+    .back-link a {
+      display:inline-block;
+      margin:0 2px;
+      padding:4px 6px;
+      background:#2aa5ff;
+      color:#fff;
+      text-decoration:none;
+      border-radius:3px;
+      font-weight:normal;
+      font-size: 9px;
+      transition: all 0.2s ease;
+    }
+
+    .back-link a:hover {
+      filter:brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    /* Main area with 2 iframes */
+    .main {
+      margin-top: 55px;
+    }
+
+    table.layout {
+      width: 100%;
+      height: calc(100vh - 55px);
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    td.left {
+      width: 250px;
+      background: #eef6ff;
+      border-right: 2px solid #2aa5ff;
+      vertical-align: top;
+    }
+
+    td.right {
+      vertical-align: top;
+    }
+
+    iframe {
+      border: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #sidebarFrame {
+      background: #eef6ff;
+    }
+
+    #contentFrame {
+      background: #ffffff;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .brand {
+        font-size: 11px;
+        padding-left: 10px;
+      }
+
+      .back-link a {
+        padding: 3px 5px;
+        margin: 0 1px;
+        font-size: 8px;
+      }
+
+      td.left {
+        width: 200px;
+      }
+
+      .topbar-inner {
+        height: 45px;
+      }
+
+      .topbar {
+        height: 45px;
+      }
+
+      .main {
+        margin-top: 45px;
+      }
+
+      table.layout {
+        height: calc(100vh - 45px);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .brand {
+        font-size: 10px;
+        padding-left: 6px;
+      }
+
+      .back-link a {
+        padding: 2px 4px;
+        margin: 0 1px;
+        font-size: 7px;
+      }
+
+      td.left {
+        width: 160px;
+      }
+    }
+  </style>
+</head>
+<body>
+<h1 class="page-main-title">index</h1>
+
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">🎵 聖詩管理系統 - 5本詩集智能整合 <small style="color: #ccc; font-size: 9px;">Hymn Management System - 5 Hymnals Integration</small></div>
+      <div class="back-link">
+        <a href="../index_v5.html" id="backHomeLink">返回主頁</a>
+        <a href="landing.html" target="contentFrame">首頁</a>
+        <a href="hymn/hymn_main_index.html" target="contentFrame">詩歌主控台</a>
+        <a href="dashboard.html" target="contentFrame">儀表板</a>
+        <a href="sidebar_playlist.html" target="sidebarFrame">☰ 播放列表</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <table class="layout">
+      <tr>
+        <td class="left">
+          <iframe id="sidebarFrame" name="sidebarFrame" title="Sidebar" src="sidebar_playlist.html"></iframe>
+        </td>
+        <td class="right">
+          <iframe id="contentFrame" name="contentFrame" title="Content" src="playlist_placeholder.html"></iframe>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <script type="text/javascript">
+    // 統一iframe通信處理系統
+    class HymnFrameManager {
+      constructor() {
+        this.init();
+      }
+      
+      init() {
+        this.setupMessageListener();
+        this.setupFrameLoadHandlers();
+      }
+      
+      setupMessageListener() {
+        // 監聽來自iframe的消息
+        window.addEventListener('message', (event) => {
+          if (event.data.type === 'navigate') {
+            console.log('📨 收到導航消息:', event.data.url);
+            this.navigateContentFrame(event.data.url);
+          }
+        });
+      }
+      
+      setupFrameLoadHandlers() {
+        const sidebarFrame = document.getElementById('sidebarFrame');
+        const contentFrame = document.getElementById('contentFrame');
+        
+        sidebarFrame.onload = () => {
+          console.log('✅ 聖詩側邊欄載入完成');
+        };
+        
+        contentFrame.onload = () => {
+          console.log('✅ 聖詩內容框架載入完成');
+        };
+      }
+      
+      navigateContentFrame(url) {
+        const contentFrame = document.getElementById('contentFrame');
+        if (contentFrame) {
+          contentFrame.src = url;
+          console.log('✅ 聖詩內容框架導航到:', url);
+        }
+      }
+    }
+
+    function initPage() {
+      // file:// 用相對路徑，https:// 用絕對路徑，確保 PC 與雲端都能正確返回主頁
+      var backLink = document.getElementById('backHomeLink');
+      if (backLink && window.location.protocol === 'file:') {
+        backLink.href = '../index.html';
+      }
+      // 初始化聖詩框架管理器
+      new HymnFrameManager();
+      
+      console.log('🎵 聖詩管理系統初始化完成');
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPage);
+    } else {
+      initPage();
+    }
+  </script>
+  <script src="../js/shell_contract.js"></script>
+  <script>
+    if (window.B100ShellContract && typeof window.B100ShellContract.validate === 'function') {
+      window.B100ShellContract.validate('hymn_management/index.html');
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+

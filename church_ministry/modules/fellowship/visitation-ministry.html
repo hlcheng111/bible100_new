@@ -1,0 +1,621 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>探訪事工 · Visitation Ministry | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">探訪事工管理</h1>
+        
+        <!-- 統計概覽 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">本月計劃</h3>
+                <p class="text-3xl font-bold text-blue-600" id="monthlyPlans">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">已完成</h3>
+                <p class="text-3xl font-bold text-green-600" id="completedVisits">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">待完成</h3>
+                <p class="text-3xl font-bold text-yellow-600" id="pendingVisits">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">逾期</h3>
+                <p class="text-3xl font-bold text-red-600" id="overdueVisits">0</p>
+            </div>
+        </div>
+
+        <!-- 主要功能區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 探訪計劃管理 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold">探訪計劃管理</h3>
+                            <button onclick="showAddPlanModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                新增計劃
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="plansList" class="space-y-4">
+                            <!-- 計劃列表將在這裡動態生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 側邊欄 -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">快速操作</h4>
+                    <button onclick="showAddRecordModal()" class="w-full bg-green-600 text-white py-3 px-4 rounded hover:bg-green-700 mb-3">
+                        新增探訪記錄
+                    </button>
+                    <button onclick="exportData()" class="w-full bg-gray-600 text-white py-3 px-4 rounded hover:bg-gray-700">
+                        匯出數據
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">提醒事項</h4>
+                    <div id="remindersList">
+                        <!-- 提醒事項將在這裡動態生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 探訪記錄列表 -->
+        <div class="mt-8">
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold">探訪記錄</h3>
+                </div>
+                <div class="p-6">
+                    <div id="visitsList" class="space-y-4">
+                        <!-- 探訪記錄將在這裡動態生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯探訪計劃模態框 -->
+    <div id="planModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" id="planModalTitle">新增探訪計劃</h3>
+                    <button onclick="closePlanModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="planForm" class="space-y-4">
+                    <input type="hidden" id="planId">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">計劃名稱</label>
+                            <input type="text" id="planTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">探訪類型</label>
+                            <select id="planType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="regular">定期探訪</option>
+                                <option value="irregular">不定期探訪</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">目標對象</label>
+                            <input type="text" id="targetPerson" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">探訪者</label>
+                            <input type="text" id="visitor" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">地區</label>
+                            <input type="text" id="area" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">地址</label>
+                            <input type="text" id="address" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">計劃日期</label>
+                            <input type="date" id="plannedDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">頻率</label>
+                            <select id="frequency" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="once">一次性</option>
+                                <option value="weekly">每週</option>
+                                <option value="monthly">每月</option>
+                                <option value="quarterly">每季</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                        <textarea id="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closePlanModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯探訪記錄模態框 -->
+    <div id="recordModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" id="recordModalTitle">新增探訪記錄</h3>
+                    <button onclick="closeRecordModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="recordForm" class="space-y-4">
+                    <input type="hidden" id="recordId">
+                    <input type="hidden" id="planIdForRecord">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">探訪日期</label>
+                            <input type="date" id="visitDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">被探者</label>
+                            <input type="text" id="visitedPerson" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">探訪者</label>
+                            <input type="text" id="visitorName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">地區</label>
+                            <input type="text" id="visitArea" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">探訪內容</label>
+                        <textarea id="visitContent" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">跟進事項</label>
+                        <textarea id="followUpNotes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">下次探訪計劃</label>
+                        <input type="date" id="nextVisitDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeRecordModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 基本數據結構
+        let visitPlans = [];
+        let visitRecords = [];
+
+        // 頁面載入
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            loadDemoData();
+            renderData();
+            bindEvents();
+        });
+
+        // 綁定事件
+        function bindEvents() {
+            document.getElementById('planForm').addEventListener('submit', handlePlanSubmit);
+            document.getElementById('recordForm').addEventListener('submit', handleRecordSubmit);
+        }
+
+        // 載入數據
+        function loadData() {
+            visitPlans = JSON.parse(localStorage.getItem('visitPlans')) || [];
+            visitRecords = JSON.parse(localStorage.getItem('visitRecords')) || [];
+        }
+
+        // 載入演示數據
+        function loadDemoData() {
+            if (visitPlans.length === 0) {
+                visitPlans = [
+                    {
+                        id: '1',
+                        title: '長者定期探訪',
+                        type: 'regular',
+                        targetPerson: '張奶奶',
+                        visitor: '李姊妹',
+                        area: '北區',
+                        address: '北區花園街123號',
+                        plannedDate: '2024-01-15',
+                        frequency: 'monthly',
+                        status: 'pending',
+                        description: '每月定期探訪長者，關心生活狀況'
+                    },
+                    {
+                        id: '2',
+                        title: '新會友歡迎探訪',
+                        type: 'irregular',
+                        targetPerson: '王弟兄',
+                        visitor: '陳牧師',
+                        area: '中區',
+                        address: '中區中心路456號',
+                        plannedDate: '2024-01-20',
+                        frequency: 'once',
+                        status: 'pending',
+                        description: '歡迎新會友加入教會大家庭'
+                    }
+                ];
+                localStorage.setItem('visitPlans', JSON.stringify(visitPlans));
+            }
+
+            if (visitRecords.length === 0) {
+                visitRecords = [
+                    {
+                        id: '1',
+                        planId: '1',
+                        visitDate: '2024-01-10',
+                        visitedPerson: '張奶奶',
+                        visitorName: '李姊妹',
+                        visitArea: '北區',
+                        visitContent: '探訪張奶奶，關心其身體狀況和生活需要，一起禱告',
+                        followUpNotes: '需要安排義工協助購物',
+                        nextVisitDate: '2024-02-10',
+                        status: 'completed'
+                    }
+                ];
+                localStorage.setItem('visitRecords', JSON.stringify(visitRecords));
+            }
+        }
+
+        // 渲染數據
+        function renderData() {
+            renderPlans();
+            renderVisits();
+            renderReminders();
+            updateStatistics();
+        }
+
+        // 渲染計劃列表
+        function renderPlans() {
+            const plansList = document.getElementById('plansList');
+            if (visitPlans.length === 0) {
+                plansList.innerHTML = '<p class="text-gray-500">暫無探訪計劃</p>';
+                return;
+            }
+
+            plansList.innerHTML = visitPlans.map(plan => `
+                <div class="border rounded-lg p-4">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <h4 class="font-semibold">${plan.title}</h4>
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    plan.type === 'regular' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'
+                                }">
+                                    ${plan.type === 'regular' ? '定期' : '不定期'}
+                                </span>
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    plan.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                    plan.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                                }">
+                                    ${plan.status === 'completed' ? '已完成' : 
+                                      plan.status === 'pending' ? '待完成' : '逾期'}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">目標：${plan.targetPerson} | 探訪者：${plan.visitor}</p>
+                            <p class="text-sm text-gray-600 mb-1">日期：${plan.plannedDate} | 地區：${plan.area}</p>
+                            <p class="text-sm text-gray-600 mb-1">地址：${plan.address} | 頻率：${getFrequencyText(plan.frequency)}</p>
+                            ${plan.description ? `<p class="text-sm text-gray-600">描述：${plan.description}</p>` : ''}
+                        </div>
+                        <div class="flex space-x-2 ml-4">
+                            <button onclick="editPlan('${plan.id}')" class="text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-300 rounded hover:bg-blue-50">編輯</button>
+                            <button onclick="deletePlan('${plan.id}')" class="text-red-600 hover:text-red-800 px-3 py-1 border border-red-300 rounded hover:bg-red-50">刪除</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染探訪記錄
+        function renderVisits() {
+            const visitsList = document.getElementById('visitsList');
+            if (visitRecords.length === 0) {
+                visitsList.innerHTML = '<p class="text-gray-500">暫無探訪記錄</p>';
+                return;
+            }
+
+            visitsList.innerHTML = visitRecords.map(record => `
+                <div class="border rounded-lg p-4">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <h4 class="font-semibold">${record.visitedPerson}</h4>
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    已完成
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">探訪者：${record.visitorName} | 日期：${record.visitDate}</p>
+                            <p class="text-sm text-gray-600 mb-1">地區：${record.visitArea}</p>
+                            <p class="text-sm text-gray-600 mb-1">探訪內容：${record.visitContent}</p>
+                            ${record.followUpNotes ? `<p class="text-sm text-gray-600 mb-1">跟進事項：${record.followUpNotes}</p>` : ''}
+                            ${record.nextVisitDate ? `<p class="text-sm text-gray-600">下次計劃：${record.nextVisitDate}</p>` : ''}
+                        </div>
+                        <div class="flex space-x-2 ml-4">
+                            <button onclick="editRecord('${record.id}')" class="text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-300 rounded hover:bg-blue-50">編輯</button>
+                            <button onclick="deleteRecord('${record.id}')" class="text-red-600 hover:text-red-800 px-3 py-1 border border-red-300 rounded hover:bg-red-50">刪除</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染提醒事項
+        function renderReminders() {
+            const remindersList = document.getElementById('remindersList');
+            const today = new Date();
+            const reminders = [];
+
+            // 檢查逾期計劃
+            visitPlans.forEach(plan => {
+                const planDate = new Date(plan.plannedDate);
+                if (planDate < today && plan.status === 'pending') {
+                    reminders.push(`逾期計劃：${plan.title}`);
+                }
+            });
+
+            if (reminders.length === 0) {
+                remindersList.innerHTML = '<p class="text-gray-500 text-sm">暫無提醒事項</p>';
+                return;
+            }
+
+            remindersList.innerHTML = reminders.map(reminder => 
+                `<div class="text-sm text-red-600 mb-2">⚠️ ${reminder}</div>`
+            ).join('');
+        }
+
+        // 更新統計
+        function updateStatistics() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            const monthlyPlans = visitPlans.filter(plan => {
+                const planDate = new Date(plan.plannedDate);
+                return planDate.getMonth() === currentMonth && planDate.getFullYear() === currentYear;
+            }).length;
+            
+            const completedVisits = visitRecords.filter(record => record.status === 'completed').length;
+            const pendingVisits = visitPlans.filter(plan => plan.status === 'pending').length;
+            const overdueVisits = visitPlans.filter(plan => {
+                const planDate = new Date(plan.plannedDate);
+                return planDate < new Date() && plan.status === 'pending';
+            }).length;
+
+            document.getElementById('monthlyPlans').textContent = monthlyPlans;
+            document.getElementById('completedVisits').textContent = completedVisits;
+            document.getElementById('pendingVisits').textContent = pendingVisits;
+            document.getElementById('overdueVisits').textContent = overdueVisits;
+        }
+
+        // 輔助函數
+        function getFrequencyText(frequency) {
+            const frequencyMap = {
+                'once': '一次性',
+                'weekly': '每週',
+                'monthly': '每月',
+                'quarterly': '每季'
+            };
+            return frequencyMap[frequency] || frequency;
+        }
+
+        // 顯示新增計劃模態框
+        function showAddPlanModal() {
+            document.getElementById('planModalTitle').textContent = '新增探訪計劃';
+            document.getElementById('planForm').reset();
+            document.getElementById('planId').value = '';
+            document.getElementById('planModal').classList.remove('hidden');
+        }
+
+        // 顯示編輯計劃模態框
+        function editPlan(planId) {
+            const plan = visitPlans.find(p => p.id === planId);
+            if (!plan) return;
+
+            document.getElementById('planModalTitle').textContent = '編輯探訪計劃';
+            document.getElementById('planId').value = plan.id;
+            document.getElementById('planTitle').value = plan.title;
+            document.getElementById('planType').value = plan.type;
+            document.getElementById('targetPerson').value = plan.targetPerson;
+            document.getElementById('visitor').value = plan.visitor;
+            document.getElementById('area').value = plan.area;
+            document.getElementById('address').value = plan.address;
+            document.getElementById('plannedDate').value = plan.plannedDate;
+            document.getElementById('frequency').value = plan.frequency;
+            document.getElementById('description').value = plan.description || '';
+
+            document.getElementById('planModal').classList.remove('hidden');
+        }
+
+        // 關閉計劃模態框
+        function closePlanModal() {
+            document.getElementById('planModal').classList.add('hidden');
+        }
+
+        // 處理計劃表單提交
+        function handlePlanSubmit(e) {
+            e.preventDefault();
+            
+            const planId = document.getElementById('planId').value;
+            const planData = {
+                title: document.getElementById('planTitle').value,
+                type: document.getElementById('planType').value,
+                targetPerson: document.getElementById('targetPerson').value,
+                visitor: document.getElementById('visitor').value,
+                area: document.getElementById('area').value,
+                address: document.getElementById('address').value,
+                plannedDate: document.getElementById('plannedDate').value,
+                frequency: document.getElementById('frequency').value,
+                description: document.getElementById('description').value,
+                status: 'pending'
+            };
+
+            if (planId) {
+                // 編輯現有計劃
+                const index = visitPlans.findIndex(p => p.id === planId);
+                if (index !== -1) {
+                    visitPlans[index] = { ...visitPlans[index], ...planData };
+                }
+            } else {
+                // 新增計劃
+                planData.id = Date.now().toString();
+                planData.createdAt = new Date().toISOString();
+                visitPlans.push(planData);
+            }
+
+            localStorage.setItem('visitPlans', JSON.stringify(visitPlans));
+            closePlanModal();
+            renderData();
+        }
+
+        // 刪除計劃
+        function deletePlan(planId) {
+            if (confirm('確定要刪除這個探訪計劃嗎？')) {
+                visitPlans = visitPlans.filter(p => p.id !== planId);
+                localStorage.setItem('visitPlans', JSON.stringify(visitPlans));
+                renderData();
+            }
+        }
+
+        // 顯示新增記錄模態框
+        function showAddRecordModal() {
+            document.getElementById('recordModalTitle').textContent = '新增探訪記錄';
+            document.getElementById('recordForm').reset();
+            document.getElementById('recordId').value = '';
+            document.getElementById('planIdForRecord').value = '';
+            document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('recordModal').classList.remove('hidden');
+        }
+
+        // 顯示編輯記錄模態框
+        function editRecord(recordId) {
+            const record = visitRecords.find(r => r.id === recordId);
+            if (!record) return;
+
+            document.getElementById('recordModalTitle').textContent = '編輯探訪記錄';
+            document.getElementById('recordId').value = record.id;
+            document.getElementById('planIdForRecord').value = record.planId;
+            document.getElementById('visitDate').value = record.visitDate;
+            document.getElementById('visitedPerson').value = record.visitedPerson;
+            document.getElementById('visitorName').value = record.visitorName;
+            document.getElementById('visitArea').value = record.visitArea;
+            document.getElementById('visitContent').value = record.visitContent;
+            document.getElementById('followUpNotes').value = record.followUpNotes || '';
+            document.getElementById('nextVisitDate').value = record.nextVisitDate || '';
+
+            document.getElementById('recordModal').classList.remove('hidden');
+        }
+
+        // 關閉記錄模態框
+        function closeRecordModal() {
+            document.getElementById('recordModal').classList.add('hidden');
+        }
+
+        // 處理記錄表單提交
+        function handleRecordSubmit(e) {
+            e.preventDefault();
+            
+            const recordId = document.getElementById('recordId').value;
+            const recordData = {
+                planId: document.getElementById('planIdForRecord').value,
+                visitDate: document.getElementById('visitDate').value,
+                visitedPerson: document.getElementById('visitedPerson').value,
+                visitorName: document.getElementById('visitorName').value,
+                visitArea: document.getElementById('visitArea').value,
+                visitContent: document.getElementById('visitContent').value,
+                followUpNotes: document.getElementById('followUpNotes').value,
+                nextVisitDate: document.getElementById('nextVisitDate').value,
+                status: 'completed'
+            };
+
+            if (recordId) {
+                // 編輯現有記錄
+                const index = visitRecords.findIndex(r => r.id === recordId);
+                if (index !== -1) {
+                    visitRecords[index] = { ...visitRecords[index], ...recordData };
+                }
+            } else {
+                // 新增記錄
+                recordData.id = Date.now().toString();
+                recordData.createdAt = new Date().toISOString();
+                visitRecords.push(recordData);
+            }
+
+            localStorage.setItem('visitRecords', JSON.stringify(visitRecords));
+            closeRecordModal();
+            renderData();
+        }
+
+        // 刪除記錄
+        function deleteRecord(recordId) {
+            if (confirm('確定要刪除這個探訪記錄嗎？')) {
+                visitRecords = visitRecords.filter(r => r.id !== recordId);
+                localStorage.setItem('visitRecords', JSON.stringify(visitRecords));
+                renderData();
+            }
+        }
+
+        // 匯出數據
+        function exportData() {
+            const csvContent = generateCSV();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `探訪數據_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 生成CSV數據
+        function generateCSV() {
+            const headers = ['類型', '計劃名稱', '目標對象', '探訪者', '地區', '地址', '計劃日期', '頻率', '狀態', '描述'];
+            const rows = visitPlans.map(plan => [
+                plan.type === 'regular' ? '定期' : '不定期',
+                plan.title,
+                plan.targetPerson,
+                plan.visitor,
+                plan.area,
+                plan.address,
+                plan.plannedDate,
+                getFrequencyText(plan.frequency),
+                plan.status === 'completed' ? '已完成' : plan.status === 'pending' ? '待完成' : '逾期',
+                plan.description || ''
+            ]);
+
+            return [headers, ...rows].map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('
+');
+        }
+    </script>
+</body>
+</html>

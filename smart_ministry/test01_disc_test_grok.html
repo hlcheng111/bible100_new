@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DISC 行為風格 · 進階自我認識工具</title>
+    <style>
+        body { font-family: "Noto Sans TC","Microsoft YaHei",Arial,sans-serif; background:#f6f7fb; color:#333; font-size:12px; margin:0; padding:16px; }
+        .header { background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%); color:#fff; padding:18px; border-radius:10px; margin-bottom:14px; text-align:center; }
+        .header h1 { margin:0 0 6px; font-size:18px; }
+        .header p { margin:0; font-size:11px; opacity:.95; }
+        .adv-box { max-width:920px; margin:0 auto 14px; padding:12px 14px; background:#fffbeb; border:1px solid #f59e0b; border-radius:8px; font-size:11px; color:#92400e; line-height:1.55; }
+        .test-container { background:#fff; padding:16px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.08); max-width:920px; margin:0 auto; }
+        .page-intro { font-size:11px; color:#475569; margin-bottom:12px; padding:10px; background:#f1f5f9; border-radius:8px; border:1px solid #e2e8f0; }
+        .page-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+        .page-tab { border:1px solid #cbd5e1; background:#fff; padding:8px 12px; border-radius:999px; font-size:11px; cursor:pointer; font-weight:600; color:#475569; }
+        .page-tab.active { background:#ede9fe; border-color:#7c3aed; color:#5b21b6; }
+        .progress-bar { background:#e5e7eb; border-radius:10px; height:10px; margin-bottom:12px; overflow:hidden; }
+        .progress-fill { background:linear-gradient(90deg,#7c3aed,#5b21b6); height:100%; width:0%; transition:width .2s; }
+        .q-item { display:flex; flex-direction:column; align-items:stretch; gap:8px; background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #7c3aed; border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+        .q-item.missing { border-color:#ef4444; }
+        .q-title { width:100%; font-size:11px; font-weight:700; color:#1e293b; margin:0; line-height:1.4; }
+        .q-scale { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-start; align-items:center; width:100%; }
+        .pill { display:flex; align-items:center; justify-content:center; min-height:28px; min-width:30px; padding:2px 6px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; cursor:pointer; font-size:11px; user-select:none; }
+        .pill:hover { border-color:#7c3aed; background:#f5f3ff; }
+        .pill input { position:absolute; opacity:0; width:0; height:0; }
+        .pill.selected { background:#ede9fe; border-color:#6d28d9; color:#4c1d95; font-weight:700; }
+        .nav-actions { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:16px; }
+        .btn { padding:10px 16px; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; }
+        .btn-primary { background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%); color:#fff; }
+        .btn-secondary { background:#64748b; color:#fff; }
+        .btn:disabled { opacity:.45; cursor:not-allowed; }
+        .result-card { max-width:920px; margin:16px auto; padding:18px; background:#fff; border-radius:10px; border:1px solid #e2e8f0; }
+        .bar-row { margin:10px 0; font-size:11px; }
+        .bar-label { display:flex; justify-content:space-between; margin-bottom:4px; color:#334155; }
+        .bar-track { height:10px; background:#e2e8f0; border-radius:6px; overflow:hidden; }
+        .bar-fill { height:100%; border-radius:6px; background:linear-gradient(90deg,#8b5cf6,#6d28d9); }
+        .pastoral { margin-top:12px; padding:10px; background:#faf5ff; border-radius:8px; font-size:11px; line-height:1.55; color:#4c1d95; }
+        .reflect { margin-top:14px; padding:12px; background:#f0fdf4; border:1px solid #86efac; border-radius:8px; font-size:11px; color:#166534; }
+        .back-link { text-align:center; margin-top:16px; }
+        .back-link a { color:#5b21b6; font-weight:700; font-size:11px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>DISC 行為風格自覺</h1>
+        <p>進階自我認識工具 · 協助團隊配搭 · 非性格好壞評分</p>
+    </div>
+
+    <div class="adv-box">
+        <strong>用途：</strong>了解你在事奉情境中較自然的行為風格（D／I／S／C），方便與不同肢體配搭。<br>
+        <strong>限制：</strong>無好壞之分、非診斷；<strong>不產生</strong>健康紅黃綠指標，也<strong>不與</strong>恩賜卷或教牧健康卷混合計分。題量較多時，建議有同工陪談。詳見 <code>docs/ADVANCED_SELF_KNOWLEDGE_TOOLS.md</code>。
+    </div>
+
+    <div class="test-container" id="surveyRoot">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <p class="meta-time" style="font-size:10px;color:#64748b;margin:0 0 8px;">預估 15–20 分鐘 · 分四段，每段 7 題（以下題目都在問你<strong>平常的自然反應</strong>）</p>
+        <div class="page-tabs" id="pageTabs"></div>
+        <div class="page-intro" id="pageIntro"></div>
+        <div id="questionContainer"></div>
+        <div class="nav-actions">
+            <button type="button" class="btn btn-secondary" id="prevBtn">上一段</button>
+            <button type="button" class="btn btn-primary" id="nextBtn">下一段</button>
+        </div>
+        <p id="pageNotice" style="display:none;color:#b91c1c;font-size:11px;text-align:center;margin-top:10px;"></p>
+    </div>
+    <div id="resultMount"></div>
+
+    <div class="back-link">
+        <a href="landing.html#journey" target="contentFrame">← 回智慧事奉路線圖</a>
+    </div>
+
+    <script>
+(function () {
+    var SURVEY_STORAGE = 'bible100_smart_ministry_';
+
+    var questions = [
+        { id: 1, text: '在事奉團隊中，我喜歡主動承擔領導責任並快速做出決定。', category: 'D' },
+        { id: 2, text: '面對事工困難或衝突時，我傾向直接面對並推動解決。', category: 'D' },
+        { id: 3, text: '我享受為事工設定明確目標，並帶領團隊努力達成。', category: 'D' },
+        { id: 4, text: '我喜歡開拓新的事奉方向或挑戰現有做法。', category: 'D' },
+        { id: 5, text: '在團隊討論中，我常主動提出意見並希望盡快行動。', category: 'D' },
+        { id: 6, text: '我比較重視事奉的成果和成效，而不是過程是否和諧。', category: 'D' },
+        { id: 7, text: '我願意承擔重要責任，推動教會異象實現。', category: 'D' },
+        { id: 8, text: '我喜歡在聚會或活動中帶動氣氛，讓大家感到喜樂與投入。', category: 'I' },
+        { id: 9, text: '我很容易與新來教會的人建立關係，並邀請他們參與事奉。', category: 'I' },
+        { id: 10, text: '我常用鼓勵和正面話語來激勵其他肢體參與服事。', category: 'I' },
+        { id: 11, text: '在小組中，我喜歡帶領大家分享、互動和討論。', category: 'I' },
+        { id: 12, text: '我享受在公開場合服事，例如領詩、分享見證或佈道。', category: 'I' },
+        { id: 13, text: '當團隊士氣低落時，我會主動用熱情提升大家的動力。', category: 'I' },
+        { id: 14, text: '我喜歡認識很多肢體，並維持廣泛的事奉關係網絡。', category: 'I' },
+        { id: 15, text: '我喜歡長期固定在同一個事工或小組穩定服事。', category: 'S' },
+        { id: 16, text: '在團隊中，我重視和諧，願意傾聽並支持其他人的意見。', category: 'S' },
+        { id: 17, text: '我有耐心陪伴軟弱或有需要的肢體。', category: 'S' },
+        { id: 18, text: '我不喜歡事工計劃突然改變，比較喜歡穩定的服事節奏。', category: 'S' },
+        { id: 19, text: '我樂於在幕後默默支持團隊，做好後勤與關懷工作。', category: 'S' },
+        { id: 20, text: '我是可靠且忠心的服事夥伴，會堅持做到最後。', category: 'S' },
+        { id: 21, text: '我重視團隊成員的感受，盡量避免衝突發生。', category: 'S' },
+        { id: 22, text: '在準備事工時，我會非常注意細節，力求準確。', category: 'C' },
+        { id: 23, text: '我喜歡先有清楚的計劃、程序和標準再開始服事。', category: 'C' },
+        { id: 24, text: '我習慣用邏輯和資料分析事工的可行性與風險。', category: 'C' },
+        { id: 25, text: '我非常重視事奉的品質、正確性和專業性。', category: 'C' },
+        { id: 26, text: '我會詳細記錄服事過程，並定期檢討改進。', category: 'C' },
+        { id: 27, text: '我適合負責需要細心與精準的工作，如行政、財務或音控。', category: 'C' },
+        { id: 28, text: '我在做決定前，傾向深思熟慮，收集充分資訊。', category: 'C' }
+    ];
+
+    var pages = [
+        { key: 'D', title: 'D · 主導與果斷', intro: '這幾題在問：面對目標與壓力時，你多常主動推進、做決定、扛責任。沒有標準答案。' },
+        { key: 'I', title: 'I · 影響與人際', intro: '這幾題在問：你多常用熱情、鼓勵、互動來帶動人。' },
+        { key: 'S', title: 'S · 穩定與支持', intro: '這幾題在問：你多常重視和諧、陪伴、長期支持。' },
+        { key: 'C', title: 'C · 謹慎與品質', intro: '這幾題在問：你多常注意程序、細節與正確性。' }
+    ];
+
+    var PASTORAL = {
+        D: { name: '主導／果斷（D）', gift: '在需要方向與決策時，你能推動團隊向前，敢於承擔。', watch: '可留意是否少數人感到壓力；重大決定前多聽不同聲音。' },
+        I: { name: '影響／人際（I）', gift: '你能鼓舞士氣、連結人、讓事工有溫度與動力。', watch: '可留意後續跟進與細節，避免只有熱情而缺少收尾。' },
+        S: { name: '穩定／支持（S）', gift: '你是團隊中可靠、願意長期陪伴的力量。', watch: '可適時表達想法，避免過度迴避衝突而累積誤解。' },
+        C: { name: '謹慎／品質（C）', gift: '你能把品質、風險與程序顧好，讓事奉更穩妥。', watch: '可練習接納「夠好就好」，避免完美主義拖慢時程。' }
+    };
+
+    var answers = {};
+    var currentPage = 0;
+
+    function qsForPage(p) {
+        var key = pages[p].key;
+        return questions.filter(function (q) { return q.category === key; });
+    }
+
+    function updateProgress() {
+        var done = Object.keys(answers).length;
+        document.getElementById('progressFill').style.width = (done / questions.length * 100) + '%';
+    }
+
+    function renderTabs() {
+        document.getElementById('pageTabs').innerHTML = pages.map(function (pg, i) {
+            var miss = qsForPage(i).filter(function (q) { return answers[q.id] == null; }).length;
+            return '<button type="button" class="page-tab' + (i === currentPage ? ' active' : '') + '" data-idx="' + i + '">' + pg.title + (miss ? '（' + miss + ' 未答）' : ' ✓') + '</button>';
+        }).join('');
+        document.querySelectorAll('#pageTabs .page-tab').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                currentPage = parseInt(btn.getAttribute('data-idx'), 10);
+                renderPage();
+            });
+        });
+    }
+
+    function renderPage() {
+        var pg = pages[currentPage];
+        document.getElementById('pageIntro').textContent = pg.intro;
+        var list = qsForPage(currentPage);
+        var html = '';
+        list.forEach(function (q) {
+            html += '<div class="q-item" data-qid="' + q.id + '"><p class="q-title">（' + q.category + '）' + q.text + '</p><div class="q-scale" role="radiogroup">';
+            for (var s = 1; s <= 5; s++) {
+                var sel = answers[q.id] === s ? ' selected' : '';
+                html += '<label class="pill' + sel + '"><input type="radio" name="q' + q.id + '" value="' + s + '"' + (answers[q.id] === s ? ' checked' : '') + '> ' + s + ' </label>';
+            }
+            html += '</div></div>';
+        });
+        document.getElementById('questionContainer').innerHTML = html;
+        document.getElementById('questionContainer').querySelectorAll('.pill input').forEach(function (inp) {
+            inp.addEventListener('change', function () {
+                var id = parseInt(inp.name.replace('q', ''), 10);
+                answers[id] = parseInt(inp.value, 10);
+                var row = inp.closest('.q-item');
+                row.querySelectorAll('.pill').forEach(function (p) { p.classList.remove('selected'); });
+                inp.closest('.pill').classList.add('selected');
+                updateProgress();
+                renderTabs();
+            });
+        });
+        document.getElementById('prevBtn').disabled = currentPage === 0;
+        var last = currentPage === pages.length - 1;
+        document.getElementById('nextBtn').textContent = last ? '完成並查看結果' : '下一段';
+        renderTabs();
+        document.getElementById('pageNotice').style.display = 'none';
+    }
+
+    function avgForCat(cat) {
+        var vals = questions.filter(function (q) { return q.category === cat; }).map(function (q) { return answers[q.id]; }).filter(function (v) { return v != null; });
+        if (!vals.length) return 0;
+        return Math.round(vals.reduce(function (a, b) { return a + b; }, 0) / vals.length * 10) / 10;
+    }
+
+    function showResults() {
+        var missing = questions.filter(function (q) { return answers[q.id] == null; });
+        if (missing.length) {
+            document.getElementById('pageNotice').style.display = 'block';
+            document.getElementById('pageNotice').textContent = '尚有 ' + missing.length + ' 題未完成，請補答。';
+            var first = missing[0];
+            currentPage = pages.findIndex(function (p) { return p.key === first.category; });
+            renderPage();
+            var el = document.querySelector('.q-item[data-qid="' + first.id + '"]');
+            if (el) { el.classList.add('missing'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            return;
+        }
+
+        var avgs = { D: avgForCat('D'), I: avgForCat('I'), S: avgForCat('S'), C: avgForCat('C') };
+        var maxK = 'D', maxV = avgs.D;
+        ['I', 'S', 'C'].forEach(function (k) {
+            if (avgs[k] > maxV) { maxV = avgs[k]; maxK = k; }
+        });
+
+        try {
+            localStorage.setItem(SURVEY_STORAGE + 'survey_disc', JSON.stringify({
+                schemaVersion: 2,
+                tool: 'disc_style',
+                averages: avgs,
+                discType: maxK,
+                savedAt: new Date().toISOString()
+            }));
+            var profile = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_profile') || '{}');
+            profile.disc_type = maxK;
+            profile.disc_averages = avgs;
+            localStorage.setItem(SURVEY_STORAGE + 'survey_profile', JSON.stringify(profile));
+        } catch (e) {}
+
+        var html = '<div class="result-card"><h2 style="margin:0 0 8px;font-size:16px;color:#5b21b6;">四向度相對強度（僅供對話，無排名好壞）</h2>' +
+            '<p style="font-size:11px;color:#64748b;margin:0 0 12px;">數字為該向度 7 題之平均（1–5），條狀圖僅協助視覺化，不代表「你是某一型」。</p>';
+
+        ['D', 'I', 'S', 'C'].forEach(function (k) {
+            var pct = (avgs[k] / 5) * 100;
+            html += '<div class="bar-row"><div class="bar-label"><span>' + PASTORAL[k].name + '</span><span>' + avgs[k] + '／5</span></div>' +
+                '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;"></div></div></div>';
+        });
+
+        ['D', 'I', 'S', 'C'].forEach(function (k) {
+            var p = PASTORAL[k];
+            html += '<div class="pastoral"><strong>' + p.name + '</strong><br><em>可能帶來的祝福：</em>' + p.gift + '<br><em>可留意的提醒：</em>' + p.watch + '</div>';
+        });
+
+        html += '<div class="reflect"><strong>反思問題</strong><ol style="margin:8px 0 0;padding-left:1.2rem;line-height:1.55;">' +
+            '<li>你的風格在團隊中常帶給別人什麼幫助？在哪些情境需要多一點「慢下來聽」或「主動溝通」？</li>' +
+            '<li>若與你相反風格的肢體同工，你可以如何欣賞對方、減少誤會？</li>' +
+            '<li>你願意把這份覺察帶到禱告中，求神幫助你在服事中更謙卑、更有智慧嗎？</li></ol></div>';
+        html += '<div class="reflect" style="margin-top:10px;border-color:#bfdbfe;background:#eff6ff;color:#1e3a5f;"><strong>建議下一步</strong><p style="margin:6px 0 0;">可與你的牧者／導師／小組長約個時間，一起閱讀這份結果並禱告回應。</p></div>';
+        html += '<p style="margin-top:14px;"><button type="button" class="btn btn-secondary" onclick="location.reload()">重新填寫</button></p></div>';
+
+        document.getElementById('surveyRoot').style.display = 'none';
+        document.getElementById('resultMount').innerHTML = html;
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', function () {
+        if (currentPage > 0) { currentPage--; renderPage(); }
+    });
+    document.getElementById('nextBtn').addEventListener('click', function () {
+        var list = qsForPage(currentPage);
+        var miss = list.filter(function (q) { return answers[q.id] == null; }).length;
+        if (miss) {
+            document.getElementById('pageNotice').style.display = 'block';
+            document.getElementById('pageNotice').textContent = '本段尚有 ' + miss + ' 題未選答。';
+            return;
+        }
+        document.getElementById('pageNotice').style.display = 'none';
+        if (currentPage < pages.length - 1) {
+            currentPage++;
+            renderPage();
+        } else {
+            showResults();
+        }
+    });
+
+        renderPage();
+        updateProgress();
+})();
+    </script>
+</body>
+</html>

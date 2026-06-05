@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>志工事工完整系統 - Volunteer Ministry · Volunteer Integrated | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="../../css/module_onboarding.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f0f2f5; color: #333; font-size: 12px; }
+        
+        /* 顶部导航栏 */
+        .header { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 15px 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header-nav { margin-bottom: 8px; }
+        .header-nav a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 12px; }
+        .header-nav a:hover { text-decoration: underline; }
+        .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+        
+        /* 標籤頁 */
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; transition: all 0.3s; }
+        .tab.active { background: white; color: #3498db; font-weight: 600; }
+        .tab:hover:not(.active) { background: rgba(255,255,255,0.3); }
+        
+        /* 容器 */
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* 统计卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid; }
+        .stat-card.blue { border-color: #3498db; }
+        .stat-card.green { border-color: #27ae60; }
+        .stat-card.orange { border-color: #e67e22; }
+        .stat-card.purple { border-color: #9b59b6; }
+        .stat-card.red { border-color: #e74c3c; }
+        .stat-card.teal { border-color: #1abc9c; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
+        .stat-label { font-size: 10px; color: #7f8c8d; }
+        
+        /* 卡片 */
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        
+        /* 按钮 */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #e67e22; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-info { background: #3498db; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        
+        /* 表格 */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        table tr:hover { background: #f8f9fa; }
+        
+        /* 表单 */
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        
+        /* 模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #7f8c8d; }
+        
+        /* 标签 */
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; margin-right: 5px; }
+        .tag.active { background: #d4edda; color: #155724; }
+        .tag.inactive { background: #f8d7da; color: #721c24; }
+        .tag.training { background: #fff3cd; color: #856404; }
+        .tag.education { background: #e3f2fd; color: #0d47a1; }
+        .tag.worship { background: #fce4ec; color: #880e4f; }
+        .tag.hospitality { background: #f3e5f5; color: #4a148c; }
+        .tag.media { background: #fff3e0; color: #e65100; }
+        
+        /* 三栏布局 */
+        .three-col { display: grid; grid-template-columns: 1fr 320px 1fr; gap: 15px; height: calc(100vh - 280px); }
+        .panel { background: white; border-radius: 8px; padding: 15px; overflow-y: auto; }
+        .panel-center { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; }
+        .panel-header { font-weight: 600; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); }
+        .list-item { padding: 10px; margin-bottom: 8px; background: #f8f9fa; border-radius: 4px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s; }
+        .list-item:hover { background: #e9ecef; }
+        .list-item.selected { background: #e3f2fd; border-left-color: #2196f3; }
+        .list-item.assigned { border-left-color: #27ae60; background: #d5f4e6; }
+        .list-item-title { font-weight: 600; font-size: 11px; margin-bottom: 3px; }
+        .list-item-meta { font-size: 9px; color: #7f8c8d; }
+        
+        /* 日历 */
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 15px; }
+        .calendar-day { background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px; min-height: 80px; font-size: 10px; }
+        .calendar-day.has-shift { background: #e3f2fd; border-color: #3498db; }
+        .calendar-date { font-weight: 600; margin-bottom: 5px; }
+        .calendar-shift { background: #3498db; color: white; padding: 2px 5px; border-radius: 3px; margin-top: 3px; font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        /* 进度条 */
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #3498db 0%, #2980b9 100%); }
+        
+        /* 消息提示 */
+        .message { position: fixed; top: 80px; right: 20px; padding: 12px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1001; animation: slideIn 0.3s; font-size: 12px; }
+        .message.success { background: #27ae60; color: white; }
+        .message.error { background: #e74c3c; color: white; }
+        .message.info { background: #3498db; color: white; }
+        @keyframes slideIn { from { transform: translateX(300px); } to { transform: translateX(0); } }
+        
+        /* 搜索框 */
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
+        
+        /* 空状态 */
+        .empty-state { text-align: center; padding: 60px 20px; color: #95a5a6; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
+        .empty-state-text { font-size: 14px; }
+        
+        /* 匹配分数 */
+        .match-score { text-align: center; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 15px; }
+        .score-num { font-size: 40px; font-weight: bold; margin-bottom: 5px; }
+        .score-label { font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
+        <div class="header-nav"><a href="../../dashboard.html">⛪ 教會事工中心</a></div>
+        <h1>👔 志工事工完整系統</h1>
+        <div class="module-mini-flow">
+            <strong>🧭 入門怎麼做？</strong>
+            <div class="mf-row">
+                <span>① 「崗位管理」建立事工缺</span>
+                <span>→</span>
+                <span>② 「智能配對」或手動分配</span>
+                <span>→</span>
+                <span>③ 「排班管理」排主日／活動</span>
+                <span>→</span>
+                <span>④ 「培訓管理」＋「績效分析」</span>
+            </div>
+        </div>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 總覽</button>
+            <button class="tab" onclick="switchTab('ministries')">🎯 崗位管理</button>
+            <button class="tab" onclick="switchTab('matching')">🤖 智能配對</button>
+            <button class="tab" onclick="switchTab('schedule')">📅 排班管理</button>
+            <button class="tab" onclick="switchTab('training')">📚 培訓管理</button>
+            <button class="tab" onclick="switchTab('analysis')">📊 績效分析</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 標籤頁1：总览 -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card blue"><div class="stat-num" id="stat-volunteers">0</div><div class="stat-label">志工總數</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-ministries">0</div><div class="stat-label">崗位數</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-assigned">0</div><div class="stat-label">已分配</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-vacant">0</div><div class="stat-label">空缺</div></div>
+                <div class="stat-card red"><div class="stat-num" id="stat-hours">0</div><div class="stat-label">本月時數</div></div>
+                <div class="stat-card teal"><div class="stat-num" id="stat-satisfaction">0%</div><div class="stat-label">滿意度</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 崗位類別分佈</div><canvas id="categoryChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 月度服務時數</div><canvas id="hoursChart"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title">🏆 本月服務之星 TOP 5</div>
+                <div id="topVolunteers"></div>
+            </div>
+            <div class="card" style="border-left:4px solid #8b5cf6;">
+                <div class="card-title">🎯 本崗建議人選（CRM · 配對 proposed）</div>
+                <p style="font-size:10px;color:#64748b;margin:-8px 0 10px;">來自 Smart Ministry 規則配對；牧者確認後可寫入志工排班。不自動派工。</p>
+                <div id="crm-ministry-suggestions"></div>
+            </div>
+        </div>
+        
+        <!-- 標籤頁2：岗位管理 -->
+        <div id="tab-ministries" class="tab-content">
+            <div class="card">
+                <div class="card-title">🎯 事工崗位管理</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="search-box" style="flex: 1; margin: 0 10px 0 0;">
+                        <input type="text" id="ministrySearch" placeholder="🔍 搜尋崗位" onkeyup="filterMinistries()">
+                    </div>
+                    <button class="btn btn-primary" onclick="showAddMinistryModal()">➕ 新增崗位</button>
+                    <button class="btn btn-info" onclick="exportMinistries()">📤 匯出資料</button>
+                </div>
+                <table id="ministriesTable">
+                    <thead>
+                        <tr>
+                            <th>崗位名稱</th>
+                            <th>類別</th>
+                            <th>需求人數</th>
+                            <th>已分配</th>
+                            <th>空缺</th>
+                            <th>技能要求</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 標籤頁3：智能配对 -->
+        <div id="tab-matching" class="tab-content">
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="stat-card blue"><div class="stat-num" id="stat-available">0</div><div class="stat-label">可分配志工</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-matched">0</div><div class="stat-label">已匹配</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-pending">0</div><div class="stat-label">待确认</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-match-rate">0%</div><div class="stat-label">匹配成功率</div></div>
+            </div>
+            <div class="three-col">
+                <div class="panel">
+                    <div class="panel-header">志工列表（显示技能）</div>
+                    <div class="search-box"><input type="text" id="volunteerSearch" placeholder="🔍 搜索志工" onkeyup="filterVolunteers()"></div>
+                    <div id="volunteersList"></div>
+                </div>
+                <div class="panel panel-center">
+                    <div class="panel-header">🤖 AI配对引擎</div>
+                    <div id="matchScoreDisplay" class="match-score" style="display: none;">
+                        <div class="score-num" id="matchScoreValue">0</div>
+                        <div class="score-label">匹配度得分</div>
+                    </div>
+                    <div id="matchDetailsDisplay" style="display: none; background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 11px;">
+                        <h4 style="margin-bottom: 8px;">匹配分析</h4>
+                        <div id="matchReasonsDisplay"></div>
+                    </div>
+                    <div id="matchInfo" style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 11px;">
+                        <p>👈 左侧选择志工</p>
+                        <p>👉 右侧选择岗位</p>
+                        <p>🔗 点击按钮计算匹配度</p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="btn btn-warning" onclick="calculateMatch()" style="width: 100%;">🎯 计算匹配度</button>
+                        <button class="btn btn-success" onclick="assignToMinistry()" style="width: 100%;">✅ 分配岗位</button>
+                        <button class="btn btn-info" onclick="autoMatchAll()" style="width: 100%;">🤖 批量智能配对</button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">岗位列表（需求）</div>
+                    <div class="search-box"><input type="text" id="ministrySearchRight" placeholder="🔍 搜尋崗位" onkeyup="filterMinistriesRight()"></div>
+                    <div id="ministriesListRight"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 標籤頁4：排班管理 -->
+        <div id="tab-schedule" class="tab-content">
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="stat-card blue"><div class="stat-num" id="stat-scheduled">0</div><div class="stat-label">已排班</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-confirmed">0</div><div class="stat-label">已确认</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-this-week">0</div><div class="stat-label">本周服务</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-next-week">0</div><div class="stat-label">下周服务</div></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📅 排班日历</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <button class="btn btn-primary" onclick="showAddShiftModal()">➕ 新增排班</button>
+                    <button class="btn btn-success" onclick="autoScheduleShifts()">🤖 智能排班</button>
+                    <button class="btn btn-info" onclick="exportSchedule()">📤 导出排班表</button>
+                </div>
+                <div class="calendar" id="scheduleCalendar"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📨 RSVP 事件流程（72h）</div>
+                <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px;">
+                    <div style="font-size:12px;color:#6b7280;">狀態：🟡 Pending（72h 內） / 🔴 Overdue（超時） / 🟢 Confirmed / ⚪ Declined</div>
+                    <button class="btn btn-primary btn-sm" onclick="bulkInvitePendingSchedules()">📩 批量發送邀請</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table id="rsvpTable">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>志工</th>
+                                <th>崗位/班次</th>
+                                <th>狀態</th>
+                                <th>72h</th>
+                                <th>提醒</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="rsvpDiagnostics" style="margin-top:12px;padding:10px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;font-size:12px;color:#334155;"></div>
+            </div>
+        </div>
+        
+        <!-- 標籤頁5：培训管理 -->
+        <div id="tab-training" class="tab-content">
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">📚 培训课程</div>
+                    <button class="btn btn-primary btn-sm" onclick="showAddTrainingModal()">➕ 新增课程</button>
+                    <table id="trainingsTable" style="margin-top: 15px;">
+                        <thead>
+                            <tr>
+                                <th>课程名称</th>
+                                <th>類別</th>
+                                <th>日期</th>
+                                <th>学员数</th>
+                                <th>讲师</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="card">
+                    <div class="card-title">🎓 志工资质</div>
+                    <div id="qualificationsList"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📈 培训效果追踪</div>
+                <canvas id="trainingChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- 標籤頁6：绩效分析 -->
+        <div id="tab-analysis" class="tab-content">
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 志工活跃度</div><canvas id="activityChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 岗位饱和度</div><canvas id="saturationChart"></canvas></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">⏰ 服务时间分布</div><canvas id="timeDistChart"></canvas></div>
+                <div class="card"><div class="card-title">⚠️ 需要关注</div><div id="attentionList"></div></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script src="../../../js/cloud_config.js"></script>
+    <script src="../../../js/cloud_api.js"></script>
+    <script src="../../../js/smart_ministry_canonical_store.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
+    <script>
+        // ========================================
+        // 核心数据结构（父子数据库设计）
+        // 存檔經 ChurchDataBridge 同步 churchMasterDatabase.volunteer
+        // ========================================
+        let data = {
+            // 父表：事工岗位
+            ministries: [],
+            
+            // 子表1：岗位分配（关联会友memberId）
+            assignments: [],
+            
+            // 子表2：排班记录（关联会友memberId）
+            schedules: [],
+            
+            // 子表3：培训课程
+            trainings: [],
+            
+            // 子表4：培训记录（关联会友memberId）
+            trainingRecords: [],
+            
+            // 子表5：服务时数记录（关联会友memberId）
+            serviceHours: []
+        };
+        
+        let charts = {};
+        let selectedVolunteer = null;
+        let selectedMinistry = null;
+        
+        // ========================================
+        // 初始化
+        // ========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.whenReady) {
+                try {
+                    await ChurchDataBridge.whenReady({ timeoutMs: 8000 });
+                } catch (e) {
+                    console.warn('[volunteer-integrated] whenReady', e && e.message ? e.message : e);
+                }
+            }
+            await loadDataAsync();
+            if (data.ministries.length === 0) {
+                if (confirm('👋 欢迎使用志工事工系统！\n\n是否载入示例数据进行体验？')) {
+                    loadDemo();
+                }
+            }
+            renderAll();
+        });
+        
+        // ========================================
+        // 数据管理
+        // ========================================
+        function loadData() {
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getVolunteerData) {
+                console.error('❌ ChurchDataBridge 不可用，已停止讀取志工資料');
+                showMessage('資料橋接層不可用，請確認 church_data_bridge.js 載入', 'error');
+                return;
+            }
+            try {
+                const fromBridge = ChurchDataBridge.getVolunteerData() || {};
+                const positions = Array.isArray(fromBridge.positions) ? fromBridge.positions : [];
+                const assignments = Array.isArray(fromBridge.assignments) ? fromBridge.assignments : [];
+                const schedules = Array.isArray(fromBridge.schedules) ? fromBridge.schedules : [];
+                data.ministries = positions;
+                data.assignments = assignments;
+                data.schedules = schedules;
+                data.trainings = Array.isArray(fromBridge.trainings) ? fromBridge.trainings : [];
+                data.trainingRecords = Array.isArray(fromBridge.trainingRecords) ? fromBridge.trainingRecords : [];
+                data.serviceHours = Array.isArray(fromBridge.serviceHours) ? fromBridge.serviceHours : [];
+                console.log('✅ 已通过 bridge 加载志工数据:', data.ministries.length, '个岗位');
+            } catch (e) {
+                console.error('❌ bridge 数据加载失败:', e);
+                showMessage('資料讀取失敗，請檢查 Bridge 資料結構', 'error');
+            }
+        }
+
+        async function loadDataAsync() {
+            if (typeof ChurchDataBridge === 'undefined') {
+                loadData();
+                return;
+            }
+            if (ChurchDataBridge.getVolunteerDataAsync) {
+                try {
+                    const fromBridge = await ChurchDataBridge.getVolunteerDataAsync();
+                    const positions = Array.isArray(fromBridge.positions) ? fromBridge.positions : [];
+                    const assignments = Array.isArray(fromBridge.assignments) ? fromBridge.assignments : [];
+                    const schedules = Array.isArray(fromBridge.schedules) ? fromBridge.schedules : [];
+                    data.ministries = positions;
+                    data.assignments = assignments;
+                    data.schedules = schedules;
+                    data.trainings = Array.isArray(fromBridge.trainings) ? fromBridge.trainings : [];
+                    data.trainingRecords = Array.isArray(fromBridge.trainingRecords) ? fromBridge.trainingRecords : [];
+                    data.serviceHours = Array.isArray(fromBridge.serviceHours) ? fromBridge.serviceHours : [];
+                    return;
+                } catch (e) {
+                    console.warn('loadDataAsync fallback to sync loadData:', e);
+                }
+            }
+            loadData();
+        }
+        
+        function saveData() {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.saveVolunteerSystemData) {
+                try {
+                    ChurchDataBridge.saveVolunteerSystemData(data);
+                    if (ChurchDataBridge.syncVolunteerRsvpFromSchedules) {
+                        ChurchDataBridge.syncVolunteerRsvpFromSchedules(data.schedules || []);
+                    }
+                    console.log('💾 已保存（bridge → volunteerSystemData + churchMasterDatabase.volunteer）');
+                    return true;
+                } catch (e) {
+                    console.error('❌ bridge 保存失败:', e);
+                    showMessage('数据保存失败！', 'error');
+                    return false;
+                }
+            }
+            showMessage('資料橋接層不可用，已拒絕直接寫入瀏覽器儲存', 'error');
+            return false;
+        }
+        
+        function loadDemo() {
+            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.isProductionMode && ChurchDataBridge.isProductionMode()) {
+                showMessage('正式環境禁止載入示範資料', 'error');
+                return;
+            }
+            // 生成事工崗位數据
+            data.ministries = [
+                {id: 1, name: '主日学教师', category: 'education', requirements: '教导,耐心', needPeople: 5, description: '教导儿童主日学'},
+                {id: 2, name: '敬拜团成员', category: 'worship', requirements: '音乐,领导力', needPeople: 8, description: '参与主日敬拜服事'},
+                {id: 3, name: '招待同工', category: 'hospitality', requirements: '服务,热情', needPeople: 10, description: '主日招待服务'},
+                {id: 4, name: '音控同工', category: 'media', requirements: '技术,细心', needPeople: 4, description: '音响控制'},
+                {id: 5, name: '投影同工', category: 'media', requirements: '技术,责任心', needPeople: 4, description: '投影操作'},
+                {id: 6, name: '停车引导', category: 'hospitality', requirements: '服务', needPeople: 6, description: '停车场引导'}
+            ];
+            
+            // 生成岗位分配数据（关联会友memberId）
+            for (let i = 1; i <= 15; i++) {
+                data.assignments.push({
+                    id: i,
+                    ministryId: ((i - 1) % 6) + 1,
+                    memberId: i,  // 👈 关联会友系统
+                    memberName: `志工${i}`,
+                    skills: ['音乐', '教导', '服务', '技术'][i % 4],
+                    position: '同工',
+                    startDate: `2024-0${Math.floor(Math.random() * 6) + 1}-15`,
+                    status: 'active',
+                    performance: ['优秀', '良好', '合格'][i % 3]
+                });
+            }
+            
+            // 生成排班记录
+            for (let week = 0; week < 4; week++) {
+                const date = new Date();
+                date.setDate(date.getDate() + (week * 7));
+                for (let i = 1; i <= 5; i++) {
+                    data.schedules.push({
+                        id: data.schedules.length + 1,
+                        memberId: i,  // 👈 关联会友系统
+                        memberName: `志工${i}`,
+                        ministryId: ((i - 1) % 6) + 1,
+                        date: date.toISOString().split('T')[0],
+                        shift: '主日崇拜',
+                        confirmed: week === 0
+                    });
+                }
+            }
+            
+            // 生成培训课程
+            data.trainings = [
+                {id: 1, name: '志工基础培训', category: 'basic', date: '2024-01-15', students: 20, trainer: '李牧师', status: 'completed'},
+                {id: 2, name: '儿童教学技巧', category: 'education', date: '2024-02-20', students: 8, trainer: '王老师', status: 'completed'},
+                {id: 3, name: '音控进阶课程', category: 'media', date: '2024-03-10', students: 5, trainer: '张弟兄', status: 'completed'},
+                {id: 4, name: '招待礼仪培训', category: 'hospitality', date: '2024-11-15', students: 12, trainer: '陈姊妹', status: 'planned'}
+            ];
+            
+            // 生成培训记录
+            for (let i = 1; i <= 10; i++) {
+                data.trainingRecords.push({
+                    id: i,
+                    memberId: i,
+                    trainingId: ((i - 1) % 3) + 1,
+                    completedDate: `2024-0${((i - 1) % 6) + 1}-20`,
+                    grade: ['A', 'B', 'A', 'B'][i % 4],
+                    certified: true
+                });
+            }
+            
+            // 生成服务时数记录
+            for (let i = 1; i <= 15; i++) {
+                for (let month = 0; month < 6; month++) {
+                    data.serviceHours.push({
+                        id: data.serviceHours.length + 1,
+                        memberId: i,
+                        month: `2024-0${month + 1}`,
+                        hours: Math.floor(Math.random() * 20) + 5
+                    });
+                }
+            }
+            
+            saveData();
+            renderAll();
+            showMessage('✅ 示例数据已载入！包含6个岗位、15个志工、4周排班', 'success');
+        }
+        
+        // ========================================
+        // 標籤頁切换
+        // ========================================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            if (tabName === 'overview') renderOverview();
+            if (tabName === 'ministries') renderMinistriesTab();
+            if (tabName === 'matching') void renderMatchingTab();
+            if (tabName === 'schedule') void renderScheduleTab();
+            if (tabName === 'training') renderTrainingTab();
+            if (tabName === 'analysis') renderAnalysisTab();
+        }
+        
+        // ========================================
+        // 渲染所有
+        // ========================================
+        function renderAll() {
+            renderOverview();
+        }
+        
+        function renderCrmMinistrySuggestions() {
+            var el = document.getElementById('crm-ministry-suggestions');
+            if (!el || typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.listPendingMinistrySuggestions) return;
+            var pending = ChurchDataBridge.listPendingMinistrySuggestions() || [];
+            if (!pending.length) {
+                el.innerHTML = '<div class="empty-state-text">尚無待確認配對。可至 <a href="../../../smart_ministry/talent_ministry_matching.html" target="_blank">事奉配對</a> 執行規則配對。</div>';
+                return;
+            }
+            var members = ChurchDataBridge.getMembers ? ChurchDataBridge.getMembers() : [];
+            var nameById = {};
+            members.forEach(function (m) {
+                var id = String(m.memberId != null ? m.memberId : m.id);
+                nameById[id] = m.name || m.fullName || id;
+            });
+            el.innerHTML = '<table><thead><tr><th>崗位</th><th>建議人選</th><th>分數</th><th>操作</th></tr></thead><tbody>' +
+                pending.slice(0, 15).map(function (row) {
+                    var tid = String(row.talent_id);
+                    var score = row.metadata && row.metadata.matchScore != null ? row.metadata.matchScore : '—';
+                    var mname = nameById[tid] || tid;
+                    var mtitle = row.ministry_name || row.ministry_id;
+                    return '<tr><td>' + mtitle + '</td><td>' + mname + '</td><td>' + score + '</td><td>' +
+                        '<button class="btn btn-success btn-sm" onclick="confirmCrmSuggestion(\'' + row.id + '\')">確認</button> ' +
+                        '<button class="btn btn-info btn-sm" onclick="promoteCrmSuggestion(\'' + row.id + '\')">寫入排班</button></td></tr>';
+                }).join('') + '</tbody></table>';
+        }
+
+        function confirmCrmSuggestion(assignmentId) {
+            if (!ChurchDataBridge.confirmMinistryAssignment) return;
+            var r = ChurchDataBridge.confirmMinistryAssignment(assignmentId);
+            if (r && r.success) {
+                showMessage('✅ 已確認配對（狀態 confirmed）', 'success');
+                renderCrmMinistrySuggestions();
+            } else {
+                showMessage('確認失敗', 'error');
+            }
+        }
+
+        function promoteCrmSuggestion(assignmentId) {
+            if (!ChurchDataBridge.promoteMinistryAssignmentToVolunteer) return;
+            var r = ChurchDataBridge.promoteMinistryAssignmentToVolunteer(assignmentId);
+            if (r && r.success) {
+                loadData();
+                renderOverview();
+                renderCrmMinistrySuggestions();
+                showMessage('✅ 已寫入志工排班（active）', 'success');
+            } else {
+                showMessage('寫入失敗：' + (r.error || ''), 'error');
+            }
+        }
+
+        // ========================================
+        // 標籤頁1：总览
+        // ========================================
+        function renderOverview() {
+            const volunteers = [...new Set(data.assignments.map(a => a.memberId))];
+            document.getElementById('stat-volunteers').textContent = volunteers.length;
+            document.getElementById('stat-ministries').textContent = data.ministries.length;
+            document.getElementById('stat-assigned').textContent = data.assignments.length;
+            
+            const totalNeeded = data.ministries.reduce((sum, m) => sum + m.needPeople, 0);
+            const vacant = totalNeeded - data.assignments.length;
+            document.getElementById('stat-vacant').textContent = Math.max(0, vacant);
+            
+            const thisMonth = new Date().getMonth() + 1;
+            const thisMonthHours = data.serviceHours.filter(sh => sh.month.endsWith(`-0${thisMonth}`))
+                .reduce((sum, sh) => sum + sh.hours, 0);
+            document.getElementById('stat-hours').textContent = thisMonthHours;
+            
+            document.getElementById('stat-satisfaction').textContent = '92%';  // 示例数据
+            
+            // 崗位類別分佈饼图
+            const categoryCount = {};
+            data.ministries.forEach(m => {
+                if (!categoryCount[m.category]) categoryCount[m.category] = 0;
+                categoryCount[m.category]++;
+            });
+            
+            const catNames = {education: '教育', worship: '敬拜', hospitality: '招待', media: '媒体'};
+            const categoryCtx = document.getElementById('categoryChart');
+            if (charts.category) charts.category.destroy();
+            charts.category = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryCount).map(k => catNames[k] || k),
+                    datasets: [{
+                        data: Object.values(categoryCount),
+                        backgroundColor: ['#3498db', '#f5576c', '#9b59b6', '#e67e22']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            
+            // 月度服務時數折线图
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
+            const hoursData = months.map((m, i) => {
+                const monthStr = `2024-0${i + 1}`;
+                return data.serviceHours.filter(sh => sh.month === monthStr)
+                    .reduce((sum, sh) => sum + sh.hours, 0);
+            });
+            
+            const hoursCtx = document.getElementById('hoursChart');
+            if (charts.hours) charts.hours.destroy();
+            charts.hours = new Chart(hoursCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '服务时数',
+                        data: hoursData,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52,152,219,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // 本月服務之星
+            renderTopVolunteers();
+            renderCrmMinistrySuggestions();
+        }
+        
+        function renderTopVolunteers() {
+            const thisMonth = new Date().getMonth() + 1;
+            const monthStr = `2024-0${thisMonth}`;
+            const volunteerHours = {};
+            
+            data.serviceHours.filter(sh => sh.month === monthStr).forEach(sh => {
+                if (!volunteerHours[sh.memberId]) volunteerHours[sh.memberId] = 0;
+                volunteerHours[sh.memberId] += sh.hours;
+            });
+            
+            const sorted = Object.entries(volunteerHours)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            const html = sorted.map(([memberId, hours], i) => {
+                const assignment = data.assignments.find(a => a.memberId === parseInt(memberId));
+                return `<div class="list-item">
+                    <div class="list-item-title">🏆 ${i + 1}. ${assignment?.memberName || '未知'}</div>
+                    <div class="list-item-meta">本月服务${hours}小时 | 评价：${assignment?.performance || '-'}</div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('topVolunteers').innerHTML = html || '<div class="empty-state-text">暫無資料</div>';
+        }
+        
+        // ========================================
+        // 標籤頁2：岗位管理
+        // ========================================
+        function renderMinistriesTab() {
+            const searchTerm = (document.getElementById('ministrySearch')?.value || '').toLowerCase();
+            const filtered = data.ministries.filter(m => m.name.toLowerCase().includes(searchTerm));
+            
+            const tbody = document.querySelector('#ministriesTable tbody');
+            tbody.innerHTML = filtered.map(m => {
+                const assigned = data.assignments.filter(a => a.ministryId === m.id).length;
+                const vacant = m.needPeople - assigned;
+                return `<tr>
+                    <td>${m.name}</td>
+                    <td><span class="tag ${m.category}">${{education:'教育',worship:'敬拜',hospitality:'招待',media:'媒体'}[m.category]}</span></td>
+                    <td>${m.needPeople}</td>
+                    <td>${assigned}</td>
+                    <td>${vacant}</td>
+                    <td>${m.requirements}</td>
+                    <td>
+                        <button class="btn btn-info btn-sm" onclick="viewMinistry(${m.id})">查看</button>
+                        <button class="btn btn-warning btn-sm" onclick="editMinistry(${m.id})">编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteMinistry(${m.id})">删除</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        
+        function filterMinistries() {
+            renderMinistriesTab();
+        }
+        
+        function showAddMinistryModal() {
+            showModal('➕ 新增崗位', `
+                <div class="form-group">
+                    <label class="form-label">崗位名稱 *</label>
+                    <input type="text" id="ministryName" class="form-input" placeholder="例如：主日学教师">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">類別 *</label>
+                    <select id="ministryCategory" class="form-select">
+                        <option value="education">教育</option>
+                        <option value="worship">敬拜</option>
+                        <option value="hospitality">招待</option>
+                        <option value="media">媒体</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">需求人數 *</label>
+                    <input type="number" id="needPeople" class="form-input" value="5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">技能要求</label>
+                    <input type="text" id="requirements" class="form-input" placeholder="例如：教导,耐心">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">岗位描述</label>
+                    <textarea id="description" class="form-textarea"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="saveMinistry()">保存</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function saveMinistry() {
+            const newMinistry = {
+                id: data.ministries.length + 1,
+                name: document.getElementById('ministryName').value,
+                category: document.getElementById('ministryCategory').value,
+                needPeople: parseInt(document.getElementById('needPeople').value),
+                requirements: document.getElementById('requirements').value,
+                description: document.getElementById('description').value
+            };
+            
+            if (!newMinistry.name) {
+                showMessage('请填写崗位名稱！', 'error');
+                return;
+            }
+            
+            data.ministries.push(newMinistry);
+            saveData();
+            renderMinistriesTab();
+            renderOverview();
+            closeModal();
+            showMessage('✅ 岗位已添加', 'success');
+        }
+        
+        function viewMinistry(id) {
+            const ministry = data.ministries.find(m => m.id === id);
+            const assigned = data.assignments.filter(a => a.ministryId === id);
+            showMessage(`查看岗位：${ministry.name}，已分配${assigned.length}人`, 'info');
+        }
+        
+        function editMinistry(id) {
+            showMessage('编辑岗位功能开发中...', 'info');
+        }
+        
+        function deleteMinistry(id) {
+            if (!confirm('确定删除此岗位？')) return;
+            data.ministries = data.ministries.filter(m => m.id !== id);
+            data.assignments = data.assignments.filter(a => a.ministryId !== id);
+            saveData();
+            renderMinistriesTab();
+            renderOverview();
+            showMessage('✅ 岗位已删除', 'success');
+        }
+        
+        function exportMinistries() {
+            const dataStr = JSON.stringify({ministries: data.ministries, assignments: data.assignments}, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `崗位數据_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showMessage('✅ 数据已导出', 'success');
+        }
+        
+        // ========================================
+        // 標籤頁3：智能配对
+        // ========================================
+        async function fetchVolunteerRsvpSummaryForUi(days) {
+            const d = days || 3;
+            if (typeof ChurchDataBridge === 'undefined') return null;
+            if (ChurchDataBridge.getVolunteerRsvpSummaryAsync) {
+                try {
+                    return await ChurchDataBridge.getVolunteerRsvpSummaryAsync(d);
+                } catch (e) {
+                    console.warn('getVolunteerRsvpSummaryAsync failed', e);
+                }
+            }
+            if (ChurchDataBridge.getVolunteerRsvpSummary) {
+                try {
+                    return ChurchDataBridge.getVolunteerRsvpSummary(d);
+                } catch (e2) {}
+            }
+            return null;
+        }
+
+        async function renderMatchingTab() {
+            await updateMatchingStats();
+            renderVolunteersList();
+            renderMinistriesListRight();
+        }
+        
+        async function updateMatchingStats() {
+            const assigned = [...new Set(data.assignments.map(a => a.memberId))];
+            const available = 15 - assigned.length;  // 假设总共15个志工
+            document.getElementById('stat-available').textContent = available;
+            document.getElementById('stat-matched').textContent = data.assignments.length;
+            let pending = Math.max(0, (data.schedules || []).filter(s => !s.confirmed).length);
+            let matchRate = assigned.length > 0 ? Math.round((data.assignments.length / assigned.length) * 100) : 0;
+            const rsvp = await fetchVolunteerRsvpSummaryForUi(3);
+            if (rsvp) {
+                pending = rsvp.pending;
+                if (rsvp.responded_within_window_pct != null) matchRate = rsvp.responded_within_window_pct;
+            }
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('stat-match-rate').textContent = matchRate + '%';
+        }
+        
+        function renderVolunteersList() {
+            const searchTerm = (document.getElementById('volunteerSearch')?.value || '').toLowerCase();
+            const volunteers = data.assignments.filter(a => 
+                a.memberName.toLowerCase().includes(searchTerm)
+            );
+            
+            const html = volunteers.map(v => {
+                const assignments = data.assignments.filter(a => a.memberId === v.memberId);
+                const isAssigned = assignments.length > 0;
+                return `<div class="list-item ${selectedVolunteer?.memberId === v.memberId ? 'selected' : ''} ${isAssigned ? 'assigned' : ''}" 
+                        onclick="selectVolunteer(${v.memberId}, '${v.memberName}', '${v.skills}')">
+                    <div class="list-item-title">${v.memberName} ${isAssigned ? '✓' : ''}</div>
+                    <div class="list-item-meta">技能：${v.skills} | 岗位：${assignments.length}个</div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('volunteersList').innerHTML = html || '<div class="empty-state-text">暫無志工</div>';
+        }
+        
+        function renderMinistriesListRight() {
+            const searchTerm = (document.getElementById('ministrySearchRight')?.value || '').toLowerCase();
+            const filtered = data.ministries.filter(m => m.name.toLowerCase().includes(searchTerm));
+            
+            const html = filtered.map(m => {
+                const assigned = data.assignments.filter(a => a.ministryId === m.id).length;
+                const vacant = m.needPeople - assigned;
+                return `<div class="list-item ${selectedMinistry?.id === m.id ? 'selected' : ''}" onclick="selectMinistry(${m.id})">
+                    <div class="list-item-title">${m.name}</div>
+                    <div class="list-item-meta">${assigned}/${m.needPeople}人 | 空缺：${vacant} | 要求：${m.requirements}</div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('ministriesListRight').innerHTML = html || '<div class="empty-state-text">暫無崗位</div>';
+        }
+        
+        function selectVolunteer(memberId, name, skills) {
+            selectedVolunteer = {memberId, memberName: name, skills};
+            renderVolunteersList();
+            updateMatchInfo();
+        }
+        
+        function selectMinistry(id) {
+            selectedMinistry = data.ministries.find(m => m.id === id);
+            renderMinistriesListRight();
+            updateMatchInfo();
+        }
+        
+        function updateMatchInfo() {
+            const info = document.getElementById('matchInfo');
+            if (!selectedVolunteer && !selectedMinistry) {
+                info.style.display = 'block';
+                return;
+            }
+            
+            info.style.display = 'none';
+        }
+        
+        function calculateMatch() {
+            if (!selectedVolunteer || !selectedMinistry) {
+                showMessage('请先选择志工和岗位', 'error');
+                return;
+            }
+            
+            // AI匹配算法
+            let score = 50;  // 基础分
+            const volunteerSkills = selectedVolunteer.skills.split(',');
+            const requirements = (selectedMinistry.requirements || '').split(',');
+            
+            // 技能匹配
+            let skillMatch = 0;
+            requirements.forEach(req => {
+                if (volunteerSkills.some(s => s.includes(req.trim()))) {
+                    skillMatch += 20;
+                }
+            });
+            score += skillMatch;
+            
+            // 经验加分（假设数据）
+            score += 15;
+            
+            // 最终分数
+            score = Math.min(score, 100);
+            
+            document.getElementById('matchScoreValue').textContent = score;
+            document.getElementById('matchScoreDisplay').style.display = 'block';
+            
+            let reasons = `
+                <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                    <span>基础分</span><span>50分</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                    <span>技能匹配</span><span>+${skillMatch}分</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                    <span>经验加分</span><span>+15分</span>
+                </div>
+            `;
+            
+            document.getElementById('matchReasonsDisplay').innerHTML = reasons;
+            document.getElementById('matchDetailsDisplay').style.display = 'block';
+            
+            if (score >= 80) {
+                showMessage(`🎉 极力推荐！匹配度：${score}分`, 'success');
+            } else if (score >= 60) {
+                showMessage(`✅ 适合配对，匹配度：${score}分`, 'success');
+            } else {
+                showMessage(`⚠️ 匹配度较低：${score}分`, 'error');
+            }
+        }
+        
+        function assignToMinistry() {
+            if (!selectedVolunteer || !selectedMinistry) {
+                showMessage('请先选择志工和岗位', 'error');
+                return;
+            }
+            
+            const exists = data.assignments.find(a => 
+                a.memberId === selectedVolunteer.memberId && a.ministryId === selectedMinistry.id
+            );
+            
+            if (exists) {
+                showMessage('该志工已分配此岗位', 'error');
+                return;
+            }
+            
+            const score = parseInt(document.getElementById('matchScoreValue').textContent || '0');
+            
+            data.assignments.push({
+                id: data.assignments.length + 1,
+                ministryId: selectedMinistry.id,
+                memberId: selectedVolunteer.memberId,
+                memberName: selectedVolunteer.memberName,
+                skills: selectedVolunteer.skills,
+                position: '同工',
+                startDate: new Date().toISOString().split('T')[0],
+                status: 'active',
+                performance: '良好',
+                matchScore: score
+            });
+            
+            saveData();
+            void renderMatchingTab();
+            renderOverview();
+            showMessage(`✅ ${selectedVolunteer.memberName} 已分配到 ${selectedMinistry.name}（匹配度：${score}分）`, 'success');
+        }
+        
+        function autoMatchAll() {
+            showMessage('🤖 批量智能配对功能开发中...', 'info');
+        }
+        
+        function filterVolunteers() {
+            renderVolunteersList();
+        }
+        
+        function filterMinistriesRight() {
+            renderMinistriesListRight();
+        }
+        
+        // ========================================
+        // 標籤頁4：排班管理
+        // ========================================
+        async function renderScheduleTab() {
+            await updateScheduleStats();
+            renderScheduleCalendar();
+            renderRsvpTable();
+            await renderRsvpDiagnostics();
+        }
+        
+        async function updateScheduleStats() {
+            document.getElementById('stat-scheduled').textContent = data.schedules.length;
+            const confirmed = data.schedules.filter(s => s.confirmed).length;
+            document.getElementById('stat-confirmed').textContent = confirmed;
+            const pendingCount = Math.max(0, data.schedules.length - confirmed);
+            const pendingEl = document.getElementById('stat-pending');
+            if (pendingEl) pendingEl.textContent = pendingCount;
+            const rsvp = await fetchVolunteerRsvpSummaryForUi(3);
+            if (rsvp && rsvp.responded_within_window_pct != null) {
+                document.getElementById('stat-confirmed').textContent = `${confirmed} (${rsvp.responded_within_window_pct}%)`;
+            }
+            
+            const today = new Date();
+            const thisWeek = data.schedules.filter(s => {
+                const diff = (new Date(s.date) - today) / (1000*60*60*24);
+                return diff >= 0 && diff <= 7;
+            }).length;
+            document.getElementById('stat-this-week').textContent = thisWeek;
+            
+            const nextWeek = data.schedules.filter(s => {
+                const diff = (new Date(s.date) - today) / (1000*60*60*24);
+                return diff > 7 && diff <= 14;
+            }).length;
+            document.getElementById('stat-next-week').textContent = nextWeek;
+        }
+        
+        function renderScheduleCalendar() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDay = firstDay.getDay();
+            
+            let html = '';
+            ['日', '一', '二', '三', '四', '五', '六'].forEach(day => {
+                html += `<div style="font-weight:600;text-align:center;padding:8px;background:#3498db;color:white;border-radius:4px;">${day}</div>`;
+            });
+            
+            for (let i = 0; i < startDay; i++) html += '<div class="calendar-day"></div>';
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const daySchedules = data.schedules.filter(s => s.date === dateStr);
+                const hasShift = daySchedules.length > 0;
+                
+                html += `<div class="calendar-day ${hasShift ? 'has-shift' : ''}">
+                    <div class="calendar-date">${day}</div>
+                    ${daySchedules.slice(0, 3).map(s => `<div class="calendar-shift">${s.memberName}</div>`).join('')}
+                    ${daySchedules.length > 3 ? `<div style="font-size:9px;color:#7f8c8d;margin-top:3px;">+${daySchedules.length - 3}人</div>` : ''}
+                </div>`;
+            }
+            
+            document.getElementById('scheduleCalendar').innerHTML = html;
+        }
+        
+        function autoScheduleShifts() {
+            showMessage('🤖 智能排班功能开发中...', 'info');
+        }
+        
+        function exportSchedule() {
+            const dataStr = JSON.stringify(data.schedules, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `排班表_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showMessage('✅ 排班表已导出', 'success');
+        }
+
+        function getRsvpStoreEvents() {
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getVolunteerRsvpEvents) return [];
+            return ChurchDataBridge.getVolunteerRsvpEvents() || [];
+        }
+
+        function getRsvpByScheduleId(scheduleId) {
+            const events = getRsvpStoreEvents();
+            const sid = String(scheduleId);
+            return events.find(e => String(e.schedule_id) === sid) || null;
+        }
+
+        function getRsvpVisualState(event) {
+            if (!event) return { label: '未邀請', dot: '⚪', className: 'pending' };
+            if (event.status === 'confirmed') return { label: 'Confirmed', dot: '🟢', className: 'active' };
+            if (event.status === 'declined') return { label: 'Declined', dot: '⚪', className: 'training' };
+            const invitedAt = event.timeline && event.timeline.invited_at ? new Date(event.timeline.invited_at) : null;
+            if (!invitedAt || Number.isNaN(invitedAt.getTime())) return { label: 'Pending', dot: '🟡', className: 'pending' };
+            const elapsedMs = Date.now() - invitedAt.getTime();
+            const overdue = elapsedMs > (72 * 3600 * 1000);
+            return overdue
+                ? { label: 'Overdue', dot: '🔴', className: 'inactive' }
+                : { label: 'Pending', dot: '🟡', className: 'pending' };
+        }
+
+        function getRsvpWindowText(event) {
+            if (!event || event.status === 'confirmed' || event.status === 'declined') return '已結案';
+            const invitedAt = event.timeline && event.timeline.invited_at ? new Date(event.timeline.invited_at) : null;
+            if (!invitedAt || Number.isNaN(invitedAt.getTime())) return '無效時間';
+            const remainMs = (72 * 3600 * 1000) - (Date.now() - invitedAt.getTime());
+            if (remainMs <= 0) return `超時 ${Math.floor(Math.abs(remainMs) / 3600000)}h`;
+            const hours = Math.floor(remainMs / 3600000);
+            return `剩餘 ${hours}h`;
+        }
+
+        function buildDefaultDeadlineForDate(dateStr) {
+            if (!dateStr) return null;
+            return `${String(dateStr).slice(0, 10)}T09:30:00+08:00`;
+        }
+
+        function inviteSchedule(scheduleId, silent, options) {
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.createVolunteerRsvpEvent) return;
+            options = options || {};
+            const schedule = data.schedules.find(s => String(s.id) === String(scheduleId));
+            if (!schedule) return;
+            const existing = getRsvpByScheduleId(schedule.id);
+            if (existing) {
+                if (!silent) showMessage('此排班已存在邀請事件', 'info');
+                return;
+            }
+            ChurchDataBridge.createVolunteerRsvpEvent({
+                schedule_id: schedule.id,
+                service_id: schedule.shift ? `SVC-${schedule.shift}` : `SVC-${schedule.id}`,
+                volunteer_id: schedule.memberId != null ? String(schedule.memberId) : '',
+                volunteer_name: schedule.memberName || '',
+                invited_at: options.invitedAt || new Date().toISOString(),
+                deadline: options.deadline || schedule.deadline || buildDefaultDeadlineForDate(schedule.date),
+                status: 'pending'
+            });
+            if (!silent) {
+                showMessage('📩 邀請已送出', 'success');
+                void renderScheduleTab();
+            }
+        }
+
+        function remindSchedule(scheduleId) {
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.remindVolunteerRsvpEvent) return;
+            const event = getRsvpByScheduleId(scheduleId);
+            if (!event) {
+                showMessage('請先發送邀請', 'error');
+                return;
+            }
+            ChurchDataBridge.remindVolunteerRsvpEvent(event.event_id);
+            showMessage('🔔 已記錄提醒', 'success');
+            void renderScheduleTab();
+        }
+
+        function respondSchedule(scheduleId, status) {
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.respondVolunteerRsvpEvent) return;
+            const event = getRsvpByScheduleId(scheduleId);
+            if (!event) {
+                showMessage('請先發送邀請', 'error');
+                return;
+            }
+            ChurchDataBridge.respondVolunteerRsvpEvent(event.event_id, status, new Date().toISOString());
+            const idx = data.schedules.findIndex(s => String(s.id) === String(scheduleId));
+            if (idx >= 0) {
+                data.schedules[idx].confirmed = status === 'confirmed';
+                data.schedules[idx].status = status;
+                data.schedules[idx].respondedAt = new Date().toISOString();
+                saveData();
+            }
+            showMessage(status === 'confirmed' ? '✅ 已標記確認' : '📝 已標記婉拒', 'success');
+            void renderScheduleTab();
+        }
+
+        function bulkInvitePendingSchedules() {
+            let created = 0;
+            data.schedules.forEach(s => {
+                if (!getRsvpByScheduleId(s.id)) {
+                    inviteSchedule(s.id, true);
+                    created++;
+                }
+            });
+            if (created === 0) showMessage('所有排班都已有邀請事件', 'info');
+            else showMessage(`📨 已批量送出 ${created} 筆邀請`, 'success');
+            void renderScheduleTab();
+        }
+
+        function renderRsvpTable() {
+            const tbody = document.querySelector('#rsvpTable tbody');
+            if (!tbody) return;
+            const rows = (data.schedules || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#64748b;">暫無排班資料</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(s => {
+                const event = getRsvpByScheduleId(s.id);
+                const state = getRsvpVisualState(event);
+                const reminders = event && event.audit ? Number(event.audit.reminders_sent || 0) : 0;
+                const shift = s.shift || (s.ministryId ? `Ministry#${s.ministryId}` : '-');
+                return `<tr>
+                    <td>${s.date || '-'}</td>
+                    <td>${s.memberName || '-'}</td>
+                    <td>${shift}</td>
+                    <td><span class="tag ${state.className}">${state.dot} ${state.label}</span></td>
+                    <td>${getRsvpWindowText(event)}</td>
+                    <td>${reminders}</td>
+                    <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <button class="btn btn-primary btn-sm" onclick="inviteSchedule('${s.id}')">邀請</button>
+                        <button class="btn btn-warning btn-sm" onclick="remindSchedule('${s.id}')">提醒</button>
+                        <button class="btn btn-success btn-sm" onclick="respondSchedule('${s.id}','confirmed')">確認</button>
+                        <button class="btn btn-danger btn-sm" onclick="respondSchedule('${s.id}','declined')">婉拒</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function renderRsvpDiagnostics() {
+            const el = document.getElementById('rsvpDiagnostics');
+            if (!el) return;
+            if (typeof ChurchDataBridge === 'undefined' || (!ChurchDataBridge.getVolunteerRsvpSummary && !ChurchDataBridge.getVolunteerRsvpSummaryAsync)) {
+                el.textContent = 'Bridge 不可用，無法生成 RSVP 診斷';
+                return;
+            }
+            const rsvp = await fetchVolunteerRsvpSummaryForUi(3);
+            if (!rsvp) {
+                el.textContent = '無法取得 RSVP 摘要';
+                return;
+            }
+            const numerator = Number(rsvp.responded_within_window || 0);
+            const denominator = Number(rsvp.total || 0);
+            const invalid = Number(rsvp.invalid_events || 0);
+            const pct = rsvp.responded_within_window_pct == null ? 'N/A' : `${rsvp.responded_within_window_pct}%`;
+            el.innerHTML = `3天內回覆率：<strong>${pct}</strong> ｜ 分子：${numerator} ｜ 分母：${denominator} ｜ 排除無效：${invalid} ｜ 待回覆：${Number(rsvp.pending || 0)}`;
+        }
+
+        function nextScheduleId() {
+            const maxId = (data.schedules || []).reduce((max, s) => {
+                const n = Number(s && s.id);
+                return Number.isFinite(n) && n > max ? n : max;
+            }, 0);
+            return maxId + 1;
+        }
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function showAddShiftModal() {
+            if (!data.assignments.length || !data.ministries.length) {
+                showMessage('请先完成志工分配與崗位設定，再新增排班', 'error');
+                return;
+            }
+            const assignOptions = data.assignments.map(a =>
+                `<option value="${a.id}">${escapeHtml(a.memberName)} ｜ ${escapeHtml((data.ministries.find(m => m.id === a.ministryId) || {}).name || '未分配崗位')}</option>`
+            ).join('');
+
+            const today = new Date().toISOString().slice(0, 10);
+            const modalHtml = `
+                <div style="display:grid;gap:12px;">
+                    <label style="font-size:12px;">志工與崗位
+                        <select id="shift-assignment-id" style="width:100%;padding:8px;margin-top:4px;">
+                            ${assignOptions}
+                        </select>
+                    </label>
+                    <label style="font-size:12px;">服務日期
+                        <input id="shift-date" type="date" value="${today}" style="width:100%;padding:8px;margin-top:4px;">
+                    </label>
+                    <label style="font-size:12px;">班次/服事
+                        <input id="shift-name" type="text" value="主日崇拜" placeholder="例如：主日崇拜、禱告會" style="width:100%;padding:8px;margin-top:4px;">
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:12px;">
+                        <input id="shift-send-rsvp" type="checkbox" checked>
+                        建立排班後立即發送 RSVP 邀請
+                    </label>
+                    <label style="font-size:12px;">預計回覆期限（Deadline）
+                        <input id="shift-deadline" type="datetime-local" style="width:100%;padding:8px;margin-top:4px;">
+                    </label>
+                    <div style="display:flex;gap:8px;justify-content:flex-end;">
+                        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button class="btn btn-primary" onclick="saveShiftFromModal()">保存排班</button>
+                    </div>
+                </div>
+            `;
+            showModal('➕ 新增排班（含 RSVP 閉環）', modalHtml);
+        }
+
+        function saveShiftFromModal() {
+            const assignmentId = Number(document.getElementById('shift-assignment-id').value || 0);
+            const date = (document.getElementById('shift-date').value || '').trim();
+            const shift = (document.getElementById('shift-name').value || '').trim();
+            const sendRsvp = !!document.getElementById('shift-send-rsvp').checked;
+            const deadlineInput = (document.getElementById('shift-deadline').value || '').trim();
+
+            if (!assignmentId || !date || !shift) {
+                showMessage('請完整填寫志工、日期、班次', 'error');
+                return;
+            }
+            const assignment = data.assignments.find(a => Number(a.id) === assignmentId);
+            if (!assignment) {
+                showMessage('找不到志工分配資料', 'error');
+                return;
+            }
+
+            const schedule = {
+                id: nextScheduleId(),
+                memberId: assignment.memberId,
+                memberName: assignment.memberName,
+                ministryId: assignment.ministryId,
+                date: date,
+                shift: shift,
+                confirmed: false,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            };
+            if (deadlineInput) {
+                schedule.deadline = new Date(deadlineInput).toISOString();
+            }
+
+            data.schedules.push(schedule);
+            const saved = saveData();
+            if (!saved) return;
+
+            if (sendRsvp) {
+                const deadline = schedule.deadline || buildDefaultDeadlineForDate(schedule.date);
+                inviteSchedule(schedule.id, true, { deadline: deadline, invitedAt: new Date().toISOString() });
+            }
+
+            closeModal();
+            void renderScheduleTab();
+            showMessage(sendRsvp ? '✅ 排班已建立並已發送 RSVP 邀請' : '✅ 排班已建立（未發送邀請）', 'success');
+        }
+        
+        // ========================================
+        // 標籤頁5：培训管理
+        // ========================================
+        function renderTrainingTab() {
+            const tbody = document.querySelector('#trainingsTable tbody');
+            tbody.innerHTML = data.trainings.map(t => `
+                <tr>
+                    <td>${t.name}</td>
+                    <td><span class="tag ${t.category}">${t.category}</span></td>
+                    <td>${t.date}</td>
+                    <td>${t.students}</td>
+                    <td>${t.trainer}</td>
+                    <td><span class="tag ${t.status === 'completed' ? 'active' : 'training'}">${t.status === 'completed' ? '已完成' : '计划中'}</span></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteTraining(${t.id})">删除</button></td>
+                </tr>
+            `).join('');
+            
+            renderQualificationsList();
+            renderTrainingChart();
+        }
+        
+        function renderQualificationsList() {
+            const qualStats = {};
+            data.trainingRecords.forEach(tr => {
+                if (!qualStats[tr.memberId]) qualStats[tr.memberId] = 0;
+                qualStats[tr.memberId]++;
+            });
+            
+            const html = Object.entries(qualStats).slice(0, 8).map(([memberId, count]) => {
+                const assignment = data.assignments.find(a => a.memberId === parseInt(memberId));
+                return `<div class="list-item">
+                    <div class="list-item-title">${assignment?.memberName || '志工' + memberId}</div>
+                    <div class="list-item-meta">已完成培训：${count}门 | 资质：${count >= 3 ? '高级' : count >= 2 ? '中级' : '初级'}</div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('qualificationsList').innerHTML = html || '<div class="empty-state-text">暫無資料</div>';
+        }
+        
+        function renderTrainingChart() {
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
+            const trainingData = months.map(() => Math.floor(Math.random() * 15) + 5);
+            
+            const ctx = document.getElementById('trainingChart');
+            if (charts.training) charts.training.destroy();
+            charts.training = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '培训人次',
+                        data: trainingData,
+                        backgroundColor: '#3498db'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+        
+        function showAddTrainingModal() {
+            showMessage('➕ 新增培训课程功能开发中...', 'info');
+        }
+        
+        function deleteTraining(id) {
+            if (!confirm('确定删除此培训课程？')) return;
+            data.trainings = data.trainings.filter(t => t.id !== id);
+            saveData();
+            renderTrainingTab();
+            showMessage('✅ 培训课程已删除', 'success');
+        }
+        
+        // ========================================
+        // 標籤頁6：绩效分析
+        // ========================================
+        function renderAnalysisTab() {
+            // 志工活跃度柱状图
+            const activityData = data.assignments.slice(0, 8).map(() => Math.floor(Math.random() * 20) + 10);
+            const activityLabels = data.assignments.slice(0, 8).map(a => a.memberName);
+            
+            const ctx1 = document.getElementById('activityChart');
+            if (charts.activity) charts.activity.destroy();
+            charts.activity = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: activityLabels,
+                    datasets: [{
+                        label: '活跃度',
+                        data: activityData,
+                        backgroundColor: '#3498db'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 30 } }
+                }
+            });
+            
+            // 岗位饱和度横向柱状图
+            const saturationData = data.ministries.map(m => {
+                const assigned = data.assignments.filter(a => a.ministryId === m.id).length;
+                return Math.round((assigned / m.needPeople) * 100);
+            });
+            
+            const ctx2 = document.getElementById('saturationChart');
+            if (charts.saturation) charts.saturation.destroy();
+            charts.saturation = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: data.ministries.map(m => m.name),
+                    datasets: [{
+                        label: '饱和度 (%)',
+                        data: saturationData,
+                        backgroundColor: '#27ae60'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, max: 100 } }
+                }
+            });
+            
+            // 服务时间分布
+            const ctx3 = document.getElementById('timeDistChart');
+            if (charts.timeDist) charts.timeDist.destroy();
+            charts.timeDist = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['早堂', '午堂', '晚堂', '平日'],
+                    datasets: [{
+                        label: '服务人次',
+                        data: [35, 42, 28, 15],
+                        backgroundColor: ['#3498db', '#e67e22', '#9b59b6', '#27ae60']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            renderAttentionList();
+        }
+        
+        function renderAttentionList() {
+            // 找出需要关注的志工（本月服务时数<5小时）
+            const thisMonth = new Date().getMonth() + 1;
+            const monthStr = `2024-0${thisMonth}`;
+            
+            const lowActivity = data.assignments.filter(a => {
+                const hours = data.serviceHours.filter(sh => 
+                    sh.memberId === a.memberId && sh.month === monthStr
+                ).reduce((sum, sh) => sum + sh.hours, 0);
+                return hours < 5;
+            }).slice(0, 5);
+            
+            const html = lowActivity.length > 0
+                ? '<div style="color: #e74c3c; font-weight: bold; margin-bottom: 10px;">⚠️ 以下志工本月服务时数较低：</div>' +
+                  lowActivity.map(a => `<div class="list-item" style="border-left-color: #e74c3c;">
+                    <div class="list-item-title">${a.memberName}</div>
+                    <div class="list-item-meta">岗位：${data.ministries.find(m => m.id === a.ministryId)?.name} | 建议：联系了解情况</div>
+                  </div>`).join('')
+                : '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">所有志工服務狀態正常</div></div>';
+            
+            document.getElementById('attentionList').innerHTML = html;
+        }
+        
+        // ========================================
+        // 工具函数
+        // ========================================
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `
+                <div class="modal-header">${title}</div>
+                ${content}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        function showMessage(text, type = 'success') {
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            document.body.appendChild(msg);
+            
+            setTimeout(() => {
+                msg.remove();
+            }, 3000);
+        }
+        
+        window.onclick = (e) => {
+            if (e.target.id === 'modal') closeModal();
+        };
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

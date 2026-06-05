@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 智能問答系統 - BibleQ&A Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .qa-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .ai-model-selector {
+            margin-bottom: 25px;
+        }
+        
+        .model-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .model-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .model-option.selected {
+            border-color: #667eea;
+            background: #e8f0ff;
+        }
+        
+        .model-option input[type="radio"] {
+            margin-right: 15px;
+            transform: scale(1.2);
+        }
+        
+        .model-info h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .model-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .chat-interface {
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        
+        .message.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .message.ai {
+            background: white;
+            border: 1px solid #e9ecef;
+            color: #333;
+        }
+        
+        .message-header {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+        
+        .message-content {
+            line-height: 1.6;
+        }
+        
+        .input-area {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .question-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: none;
+            font-family: inherit;
+        }
+        
+        .question-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .send-btn {
+            padding: 15px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .send-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        .send-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .quick-questions {
+            margin-top: 25px;
+        }
+        
+        .quick-question {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            color: #495057;
+            text-decoration: none;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-question:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .language-selector {
+            margin-bottom: 25px;
+        }
+        
+        .language-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background: #95a5a6;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .qa-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回 AI 功能中心</a>
+        
+        <div class="header">
+            <h1>🎯 AI 智能問答系統</h1>
+            <p>基於先進 AI 技術的聖經學習助手，支持多語言互動</p>
+        </div>
+        
+        <div class="qa-container">
+            <!-- 左側邊欄 -->
+            <div class="sidebar">
+                <h3 class="section-title">⚙️ 系統設置</h3>
+                
+                <div class="language-selector">
+                    <label for="languageSelect">選擇語言：</label>
+                    <select id="languageSelect">
+                        <option value="zh">中文</option>
+                        <option value="en">English</option>
+                        <option value="vi">Tiếng Việt</option>
+                        <option value="id">Bahasa Indonesia</option>
+                    </select>
+                </div>
+                
+                <div class="ai-model-selector">
+                    <h4>選擇 AI 模型：</h4>
+                    <div class="model-option selected">
+                        <input type="radio" name="aiModel" value="gpt4" checked>
+                        <div class="model-info">
+                            <h4>GPT-4</h4>
+                            <p>最先進的語言模型，理解力強</p>
+                        </div>
+                    </div>
+                    <div class="model-option">
+                        <input type="radio" name="aiModel" value="claude">
+                        <div class="model-info">
+                            <h4>Claude</h4>
+                            <p>擅長分析和解釋複雜概念</p>
+                        </div>
+                    </div>
+                    <div class="model-option">
+                        <input type="radio" name="aiModel" value="gemini">
+                        <div class="model-info">
+                            <h4>Gemini</h4>
+                            <p>多模態理解，創意性強</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quick-questions">
+                    <h4>💡 快速問題示例：</h4>
+                    <a href="#" class="quick-question" onclick="askQuestion('什麼是恩典？')">什麼是恩典？</a>
+                    <a href="#" class="quick-question" onclick="askQuestion('如何理解三位一體？')">如何理解三位一體？</a>
+                    <a href="#" class="quick-question" onclick="askQuestion('聖經中的愛是什麼意思？')">聖經中的愛是什麼意思？</a>
+                    <a href="#" class="quick-question" onclick="askQuestion('如何培養禱告生活？')">如何培養禱告生活？</a>
+                    <a href="#" class="quick-question" onclick="askQuestion('聖經對婚姻的教導是什麼？')">聖經對婚姻的教導是什麼？</a>
+                </div>
+            </div>
+            
+            <!-- 主要聊天區域 -->
+            <div class="main-content">
+                <h3 class="section-title">💬 與 AI 助手對話</h3>
+                
+                <div class="chat-interface">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message ai">
+                            <div class="message-header">AI 助手</div>
+                            <div class="message-content">
+                                您好！我是您的 AI 聖經學習助手。我可以幫助您：
+                                <ul style="margin: 10px 0; padding-left: 20px;">
+                                    <li>解答聖經相關問題</li>
+                                    <li>解釋神學概念</li>
+                                    <li>提供學習建議</li>
+                                    <li>幫助理解經文</li>
+                                </ul>
+                                請在下方輸入您的問題，我會盡力幫助您！
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>AI 正在思考您的問題...</p>
+                    </div>
+                    
+                    <div class="input-area">
+                        <textarea 
+                            class="question-input" 
+                            id="questionInput" 
+                            placeholder="請輸入您的問題..."
+                            rows="3"
+                        ></textarea>
+                        <button class="send-btn" id="sendBtn" onclick="sendQuestion()">發送</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let chatHistory = [];
+        let currentLanguage = 'zh';
+        let currentModel = 'gpt4';
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 語言選擇器事件
+            document.getElementById('languageSelect').addEventListener('change', function(e) {
+                currentLanguage = e.target.value;
+                updateLanguage();
+            });
+            
+            // AI 模型選擇器事件
+            document.querySelectorAll('input[name="aiModel"]').forEach(radio => {
+                radio.addEventListener('change', function(e) {
+                    currentModel = e.target.value;
+                    updateModelSelection();
+                });
+            });
+            
+            // 輸入框回車發送
+            document.getElementById('questionInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendQuestion();
+                }
+            });
+        });
+        
+        // 更新語言
+        function updateLanguage() {
+            const messages = document.querySelectorAll('.message.ai');
+            if (currentLanguage === 'zh') {
+                // 中文界面
+                document.querySelector('.header h1').textContent = '🎯 AI 智能問答系統';
+                document.querySelector('.header p').textContent = '基於先進 AI 技術的聖經學習助手，支持多語言互動';
+            } else if (currentLanguage === 'en') {
+                // 英文界面
+                document.querySelector('.header h1').textContent = '🎯 AI Smart Q&A System';
+                document.querySelector('.header p').textContent = 'Advanced AI-powered Bible learning assistant with multilingual support';
+            }
+            // 可以添加其他語言支持
+        }
+        
+        // 更新模型選擇
+        function updateModelSelection() {
+            document.querySelectorAll('.model-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            const selectedRadio = document.querySelector(`input[value="${currentModel}"]`);
+            if (selectedRadio) {
+                selectedRadio.closest('.model-option').classList.add('selected');
+            }
+        }
+        
+        // 發送問題
+        function sendQuestion() {
+            const questionInput = document.getElementById('questionInput');
+            const question = questionInput.value.trim();
+            
+            if (!question) {
+                alert('請輸入問題！');
+                return;
+            }
+            
+            // 添加用戶問題到聊天記錄
+            addMessage('user', question);
+            
+            // 清空輸入框
+            questionInput.value = '';
+            
+            // 顯示加載狀態
+            showLoading(true);
+            
+            // 模擬 AI 回答（實際應用中這裡會調用 AI API）
+            setTimeout(() => {
+                const aiResponse = generateAIResponse(question, currentLanguage, currentModel);
+                addMessage('ai', aiResponse);
+                showLoading(false);
+            }, 2000);
+        }
+        
+        // 快速問題
+        function askQuestion(question) {
+            document.getElementById('questionInput').value = question;
+            sendQuestion();
+        }
+        
+        // 添加消息到聊天記錄
+        function addMessage(sender, content) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const header = document.createElement('div');
+            header.className = 'message-header';
+            header.textContent = sender === 'user' ? '您' : 'AI 助手';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = content;
+            
+            messageDiv.appendChild(header);
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            // 滾動到底部
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // 保存到聊天歷史
+            chatHistory.push({
+                sender: sender,
+                content: content,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        // 顯示/隱藏加載狀態
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            if (show) {
+                loading.classList.add('show');
+                sendBtn.disabled = true;
+                sendBtn.textContent = '發送中...';
+            } else {
+                loading.classList.remove('show');
+                sendBtn.disabled = false;
+                sendBtn.textContent = '發送';
+            }
+        }
+        
+        // 生成 AI 回答（模擬）
+        function generateAIResponse(question, language, model) {
+            // 這裡是模擬回答，實際應用中會調用真實的 AI API
+            const responses = {
+                'zh': {
+                    'gpt4': `基於您的問題"${question}"，我作為 GPT-4 模型，可以提供以下見解：
+
+聖經教導我們要深入思考神的話語。根據我的理解，這個問題涉及以下幾個方面：
+
+1. **聖經基礎**：我們需要回到聖經原文來理解
+2. **歷史背景**：了解當時的文化和歷史背景
+3. **神學解釋**：從神學角度進行分析
+4. **實際應用**：如何應用到現代生活中
+
+建議您：
+- 仔細研讀相關經文
+- 參考可靠的解經資料
+- 與牧師或神學老師討論
+- 在禱告中尋求神的智慧
+
+記住，聖經學習是一個持續的過程，需要時間和耐心。`,
+                    
+                    'claude': `作為 Claude 模型，我對您的問題"${question}"有以下分析：
+
+我擅長分析複雜的概念和提供結構化的解釋。這個問題可以從以下角度來理解：
+
+**核心概念分析：**
+- 定義和範圍
+- 相關經文支持
+- 神學意義
+
+**實踐應用：**
+- 個人靈修
+- 小組討論
+- 教會教導
+
+**學習建議：**
+- 系統性學習
+- 記錄學習心得
+- 與他人分享交流
+
+希望這個分析對您有幫助！`,
+                    
+                    'gemini': `作為 Gemini 模型，我對您的問題"${question}"有以下創意性見解：
+
+我特別擅長多角度思考和創意性表達。讓我們從一個新的角度來看待這個問題：
+
+🎨 **視覺化理解**：就像一幅畫有不同的色彩層次
+🌱 **成長過程**：如同種子發芽到開花結果
+🔗 **關聯性思維**：將不同概念連接起來
+
+**創新學習方法：**
+- 思維導圖
+- 故事化理解
+- 藝術表達
+- 音樂詮釋
+
+**實踐建議：**
+- 嘗試不同的學習方式
+- 發揮創意來記憶
+- 與藝術和音樂結合
+
+讓我們一起探索這個問題的奧秘！`
+                }
+            };
+            
+            return responses[language]?.[model] || responses['zh']['gpt4'];
+        }
+        
+        console.log('AI 智能問答系統已加載完成！');
+    </script>
+</body>
+</html>

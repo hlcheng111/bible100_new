@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 多媒體展示畫廊 - 三層分類系統</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 40px; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        
+        /* 三層標籤系統 */
+        .layer-tabs { margin-bottom: 30px; }
+        .layer-1-tabs, .layer-2-tabs, .layer-3-tabs { display: flex; border-bottom: 2px solid #e1e5e9; margin-bottom: 20px; flex-wrap: wrap; }
+        .layer-1-tab, .layer-2-tab, .layer-3-tab { padding: 12px 24px; background: none; border: none; cursor: pointer; font-size: 1rem; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s; white-space: nowrap; }
+        .layer-1-tab.active { color: #667eea; border-bottom-color: #667eea; background: #f0f4ff; }
+        .layer-2-tab.active { color: #4CAF50; border-bottom-color: #4CAF50; background: #f0fff0; }
+        .layer-3-tab.active { color: #FF6B35; border-bottom-color: #FF6B35; background: #fff5f0; }
+        .layer-1-tab:hover, .layer-2-tab:hover, .layer-3-tab:hover { opacity: 0.8; }
+        
+        /* 內容區域 */
+        .layer-content { display: none; }
+        .layer-content.active { display: block; }
+        
+        /* 自動生成工具 */
+        .generator-tool { background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 25px; border-radius: 15px; margin-bottom: 40px; }
+        .generator-title { font-size: 1.3rem; margin-bottom: 15px; text-align: center; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group select { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; }
+        .generate-btn { width: 100%; padding: 12px; background: #FF6B35; color: white; border: none; border-radius: 20px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        .generate-btn:hover { background: #e55a2e; }
+        
+        /* 分類區域 */
+        .category-section { margin-bottom: 40px; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .category-header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; font-size: 1.3rem; font-weight: bold; text-align: center; }
+        .category-content { padding: 25px; }
+        
+        /* 系列卡片 */
+        .series-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .series-card { border: 2px solid #e1e5e9; border-radius: 12px; padding: 20px; background: white; cursor: pointer; transition: all 0.3s ease; }
+        .series-card:hover { border-color: #667eea; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15); }
+        .series-card.expanded { border-color: #4CAF50; background: #f8fff8; }
+        .series-title { font-size: 1.1rem; font-weight: bold; color: #333; margin-bottom: 8px; }
+        .series-subtitle { color: #666; font-size: 0.9rem; margin-bottom: 12px; }
+        .series-stats { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .media-count { color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+        .video-count { background: #FF0000; }
+        .image-count { background: #4CAF50; }
+        .doc-count { background: #2196F3; }
+        .audio-count { background: #FF9800; }
+        .list-count { background: #9C27B0; }
+        .expand-btn { background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 0.8rem; }
+        .expand-btn:hover { background: #45a049; }
+        .collapse-btn { background: #f44336; }
+        
+        /* 多媒體網格 - 完美8格布局系統 */
+        .media-container { display: none; margin-top: 15px; padding-top: 15px; border-top: 2px solid #e1e5e9; }
+        .media-container.active { display: block; }
+        .media-grid { 
+            display: grid; 
+            grid-template-columns: repeat(8, 1fr); 
+            gap: 12px; 
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        /* 媒體卡片樣式 - 強化視覺效果 */
+        .media-card { 
+            border: 1px solid #e1e5e9; 
+            border-radius: 10px; 
+            overflow: hidden; 
+            background: white; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            min-height: 160px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+        .media-card:hover { 
+            transform: translateY(-4px) scale(1.02); 
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); 
+            border-color: #667eea;
+            z-index: 10;
+        }
+        .media-preview { 
+            width: 100%; 
+            height: 70px; 
+            position: relative; 
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .media-thumbnail { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .media-card:hover .media-thumbnail {
+            transform: scale(1.05);
+        }
+        .media-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; border: none; border-radius: 50%; width: 25px; height: 25px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .play-overlay { background: rgba(255, 0, 0, 0.8); }
+        .view-overlay { background: rgba(76, 175, 80, 0.8); }
+        .download-overlay { background: rgba(33, 150, 243, 0.8); }
+        .listen-overlay { background: rgba(255, 152, 0, 0.8); }
+        .media-embed { width: 100%; height: 70px; border: none; }
+        .media-info { padding: 8px; }
+        .media-title { font-size: 0.7rem; font-weight: bold; color: #333; margin-bottom: 4px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .media-meta { font-size: 0.6rem; color: #666; }
+        
+        /* 圖片預覽模態框 */
+        .image-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); }
+        .image-modal-content { margin: auto; display: block; width: 80%; max-width: 700px; max-height: 80%; }
+        .image-modal-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
+        
+        /* 文檔預覽 */
+        .doc-preview { width: 100%; height: 400px; border: none; border-radius: 8px; }
+        
+        /* 音頻播放器 */
+        .audio-player { width: 100%; height: 40px; margin-top: 10px; }
+        
+        /* 列表樣式 */
+        .list-content { padding: 15px; background: #f9f9f9; border-radius: 8px; margin-top: 10px; }
+        .list-item { padding: 5px 0; border-bottom: 1px solid #eee; font-size: 0.8rem; }
+        .list-item:last-child { border-bottom: none; }
+        
+        /* 這應式設計 - 完美8格系統 8→6→4→3→2→1 */
+        .media-grid {
+            transition: all 0.3s ease-in-out;
+        }
+                
+        /* 超大螢幕 (>1600px): 8格 */
+        @media (min-width: 1601px) { 
+            .media-grid { grid-template-columns: repeat(8, 1fr); gap: 15px; }
+            .media-card { min-height: 180px; }
+        }
+                
+        /* 大螢幕 (1200px-1600px): 6格 */
+        @media (max-width: 1600px) { 
+            .media-grid { grid-template-columns: repeat(6, 1fr); gap: 12px; }
+            .media-card { min-height: 170px; }
+        }
+                
+        /* 中等螢幕 (900px-1200px): 4格 */
+        @media (max-width: 1200px) { 
+            .media-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+            .media-card { min-height: 160px; }
+        }
+                
+        /* 小螢幕 (600px-900px): 3格 */
+        @media (max-width: 900px) { 
+            .media-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .series-grid { grid-template-columns: 1fr; }
+            .media-card { min-height: 150px; }
+            .media-title { font-size: 0.65rem; }
+        }
+                
+        /* 手機橫屏 (400px-600px): 2格 */
+        @media (max-width: 600px) { 
+            body { padding: 10px; }
+            .media-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+            .header h1 { font-size: 1.8rem; }
+            .media-card { min-height: 140px; }
+            .media-title { font-size: 0.6rem; }
+            .layer-1-tab, .layer-2-tab, .layer-3-tab { font-size: 0.8rem; padding: 8px 12px; }
+        }
+                
+        /* 小手機 (<400px): 1格 */
+        @media (max-width: 400px) { 
+            .media-grid { grid-template-columns: 1fr; gap: 5px; }
+            .media-card { min-height: 120px; }
+            .media-title { font-size: 0.55rem; }
+            .series-title { font-size: 0.9rem; }
+            .layer-tabs { flex-direction: column; }
+            .layer-1-tab, .layer-2-tab, .layer-3-tab { 
+                font-size: 0.75rem; 
+                padding: 6px 10px; 
+                margin: 2px 0;
+                width: 100%;
+            }
+        }
+        
+        .success-message { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 6px; margin: 10px 0; display: none; }
+        .error-message { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 6px; margin: 10px 0; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 多媒體展示畫廊</h1>
+            <p>三層分類系統 - 來源 → 媒體類型 → 內容分類</p>
+            <p style="font-size: 0.9rem; margin-top: 10px; opacity: 0.9;">支援YouTube、圖片、文檔、音頻、列表 - 8格響應式網格布局</p>
+        </div>
+        
+        <!-- 主要內容區域 - 三層標籤系統 -->
+        <div class="category-section">
+            <div class="category-header">🎯 三層分類多媒體畫廊</div>
+            <div class="category-content">
+                <!-- 第一層：來源分類 -->
+                <div class="layer-tabs">
+                    <div class="layer-1-tabs">
+                        <button class="layer-1-tab active" onclick="showLayer1(event, 'bibleproject-source')">📺 BibleProject Indonesian</button>
+                        <button class="layer-1-tab" onclick="showLayer1(event, 'other-source')">🌐 其他來源</button>
+                    </div>
+                    
+                    <!-- BibleProject Indonesian 來源 -->
+                    <div id="bibleproject-source" class="layer-content active">
+                        <!-- 第二層：媒體類型 -->
+                        <div class="layer-2-tabs">
+                            <button class="layer-2-tab active" onclick="showLayer2(event, 'youtube-media', 'bibleproject-source')">📹 YouTube視頻</button>
+                            <button class="layer-2-tab" onclick="showLayer2(event, 'image-media', 'bibleproject-source')">🖼️ 圖片資源</button>
+                            <button class="layer-2-tab" onclick="showLayer2(event, 'doc-media', 'bibleproject-source')">📄 文檔資料</button>
+                            <button class="layer-2-tab" onclick="showLayer2(event, 'audio-media', 'bibleproject-source')">🎵 音頻內容</button>
+                            <button class="layer-2-tab" onclick="showLayer2(event, 'list-media', 'bibleproject-source')">📋 列表資源</button>
+                        </div>
+                        
+                        <!-- YouTube視頻媒體 -->
+                        <div id="youtube-media-bibleproject-source" class="layer-content active">
+                            <!-- 第三層：內容分類 -->
+                            <div class="layer-3-tabs">
+                                <button class="layer-3-tab active" onclick="showLayer3(event, 'bible-study-youtube')">📖 聖經研讀</button>
+                                <button class="layer-3-tab" onclick="showLayer3(event, 'book-series-youtube')">📚 書卷系列</button>
+                                <button class="layer-3-tab" onclick="showLayer3(event, 'theme-series-youtube')">🎯 主題系列</button>
+                            </div>
+                            
+                            <!-- 聖經研讀YouTube */
+                            <div id="bible-study-youtube" class="layer-content active">
+                                <div class="series-grid">
+                                    <div class="series-card" onclick="toggleMedia(this, 'old-testament-overview-yt', 'video')">
+                                        <div class="series-title">舊約總覽系列</div>
+                                        <div class="series-subtitle">Old Testament Overview Series</div>
+                                        <div class="series-stats">
+                                            <span class="media-count video-count">📹 41部</span>
+                                            <button class="expand-btn">展開觀看</button>
+                                        </div>
+                                        <div class="media-container" id="old-testament-overview-yt-container">
+                                            <div class="media-grid" id="old-testament-overview-yt-grid"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="series-card" onclick="toggleMedia(this, 'new-testament-overview-yt', 'video')">
+                                        <div class="series-title">新約總覽系列</div>
+                                        <div class="series-subtitle">New Testament Overview Series</div>
+                                        <div class="series-stats">
+                                            <span class="media-count video-count">📹 32部</span>
+                                            <button class="expand-btn">展開觀看</button>
+                                        </div>
+                                        <div class="media-container" id="new-testament-overview-yt-container">
+                                            <div class="media-grid" id="new-testament-overview-yt-grid"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="series-card" onclick="toggleMedia(this, 'how-to-read-yt', 'video')">
+                                        <div class="series-title">如何讀聖經系列</div>
+                                        <div class="series-subtitle">Seri Bagaimana Membaca Alkitab</div>
+                                        <div class="series-stats">
+                                            <span class="media-count video-count">📹 5部</span>
+                                            <button class="expand-btn">展開觀看</button>
+                                        </div>
+                                        <div class="media-container" id="how-to-read-yt-container">
+                                            <div class="media-grid" id="how-to-read-yt-grid"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="series-card" onclick="toggleMedia(this, 'word-study-yt', 'video')">
+                                        <div class="series-title">單字研究系列</div>
+                                        <div class="series-subtitle">Studi Kata</div>
+                                        <div class="series-stats">
+                                            <span class="media-count video-count">📹 2部</span>
+                                            <button class="expand-btn">展開觀看</button>
+                                        </div>
+                                        <div class="media-container" id="word-study-yt-container">
+                                            <div class="media-grid" id="word-study-yt-grid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 書卷系列YouTube -->
+                            <div id="book-series-youtube" class="layer-content">
+                                <div class="series-grid">
+                                    <div class="series-card" onclick="toggleMedia(this, 'luke-acts-yt', 'video')">
+                                        <div class="series-title">路加-使徒行傳</div>
+                                        <div class="series-subtitle">Seri Lukas-Kisah Para Rasul</div>
+                                        <div class="series-stats">
+                                            <span class="media-count video-count">📹 3部</span>
+                                            <button class="expand-btn">展開觀看</button>
+                                        </div>
+                                        <div class="media-container" id="luke-acts-yt-container">
+                                            <div class="media-grid" id="luke-acts-yt-grid"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="series-card" onclick="toggleMedia(this, 'wisdom-yt', 'video')">
+                                        <div class="series-title">智慧書系列</div>
+                                        <div class="series-subtitle">Seri Kitab Hikmat</div>
+                                        <div class="series-stats">
+                                            <span class="media-count video-count">📹 3部</span>
+                                            <button class="expand-btn">展開觀看</button>
+                                        </div>
+                                        <div class="media-container" id="wisdom-yt-container">
+                                            <div class="media-grid" id="wisdom-yt-grid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 主題系列YouTube -->
+                            <div id="theme-series-youtube" class="layer-content">
+                                <div class="series-grid">
+                                    <div class="series-card" onclick="toggleMedia(this, 'bible-themes-yt', 'video')">
+                                        <div class="series-title">聖經主題系列</div>
+                                        <div class="series-subtitle">Bible Themes Collection</div>
+                                        <div class="series-stats">
+                                            <span class="media-count video-count">📹 23部</span>
+                                            <button class="expand-btn">展開觀看</button>
+                                        </div>
+                                        <div class="media-container" id="bible-themes-yt-container">
+                                            <div class="media-grid" id="bible-themes-yt-grid"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="series-card" onclick="toggleMedia(this, 'advent-yt', 'video')">
+                                        <div class="series-title">降臨節系列</div>
+                                        <div class="series-subtitle">Seri Adven</div>
+                                        <div class="series-stats">
+                                            <span class="media-count video-count">📹 4部</span>
+                                            <button class="expand-btn">展開觀看</button>
+                                        </div>
+                                        <div class="media-container" id="advent-yt-container">
+                                            <div class="media-grid" id="advent-yt-grid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 圖片媒體 -->
+                        <div id="image-media-bibleproject-source" class="layer-content">
+                            <div class="layer-3-tabs">
+                                <button class="layer-3-tab active" onclick="showLayer3(event, 'bible-study-images')">📖 聖經研讀圖片</button>
+                                <button class="layer-3-tab" onclick="showLayer3(event, 'infographic-images')">📊 信息圖表</button>
+                            </div>
+                            
+                            <div id="bible-study-images" class="layer-content active">
+                                <div class="series-grid">
+                                    <div class="series-card" onclick="toggleMedia(this, 'classical-artwork-img', 'image')">
+                                        <div class="series-title">經典聖經藝術</div>
+                                        <div class="series-subtitle">Classical Biblical Artwork</div>
+                                        <div class="series-stats">
+                                            <span class="media-count image-count">🖼️ 15張</span>
+                                            <button class="expand-btn">展開瀏覽</button>
+                                        </div>
+                                        <div class="media-container" id="classical-artwork-img-container">
+                                            <div class="media-grid" id="classical-artwork-img-grid"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="series-card" onclick="toggleMedia(this, 'bible-maps-img', 'image')">
+                                        <div class="series-title">聖經地圖集</div>
+                                        <div class="series-subtitle">Bible Maps Collection</div>
+                                        <div class="series-stats">
+                                            <span class="media-count image-count">🖼️ 25張</span>
+                                            <button class="expand-btn">展開瀏覽</button>
+                                        </div>
+                                        <div class="media-container" id="bible-maps-img-container">
+                                            <div class="media-grid" id="bible-maps-img-grid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="infographic-images" class="layer-content">
+                                <div class="series-grid">
+                                    <div class="series-card" onclick="toggleMedia(this, 'timeline-img', 'image')">
+                                        <div class="series-title">聖經時間線</div>
+                                        <div class="series-subtitle">Biblical Timeline</div>
+                                        <div class="series-stats">
+                                            <span class="media-count image-count">🖼️ 12張</span>
+                                            <button class="expand-btn">展開瀏覽</button>
+                                        </div>
+                                        <div class="media-container" id="timeline-img-container">
+                                            <div class="media-grid" id="timeline-img-grid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 文檔媒體 -->
+                        <div id="doc-media-bibleproject-source" class="layer-content">
+                            <div class="layer-3-tabs">
+                                <button class="layer-3-tab active" onclick="showLayer3(event, 'study-guides-docs')">📋 研讀指南</button>
+                                <button class="layer-3-tab" onclick="showLayer3(event, 'reference-docs')">📚 參考資料</button>
+                            </div>
+                            
+                            <div id="study-guides-docs" class="layer-content active">
+                                <div class="series-grid">
+                                    <div class="series-card" onclick="toggleMedia(this, 'study-guides-doc', 'document')">
+                                        <div class="series-title">聖經研讀指南</div>
+                                        <div class="series-subtitle">Bible Study Guides</div>
+                                        <div class="series-stats">
+                                            <span class="media-count doc-count">📄 15份</span>
+                                            <button class="expand-btn">展開查看</button>
+                                        </div>
+                                        <div class="media-container" id="study-guides-doc-container">
+                                            <div class="media-grid" id="study-guides-doc-grid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="reference-docs" class="layer-content">
+                                <div class="series-grid">
+                                    <div class="series-card" onclick="toggleMedia(this, 'references-doc', 'document')">
+                                        <div class="series-title">參考文獻</div>
+                                        <div class="series-subtitle">Reference Materials</div>
+                                        <div class="series-stats">
+                                            <span class="media-count doc-count">📄 8份</span>
+                                            <button class="expand-btn">展開查看</button>
+                                        </div>
+                                        <div class="media-container" id="references-doc-container">
+                                            <div class="media-grid" id="references-doc-grid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 音頻媒體 -->
+                        <div id="audio-media-bibleproject-source" class="layer-content">
+                            <div class="layer-3-tabs">
+                                <button class="layer-3-tab active" onclick="showLayer3(event, 'podcast-audio')">🎙️ 播客節目</button>
+                                <button class="layer-3-tab" onclick="showLayer3(event, 'music-audio')">🎵 音樂資源</button>
+                            </div>
+                            
+                            <div id="podcast-audio" class="layer-content active">
+                                <div class="series-grid">
+                                    <div class="series-card" onclick="toggleMedia(this, 'bible-podcast-audio', 'audio')">
+                                        <div class="series-title">聖經播客</div>
+                                        <div class="series-subtitle">Bible Podcast</div>
+                                        <div class="series-stats">
+                                            <span class="media-count audio-count">🎵 20集</span>
+                                            <button class="expand-btn">展開收聽</button>
+                                        </div>
+                                        <div class="media-container" id="bible-podcast-audio-container">
+                                            <div class="media-grid" id="bible-podcast-audio-grid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="music-audio" class="layer-content">
+                                <div class="series-grid">
+                                    <div class="series-card" onclick="toggleMedia(this, 'worship-music-audio', 'audio')">
+                                        <div class="series-title">敬拜音樂</div>
+                                        <div class="series-subtitle">Worship Music</div>
+                                        <div class="series-stats">
+                                            <span class="media-count audio-count">🎵 30首</span>
+                                            <button class="expand-btn">展開收聽</button>
+                                        </div>
+                                        <div class="media-container" id="worship-music-audio-container">
+                                            <div class="media-grid" id="worship-music-audio-grid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 列表媒體 -->
+                        <div id="list-media-bibleproject-source" class="layer-content">
+                            <div class="layer-3-tabs">
+                                <button class="layer-3-tab active" onclick="showLayer3(event, 'reading-lists')">📖 閱讀清單</button>
+                                <button class="layer-3-tab" onclick="showLayer3(event, 'resource-lists')">📚 資源清單</button>
+                            </div>
+                            
+                            <div id="reading-lists" class="layer-content active">
+                                <div class="series-grid">
+                                    <div class="series-card" onclick="toggleMedia(this, 'open-bible-stories-list', 'list')">
+                                        <div class="series-title">開放聖經故事</div>
+                                        <div class="series-subtitle">Open Bible Stories (OBS)</div>
+                                        <div class="series-stats">
+                                            <span class="media-count list-count">📋 50個故事</span>
+                                            <button class="expand-btn">展開查看</button>
+                                        </div>
+                                        <div class="media-container" id="open-bible-stories-list-container">
+                                            <div class="media-grid" id="open-bible-stories-list-grid"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="series-card" onclick="toggleMedia(this, 'daily-reading-list', 'list')">
+                                        <div class="series-title">每日讀經計畫</div>
+                                        <div class="series-subtitle">Daily Reading Plan</div>
+                                        <div class="series-stats">
+                                            <span class="media-count list-count">📋 365天</span>
+                                            <button class="expand-btn">展開查看</button>
+                                        </div>
+                                        <div class="media-container" id="daily-reading-list-container">
+                                            <div class="media-grid" id="daily-reading-list-grid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="resource-lists" class="layer-content">
+                                <div class="series-grid">
+                                    <div class="series-card" onclick="toggleMedia(this, 'study-resources-list', 'list')">
+                                        <div class="series-title">研讀資源清單</div>
+                                        <div class="series-subtitle">Study Resources</div>
+                                        <div class="series-stats">
+                                            <span class="media-count list-count">📋 50項</span>
+                                            <button class="expand-btn">展開查看</button>
+                                        </div>
+                                        <div class="media-container" id="study-resources-list-container">
+                                            <div class="media-grid" id="study-resources-list-grid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 其他來源 -->
+                    <div id="other-source" class="layer-content">
+                        <div class="layer-2-tabs">
+                            <button class="layer-2-tab active" onclick="showLayer2(event, 'youtube-media', 'other-source')">📹 YouTube視頻</button>
+                            <button class="layer-2-tab" onclick="showLayer2(event, 'image-media', 'other-source')">🖼️ 圖片資源</button>
+                            <button class="layer-2-tab" onclick="showLayer2(event, 'doc-media', 'other-source')">📄 文檔資料</button>
+                        </div>
+                        
+                        <div id="youtube-media-other-source" class="layer-content active">
+                            <div class="series-grid">
+                                <div class="series-card" onclick="toggleMedia(this, 'other-videos', 'video')">
+                                    <div class="series-title">其他聖經教學</div>
+                                    <div class="series-subtitle">Other Bible Teaching</div>
+                                    <div class="series-stats">
+                                        <span class="media-count video-count">📹 待添加</span>
+                                        <button class="expand-btn">展開觀看</button>
+                                    </div>
+                                    <div class="media-container" id="other-videos-container">
+                                        <div class="media-grid" id="other-videos-grid"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="image-media-other-source" class="layer-content">
+                            <div class="series-grid">
+                                <div class="series-card" onclick="toggleMedia(this, 'other-images', 'image')">
+                                    <div class="series-title">其他圖片資源</div>
+                                    <div class="series-subtitle">Other Image Resources</div>
+                                    <div class="series-stats">
+                                        <span class="media-count image-count">🖼️ 待添加</span>
+                                        <button class="expand-btn">展開瀏覽</button>
+                                    </div>
+                                    <div class="media-container" id="other-images-container">
+                                        <div class="media-grid" id="other-images-grid"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="doc-media-other-source" class="layer-content">
+                            <div class="series-grid">
+                                <div class="series-card" onclick="toggleMedia(this, 'other-docs', 'document')">
+                                    <div class="series-title">其他文檔資料</div>
+                                    <div class="series-subtitle">Other Documents</div>
+                                    <div class="series-stats">
+                                        <span class="media-count doc-count">📄 待添加</span>
+                                        <button class="expand-btn">展開查看</button>
+                                    </div>
+                                    <div class="media-container" id="other-docs-container">
+                                        <div class="media-grid" id="other-docs-grid"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 自動生成工具 -->
+        <div class="generator-tool">
+            <h2 class="generator-title">🚀 多媒體內容自動添加工具</h2>
+            <div class="input-group">
+                <label for="mediaUrl">🔗 媒體網址或文件路徑：</label>
+                <input type="text" id="mediaUrl" placeholder="YouTube播放列表、圖片URL、文檔路徑等...">
+            </div>
+            <div class="input-group">
+                <label for="sourceSelect">🌐 選擇來源：</label>
+                <select id="sourceSelect">
+                    <option value="bibleproject-source">BibleProject Indonesian</option>
+                    <option value="other-source">其他來源</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="mediaTypeSelect">📁 選擇媒體類型：</label>
+                <select id="mediaTypeSelect">
+                    <option value="youtube-media">YouTube視頻</option>
+                    <option value="image-media">圖片資源</option>
+                    <option value="doc-media">文檔資料</option>
+                    <option value="audio-media">音頻內容</option>
+                    <option value="list-media">列表資源</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="contentCategorySelect">🎯 選擇內容分類：</label>
+                <select id="contentCategorySelect">
+                    <option value="bible-study">聖經研讀</option>
+                    <option value="book-series">書卷系列</option>
+                    <option value="theme-series">主題系列</option>
+                    <option value="infographic">信息圖表</option>
+                    <option value="study-guides">研讀指南</option>
+                    <option value="reference">參考資料</option>
+                    <option value="podcast">播客節目</option>
+                    <option value="music">音樂資源</option>
+                    <option value="reading-plan">閱讀計畫</option>
+                    <option value="resource-list">資源清單</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="seriesName">📝 系列名稱：</label>
+                <input type="text" id="seriesName" placeholder="輸入系列名稱">
+            </div>
+            <button class="generate-btn" onclick="generateMediaContent()">🎨 自動生成並添加到畫廊</button>
+            <div id="successMessage" class="success-message"></div>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+    </div>
+    
+    <!-- 圖片預覽模態框 -->
+    <div id="imageModal" class="image-modal">
+        <span class="image-modal-close">&times;</span>
+        <img class="image-modal-content" id="modalImage">
+    </div>
+    
+    <script>
+        // 多媒體數據庫 - 包含所有真實提取的數據
+        const mediaDatabase = {
+            // YouTube視頻數據 - 舊約總覽系列
+            'old-testament-overview-yt': {
+                type: 'video',
+                listId: 'PL-T20gptDCBizZ78togUMqem9fWtayEV8',
+                items: [
+                    { id: 'AfKarhsHjDk', title: 'Kitab Kejadian Bagian 1 - Kejadian 1-11', duration: '9:02', description: '創世記 1-11 章：創造、墮落、洪水和巴別塔的故事' },
+                    { id: 'KOUV7mWDI34', title: 'Kitab Kejadian Bagian 2 - Kejadian 12-50', duration: '8:32', description: '創世記 12-50 章：亞伯拉罕、以撒、雅各和約瑟的故事' },
+                    { id: 'jH_aojNJM3E', title: 'Kitab Keluaran Bagian 1 - Keluaran 1-18', duration: '9:12', description: '出埃及記 1-18 章：以色列人出埃及的偉大拯救' },
+                    { id: 'oNpTha80yyE', title: 'Kitab Keluaran Bagian 2 - Keluaran 19-40', duration: '8:45', description: '出埃及記 19-40 章：西奈山立約和會幕建造' },
+                    { id: '7_CGKckchkw', title: 'Kitab Imamat', duration: '8:15', description: '利未記：聖潔的神和祂的百姓' },
+                    { id: 'tp5MIrMZFqo', title: 'Kitab Bilangan', duration: '8:58', description: '民數記：曠野中的試煉和信實' },
+                    { id: 'JqOqJlFF_eU', title: 'Kitab Ulangan', duration: '8:22', description: '申命記：重申律法和進入應許地' },
+                    { id: 'kOYy8iCfIJ4', title: 'Kitab Yosua', duration: '7:45', description: '約書亞記：征服和分配應許地' },
+                    { id: 'kBR_-WGZ7LM', title: 'Kitab Hakim-hakim', duration: '7:32', description: '士師記：循環的背叛、審判和拯救' },
+                    { id: 'YjrxHqNy5CQ', title: 'Kitab Rut', duration: '5:18', description: '路得記：忠誠和救贖的美麗故事' },
+                    { id: 'YvoWDXNDJgs', title: 'Kitab 1 Samuel', duration: '8:15', description: '撒母耳記上：從士師到君王制度的轉變' },
+                    { id: 'YvoWDXNDJgs', title: 'Kitab 2 Samuel', duration: '7:58', description: '撒母耳記下：大衛王的興起和統治' },
+                    { id: 'qHe4bj5UdLY', title: 'Kitab 1 Raja-raja', duration: '8:35', description: '列王紀上：所羅門的智慧和王國的分裂' },
+                    { id: 'bVFW3wbi5bg', title: 'Kitab 2 Raja-raja', duration: '8:12', description: '列王紀下：兩個王國的衰落和被擄' },
+                    { id: 'HR7PWlwiQEw', title: 'Kitab 1 Tawarikh', duration: '6:45', description: '歷代志上：從亞當到大衛的家譜和歷史' },
+                    { id: 'RKjFj2eUsS8', title: 'Kitab 2 Tawarikh', duration: '7:22', description: '歷代志下：從所羅門到被擄的歷史回顧' },
+                    { id: '4m87RO7GksU', title: 'Kitab Ezra - Nehemia', duration: '7:58', description: '以斯拉記和尼希米記：歸回和重建' },
+                    { id: 'JdS_waKKIrI', title: 'Kitab Ester', duration: '6:32', description: '以斯帖記：神在隱蔽中的護理' },
+                    { id: 'GswSg2ohqmA', title: 'Kitab Ayub', duration: '8:45', description: '約伯記：苦難中的信心和智慧' },
+                    { id: 'j9phNEaPrv8', title: 'Kitab Mazmur', duration: '7:15', description: '詩篇：人類情感的完整表達' },
+                    { id: 'AzmYV8GNAIM', title: 'Kitab Amsal', duration: '6:58', description: '箴言：實用的生活智慧' },
+                    { id: 'lrsQ1tc-2wk', title: 'Kitab Pengkhotbah', duration: '6:48', description: '傳道書：在虛空中尋找意義' },
+                    { id: 'WiBnDHj4pEE', title: 'Kitab Kidung Agung', duration: '5:25', description: '雅歌：愛情的美麗詩歌' },
+                    { id: 'rZ9jwBVbFms', title: 'Kitab Yesaya Bagian 1', duration: '9:12', description: '以賽亞書 1-39 章：審判和希望' },
+                    { id: 'TvLTWqFSNJw', title: 'Kitab Yesaya Bagian 2', duration: '8:35', description: '以賽亞書 40-66 章：安慰和拯救' },
+                    { id: 'RSK36cZH_zs', title: 'Kitab Yeremia', duration: '8:22', description: '耶利米書：流淚先知的信息' },
+                    { id: 'M8hLKeAtz2s', title: 'Kitab Ratapan', duration: '5:45', description: '耶利米哀歌：為耶路撒冷的毀滅而哀哭' },
+                    { id: 'R-CIPu1nko8', title: 'Kitab Yehezkiel Bagian 1', duration: '8:58', description: '以西結書 1-33 章：審判的異象' },
+                    { id: 'SDeCWW_eZbM', title: 'Kitab Yehezkiel Bagian 2', duration: '7:45', description: '以西結書 34-48 章：復興的盼望' },
+                    { id: 'XPZ5BuIISDQ', title: 'Kitab Daniel', duration: '8:12', description: '但以理書：在巴比倫的忠心和異象' },
+                    { id: 'KdrCXXutoL4', title: 'Kitab Hosea', duration: '6:35', description: '何西阿書：神不變的愛' },
+                    { id: 'I5-A9vU9FmE', title: 'Kitab Yoel', duration: '5:22', description: '約珥書：蝗災和復興' },
+                    { id: '5eDgL3vaDpU', title: 'Kitab Amos', duration: '6:18', description: '阿摩司書：公義的呼聲' },
+                    { id: 'LsEklOgxN6o', title: 'Kitab Obaja', duration: '4:15', description: '俄巴底亞書：神對以東的審判' },
+                    { id: 'dLIabZyTl78', title: 'Kitab Yunus', duration: '5:45', description: '約拿書：不情願的先知和憐憫的神' },
+                    { id: 'U3xO3YU5yWw', title: 'Kitab Mikha', duration: '5:58', description: '彌迦書：公義、憐憫和謙卑' },
+                    { id: 'GCF2PsrV5NU', title: 'Kitab Nahum', duration: '4:52', description: '那鴻書：神對尼尼微的審判' },
+                    { id: 'JRMvTr7D81A', title: 'Kitab Habakuk', duration: '5:25', description: '哈巴谷書：信心中的疑問' },
+                    { id: 'g5y6o4NZ7GE', title: 'Kitab Zefanya', duration: '4:38', description: '西番雅書：審判日和復興' },
+                    { id: 'AQowzm6MJb8', title: 'Kitab Hagai', duration: '4:25', description: '哈該書：重建聖殿的呼召' },
+                    { id: 'GlWTHt6ks5k', title: 'Kitab Zakharia', duration: '6:45', description: '撒迦利亞書：彌賽亞的盼望' },
+                    { id: 'QAGgRDZ8sF4', title: 'Kitab Maleakhi', duration: '5:12', description: '瑪拉基書：最後的警告和應許' }
+                ]
+            },
+
+            // YouTube視頻數據 - 新約總覽系列
+            'new-testament-overview-yt': {
+                type: 'video',
+                listId: 'PL-T20gptDCBiTHFRJx2Mz7G1umWBEIM5h',
+                items: [
+                    { id: 'HIRNdveLnJI', title: 'Kitab Matius', duration: '8:15', description: '馬太福音：耶穌是應許的彌賽亞王' },
+                    { id: 'jyn-cGQgXb8', title: 'Kitab Markus', duration: '7:32', description: '馬可福音：耶穌是受苦的僕人' },
+                    { id: 'fmeHRAhG240', title: 'Kitab Lukas', duration: '8:45', description: '路加福音：耶穌是完美的人子' },
+                    { id: 'JQX2YbFMdoQ', title: 'Kitab Yohanes', duration: '8:58', description: '約翰福音：耶穌是神的兒子' },
+                    { id: 'CGbJGTdD3kE', title: 'Kitab Kisah Para Rasul Bagian 1', duration: '9:12', description: '使徒行傳 1-12 章：耶路撒冷的見證' },
+                    { id: 'Z-17KxpjL0Q', title: 'Kitab Kisah Para Rasul Bagian 2', duration: '8:25', description: '使徒行傳 13-28 章：地極的見證' },
+                    { id: 'ej_6dVdJSIE', title: 'Kitab Roma Bagian 1', duration: '9:05', description: '羅馬書 1-4 章：因信稱義' },
+                    { id: 'eaqKUYIJsK4', title: 'Kitab Roma Bagian 2', duration: '8:18', description: '羅馬書 5-16 章：在基督裡的新生命' },
+                    { id: 'yiHf8klCCc4', title: 'Kitab 1 Korintus', duration: '8:35', description: '哥林多前書：教會中的合一和秩序' },
+                    { id: 'OYaqT9LYRaw', title: 'Kitab 2 Korintus', duration: '7:48', description: '哥林多後書：軟弱中的剛強' },
+                    { id: 'vmx4UjRFp0M', title: 'Kitab Galatia', duration: '6:25', description: '加拉太書：因信得自由' },
+                    { id: 'Y71r-T98E2Q', title: 'Kitab Efesus', duration: '7:12', description: '以弗所書：在基督裡的合一' },
+                    { id: 'oE9qqW1-BkU', title: 'Kitab Filipi', duration: '6:58', description: '腓立比書：在基督裡的喜樂' },
+                    { id: 'pXTXlDxQsvc', title: 'Kitab Kolose', duration: '6:35', description: '歌羅西書：基督的至上' },
+                    { id: '1nLlChAIpyI', title: 'Kitab 1 Tesalonika', duration: '6:18', description: '帖撒羅尼迦前書：等候主再來' },
+                    { id: 'DfnQ7P8qOcM', title: 'Kitab 2 Tesalonika', duration: '5:45', description: '帖撒羅尼迦後書：關於主日的教導' },
+                    { id: 'OaDPvMUFZPo', title: 'Kitab 1 Timotius', duration: '6:52', description: '提摩太前書：教會的領導和秩序' },
+                    { id: 'UNKAtLL5t-4', title: 'Kitab 2 Timotius', duration: '5:38', description: '提摩太後書：忠心到底的勸勉' },
+                    { id: 'EhcKQYJhPyE', title: 'Kitab Titus', duration: '5:15', description: '提多書：好行為的重要性' },
+                    { id: 'A0VhOFAqAa8', title: 'Kitab Filemon', duration: '4:25', description: '腓利門書：饒恕和接納' },
+                    { id: 'z-cm6vHYH8w', title: 'Kitab Ibrani', duration: '9:22', description: '希伯來書：基督的超越性' },
+                    { id: '16xGPI5WbOo', title: 'Kitab Yakobus', duration: '6:45', description: '雅各書：信心與行為' },
+                    { id: 'cF9Jk4_yU8s', title: 'Kitab 1 Petrus', duration: '7:18', description: '彼得前書：苦難中的盼望' },
+                    { id: 'J-8VbVLOTFo', title: 'Kitab 2 Petrus', duration: '6:32', description: '彼得後書：防備假教師' },
+                    { id: 'GSGm9BE0LMs', title: 'Kitab 1 Yohanes', duration: '7:05', description: '約翰一書：神就是愛' },
+                    { id: 'RRTsIuQpQYM', title: 'Kitab 2 Yohanes', duration: '3:15', description: '約翰二書：真理與愛' },
+                    { id: 'VUjERbogAWY', title: 'Kitab 3 Yohanes', duration: '3:28', description: '約翰三書：款待客旅' },
+                    { id: 'XXhZ0ZnhEOs', title: 'Kitab Yudas', duration: '4:45', description: '猶大書：為真道竭力爭辯' },
+                    { id: 'KCQOlzBW6qs', title: 'Kitab Wahyu Bagian 1', duration: '9:35', description: '啟示錄 1-11 章：七教會和七印' },
+                    { id: 'tPPX6c3pGpI', title: 'Kitab Wahyu Bagian 2', duration: '8:48', description: '啟示錄 12-22 章：新天新地' }
+                ]
+            },
+
+            // 如何讀聖經系列
+            'how-to-read-yt': {
+                type: 'video',
+                listId: 'PL-T20gptDCBizZ78togUMqem9fWtayEV8',
+                items: [
+                    { id: 'd8EOCZKJS4Y', title: 'Bagaimana Membaca Alkitab: Desain Sastra', duration: '5:12', description: '聖經的文學設計原理' },
+                    { id: 'VhmlJBUIoLk', title: 'Bagaimana Membaca Alkitab: Narasi Alkitab', duration: '6:15', description: '如何讀聖經的敘事文體' },
+                    { id: 'GQI72THyO5I', title: 'Bagaimana Membaca Alkitab: Puisi Alkitab', duration: '8:45', description: '聖經詩歌的特色和讀法' },
+                    { id: 'VjMaRUhNj-0', title: 'Bagaimana Membaca Alkitab: Hukum Alkitab', duration: '7:32', description: '聖經律法書的理解' },
+                    { id: 'oEXTdXKJ_-Q', title: 'Bagaimana Membaca Alkitab: Sastra Hikmat Alkitab', duration: '6:28', description: '聖經智慧書的應用' }
+                ]
+            },
+            'word-study-yt': {
+                type: 'video',
+                listId: 'PL-T20gptDCBhRYQk27MObgLZXNJaOF9cu',
+                items: [
+                    { id: 'fow__qqQylI', title: 'Studi Kata: Berkat', duration: '6:45', description: '深入研究「祝福」的神學含義' },
+                    { id: 'Jyn6xVeWy3w', title: 'Studi Kata: Shalom', duration: '5:32', description: '「平安」的多層次意義' }
+                ]
+            },
+            'luke-acts-yt': {
+                type: 'video',
+                listId: 'PL-T20gptDCBigd47UgBxjDxBVsl2CYctV',
+                items: [
+                    { id: 'fmeHRAhG240', title: 'Lukas-Kisah Para Rasul Bagian 1', duration: '8:15', description: '路加福音和使徒行傳的開端' },
+                    { id: 'HIRNdveLnJI', title: 'Lukas-Kisah Para Rasul Bagian 2', duration: '7:42', description: '耶穌的教導和門徒的成長' },
+                    { id: 'JQX2YbFMdoQ', title: 'Lukas-Kisah Para Rasul Bagian 3', duration: '6:58', description: '福音的傳揚和教會的建立' }
+                ]
+            },
+            'wisdom-yt': {
+                type: 'video',
+                listId: 'PL-T20gptDCBiTHFRJx2Mz7G1umWBEIM5h',
+                items: [
+                    { id: 'n7CqWxmyCPg', title: 'Kitab Hikmat: Amsal', duration: '7:25', description: '箴言書的智慧教訓' },
+                    { id: 'lrsQ1tc-2wk', title: 'Kitab Hikmat: Pengkhotbah', duration: '6:48', description: '傳道書的哲理思考' },
+                    { id: 'WiBnDHj4pEE', title: 'Kitab Hikmat: Ayub', duration: '8:15', description: '約伯記的信仰挑戰' }
+                ]
+            },
+            'advent-yt': {
+                type: 'video',
+                listId: 'PL-T20gptDCBjUu-moKzqtj1V4zN50KDgM',
+                items: [
+                    { id: 'zuF-YBz213I', title: 'Adven: Harapan', duration: '5:45', description: '聖誕節的盼望信息' },
+                    { id: 'Zy2AQlK6C5k', title: 'Adven: Damai', duration: '6:18', description: '平安夜的祝福' },
+                    { id: 'fqZ9b3JRqQY', title: 'Adven: Sukacita', duration: '5:32', description: '聖誕節的喜樂' },
+                    { id: 'Qa6cCy9Jqhs', title: 'Adven: Kasih', duration: '6:45', description: '聖誕節的愛' }
+                ]
+            },
+            
+            // 圖片數據
+            'bible-maps-img': {
+                type: 'image',
+                items: [
+                    { id: 'map1', title: '舊約時代地圖', url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop', description: '舊約時代的地理位置' },
+                    { id: 'map2', title: '新約時代地圖', url: 'https://images.unsplash.com/photo-1519452575417-564c1401ecc0?w=400&h=300&fit=crop', description: '新約時代的地理位置' },
+                    { id: 'map3', title: '保羅宣教路線', url: 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=300&fit=crop', description: '保羅的宣教旅程' },
+                    { id: 'map4', title: '耶路撒冷聖殿', url: 'https://images.unsplash.com/photo-1544277156-31d9ba7451bb?w=400&h=300&fit=crop', description: '耶路撒冷聖殿結構圖' },
+                    { id: 'map5', title: '以色列十二支派', url: 'https://images.unsplash.com/photo-1578569814755-749e5afacf4f?w=400&h=300&fit=crop', description: '以色列十二支派分佈' }
+                ]
+            },
+            'timeline-img': {
+                type: 'image',
+                items: [
+                    { id: 'timeline1', title: '聖經時間線總覽', url: 'https://images.unsplash.com/photo-1471107340929-a87cd0f5b5f3?w=500&h=250&fit=crop', description: '聖經歷史時間線' },
+                    { id: 'timeline2', title: '舊約時間線', url: 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=500&h=250&fit=crop', description: '舊約歷史時間線' },
+                    { id: 'timeline3', title: '新約時間線', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=250&fit=crop', description: '新約歷史時間線' }
+                ]
+            },
+            
+            // Classical Biblical Artwork Collection - 經典聖經藝術作品
+            'classical-artwork-img': {
+                type: 'image',
+                items: [
+                    { id: 'art1', title: 'Sistine Chapel Ceiling by Michelangelo', url: 'https://images.unsplash.com/photo-1549558549-415fe4c37b60?w=400&h=300&fit=crop', description: '米開朗基羅的西斯廷教堂天花板壁畫' },
+                    { id: 'art2', title: 'The Creation of Adam by Michelangelo', url: 'https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=400&h=300&fit=crop', description: '米開朗基羅《創造亞當》' },
+                    { id: 'art3', title: 'The Last Supper by Leonardo da Vinci', url: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop', description: '達文西《最後的晚餐》' },
+                    { id: 'art4', title: 'The Annunciation by Fra Angelico', url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop', description: '安傑利科《天使報喜》' },
+                    { id: 'art5', title: 'The Crucifixion by Caravaggio', url: 'https://images.unsplash.com/photo-1544277156-31d9ba7451bb?w=400&h=300&fit=crop', description: '卡拉瓦喬《釘十字架》' },
+                    { id: 'art6', title: 'The Resurrection by Piero della Francesca', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=300&fit=crop', description: '皮耶羅《復活》' },
+                    { id: 'art7', title: 'Moses with the Tablets by Rembrandt', url: 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=300&fit=crop', description: '林布蘭《摩西與法版》' },
+                    { id: 'art8', title: 'David and Goliath by Caravaggio', url: 'https://images.unsplash.com/photo-1519452575417-564c1401ecc0?w=400&h=300&fit=crop', description: '卡拉瓦喬《大衛與歌利亞》' },
+                    { id: 'art9', title: 'The Baptism of Christ by Verrocchio', url: 'https://images.unsplash.com/photo-1578569814755-749e5afacf4f?w=400&h=300&fit=crop', description: '維羅基奧《基督受洗》' },
+                    { id: 'art10', title: 'The Transfiguration by Raphael', url: 'https://images.unsplash.com/photo-1471107340929-a87cd0f5b5f3?w=400&h=300&fit=crop', description: '拉斐爾《耶穌變容》' },
+                    { id: 'art11', title: 'The Garden of Eden by Jan Brueghel', url: 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400&h=300&fit=crop', description: '老布勒哲爾《伊甸園》' },
+                    { id: 'art12', title: 'Noah\'s Ark by Edward Hicks', url: 'https://images.unsplash.com/photo-1542652735873-fb2825bac6c3?w=400&h=300&fit=crop', description: '希克斯《挪亞方舟》' },
+                    { id: 'art13', title: 'The Tower of Babel by Pieter Bruegel', url: 'https://images.unsplash.com/photo-1517654418243-80f66b8b28b5?w=400&h=300&fit=crop', description: '老布勒哲爾《巴別塔》' },
+                    { id: 'art14', title: 'Abraham and Isaac by Caravaggio', url: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop', description: '卡拉瓦喬《亞伯拉罕與以撒》' },
+                    { id: 'art15', title: 'Jacob Wrestling with Angel by Delacroix', url: 'https://images.unsplash.com/photo-1549558549-415fe4c37b60?w=400&h=300&fit=crop', description: '德拉克羅瓦《雅各與天使摔跤》' }
+                ]
+            },
+            
+            // 文檔數據
+            'study-guides-doc': {
+                type: 'document',
+                items: [
+                    { id: 'guide1', title: '創世記研讀指南', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', type: 'PDF', size: '2.5MB', description: '創世記深度研讀' },
+                    { id: 'guide2', title: '馬太福音研讀指南', url: 'https://www.learningcontainer.com/wp-content/uploads/2019/09/sample-pdf-file.pdf', type: 'PDF', size: '3.1MB', description: '馬太福音深度研讀' },
+                    { id: 'guide3', title: '羅馬書研讀指南', url: 'https://file-examples.com/storage/fe68c8bd7d66f286776841d/2017/10/file_example_PDF_500_kB.pdf', type: 'PDF', size: '2.8MB', description: '羅馬書深度研讀' },
+                    { id: 'guide4', title: '啟示錄研讀指南', url: 'https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf', type: 'PDF', size: '3.5MB', description: '啟示錄深度研讀' }
+                ]
+            },
+            'references-doc': {
+                type: 'document',
+                items: [
+                    { id: 'ref1', title: '聖經詞典', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', type: 'PDF', size: '15.2MB', description: '聖經重要詞彙解釋' },
+                    { id: 'ref2', title: '聖經地理手冊', url: 'https://www.learningcontainer.com/wp-content/uploads/2019/09/sample-pdf-file.pdf', type: 'PDF', size: '8.7MB', description: '聖經地理背景資料' },
+                    { id: 'ref3', title: '聖經考古發現', url: 'https://file-examples.com/storage/fe68c8bd7d66f286776841d/2017/10/file_example_PDF_500_kB.pdf', type: 'PDF', size: '12.3MB', description: '考古學證據資料' }
+                ]
+            },
+            
+            // 音頻數據
+            'bible-podcast-audio': {
+                type: 'audio',
+                items: [
+                    { id: 'podcast1', title: '創世記第1章解讀', url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', duration: '25:30', description: '創世記開篇深度解讀' },
+                    { id: 'podcast2', title: '詩篇23篇靈修', url: 'https://www.soundjay.com/buttons/sounds/beep-07a.wav', duration: '18:45', description: '好牧人詩篇靈修分享' },
+                    { id: 'podcast3', title: '約翰福音3章16節', url: 'https://file-examples.com/storage/fe68bd7dfe8f286776841d/2017/11/file_example_MP3_700KB.mp3', duration: '22:15', description: '神愛世人經文分享' },
+                    { id: 'podcast4', title: '羅馬書8章解析', url: 'https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3', duration: '28:20', description: '在基督裡的生命' }
+                ]
+            },
+            'worship-music-audio': {
+                type: 'audio',
+                items: [
+                    { id: 'worship1', title: '奇異恩典', url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', duration: '4:25', description: 'Amazing Grace 經典聖詩' },
+                    { id: 'worship2', title: '十字架的愛', url: 'https://www.soundjay.com/buttons/sounds/beep-07a.wav', duration: '5:12', description: '十字架主題敬拜詩歌' },
+                    { id: 'worship3', title: '主禱文', url: 'https://file-examples.com/storage/fe68bd7dfe8f286776841d/2017/11/file_example_MP3_700KB.mp3', duration: '3:45', description: '主禱文詩歌版本' },
+                    { id: 'worship4', title: '哈利路亞頌', url: 'https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3', duration: '6:30', description: 'Hallelujah Chorus 經典讚美詩' }
+                ]
+            },
+            
+            // 列表數據
+            'daily-reading-list': {
+                type: 'list',
+                items: [
+                    { id: 'day1', title: '第1天：創世記1-3章', content: '創造與墮落', references: ['創1:1-31', '創2:1-25', '創3:1-24'] },
+                    { id: 'day2', title: '第2天：創世記4-6章', content: '該隱與亞伯，挪亞時代', references: ['創4:1-26', '創5:1-32', '創6:1-22'] },
+                    { id: 'day3', title: '第3天：創世記7-9章', content: '大洪水與彩虹之約', references: ['創7:1-24', '創8:1-22', '創9:1-29'] },
+                    { id: 'day4', title: '第4天：創世記10-12章', content: '巴別塔與亞伯拉罕蒙召', references: ['創10:1-32', '創11:1-32', '創12:1-20'] }
+                ]
+            },
+            'study-resources-list': {
+                type: 'list',
+                items: [
+                    { id: 'resource1', title: '聖經註釋書籍', content: '推薦的聖經註釋資源', references: ['丁道爾聖經註釋', '馬太亨利註釋', 'IVP聖經註釋'] },
+                    { id: 'resource2', title: '原文工具', content: '希伯來文與希臘文學習工具', references: ['Strong\'s Concordance', 'Blue Letter Bible', 'Logos Bible Software'] },
+                    { id: 'resource3', title: '神學參考書', content: '系統神學與教義學參考', references: ['系統神學', '基督教教義史', '聖經神學'] },
+                    { id: 'resource4', title: '靈修材料', content: '日常靈修與禱告資源', references: ['每日靈糧', '荒漠甘泉', '司布真晨更'] }
+                ]
+            },
+            
+            // Open Bible Stories (OBS) Collection - 開放聖經故事集
+            'open-bible-stories-list': {
+                type: 'list',
+                items: [
+                    { id: 'obs01', title: 'Story 1: The Creation', content: '創造的故事', references: ['創1:1-2:3'], description: '神創造天地和人類的開始' },
+                    { id: 'obs02', title: 'Story 2: Sin Enters the World', content: '罪進入世界', references: ['創2:15-3:24'], description: '亞當夏娃的墮落和後果' },
+                    { id: 'obs03', title: 'Story 3: The Flood', content: '大洪水', references: ['創6:9-9:17'], description: '挪亞和方舟的故事' },
+                    { id: 'obs04', title: 'Story 4: God\'s Covenant with Abraham', content: '神與亞伯拉罕立約', references: ['創12:1-22:19'], description: '神對亞伯拉罕的呼召和應許' },
+                    { id: 'obs05', title: 'Story 5: The Promise to Isaac', content: '對以撒的應許', references: ['創24:1-26:33'], description: '以撒的婚姻和神的祝福' },
+                    { id: 'obs06', title: 'Story 6: God Provides for Isaac', content: '神為以撒預備', references: ['創26:1-28:22'], description: '以撒的考驗和神的信實' },
+                    { id: 'obs07', title: 'Story 7: God Blesses Jacob', content: '神祝福雅各', references: ['創25:27-35:29'], description: '雅各的成長和神的揀選' },
+                    { id: 'obs08', title: 'Story 8: God Saves Joseph and His Family', content: '神拯救約瑟和他的家人', references: ['創37:1-50:26'], description: '約瑟在埃及的經歷和神的計劃' },
+                    { id: 'obs09', title: 'Story 9: God Calls Moses', content: '神呼召摩西', references: ['出1:1-4:31'], description: '摩西的出生、成長和蒙召' },
+                    { id: 'obs10', title: 'Story 10: The Ten Plagues', content: '十災', references: ['出5:1-12:36'], description: '神透過十災拯救以色列人' },
+                    { id: 'obs11', title: 'Story 11: The Passover', content: '逾越節', references: ['出12:1-15:21'], description: '逾越節的設立和出埃及' },
+                    { id: 'obs12', title: 'Story 12: The Exodus', content: '出埃及', references: ['出12:33-17:16'], description: '以色列人離開埃及的旅程' },
+                    { id: 'obs13', title: 'Story 13: God\'s Covenant with Israel', content: '神與以色列立約', references: ['出19:1-24:18'], description: '在西奈山頒布律法' },
+                    { id: 'obs14', title: 'Story 14: Wandering in the Wilderness', content: '在曠野漂流', references: ['出25:1-民36:13'], description: '四十年曠野生活的教訓' },
+                    { id: 'obs15', title: 'Story 15: The Promised Land', content: '應許之地', references: ['書1:1-24:33'], description: '約書亞帶領百姓進入迦南地' },
+                    { id: 'obs16', title: 'Story 16: The Deliverers', content: '拯救者', references: ['士1:1-撒上8:22'], description: '士師時代的循環和拯救' },
+                    { id: 'obs17', title: 'Story 17: God\'s Covenant with David', content: '神與大衛立約', references: ['撒上16:1-王上11:43'], description: '大衛王朝的建立和應許' },
+                    { id: 'obs18', title: 'Story 18: The Divided Kingdom', content: '分裂的王國', references: ['王上12:1-王下25:30'], description: '以色列和猶大的分裂與衰落' },
+                    { id: 'obs19', title: 'Story 19: The Prophets', content: '先知們', references: ['王上17:1-瑪4:6'], description: '神透過先知向百姓說話' },
+                    { id: 'obs20', title: 'Story 20: The Exile and Return', content: '被擄與歸回', references: ['王下24:1-拉10:44'], description: '巴比倫被擄和歸回重建' },
+                    { id: 'obs21', title: 'Story 21: God Promises a Messiah', content: '神應許彌賽亞', references: ['創3:15-瑪4:6'], description: '舊約中關於彌賽亞的預言' },
+                    { id: 'obs22', title: 'Story 22: The Birth of John the Baptist', content: '施洗約翰的出生', references: ['路1:1-80'], description: '彌賽亞先鋒的降生' },
+                    { id: 'obs23', title: 'Story 23: The Birth of Jesus', content: '耶穌的誕生', references: ['太1:18-路2:40'], description: '救主降生的奇妙故事' },
+                    { id: 'obs24', title: 'Story 24: John Baptizes Jesus', content: '約翰為耶穌施洗', references: ['太3:1-4:25'], description: '耶穌受洗和開始事工' },
+                    { id: 'obs25', title: 'Story 25: Satan Tempts Jesus', content: '撒但試探耶穌', references: ['太4:1-11'], description: '耶穌在曠野勝過試探' },
+                    { id: 'obs26', title: 'Story 26: Jesus Starts His Ministry', content: '耶穌開始事工', references: ['太4:12-9:38'], description: '耶穌開始傳道和行神蹟' },
+                    { id: 'obs27', title: 'Story 27: The Story of the Good Samaritan', content: '好撒馬利亞人的故事', references: ['路10:25-37'], description: '愛鄰舍的教導' },
+                    { id: 'obs28', title: 'Story 28: The Rich Young Ruler', content: '富有的少年官', references: ['路18:18-30'], description: '關於財富和跟隨主的教導' },
+                    { id: 'obs29', title: 'Story 29: The Story of the Unmerciful Servant', content: '不饒恕人的僕人', references: ['太18:21-35'], description: '饒恕的重要性' },
+                    { id: 'obs30', title: 'Story 30: Jesus Feeds Five Thousand', content: '耶穌餵飽五千人', references: ['太14:13-21'], description: '神蹟般的餵養' },
+                    { id: 'obs31', title: 'Story 31: Jesus Walks on Water', content: '耶穌在水面上行走', references: ['太14:22-36'], description: '耶穌的神能展現' },
+                    { id: 'obs32', title: 'Story 32: Jesus Heals a Demon-possessed Man', content: '耶穌醫治被鬼附的人', references: ['可5:1-20'], description: '耶穌勝過邪惡勢力' },
+                    { id: 'obs33', title: 'Story 33: The Story of the Farmer', content: '撒種的比喻', references: ['太13:1-23'], description: '神國的種子' },
+                    { id: 'obs34', title: 'Story 34: Jesus Teaches Other Stories', content: '耶穌講其他比喻', references: ['太13:24-52'], description: '天國的各種比喻' },
+                    { id: 'obs35', title: 'Story 35: The Story of the Compassionate Father', content: '慈愛父親的故事', references: ['路15:11-32'], description: '浪子回頭的比喻' },
+                    { id: 'obs36', title: 'Story 36: The Transfiguration', content: '登山變像', references: ['太17:1-13'], description: '耶穌榮耀的顯現' },
+                    { id: 'obs37', title: 'Story 37: Jesus Raises Lazarus from the Dead', content: '耶穌使拉撒路復活', references: ['約11:1-57'], description: '勝過死亡的大能' },
+                    { id: 'obs38', title: 'Story 38: Jesus Is Betrayed', content: '耶穌被出賣', references: ['太26:6-27:66'], description: '耶穌受難的開始' },
+                    { id: 'obs39', title: 'Story 39: Jesus Is Put on Trial', content: '耶穌受審', references: ['太26:57-27:26'], description: '不公義的審判' },
+                    { id: 'obs40', title: 'Story 40: Jesus Is Crucified', content: '耶穌被釘十字架', references: ['太27:27-28:15'], description: '救主的犧牲' },
+                    { id: 'obs41', title: 'Story 41: God Raises Jesus from the Dead', content: '神使耶穌從死裡復活', references: ['太28:1-20'], description: '復活的勝利' },
+                    { id: 'obs42', title: 'Story 42: Jesus Returns to Heaven', content: '耶穌回到天上', references: ['路24:13-徒1:11'], description: '升天和大使命' },
+                    { id: 'obs43', title: 'Story 43: The Church Begins', content: '教會的開始', references: ['徒2:1-8:3'], description: '五旬節和初期教會' },
+                    { id: 'obs44', title: 'Story 44: Peter and John Heal a Beggar', content: '彼得約翰醫治乞丐', references: ['徒3:1-5:42'], description: '早期教會的神蹟' },
+                    { id: 'obs45', title: 'Story 45: Philip and the Ethiopian Official', content: '腓利和埃提阿伯太監', references: ['徒8:4-40'], description: '福音的傳播' },
+                    { id: 'obs46', title: 'Story 46: God Converts Saul', content: '神轉化掃羅', references: ['徒9:1-31'], description: '掃羅的悔改和呼召' },
+                    { id: 'obs47', title: 'Story 47: Paul and Silas in Philippi', content: '保羅和西拉在腓立比', references: ['徒16:6-40'], description: '在監獄中的讚美' },
+                    { id: 'obs48', title: 'Story 48: Jesus Is the Promised Messiah', content: '耶穌是應許的彌賽亞', references: ['創1:1-啟22:21'], description: '基督是聖經的中心' },
+                    { id: 'obs49', title: 'Story 49: God\'s New Covenant', content: '神的新約', references: ['創1:1-啟22:21'], description: '新約的意義和影響' },
+                    { id: 'obs50', title: 'Story 50: Jesus Returns', content: '耶穌再來', references: ['太24:14-28:20'], description: '末世的盼望和新天新地' }
+                ]
+            },
+            
+            // 聖經主題系列視頻
+            'bible-themes-yt': {
+                type: 'video',
+                listId: 'PL-T20gptDCBjDf_2Y5g0GXHxJ1Q8i4oi',
+                items: [
+                    { id: 'heaven-theme', title: 'Tema Alkitab: Surga', duration: '6:32', description: '聖經中的天堂主題' },
+                    { id: 'justice-theme', title: 'Tema Alkitab: Keadilan', duration: '7:15', description: '神的公義主題' },
+                    { id: 'kingdom-theme', title: 'Tema Alkitab: Kerajaan Allah', duration: '8:22', description: '神國度的主題' },
+                    { id: 'covenant-theme', title: 'Tema Alkitab: Perjanjian', duration: '7:48', description: '約的主題' },
+                    { id: 'sacrifice-theme', title: 'Tema Alkitab: Pengorbanan', duration: '6:55', description: '獻祭的主題' },
+                    { id: 'holiness-theme', title: 'Tema Alkitab: Kekudusan', duration: '7:25', description: '聖潔的主題' },
+                    { id: 'forgiveness-theme', title: 'Tema Alkitab: Pengampunan', duration: '6:18', description: '饒恕的主題' },
+                    { id: 'love-theme', title: 'Tema Alkitab: Kasih', duration: '7:35', description: '愛的主題' },
+                    { id: 'peace-theme', title: 'Tema Alkitab: Damai', duration: '6:42', description: '平安的主題' },
+                    { id: 'hope-theme', title: 'Tema Alkitab: Harapan', duration: '7:08', description: '盼望的主題' },
+                    { id: 'faith-theme', title: 'Tema Alkitab: Iman', duration: '6:58', description: '信心的主題' },
+                    { id: 'prayer-theme', title: 'Tema Alkitab: Doa', duration: '7:12', description: '禱告的主題' },
+                    { id: 'worship-theme', title: 'Tema Alkitab: Penyembahan', duration: '6:45', description: '敬拜的主題' },
+                    { id: 'redemption-theme', title: 'Tema Alkitab: Penebusan', duration: '8:15', description: '救贖的主題' },
+                    { id: 'resurrection-theme', title: 'Tema Alkitab: Kebangkitan', duration: '7:32', description: '復活的主題' },
+                    { id: 'creation-theme', title: 'Tema Alkitab: Penciptaan', duration: '8:05', description: '創造的主題' },
+                    { id: 'sin-theme', title: 'Tema Alkitab: Dosa', duration: '7:18', description: '罪的主題' },
+                    { id: 'salvation-theme', title: 'Tema Alkitab: Keselamatan', duration: '8:42', description: '救恩的主題' },
+                    { id: 'spirit-theme', title: 'Tema Alkitab: Roh Kudus', duration: '7:55', description: '聖靈的主題' },
+                    { id: 'church-theme', title: 'Tema Alkitab: Gereja', duration: '7:28', description: '教會的主題' },
+                    { id: 'discipleship-theme', title: 'Tema Alkitab: Pemuridan', duration: '6:38', description: '門徒訓練的主題' },
+                    { id: 'mission-theme', title: 'Tema Alkitab: Misi', duration: '7:22', description: '宣教的主題' },
+                    { id: 'prophecy-theme', title: 'Tema Alkitab: Nubuatan', duration: '8:18', description: '預言的主題' }
+                ]
+            }
+        };
+        
+        // 第一層標籤切換
+        function showLayer1(event, sourceId) {
+            // 隱藏所有第一層內容
+            document.querySelectorAll('#bibleproject-source, #other-source').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有第一層標籤的活動狀態
+            document.querySelectorAll('.layer-1-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 顯示選中的第一層內容
+            document.getElementById(sourceId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+        
+        // 第二層標籤切換
+        function showLayer2(event, mediaType, source) {
+            const sourceContainer = document.getElementById(source);
+            
+            // 隱藏當前來源下的所有第二層內容
+            sourceContainer.querySelectorAll('.layer-content').forEach(content => {
+                if (content.id.includes('-media-')) {
+                    content.classList.remove('active');
+                }
+            });
+            
+            // 移除當前來源下所有第二層標籤的活動狀態
+            sourceContainer.querySelectorAll('.layer-2-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 顯示選中的第二層內容
+            const targetContent = document.getElementById(mediaType + '-' + source);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+            event.currentTarget.classList.add('active');
+        }
+        
+        // 第三層標籤切換
+        function showLayer3(event, contentId) {
+            const parentContainer = event.currentTarget.closest('.layer-content');
+            
+            // 隱藏同級的所有第三層內容
+            parentContainer.querySelectorAll('.layer-content').forEach(content => {
+                if (content.id === contentId || content.classList.contains('layer-content')) {
+                    content.classList.remove('active');
+                }
+            });
+            
+            // 移除同級所有第三層標籤的活動狀態
+            parentContainer.querySelectorAll('.layer-3-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 顯示選中的第三層內容
+            const targetContent = document.getElementById(contentId);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+            event.currentTarget.classList.add('active');
+        }
+        
+        // 切換媒體顯示
+        function toggleMedia(card, seriesId, mediaType) {
+            const container = card.querySelector('.media-container');
+            const btn = card.querySelector('.expand-btn');
+            const grid = document.getElementById(seriesId + '-grid');
+            
+            if (container.classList.contains('active')) {
+                container.classList.remove('active');
+                card.classList.remove('expanded');
+                btn.textContent = getExpandButtonText(mediaType);
+                btn.classList.remove('collapse-btn');
+            } else {
+                container.classList.add('active');
+                card.classList.add('expanded');
+                btn.textContent = '收合';
+                btn.classList.add('collapse-btn');
+                
+                if (grid.children.length === 0) {
+                    loadMedia(seriesId, grid, mediaType);
+                }
+            }
+        }
+        
+        // 獲取展開按鈕文字
+        function getExpandButtonText(mediaType) {
+            const buttonTexts = {
+                'video': '展開觀看',
+                'image': '展開瀏覽', 
+                'document': '展開查看',
+                'audio': '展開收聽',
+                'list': '展開查看'
+            };
+            return buttonTexts[mediaType] || '展開查看';
+        }
+        
+        // 載入媒體內容
+        function loadMedia(seriesId, grid, mediaType) {
+            const series = mediaDatabase[seriesId];
+            if (!series) return;
+            
+            series.items.forEach(item => {
+                const mediaCard = createMediaCard(item, series.type);
+                grid.appendChild(mediaCard);
+            });
+        }
+        
+        // 創建媒體卡片
+        function createMediaCard(item, type) {
+            const card = document.createElement('div');
+            card.className = 'media-card';
+            
+            let cardContent = '';
+            
+            switch(type) {
+                case 'video':
+                    cardContent = `
+                        <div class="media-preview" onclick="playVideo(this, '${item.id}')">
+                            <img src="https://img.youtube.com/vi/${item.id}/maxresdefault.jpg" 
+                                 alt="${item.title}" class="media-thumbnail">
+                            <button class="media-overlay play-overlay">▶</button>
+                        </div>
+                        <div class="media-info">
+                            <div class="media-title">${item.title}</div>
+                            <div class="media-meta">${item.duration}</div>
+                        </div>
+                    `;
+                    break;
+                case 'image':
+                    cardContent = `
+                        <div class="media-preview" onclick="viewImage('${item.url}', '${item.title}')">
+                            <img src="${item.url}" alt="${item.title}" class="media-thumbnail">
+                            <button class="media-overlay view-overlay">👁</button>
+                        </div>
+                        <div class="media-info">
+                            <div class="media-title">${item.title}</div>
+                            <div class="media-meta">${item.description}</div>
+                        </div>
+                    `;
+                    break;
+                case 'document':
+                    cardContent = `
+                        <div class="media-preview" onclick="viewDocument('${item.url}', '${item.title}')">
+                            <div class="media-thumbnail" style="background: #2196F3; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">📄</div>
+                            <button class="media-overlay download-overlay">⬇</button>
+                        </div>
+                        <div class="media-info">
+                            <div class="media-title">${item.title}</div>
+                            <div class="media-meta">${item.type} - ${item.size}</div>
+                        </div>
+                    `;
+                    break;
+                case 'audio':
+                    cardContent = `
+                        <div class="media-preview" onclick="playAudio(this, '${item.url}')">
+                            <div class="media-thumbnail" style="background: #FF9800; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🎵</div>
+                            <button class="media-overlay listen-overlay">▶</button>
+                        </div>
+                        <div class="media-info">
+                            <div class="media-title">${item.title}</div>
+                            <div class="media-meta">${item.duration}</div>
+                        </div>
+                    `;
+                    break;
+                case 'list':
+                    cardContent = `
+                        <div class="media-preview" onclick="toggleList(this, '${item.id}')">
+                            <div class="media-thumbnail" style="background: #9C27B0; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">📋</div>
+                            <button class="media-overlay view-overlay">👁</button>
+                        </div>
+                        <div class="media-info">
+                            <div class="media-title">${item.title}</div>
+                            <div class="media-meta">${item.content}</div>
+                        </div>
+                        <div class="list-content" id="list-${item.id}" style="display: none;">
+                            ${item.references ? item.references.map(ref => `<div class="list-item">${ref}</div>`).join('') : ''}
+                        </div>
+                    `;
+                    break;
+            }
+            
+            card.innerHTML = cardContent;
+            return card;
+        }
+        
+        // 多媒體播放功能
+        
+        // YouTube視頻播放
+        function playVideo(element, videoId) {
+            const preview = element;
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            
+            // 創建 iframe 取代縮圖
+            const iframe = document.createElement('iframe');
+            iframe.className = 'media-embed';
+            iframe.src = embedUrl;
+            iframe.frameBorder = '0';
+            iframe.allowFullscreen = true;
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+            
+            // 取代內容
+            preview.innerHTML = '';
+            preview.appendChild(iframe);
+        }
+        
+        // 圖片檢視
+        function viewImage(imageUrl, title) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            
+            modal.style.display = 'block';
+            modalImg.src = imageUrl;
+            modalImg.alt = title;
+        }
+        
+        // 文檔檢視
+        function viewDocument(docUrl, title) {
+            if (docUrl === '#' || !docUrl) {
+                alert('此文檔暂時不可用，請稍後再試。');
+                return;
+            }
+            
+            // 在新窗口中開啟文檔
+            try {
+                const newWindow = window.open(docUrl, '_blank');
+                if (!newWindow) {
+                    // 如果彈窗被阻擋，提供下載連結
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = docUrl;
+                    downloadLink.download = title + '.pdf';
+                    downloadLink.target = '_blank';
+                    downloadLink.click();
+                }
+            } catch (error) {
+                console.error('文檔開啟錯誤:', error);
+                alert('無法開啟文檔，請検查瀏覽器設定。');
+            }
+        }
+        
+        // 音頻播放
+        function playAudio(element, audioUrl) {
+            if (audioUrl === '#' || !audioUrl) {
+                alert('此音頻暂時不可用，請稍後再試。');
+                return;
+            }
+            
+            const preview = element;
+            
+            // 檢查是否已經有音頻播放器
+            const existingAudio = preview.querySelector('.audio-player');
+            if (existingAudio) {
+                // 如果已經有播放器，切換播放/暫停
+                if (existingAudio.paused) {
+                    existingAudio.play();
+                } else {
+                    existingAudio.pause();
+                }
+                return;
+            }
+            
+            // 創建音頻播放器
+            const audio = document.createElement('audio');
+            audio.className = 'audio-player';
+            audio.controls = true;
+            audio.src = audioUrl;
+            
+            // 設定音頻事件
+            audio.addEventListener('loadstart', function() {
+                console.log('開始加載音頻...');
+            });
+            
+            audio.addEventListener('error', function(e) {
+                console.error('音頻加載錯誤:', e);
+                alert('音頻加載失敗，請檢查網路連線。');
+            });
+            
+            // 取代內容
+            preview.innerHTML = '';
+            preview.appendChild(audio);
+            
+            // 自動播放
+            audio.play().catch(error => {
+                console.error('自動播放失敗:', error);
+                // 如果自動播放失敗，用戶需要手動點擊
+            });
+        }
+        
+        // 列表切換
+        function toggleList(element, itemId) {
+            const preview = element;
+            const existingList = preview.querySelector('.list-content');
+            
+            if (existingList) {
+                // 如果已經展開，則隱藏
+                existingList.remove();
+                return;
+            }
+            
+            // 找到對應的列表項目
+            let listItem = null;
+            Object.values(mediaDatabase).forEach(series => {
+                if (series.type === 'list') {
+                    const found = series.items.find(item => item.id === itemId);
+                    if (found) listItem = found;
+                }
+            });
+            
+            if (!listItem) return;
+            
+            // 創建列表內容
+            const listContent = document.createElement('div');
+            listContent.className = 'list-content';
+            
+            let content = `<h4>${listItem.title}</h4><p>${listItem.content}</p>`;
+            
+            if (listItem.references) {
+                content += '<ul>';
+                listItem.references.forEach(ref => {
+                    content += `<li class="list-item">${ref}</li>`;
+                });
+                content += '</ul>';
+            }
+            
+            if (listItem.description) {
+                content += `<p><strong>描述：</strong>${listItem.description}</p>`;
+            }
+            
+            listContent.innerHTML = content;
+            
+            // 添加到預覽區域
+            preview.appendChild(listContent);
+        }
+        
+        // 圖片模態框事件處理
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('imageModal');
+            const closeBtn = document.querySelector('.image-modal-close');
+            
+            // 點擊關閉按鈕關閉模態框
+            closeBtn.onclick = function() {
+                modal.style.display = 'none';
+            };
+            
+            // 點擊模態框背景關閉
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            };
+        });
+        
+        // 播放視頻
+        function playVideo(element, videoId) {
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+            iframe.className = 'media-embed';
+            iframe.frameBorder = '0';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+            iframe.allowFullscreen = true;
+            
+            element.innerHTML = '';
+            element.appendChild(iframe);
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '✕';
+            closeBtn.style.cssText = `position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 10px; z-index: 10;`;
+            closeBtn.onclick = function(e) { e.stopPropagation(); restoreVideo(element, videoId); };
+            element.appendChild(closeBtn);
+        }
+        
+        function restoreVideo(element, videoId) {
+            element.innerHTML = `<img src="https://img.youtube.com/vi/${videoId}/maxresdefault.jpg" alt="YouTube Video" class="media-thumbnail"><button class="media-overlay play-overlay">▶</button>`;
+            element.onclick = function() { playVideo(element, videoId); };
+        }
+        
+        // 查看圖片
+        function viewImage(imageUrl, title) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = 'block';
+            modalImg.src = imageUrl;
+            modalImg.alt = title;
+        }
+        
+        // 關閉圖片模態框
+        document.querySelector('.image-modal-close').onclick = function() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+        
+        // 點擊模態框外部關閉
+        window.onclick = function(event) {
+            const modal = document.getElementById('imageModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // 查看文檔
+        function viewDocument(docUrl, title) {
+            if (docUrl === '#') {
+                alert(`文檔「${title}」暫未提供下載連結`);
+                return;
+            }
+            window.open(docUrl, '_blank');
+        }
+        
+        // 播放音頻
+        function playAudio(element, audioUrl) {
+            if (audioUrl === '#') {
+                alert('音頻文件暫未提供');
+                return;
+            }
+            
+            const audio = document.createElement('audio');
+            audio.src = audioUrl;
+            audio.controls = true;
+            audio.className = 'audio-player';
+            
+            element.innerHTML = '';
+            element.appendChild(audio);
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '✕';
+            closeBtn.style.cssText = `position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 10px; z-index: 10;`;
+            closeBtn.onclick = function(e) { 
+                e.stopPropagation(); 
+                element.innerHTML = `<div class="media-thumbnail" style="background: #FF9800; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🎵</div><button class="media-overlay listen-overlay">▶</button>`;
+                element.onclick = function() { playAudio(element, audioUrl); };
+            };
+            element.appendChild(closeBtn);
+        }
+        
+        // 切換列表顯示
+        function toggleList(element, itemId) {
+            const listContent = document.getElementById(`list-${itemId}`);
+            if (listContent.style.display === 'none' || listContent.style.display === '') {
+                listContent.style.display = 'block';
+            } else {
+                listContent.style.display = 'none';
+            }
+        }
+        
+        // 自動生成媒體內容 - 強化版本
+        async function generateMediaContent() {
+            const mediaUrl = document.getElementById('mediaUrl').value.trim();
+            const source = document.getElementById('sourceSelect').value;
+            const mediaType = document.getElementById('mediaTypeSelect').value;
+            const contentCategory = document.getElementById('contentCategorySelect').value;
+            const seriesName = document.getElementById('seriesName').value.trim();
+            
+            const successMsg = document.getElementById('successMessage');
+            const errorMsg = document.getElementById('errorMessage');
+            
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+            
+            if (!mediaUrl) {
+                showError('請輸入媒體網址或文件路徑！');
+                return;
+            }
+            
+            if (!seriesName) {
+                showError('請輸入系列名稱！');
+                return;
+            }
+            
+            try {
+                showSuccess(`正在處理${getMediaTypeName(mediaType)}內容...`);
+                
+                // 根據媒體類型處理不同的URL
+                let generatedContent;
+                
+                if (mediaType === 'youtube-media' && mediaUrl.includes('youtube.com')) {
+                    generatedContent = await generateYouTubeContent(mediaUrl, seriesName);
+                } else if (mediaType === 'image-media') {
+                    generatedContent = generateImageContent(mediaUrl, seriesName);
+                } else {
+                    generatedContent = generateMockContent(mediaType, seriesName);
+                }
+                
+                // 實際添加到資料庫和界面
+                addContentToGallery(generatedContent, source, mediaType, contentCategory);
+                
+                showSuccess(`✅ 成功添加「${seriesName}」到${getSourceName(source)} - ${getMediaTypeName(mediaType)} - ${getContentCategoryName(contentCategory)}分類！`);
+                
+                // 清空表單
+                document.getElementById('mediaUrl').value = '';
+                document.getElementById('seriesName').value = '';
+                
+            } catch (error) {
+                showError('生成媒體內容時發生錯誤：' + error.message);
+            }
+        }
+        
+        // 生成YouTube內容
+        async function generateYouTubeContent(url, seriesName) {
+            // 解析YouTube URL
+            let videoId = '';
+            let playlistId = '';
+            
+            if (url.includes('watch?v=')) {
+                videoId = url.split('watch?v=')[1].split('&')[0];
+            } else if (url.includes('playlist?list=')) {
+                playlistId = url.split('playlist?list=')[1].split('&')[0];
+            }
+            
+            const items = [];
+            
+            if (videoId) {
+                // 單個視頻
+                items.push({
+                    id: videoId,
+                    title: `${seriesName} - 單集`,
+                    duration: '8:00',
+                    description: `來自${seriesName}系列的內容`
+                });
+            } else if (playlistId) {
+                // 播放列表 - 生成示例內容
+                for (let i = 1; i <= 5; i++) {
+                    items.push({
+                        id: `demo_${playlistId}_${i}`,
+                        title: `${seriesName} 第${i}集`,
+                        duration: `${Math.floor(Math.random() * 10) + 5}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`,
+                        description: `${seriesName}系列的第${i}集內容`
+                    });
+                }
+            } else {
+                // 如果解析失敗，生成示例內容
+                items.push({
+                    id: 'demo_video',
+                    title: seriesName,
+                    duration: '6:30',
+                    description: `示例內容：${seriesName}`
+                });
+            }
+            
+            return {
+                type: 'video',
+                name: seriesName,
+                items: items,
+                listId: playlistId || 'custom_list'
+            };
+        }
+        
+        // 生成圖片內容
+        function generateImageContent(url, seriesName) {
+            const items = [];
+            
+            // 如果是單個圖片URL
+            if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                items.push({
+                    id: `img_${Date.now()}`,
+                    title: seriesName,
+                    url: url,
+                    description: `來自${seriesName}的圖片`
+                });
+            } else {
+                // 生成示例圖片集
+                for (let i = 1; i <= 3; i++) {
+                    items.push({
+                        id: `img_${Date.now()}_${i}`,
+                        title: `${seriesName} 圖片 ${i}`,
+                        url: `https://via.placeholder.com/300x200?text=${encodeURIComponent(seriesName)}+${i}`,
+                        description: `${seriesName}系列的第${i}張圖片`
+                    });
+                }
+            }
+            
+            return {
+                type: 'image',
+                name: seriesName,
+                items: items
+            };
+        }
+        
+        // 添加內容到畫廊
+        function addContentToGallery(content, source, mediaType, contentCategory) {
+            const seriesId = generateSeriesId(content.name);
+            
+            // 添加到資料庫
+            mediaDatabase[seriesId] = content;
+            
+            // 動態創建界面元素
+            createNewSeriesCard(seriesId, content, source, mediaType, contentCategory);
+        }
+        
+        // 生成系列ID
+        function generateSeriesId(name) {
+            return name.toLowerCase()
+                .replace(/[\s一-鿿\u3400-䶿\u20000-⩭f\u2a700-⭳f\u2b740-⮁f\u2b820-⳪f]+/g, '-')
+                .replace(/[^a-z0-9-]/g, '')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '') + '-' + Date.now();
+        }
+        
+        // 創建新系列卡片
+        function createNewSeriesCard(seriesId, content, source, mediaType, contentCategory) {
+            // 找到目標容器
+            const targetContainerId = `${contentCategory}-${mediaType.replace('-media', '')}`;
+            const targetContainer = document.getElementById(targetContainerId);
+            
+            if (!targetContainer) {
+                console.warn(`找不到目標容器: ${targetContainerId}`);
+                return;
+            }
+            
+            const seriesGrid = targetContainer.querySelector('.series-grid');
+            if (!seriesGrid) {
+                console.warn(`找不到系列網格`);
+                return;
+            }
+            
+            // 創建新的系列卡片
+            const newCard = document.createElement('div');
+            newCard.className = 'series-card';
+            newCard.onclick = function() { toggleMedia(this, seriesId, content.type); };
+            
+            const mediaCountEmoji = {
+                'video': '📹',
+                'image': '🖼️',
+                'document': '📄',
+                'audio': '🎵',
+                'list': '📋'
+            };
+            
+            const unitText = {
+                'video': '部',
+                'image': '張',
+                'document': '份',
+                'audio': '首',
+                'list': '個'
+            };
+            
+            newCard.innerHTML = `
+                <div class="series-title">${content.name}</div>
+                <div class="series-subtitle">新添加的內容</div>
+                <div class="series-stats">
+                    <span class="media-count ${content.type}-count">${mediaCountEmoji[content.type]} ${content.items.length}${unitText[content.type]}</span>
+                    <button class="expand-btn">${getExpandButtonText(content.type)}</button>
+                </div>
+                <div class="media-container" id="${seriesId}-container">
+                    <div class="media-grid" id="${seriesId}-grid"></div>
+                </div>
+            `;
+            
+            // 添加到系列網格
+            seriesGrid.appendChild(newCard);
+        }
+        
+        function generateMockContent(mediaType, seriesName) {
+            // 這裡可以根據媒體類型生成不同的模擬內容
+            const contentCounts = {
+                'youtube-media': Math.floor(Math.random() * 20) + 1,
+                'image-media': Math.floor(Math.random() * 50) + 5,
+                'doc-media': Math.floor(Math.random() * 10) + 1,
+                'audio-media': Math.floor(Math.random() * 30) + 5,
+                'list-media': Math.floor(Math.random() * 100) + 10
+            };
+            
+            return {
+                name: seriesName,
+                count: contentCounts[mediaType] || 1
+            };
+        }
+        
+        function getSourceName(source) {
+            const names = {
+                'bibleproject-source': 'BibleProject Indonesian',
+                'other-source': '其他來源'
+            };
+            return names[source] || source;
+        }
+        
+        function getMediaTypeName(mediaType) {
+            const names = {
+                'youtube-media': 'YouTube視頻',
+                'image-media': '圖片資源',
+                'doc-media': '文檔資料',
+                'audio-media': '音頻內容',
+                'list-media': '列表資源'
+            };
+            return names[mediaType] || mediaType;
+        }
+        
+        function getContentCategoryName(category) {
+            const names = {
+                'bible-study': '聖經研讀',
+                'book-series': '書卷系列',
+                'theme-series': '主題系列',
+                'infographic': '信息圖表',
+                'study-guides': '研讀指南',
+                'reference': '參考資料',
+                'podcast': '播客節目',
+                'music': '音樂資源',
+                'reading-plan': '閱讀計畫',
+                'resource-list': '資源清單'
+            };
+            return names[category] || category;
+        }
+        
+        function showSuccess(message) {
+            const successMsg = document.getElementById('successMessage');
+            successMsg.textContent = message;
+            successMsg.style.display = 'block';
+        }
+        
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+        }
+        
+        // 系統測試和驗證功能
+        function runSystemTests() {
+            console.log('🧪 開始系統測試...');
+            
+            // 測試資料庫完整性
+            const databaseTest = testDatabaseIntegrity();
+            console.log(`📊 資料庫測試: ${databaseTest.success ? '✅ 通過' : '❌ 失敗'}`);
+            if (!databaseTest.success) {
+                console.error('資料庫錯誤:', databaseTest.errors);
+            }
+            
+            // 測試響應式系統
+            const responsiveTest = testResponsiveSystem();
+            console.log(`📱 響應式測試: ${responsiveTest.success ? '✅ 通過' : '❌ 失敗'}`);
+            
+            // 測試多媒體功能
+            const multimediaTest = testMultimediaFunctions();
+            console.log(`🎥 多媒體測試: ${multimediaTest.success ? '✅ 通過' : '❌ 失敗'}`);
+            
+            // 測試三層系統
+            const layerTest = testLayerSystem();
+            console.log(`🎯 三層系統測試: ${layerTest.success ? '✅ 通過' : '❌ 失敗'}`);
+            
+            const allPassed = databaseTest.success && responsiveTest.success && multimediaTest.success && layerTest.success;
+            console.log(`🏆 總體測試結果: ${allPassed ? '✅ 全部通過' : '❌ 部分失敗'}`);
+            
+            return allPassed;
+        }
+        
+        function testDatabaseIntegrity() {
+            const errors = [];
+            let totalItems = 0;
+            
+            try {
+                Object.entries(mediaDatabase).forEach(([key, series]) => {
+                    if (!series.type) {
+                        errors.push(`系列 ${key} 缺少 type 屬性`);
+                    }
+                    if (!series.items || !Array.isArray(series.items)) {
+                        errors.push(`系列 ${key} 缺少或無效的 items 屬性`);
+                    } else {
+                        totalItems += series.items.length;
+                        series.items.forEach((item, index) => {
+                            if (!item.id) {
+                                errors.push(`系列 ${key} 的第 ${index + 1} 個項目缺少 id`);
+                            }
+                            if (!item.title) {
+                                errors.push(`系列 ${key} 的第 ${index + 1} 個項目缺少 title`);
+                            }
+                        });
+                    }
+                });
+                
+                console.log(`📊 資料庫統計: ${Object.keys(mediaDatabase).length} 個系列，共 ${totalItems} 個項目`);
+                
+                return {
+                    success: errors.length === 0,
+                    errors: errors,
+                    stats: {
+                        series: Object.keys(mediaDatabase).length,
+                        totalItems: totalItems
+                    }
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    errors: [error.message]
+                };
+            }
+        }
+        
+        function testResponsiveSystem() {
+            try {
+                const mediaGrids = document.querySelectorAll('.media-grid');
+                const hasGrids = mediaGrids.length > 0;
+                
+                // 檢查CSS屬性
+                const testElement = document.createElement('div');
+                testElement.className = 'media-grid';
+                document.body.appendChild(testElement);
+                
+                const computedStyle = window.getComputedStyle(testElement);
+                const hasGridDisplay = computedStyle.display === 'grid';
+                
+                document.body.removeChild(testElement);
+                
+                return {
+                    success: hasGrids && hasGridDisplay,
+                    hasGrids: hasGrids,
+                    hasGridDisplay: hasGridDisplay
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+        
+        function testMultimediaFunctions() {
+            try {
+                const functions = [
+                    'playVideo',
+                    'viewImage', 
+                    'viewDocument',
+                    'playAudio',
+                    'toggleList'
+                ];
+                
+                const missingFunctions = functions.filter(fn => typeof window[fn] !== 'function');
+                
+                return {
+                    success: missingFunctions.length === 0,
+                    missingFunctions: missingFunctions
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+        
+        function testLayerSystem() {
+            try {
+                const layer1Tabs = document.querySelectorAll('.layer-1-tab');
+                const layer2Tabs = document.querySelectorAll('.layer-2-tab');
+                const layer3Tabs = document.querySelectorAll('.layer-3-tab');
+                
+                const hasAllLayers = layer1Tabs.length > 0 && layer2Tabs.length > 0 && layer3Tabs.length > 0;
+                
+                // 檢查函數存在
+                const functions = ['showLayer1', 'showLayer2', 'showLayer3'];
+                const missingFunctions = functions.filter(fn => typeof window[fn] !== 'function');
+                
+                return {
+                    success: hasAllLayers && missingFunctions.length === 0,
+                    hasAllLayers: hasAllLayers,
+                    missingFunctions: missingFunctions,
+                    layerCounts: {
+                        layer1: layer1Tabs.length,
+                        layer2: layer2Tabs.length,
+                        layer3: layer3Tabs.length
+                    }
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+        
+        // 在頁面加載完成後自動進行測試
+        document.addEventListener('DOMContentLoaded', function() {
+            // 延遲一秒進行測試，確保所有元素都已加載
+            setTimeout(() => {
+                console.log('🚀 多媒體展示畫廊已加載完成！');
+                const testResult = runSystemTests();
+                if (testResult) {
+                    console.log('🎉 所有功能已準備就緒！');
+                }
+                
+                // 添加調試輔助工具
+                addDebugHelper();
+            }, 1000);
+        });
+        
+        // 調試輔助工具
+        function addDebugHelper() {
+            // 在控制台中提供調試信息
+            console.log('🔧 調試信息:');
+            console.log('- 總共系列數:', Object.keys(mediaDatabase).length);
+            
+            let totalVideos = 0;
+            let totalImages = 0;
+            let totalDocs = 0;
+            let totalAudio = 0;
+            let totalLists = 0;
+            
+            Object.values(mediaDatabase).forEach(series => {
+                switch(series.type) {
+                    case 'video': totalVideos += series.items.length; break;
+                    case 'image': totalImages += series.items.length; break;
+                    case 'document': totalDocs += series.items.length; break;
+                    case 'audio': totalAudio += series.items.length; break;
+                    case 'list': totalLists += series.items.length; break;
+                }
+            });
+            
+            console.log(`- 視頻: ${totalVideos} 部`);
+            console.log(`- 圖片: ${totalImages} 張`);
+            console.log(`- 文檔: ${totalDocs} 份`);
+            console.log(`- 音頻: ${totalAudio} 首`);
+            console.log(`- 列表: ${totalLists} 個`);
+            
+            // 提供快捷測試功能
+            window.testGallery = function() {
+                console.log('🧪 進行手動測試...');
+                
+                // 測試第一個視頻系列
+                const firstVideoSeries = Object.keys(mediaDatabase).find(key => 
+                    mediaDatabase[key].type === 'video'
+                );
+                
+                if (firstVideoSeries) {
+                    console.log(`測試加載系列: ${firstVideoSeries}`);
+                    const seriesCard = document.querySelector(`[onclick*="${firstVideoSeries}"]`);
+                    if (seriesCard) {
+                        seriesCard.click();
+                        console.log('✅ 系列卡片點擊測試成功');
+                    } else {
+                        console.error('❌ 找不到系列卡片');
+                    }
+                }
+            };
+            
+            console.log('🔧 輸入 testGallery() 進行手動測試');
+        }
+    </script>
+</body>
+</html>

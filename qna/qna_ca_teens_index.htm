@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChristianAnswers · Teen Qs 導覽</title>
+<style>
+:root { --bg:#f5f7fb; --panel:#fff; --line:#d9e1ec; --text:#1d2733; --muted:#637282; --accent:#1248aa; }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif; color: var(--text); background: var(--bg); }
+.app { height: 100%; display: flex; flex-direction: column; }
+.topbar {
+  flex: 0 0 auto; min-height: 48px; border-bottom: 1px solid var(--line); background: var(--panel);
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; padding: 8px 14px; font-size: 14px;
+}
+.topbar .title { font-weight: 700; flex: 1 1 200px; }
+.topbar a { color: var(--accent); text-decoration: none; }
+.topbar a:hover { text-decoration: underline; }
+.main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(280px, 380px) 1fr; }
+.sidebar { border-right: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 10px 10px 20px; display: flex; flex-direction: column; gap: 8px; }
+.sidebar .l1 { font-size: 13px; font-weight: 700; color: var(--muted); margin: 0 0 6px; }
+.search { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+#tree { flex: 1; overflow: auto; }
+.details { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; background: #fafbfc; }
+.details summary { cursor: pointer; padding: 8px 10px; font-weight: 600; font-size: 13px; }
+.details .lvl3 { list-style: none; margin: 0; padding: 4px 8px 10px 12px; }
+.details .lvl3 li { margin: 4px 0; }
+.details button.linkish {
+  display: block; width: 100%; text-align: left; border: 0; background: transparent; cursor: pointer;
+  color: var(--accent); font: inherit; font-size: 12px; line-height: 1.35; padding: 4px 4px; border-radius: 4px;
+}
+.details button.linkish:hover { background: #edf3ff; }
+.viewer { min-width: 0; min-height: 0; background: #fff; position: relative; display: flex; flex-direction: column; }
+#iframe { flex: 1; width: 100%; min-height: 240px; border: 0; display: none; }
+.landing { height: 100%; overflow: auto; padding: 20px 24px; font-size: 14px; }
+.landing h2 { margin: 0 0 10px; font-size: 20px; }
+.landing p { margin: 8px 0; color: var(--muted); line-height: 1.5; }
+.note { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar">
+    <span class="title">Teen Qs – Questions and Biblical Answers for teenagers</span>
+    <a href="qna_index.htm">Q&amp;A 導覽首頁</a>
+    <a href="https://christiananswers.net/menu-ay1.html" target="_blank" rel="noopener">官方索引</a>
+  </header>
+  <div class="main">
+    <aside class="sidebar">
+      <p class="l1">Teen Qs – Questions and Biblical Answers for teenagers</p>
+      <input type="search" class="search" id="qnaFilter" placeholder="篩選標題…" autocomplete="off">
+      <div id="tree"></div>
+      <p class="note">資料： christiananswers.net/menu-ay1.html 各主題列點之連結（下載解析）。顯示標題取題幹問句為主。</p>
+    </aside>
+    <section class="viewer">
+      <div id="landing" class="landing">
+        <h2>歡迎</h2>
+        <p>左側選主題與題目；右側 iframe 載入原文。若無法嵌入，請用頂端「官方」連結或按鈕在新分頁開啟。</p>
+        <p><button type="button" id="openInitial" style="padding:8px 14px;cursor:pointer;border:1px solid var(--line);border-radius:8px;background:#f7faff;">於右側開啟官方首頁／索引</button></p>
+      </div>
+      <iframe id="iframe" title="viewer" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  const OFFICIAL = "https://christiananswers.net/menu-ay1.html";
+  const DATA = { sections: [{"topic":"Christian Living","items":[{"title":"What advice do you have for new and growing Christians?","url":"https://christiananswers.net/q-comfort/growing.html"},{"title":"What is WISDOM?","url":"https://christiananswers.net/dictionary/wisewisdom.html"},{"title":"What is spiritual light vs. darkness ?","url":"https://christiananswers.net/dictionary/light.html"},{"title":"What is the Fall of Mankind and what did it lead to?","url":"https://christiananswers.net/dictionary/fallofman.html"},{"title":"What is SIN?","url":"https://christiananswers.net/dictionary/sin.html"},{"title":"Are you good enough to go to Heaven?","url":"https://christiananswers.net/q-comfort/heaven-goodenough.html"},{"title":"How do I know what is right from wrong?","url":"https://christiananswers.net/q-dml/dml-y003.html"},{"title":"How good is good enough?","url":"https://christiananswers.net/q-aiia/goodenough.html"},{"title":"How can I be and feel forgiven?","url":"https://christiananswers.net/q-dml/dml-y004.html"},{"title":"If God forgives me every time I ask, why do I still feel so guilty?","url":"https://christiananswers.net/q-dml/dml-y027.html"},{"title":"Is circumcision a requirement for salvation for Christian males?","url":"https://christiananswers.net/q-eden/circumcision.html"},{"title":"Physical healing—Is it guaranteed in Christ’s atonement?","url":"https://christiananswers.net/q-eden/rfsm-healing.html"},{"title":"Questions for the Not-Yet-a-Believer to consider…","url":"https://christiananswers.net/q-aiia/questions-for-skeptics.html"},{"title":"How do I witness to my peers when they seem to have knowledgeable answers against all of my beliefs?","url":"https://christiananswers.net/q-dml/dml-y035.html"},{"title":"THE NEW TOLERANCE for all beliefs —It’s politically correct, but does it hold danger for followers of Christ?","url":"https://christiananswers.net/q-eden/tolerance.html"},{"title":"What does God expect of me?","url":"https://christiananswers.net/q-eden/commandments.html"}]},{"topic":"Dating","items":[{"title":"What are the Biblical guidelines for dating relationships?","url":"https://christiananswers.net/q-dml/dml-y006.html"},{"title":"What is true love and how do you know when you have found it?","url":"https://christiananswers.net/q-dml/dml-y030.html"},{"title":"My boyfriend wants to have sex. I don’t want to lose him. What should I do?","url":"https://christiananswers.net/q-dml/dml-y010.html"},{"title":"I am not married, and just found out I’m pregnant. What should I do?","url":"https://christiananswers.net/q-dml/dml-y039.html"},{"title":"What does God think of “missionary dating”?","url":"https://christiananswers.net/q-dml/dml-y015.html"},{"title":"Why won’t my parents allow me to single-date?","url":"https://christiananswers.net/q-dml/dml-y026.html"},{"title":"Is inter-ethnic marriage biblical?","url":"https://christiananswers.net/q-sum/sum-g003.html"}]},{"topic":"Depression","items":[{"title":"Why does God allow innocent people to suffer?","url":"https://christiananswers.net/q-eden/edn-t023.html"},{"title":"Are there biblical examples of depression and how to deal with it?","url":"https://christiananswers.net/q-eden/depression-bible.html"},{"title":"What should a Christian do if overwhelmed with depression?","url":"https://christiananswers.net/q-acb/acb-f001.html"},{"title":"If God knows I am hurting, why doesn’t He help me?","url":"https://christiananswers.net/q-dml/dml-y025.html"},{"title":"What if the cosmos is all that there is?","url":"https://christiananswers.net/q-aiia/cosmosallthereis.html"},{"title":"Help for Eating Disorders “I’m a girl suffering from Bulimia Nervosa. Only a few people in my church family know, but I am not getting an…","url":"https://christiananswers.net/q-eden/eatingdisorders.html"},{"title":"Cutting —Help for Cutters (and Others Who Self-Mutilate In Some Way)","url":"https://christiananswers.net/q-eden/cutting.html"},{"title":"Suicide—What does the Bible say?","url":"https://christiananswers.net/q-dml/dml-y038.html"},{"title":"If a Christian commits suicide, will he go to heaven?","url":"https://christiananswers.net/q-dml/suicide-and-heaven.html"}]},{"topic":"Eating Disorders","items":[{"title":"Help for Eating Disorders “I’m a girl suffering from Bulimia Nervosa. Only a few people in my church family know, but I am not getting an…","url":"https://christiananswers.net/q-eden/eatingdisorders.html"},{"title":"Are there biblical examples of depression and how to deal with it?","url":"https://christiananswers.net/q-eden/depression-bible.html"},{"title":"What should a Christian do if overwhelmed with depression ?","url":"https://christiananswers.net/q-acb/acb-f001.html"}]},{"topic":"Family","items":[{"title":"How do I respect the wishes of my non-Christian parents while still following God’s will?","url":"https://christiananswers.net/hungarian/q-dml/dml-y024h.html"},{"title":"FOR PARENTS: Got teens from the Millennial generation?","url":"https://christiananswers.net/q-dml/parenting-millennials.html"}]},{"topic":"Sex","items":[{"title":"Purity —Should I save sex for marriage?","url":"https://christiananswers.net/q-sum/sum-f001.html"},{"title":"Sexual lust outside of marriage —Why does God strongly warn us about it?","url":"https://christiananswers.net/q-eden/lust.html"},{"title":"Is there a way to overcome excessive lust for sex?","url":"https://christiananswers.net/q-eden/edn-f017.html"},{"title":"I’v been looking at pornography, how can I tell if I’m am addicted to it?","url":"https://christiananswers.net/q-eden/edn-f016.html"},{"title":"Tips on how to deal with sexual addictions","url":"https://christiananswers.net/q-eden/sexaddictiontips.html"},{"title":"How can I deal with temptations?","url":"https://christiananswers.net/q-eden/edn-g005.html"}]},{"topic":"Abortion","items":[{"title":"Discover definitive answers about whether the human fetus is less than fully human at any stage (conception to 9-months)","url":"https://christiananswers.net/q-sum/q-life029.html"}]},{"topic":"Friendships","items":[{"title":"My friend sleeps around. Now people think I do. How do I fix my reputation and help my friend?","url":"https://christiananswers.net/q-dml/dml-y018.html"}]},{"topic":"Abuse","items":[{"title":"I think I was sexually abused, but I’m not sure. What is sexual abuse, and what can I do to stop the trauma I am facing now?","url":"https://christiananswers.net/q-dml/dml-y021.html"},{"title":"Sexual Abuse of Children What is it?","url":"https://christiananswers.net/q-eden/childsexualabuse.html"},{"title":"I hit my girlfriend—once. Now she won’t go out with me anymore. What should I do?","url":"https://christiananswers.net/q-dml/dml-y017.html"}]},{"topic":"Self-Abuse","items":[{"title":"Cutting —Help for Cutters (and Others Who Self-Mutilate In Some Way)","url":"https://christiananswers.net/q-eden/cutting.html"},{"title":"Help for Eating Disorders “I’m a girl suffering from Bulimia Nervosa. Only a few people in my church family know, but I am not getting an…","url":"https://christiananswers.net/q-eden/eatingdisorders.html"}]},{"topic":"Jobs","items":[{"title":"Jobs in Christian service—How can I use the Internet to find a new job?","url":"https://christiananswers.net/q-eden/jobs.html"}]},{"topic":"About God","items":[{"title":"What if the cosmos is all that there is?","url":"https://christiananswers.net/q-aiia/cosmosallthereis.html"},{"title":"Why should any one have to accept ancient hearsay as evidence for the existence of a god?","url":"https://christiananswers.net/q-aiia/aiia-falliblehumans.html"},{"title":"If Christ’s miracles really happened, why weren’t they reported by historians?","url":"https://christiananswers.net/q-aiia/aiia-miracles.html"},{"title":"How do I know what God’s will is for my life?","url":"https://christiananswers.net/q-dml/dml-y001.html"},{"title":"Why aren’t my prayers answered?","url":"https://christiananswers.net/q-dml/dml-y002.html"},{"title":"If God knows I am hurting, why doesn’t He help me?","url":"https://christiananswers.net/q-dml/dml-y025.html"},{"title":"Does God feel our pain?","url":"https://christiananswers.net/q-aiia/god-pain.html"},{"title":"How can I be sure of my salvation?","url":"https://christiananswers.net/q-dml/dml-y005.html"},{"title":"Does Christianity need to develop a NEW gospel adapted to today’s world?","url":"https://christiananswers.net/q-eden/newgospel.html"},{"title":"Aren’t all religions basically the same?","url":"https://christiananswers.net/q-aiia/religionssame.html"},{"title":"Will my mentally handicapped sister go to heaven?","url":"https://christiananswers.net/q-dml/dml-y014.html"},{"title":"I’m in a gang. Can God save me?","url":"https://christiananswers.net/q-dml/dml-y019.html"},{"title":"I’m ugly. Why was God so unfair to me this way?","url":"https://christiananswers.net/q-dml/dml-y020.html"},{"title":"Is God punishing me by allowing my friend to die at the hand of a drunk driver?","url":"https://christiananswers.net/q-dml/dml-y022.html"}]},{"topic":"The Bible","items":[{"title":"Is the Bible truth or tabloid?","url":"https://christiananswers.net/q-dml/dml-y007.html"},{"title":"So, is the Bible really all that accurate?","url":"https://christiananswers.net/q-dml/dml-y008.html"},{"title":"What’s the big deal about the Bible anyway?","url":"https://christiananswers.net/q-dml/dml-y009.html"}]},{"topic":"Science","items":[{"title":"What if the cosmos is all that there is?","url":"https://christiananswers.net/q-aiia/cosmosallthereis.html"},{"title":"Which colleges and seminaries teach a literal Genesis, including six-day, young-Earth Creation?","url":"https://christiananswers.net/q-eden/creationist-schools.html"},{"title":"What do you do when your teacher is an evolutionist?","url":"https://christiananswers.net/q-eden/edn-c010.html"},{"title":"Has science disproved the miracles associated with Jesus Christ?","url":"https://christiananswers.net/q-eden/rfsm-miracles.html"}]},{"topic":"Current Issues","items":[{"title":"RACISM—What are the consequences of racial prejudice and false beliefs about the origin of different ethnicities?","url":"https://christiananswers.net/q-aig/race-falsebeliefs.html"},{"title":"ORIGIN OF ETHNIC PEOPLE GROUPS —How could all ethnicities come from Noah, his three sons and their wives?","url":"https://christiananswers.net/q-aig/race-definition.html"},{"title":"Are we living in a moral Stone Age?","url":"https://christiananswers.net/q-eden/edn-g007.html"},{"title":"Who is the being of light encountered in near-death experiences?","url":"https://christiananswers.net/q-eden/rfsm-nde.html"}]}] };
+  const tree = document.getElementById("tree");
+  const frame = document.getElementById("iframe");
+  const landing = document.getElementById("landing");
+  function showFrame(u) {
+    if (!u) return;
+    landing.style.display = "none";
+    frame.style.display = "block";
+    frame.src = u;
+  }
+  document.getElementById("openInitial").addEventListener("click", function(){ showFrame("https://christiananswers.net/teens/home.html"); });
+  
+  function renderSections(dataKey) {
+    tree.innerHTML = "";
+    DATA[dataKey].forEach(function(sec) {
+      var det = document.createElement("details");
+      det.className = "details";
+      var sm = document.createElement("summary");
+      sm.textContent = sec.topic;
+      det.appendChild(sm);
+      var ul = document.createElement("ul");
+      ul.className = "lvl3";
+      sec.items.forEach(function(it) {
+        var li = document.createElement("li");
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "linkish";
+        btn.textContent = it.title;
+        btn.addEventListener("click", function() { showFrame(it.url); });
+        li.appendChild(btn);
+        ul.appendChild(li);
+      });
+      det.appendChild(ul);
+      tree.appendChild(det);
+    });
+  }
+  renderSections("sections");
+  var fi = document.getElementById("qnaFilter");
+  if (fi) fi.addEventListener("input", function() {
+    var q = (fi.value || "").toLowerCase().trim();
+    tree.querySelectorAll(".details").forEach(function(det) {
+      var hit = false;
+      det.querySelectorAll("button.linkish").forEach(function(btn) {
+        var m = !q || (btn.textContent || "").toLowerCase().indexOf(q) >= 0;
+        btn.style.display = m ? "" : "none";
+        if (m) hit = true;
+      });
+      det.style.display = hit || !q ? "" : "none";
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

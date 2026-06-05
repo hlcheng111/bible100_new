@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SMART 目標 · 策略收斂</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .badge-orphan {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      animation: pulse 2s infinite;
+      margin-left: 8px;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.72; }
+      100% { opacity: 1; }
+    }
+    .goal-card.is-orphan {
+      border-left: 4px solid #ef4444;
+      background: #fff7f7;
+    }
+    .select-error {
+      border: 2px solid #ef4444 !important;
+      background: #fff1f1 !important;
+    }
+    .btn-repair {
+      margin-top: 8px;
+      border: 1px solid #ef4444;
+      background: #fff;
+      color: #b91c1c;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <script src="assets/shell.js"></script>
+  <div class="planning-wrap wide">
+    <div class="step-head-mini">
+      <h2>SMART 目標</h2>
+      <a class="step-head-back" href="index.html">← 流程總覽</a>
+    </div>
+    <div class="report-dest-strip">
+      <span class="report-dest-icon" aria-hidden="true">📊</span>
+      <span>儲存後在 <strong>戰情總覽</strong> 可看目標摘要；再到 <a href="kanban.html">看板</a> 調狀態。</span>
+    </div>
+    <div class="usage-hint-box" style="margin-bottom:14px;">
+      <h2 style="font-size:1rem;margin:0 0 8px;color:#0f172a;">建議用法</h2>
+      <p style="margin:0;font-size:14px;line-height:1.55;">從 SWOT 選 3～5 條議題各寫 1 個 SMART；完成後到看板推進度。</p>
+    </div>
+
+    <div class="planning-layout cols-2">
+      <aside class="ref-panel">
+        <div class="ref-block">
+          <h3>使命 · 核心價值（Step 1）</h3>
+          <p id="ref-mission" style="margin:0;font-size:13px;"></p>
+          <p id="ref-values" style="margin:8px 0 0;font-size:12px;color:var(--muted);"></p>
+        </div>
+        <div class="ref-block">
+          <h3>SWOT 條目（可引用）</h3>
+          <ul class="compact" id="ref-swot-list"><li>（請先到 swot.html 填寫）</li></ul>
+        </div>
+      </aside>
+
+      <div class="fill-zone" style="margin:0;">
+        <p class="fill-zone-hint" style="margin-top:0;">左欄對照使命與 SWOT；下方每列為一個目標。</p>
+        <p style="margin:0 0 10px;">
+          <button type="button" class="btn-row" id="btn-add-goal">＋ 新增目標</button>
+        </p>
+        <div id="goals-root"></div>
+
+        <p style="margin-top:16px;">
+          <button type="button" class="btn-big" id="btn-save" style="display:inline-block;width:auto;max-width:none;">儲存目標</button>
+          <button type="button" class="btn-big secondary" id="btn-export" style="display:inline-block;width:auto;max-width:none;margin-left:8px;">匯出 JSON</button>
+          <button type="button" class="btn-big secondary" id="btn-export-text" style="display:inline-block;width:auto;max-width:none;margin-left:8px;">匯出文字</button>
+          <span id="save-status" class="status-saved"></span>
+        </p>
+        <pre id="export-out" style="display:none;margin-top:12px;padding:12px;background:#f1f5f9;border-radius:8px;font-size:12px;overflow:auto;max-height:240px;"></pre>
+        <pre id="export-text-out" style="display:none;margin-top:12px;padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12px;overflow:auto;max-height:280px;white-space:pre-wrap;"></pre>
+
+        <a class="btn-big step-jump" href="kanban.html">下一步：看板追蹤</a>
+        <p class="nav-back"><a href="swot.html">← SWOT</a> · <a href="strategy.html">策略首頁</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/pipeline.js"></script>
+  <script>
+(function () {
+  var P = window.LongTermPipeline;
+
+  function genId() {
+    return "g-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+  }
+
+  var state = P.loadGoals();
+  if (!state.goals.length) {
+    state.goals.push({
+      id: genId(),
+      title: "",
+      description: "",
+      visionAxis: "",
+      status: "backlog",
+      smart: { s: "", m: "", a: "", r: "", t: "" },
+      swotRef: null,
+    });
+  }
+
+  function visionOptions() {
+    return P.getVisionAxisOptions();
+  }
+
+  function fillRef() {
+    var t = P.loadTheology();
+    document.getElementById("ref-mission").textContent =
+      (t.missionStatement || "").trim() || "（尚無使命句，請到 Step 1 填寫）";
+    document.getElementById("ref-values").textContent =
+      (t.coreValues || "").trim()
+        ? "核心價值：" + t.coreValues
+        : "";
+
+    var flat = P.getSwotItemsFlat();
+    var ul = document.getElementById("ref-swot-list");
+    if (!flat.length) {
+      ul.innerHTML = "<li>（swot 尚無條目）</li>";
+    } else {
+      ul.innerHTML = flat.map(function (x) {
+        return "<li>[" + x.quadrant + "] " + escapeHtml(x.text.slice(0, 60)) + (x.text.length > 60 ? "…" : "") + "</li>";
+      }).join("");
+    }
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function swotSelectHtml(g) {
+    var flat = P.getSwotItemsFlat();
+    var cur =
+      g.swotRef && g.swotRef.itemId
+        ? g.swotRef.quadrant + ":" + g.swotRef.itemId
+        : "";
+    var opts = '<option value="">（不引用）</option>';
+    flat.forEach(function (x) {
+      var val = x.quadrant + ":" + x.id;
+      opts +=
+        '<option value="' +
+        escapeAttr(val) +
+        '"' +
+        (val === cur ? " selected" : "") +
+        ">" +
+        escapeHtml(x.label) +
+        "</option>";
+    });
+    return opts;
+  }
+
+  function parseSwotRef(val) {
+    if (!val || val.indexOf(":") < 0) return null;
+    var i = val.indexOf(":");
+    return { quadrant: val.slice(0, i), itemId: val.slice(i + 1) };
+  }
+
+  function persist() {
+    P.saveGoals({ goals: state.goals });
+    var el = document.getElementById("save-status");
+    el.textContent = "已儲存";
+    setTimeout(function () { el.textContent = ""; }, 1400);
+  }
+
+  function getValidatedGoalMap() {
+    var map = {};
+    if (!P || typeof P.validateGoalRefs !== "function") return map;
+    var list = P.validateGoalRefs();
+    if (!Array.isArray(list)) return map;
+    list.forEach(function (g) {
+      if (g && g.id) map[g.id] = g;
+    });
+    return map;
+  }
+
+  function render() {
+    var root = document.getElementById("goals-root");
+    root.innerHTML = "";
+    var vopts = visionOptions();
+    var validatedMap = getValidatedGoalMap();
+    state.goals.forEach(function (g, idx) {
+      var v = validatedMap[g.id];
+      if (v) {
+        g._isOrphaned = !!v._isOrphaned;
+        g._orphanReason = v._orphanReason || "";
+      } else {
+        g._isOrphaned = false;
+        g._orphanReason = "";
+      }
+      root.appendChild(renderGoal(g, idx, vopts));
+    });
+  }
+
+  function renderGoal(g, idx, vopts) {
+    var card = document.createElement("div");
+    card.className = "goal-card" + (g._isOrphaned ? " is-orphan" : "");
+    var h = document.createElement("h3");
+    h.textContent = "目標 " + (idx + 1);
+    card.appendChild(h);
+
+    var html = "";
+    html += "<label>標題</label><input type=\"text\" class=\"g-title\" data-id=\"" + g.id + "\" value=\"" + escapeAttr(g.title) + "\" placeholder=\"例：強化青年門訓\">";
+    html += "<label style=\"margin-top:10px;\">描述</label><textarea class=\"g-desc\" data-id=\"" + g.id + "\" rows=\"2\" placeholder=\"簡述\">" + escapeHtml(g.description || "") + "</textarea>";
+    html += "<label style=\"margin-top:10px;\">對齊核心價值／願景軸</label><select class=\"g-vision\" data-id=\"" + g.id + "\">";
+    if (!vopts.length) {
+      html += '<option value="" disabled selected>（請先到 Step 1 填核心價值）</option>';
+    } else {
+      html += '<option value="">（請選擇）</option>';
+      vopts.forEach(function (v) {
+        html += "<option value=\"" + escapeAttr(v) + "\"" + (g.visionAxis === v ? " selected" : "") + ">" + escapeHtml(v) + "</option>";
+      });
+    }
+    html += "</select>";
+    html += "<label style=\"margin-top:10px;\">引用 SWOT 條目（選填）</label><select class=\"g-swot\" data-id=\"" + g.id + "\">" + swotSelectHtml(g) + "</select>";
+    html += "<div class=\"field-grid smart-grid\" style=\"margin-top:10px;\">";
+    [["s", "S 具體"], ["m", "M 可量度"], ["a", "A 可達成"], ["r", "R 為何重要"], ["t", "T 期限"]].forEach(function (pair) {
+      var k = pair[0];
+      var lab = pair[1];
+      html += "<div><label>" + lab + "</label><input type=\"text\" class=\"g-smart\" data-id=\"" + g.id + "\" data-k=\"" + k + "\" value=\"" + escapeAttr((g.smart && g.smart[k]) || "") + "\"></div>";
+    });
+    html += "</div>";
+    if (g.swotRef && g.swotRef.itemId) {
+      html += "<span class=\"goal-tag\">引用 [" + g.swotRef.quadrant + "]</span>";
+    }
+    if (g._isOrphaned) {
+      html += '<span class="badge-orphan" title="' + escapeAttr(g._orphanReason || "orphan") + '">⚠ 引用失效：請重新關聯 SWOT</span>';
+      html += '<p><button type="button" class="btn-repair" data-id="' + g.id + '">立即修復關聯</button></p>';
+    }
+    html += "<p style=\"margin:10px 0 0;\"><button type=\"button\" class=\"btn-tiny btn-del-goal\" data-id=\"" + g.id + "\">刪除此目標</button></p>";
+
+    card.innerHTML = html;
+
+    card.querySelector(".g-title").addEventListener("input", function () {
+      g.title = this.value;
+      persist();
+    });
+    card.querySelector(".g-desc").addEventListener("input", function () {
+      g.description = this.value;
+      persist();
+    });
+    card.querySelector(".g-vision").addEventListener("change", function () {
+      g.visionAxis = this.value;
+      persist();
+    });
+    var swSel = card.querySelector(".g-swot");
+    swSel.addEventListener("change", function () {
+      swSel.classList.remove("select-error");
+      g.swotRef = parseSwotRef(this.value);
+      persist();
+      render();
+    });
+    var repairBtn = card.querySelector(".btn-repair");
+    if (repairBtn) {
+      repairBtn.addEventListener("click", function () {
+        swSel.classList.add("select-error");
+        swSel.focus();
+        try {
+          alert("原本關聯的 SWOT 項目已被刪除或象限不一致，請重新選擇。");
+        } catch (e) {}
+      });
+    }
+    card.querySelectorAll(".g-smart").forEach(function (inp) {
+      inp.addEventListener("input", function () {
+        if (!g.smart) g.smart = {};
+        g.smart[inp.dataset.k] = inp.value;
+        persist();
+      });
+    });
+    card.querySelector(".btn-del-goal").addEventListener("click", function () {
+      state.goals = state.goals.filter(function (x) {
+        return x.id !== g.id;
+      });
+      if (!state.goals.length) {
+        state.goals.push({
+          id: genId(),
+          title: "",
+          description: "",
+          visionAxis: "",
+          status: "backlog",
+          smart: { s: "", m: "", a: "", r: "", t: "" },
+          swotRef: null,
+        });
+      }
+      render();
+      persist();
+    });
+
+    return card;
+  }
+
+  function escapeAttr(s) {
+    if (!s) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  }
+
+  document.getElementById("btn-add-goal").addEventListener("click", function () {
+    state.goals.push({
+      id: genId(),
+      title: "",
+      description: "",
+      visionAxis: "",
+      status: "backlog",
+      smart: { s: "", m: "", a: "", r: "", t: "" },
+      swotRef: null,
+    });
+    render();
+    persist();
+  });
+
+  document.getElementById("btn-save").addEventListener("click", function () {
+    P.saveGoals({ goals: state.goals });
+    document.getElementById("save-status").textContent = "已儲存於 localStorage";
+  });
+
+  document.getElementById("btn-export").addEventListener("click", function () {
+    var json = JSON.stringify(state.goals, null, 2);
+    console.log("[goals draft]", json);
+    document.getElementById("export-text-out").style.display = "none";
+    var pre = document.getElementById("export-out");
+    pre.style.display = "block";
+    pre.textContent = json;
+  });
+
+  function buildGoalsPlainText() {
+    var th = P.loadTheology();
+    var lines = [];
+    lines.push("SMART 目標 · 文字匯出");
+    lines.push("");
+    lines.push("【使命（參考）】" + ((th.missionStatement || "").trim() || "—"));
+    lines.push("");
+    state.goals.forEach(function (g, i) {
+      lines.push("目標 " + (i + 1) + "：" + ((g.title || "").trim() || "（無標題）"));
+      lines.push("  狀態：" + P.goalStatusLabel(g.status || "backlog"));
+      lines.push("  主軸：" + ((g.visionAxis || "").trim() || "—"));
+      var sm = g.smart || {};
+      lines.push(
+        "  SMART — S：" +
+          (sm.s || "—") +
+          "　M：" +
+          (sm.m || "—") +
+          "　A：" +
+          (sm.a || "—") +
+          "　R：" +
+          (sm.r || "—") +
+          "　T：" +
+          (sm.t || "—")
+      );
+      lines.push("");
+    });
+    return lines.join("\n");
+  }
+
+  document.getElementById("btn-export-text").addEventListener("click", function () {
+    document.getElementById("export-out").style.display = "none";
+    var pre = document.getElementById("export-text-out");
+    pre.style.display = "block";
+    pre.textContent = buildGoalsPlainText();
+  });
+
+  fillRef();
+  render();
+})();
+  </script>
+</body>
+</html>

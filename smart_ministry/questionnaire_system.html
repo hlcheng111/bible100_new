@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧事奉 - 问卷系统</title>
+    <style>
+        /* 遵循统一标准的基础样式 */
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            font-family: "Microsoft YaHei", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; 
+            background: #eef6ff; 
+            color: #333; 
+            font-size: 10px;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 8px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin: 0 0 10px 0;
+        }
+        
+        .header p {
+            font-size: 14px;
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .questionnaire-nav {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            padding: 10px 20px;
+            background: #f8fbff;
+            border: 2px solid #0066cc;
+            color: #0066cc;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .nav-btn:hover, .nav-btn.active {
+            background: #0066cc;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+        }
+        
+        .questionnaire-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        .questionnaire-section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-title {
+            font-size: 18px;
+            color: #004d99;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #d4e6f7;
+        }
+        
+        .question-group {
+            background: #f8fbff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #0066cc;
+        }
+        
+        .question {
+            margin-bottom: 15px;
+        }
+        
+        .question-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #004d99;
+            margin-bottom: 10px;
+        }
+        
+        .question-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+        
+        .option:hover {
+            background: #e6f3ff;
+        }
+        
+        .option input[type="radio"], .option input[type="checkbox"] {
+            margin: 0;
+            transform: scale(1.2);
+        }
+        
+        .option label {
+            font-size: 12px;
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .text-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #d4e6f7;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+        
+        .text-input:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 5px rgba(0, 102, 204, 0.3);
+        }
+        
+        .scale-input {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .scale-label {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .scale-numbers {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .scale-number {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .scale-number input[type="radio"] {
+            transform: scale(1.3);
+        }
+        
+        .scale-number span {
+            font-size: 12px;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: #0066cc;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #004d99;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f8fbff;
+            color: #0066cc;
+            border: 2px solid #0066cc;
+        }
+        
+        .btn-secondary:hover {
+            background: #0066cc;
+            color: white;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* 响应式设计 */
+        @media screen and (max-width: 768px) {
+            body {
+                font-size: 14px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .questionnaire-nav {
+                flex-direction: column;
+            }
+            
+            .nav-btn {
+                font-size: 14px;
+                padding: 12px 20px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+        
+        @media screen and (max-width: 480px) {
+            .scale-numbers {
+                gap: 8px;
+            }
+            
+            .question-title {
+                font-size: 16px;
+            }
+            
+            .option label {
+                font-size: 14px;
+            }
+        }
+        
+        /* 结果显示样式 */
+        .result-section {
+            background: linear-gradient(135deg, #f8fbff, #e6f3ff);
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #0066cc;
+            margin-top: 20px;
+        }
+        
+        .result-title {
+            font-size: 20px;
+            color: #004d99;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .result-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .result-item h4 {
+            color: #004d99;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        
+        .result-item p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #0066cc;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 智慧事奉问卷系统</h1>
+            <p>发现您的恩赐，找到最适合的事奉岗位</p>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">准备开始 (0%)</div>
+        
+        <div class="questionnaire-nav">
+            <button class="nav-btn active" onclick="showSection('basic')" id="nav-basic">基本信息</button>
+            <button class="nav-btn" onclick="showSection('spiritual')" id="nav-spiritual">属灵恩赐</button>
+            <button class="nav-btn" onclick="showSection('skills')" id="nav-skills">技能专长</button>
+            <button class="nav-btn" onclick="showSection('availability')" id="nav-availability">时间安排</button>
+            <button class="nav-btn" onclick="showSection('preferences')" id="nav-preferences">事奉偏好</button>
+        </div>
+        
+        <!-- 基本信息问卷 -->
+        <div id="section-basic" class="questionnaire-section active">
+            <h2 class="section-title">📋 基本信息</h2>
+            
+            <div class="question-group">
+                <div class="question">
+                    <div class="question-title">1. 您的姓名</div>
+                    <input type="text" class="text-input" id="name" placeholder="请输入您的姓名" required>
+                </div>
+                
+                <div class="question">
+                    <div class="question-title">2. 年龄段</div>
+                    <div class="question-options">
+                        <div class="option">
+                            <input type="radio" name="age" value="18-25" id="age1">
+                            <label for="age1">18-25岁</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="age" value="26-35" id="age2">
+                            <label for="age2">26-35岁</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="age" value="36-50" id="age3">
+                            <label for="age3">36-50岁</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="age" value="51-65" id="age4">
+                            <label for="age4">51-65岁</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="age" value="65+" id="age5">
+                            <label for="age5">65岁以上</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <div class="question-title">3. 信主年数</div>
+                    <div class="question-options">
+                        <div class="option">
+                            <input type="radio" name="faith_years" value="0-1" id="faith1">
+                            <label for="faith1">1年以内</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="faith_years" value="1-3" id="faith2">
+                            <label for="faith2">1-3年</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="faith_years" value="3-10" id="faith3">
+                            <label for="faith3">3-10年</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="faith_years" value="10+" id="faith4">
+                            <label for="faith4">10年以上</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <div class="question-title">4. 目前的事奉参与度</div>
+                    <div class="scale-input">
+                        <span class="scale-label">很少参与</span>
+                        <div class="scale-numbers">
+                            <div class="scale-number">
+                                <input type="radio" name="current_service" value="1" id="service1">
+                                <span>1</span>
+                            </div>
+                            <div class="scale-number">
+                                <input type="radio" name="current_service" value="2" id="service2">
+                                <span>2</span>
+                            </div>
+                            <div class="scale-number">
+                                <input type="radio" name="current_service" value="3" id="service3">
+                                <span>3</span>
+                            </div>
+                            <div class="scale-number">
+                                <input type="radio" name="current_service" value="4" id="service4">
+                                <span>4</span>
+                            </div>
+                            <div class="scale-number">
+                                <input type="radio" name="current_service" value="5" id="service5">
+                                <span>5</span>
+                            </div>
+                        </div>
+                        <span class="scale-label">非常积极</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 属灵恩赐问卷 -->
+        <div id="section-spiritual" class="questionnaire-section">
+            <h2 class="section-title">✨ 属灵恩赐评估</h2>
+            
+            <div class="question-group">
+                <div class="question">
+                    <div class="question-title">5. 您在以下哪些方面感受到神的恩赐？（可多选）</div>
+                    <div class="question-options">
+                        <div class="option">
+                            <input type="checkbox" name="spiritual_gifts" value="teaching" id="gift1">
+                            <label for="gift1">教导 - 能够清楚解释圣经真理</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="spiritual_gifts" value="leadership" id="gift2">
+                            <label for="gift2">领导 - 能够带领和组织团队</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="spiritual_gifts" value="pastoral" id="gift3">
+                            <label for="gift3">牧养 - 关怀和照顾他人的需要</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="spiritual_gifts" value="evangelism" id="gift4">
+                            <label for="gift4">传福音 - 向未信者分享福音</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="spiritual_gifts" value="service" id="gift5">
+                            <label for="gift5">服务 - 乐意帮助和服务他人</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="spiritual_gifts" value="giving" id="gift6">
+                            <label for="gift6">奉献 - 慷慨给予时间和资源</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="spiritual_gifts" value="mercy" id="gift7">
+                            <label for="gift7">怜悯 - 对受苦的人有特别的同情心</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="spiritual_gifts" value="administration" id="gift8">
+                            <label for="gift8">管理 - 善于组织和管理事务</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <div class="question-title">6. 您最有负担的事工领域是？</div>
+                    <div class="question-options">
+                        <div class="option">
+                            <input type="radio" name="ministry_burden" value="worship" id="burden1">
+                            <label for="burden1">敬拜赞美</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="ministry_burden" value="children" id="burden2">
+                            <label for="burden2">儿童事工</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="ministry_burden" value="youth" id="burden3">
+                            <label for="burden3">青少年事工</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="ministry_burden" value="adult" id="burden4">
+                            <label for="burden4">成人事工</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="ministry_burden" value="elderly" id="burden5">
+                            <label for="burden5">长者事工</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="ministry_burden" value="outreach" id="burden6">
+                            <label for="burden6">宣教外展</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="ministry_burden" value="social" id="burden7">
+                            <label for="burden7">社会关怀</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 技能专长问卷 -->
+        <div id="section-skills" class="questionnaire-section">
+            <h2 class="section-title">💼 技能专长</h2>
+            
+            <div class="question-group">
+                <div class="question">
+                    <div class="question-title">7. 您的专业技能有哪些？（可多选）</div>
+                    <div class="question-options">
+                        <div class="option">
+                            <input type="checkbox" name="skills" value="music" id="skill1">
+                            <label for="skill1">音乐 - 唱歌、乐器演奏</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="skills" value="technology" id="skill2">
+                            <label for="skill2">技术 - 音响、视频、网络</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="skills" value="design" id="skill3">
+                            <label for="skill3">设计 - 平面设计、美工</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="skills" value="writing" id="skill4">
+                            <label for="skill4">写作 - 文字编辑、创作</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="skills" value="finance" id="skill5">
+                            <label for="skill5">财务 - 会计、财务管理</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="skills" value="cooking" id="skill6">
+                            <label for="skill6">烹饪 - 餐饮服务</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="skills" value="crafts" id="skill7">
+                            <label for="skill7">手工 - 装饰、制作</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="skills" value="counseling" id="skill8">
+                            <label for="skill8">辅导 - 心理咨询、关怀</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <div class="question-title">8. 您的沟通能力如何？</div>
+                    <div class="scale-input">
+                        <span class="scale-label">比较内向</span>
+                        <div class="scale-numbers">
+                            <div class="scale-number">
+                                <input type="radio" name="communication" value="1" id="comm1">
+                                <span>1</span>
+                            </div>
+                            <div class="scale-number">
+                                <input type="radio" name="communication" value="2" id="comm2">
+                                <span>2</span>
+                            </div>
+                            <div class="scale-number">
+                                <input type="radio" name="communication" value="3" id="comm3">
+                                <span>3</span>
+                            </div>
+                            <div class="scale-number">
+                                <input type="radio" name="communication" value="4" id="comm4">
+                                <span>4</span>
+                            </div>
+                            <div class="scale-number">
+                                <input type="radio" name="communication" value="5" id="comm5">
+                                <span>5</span>
+                            </div>
+                        </div>
+                        <span class="scale-label">非常外向</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 时间安排问卷 -->
+        <div id="section-availability" class="questionnaire-section">
+            <h2 class="section-title">⏰ 时间安排</h2>
+            
+            <div class="question-group">
+                <div class="question">
+                    <div class="question-title">9. 您每周可以投入事奉的时间？</div>
+                    <div class="question-options">
+                        <div class="option">
+                            <input type="radio" name="time_commitment" value="1-2" id="time1">
+                            <label for="time1">1-2小时</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="time_commitment" value="3-5" id="time2">
+                            <label for="time2">3-5小时</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="time_commitment" value="6-10" id="time3">
+                            <label for="time3">6-10小时</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="time_commitment" value="10+" id="time4">
+                            <label for="time4">10小时以上</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <div class="question-title">10. 您比较适合的事奉时间？（可多选）</div>
+                    <div class="question-options">
+                        <div class="option">
+                            <input type="checkbox" name="available_times" value="sunday_morning" id="time_sun_am">
+                            <label for="time_sun_am">主日上午</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="available_times" value="sunday_evening" id="time_sun_pm">
+                            <label for="time_sun_pm">主日下午/晚上</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="available_times" value="weekday_evening" id="time_week_pm">
+                            <label for="time_week_pm">平日晚上</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="available_times" value="saturday" id="time_sat">
+                            <label for="time_sat">周六</label>
+                        </div>
+                        <div class="option">
+                            <input type="checkbox" name="available_times" value="flexible" id="time_flex">
+                            <label for="time_flex">时间灵活</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 事奉偏好问卷 -->
+        <div id="section-preferences" class="questionnaire-section">
+            <h2 class="section-title">❤️ 事奉偏好</h2>
+            
+            <div class="question-group">
+                <div class="question">
+                    <div class="question-title">11. 您更喜欢哪种事奉方式？</div>
+                    <div class="question-options">
+                        <div class="option">
+                            <input type="radio" name="service_style" value="team" id="style1">
+                            <label for="style1">团队合作</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="service_style" value="individual" id="style2">
+                            <label for="style2">独立工作</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="service_style" value="both" id="style3">
+                            <label for="style3">两者都可以</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <div class="question-title">12. 您希望在事奉中得到什么？</div>
+                    <textarea class="text-input" id="service_goals" rows="4" placeholder="请分享您对事奉的期望和目标..."></textarea>
+                </div>
+                
+                <div class="question">
+                    <div class="question-title">13. 还有什么想要补充的信息？</div>
+                    <textarea class="text-input" id="additional_info" rows="3" placeholder="任何其他想要分享的信息..."></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 结果显示区域 -->
+        <div id="results-section" class="questionnaire-section">
+            <div class="result-section">
+                <h2 class="result-title">🎯 您的事奉配对结果</h2>
+                <div id="results-content">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在分析您的问卷结果...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn btn-secondary" id="prevBtn" onclick="previousSection()">上一步</button>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextSection()">下一步</button>
+        </div>
+    </div>
+    
+    <!-- 引入配对算法和数据库 -->
+    <script src="js/database.js"></script>
+    <script src="js/matching_algorithm.js"></script>
+    
+    <script>
+        // 遵循统一标准的JavaScript函数命名
+        
+        // 全局变量
+        const STORAGE_PREFIX = 'bible100_smart_ministry_';
+        let currentSection = 0;
+        const sections = ['basic', 'spiritual', 'skills', 'availability', 'preferences'];
+        let currentUserId = null;
+        
+        // 统一的初始化函数
+        function initQuestionnaire() {
+            updateProgress();
+            updateButtons();
+            loadSavedData();
+        }
+        
+        // 显示指定部分
+        function showSection(sectionName) {
+            // 隐藏所有部分
+            document.querySelectorAll('.questionnaire-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 移除所有导航按钮的active状态
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示指定部分
+            document.getElementById(`section-${sectionName}`).classList.add('active');
+            document.getElementById(`nav-${sectionName}`).classList.add('active');
+            
+            // 更新当前部分索引
+            currentSection = sections.indexOf(sectionName);
+            updateProgress();
+            updateButtons();
+            
+            // 自动保存数据
+            saveCurrentData();
+        }
+        
+        // 下一步
+        function nextSection() {
+            if (currentSection < sections.length - 1) {
+                if (validateCurrentSection()) {
+                    currentSection++;
+                    showSection(sections[currentSection]);
+                }
+            } else {
+                // 最后一步，提交问卷
+                submitQuestionnaire();
+            }
+        }
+        
+        // 上一步
+        function previousSection() {
+            if (currentSection > 0) {
+                currentSection--;
+                showSection(sections[currentSection]);
+            }
+        }
+        
+        // 更新进度条
+        function updateProgress() {
+            const progress = ((currentSection + 1) / sections.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            let progressText = '';
+            switch(currentSection) {
+                case 0: progressText = '基本信息 (20%)'; break;
+                case 1: progressText = '属灵恩赐 (40%)'; break;
+                case 2: progressText = '技能专长 (60%)'; break;
+                case 3: progressText = '时间安排 (80%)'; break;
+                case 4: progressText = '事奉偏好 (100%)'; break;
+                default: progressText = '完成 (100%)'; break;
+            }
+            document.getElementById('progressText').textContent = progressText;
+        }
+        
+        // 更新按钮状态
+        function updateButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            prevBtn.style.display = currentSection === 0 ? 'none' : 'inline-block';
+            
+            if (currentSection === sections.length - 1) {
+                nextBtn.textContent = '提交问卷';
+                nextBtn.classList.add('btn-primary');
+            } else {
+                nextBtn.textContent = '下一步';
+            }
+        }
+        
+        // 验证当前部分
+        function validateCurrentSection() {
+            const currentSectionName = sections[currentSection];
+            let isValid = true;
+            let missingFields = [];
+            
+            switch(currentSectionName) {
+                case 'basic':
+                    if (!document.getElementById('name').value.trim()) {
+                        missingFields.push('姓名');
+                        isValid = false;
+                    }
+                    if (!document.querySelector('input[name="age"]:checked')) {
+                        missingFields.push('年龄段');
+                        isValid = false;
+                    }
+                    if (!document.querySelector('input[name="faith_years"]:checked')) {
+                        missingFields.push('信主年数');
+                        isValid = false;
+                    }
+                    break;
+                    
+                case 'spiritual':
+                    if (!document.querySelector('input[name="spiritual_gifts"]:checked')) {
+                        missingFields.push('属灵恩赐');
+                        isValid = false;
+                    }
+                    if (!document.querySelector('input[name="ministry_burden"]:checked')) {
+                        missingFields.push('事工负担');
+                        isValid = false;
+                    }
+                    break;
+                    
+                case 'skills':
+                    if (!document.querySelector('input[name="skills"]:checked')) {
+                        missingFields.push('专业技能');
+                        isValid = false;
+                    }
+                    if (!document.querySelector('input[name="communication"]:checked')) {
+                        missingFields.push('沟通能力');
+                        isValid = false;
+                    }
+                    break;
+                    
+                case 'availability':
+                    if (!document.querySelector('input[name="time_commitment"]:checked')) {
+                        missingFields.push('时间投入');
+                        isValid = false;
+                    }
+                    if (!document.querySelector('input[name="available_times"]:checked')) {
+                        missingFields.push('可用时间');
+                        isValid = false;
+                    }
+                    break;
+                    
+                case 'preferences':
+                    if (!document.querySelector('input[name="service_style"]:checked')) {
+                        missingFields.push('事奉方式');
+                        isValid = false;
+                    }
+                    break;
+            }
+            
+            if (!isValid) {
+                alert('请完成以下必填项：
+' + missingFields.join('、'));
+            }
+            
+            return isValid;
+        }
+        
+        // 保存当前数据
+        function saveCurrentData() {
+            const formData = new FormData(document.querySelector('.container'));
+            const data = {};
+            
+            // 保存所有表单数据
+            for (let [key, value] of formData.entries()) {
+                if (data[key]) {
+                    if (Array.isArray(data[key])) {
+                        data[key].push(value);
+                    } else {
+                        data[key] = [data[key], value];
+                    }
+                } else {
+                    data[key] = value;
+                }
+            }
+            
+            // 保存文本输入
+            data.name = document.getElementById('name').value;
+            data.service_goals = document.getElementById('service_goals').value;
+            data.additional_info = document.getElementById('additional_info').value;
+            
+            localStorage.setItem(`${STORAGE_PREFIX}questionnaire_data`, JSON.stringify(data));
+        }
+        
+        // 加载保存的数据
+        function loadSavedData() {
+            const savedData = localStorage.getItem(`${STORAGE_PREFIX}questionnaire_data`);
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    
+                    // 恢复表单数据
+                    Object.keys(data).forEach(key => {
+                        const element = document.querySelector(`[name="${key}"]`) || document.getElementById(key);
+                        if (element) {
+                            if (element.type === 'radio' || element.type === 'checkbox') {
+                                if (Array.isArray(data[key])) {
+                                    data[key].forEach(value => {
+                                        const checkbox = document.querySelector(`[name="${key}"][value="${value}"]`);
+                                        if (checkbox) checkbox.checked = true;
+                                    });
+                                } else {
+                                    const radio = document.querySelector(`[name="${key}"][value="${data[key]}"]`);
+                                    if (radio) radio.checked = true;
+                                }
+                            } else {
+                                element.value = data[key];
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.warn('无法加载保存的数据:', e);
+                }
+            }
+        }
+        
+        // 提交问卷
+        function submitQuestionnaire() {
+            if (!validateCurrentSection()) {
+                return;
+            }
+            
+            // 显示结果部分
+            document.querySelectorAll('.questionnaire-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById('results-section').classList.add('active');
+            
+            // 隐藏导航按钮
+            document.querySelector('.questionnaire-nav').style.display = 'none';
+            document.querySelector('.action-buttons').style.display = 'none';
+            
+            // 更新进度
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressText').textContent = '分析完成 (100%)';
+            
+            // 分析结果
+            setTimeout(() => {
+                analyzeResults();
+            }, 2000);
+        }
+        
+        // 分析结果
+        function analyzeResults() {
+            const savedData = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}questionnaire_data`) || '{}');
+            
+            // 使用智能配对算法
+            const matcher = new MinistryMatchingAlgorithm();
+            const matches = matcher.findMatches(savedData);
+            
+            // 显示结果
+            const resultsContent = document.getElementById('results-content');
+            resultsContent.innerHTML = '';
+            
+            if (matches.length > 0) {
+                // 显示智能配对结果
+                matches.forEach((match, index) => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    
+                    const scorePercentage = Math.round(match.score * 100);
+                    const scoreColor = scorePercentage >= 80 ? '#4CAF50' : 
+                                     scorePercentage >= 60 ? '#FF9800' : '#2196F3';
+                    
+                    resultItem.innerHTML = `
+                        <h4 style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>${match.position.name}</span>
+                            <span style="background: ${scoreColor}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">
+                                匹配度 ${scorePercentage}%
+                            </span>
+                        </h4>
+                        <p style="color: #666; margin-bottom: 10px;">${match.position.description}</p>
+                        <div style="background: #f0f8ff; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                            <strong>匹配原因：</strong>
+                            <ul style="margin: 5px 0; padding-left: 20px;">
+                                ${match.reasons.map(reason => `<li>${reason}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                    resultsContent.appendChild(resultItem);
+                });
+                
+                // 保存配对结果到数据库
+                saveMatchesToDatabase(savedData, matches);
+            } else {
+                // 显示备用建议
+                const fallbackResults = generateRecommendations(savedData);
+                fallbackResults.forEach(result => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    resultItem.innerHTML = `
+                        <h4>${result.title}</h4>
+                        <p>${result.description}</p>
+                    `;
+                    resultsContent.appendChild(resultItem);
+                });
+            }
+            
+            // 添加统计信息
+            const stats = matcher.getStatistics();
+            const statsDiv = document.createElement('div');
+            statsDiv.className = 'result-item';
+            statsDiv.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+            statsDiv.style.color = 'white';
+            statsDiv.innerHTML = `
+                <h4>📊 系统统计</h4>
+                <p>
+                    • 可选事奉岗位：${stats.totalPositions} 个<br>
+                    • 已完成配对：${stats.totalMatches} 次<br>
+                    • 平均匹配度：${Math.round((stats.averageMatchScore || 0) * 100)}%
+                </p>
+            `;
+            resultsContent.appendChild(statsDiv);
+            
+            // 添加操作按钮
+            const actionDiv = document.createElement('div');
+            actionDiv.style.textAlign = 'center';
+            actionDiv.style.marginTop = '20px';
+            actionDiv.innerHTML = `
+                <p style="font-size:12px;color:#475569;max-width:520px;margin:0 auto 14px;line-height:1.6;text-align:left;">
+                    感謝您完成問卷！接下來，教會同工會為您禱告、分辨合適崗位。<strong>系統建議非自動派工</strong>，最終仍由您與牧者同行。<br>
+                    <span style="font-size:11px;color:#64748b;">Thank you. Staff will pray and discern with you; suggestions are not automatic assignments.</span>
+                </p>
+                <button class="btn btn-primary" onclick="saveResults()" style="margin-right: 10px;">保存结果 Save</button>
+                <button class="btn btn-secondary" onclick="restartQuestionnaire()" style="margin-right: 10px;">重新测试 Retry</button>
+                <button class="btn btn-secondary" onclick="viewHistory()" style="margin-right: 10px;">查看历史 History</button>
+                <br><br>
+                <a href="landing.html" class="btn btn-secondary" style="display:inline-block;padding:10px 16px;border-radius:6px;text-decoration:none;background:#667eea;color:#fff;font-size:12px;margin-right:8px;">返回路線圖 Journey map</a>
+                <span style="font-size:11px;color:#64748b;">亦可向區牧／小組長表達願意服事 · Talk to your pastor/cell leader</span>
+            `;
+            resultsContent.appendChild(actionDiv);
+        }
+        
+        // 生成推荐
+        function generateRecommendations(data) {
+            const recommendations = [];
+            
+            // 基于属灵恩赐的推荐
+            if (data.spiritual_gifts) {
+                const gifts = Array.isArray(data.spiritual_gifts) ? data.spiritual_gifts : [data.spiritual_gifts];
+                
+                if (gifts.includes('teaching')) {
+                    recommendations.push({
+                        title: '📚 主日学教师',
+                        description: '您有教导的恩赐，非常适合担任主日学教师，帮助弟兄姊妹深入理解圣经真理。'
+                    });
+                }
+                
+                if (gifts.includes('leadership')) {
+                    recommendations.push({
+                        title: '👥 小组长',
+                        description: '您有领导恩赐，适合带领小组，组织活动，帮助小组成员灵命成长。'
+                    });
+                }
+                
+                if (gifts.includes('pastoral')) {
+                    recommendations.push({
+                        title: '💝 关怀事工',
+                        description: '您有牧养的心，适合参与探访、关怀、辅导等事工，陪伴有需要的弟兄姊妹。'
+                    });
+                }
+                
+                if (gifts.includes('service')) {
+                    recommendations.push({
+                        title: '🤝 服务团队',
+                        description: '您有服务的心志，适合参与接待、清洁、后勤等服务性事工。'
+                    });
+                }
+            }
+            
+            // 基于技能的推荐
+            if (data.skills) {
+                const skills = Array.isArray(data.skills) ? data.skills : [data.skills];
+                
+                if (skills.includes('music')) {
+                    recommendations.push({
+                        title: '🎵 敬拜团队',
+                        description: '您有音乐才能，可以考虑加入敬拜团队，用音乐服务神和弟兄姊妹。'
+                    });
+                }
+                
+                if (skills.includes('technology')) {
+                    recommendations.push({
+                        title: '💻 技术事工',
+                        description: '您的技术技能可以用于音响、投影、网络等技术事工，支持教会各项活动。'
+                    });
+                }
+                
+                if (skills.includes('design')) {
+                    recommendations.push({
+                        title: '🎨 宣传设计',
+                        description: '您的设计能力可以用于制作海报、网站、宣传材料等，美化教会形象。'
+                    });
+                }
+            }
+            
+            // 基于事工负担的推荐
+            if (data.ministry_burden) {
+                switch (data.ministry_burden) {
+                    case 'children':
+                        recommendations.push({
+                            title: '👶 儿童事工',
+                            description: '您对儿童事工有负担，可以考虑参与主日学、儿童营会等活动。'
+                        });
+                        break;
+                    case 'youth':
+                        recommendations.push({
+                            title: '🌟 青少年事工',
+                            description: '您对青少年有负担，适合参与青少年团契、营会等活动。'
+                        });
+                        break;
+                    case 'elderly':
+                        recommendations.push({
+                            title: '👴 长者事工',
+                            description: '您关心长者，可以参与长者团契、探访、关怀等事工。'
+                        });
+                        break;
+                }
+            }
+            
+            // 如果没有具体推荐，给出通用建议
+            if (recommendations.length === 0) {
+                recommendations.push({
+                    title: '🌱 新人事奉',
+                    description: '建议您先从简单的服务开始，如接待、清洁、协助等，逐步发现自己的恩赐和呼召。'
+                });
+            }
+            
+            // 添加时间相关的建议
+            if (data.time_commitment) {
+                let timeAdvice = '';
+                switch (data.time_commitment) {
+                    case '1-2':
+                        timeAdvice = '根据您的时间安排，建议选择轻松的服务岗位。';
+                        break;
+                    case '3-5':
+                        timeAdvice = '您有中等的时间投入，可以考虑定期的事工参与。';
+                        break;
+                    case '6-10':
+                        timeAdvice = '您有较多时间投入，可以考虑承担更多责任。';
+                        break;
+                    case '10+':
+                        timeAdvice = '您有充足的时间，可以考虑领导性的事工角色。';
+                        break;
+                }
+                
+                recommendations.push({
+                    title: '⏰ 时间建议',
+                    description: timeAdvice
+                });
+            }
+            
+            return recommendations;
+        }
+        
+        // 保存结果
+        function saveResults() {
+            const results = document.getElementById('results-content').innerHTML;
+            const timestamp = new Date().toLocaleString();
+            
+            localStorage.setItem(`${STORAGE_PREFIX}results_${Date.now()}`, JSON.stringify({
+                timestamp: timestamp,
+                results: results,
+                questionnaire_data: localStorage.getItem(`${STORAGE_PREFIX}questionnaire_data`)
+            }));
+            
+            alert('结果已保存！您可以在"人才追踪"页面查看历史记录。');
+        }
+        
+        // 重新开始问卷
+        function restartQuestionnaire() {
+            if (confirm('确定要重新开始问卷吗？当前的答案将被清除。')) {
+                localStorage.removeItem(`${STORAGE_PREFIX}questionnaire_data`);
+                location.reload();
+            }
+        }
+        
+        // 查看历史记录
+        function viewHistory() {
+            const savedData = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}questionnaire_data`) || '{}');
+            const matcher = new MinistryMatchingAlgorithm();
+            const history = matcher.getMatchHistory(savedData.name || 'anonymous');
+            
+            if (history.length === 0) {
+                alert('暂无历史记录');
+                return;
+            }
+            
+            // 创建历史记录窗口
+            const historyWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes');
+            historyWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="zh-CN">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>配对历史记录</title>
+                    <style>
+                        body { font-family: "Microsoft YaHei", sans-serif; margin: 20px; background: #f5f5f5; }
+                        .header { background: #667eea; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+                        .history-item { background: white; margin: 15px 0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                        .timestamp { color: #666; font-size: 12px; }
+                        .match-item { background: #f8fbff; margin: 10px 0; padding: 15px; border-radius: 6px; border-left: 4px solid #0066cc; }
+                        .score { background: #4CAF50; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>📊 配对历史记录</h1>
+                        <p>用户：${savedData.name || '匿名用户'}</p>
+                    </div>
+            `);
+            
+            history.forEach((record, index) => {
+                const date = new Date(record.timestamp).toLocaleString();
+                historyWindow.document.write(`
+                    <div class="history-item">
+                        <h3>第 ${index + 1} 次配对结果</h3>
+                        <div class="timestamp">时间：${date}</div>
+                        <div style="margin-top: 15px;">
+                `);
+                
+                if (record.matches && record.matches.length > 0) {
+                    record.matches.slice(0, 3).forEach(match => {
+                        const scorePercentage = Math.round(match.score * 100);
+                        historyWindow.document.write(`
+                            <div class="match-item">
+                                <strong>${match.position.name}</strong>
+                                <span class="score">${scorePercentage}%</span>
+                                <p style="margin: 5px 0; color: #666;">${match.position.description}</p>
+                            </div>
+                        `);
+                    });
+                }
+                
+                historyWindow.document.write('</div></div>');
+            });
+            
+            historyWindow.document.write(`
+                    <div style="text-align: center; margin-top: 30px;">
+                        <button onclick="window.close()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">关闭窗口</button>
+                    </div>
+                </body>
+                </html>
+            `);
+            historyWindow.document.close();
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initQuestionnaire();
+            
+            // 自动保存功能
+            document.addEventListener('change', function() {
+                saveCurrentData();
+            });
+            
+            document.addEventListener('input', function() {
+                saveCurrentData();
+            });
+        });
+        
+        // 键盘快捷键支持
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft' && currentSection > 0) {
+                previousSection();
+            } else if (e.key === 'ArrowRight' && currentSection < sections.length - 1) {
+                nextSection();
+            }
+        });
+        
+        // 数据库操作函数
+        
+        /**
+         * 保存配对结果到数据库
+         */
+        async function saveMatchesToDatabase(userData, matches) {
+            try {
+                // 等待数据库初始化
+                if (!window.smartMinistryDB.isInitialized()) {
+                    await new Promise(resolve => {
+                        const checkInit = setInterval(() => {
+                            if (window.smartMinistryDB.isInitialized()) {
+                                clearInterval(checkInit);
+                                resolve();
+                            }
+                        }, 100);
+                    });
+                }
+                
+                // 保存用户档案
+                currentUserId = await window.smartMinistryDB.saveUserProfile(userData);
+                
+                // 保存配对结果
+                await window.smartMinistryDB.saveMatchResults(currentUserId, matches);
+                
+                console.log('配对结果已保存到数据库');
+            } catch (error) {
+                console.error('保存配对结果到数据库失败:', error);
+                // 降级到localStorage
+                const matcher = new MinistryMatchingAlgorithm();
+                matcher.saveMatchResults(userData.name || 'anonymous', matches);
+            }
+        }
+        
+        /**
+         * 从数据库获取用户历史
+         */
+        async function getUserHistoryFromDatabase(userName) {
+            try {
+                if (!window.smartMinistryDB.isInitialized()) {
+                    return [];
+                }
+                
+                // 查找用户
+                const users = window.smartMinistryDB.queryRecords('user_profiles', { name: userName });
+                if (users.length === 0) {
+                    return [];
+                }
+                
+                // 获取配对历史
+                const history = window.smartMinistryDB.getUserMatchHistory(users[0].id);
+                return history;
+            } catch (error) {
+                console.error('从数据库获取用户历史失败:', error);
+                return [];
+            }
+        }
+        
+        /**
+         * 获取数据库统计信息
+         */
+        function getDatabaseStatistics() {
+            try {
+                if (!window.smartMinistryDB.isInitialized()) {
+                    return {};
+                }
+                
+                return window.smartMinistryDB.getStatistics();
+            } catch (error) {
+                console.error('获取数据库统计信息失败:', error);
+                return {};
+            }
+        }
+        
+        /**
+         * 备份用户数据
+         */
+        function backupUserData() {
+            try {
+                if (!window.smartMinistryDB.isInitialized()) {
+                    alert('数据库未初始化，无法备份');
+                    return;
+                }
+                
+                const backup = window.smartMinistryDB.backupData();
+                if (backup) {
+                    const dataStr = JSON.stringify(backup, null, 2);
+                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `smart_ministry_backup_${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    
+                    URL.revokeObjectURL(url);
+                    alert('数据备份已下载');
+                } else {
+                    alert('备份失败');
+                }
+            } catch (error) {
+                console.error('备份用户数据失败:', error);
+                alert('备份失败：' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 問功課助手 - 聖經學習</title>
+  <script src="../assets/js/lab-frame-nav.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+      font-size: 10pt; /* 最小字体支持 */
+      line-height: 1.4;
+    }
+
+    /* 导航列 - 顶部小字 */
+    .top-nav {
+      background: rgba(0,0,0,0.1);
+      padding: 5px 10px;
+      font-size: 9pt;
+      color: white;
+      text-align: left;
+    }
+
+    .top-nav a {
+      color: #fff;
+      text-decoration: none;
+      margin-right: 15px;
+      padding: 2px 5px;
+      border-radius: 3px;
+      transition: background 0.3s ease;
+    }
+
+    .top-nav a:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 20px;
+      padding: 20px 0;
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .header p {
+      font-size: 11pt;
+      opacity: 0.95;
+      background: rgba(255,255,255,0.1);
+      padding: 8px 15px;
+      border-radius: 20px;
+      display: inline-block;
+      backdrop-filter: blur(10px);
+    }
+
+    .main-content {
+      background: rgba(255,255,255,0.95);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+    }
+
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #f8f9ff;
+      border-left: 4px solid #667eea;
+    }
+
+    .section h2 {
+      color: #667eea;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+
+    .section h3 {
+      color: #34495e;
+      font-size: 1rem;
+      margin: 10px 0 5px 0;
+    }
+
+    .section p {
+      font-size: 10pt;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    /* AI平台分类样式 */
+    .platform-categories {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin: 15px 0;
+    }
+
+    .platform-category {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .category-header {
+      font-weight: bold;
+      font-size: 11pt;
+      margin-bottom: 10px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .no-signin {
+      background: #e8f5e8;
+      color: #27ae60;
+      border: 2px solid #27ae60;
+    }
+
+    .need-signin {
+      background: #fff3cd;
+      color: #856404;
+      border: 2px solid #ffc107;
+    }
+
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+    }
+
+    .platform-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 8px 5px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 9pt;
+      text-align: center;
+      text-decoration: none;
+      display: block;
+    }
+
+    .platform-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .platform-btn:active {
+      transform: translateY(0);
+    }
+
+    .platform-btn.working {
+      background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    }
+
+    .platform-btn.testing {
+      background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    }
+
+    .platform-btn.error {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    }
+
+    .homework-platform-wrap {
+      margin-top: 16px;
+      border: 2px solid #667eea;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .homework-platform-bar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 10px 14px;
+      font-weight: bold;
+      font-size: 11pt;
+    }
+
+    #homeworkPlatformPlaceholder {
+      display: none;
+      padding: 16px;
+      background: #f8f9ff;
+      font-size: 10pt;
+      line-height: 1.6;
+    }
+
+    #homeworkPlatformFrame {
+      width: 100%;
+      height: 480px;
+      border: none;
+      display: block;
+      background: #fafafa;
+    }
+
+    .platform-info {
+      background: #f8f9ff;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border-left: 4px solid #667eea;
+      font-size: 10pt;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+
+    .status-working { background: #27ae60; }
+    .status-testing { background: #f39c12; }
+    .status-error { background: #e74c3c; }
+
+    /* 提示词示例 */
+    .prompt-examples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .prompt-item {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      border-left: 3px solid #007bff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 9pt;
+    }
+
+    .prompt-item:hover {
+      background: #f8f9fa;
+      transform: translateY(-2px);
+    }
+
+    .copy-btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 8pt;
+      float: right;
+      margin-top: 5px;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .container {
+        padding: 5px;
+      }
+      
+      .header h1 {
+        font-size: 1.5rem;
+      }
+      
+      .platform-categories {
+        grid-template-columns: 1fr;
+      }
+      
+      .platform-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      }
+      
+      .main-content {
+        padding: 15px;
+      }
+      
+      #homeworkPlatformFrame {
+        height: 360px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        font-size: 9pt;
+      }
+      
+      .header h1 {
+        font-size: 1.3rem;
+      }
+      
+      .platform-btn {
+        font-size: 8pt;
+        padding: 6px 3px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部导航 -->
+  <div class="top-nav">
+    <a href="../index.html" target="_parent">← 返回主站</a>
+    <a href="javascript:void(0)" onclick="labNav('dashboard.html'); return false;">← 儀表板</a>
+    <a href="javascript:void(0)" onclick="labNav('index.html'); return false;">← AI 工具目錄</a>
+    <a href="javascript:void(0)" onclick="labNav('guides/prompt_writing_guide.html'); return false;">📖 Prompt 設計指南</a>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <h1>🤖 AI 問功課助手</h1>
+      <p>使用 AI 來解答聖經問題、設計教學活動、整理重點與製作教材。適合老師與學生擴充《聖經》學習與信仰反思。</p>
+    </div>
+
+    <div class="main-content">
+      <!-- AI平台选择 -->
+      <div class="section">
+        <h2>🚀 即用AI平台</h2>
+        <p>選擇平台後會在<strong>下方格子</strong>內載入（與文生圖頁相同）；若該站不允許內嵌，會自動改為新分頁並在格子內顯示說明。</p>
+        
+        <div class="platform-categories">
+          <!-- 免登入平台 -->
+          <div class="platform-category">
+            <div class="category-header no-signin">
+              <span class="status-indicator status-working"></span>
+              免登入（直接使用）
+            </div>
+            <div class="platform-grid">
+              <button class="platform-btn working" onclick="openPlatform('kimi')" data-platform="kimi">
+                🚀 Kimi AI<br><small>月之暗面</small>
+              </button>
+              <button class="platform-btn working" onclick="openPlatform('deepseek')" data-platform="deepseek">
+                🧠 DeepSeek<br><small>深度思考</small>
+              </button>
+              <button class="platform-btn working" onclick="openPlatform('qianyi')" data-platform="qianyi">
+                💬 千義通問<br><small>通義千問</small>
+              </button>
+              <button class="platform-btn testing" onclick="openPlatform('grok')" data-platform="grok">
+                🤖 Grok AI<br><small>X平台</small>
+              </button>
+            </div>
+          </div>
+
+          <!-- 需登入平台 -->
+          <div class="platform-category">
+            <div class="category-header need-signin">
+              <span class="status-indicator status-testing"></span>
+              需登入（註冊後使用）
+            </div>
+            <div class="platform-grid">
+              <button class="platform-btn testing" onclick="openPlatform('claude')" data-platform="claude">
+                🧠 Claude AI<br><small>Anthropic</small>
+              </button>
+              <button class="platform-btn testing" onclick="openPlatform('chatgpt')" data-platform="chatgpt">
+                🤖 ChatGPT<br><small>OpenAI</small>
+              </button>
+              <button class="platform-btn testing" onclick="openPlatform('gemini')" data-platform="gemini">
+                💎 Gemini<br><small>Google</small>
+              </button>
+              <button class="platform-btn error" onclick="openPlatform('copilot')" data-platform="copilot">
+                🤖 Copilot<br><small>Microsoft</small>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="platform-info">
+          <strong>💡 使用提示：</strong>
+          <span class="status-indicator status-working"></span> 正常可用 |
+          <span class="status-indicator status-testing"></span> 測試中 |
+          <span class="status-indicator status-error"></span> 暫時不可用
+          · 同一 prompt 可貼到不同 AI 比較回答，養成檢驗習慣。
+        </div>
+
+        <div class="homework-platform-wrap">
+          <div id="homeworkPlatformBar" class="homework-platform-bar">📌 即用平台（下方載入）· 預設 Kimi</div>
+          <div id="homeworkPlatformPlaceholder"></div>
+          <iframe id="homeworkPlatformFrame" title="AI 平台" src="about:blank"></iframe>
+        </div>
+      </div>
+
+      <!-- 分眾提示詞：學生／老師 -->
+      <div class="section">
+        <h2>💡 聖經教學提示詞範例（分眾）</h2>
+        <p style="font-size: 10pt; color: #666; margin-bottom: 10px;">👤 學生 · 👩‍🏫 老師 · 小學／中學／通用。點擊複製後到下方 AI 貼上使用。</p>
+        <div class="prompt-examples">
+          <div class="prompt-item" onclick="copyPrompt(this)">
+            <strong>👤 學生－小學</strong><br>
+            <small>請用簡單的話解釋創世記1:1-3在說什麼，並舉一個生活中的例子。</small>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyPrompt(this.parentElement)">複製</button>
+          </div>
+          <div class="prompt-item" onclick="copyPrompt(this)">
+            <strong>👤 學生－中學</strong><br>
+            <small>請解釋創世記1:1-3的深層含義，並說明這段經文的歷史與神學背景。</small>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyPrompt(this.parentElement)">複製</button>
+          </div>
+          <div class="prompt-item" onclick="copyPrompt(this)">
+            <strong>👩‍🏫 老師－備課</strong><br>
+            <small>請解釋創世記1:1-3，並提供教學重點、學生可能的迷思、以及一個討論題。</small>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyPrompt(this.parentElement)">複製</button>
+          </div>
+          <div class="prompt-item" onclick="copyPrompt(this)">
+            <strong>👩‍🏫 老師－出題</strong><br>
+            <small>請為「詩篇23篇」出 2 題理解、1 題應用，並給簡要評分要點。</small>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyPrompt(this.parentElement)">複製</button>
+          </div>
+          <div class="prompt-item" onclick="copyPrompt(this)">
+            <strong>耶穌比喻</strong><br>
+            <small>分析撒種的比喻（馬太福音13:1-23），設計互動式教學活動</small>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyPrompt(this.parentElement)">複製</button>
+          </div>
+          <div class="prompt-item" onclick="copyPrompt(this)">
+            <strong>使徒行傳</strong><br>
+            <small>比較彼得和保羅的傳道方式，製作對比表格</small>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyPrompt(this.parentElement)">複製</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 問完之後：如何用 AI 答案真正學習 -->
+      <div class="section" style="border-left-color: #2196F3;">
+        <h2>📌 問完功課之後（如何真正學到）</h2>
+        <ol style="font-size: 10pt; line-height: 1.7; margin: 10px 0;">
+          <li><strong>對照經文</strong>：拿 AI 答案對照聖經原文，看有沒有漏或錯。</li>
+          <li><strong>請 AI 反問</strong>：貼下方「蘇格拉底式」範例，讓 AI 先問你、再給答案，加深理解。</li>
+          <li><strong>自我檢核</strong>：請 AI「出 1～2 題考我」，做檢索練習，確認自己真的懂。</li>
+        </ol>
+        <p style="font-size: 10pt; color: #666; margin-top: 10px;">追問範例（可複製）：</p>
+        <div class="prompt-examples" style="margin-top: 8px;">
+          <div class="prompt-item" onclick="copyPrompt(this)">
+            <strong>蘇格拉底式</strong><br>
+            <small>請先不要直接講答案，用三個問題引導我理解這段經文，我再自己試著回答。</small>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyPrompt(this.parentElement)">複製</button>
+          </div>
+          <div class="prompt-item" onclick="copyPrompt(this)">
+            <strong>出題考我</strong><br>
+            <small>請根據剛才的經文內容，出 2 題簡短問答考我，並在我回答後給回饋。</small>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyPrompt(this.parentElement)">複製</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 給老師：與 AI 共用的作業設計 -->
+      <div class="section" style="border-left-color: #7b1fa2;">
+        <h2>👩‍🏫 給老師：與 AI 共用的作業設計建議</h2>
+        <p style="font-size: 10pt; line-height: 1.6; margin-bottom: 10px;">多出「過程、反思、生活應用」題，少出 AI 可直接代答的記憶題。可設計「先自己寫一段，再請 AI 給回饋」或畫圖／口說任務。</p>
+        <div class="prompt-examples">
+          <div class="prompt-item" onclick="copyPrompt(this)">
+            <strong>反思＋應用</strong><br>
+            <small>請幫我設計一題作業：學生需寫「這段經文對本週生活的一點影響」並附一句經文，避免純記憶題。</small>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyPrompt(this.parentElement)">複製</button>
+          </div>
+          <div class="prompt-item" onclick="copyPrompt(this)">
+            <strong>先寫再對 AI</strong><br>
+            <small>請給我一組「學生先寫 50 字心得，再貼給 AI 請它給回饋」的引導說明與範例 prompt。</small>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyPrompt(this.parentElement)">複製</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 使用步驟 -->
+      <div class="section">
+        <h2>📋 使用步驟</h2>
+        <ol style="font-size: 10pt; line-height: 1.6;">
+          <li><strong>選擇AI平台</strong>：點擊上方按鈕，平台載入下方格子（無法內嵌者會開新分頁）</li>
+          <li><strong>輸入問題</strong>：在對話框中輸入您的聖經問題或教學需求</li>
+          <li><strong>獲取答案</strong>：AI會提供詳細的解答和建議</li>
+          <li><strong>應用結果</strong>：將答案用於教學或學習</li>
+          <li><strong>優化改進</strong>：根據需要調整問題或使用不同平台</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // AI平台配置
+    const aiPlatforms = {
+      'deepseek': {
+        name: 'DeepSeek',
+        url: 'https://chat.deepseek.com/',
+        description: '深度思考AI，擅長邏輯推理和複雜問題分析',
+        status: 'working'
+      },
+      'kimi': {
+        name: 'Kimi AI',
+        url: 'https://www.kimi.com/',
+        description: '月之暗面開發的AI助手，支持長文本處理',
+        status: 'working'
+      },
+      'grok': {
+        name: 'Grok AI',
+        url: 'https://x.ai/',
+        description: 'X平台開發的AI，具有獨特的幽默感',
+        status: 'testing'
+      },
+      'qianyi': {
+        name: '千義通問',
+        url: 'https://chat.qianyiwen.com',
+        description: '阿里巴巴通義千問，中文理解能力強',
+        status: 'working'
+      },
+      'claude': {
+        name: 'Claude AI',
+        url: 'https://claude.ai/',
+        description: 'Anthropic開發的AI，注重安全性和有用性',
+        status: 'testing'
+      },
+      'chatgpt': {
+        name: 'ChatGPT',
+        url: 'https://chat.openai.com/',
+        description: 'OpenAI開發的知名AI助手',
+        status: 'testing'
+      },
+      'gemini': {
+        name: 'Gemini',
+        url: 'https://gemini.google.com/',
+        description: 'Google開發的多模態AI助手',
+        status: 'testing'
+      },
+      'copilot': {
+        name: 'Copilot',
+        url: 'https://copilot.microsoft.com/',
+        description: 'Microsoft開發的AI助手',
+        status: 'error'
+      }
+    };
+
+    /** 與課程設計頁一致：多數官方站禁止 iframe，改新分頁 */
+    function hostnameOpensNewTabOnly(hostname) {
+      var h = (hostname || '').toLowerCase().replace(/^www\./, '');
+      var blocked = [
+        'claude.ai', 'chatgpt.com', 'openai.com', 'x.ai',
+        'gemini.google.com', 'google.com',
+        'chat.deepseek.com', 'deepseek.com',
+        'copilot.microsoft.com', 'bing.com',
+        'qianwen.aliyun.com', 'aliyun.com',
+        'perplexity.ai', 'poe.com', 'you.com'
+      ];
+      for (var i = 0; i < blocked.length; i++) {
+        if (h === blocked[i] || h.endsWith('.' + blocked[i])) return true;
+      }
+      if (h.indexOf('openai.') !== -1) return true;
+      return false;
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function escapeAttr(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    }
+
+    function openPlatform(platformId) {
+      var platform = aiPlatforms[platformId];
+      if (!platform) return;
+
+      var url = platform.url;
+      var name = platform.name;
+      var host;
+      try { host = new URL(url).hostname; } catch (e) { host = ''; }
+      var mustNewTab = hostnameOpensNewTabOnly(host);
+      var bar = document.getElementById('homeworkPlatformBar');
+      var iframe = document.getElementById('homeworkPlatformFrame');
+      var ph = document.getElementById('homeworkPlatformPlaceholder');
+
+      if (mustNewTab) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        iframe.style.display = 'none';
+        ph.style.display = 'block';
+        ph.innerHTML =
+          '<p><strong>' + escapeHtml(name) + '</strong> 已在<strong>新分頁</strong>開啟（此站不允許內嵌）。</p>' +
+          '<p>若沒看到新視窗，請檢查瀏覽器<strong>彈出視窗</strong>設定。</p>' +
+          '<p><a href="' + escapeAttr(url) + '" target="_blank" rel="noopener noreferrer">再次開啟官方網站</a></p>';
+        bar.textContent = '⚠ ' + name + '：已開新分頁（無法內嵌）';
+        return;
+      }
+
+      ph.style.display = 'none';
+      ph.innerHTML = '';
+      iframe.style.display = 'block';
+      bar.textContent = '當前平台（內嵌）：' + name + ' — 若畫面空白請用格子內說明或改選其他平台';
+      iframe.src = url;
+    }
+
+    // 复制提示词
+    function copyPrompt(element) {
+      const small = element.querySelector('small');
+      const text = small ? small.textContent : '';
+      if (!text) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = element.querySelector('.copy-btn');
+          if (btn) {
+            const originalText = btn.textContent;
+            btn.textContent = '已複製!';
+            btn.style.background = '#27ae60';
+            setTimeout(function() {
+              btn.textContent = originalText;
+              btn.style.background = '#007bff';
+            }, 2500);
+          }
+          if (typeof alert !== 'undefined') alert('已複製聖經專用 Prompt，請到下方 AI 貼上使用。');
+        }).catch(function() { fallbackCopy(text); });
+      } else fallbackCopy(text);
+
+      function fallbackCopy(t) {
+        var ta = document.createElement('textarea');
+        ta.value = t;
+        ta.style.position = 'fixed';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); if (typeof alert !== 'undefined') alert('已複製聖經專用 Prompt，請到下方 AI 貼上使用。'); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      openPlatform('kimi');
+    });
+  </script>
+</body>
+</html>

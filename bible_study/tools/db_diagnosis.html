@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數據庫診斷工具 - Bible100</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .result { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        .info { background: #e3f2fd; color: #1976d2; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+        .path-note { font-size: 12px; color: #666; margin: 10px 0; padding: 8px; background: #fff3cd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 數據庫診斷工具</h1>
+        <p>診斷 .db 能否載入、表結構與樣本數據。Bible100 維護用。</p>
+        <div class="path-note">📁 會依序嘗試 <code>data/bibles/</code>、<code>data/cj/</code> 下的 .db。請用 Live Server 等提供 HTTP 存取。</div>
+        <div id="status">正在診斷...</div>
+        <div id="results"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/sql-wasm.js"></script>
+    <script>
+        const DATA_BASE = '../../data';
+        const DB_CANDIDATES = [
+            DATA_BASE + '/bibles/信望愛(和合本).db',
+            DATA_BASE + '/bibles/和合本.db',
+            DATA_BASE + '/cj/启导本圣经注释.db',
+            DATA_BASE + '/cj/精读本圣经注释.db'
+        ];
+
+        async function diagnoseDatabase() {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            let dbPath = null;
+            for (const path of DB_CANDIDATES) {
+                try {
+                    const r = await fetch(path);
+                    if (r.ok) { dbPath = path; break; }
+                } catch (e) {}
+            }
+            if (!dbPath) {
+                status.textContent = '❌ 未找到可用的 .db';
+                results.innerHTML = '<div class="result error">請確認 data/bibles/ 或 data/cj/ 下有 .db 且透過 HTTP 提供。</div>';
+                return;
+            }
+            try {
+                status.textContent = '步驟1: 載入 SQLite.js...';
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/${file}`
+                });
+                results.innerHTML += '<div class="result success">✅ SQLite.js 載入成功</div>';
+                status.textContent = '步驟2: 載入數據庫...';
+                const response = await fetch(dbPath);
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                results.innerHTML += `<div class="result success">✅ 數據庫載入成功 (${dbPath})</div>`;
+                const arrayBuffer = await response.arrayBuffer();
+                results.innerHTML += `<div class="result info">📊 文件大小: ${arrayBuffer.byteLength} bytes</div>`;
+                status.textContent = '步驟3: 解析並查詢...';
+                const db = new SQL.Database(new Uint8Array(arrayBuffer));
+                results.innerHTML += '<div class="result success">✅ 解析成功</div>';
+                const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table'");
+                if (tables.length && tables[0].values) {
+                    results.innerHTML += `<div class="result success"><h3>📋 表列表</h3><pre>${JSON.stringify(tables[0].values, null, 2)}</pre></div>`;
+                    for (const row of tables[0].values) {
+                        const tableName = row[0];
+                        try {
+                            const schema = db.exec(`PRAGMA table_info(${tableName})`);
+                            results.innerHTML += `<div class="result info"><h3>🔍 表 "${tableName}" 結構</h3><pre>${JSON.stringify(schema, null, 2)}</pre></div>`;
+                            const count = db.exec(`SELECT COUNT(*) FROM ${tableName}`);
+                            if (count[0] && count[0].values) results.innerHTML += `<div class="result info">📊 行數: ${count[0].values[0][0]}</div>`;
+                            const sample = db.exec(`SELECT * FROM ${tableName} LIMIT 3`);
+                            if (sample[0] && sample[0].values.length) results.innerHTML += `<div class="result info"><h3>📄 樣本</h3><pre>${JSON.stringify(sample, null, 2)}</pre></div>`;
+                        } catch (e) {
+                            results.innerHTML += `<div class="result error">表 ${tableName} 查詢錯誤: ${e.message}</div>`;
+                        }
+                    }
+                }
+                db.close();
+                status.textContent = '✅ 診斷完成！';
+            } catch (error) {
+                status.textContent = '❌ 診斷失敗';
+                results.innerHTML += `<div class="result error"><h3>錯誤</h3><pre>${error.message}</pre></div>`;
+                console.error(error);
+            }
+        }
+        diagnoseDatabase();
+    </script>
+</body>
+</html>

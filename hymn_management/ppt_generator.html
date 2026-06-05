@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPT 投影片生成器 - 詩歌大字幕</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #1e293b; color: #f1f5f9; padding: 16px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { font-size: 20px; margin-bottom: 16px; color: #f8fafc; }
+        .grid { display: grid; grid-template-columns: 260px 1fr; gap: 20px; }
+        .sidebar { background: #334155; border-radius: 10px; padding: 20px; }
+        .sidebar h3 { font-size: 14px; margin-bottom: 12px; color: #94a3b8; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #475569; border-radius: 6px; background: #1e293b; color: #f1f5f9; font-size: 13px; }
+        .btn { padding: 12px 20px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 10px; font-size: 14px; font-weight: 600; }
+        .btn:hover { background: #0284c7; }
+        .btn-success { background: #10b981; }
+        .btn-success:hover { background: #059669; }
+        .btn-secondary { background: #475569; }
+        .btn-secondary:hover { background: #64748b; }
+        .print-tip { font-size: 10px; color: #94a3b8; margin-top: 6px; }
+        .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+        .color-option { width: 36px; height: 36px; border-radius: 6px; cursor: pointer; border: 3px solid transparent; }
+        .color-option:hover, .color-option.active { border-color: #0ea5e9; }
+        .slides-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .slide { background: #0f172a; color: #f8fafc; padding: 48px 32px; border-radius: 10px; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; position: relative; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .slide.title-slide { background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%); }
+        .slide h2 { font-size: 28px; margin-bottom: 12px; }
+        .slide p { font-size: 18px; line-height: 1.8; white-space: pre-line; }
+        .slide .slide-number { position: absolute; top: 12px; right: 16px; font-size: 11px; opacity: 0.8; }
+        .batch-banner { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 14px 18px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .batch-banner strong { display: block; margin-bottom: 4px; }
+        .batch-banner .btn-edit { padding: 8px 16px; background: rgba(255,255,255,0.9); color: #059669; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; }
+        .batch-banner .btn-edit:hover { background: white; }
+        .usage-hint { background: #1e3a5f; color: #94a3b8; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 16px; line-height: 1.5; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal-box { background: #1e293b; border-radius: 12px; width: 95%; max-width: 700px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; border: 1px solid #475569; }
+        .modal-title { padding: 16px; border-bottom: 1px solid #475569; font-weight: 600; font-size: 15px; }
+        .modal-body { padding: 16px; overflow-y: auto; flex: 1; }
+        .edit-hymn-item { background: #334155; padding: 12px 14px; margin-bottom: 10px; border-radius: 8px; }
+        .edit-hymn-item h4 { font-size: 13px; margin-bottom: 8px; }
+        .edit-hymn-item textarea { width: 100%; min-height: 100px; padding: 10px; border: 1px solid #475569; border-radius: 6px; background: #0f172a; color: #f1f5f9; font-size: 13px; margin-bottom: 8px; resize: vertical; }
+        .edit-hymn-item input { width: 100%; padding: 8px 10px; border: 1px solid #475569; border-radius: 6px; background: #0f172a; color: #f1f5f9; font-size: 12px; margin-bottom: 6px; }
+        .edit-hymn-item label { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+        .modal-footer { padding: 12px 16px; border-top: 1px solid #475569; display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-footer button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .modal-footer .btn-ok { background: #10b981; color: white; }
+        .slide .edit-btn { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 6px 14px; font-size: 11px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 4px; cursor: pointer; opacity: 0.8; }
+        .slide .edit-btn:hover { opacity: 1; }
+        .no-lyrics-msg { background: #334155; padding: 24px; border-radius: 8px; text-align: center; margin-bottom: 12px; }
+        .no-lyrics-msg .btn-add { padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 PPT 投影片生成器 · 詩歌大字幕</h1>
+        <div class="usage-hint">
+            <strong>使用說明：</strong> 從崇拜流程載入後，先點「匯出前編輯」加入歌詞、圖片，可修改。左側可<strong>轉色</strong>、調<strong>字體大小</strong>。張數依歌詞自動分頁。列印時勾選「背景圖形」。
+        </div>
+
+        <div id="batchBanner" class="batch-banner" style="display:none;">
+            <div>
+                <strong>從崇拜流程載入</strong>
+                <span id="batchInfo">已載入 0 首詩歌，將依序生成投影片</span>
+            </div>
+            <button class="btn-edit" onclick="openEditModal()">✏️ 匯出前編輯（加歌詞、圖片）</button>
+        </div>
+
+        <div class="grid">
+            <div class="sidebar">
+                <h3>📋 選擇詩歌</h3>
+                <div class="form-group">
+                    <select id="hymnSelect" onchange="loadHymnForPPT()">
+                        <option value="">請選擇詩歌...</option>
+                    </select>
+                </div>
+                <button class="btn btn-secondary" onclick="loadHymns()">🔄 重新載入詩歌列表</button>
+                <button class="btn btn-secondary" id="btnEditSingle" style="display:none;" onclick="openEditForSingle()">✏️ 編輯歌詞與圖片</button>
+
+                <h3 style="margin-top:20px;">🎨 樣式（轉色、字體）</h3>
+                <div class="form-group">
+                    <label>背景顏色（點色塊轉色）</label>
+                    <div class="color-picker">
+                        <div class="color-option active" style="background:#0f172a" onclick="setColor('#0f172a',this)"></div>
+                        <div class="color-option" style="background:#1e293b" onclick="setColor('#1e293b',this)"></div>
+                        <div class="color-option" style="background:#1a5f7a" onclick="setColor('#1a5f7a',this)"></div>
+                        <div class="color-option" style="background:#0f766e" onclick="setColor('#0f766e',this)"></div>
+                        <div class="color-option" style="background:#1e3a5f" onclick="setColor('#1e3a5f',this)"></div>
+                        <div class="color-option" style="background:#1e1b4b" onclick="setColor('#1e1b4b',this)"></div>
+                        <div class="color-option" style="background:#000" onclick="setColor('#000',this)"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>字體大小（歌詞）</label>
+                    <select id="fontSize" onchange="updateSlides()">
+                        <option value="18">小 (18px)</option>
+                        <option value="22" selected>中 (22px)</option>
+                        <option value="26">大 (26px)</option>
+                        <option value="32">特大 (32px)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>每張投影片行數</label>
+                    <select id="linesPerSlide" onchange="updateSlides()">
+                        <option value="4" selected>4 行</option>
+                        <option value="6">6 行</option>
+                        <option value="8">8 行</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-success" onclick="downloadPDF()">📥 匯出為 PDF</button>
+                <button class="btn" onclick="printSlides()">🖨️ 列印投影片</button>
+                <p class="print-tip">列印時：勾選「背景圖形」才會有顏色與文字</p>
+            </div>
+
+            <div>
+                <h2 style="margin-bottom:12px;font-size:16px;color:#94a3b8;">投影片預覽 <span id="slideCount"></span></h2>
+                <div id="slidesPreview" class="slides-preview">
+                    <div style="grid-column:1/-1;padding:60px;text-align:center;color:#64748b;">
+                        <p style="font-size:16px;">👈 請選擇詩歌，或從崇拜流程建設器點「生成 PPT」載入多首</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">✏️ 匯出前編輯 · 加入歌詞、圖片（可修改）</div>
+            <div class="modal-body" id="editModalBody">
+                <p style="color:#94a3b8;margin-bottom:12px;">為每首詩歌加入或編輯歌詞、標題圖片。儲存後即更新預覽。</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-ok" onclick="saveEditModal()">儲存並更新</button>
+                <button style="background:#475569;color:white;" onclick="closeEditModal()">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="data/source-hymns-loader.js"></script>
+    <script>
+        var hymns = [];
+        var batchHymnIds = [];
+        var currentHymn = null;
+        var currentColor = '#0f172a';
+        var CUSTOM_LYRICS_KEY = 'ppt_custom_lyrics';
+        var CUSTOM_IMAGES_KEY = 'ppt_custom_images';
+
+        function getCustomLyrics(hymnId) {
+            try {
+                var o = JSON.parse(localStorage.getItem(CUSTOM_LYRICS_KEY) || '{}');
+                return o[hymnId] || '';
+            } catch(e) { return ''; }
+        }
+        function getCustomImage(hymnId) {
+            try {
+                var o = JSON.parse(localStorage.getItem(CUSTOM_IMAGES_KEY) || '{}');
+                return o[hymnId] || '';
+            } catch(e) { return ''; }
+        }
+        function saveCustomData(hymnId, lyrics, imageUrl) {
+            var l = JSON.parse(localStorage.getItem(CUSTOM_LYRICS_KEY) || '{}');
+            var i = JSON.parse(localStorage.getItem(CUSTOM_IMAGES_KEY) || '{}');
+            if (lyrics !== undefined) l[hymnId] = lyrics;
+            if (imageUrl !== undefined) i[hymnId] = imageUrl;
+            localStorage.setItem(CUSTOM_LYRICS_KEY, JSON.stringify(l));
+            localStorage.setItem(CUSTOM_IMAGES_KEY, JSON.stringify(i));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var params = new URLSearchParams(window.location.search);
+            var idsParam = params.get('ids');
+            var fromPlaylist = params.get('from') === 'playlist';
+            if (idsParam) {
+                batchHymnIds = idsParam.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+            } else {
+                try {
+                    var stored = localStorage.getItem('ppt_generator_hymn_ids');
+                    if (stored) batchHymnIds = JSON.parse(stored);
+                } catch(e){}
+            }
+            loadHymns();
+        });
+
+        function loadHymns() {
+            var local = JSON.parse(localStorage.getItem('hymns') || '[]');
+            (window.loadSourceHymns || function(){ return fetch('data/source-hymns.json').then(function(r){ return r.ok ? r.json() : null; }); })().then(function(data){
+                var source = (data && data.hymns) ? data.hymns.filter(function(h){ return h.sourcePath; }).map(function(h){
+                    return {
+                        id: h.id,
+                        number: h.number,
+                        title: h.title_zh || h.title_en || h.number || '—',
+                        author: (h.author || '').replace(/^_+/, '').trim(),
+                        lyrics: (h.lyrics_zh || h.lyrics_en || h.lyrics || '').trim()
+                    };
+                }) : [];
+                hymns = source.concat(local.map(function(h){ return { id: h.id, number: h.number, title: h.title_zh || h.title || h.title_en, author: h.author || '', lyrics: h.lyrics || '' }; }));
+                var select = document.getElementById('hymnSelect');
+                select.innerHTML = '<option value="">請選擇詩歌... (' + hymns.length + ' 首)</option>' + hymns.map(function(h, i){
+                    var lab = (h.number ? '#' + h.number + ' ' : '') + (h.title || '—').substring(0, 45);
+                    return '<option value="' + i + '">' + lab + '</option>';
+                }).join('');
+                if (batchHymnIds.length > 0) {
+                    document.getElementById('batchBanner').style.display = 'block';
+                    document.getElementById('batchInfo').textContent = '已載入 ' + batchHymnIds.length + ' 首詩歌，將依序生成投影片';
+                    document.getElementById('btnEditSingle').style.display = 'none';
+                    renderBatchSlides();
+                }
+            }).catch(function(){
+                hymns = JSON.parse(localStorage.getItem('hymns') || '[]');
+                var select = document.getElementById('hymnSelect');
+                select.innerHTML = '<option value="">請選擇詩歌...</option>' + hymns.map(function(h, i) {
+                    return '<option value="' + i + '">' + (h.number ? '#' + h.number + ' ' : '') + (h.title || '') + '</option>';
+                }).join('');
+            });
+        }
+
+        function getEffectiveLyrics(h) {
+            var custom = getCustomLyrics(h.id);
+            if (custom && custom.trim()) return custom.trim();
+            return (h.lyrics || '').trim();
+        }
+
+        function renderBatchSlides() {
+            if (batchHymnIds.length === 0) return;
+            var allSlides = [];
+            var fontSize = parseInt(document.getElementById('fontSize').value) || 22;
+            var lps = parseInt(document.getElementById('linesPerSlide').value) || 4;
+            batchHymnIds.forEach(function(hymnId) {
+                var h = hymns.find(function(x){ return x.id === hymnId; });
+                if (!h) return;
+                var lyrics = getEffectiveLyrics(h);
+                var imgUrl = getCustomImage(h.id);
+                var titleExtra = imgUrl ? '<img src="' + imgUrl.replace(/"/g,'&quot;') + '" style="max-width:200px;max-height:120px;object-fit:contain;margin:12px auto;display:block;border-radius:8px;" onerror="this.style.display=\'none\'">' : '';
+                if (!lyrics) {
+                    allSlides.push({ type: 'title', content: '<h2>' + (h.title || '—') + '</h2>' + titleExtra + '<p style="font-size:14px;margin-top:8px;opacity:0.8;">此詩歌無歌詞 · 請點「匯出前編輯」加入</p>' });
+                    return;
+                }
+                allSlides.push({ type: 'title', content: '<h2>' + (h.title || '—') + '</h2>' + titleExtra + (h.author ? '<p style="font-size:16px;margin-top:10px;">' + h.author + '</p>' : '') });
+                var verses = lyrics.split('\n\n').filter(function(v){ return v.trim(); });
+                verses.forEach(function(verse) {
+                    var lines = verse.split('\n');
+                    for (var i = 0; i < lines.length; i += lps) {
+                        var chunk = lines.slice(i, i + lps).join('\n');
+                        allSlides.push({ type: 'content', content: '<p style="font-size:' + fontSize + 'px;">' + chunk.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>' });
+                    }
+                });
+            });
+            var container = document.getElementById('slidesPreview');
+            container.innerHTML = allSlides.map(function(s, i) {
+                return '<div class="slide ' + (s.type === 'title' ? 'title-slide' : '') + '" style="background-color:' + (s.type === 'title' ? '' : currentColor) + ';">' +
+                    '<div class="slide-number">' + (i + 1) + '/' + allSlides.length + '</div>' + s.content + '</div>';
+            }).join('');
+            document.getElementById('slideCount').textContent = '(共 ' + allSlides.length + ' 張)';
+        }
+
+        function loadHymnForPPT() {
+            batchHymnIds = [];
+            document.getElementById('batchBanner').style.display = 'none';
+            var idx = document.getElementById('hymnSelect').value;
+            document.getElementById('btnEditSingle').style.display = idx !== '' ? 'block' : 'none';
+            if (idx === '') {
+                currentHymn = null;
+                document.getElementById('slidesPreview').innerHTML = '<div style="grid-column:1/-1;padding:60px;text-align:center;color:#64748b;"><p>👈 請選擇詩歌</p></div>';
+                document.getElementById('slideCount').textContent = '';
+                return;
+            }
+            currentHymn = hymns[parseInt(idx, 10)];
+            updateSlides();
+        }
+
+        function updateSlides() {
+            if (!currentHymn) return;
+            var lyrics = getEffectiveLyrics(currentHymn);
+            if (!lyrics) {
+                document.getElementById('slidesPreview').innerHTML = '<div class="no-lyrics-msg" style="grid-column:1/-1;"><p>此詩歌無歌詞</p><p style="font-size:12px;margin-top:8px;">請點下方按鈕加入歌詞後再匯出</p><button class="btn-add" onclick="openEditForSingle()">✏️ 加入／編輯歌詞與圖片</button></div>';
+                document.getElementById('slideCount').textContent = '';
+                return;
+            }
+            var lps = parseInt(document.getElementById('linesPerSlide').value) || 4;
+            var fontSize = document.getElementById('fontSize').value || '22';
+            var imgUrl = getCustomImage(currentHymn.id);
+            var titleExtra = imgUrl ? '<img src="' + imgUrl.replace(/"/g,'&quot;') + '" style="max-width:200px;max-height:120px;object-fit:contain;margin:12px auto;display:block;border-radius:8px;" onerror="this.style.display=\'none\'">' : '';
+            var verses = lyrics.split('\n\n').filter(function(v){ return v.trim(); });
+            var slides = [];
+            slides.push({ type: 'title', content: '<h2>' + (currentHymn.title || '—') + '</h2>' + titleExtra + (currentHymn.author ? '<p style="font-size:18px;margin-top:10px;">' + currentHymn.author + '</p>' : '') });
+            verses.forEach(function(verse) {
+                var lines = verse.split('\n');
+                for (var i = 0; i < lines.length; i += lps) {
+                    var chunk = lines.slice(i, i + lps).join('\n');
+                    slides.push({ type: 'content', content: '<p style="font-size:' + fontSize + 'px;">' + chunk + '</p>' });
+                }
+            });
+            var container = document.getElementById('slidesPreview');
+            container.innerHTML = slides.map(function(s, i) {
+                return '<div class="slide ' + (s.type === 'title' ? 'title-slide' : '') + '" style="background-color:' + (s.type === 'title' ? '' : currentColor) + ';">' +
+                    '<div class="slide-number">' + (i + 1) + '/' + slides.length + '</div>' + s.content + '</div>';
+            }).join('');
+            document.getElementById('slideCount').textContent = '(共 ' + slides.length + ' 張)';
+        }
+
+        function openEditModal() {
+            if (batchHymnIds.length === 0) {
+                alert('請先從崇拜流程載入詩歌');
+                return;
+            }
+            var html = '<p style="color:#94a3b8;margin-bottom:12px;">為每首詩歌加入或編輯歌詞、標題圖片。儲存後即更新預覽。</p>';
+            batchHymnIds.forEach(function(hymnId) {
+                var h = hymns.find(function(x){ return x.id === hymnId; });
+                if (!h) return;
+                var hasLyrics = !!getEffectiveLyrics(h);
+                var customLyrics = getCustomLyrics(hymnId);
+                var origLyrics = (h.lyrics || '').trim();
+                var dispLyrics = customLyrics || origLyrics || '';
+                var imgUrl = getCustomImage(hymnId);
+                html += '<div class="edit-hymn-item" data-hymn-id="' + (hymnId || '').replace(/"/g,'&quot;') + '">';
+                html += '<h4>' + (h.title || '—') + (h.number ? ' #' + h.number : '') + (hasLyrics ? '' : ' <span style="color:#f59e0b;">（無歌詞，請加入）</span>') + '</h4>';
+                html += '<label>歌詞（每段空一行，可修改）</label>';
+                html += '<textarea data-lyrics placeholder="貼上或輸入歌詞...">' + (dispLyrics || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</textarea>';
+                html += '<label>標題圖片 URL（選填）</label>';
+                html += '<input type="text" data-image placeholder="https://..." value="' + (imgUrl || '').replace(/"/g,'&quot;') + '">';
+                html += '</div>';
+            });
+            document.getElementById('editModalBody').innerHTML = html;
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        function openEditForSingle() {
+            if (!currentHymn) return;
+            var wasBatch = batchHymnIds.length > 0;
+            batchHymnIds = [currentHymn.id];
+            if (!wasBatch) {
+                document.getElementById('batchBanner').style.display = 'block';
+                document.getElementById('batchInfo').textContent = '編輯模式：' + (currentHymn.title || '—');
+            }
+            openEditModal();
+        }
+
+        function saveEditModal() {
+            document.querySelectorAll('#editModalBody .edit-hymn-item').forEach(function(el) {
+                var hymnId = el.getAttribute('data-hymn-id');
+                var lyrics = (el.querySelector('[data-lyrics]') || {}).value || '';
+                var imgUrl = (el.querySelector('[data-image]') || {}).value || '';
+                saveCustomData(hymnId, lyrics, imgUrl);
+            });
+            closeEditModal();
+            renderBatchSlides();
+            alert('已儲存，預覽已更新');
+        }
+
+        function setColor(color, el) {
+            document.querySelectorAll('.color-option').forEach(function(x){ x.classList.remove('active'); });
+            el.classList.add('active');
+            currentColor = color;
+            if (batchHymnIds.length > 0) renderBatchSlides();
+            else updateSlides();
+        }
+
+        function printSlides() {
+            if (!currentHymn && batchHymnIds.length === 0) {
+                alert('請先選擇詩歌或從崇拜流程載入！');
+                return;
+            }
+            if (!confirm('即將列印。\n\n⚠️ 若文字或顏色不見，請在列印視窗勾選「背景圖形」或「Background graphics」。\n\n確定繼續？')) return;
+            window.print();
+        }
+
+        function downloadPDF() {
+            if (!currentHymn && batchHymnIds.length === 0) {
+                alert('請先選擇詩歌或從崇拜流程載入！');
+                return;
+            }
+            alert('💡 匯出 PDF：\n1. 點「列印投影片」\n2. 目的地選「另存為 PDF」\n3. 勾選「背景圖形」\n4. 儲存');
+        }
+    </script>
+
+    <style media="print">
+        body { background: white; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .container { max-width: none; }
+        .sidebar, .usage-hint, .print-tip { display: none !important; }
+        .grid { display: block !important; }
+        .batch-banner { display: none !important; }
+        h1, h2 { display: none !important; }
+        .slides-preview { display: block !important; }
+        .slide { page-break-after: always; min-height: 100vh; margin: 0; border-radius: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #f8fafc !important; }
+        .slide p, .slide h2 { color: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    </style>
+</body>
+</html>

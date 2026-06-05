@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow 跟進流程 · Workflow | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <link href="../../assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div class="container mx-auto px-4 py-6">
+        <div class="flex items-center gap-3 mb-4">
+            <a href="../../dashboard.html" class="text-gray-600 hover:text-gray-900 text-sm">⛪ 教會事工中心</a>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">Workflow 跟進流程</h1>
+        <details class="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <summary class="cursor-pointer font-semibold text-purple-900">功能與使用說明</summary>
+            <div class="mt-3 text-sm text-gray-700 space-y-2">
+                <p><b>此頁是為誰而設？</b> 牧者、關懷同工，需要按步驟跟進新會友、探訪對象等。</p>
+                <p><b>有什麼功能？</b> 定義流程（如：新會友 → 歡迎信 → 加入跟進名單 → 7 天後提醒探訪），將人員加入流程，並以「下一步」推進步驟。</p>
+                <p><b>如何入手？</b> 選擇流程、選擇人員，點「加入流程」；在進行中列表點「下一步」推進。</p>
+            </div>
+        </details>
+
+        <!-- 快速操作 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <button onclick="showAddInstance()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                <i class="fas fa-user-plus mr-2"></i>加入流程
+            </button>
+            <button onclick="showWorkflowDefinitions()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-list mr-2"></i>流程定義
+            </button>
+            <button onclick="refreshData()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                <i class="fas fa-sync mr-2"></i>重新整理
+            </button>
+        </div>
+
+        <!-- 進行中 -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">進行中的流程</h3>
+            <div id="activeInstancesList" class="space-y-3">
+                <!-- 動態生成 -->
+            </div>
+        </div>
+
+        <!-- 流程定義列表（可摺疊） -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">預設流程</h3>
+            <div id="workflowDefsList" class="space-y-4">
+                <!-- 動態生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 加入流程 Modal -->
+    <div id="addInstanceModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">將人員加入流程</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">選擇流程</label>
+                        <select id="addWorkflowSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">選擇人員</label>
+                        <select id="addPersonSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></select>
+                    </div>
+                </div>
+                <div class="flex space-x-3 mt-6">
+                    <button onclick="submitAddInstance()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex-1">加入</button>
+                    <button onclick="closeAddInstanceModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 flex-1">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_WORKFLOWS = 'workflowDefinitions';
+        const STORAGE_INSTANCES = 'workflowInstances';
+
+        let workflowDefs = [];
+        let instances = [];
+
+        const DEFAULT_WORKFLOWS = [
+            {
+                id: 'new_member',
+                name: '新會友跟進流程',
+                steps: [
+                    { name: '發送歡迎信', description: '寄送歡迎信或簡訊' },
+                    { name: '加入跟進名單', description: '加入探訪／關懷跟進名單' },
+                    { name: '7 天後提醒探訪', description: '設定探訪提醒' }
+                ]
+            },
+            {
+                id: 'visit_followup',
+                name: '探訪後跟進',
+                steps: [
+                    { name: '記錄探訪內容', description: '填寫探訪紀錄' },
+                    { name: '3 天後跟進', description: '電話或訊息關懷' },
+                    { name: '加入定期探訪', description: '排入定期探訪計畫' }
+                ]
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            renderActiveInstances();
+            renderWorkflowDefs();
+        });
+
+        function loadData() {
+            workflowDefs = JSON.parse(localStorage.getItem(STORAGE_WORKFLOWS)) || DEFAULT_WORKFLOWS;
+            instances = JSON.parse(localStorage.getItem(STORAGE_INSTANCES)) || [];
+            if (workflowDefs.length === 0) workflowDefs = DEFAULT_WORKFLOWS;
+            localStorage.setItem(STORAGE_WORKFLOWS, JSON.stringify(workflowDefs));
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_INSTANCES, JSON.stringify(instances));
+        }
+
+        function getPeopleList() {
+            let list = [];
+            try {
+                const ms = localStorage.getItem('memberSystemData');
+                if (ms) { const d = JSON.parse(ms); list = d.members || []; }
+                if (list.length === 0) {
+                    const cm = localStorage.getItem('churchMasterDatabase');
+                    if (cm) { const c = JSON.parse(cm); list = c.members || []; }
+                }
+                if (list.length === 0) {
+                    const pl = localStorage.getItem('bible100_people');
+                    if (pl) { const p = JSON.parse(pl); list = p.people || []; }
+                }
+            } catch(e) {}
+            return list.map((m, i) => ({
+                id: m.id || ('p' + (i + 1)),
+                name: m.name || m.memberName || '未命名'
+            }));
+        }
+
+        function refreshData() {
+            loadData();
+            renderActiveInstances();
+            renderWorkflowDefs();
+        }
+
+        function renderActiveInstances() {
+            const active = instances.filter(i => {
+                const wf = workflowDefs.find(w => w.id === i.workflowId);
+                return wf && i.stepIndex < wf.steps.length;
+            });
+            const container = document.getElementById('activeInstancesList');
+            if (active.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-6">尚無進行中的流程。點「加入流程」開始。</div>';
+                return;
+            }
+            container.innerHTML = active.map(inst => {
+                const wf = workflowDefs.find(w => w.id === inst.workflowId);
+                if (!wf) return '';
+                const step = wf.steps[inst.stepIndex];
+                const isLast = inst.stepIndex >= wf.steps.length - 1;
+                return `
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">${inst.personName || '未知'} · ${wf.name}</div>
+                            <div class="text-sm text-gray-600 mt-1">目前步驟：${step ? step.name : '-'} ${step && step.description ? '(' + step.description + ')' : ''}</div>
+                            <div class="text-xs text-gray-500 mt-1">進度 ${inst.stepIndex + 1}/${wf.steps.length}</div>
+                        </div>
+                        <div class="flex space-x-2">
+                            ${!isLast ? `<button onclick="advanceStep('${inst.id}')" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">下一步</button>` : ''}
+                            <button onclick="completeInstance('${inst.id}')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">${isLast ? '完成' : '標記完成'}</button>
+                            <button onclick="removeInstance('${inst.id}')" class="text-red-600 hover:text-red-800 text-sm">移除</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderWorkflowDefs() {
+            const container = document.getElementById('workflowDefsList');
+            container.innerHTML = workflowDefs.map(wf => `
+                <div class="p-4 border border-gray-200 rounded-lg">
+                    <div class="font-medium text-gray-900">${wf.name}</div>
+                    <ol class="mt-2 text-sm text-gray-600 list-decimal list-inside space-y-1">
+                        ${wf.steps.map(s => `<li>${s.name}${s.description ? ' — ' + s.description : ''}</li>`).join('')}
+                    </ol>
+                </div>
+            `).join('');
+        }
+
+        function showAddInstance() {
+            const wfSelect = document.getElementById('addWorkflowSelect');
+            const personSelect = document.getElementById('addPersonSelect');
+            wfSelect.innerHTML = workflowDefs.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+            const people = getPeopleList();
+            personSelect.innerHTML = people.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            if (people.length === 0) {
+                personSelect.innerHTML = '<option value="">尚無人員，請先載入會友</option>';
+            }
+            document.getElementById('addInstanceModal').classList.remove('hidden');
+        }
+
+        function closeAddInstanceModal() {
+            document.getElementById('addInstanceModal').classList.add('hidden');
+        }
+
+        function submitAddInstance() {
+            const workflowId = document.getElementById('addWorkflowSelect').value;
+            const personId = document.getElementById('addPersonSelect').value;
+            if (!workflowId || !personId) {
+                alert('請選擇流程與人員');
+                return;
+            }
+            const people = getPeopleList();
+            const person = people.find(p => p.id === personId);
+            const personName = person ? person.name : '未知';
+            const existing = instances.find(i => i.workflowId === workflowId && i.personId === personId && i.stepIndex < (workflowDefs.find(w=>w.id===workflowId)?.steps?.length || 0));
+            if (existing) {
+                alert('此人已在該流程中');
+                return;
+            }
+            const newInst = {
+                id: 'inst_' + Date.now(),
+                workflowId,
+                personId,
+                personName,
+                stepIndex: 0,
+                completedAt: [],
+                startedAt: new Date().toISOString()
+            };
+            instances.push(newInst);
+            saveData();
+            closeAddInstanceModal();
+            renderActiveInstances();
+        }
+
+        function advanceStep(instId) {
+            const inst = instances.find(i => i.id === instId);
+            if (!inst) return;
+            const wf = workflowDefs.find(w => w.id === inst.workflowId);
+            if (!wf || inst.stepIndex >= wf.steps.length - 1) return;
+            inst.completedAt = inst.completedAt || [];
+            inst.completedAt.push(new Date().toISOString());
+            inst.stepIndex++;
+            saveData();
+            renderActiveInstances();
+        }
+
+        function completeInstance(instId) {
+            const inst = instances.find(i => i.id === instId);
+            if (!inst) return;
+            const wf = workflowDefs.find(w => w.id === inst.workflowId);
+            if (wf) {
+                inst.completedAt = inst.completedAt || [];
+                while (inst.completedAt.length <= inst.stepIndex) {
+                    inst.completedAt.push(new Date().toISOString());
+                }
+                inst.stepIndex = wf.steps.length;
+            }
+            saveData();
+            renderActiveInstances();
+        }
+
+        function removeInstance(instId) {
+            if (!confirm('確定要移除此流程？')) return;
+            instances = instances.filter(i => i.id !== instId);
+            saveData();
+            renderActiveInstances();
+        }
+
+        function showWorkflowDefinitions() {
+            document.getElementById('workflowDefsList').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

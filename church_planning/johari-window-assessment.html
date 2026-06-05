@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Johari 團隊盲點量表</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <main class="max-w-5xl mx-auto p-4 md:p-6">
+    <header class="mb-5">
+      <p class="text-xs font-semibold text-indigo-700"><a class="underline" href="assessment-os-hub.html">CTA-OS 分層中心</a></p>
+      <h1 class="text-2xl md:text-3xl font-black mt-2">Johari 團隊盲點量表</h1>
+      <p class="text-sm text-slate-600 mt-2">用途：提升團隊透明度、降低誤解與隱性衝突。模型輸出：Open / Blind / Hidden / Unknown + CTV(R/P/F) 參照。</p>
+    </header>
+
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button class="px-3 py-2 rounded-lg bg-indigo-700 text-white text-sm" onclick="switchTab('intro')">① 理念與說明</button>
+      <button class="px-3 py-2 rounded-lg bg-white border text-sm" onclick="switchTab('survey')">② 開始測評</button>
+      <button class="px-3 py-2 rounded-lg bg-white border text-sm" onclick="switchTab('report')">③ 分析報告</button>
+    </div>
+
+    <section id="tab-intro" class="rounded-xl border bg-white p-4 space-y-3">
+      <p class="text-sm">本量表不作人事任命，只作「回饋對話起點」。建議搭配 RACI 與領袖健康診斷交叉閱讀。</p>
+      <ul class="text-sm list-disc pl-5 space-y-1">
+        <li>Open 區高：團隊信任度佳，可承擔跨組協作任務。</li>
+        <li>Blind 區高：建議 360 回饋與導師陪談。</li>
+        <li>Hidden 區高：建議強化安全感與屬靈同伴機制。</li>
+        <li>Unknown 區高：建議以短期試任務探索潛能。</li>
+      </ul>
+    </section>
+
+    <section id="tab-survey" class="hidden rounded-xl border bg-white p-4">
+      <h2 class="font-black mb-3">自評（示範 8 題）</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        <label class="border rounded p-3">我會主動邀請同工指出我看不見的盲點。<input data-q="j1" class="w-full mt-2 border rounded p-1" type="number" min="1" max="5" value="4"></label>
+        <label class="border rounded p-3">我在壓力期也願意如實表達需要幫助。<input data-q="j2" class="w-full mt-2 border rounded p-1" type="number" min="1" max="5" value="3"></label>
+        <label class="border rounded p-3">我傾向隱藏負面情緒，避免影響團隊。<input data-q="j3" class="w-full mt-2 border rounded p-1" type="number" min="1" max="5" value="4"></label>
+        <label class="border rounded p-3">我能接受被修正後立刻調整做法。<input data-q="j4" class="w-full mt-2 border rounded p-1" type="number" min="1" max="5" value="4"></label>
+      </div>
+      <button class="mt-3 px-3 py-2 rounded border text-sm" onclick="generateOsReport()">生成 CTA-OS 報告</button>
+      <p class="text-xs text-slate-500 mt-3">正式版建議：自評 24 題 + 他評 24 題（同題庫）。</p>
+    </section>
+
+    <section id="tab-report" class="hidden rounded-xl border bg-white p-4 space-y-3">
+      <h2 class="font-black">示範報告</h2>
+      <p class="text-sm" id="metricLine">Open 0.62 / Blind 0.48 / Hidden 0.55 / Unknown 0.37</p>
+      <p class="text-sm" id="adviceLine">牧養建議：先做 4 週「回饋-回應」操練，每週一題回饋紀錄，降低 Hidden 區。</p>
+      <pre id="osReport" class="hidden text-xs bg-slate-100 p-2 rounded whitespace-pre-wrap"></pre>
+      <div class="flex flex-wrap gap-2 pt-2 text-sm">
+        <button class="px-3 py-2 rounded border" onclick="window.print()">🖨️ 打印 / 導出 PDF</button>
+        <button class="px-3 py-2 rounded border" onclick="copyText()">💬 複製純文字報告</button>
+        <button class="px-3 py-2 rounded border" onclick="makeLink()">🔗 生成專屬加密分享連結</button>
+        <button class="px-3 py-2 rounded border" onclick="location.reload()">🔄 清除數據並重新測試</button>
+      </div>
+      <pre id="linkBox" class="hidden text-xs bg-slate-100 p-2 rounded"></pre>
+    </section>
+  </main>
+  <script src="js/cta_os_runtime.js"></script>
+  <script src="js/cta_os_item_packs.js"></script>
+  <script src="js/cta_os_bridge.js"></script>
+  <script>
+    function switchTab(id){['intro','survey','report'].forEach(k=>document.getElementById('tab-'+k).classList.toggle('hidden',k!==id));}
+    function copyText(){
+      var pre = document.querySelector('.cta-os-report-panel [data-cta-field="plain-text"]');
+      if (pre && navigator.clipboard) navigator.clipboard.writeText(pre.textContent || '');
+    }
+    function makeLink(){
+      var rep = window.CTAOSRuntime.readLastReport();
+      const t=btoa(JSON.stringify(rep || {tool:'johari',t:Date.now()}));
+      const box=document.getElementById('linkBox');
+      box.textContent=location.origin+location.pathname+'?share='+encodeURIComponent(t);
+      box.classList.remove('hidden');
+    }
+    function generateOsReport(){
+      var rep = window.__CTAOS_generate();
+      if (rep) {
+        document.getElementById('metricLine').textContent = 'CTV：' + rep.vectorLine;
+        document.getElementById('adviceLine').textContent = '優勢 ' + rep.strengths + '；成長 ' + rep.growth;
+      }
+      switchTab('report');
+    }
+    CTAOSBridge.initPage({ toolId: 'johari', reportAnchor: '#tab-report', fab: false });
+  </script>
+</body>
+</html>

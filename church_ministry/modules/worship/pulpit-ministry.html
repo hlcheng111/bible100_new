@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>讲台事奉管理系统 - Church Ministry · Pulpit Ministry | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif; background: #f8f9fa; color: #2c3e50; font-size: 11px; overflow-x: hidden; }
+        
+        /* Topbar */
+        .topbar { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .topbar h1 { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .topbar-actions button { margin-left: 6px; padding: 6px 12px; border: none; background: white; color: #e67e22; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 500; transition: all 0.2s; }
+        .topbar-actions button:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+        
+        /* Stats Dashboard */
+        .stats-dashboard { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; padding: 15px 20px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .stat-card { text-align: center; padding: 15px 10px; background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%); border-radius: 6px; border-left: 3px solid #e67e22; transition: all 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .stat-num { font-size: 24px; font-weight: bold; color: #e67e22; margin-bottom: 4px; }
+        .stat-label { font-size: 9px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-trend { font-size: 9px; margin-top: 4px; }
+        .trend-up { color: #27ae60; }
+        .trend-down { color: #e74c3c; }
+        
+        /* Main Layout */
+        .main-layout { display: grid; grid-template-columns: 300px 1fr 350px; gap: 15px; padding: 15px 20px; height: calc(100vh - 180px); }
+        
+        /* Panel Styles */
+        .panel { background: white; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .panel-header { padding: 12px 15px; background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; font-weight: 600; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .panel-header-light { background: #f8f9fa; color: #2c3e50; border-bottom: 2px solid #e67e22; }
+        .panel-body { flex: 1; overflow-y: auto; padding: 12px; }
+        
+        /* Speaker Card */
+        .speaker-card { padding: 12px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; cursor: pointer; transition: all 0.2s; position: relative; }
+        .speaker-card:hover { border-color: #e67e22; box-shadow: 0 3px 10px rgba(230, 126, 34, 0.15); transform: translateX(2px); }
+        .speaker-card.selected { background: #fff5e6; border-color: #e67e22; border-width: 2px; }
+        .speaker-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; float: left; margin-right: 10px; }
+        .speaker-info { overflow: hidden; }
+        .speaker-name { font-size: 13px; font-weight: 600; color: #2c3e50; margin-bottom: 3px; }
+        .speaker-meta { font-size: 9px; color: #7f8c8d; margin-bottom: 2px; }
+        .speaker-stats { display: flex; gap: 10px; margin-top: 6px; }
+        .speaker-stat { font-size: 9px; padding: 2px 6px; background: #f8f9fa; border-radius: 3px; }
+        .speaker-badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 8px; font-weight: 500; margin-left: 4px; }
+        .badge-senior { background: #ffe0b2; color: #e65100; }
+        .badge-active { background: #c8e6c9; color: #2e7d32; }
+        .badge-new { background: #bbdefb; color: #1565c0; }
+        
+        /* Sermon Card */
+        .sermon-card { padding: 12px; margin-bottom: 8px; background: #fff; border-left: 4px solid #e67e22; border-radius: 4px; transition: all 0.2s; }
+        .sermon-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); transform: translateY(-1px); }
+        .sermon-week { display: inline-block; padding: 4px 8px; background: #e67e22; color: white; border-radius: 4px; font-size: 9px; font-weight: 600; margin-bottom: 6px; }
+        .sermon-date { font-size: 9px; color: #7f8c8d; margin-left: 6px; }
+        .sermon-title { font-size: 12px; font-weight: 600; color: #2c3e50; margin-bottom: 4px; }
+        .sermon-series { font-size: 10px; color: #e67e22; margin-bottom: 4px; }
+        .sermon-speaker { font-size: 10px; color: #34495e; margin-bottom: 6px; }
+        .sermon-scripture { font-size: 9px; color: #7f8c8d; background: #f8f9fa; padding: 4px 6px; border-radius: 3px; display: inline-block; }
+        .sermon-status { position: absolute; top: 12px; right: 12px; padding: 3px 8px; border-radius: 10px; font-size: 8px; font-weight: 500; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-scheduled { background: #cce5ff; color: #004085; }
+        .status-preparing { background: #fff3cd; color: #856404; }
+        
+        /* Control Panel */
+        .control-section { margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; }
+        .control-section h4 { font-size: 11px; font-weight: 600; color: #2c3e50; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid #e67e22; }
+        .control-btn { width: 100%; padding: 10px; margin-bottom: 6px; border: none; background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .control-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(230, 126, 34, 0.3); }
+        .control-btn.secondary { background: white; color: #e67e22; border: 1px solid #e67e22; }
+        .control-btn.secondary:hover { background: #fff5e6; }
+        
+        /* Chart Container */
+        .chart-container { background: white; padding: 15px; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .chart-title { font-size: 11px; font-weight: 600; color: #2c3e50; margin-bottom: 10px; text-align: center; }
+        
+        /* Quick Stats */
+        .quick-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .quick-stat { background: white; padding: 12px; border-radius: 6px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .quick-stat-num { font-size: 20px; font-weight: bold; color: #e67e22; }
+        .quick-stat-label { font-size: 9px; color: #7f8c8d; margin-top: 3px; }
+        
+        /* Search Box */
+        .search-box { margin-bottom: 10px; }
+        .search-box input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 10px; transition: all 0.2s; }
+        .search-box input:focus { outline: none; border-color: #e67e22; box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1); }
+        
+        /* Filter Tabs */
+        .filter-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+        .filter-tab { flex: 1; padding: 6px 10px; background: #f8f9fa; border: none; border-radius: 4px; cursor: pointer; font-size: 9px; font-weight: 500; color: #7f8c8d; transition: all 0.2s; }
+        .filter-tab.active { background: #e67e22; color: white; }
+        
+        /* Timeline */
+        .timeline { position: relative; padding-left: 20px; }
+        .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #e0e0e0; }
+        .timeline-item { position: relative; margin-bottom: 15px; }
+        .timeline-dot { position: absolute; left: -16px; width: 10px; height: 10px; border-radius: 50%; background: #e67e22; border: 2px solid white; box-shadow: 0 0 0 2px #e67e22; }
+        
+        /* Welcome Message */
+        .welcome-banner { background: linear-gradient(135deg, #fff5e6 0%, #ffe0b2 100%); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #e67e22; }
+        .welcome-title { font-size: 14px; font-weight: 600; color: #e67e22; margin-bottom: 6px; }
+        .welcome-text { font-size: 10px; color: #5d4037; line-height: 1.6; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #e67e22; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d35400; }
+        
+        /* Message Toast */
+        .toast { position: fixed; top: 80px; right: 20px; padding: 12px 18px; background: #27ae60; color: white; border-radius: 6px; font-size: 11px; z-index: 1000; animation: slideIn 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast.error { background: #e74c3c; }
+        .toast.info { background: #3498db; }
+        
+        /* Loading Spinner */
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #e67e22; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Empty State */
+        .empty-state { text-align: center; padding: 40px 20px; color: #95a5a6; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state-text { font-size: 11px; }
+        
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .main-layout { grid-template-columns: 280px 1fr 320px; }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <!-- Topbar -->
+    <div class="topbar">
+        <h1><span>📖</span>讲台事奉管理系统</h1>
+        <div class="topbar-actions">
+            <button onclick="generateReport()">📊 生成报告</button>
+            <button onclick="exportData()">📤 导出数据</button>
+            <button onclick="printSchedule()">🖨️ 打印排班</button>
+            <button onclick="showHelp()">❓ 帮助</button>
+            <button onclick="location.href='../../index.html'">🏠 返回</button>
+        </div>
+    </div>
+    
+    <!-- Stats Dashboard -->
+    <div class="stats-dashboard">
+        <div class="stat-card">
+            <div class="stat-num" id="totalSpeakers">0</div>
+            <div class="stat-label">讲员总数</div>
+            <div class="stat-trend trend-up" id="speakerTrend">↑ 本月+0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" id="totalSermons">0</div>
+            <div class="stat-label">讲道总数</div>
+            <div class="stat-trend trend-up" id="sermonTrend">52周计划</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" id="totalSeries">0</div>
+            <div class="stat-label">系列数量</div>
+            <div class="stat-trend" id="seriesTrend">进行中</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" id="avgFrequency">0</div>
+            <div class="stat-label">平均频率</div>
+            <div class="stat-trend" id="freqTrend">次/季</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" id="thisWeekStatus">待安排</div>
+            <div class="stat-label">本周状态</div>
+            <div class="stat-trend" id="weekTrend">--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" id="completionRate">0%</div>
+            <div class="stat-label">完成率</div>
+            <div class="stat-trend trend-up" id="completionTrend">↑ 良好</div>
+        </div>
+    </div>
+    
+    <!-- Main Layout -->
+    <div class="main-layout">
+        <!-- Left Panel: Speakers -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>👥 讲员名单</span>
+                <span class="speaker-badge badge-active" id="speakerCount">0位</span>
+            </div>
+            <div class="panel-body">
+                <div class="search-box">
+                    <input type="text" id="speakerSearch" placeholder="🔍 搜索讲员姓名、专长..." onkeyup="filterSpeakers()">
+                </div>
+                <div class="filter-tabs">
+                    <button class="filter-tab active" onclick="filterSpeakersByType('all')">全部</button>
+                    <button class="filter-tab" onclick="filterSpeakersByType('senior')">资深</button>
+                    <button class="filter-tab" onclick="filterSpeakersByType('active')">活跃</button>
+                </div>
+                <div id="speakerList"></div>
+            </div>
+        </div>
+        
+        <!-- Center Panel: Sermon Schedule -->
+        <div class="panel">
+            <div class="panel-header panel-header-light">
+                <span>📅 全年讲道计划 (52周)</span>
+                <div>
+                    <button onclick="prevMonth()" style="border:none;background:none;cursor:pointer;font-size:14px;">◀</button>
+                    <span id="currentMonth" style="margin:0 10px;font-weight:600;">第1-4周</span>
+                    <button onclick="nextMonth()" style="border:none;background:none;cursor:pointer;font-size:14px;">▶</button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="welcome-banner" id="welcomeBanner">
+                    <div class="welcome-title">👋 欢迎使用讲台事奉管理系统！</div>
+                    <div class="welcome-text">
+                        <strong>系统功能：</strong>管理讲员资料、安排全年52周讲道计划、追踪系列主题、生成统计报告。<br>
+                        <strong>快速开始：</strong>点击下方"载入示例数据"立即体验完整功能！
+                        <button onclick="loadDemo()" style="margin-top:8px;padding:6px 12px;background:#e67e22;color:white;border:none;border-radius:4px;cursor:pointer;font-size:10px;">🎯 载入示例数据</button>
+                    </div>
+                </div>
+                <div id="sermonList"></div>
+            </div>
+        </div>
+        
+        <!-- Right Panel: Control & Stats -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>🎛️ 控制中心</span>
+            </div>
+            <div class="panel-body">
+                <!-- Quick Actions -->
+                <div class="control-section">
+                    <h4>⚡ 快速操作</h4>
+                    <button class="control-btn" onclick="addSpeaker()">
+                        <span>➕</span><span>新增讲员</span>
+                    </button>
+                    <button class="control-btn" onclick="scheduleSermon()">
+                        <span>📅</span><span>安排讲道</span>
+                    </button>
+                    <button class="control-btn secondary" onclick="viewSpeakerProfile()">
+                        <span>👁️</span><span>查看讲员档案</span>
+                    </button>
+                    <button class="control-btn secondary" onclick="editSermon()">
+                        <span>✏️</span><span>编辑讲道计划</span>
+                    </button>
+                </div>
+                
+                <!-- Chart -->
+                <div class="chart-container">
+                    <div class="chart-title">📊 讲道系列分布</div>
+                    <canvas id="seriesChart" width="300" height="200"></canvas>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="quick-stat">
+                        <div class="quick-stat-num" id="thisMonthCount">0</div>
+                        <div class="quick-stat-label">本月讲道</div>
+                    </div>
+                    <div class="quick-stat">
+                        <div class="quick-stat-num" id="nextMonthCount">0</div>
+                        <div class="quick-stat-label">下月计划</div>
+                    </div>
+                </div>
+                
+                <!-- Speaker Performance -->
+                <div class="control-section">
+                    <h4>🏆 讲员服事统计</h4>
+                    <div id="speakerPerformance"></div>
+                </div>
+                
+                <!-- Tips -->
+                <div class="control-section">
+                    <h4>💡 使用提示</h4>
+                    <div style="font-size:9px;color:#7f8c8d;line-height:1.6;">
+                        1. 点击讲员卡片查看详细资料<br>
+                        2. 使用搜索快速定位讲员<br>
+                        3. 系列化主题有助于深度教导<br>
+                        4. 建议提前2-3周安排讲员<br>
+                        5. 定期导出数据进行备份
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let speakers = [];
+        let sermons = [];
+        let selectedSpeaker = null;
+        let currentMonthView = 1;
+        let seriesChart = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            if (speakers.length === 0 || sermons.length === 0) {
+                loadDemo();
+            }
+            document.getElementById('welcomeBanner').style.display = (speakers.length > 0 && sermons.length > 0) ? 'none' : 'block';
+            renderAll();
+        });
+        
+        function loadDemo() {
+            // Generate sample speakers
+            speakers = [
+                {
+                    id: 1,
+                    name: '张主任牧师',
+                    title: '主任牧师',
+                    specialty: '释经讲道、神学教导',
+                    phone: '0912-345-001',
+                    email: 'zhang@church.com',
+                    experience: '30年',
+                    count: 15,
+                    type: 'senior',
+                    lastSermon: '2025-10-05'
+                },
+                {
+                    id: 2,
+                    name: '李传道',
+                    title: '传道',
+                    specialty: '福音布道、青年牧养',
+                    phone: '0912-345-002',
+                    email: 'li@church.com',
+                    experience: '8年',
+                    count: 12,
+                    type: 'active',
+                    lastSermon: '2025-09-28'
+                },
+                {
+                    id: 3,
+                    name: '王长老',
+                    title: '长老',
+                    specialty: '圣经综览、属灵生命',
+                    phone: '0912-345-003',
+                    email: 'wang@church.com',
+                    experience: '15年',
+                    count: 10,
+                    type: 'senior',
+                    lastSermon: '2025-09-21'
+                },
+                {
+                    id: 4,
+                    name: '陈姊妹',
+                    title: '同工',
+                    specialty: '妇女事工、家庭婚姻',
+                    phone: '0912-345-004',
+                    email: 'chen@church.com',
+                    experience: '5年',
+                    count: 8,
+                    type: 'active',
+                    lastSermon: '2025-09-14'
+                }
+            ];
+            
+            // Generate 52 weeks sermon schedule
+            sermons = [];
+            const seriesData = [
+                { name: '创世记系列', weeks: 8, color: '#3498db' },
+                { name: '登山宝训', weeks: 6, color: '#e74c3c' },
+                { name: '使徒行传', weeks: 10, color: '#2ecc71' },
+                { name: '罗马书', weeks: 8, color: '#f39c12' },
+                { name: '诗篇精选', weeks: 6, color: '#9b59b6' },
+                { name: '先知书', weeks: 7, color: '#1abc9c' },
+                { name: '启示录', weeks: 7, color: '#e67e22' }
+            ];
+            
+            let weekCounter = 1;
+            let startDate = new Date('2025-01-05');
+            
+            seriesData.forEach(series => {
+                for (let i = 0; i < series.weeks; i++) {
+                    const speaker = speakers[weekCounter % speakers.length];
+                    const currentDate = new Date(startDate);
+                    currentDate.setDate(currentDate.getDate() + (weekCounter - 1) * 7);
+                    
+                    sermons.push({
+                        id: weekCounter,
+                        week: weekCounter,
+                        date: currentDate.toISOString().split('T')[0],
+                        series: series.name,
+                        title: `${series.name} (${i + 1}/${series.weeks})`,
+                        speaker: speaker.name,
+                        speakerId: speaker.id,
+                        scripture: generateScripture(series.name, i),
+                        status: weekCounter <= 10 ? 'completed' : weekCounter <= 15 ? 'preparing' : 'scheduled'
+                    });
+                    weekCounter++;
+                }
+            });
+            
+            saveData();
+            renderAll();
+            showToast('✅ 示例数据载入成功！已生成4位讲员和52周完整讲道计划！', 'success');
+            document.getElementById('welcomeBanner').style.display = 'none';
+        }
+        
+        function generateScripture(series, index) {
+            const scriptures = {
+                '创世记系列': ['创1:1-31', '创2:1-25', '创3:1-24', '创6:1-22', '创12:1-20', '创22:1-19', '创37:1-36', '创50:15-26'],
+                '登山宝训': ['太5:1-12', '太5:13-20', '太5:21-48', '太6:1-18', '太6:19-34', '太7:1-29'],
+                '使徒行传': ['徒1:1-11', '徒2:1-47', '徒3:1-26', '徒4:1-31', '徒8:26-40', '徒9:1-31', '徒13:1-52', '徒16:6-40', '徒20:17-38', '徒28:16-31'],
+                '罗马书': ['罗1:1-17', '罗3:21-31', '罗5:1-11', '罗6:1-23', '罗8:1-39', '罗12:1-21', '罗13:8-14', '罗15:1-13'],
+                '诗篇精选': ['诗1篇', '诗23篇', '诗51篇', '诗103篇', '诗119篇', '诗139篇'],
+                '先知书': ['赛6:1-13', '赛53:1-12', '耶1:1-19', '结37:1-14', '何11:1-11', '弥6:6-8', '玛3:1-12'],
+                '启示录': ['启1:1-20', '启2:1-29', '启3:14-22', '启5:1-14', '启7:9-17', '启21:1-8', '启22:1-21']
+            };
+            return scriptures[series][index] || '待定';
+        }
+        
+        function renderAll() {
+            renderSpeakers();
+            renderSermons();
+            updateAllStats();
+            renderChart();
+            renderSpeakerPerformance();
+        }
+        
+        function renderSpeakers() {
+            const list = document.getElementById('speakerList');
+            const filtered = filterSpeakersData();
+            
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👤</div><div class="empty-state-text">暂无讲员数据</div></div>';
+                return;
+            }
+            
+            list.innerHTML = filtered.map(s => `
+                <div class="speaker-card ${selectedSpeaker && selectedSpeaker.id === s.id ? 'selected' : ''}" onclick="selectSpeaker(${s.id})">
+                    <div class="speaker-avatar">${s.name.charAt(0)}</div>
+                    <div class="speaker-info">
+                        <div class="speaker-name">
+                            ${s.name}
+                            <span class="speaker-badge badge-${s.type}">${s.type === 'senior' ? '资深' : '活跃'}</span>
+                        </div>
+                        <div class="speaker-meta">${s.title} · ${s.specialty}</div>
+                        <div class="speaker-meta">📞 ${s.phone} · 📧 ${s.email}</div>
+                        <div class="speaker-stats">
+                            <span class="speaker-stat">🎯 本年${s.count}次</span>
+                            <span class="speaker-stat">⏰ ${s.experience}经验</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('speakerCount').textContent = filtered.length + '位';
+        }
+        
+        function renderSermons() {
+            const list = document.getElementById('sermonList');
+            const startWeek = (currentMonthView - 1) * 4 + 1;
+            const endWeek = Math.min(startWeek + 3, 52);
+            const filtered = sermons.filter(s => s.week >= startWeek && s.week <= endWeek);
+            
+            list.innerHTML = filtered.map(s => `
+                <div class="sermon-card" style="position:relative;">
+                    <span class="sermon-status status-${s.status}">${getStatusText(s.status)}</span>
+                    <div>
+                        <span class="sermon-week">第${s.week}周</span>
+                        <span class="sermon-date">${s.date}</span>
+                    </div>
+                    <div class="sermon-title">${s.title}</div>
+                    <div class="sermon-series">📚 系列：${s.series}</div>
+                    <div class="sermon-speaker">👤 讲员：${s.speaker}</div>
+                    <span class="sermon-scripture">📖 ${s.scripture}</span>
+                </div>
+            `).join('');
+        }
+        
+        function getStatusText(status) {
+            const map = { completed: '已完成', preparing: '准备中', scheduled: '已安排' };
+            return map[status] || '未知';
+        }
+        
+        function updateAllStats() {
+            document.getElementById('totalSpeakers').textContent = speakers.length;
+            document.getElementById('totalSermons').textContent = sermons.length;
+            
+            const seriesSet = new Set(sermons.map(s => s.series));
+            document.getElementById('totalSeries').textContent = seriesSet.size;
+            
+            const avgFreq = speakers.length > 0 ? Math.round(speakers.reduce((sum, s) => sum + s.count, 0) / speakers.length) : 0;
+            document.getElementById('avgFrequency').textContent = avgFreq;
+            
+            const thisWeek = sermons.find(s => s.week === Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000)) % 52);
+            document.getElementById('thisWeekStatus').textContent = thisWeek ? thisWeek.speaker : '待安排';
+            
+            const completed = sermons.filter(s => s.status === 'completed').length;
+            const rate = Math.round((completed / sermons.length) * 100);
+            document.getElementById('completionRate').textContent = rate + '%';
+            
+            // Month stats
+            const thisMonth = sermons.filter(s => s.week >= 1 && s.week <= 4).length;
+            const nextMonth = sermons.filter(s => s.week >= 5 && s.week <= 8).length;
+            document.getElementById('thisMonthCount').textContent = thisMonth;
+            document.getElementById('nextMonthCount').textContent = nextMonth;
+        }
+        
+        function renderChart() {
+            const ctx = document.getElementById('seriesChart');
+            if (!ctx) return;
+            
+            const seriesCount = {};
+            sermons.forEach(s => {
+                seriesCount[s.series] = (seriesCount[s.series] || 0) + 1;
+            });
+            
+            if (seriesChart) seriesChart.destroy();
+            
+            seriesChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(seriesCount),
+                    datasets: [{
+                        data: Object.values(seriesCount),
+                        backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+        
+        function renderSpeakerPerformance() {
+            const container = document.getElementById('speakerPerformance');
+            const sorted = [...speakers].sort((a, b) => b.count - a.count);
+            
+            container.innerHTML = sorted.map((s, i) => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0;">
+                    <div style="font-size:10px;font-weight:500;">${i + 1}. ${s.name}</div>
+                    <div>
+                        <span style="font-size:11px;font-weight:600;color:#e67e22;">${s.count}</span>
+                        <span style="font-size:9px;color:#7f8c8d;">次</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function filterSpeakersData() {
+            let filtered = speakers;
+            const search = document.getElementById('speakerSearch')?.value.toLowerCase() || '';
+            if (search) {
+                filtered = filtered.filter(s => 
+                    s.name.toLowerCase().includes(search) || 
+                    s.specialty.toLowerCase().includes(search)
+                );
+            }
+            return filtered;
+        }
+        
+        function filterSpeakers() {
+            renderSpeakers();
+        }
+        
+        function filterSpeakersByType(type) {
+            document.querySelectorAll('.filter-tab').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            // Implement filtering logic
+            renderSpeakers();
+        }
+        
+        function selectSpeaker(id) {
+            selectedSpeaker = speakers.find(s => s.id === id);
+            renderSpeakers();
+            showToast(`已选择：${selectedSpeaker.name}`, 'info');
+        }
+        
+        function prevMonth() {
+            if (currentMonthView > 1) {
+                currentMonthView--;
+                updateMonthDisplay();
+                renderSermons();
+            }
+        }
+        
+        function nextMonth() {
+            if (currentMonthView < 13) {
+                currentMonthView++;
+                updateMonthDisplay();
+                renderSermons();
+            }
+        }
+        
+        function updateMonthDisplay() {
+            const start = (currentMonthView - 1) * 4 + 1;
+            const end = Math.min(start + 3, 52);
+            document.getElementById('currentMonth').textContent = `第${start}-${end}周`;
+        }
+        
+        function addSpeaker() {
+            const name = prompt('讲员姓名：');
+            if (!name) return;
+            const title = prompt('职称：', '传道');
+            const specialty = prompt('专长：', '讲道教导');
+            speakers.push({
+                id: Date.now(),
+                name, title, specialty,
+                phone: '0912-000-000',
+                email: 'speaker@church.com',
+                experience: '1年',
+                count: 0,
+                type: 'active',
+                lastSermon: ''
+            });
+            saveData();
+            renderAll();
+            showToast('✅ 讲员添加成功！', 'success');
+        }
+        
+        function scheduleSermon() {
+            showToast('ℹ️ 功能开发中...', 'info');
+        }
+        
+        function viewSpeakerProfile() {
+            if (!selectedSpeaker) {
+                showToast('⚠️ 请先选择一位讲员！', 'error');
+                return;
+            }
+            alert(`📋 讲员档案\n\n姓名：${selectedSpeaker.name}\n职称：${selectedSpeaker.title}\n专长：${selectedSpeaker.specialty}\n电话：${selectedSpeaker.phone}\n邮箱：${selectedSpeaker.email}\n经验：${selectedSpeaker.experience}\n本年服事：${selectedSpeaker.count}次\n最后讲道：${selectedSpeaker.lastSermon}`);
+        }
+        
+        function editSermon() {
+            showToast('ℹ️ 功能开发中...', 'info');
+        }
+        
+        function exportData() {
+            const csv = '周次,日期,系列,主题,讲员,经文,状态\n' + 
+                sermons.map(s => `${s.week},${s.date},${s.series},${s.title},${s.speaker},${s.scripture},${getStatusText(s.status)}`).join('\n');
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '讲台事奉计划_2025年.csv';
+            a.click();
+            showToast('✅ 数据导出成功！', 'success');
+        }
+        
+        function generateReport() {
+            showToast('📊 正在生成年度报告...', 'info');
+        }
+        
+        function printSchedule() {
+            window.print();
+        }
+        
+        function showHelp() {
+            alert('📖 讲台事奉管理系统 - 使用帮助\n\n【讲员管理】\n• 点击讲员卡片查看详情\n• 使用搜索快速定位讲员\n• 按类型筛选讲员\n\n【讲道计划】\n• 查看全年52周计划\n• 按月份查看（每页4周）\n• 系列化主题深度教导\n\n【统计分析】\n• 顶部仪表板实时统计\n• 系列分布饼图\n• 讲员服事排名\n\n【数据管理】\n• 导出Excel备份\n• 打印排班表\n• 生成年度报告');
+        }
+        
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        function loadData() {
+            const s = localStorage.getItem('pulpit_speakers');
+            const m = localStorage.getItem('pulpit_sermons');
+            speakers = s ? JSON.parse(s) : [];
+            sermons = m ? JSON.parse(m) : [];
+        }
+        
+        function saveData() {
+            localStorage.setItem('pulpit_speakers', JSON.stringify(speakers));
+            localStorage.setItem('pulpit_sermons', JSON.stringify(sermons));
+        }
+    </script>
+</body>
+</html>

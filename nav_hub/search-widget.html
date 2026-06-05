@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡化搜索組件</title>
+    <style>
+        .search-widget {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            padding: 10px 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            min-width: 300px;
+        }
+
+        .search-input {
+            border: none;
+            outline: none;
+            font-size: 14px;
+            width: 100%;
+            padding: 8px 12px;
+            background: transparent;
+        }
+
+        .search-input::placeholder {
+            color: #999;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            margin-top: 5px;
+        }
+
+        .search-result {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .search-result:hover {
+            background: #f8f9fa;
+        }
+
+        .search-result:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .search-result-path {
+            font-size: 12px;
+            color: #666;
+            font-family: monospace;
+        }
+
+        .no-results {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .search-widget {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="search-widget">
+        <input type="text" 
+               class="search-input" 
+               placeholder="🔍 搜索頁面..."
+               id="searchWidgetInput">
+        
+        <div class="search-results" id="searchWidgetResults">
+            <div class="no-results">輸入關鍵詞開始搜索...</div>
+        </div>
+    </div>
+
+    <script>
+        class SearchWidget {
+            constructor() {
+                this.pages = [
+                    // 主要模組
+                    { title: "聖經研讀", path: "bible_study/dashboard.html", keywords: "聖經,研讀,bible,study" },
+                    { title: "聖經研讀", path: "bible_study/index.html", keywords: "聖經,研讀,bible,study" },
+                    { title: "AI 工具", path: "ai_tools/index.html", keywords: "AI,工具,artificial,intelligence" },
+                    { title: "教會事工", path: "church_ministry/index.html", keywords: "教會,事工,church,ministry" },
+                    { title: "學校管理", path: "school_management/index.html", keywords: "學校,管理,school,management" },
+                    { title: "智慧事奉", path: "smart_ministry/index.html", keywords: "智慧,事奉,smart,ministry" },
+                    
+                    // 語言版本
+                    { title: "中文版", path: "languages/index_cn.html", keywords: "中文,chinese,cn" },
+                    { title: "英文版", path: "languages/index_en.html", keywords: "英文,english,en" },
+                    { title: "越南語版", path: "languages/index_vi.html", keywords: "越南語,vietnamese,vi" },
+                    { title: "印尼語版", path: "languages/index_id.html", keywords: "印尼語,indonesian,id" },
+                    { title: "兒童版", path: "languages/index_ch.html", keywords: "兒童,children,ch" },
+                    { title: "進階版", path: "languages/index_ad.html", keywords: "進階,advanced,ad" },
+                    
+                    // 工具功能
+                    { title: "聖經閱讀器", path: "data/bibles/bible_reader_final.html", keywords: "聖經,閱讀器,bible,reader" },
+                    { title: "站點導航", path: "sitemap_navigation.html", keywords: "站點,導航,site,navigation" },
+                    { title: "目錄搜索", path: "nav_hub/index.html", keywords: "目錄,搜索,toc,search" }
+                ];
+                
+                this.init();
+            }
+
+            init() {
+                const searchInput = document.getElementById('searchWidgetInput');
+                const searchResults = document.getElementById('searchWidgetResults');
+                
+                searchInput.addEventListener('input', (e) => {
+                    this.search(e.target.value);
+                });
+
+                searchInput.addEventListener('focus', () => {
+                    searchResults.style.display = 'block';
+                });
+
+                // 點擊外部關閉搜索結果
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.search-widget')) {
+                        searchResults.style.display = 'none';
+                    }
+                });
+            }
+
+            search(query) {
+                const searchResults = document.getElementById('searchWidgetResults');
+                
+                if (!query.trim()) {
+                    searchResults.innerHTML = '<div class="no-results">輸入關鍵詞開始搜索...</div>';
+                    return;
+                }
+
+                const results = this.pages.filter(page => {
+                    return page.title.toLowerCase().includes(query.toLowerCase()) ||
+                           page.keywords.toLowerCase().includes(query.toLowerCase());
+                }).slice(0, 8); // 限制顯示8個結果
+
+                if (results.length === 0) {
+                    searchResults.innerHTML = '<div class="no-results">沒有找到相關結果</div>';
+                    return;
+                }
+
+                let html = '';
+                results.forEach(page => {
+                    html += `
+                        <div class="search-result" onclick="this.navigateTo('${page.path}')">
+                            <div class="search-result-title">${page.title}</div>
+                            <div class="search-result-path">${page.path}</div>
+                        </div>
+                    `;
+                });
+
+                searchResults.innerHTML = html;
+            }
+
+            navigateTo(path) {
+                // 如果在iframe中，發送消息給父窗口
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'navigate',
+                        url: path
+                    }, '*');
+                } else {
+                    // 如果不在iframe中，直接導航
+                    window.location.href = path;
+                }
+                
+                // 隱藏搜索結果
+                document.getElementById('searchWidgetResults').style.display = 'none';
+            }
+        }
+
+        // 初始化搜索組件
+        document.addEventListener('DOMContentLoaded', function() {
+            new SearchWidget();
+        });
+    </script>
+</body>
+</html>
+

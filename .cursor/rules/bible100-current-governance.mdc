@@ -1,0 +1,91 @@
+---
+description: Bible100 現行最高層治理規則：整合舊 Cursor rules，處理 index_v5、資料 SSOT、AI 備課、小語種翻譯、測試與安全重構的優先級
+globs: "**/*"
+alwaysApply: true
+---
+
+# Bible100 現行治理總規則（2026-05-22）
+
+本規則用來統一舊 `.cursor/rules/*` 的互相衝突處。若舊規則與本規則衝突，除非使用者明確指定舊模式，否則以本規則為準。
+
+## 1. 目前使命
+
+- 先服務中文聖經老師與中文課件。
+- 小語種版本先由 AI 產生臨時翻譯草稿，再由人校對；不可視為正式神學教材。
+- 網站同時支援本機/USB/離線使用與線上試用。
+- AI 優先用於：備課、查經問答、課件翻譯/校對。
+- 最大產品風險是老師不懂用；因此優先做「任務式入口」和「小白說明」，不是堆更多模組。
+
+## 2. 規則優先級
+
+1. 使用者最新明確指令。
+2. 安全、隱私、資料保護。
+3. 目前 `index_v5.html` 架構和已通過測試。
+4. 現行程式碼與活躍文件中的資料契約。
+5. 舊 `.cursor/rules.md`、`module_standards.md`、早期 2025 規則僅作歷史參考。
+
+不要把所有 `.cursor` 檔案視為同等有效。
+
+## 3. 現行架構
+
+- 根入口：`index.html` 轉到 `index_v5.html`。
+- 主殼：`index_v5.html`。
+- 外層 iframe：左欄 `sidebarFrame`，右欄 `contentFrame`。
+- 避免殼中殼：不要把內部又有 `contentFrame` 的模組殼直接塞進外層右欄，除非該模組已明確設計為 embed。
+- `church_planning` 從總站進入時，優先使用外層雙欄：`sidebar_plan.html` + `index_plan.html`，不要回到嵌套 `church_planning/index.html` 的舊做法。
+
+## 4. 測試策略
+
+簡單靜態頁可用 `file://`；涉及 JSON、SQLite/WASM、iframe、安全限制時，用本機 HTTP。
+
+常用檢查：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tests\run-all-tests.ps1
+python tests\test_index_v5_shell.py
+python scripts\analyze_broken_links_fast.py
+python scripts\check_phase_tool_and_nav_links.py
+```
+
+修改 `nav_hub/`、`help/`、`tools/` 相關連結後，必跑 `check_phase_tool_and_nav_links.py`。
+
+## 5. 資料與隱私
+
+- 每個業務領域只允許一個 canonical 寫入路徑。
+- 涉及人員資料時，以 `member_id` 對齊中央會友資料；不可隨意新造永久人員 ID。
+- 不把同一份正式資料分散寫入多個 localStorage key，除非有同步和遷移文件。
+- 問卷 raw、牧養筆記、個人靈命資料、Smart Ministry raw、L2/L3 敏感資料，預設只留本機。
+- 不把上述敏感資料送到 Sheets、NotebookLM、公開 API，除非使用者明確要求某個遷移任務。
+
+## 6. v1/v2/v3 模式解釋
+
+- 預設：local/offline-first，兼容線上試用。
+- v1 localStorage：目前敏感資料與個人化資料的預設模式。
+- v2 Sheets SSOT：只在使用者明確要求「Sheets / Apps Script / 雲端營運資料」時啟用；不可默認覆蓋 v1。
+- v3 future cloud：只作規劃，不自動改寫現行實作。
+
+若舊 `bible100-v2-preset-v2-sheets-ssot.mdc` 與本規則衝突，以本規則的「明確啟用」條件為準。
+
+## 7. AI 備課與查經問答
+
+- AI 工具要做成老師工作流，不只是外部 AI 連結清單。
+- 第一版優先做 Prompt 生成器，不需 API key：老師填表 -> 複製 prompt -> 貼到 Kimi/ChatGPT/Claude/Gemini -> 老師審核。
+- AI 回答只是草稿；不可成為神學權威。
+- Prompt 必須要求：引用經文、不編造經文、不宣稱屬靈權威、不取代牧者/老師、不確定時明說需查證。
+- 小語種輸出須保留中文源文或中英橋接欄，方便回查。
+
+## 8. 安全修改流程
+
+- 大改前先讀現行檔案與相關 docs。
+- 一次只做一個主題，不同模組大改要拆批。
+- 不刪除 data、archive、backups、歷史資料，除非使用者明確要求。
+- 不隨意加 npm 依賴，不把靜態模組改成 React/Vite/Next，除非使用者明確要求。
+- 修改資料契約、入口、AI workflow、問卷 scoring 時，同步更新文件。
+- 修改後執行相關測試，回覆中列出結果。
+
+## 9. 舊規則的降級說明
+
+- `bible_reading/`、`default_sidebar.html`、`landP_*`、六語言固定結構等，視為歷史規則；現行以 `bible_study/`、`index_v5`、`languages/index_cn.html`、`landing_new_cn.html` 和現有語言配置為準。
+- 「不使用 localhost」改為「簡單頁用 file://，必要時用 local HTTP」。
+- 「不新增檔案」改為「不新增無用測試頁或重複生產頁；允許新增 docs、reports、skills、測試工具」。
+- 「所有文字和按鈕都用超連結」改為「導覽用連結，動作用 button，輸入用表單控制」。

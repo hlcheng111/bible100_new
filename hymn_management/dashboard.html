@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>聖詩管理 - 儀表板</title>
+  <style type="text/css">
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "Microsoft YaHei", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #ffffff;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0b5fa5, #2aa5ff);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0 0 10px 0;
+      font-size: 24px;
+    }
+
+    .header p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .hymnal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .hymnal-card {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .hymnal-card:hover {
+      border-color: #2aa5ff;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
+
+    .hymnal-card h3 {
+      margin: 0 0 10px 0;
+      color: #0b5fa5;
+      font-size: 16px;
+      border-bottom: 2px solid #2aa5ff;
+      padding-bottom: 5px;
+    }
+
+    .hymnal-stats {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .hymnal-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 5px;
+      padding: 5px;
+    }
+
+    .hymn-item {
+      display: flex;
+      align-items: center;
+      padding: 5px 8px;
+      margin: 2px 0;
+      background: #f8f9fa;
+      border-radius: 3px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+
+    .hymn-item:hover {
+      background: #e3f2fd;
+    }
+
+    .hymn-number {
+      font-weight: bold;
+      color: #0b5fa5;
+      margin-right: 8px;
+      min-width: 40px;
+    }
+
+    .hymn-symbol {
+      margin-right: 8px;
+      font-size: 14px;
+    }
+
+    .hymn-title {
+      flex: 1;
+      font-size: 11px;
+    }
+
+    .hymn-title-zh {
+      color: #333;
+      font-weight: 500;
+    }
+
+    .hymn-title-en {
+      color: #666;
+      font-size: 10px;
+      font-style: italic;
+    }
+
+    .controls {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .controls input, .controls select, .controls button {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .controls button {
+      background: #2aa5ff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .controls button:hover {
+      background: #1e8ce6;
+    }
+
+    .stats-bar {
+      background: #e3f2fd;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 11px;
+      color: #0b5fa5;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .error {
+      background: #ffebee;
+      color: #c62828;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+      .hymnal-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .controls input, .controls select, .controls button {
+        width: 100%;
+        margin-bottom: 5px;
+      }
+    }
+
+    /* 分類符號顏色 */
+    .symbol-world { color: #ff6b6b; }
+    .symbol-chinese { color: #4ecdc4; }
+    .symbol-worship { color: #45b7d1; }
+    .symbol-ethnic { color: #f9ca24; }
+  </style>
+</head>
+<body>
+  <script src="../js/shell_nav.js"></script>
+  <div class="landing-top-nav" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 14px;background:#e3f2fd;border-radius:8px;margin-bottom:20px;font-size:9px;">
+    <span style="color:#666;">導航（總站殼 index_v5）：</span>
+    <a href="../index_v5.html" target="_top" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">index_v5</a>
+    <a href="#" onclick="return bible100OpenContent(event,'help/global-tools.htm');" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">全站工具說明</a>
+    <a href="#" onclick="return bible100OpenContent(event,'help/translate.html');" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">翻譯</a>
+    <a href="#" onclick="return bible100OpenContent(event,'help/my-saved.html');" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">已收藏</a>
+    <a href="dashboard.html" style="padding:4px 8px;background:#0b5fa5;color:#fff;text-decoration:none;border-radius:4px;">本模組首頁</a>
+    <a href="#" onclick="return bible100OpenContent(event,'nav_hub/index.html');" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">目錄搜索</a>
+    <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'bible_study/sidebar.html',contentUrl:'bible_study/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">聖經研讀</a>
+    <a href="#" onclick="return bible100OpenContent(event,'qna/qna_landing.htm');" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">聖經難題</a>
+    <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'disciple_dynamics/sidebar.html',contentUrl:'disciple_dynamics/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">門訓動力站</a>
+    <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'school_management/sidebar.html',contentUrl:'school_management/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">學校管理</a>
+    <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'church_ministry/sidebar.html',contentUrl:'church_ministry/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">教會事工</a>
+    <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'ai_tools/sidebar.html',contentUrl:'ai_tools/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">AI 工具</a>
+    <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'smart_ministry/sidebar.html',contentUrl:'smart_ministry/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">智慧事奉</a>
+    <a href="#" onclick="return bible100ShellNav(event,{sidebarUrl:'hymn_management/sidebar.html',contentUrl:'hymn_management/dashboard.html'});" style="padding:4px 8px;background:#fff;color:#0b5fa5;text-decoration:none;border-radius:4px;border:1px solid #90caf9;">詩歌管理</a>
+  </div>
+  <div class="header">
+    <h1>🎵 聖詩管理儀表板</h1>
+    <p>5本詩集智能整合 - 世紀頌讚 | 普頌新 | 頌主新歌 | 新編讚美詩 | Hymns of the Faith</p>
+  </div>
+
+  <div class="controls" style="margin-bottom:12px;padding:10px;background:#f0f8ff;border-radius:8px;">
+    <strong>詩歌庫入口：</strong>
+    <a href="hymn/hymn_main_index.html" style="margin:0 8px;color:#0b5fa5;">主控台</a>
+    <a href="hymn/default.htm" style="margin:0 8px;color:#0b5fa5;">總索引</a>
+    <a href="hymn/index_hymn_web/hymn_English_Title.htm" style="margin:0 8px;color:#0b5fa5;">英文標題索引</a>
+    <a href="hymn/index_hymnal/" style="margin:0 8px;color:#0b5fa5;">五本詩集索引</a>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="globalSearch" placeholder="全局搜索..." onkeyup="performGlobalSearch()">
+    <select id="sortBy" onchange="sortHymns()">
+      <option value="number">按編號排序</option>
+      <option value="title">按標題排序</option>
+      <option value="category">按分類排序</option>
+    </select>
+    <button onclick="showAllHymnals()">顯示全部</button>
+    <button onclick="exportData()">導出數據</button>
+    <button onclick="refreshData()">刷新數據</button>
+  </div>
+
+  <div class="stats-bar">
+    <span>總聖詩數: <strong id="totalHymns">0</strong></span> | 
+    <span>顯示: <strong id="displayedHymns">0</strong></span> | 
+    <span>當前篩選: <strong id="currentFilter">全部</strong></span>
+  </div>
+
+  <div id="loadingMessage" class="loading">
+    <p>🔄 正在載入聖詩數據...</p>
+  </div>
+
+  <div id="errorMessage" class="error" style="display: none;">
+    <p>❌ 載入聖詩數據時發生錯誤，請檢查數據文件。</p>
+  </div>
+
+  <div id="hymnalContainer" class="hymnal-grid" style="display: none;">
+    <!-- 詩集卡片將在這裡動態生成 -->
+  </div>
+
+  <script type="text/javascript" src="js/data-parser.js"></script>
+  <script type="text/javascript">
+    class HymnDashboard {
+      constructor() {
+        this.hymnalData = null;
+        this.filteredData = {};
+        this.currentFilters = {
+          search: '',
+          sort: 'number',
+          category: 'all'
+        };
+        this.init();
+      }
+
+      async init() {
+        try {
+          await this.loadHymnalData();
+          this.renderHymnals();
+          this.setupEventListeners();
+          this.hideLoading();
+        } catch (error) {
+          console.error('載入聖詩數據失敗:', error);
+          this.showError();
+        }
+      }
+
+      async loadHymnalData() {
+        // 使用真實數據解析器載入數據
+        try {
+          const parser = new HymnDataParser();
+          this.hymnalData = await parser.parseAllHymnals();
+          
+          // 如果解析失敗，使用備用示例數據
+          if (!this.hymnalData || Object.keys(this.hymnalData).length === 0) {
+            console.log('🔄 使用備用示例數據');
+            this.hymnalData = this.getBackupData();
+          }
+        } catch (error) {
+          console.error('載入真實數據失敗，使用示例數據:', error);
+          this.hymnalData = this.getBackupData();
+        }
+      }
+
+      getBackupData() {
+        return {
+          century_praise: {
+            name: "世紀頌讚",
+            name_en: "Century Praise",
+            total: 573,
+            description: "現代中文聖詩集",
+            hymns: [
+              {
+                number: "001",
+                title_zh: "三一頌",
+                title_en: "Holy Trinity",
+                author: "傳統",
+                category: "world_famous",
+                symbol: "▲",
+                classification_code: "H04B-01"
+              },
+              {
+                number: "002",
+                title_zh: "讚美父神",
+                title_en: "Praise Father",
+                author: "傳統",
+                category: "world_famous",
+                symbol: "▲",
+                classification_code: "H04B-02"
+              },
+              {
+                number: "003",
+                title_zh: "主禱文",
+                title_en: "Lord's Prayer",
+                author: "傳統",
+                category: "chinese",
+                symbol: "●",
+                classification_code: "H04B-03"
+              }
+            ]
+          },
+          universal_praise: {
+            name: "普頌新",
+            name_en: "New Hymns of Universal Praise",
+            total: 1122,
+            description: "普世頌讚新詩集",
+            hymns: [
+              {
+                number: "001",
+                title_zh: "新天新地歌",
+                title_en: "A NEW JERUSALEM WE SEEK",
+                author: "劉廷芳",
+                category: "chinese",
+                symbol: "●",
+                classification_code: "K03A-02C"
+              },
+              {
+                number: "002",
+                title_zh: "讚美上主",
+                title_en: "Praise to the Lord",
+                author: "傳統",
+                category: "world_famous",
+                symbol: "▲",
+                classification_code: "K03A-03C"
+              }
+            ]
+          },
+          lord_new_songs: {
+            name: "頌主新歌",
+            name_en: "Lord's New Songs",
+            total: 400,
+            description: "頌主新歌詩集",
+            hymns: [
+              {
+                number: "001",
+                title_zh: "頌主新歌",
+                title_en: "New Song to the Lord",
+                author: "傳統",
+                category: "worship",
+                symbol: "◆",
+                classification_code: "L01A-01"
+              }
+            ]
+          },
+          new_hymnal: {
+            name: "新編讚美詩",
+            name_en: "New Hymnal",
+            total: 600,
+            description: "新編讚美詩集",
+            hymns: [
+              {
+                number: "001",
+                title_zh: "讚美詩",
+                title_en: "Hymn of Praise",
+                author: "傳統",
+                category: "ethnic",
+                symbol: "★",
+                classification_code: "N01A-01"
+              }
+            ]
+          },
+          hymns_faith: {
+            name: "Hymns of the Faith",
+            name_en: "Hymns of the Faith",
+            total: 500,
+            description: "信仰聖詩集",
+            hymns: [
+              {
+                number: "001",
+                title_zh: "信仰之歌",
+                title_en: "Song of Faith",
+                author: "Traditional",
+                category: "world_famous",
+                symbol: "▲",
+                classification_code: "F01A-01"
+              }
+            ]
+          }
+        };
+      }
+
+      renderHymnals() {
+        const container = document.getElementById('hymnalContainer');
+        container.innerHTML = '';
+
+        Object.keys(this.hymnalData).forEach(hymnalId => {
+          const hymnal = this.hymnalData[hymnalId];
+          const card = this.createHymnalCard(hymnalId, hymnal);
+          container.appendChild(card);
+        });
+
+        this.updateStats();
+      }
+
+      createHymnalCard(hymnalId, hymnal) {
+        const card = document.createElement('div');
+        card.className = 'hymnal-card';
+        card.innerHTML = `
+          <h3>${hymnal.name} (${hymnal.name_en})</h3>
+          <div class="hymnal-stats">
+            <span>總數: ${hymnal.total}</span>
+            <span>顯示: ${hymnal.hymns.length}</span>
+          </div>
+          <div class="hymnal-list" id="list-${hymnalId}">
+            ${this.renderHymnList(hymnal.hymns)}
+          </div>
+        `;
+        return card;
+      }
+
+      renderHymnList(hymns) {
+        return hymns.map(hymn => `
+          <div class="hymn-item" onclick="viewHymn('${hymn.number}', '${hymn.title_zh}')">
+            <div class="hymn-number">${hymn.number}</div>
+            <div class="hymn-symbol symbol-${hymn.category}">${hymn.symbol}</div>
+            <div class="hymn-title">
+              <div class="hymn-title-zh">${hymn.title_zh}</div>
+              <div class="hymn-title-en">${hymn.title_en}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      setupEventListeners() {
+        // 監聽來自側邊欄的消息
+        window.addEventListener('message', (event) => {
+          if (event.data.type === 'hymnFilter') {
+            this.applyFilters(event.data.filters);
+          }
+        });
+      }
+
+      applyFilters(filters) {
+        this.currentFilters = { ...this.currentFilters, ...filters };
+        this.filterAndRender();
+        this.updateStats();
+      }
+
+      filterAndRender() {
+        Object.keys(this.hymnalData).forEach(hymnalId => {
+          const hymnal = this.hymnalData[hymnalId];
+          let filteredHymns = hymnal.hymns;
+
+          // 應用搜索篩選
+          if (this.currentFilters.search) {
+            const searchTerm = this.currentFilters.search.toLowerCase();
+            filteredHymns = filteredHymns.filter(hymn =>
+              hymn.number.includes(searchTerm) ||
+              hymn.title_zh.toLowerCase().includes(searchTerm) ||
+              hymn.title_en.toLowerCase().includes(searchTerm) ||
+              hymn.author.toLowerCase().includes(searchTerm)
+            );
+          }
+
+          // 應用分類篩選
+          if (this.currentFilters.categories && this.currentFilters.categories.length > 0) {
+            filteredHymns = filteredHymns.filter(hymn =>
+              this.currentFilters.categories.includes(hymn.category)
+            );
+          }
+
+          // 更新顯示
+          const listElement = document.getElementById(`list-${hymnalId}`);
+          if (listElement) {
+            listElement.innerHTML = this.renderHymnList(filteredHymns);
+          }
+        });
+      }
+
+      updateStats() {
+        const totalHymns = Object.values(this.hymnalData).reduce((sum, hymnal) => sum + hymnal.hymns.length, 0);
+        const displayedHymns = Object.values(this.hymnalData).reduce((sum, hymnal) => {
+          const listElement = document.getElementById(`list-${Object.keys(this.hymnalData).find(id => this.hymnalData[id] === hymnal)}`);
+          return sum + (listElement ? listElement.children.length : 0);
+        }, 0);
+
+        document.getElementById('totalHymns').textContent = totalHymns;
+        document.getElementById('displayedHymns').textContent = displayedHymns;
+        document.getElementById('currentFilter').textContent = this.currentFilters.search || '全部';
+      }
+
+      hideLoading() {
+        document.getElementById('loadingMessage').style.display = 'none';
+        document.getElementById('hymnalContainer').style.display = 'grid';
+      }
+
+      showError() {
+        document.getElementById('loadingMessage').style.display = 'none';
+        document.getElementById('errorMessage').style.display = 'block';
+      }
+    }
+
+    // 全局函數
+    function performGlobalSearch() {
+      const input = document.getElementById('globalSearch');
+      dashboard.currentFilters.search = input.value;
+      dashboard.filterAndRender();
+      dashboard.updateStats();
+    }
+
+    function sortHymns() {
+      const select = document.getElementById('sortBy');
+      dashboard.currentFilters.sort = select.value;
+      // 實現排序邏輯
+      dashboard.filterAndRender();
+    }
+
+    function showAllHymnals() {
+      dashboard.currentFilters = {
+        search: '',
+        sort: 'number',
+        category: 'all'
+      };
+      document.getElementById('globalSearch').value = '';
+      dashboard.filterAndRender();
+      dashboard.updateStats();
+    }
+
+    function exportData() {
+      const data = JSON.stringify(dashboard.hymnalData, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'hymnal-data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function refreshData() {
+      location.reload();
+    }
+
+    function viewHymn(number, title) {
+      alert(`查看聖詩: ${number} - ${title}`);
+      // 實際應用中可以在新窗口或模態框中顯示聖詩詳情
+    }
+
+    // 初始化儀表板
+    let dashboard;
+    document.addEventListener('DOMContentLoaded', function() {
+      dashboard = new HymnDashboard();
+      console.log('🎵 聖詩儀表板初始化完成');
+    });
+  </script>
+</body>
+</html>

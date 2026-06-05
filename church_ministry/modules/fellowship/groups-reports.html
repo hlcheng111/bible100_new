@@ -1,0 +1,909 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小組管理報表 · Groups Reports | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+    <script src="assets/js/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">小組管理統計報表</h1>
+        
+        <!-- 報表類型選擇 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('overview')">
+                <div class="text-4xl text-blue-600 mb-2">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <h3 class="text-lg font-semibold">總覽報表</h3>
+                <p class="text-sm text-gray-600">整體小組概況</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('members')">
+                <div class="text-4xl text-green-600 mb-2">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="text-lg font-semibold">成員分析</h3>
+                <p class="text-sm text-gray-600">成員分布與統計</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('activities')">
+                <div class="text-4xl text-purple-600 mb-2">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h3 class="text-lg font-semibold">活動分析</h3>
+                <p class="text-sm text-gray-600">活動參與與效果</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('performance')">
+                <div class="text-4xl text-orange-600 mb-2">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h3 class="text-lg font-semibold">績效分析</h3>
+                <p class="text-sm text-gray-600">小組績效評估</p>
+            </div>
+        </div>
+
+        <!-- 報表參數設置 -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="px-6 py-4 border-b">
+                <h3 class="text-lg font-semibold">報表參數設置</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
+                        <input type="date" id="startDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
+                        <input type="date" id="endDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">報表類型</label>
+                        <select id="reportType" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="overview">總覽報表</option>
+                            <option value="members">成員分析</option>
+                            <option value="activities">活動分析</option>
+                            <option value="performance">績效分析</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">分析維度</label>
+                        <select id="analysisDimension" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="general">一般分析</option>
+                            <option value="detailed">詳細分析</option>
+                            <option value="comparison">對比分析</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-6 flex space-x-3">
+                    <button onclick="generateReport()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-chart-bar mr-2"></i>生成報表
+                    </button>
+                    <button onclick="exportReport()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>匯出報表
+                    </button>
+                    <button onclick="printReport()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-print mr-2"></i>列印報表
+                    </button>
+                    <button onclick="showAdvancedAnalysis()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-chart-line mr-2"></i>進階分析
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 報表內容顯示 -->
+        <div id="reportContent" class="space-y-8">
+            <!-- 報表將在這裡動態生成 -->
+        </div>
+
+        <!-- 進階分析模態框 -->
+        <div id="advancedAnalysisModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+            <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-4/5 lg:w-3/4 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">進階分析</h3>
+                        <button onclick="closeAdvancedAnalysisModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-3">小組成長趨勢</h4>
+                            <canvas id="growthChart" width="400" height="300"></canvas>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-3">成員參與度分析</h4>
+                            <canvas id="participationChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-gray-900 mb-3">小組排名</h4>
+                        <div id="groupRanking" class="space-y-2">
+                            <!-- 小組排名將在這裡動態生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 註冊 Chart.js 插件
+        Chart.register(ChartDataLabels);
+
+        // 數據存儲
+        let groups = [];
+        let groupMembers = [];
+        let groupActivities = [];
+        let members = [];
+
+        // 頁面載入
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setDefaultDates();
+            generateReport('overview'); // 自動生成總覽報表
+        });
+
+        // 載入數據
+        function loadData() {
+            groups = JSON.parse(localStorage.getItem('groups')) || [];
+            groupMembers = JSON.parse(localStorage.getItem('groupMembers')) || [];
+            groupActivities = JSON.parse(localStorage.getItem('groupActivities')) || [];
+            members = JSON.parse(localStorage.getItem('members')) || [];
+            
+            // 如果沒有數據，載入示例數據
+            if (groups.length === 0) {
+                loadSampleData();
+            }
+        }
+
+        // 載入示例數據
+        function loadSampleData() {
+            const sampleGroups = [
+                {
+                    id: 1,
+                    name: '青年小組',
+                    leader: '張牧師',
+                    category: '年齡層',
+                    status: 'active',
+                    maxMembers: 20,
+                    currentMembers: 15,
+                    description: '18-35歲青年人的小組'
+                },
+                {
+                    id: 2,
+                    name: '家庭小組',
+                    leader: '李姊妹',
+                    category: '家庭',
+                    status: 'active',
+                    maxMembers: 15,
+                    currentMembers: 12,
+                    description: '以家庭為單位的小組'
+                },
+                {
+                    id: 3,
+                    name: '長者小組',
+                    leader: '王弟兄',
+                    category: '年齡層',
+                    status: 'active',
+                    maxMembers: 25,
+                    currentMembers: 18,
+                    description: '60歲以上長者的小組'
+                }
+            ];
+
+            const sampleGroupMembers = [
+                { id: 1, groupId: 1, memberId: 1, joinDate: '2024-01-01', role: 'member' },
+                { id: 2, groupId: 1, memberId: 2, joinDate: '2024-01-01', role: 'member' },
+                { id: 3, groupId: 2, memberId: 3, joinDate: '2024-01-01', role: 'member' }
+            ];
+
+            const sampleGroupActivities = [
+                {
+                    id: 1,
+                    groupId: 1,
+                    title: '週五團契',
+                    date: '2024-01-19',
+                    participants: 12,
+                    type: 'regular'
+                },
+                {
+                    id: 2,
+                    groupId: 2,
+                    title: '家庭聚餐',
+                    date: '2024-01-20',
+                    participants: 8,
+                    type: 'social'
+                }
+            ];
+
+            localStorage.setItem('groups', JSON.stringify(sampleGroups));
+            localStorage.setItem('groupMembers', JSON.stringify(sampleGroupMembers));
+            localStorage.setItem('groupActivities', JSON.stringify(sampleGroupActivities));
+            
+            groups = sampleGroups;
+            groupMembers = sampleGroupMembers;
+            groupActivities = sampleGroupActivities;
+        }
+
+        // 設置默認日期
+        function setDefaultDates() {
+            const today = new Date();
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+            document.getElementById('startDate').value = startOfMonth.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endOfMonth.toISOString().split('T')[0];
+        }
+
+        // 生成報表
+        function generateReport(type = null) {
+            const reportType = type || document.getElementById('reportType').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const analysisDimension = document.getElementById('analysisDimension').value;
+
+            if (!startDate || !endDate) {
+                alert('請選擇開始和結束日期');
+                return;
+            }
+
+            const reportData = analyzeData(startDate, endDate, reportType);
+            displayReport(reportData, reportType, analysisDimension);
+        }
+
+        // 分析數據
+        function analyzeData(startDate, endDate, reportType) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            const filteredActivities = groupActivities.filter(activity => {
+                const activityDate = new Date(activity.date);
+                return activityDate >= start && activityDate <= end;
+            });
+
+            const totalGroups = groups.length;
+            const activeGroups = groups.filter(group => group.status === 'active').length;
+            const totalMembers = groupMembers.length;
+            const totalActivities = filteredActivities.length;
+
+            // 小組類別統計
+            const categoryStats = {};
+            groups.forEach(group => {
+                categoryStats[group.category] = (categoryStats[group.category] || 0) + 1;
+            });
+
+            // 活動類型統計
+            const activityTypeStats = {};
+            filteredActivities.forEach(activity => {
+                activityTypeStats[activity.type] = (activityTypeStats[activity.type] || 0) + 1;
+            });
+
+            // 小組成員分布
+            const groupMemberStats = {};
+            groups.forEach(group => {
+                groupMemberStats[group.name] = group.currentMembers;
+            });
+
+            // 活動參與趨勢
+            const activityTrend = generateActivityTrend(start, end, filteredActivities);
+
+            return {
+                totalGroups,
+                activeGroups,
+                totalMembers,
+                totalActivities,
+                categoryStats,
+                activityTypeStats,
+                groupMemberStats,
+                activityTrend,
+                filteredActivities,
+                groups,
+                startDate,
+                endDate
+            };
+        }
+
+        // 生成活動趨勢數據
+        function generateActivityTrend(start, end, activities) {
+            const trendData = [];
+            const current = new Date(start);
+            
+            while (current <= end) {
+                const dateStr = current.toISOString().split('T')[0];
+                const dayActivities = activities.filter(activity => activity.date === dateStr).length;
+                const dayParticipants = activities.filter(activity => activity.date === dateStr)
+                    .reduce((sum, activity) => sum + activity.participants, 0);
+                
+                trendData.push({
+                    date: dateStr,
+                    activities: dayActivities,
+                    participants: dayParticipants
+                });
+                
+                current.setDate(current.getDate() + 1);
+            }
+            
+            return trendData;
+        }
+
+        // 顯示報表
+        function displayReport(data, reportType, analysisDimension) {
+            const reportContent = document.getElementById('reportContent');
+            const reportTitle = getReportTitle(reportType, data.startDate, data.endDate);
+            
+            let content = `
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-900">${reportTitle}</h3>
+                        <p class="text-sm text-gray-600">報表期間：${data.startDate} 至 ${data.endDate}</p>
+                    </div>
+                    <div class="p-6">
+                        <!-- 關鍵指標 -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                                <div class="text-3xl font-bold text-blue-600">${data.totalGroups}</div>
+                                <div class="text-sm text-gray-600">總小組數</div>
+                            </div>
+                            <div class="text-center p-4 bg-green-50 rounded-lg">
+                                <div class="text-3xl font-bold text-green-600">${data.activeGroups}</div>
+                                <div class="text-sm text-gray-600">活躍小組</div>
+                            </div>
+                            <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                                <div class="text-3xl font-bold text-yellow-600">${data.totalMembers}</div>
+                                <div class="text-sm text-gray-600">總成員數</div>
+                            </div>
+                            <div class="text-center p-4 bg-purple-50 rounded-lg">
+                                <div class="text-3xl font-bold text-purple-600">${data.totalActivities}</div>
+                                <div class="text-sm text-gray-600">活動數量</div>
+                            </div>
+                        </div>
+
+                        <!-- 圖表區域 -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-gray-900 mb-3">小組類別分布</h4>
+                                <canvas id="categoryChart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-gray-900 mb-3">活動類型分布</h4>
+                                <canvas id="activityTypeChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- 趨勢圖 -->
+                        <div class="bg-gray-50 p-4 rounded-lg mb-8">
+                            <h4 class="font-semibold text-gray-900 mb-3">活動趨勢</h4>
+                            <canvas id="trendChart" width="800" height="300"></canvas>
+                        </div>
+            `;
+
+            // 根據報表類型添加不同內容
+            if (reportType === 'members') {
+                content += generateMembersAnalysis(data);
+            } else if (reportType === 'activities') {
+                content += generateActivitiesAnalysis(data);
+            } else if (reportType === 'performance') {
+                content += generatePerformanceAnalysis(data);
+            } else {
+                content += generateOverviewAnalysis(data);
+            }
+
+            content += `
+                        <!-- 小組列表 -->
+                        <div class="mt-8">
+                            <h4 class="font-semibold text-gray-900 mb-3">小組詳情列表</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">小組名稱</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">組長</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">類別</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">成員數</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">狀態</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${data.groups.map(group => `
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${group.name}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${group.leader}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${group.category}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${group.currentMembers}/${group.maxMembers}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                                        group.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                                    }">
+                                                        ${group.status === 'active' ? '活躍' : '非活躍'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            reportContent.innerHTML = content;
+            
+            // 渲染圖表
+            renderCharts(data);
+        }
+
+        // 生成成員分析
+        function generateMembersAnalysis(data) {
+            return `
+                <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-blue-900 mb-3">成員分析詳情</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${Object.entries(data.groupMemberStats).map(([groupName, memberCount]) => `
+                            <div class="flex justify-between items-center p-3 bg-white rounded">
+                                <span class="text-sm font-medium text-gray-700">${groupName}</span>
+                                <span class="font-semibold text-blue-600">${memberCount} 人</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成活動分析
+        function generateActivitiesAnalysis(data) {
+            return `
+                <div class="bg-green-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-green-900 mb-3">活動分析詳情</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${Object.entries(data.activityTypeStats).map(([type, count]) => `
+                            <div class="flex justify-between items-center p-3 bg-white rounded">
+                                <span class="text-sm font-medium text-gray-700">${getActivityTypeName(type)}</span>
+                                <span class="font-semibold text-green-600">${count} 個活動</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成績效分析
+        function generatePerformanceAnalysis(data) {
+            const avgMembersPerGroup = data.totalGroups > 0 ? Math.round(data.totalMembers / data.totalGroups) : 0;
+            const avgActivitiesPerGroup = data.totalGroups > 0 ? Math.round(data.totalActivities / data.totalGroups) : 0;
+            
+            return `
+                <div class="bg-purple-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-purple-900 mb-3">績效分析詳情</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">平均成員數</div>
+                            <div class="text-sm text-gray-600">${avgMembersPerGroup} 人/組</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">平均活動數</div>
+                            <div class="text-sm text-gray-600">${avgActivitiesPerGroup} 個/組</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">活躍率</div>
+                            <div class="text-sm text-gray-600">${data.totalGroups > 0 ? Math.round((data.activeGroups / data.totalGroups) * 100) : 0}%</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成總覽分析
+        function generateOverviewAnalysis(data) {
+            return `
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">綜合分析</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">最活躍類別</div>
+                            <div class="text-sm text-gray-600">${getMostActiveCategory(data.categoryStats)}</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">主要活動類型</div>
+                            <div class="text-sm text-gray-600">${getMainActivityType(data.activityTypeStats)}</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">成員最多小組</div>
+                            <div class="text-sm text-gray-600">${getLargestGroup(data.groupMemberStats)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 獲取最活躍類別
+        function getMostActiveCategory(categoryStats) {
+            if (Object.keys(categoryStats).length === 0) return '無數據';
+            const maxCategory = Object.entries(categoryStats).reduce((a, b) => a[1] > b[1] ? a : b);
+            return `${maxCategory[0]} (${maxCategory[1]}個小組)`;
+        }
+
+        // 獲取主要活動類型
+        function getMainActivityType(activityTypeStats) {
+            if (Object.keys(activityTypeStats).length === 0) return '無數據';
+            const maxType = Object.entries(activityTypeStats).reduce((a, b) => a[1] > b[1] ? a : b);
+            return `${getActivityTypeName(maxType[0])} (${maxType[1]}個活動)`;
+        }
+
+        // 獲取成員最多小組
+        function getLargestGroup(groupMemberStats) {
+            if (Object.keys(groupMemberStats).length === 0) return '無數據';
+            const maxGroup = Object.entries(groupMemberStats).reduce((a, b) => a[1] > b[1] ? a : b);
+            return `${maxGroup[0]} (${maxGroup[1]}人)`;
+        }
+
+        // 獲取活動類型名稱
+        function getActivityTypeName(type) {
+            const typeNames = {
+                'regular': '定期活動',
+                'social': '社交活動',
+                'study': '學習活動',
+                'worship': '敬拜活動'
+            };
+            return typeNames[type] || type;
+        }
+
+        // 渲染圖表
+        function renderCharts(data) {
+            // 小組類別圖
+            renderCategoryChart(data.categoryStats);
+            
+            // 活動類型圖
+            renderActivityTypeChart(data.activityTypeStats);
+            
+            // 趨勢圖
+            renderTrendChart(data.activityTrend);
+        }
+
+        // 渲染小組類別圖
+        function renderCategoryChart(categoryStats) {
+            const ctx = document.getElementById('categoryChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryStats),
+                    datasets: [{
+                        data: Object.values(categoryStats),
+                        backgroundColor: [
+                            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染活動類型圖
+        function renderActivityTypeChart(activityTypeStats) {
+            const ctx = document.getElementById('activityTypeChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(activityTypeStats).map(type => getActivityTypeName(type)),
+                    datasets: [{
+                        data: Object.values(activityTypeStats),
+                        backgroundColor: ['#10B981', '#F59E0B', '#8B5CF6', '#EF4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染趨勢圖
+        function renderTrendChart(trendData) {
+            const ctx = document.getElementById('trendChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: trendData.map(item => item.date),
+                    datasets: [
+                        {
+                            label: '活動數量',
+                            data: trendData.map(item => item.activities),
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: '參與人數',
+                            data: trendData.map(item => item.participants),
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 獲取報表標題
+        function getReportTitle(type, startDate, endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            switch(type) {
+                case 'overview':
+                    return `小組管理總覽報表`;
+                case 'members':
+                    return `小組成員分析報表`;
+                case 'activities':
+                    return `小組活動分析報表`;
+                case 'performance':
+                    return `小組績效分析報表`;
+                default:
+                    return '小組管理報表';
+            }
+        }
+
+        // 顯示進階分析
+        function showAdvancedAnalysis() {
+            document.getElementById('advancedAnalysisModal').classList.remove('hidden');
+            generateAdvancedAnalysis();
+        }
+
+        // 關閉進階分析模態框
+        function closeAdvancedAnalysisModal() {
+            document.getElementById('advancedAnalysisModal').classList.add('hidden');
+        }
+
+        // 生成進階分析
+        function generateAdvancedAnalysis() {
+            // 小組排名分析
+            const groupRanking = analyzeGroupRanking();
+            displayGroupRanking(groupRanking);
+            
+            // 渲染進階圖表
+            renderAdvancedCharts();
+        }
+
+        // 分析小組排名
+        function analyzeGroupRanking() {
+            const ranking = groups.map(group => {
+                const activities = groupActivities.filter(activity => activity.groupId === group.id);
+                const totalParticipants = activities.reduce((sum, activity) => sum + activity.participants, 0);
+                const avgParticipants = activities.length > 0 ? totalParticipants / activities.length : 0;
+                
+                return {
+                    name: group.name,
+                    memberCount: group.currentMembers,
+                    activityCount: activities.length,
+                    avgParticipants: Math.round(avgParticipants),
+                    score: (group.currentMembers * 0.4) + (activities.length * 0.3) + (avgParticipants * 0.3)
+                };
+            });
+            
+            return ranking.sort((a, b) => b.score - a.score);
+        }
+
+        // 顯示小組排名
+        function displayGroupRanking(groupRanking) {
+            const container = document.getElementById('groupRanking');
+            
+            container.innerHTML = groupRanking.map((group, index) => `
+                <div class="flex justify-between items-center p-3 bg-white rounded border-l-4 ${
+                    index === 0 ? 'border-l-yellow-400' : 
+                    index === 1 ? 'border-l-gray-400' : 
+                    index === 2 ? 'border-l-orange-400' : 'border-l-blue-400'
+                }">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-lg font-bold text-gray-600">${index + 1}</span>
+                        <span class="font-medium text-gray-900">${group.name}</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-600">綜合評分: ${Math.round(group.score)}</div>
+                        <div class="text-xs text-gray-500">${group.memberCount}人, ${group.activityCount}個活動</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染進階圖表
+        function renderAdvancedCharts() {
+            // 小組成長趨勢圖
+            renderGrowthChart();
+            
+            // 成員參與度圖
+            renderParticipationChart();
+        }
+
+        // 渲染小組成長趨勢圖
+        function renderGrowthChart() {
+            const ctx = document.getElementById('growthChart');
+            if (!ctx) return;
+
+            const labels = groups.map(group => group.name);
+            const data = groups.map(group => group.currentMembers);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '成員數量',
+                        data: data,
+                        backgroundColor: '#3B82F6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染成員參與度圖
+        function renderParticipationChart() {
+            const ctx = document.getElementById('participationChart');
+            if (!ctx) return;
+
+            const labels = groups.map(group => group.name);
+            const data = groups.map(group => {
+                const activities = groupActivities.filter(activity => activity.groupId === group.id);
+                return activities.reduce((sum, activity) => sum + activity.participants, 0);
+            });
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#3B82F6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => value
+                        }
+                    }
+                }
+            });
+        }
+
+        // 匯出報表
+        function exportReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent.innerHTML.trim()) {
+                alert('請先生成報表');
+                return;
+            }
+
+            const reportData = generateReportData();
+            const csvContent = generateCSV(reportData);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `小組管理報表_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 生成報表數據
+        function generateReportData() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const reportType = document.getElementById('reportType').value;
+            
+            return analyzeData(startDate, endDate, reportType);
+        }
+
+        // 生成CSV
+        function generateCSV(data) {
+            const headers = ['小組名稱', '組長', '類別', '成員數', '狀態', '描述'];
+            const rows = data.groups.map(group => [
+                group.name,
+                group.leader,
+                group.category,
+                `${group.currentMembers}/${group.maxMembers}`,
+                group.status === 'active' ? '活躍' : '非活躍',
+                group.description || ''
+            ]);
+
+            return [headers, ...rows].map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('
+');
+        }
+
+        // 列印報表
+        function printReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent.innerHTML.trim()) {
+                alert('請先生成報表');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>小組管理報表</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            table { border-collapse: collapse; width: 100%; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                            .chart-container { margin: 20px 0; }
+                        </style>
+                    </head>
+                    <body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>                        ${reportContent.innerHTML}
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    </script>
+</body>
+</html>

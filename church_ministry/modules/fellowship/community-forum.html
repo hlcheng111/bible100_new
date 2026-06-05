@@ -1,0 +1,807 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社群論壇 · Community Forum | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">社群論壇</h1>
+        
+        <!-- 統計概覽 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">總主題數</h3>
+                <p class="text-3xl font-bold text-blue-600" id="totalTopics">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">總回覆數</h3>
+                <p class="text-3xl font-bold text-green-600" id="totalReplies">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">待審核</h3>
+                <p class="text-3xl font-bold text-yellow-600" id="pendingReview">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2">活躍用戶</h3>
+                <p class="text-3xl font-bold text-purple-600" id="activeUsers">0</p>
+            </div>
+        </div>
+
+        <!-- 主要功能區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- 主題列表 -->
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold">討論主題</h3>
+                            <div class="flex space-x-2">
+                                <select id="categoryFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">所有分類</option>
+                                    <!-- 分類選項將在這裡動態生成 -->
+                                </select>
+                                <button onclick="showAddTopicModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                    新增主題
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="topicsList" class="space-y-4">
+                            <!-- 主題列表將在這裡動態生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 側邊欄 -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">快速操作</h4>
+                    <button onclick="showAddCategoryModal()" class="w-full bg-green-600 text-white py-3 px-4 rounded hover:bg-green-700 mb-3">
+                        新增分類
+                    </button>
+                    <button onclick="showReviewPanel()" class="w-full bg-yellow-600 text-white py-3 px-4 rounded hover:bg-yellow-700 mb-3">
+                        內容審核
+                    </button>
+                    <button onclick="exportForumData()" class="w-full bg-gray-600 text-white py-3 px-4 rounded hover:bg-gray-700">
+                        匯出數據
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">熱門主題</h4>
+                    <div id="hotTopics">
+                        <!-- 熱門主題將在這裡動態生成 -->
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h4 class="text-lg font-semibold mb-4">分類管理</h4>
+                    <div id="categoriesList">
+                        <!-- 分類列表將在這裡動態生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯主題模態框 -->
+    <div id="topicModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" id="topicModalTitle">新增主題</h3>
+                    <button onclick="closeTopicModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="topicForm" class="space-y-4">
+                    <input type="hidden" id="topicId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">主題標題</label>
+                        <input type="text" id="topicTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">分類</label>
+                        <select id="topicCategory" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <!-- 分類選項將在這裡動態生成 -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">標籤</label>
+                        <input type="text" id="topicTags" placeholder="用逗號分隔多個標籤" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">主題內容</label>
+                        <textarea id="topicContent" rows="6" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">作者</label>
+                        <input type="text" id="topicAuthor" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeTopicModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯分類模態框 -->
+    <div id="categoryModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" id="categoryModalTitle">新增分類</h3>
+                    <button onclick="closeCategoryModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="categoryForm" class="space-y-4">
+                    <input type="hidden" id="categoryId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">分類名稱</label>
+                        <input type="text" id="categoryName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">分類描述</label>
+                        <textarea id="categoryDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">排序順序</label>
+                        <input type="number" id="categoryOrder" value="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeCategoryModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 內容審核模態框 -->
+    <div id="reviewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">內容審核</h3>
+                    <button onclick="closeReviewModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="reviewContent" class="space-y-4">
+                    <!-- 審核內容將在這裡動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 回覆模態框 -->
+    <div id="replyModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">回覆主題</h3>
+                    <button onclick="closeReplyModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="replyForm" class="space-y-4">
+                    <input type="hidden" id="replyTopicId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">回覆內容</label>
+                        <textarea id="replyContent" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">回覆者</label>
+                        <input type="text" id="replyAuthor" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeReplyModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">發表回覆</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 數據存儲
+        let topics = [];
+        let categories = [];
+        let replies = [];
+        let pendingReviews = [];
+
+        // 頁面載入
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            loadDemoData();
+            renderData();
+            bindEvents();
+        });
+
+        // 綁定事件
+        function bindEvents() {
+            document.getElementById('topicForm').addEventListener('submit', handleTopicSubmit);
+            document.getElementById('categoryForm').addEventListener('submit', handleCategorySubmit);
+            document.getElementById('replyForm').addEventListener('submit', handleReplySubmit);
+            document.getElementById('categoryFilter').addEventListener('change', filterTopics);
+        }
+
+        // 載入數據
+        function loadData() {
+            topics = JSON.parse(localStorage.getItem('forumTopics')) || [];
+            categories = JSON.parse(localStorage.getItem('forumCategories')) || [];
+            replies = JSON.parse(localStorage.getItem('forumReplies')) || [];
+            pendingReviews = JSON.parse(localStorage.getItem('pendingReviews')) || [];
+        }
+
+        // 載入演示數據
+        function loadDemoData() {
+            if (categories.length === 0) {
+                categories = [
+                    {
+                        id: '1',
+                        name: '信仰分享',
+                        description: '分享信仰經歷和見證',
+                        order: 1,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: '2',
+                        name: '聖經討論',
+                        description: '討論聖經經文和教義',
+                        order: 2,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: '3',
+                        name: '生活見證',
+                        description: '分享日常生活見證',
+                        order: 3,
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                localStorage.setItem('forumCategories', JSON.stringify(categories));
+            }
+
+            if (topics.length === 0) {
+                topics = [
+                    {
+                        id: '1',
+                        title: '我的信仰見證',
+                        categoryId: '1',
+                        tags: '見證,信仰',
+                        content: '今天想和大家分享我的信仰見證...',
+                        author: '張弟兄',
+                        status: 'approved',
+                        viewCount: 25,
+                        replyCount: 3,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: '2',
+                        title: '約翰福音3:16的思考',
+                        categoryId: '2',
+                        tags: '聖經,約翰福音',
+                        content: '關於這節經文的深度思考...',
+                        author: '李姊妹',
+                        status: 'approved',
+                        viewCount: 18,
+                        replyCount: 2,
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                localStorage.setItem('forumTopics', JSON.stringify(topics));
+            }
+
+            if (replies.length === 0) {
+                replies = [
+                    {
+                        id: '1',
+                        topicId: '1',
+                        content: '感謝分享，很有啟發！',
+                        author: '王弟兄',
+                        status: 'approved',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: '2',
+                        topicId: '1',
+                        content: '願神繼續帶領你！',
+                        author: '陳姊妹',
+                        status: 'approved',
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                localStorage.setItem('forumReplies', JSON.stringify(replies));
+            }
+        }
+
+        // 渲染數據
+        function renderData() {
+            renderTopics();
+            renderCategories();
+            renderHotTopics();
+            updateStatistics();
+            populateCategoryOptions();
+        }
+
+        // 渲染主題列表
+        function renderTopics() {
+            const topicsList = document.getElementById('topicsList');
+            if (topics.length === 0) {
+                topicsList.innerHTML = '<p class="text-gray-500">暫無主題</p>';
+                return;
+            }
+
+            topicsList.innerHTML = topics.map(topic => {
+                const category = categories.find(c => c.id === topic.categoryId);
+                const topicReplies = replies.filter(r => r.topicId === topic.id);
+                return `
+                    <div class="border rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <h4 class="font-semibold text-lg">${topic.title}</h4>
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                        getStatusColor(topic.status)
+                                    }">
+                                        ${getStatusText(topic.status)}
+                                    </span>
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        ${category ? category.name : '未分類'}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">作者：${topic.author} | 發表時間：${formatDate(topic.createdAt)}</p>
+                                <p class="text-sm text-gray-600 mb-2">瀏覽：${topic.viewCount} | 回覆：${topic.replyCount}</p>
+                                ${topic.tags ? `<p class="text-sm text-gray-600 mb-2">標籤：${topic.tags}</p>` : ''}
+                                <p class="text-gray-700 mb-3">${topic.content.substring(0, 150)}${topic.content.length > 150 ? '...' : ''}</p>
+                                
+                                <!-- 回覆列表 -->
+                                ${topicReplies.length > 0 ? `
+                                    <div class="bg-gray-50 p-3 rounded-lg mt-3">
+                                        <h5 class="font-medium text-sm mb-2">回覆：</h5>
+                                        ${topicReplies.map(reply => `
+                                            <div class="border-l-2 border-blue-300 pl-3 mb-2">
+                                                <p class="text-sm text-gray-600">${reply.author}：${reply.content}</p>
+                                                <p class="text-xs text-gray-500">${formatDate(reply.createdAt)}</p>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="flex space-x-2 ml-4">
+                                <button onclick="showReplyModal('${topic.id}')" class="text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-300 rounded hover:bg-blue-50">回覆</button>
+                                <button onclick="editTopic('${topic.id}')" class="text-green-600 hover:text-green-800 px-3 py-1 border border-green-300 rounded hover:bg-green-50">編輯</button>
+                                <button onclick="deleteTopic('${topic.id}')" class="text-red-600 hover:text-red-800 px-3 py-1 border border-red-300 rounded hover:bg-red-50">刪除</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 渲染分類列表
+        function renderCategories() {
+            const categoriesList = document.getElementById('categoriesList');
+            if (categories.length === 0) {
+                categoriesList.innerHTML = '<p class="text-gray-500 text-sm">暫無分類</p>';
+                return;
+            }
+
+            categoriesList.innerHTML = categories.map(category => `
+                <div class="border rounded-lg p-3 mb-3">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h5 class="font-medium text-sm">${category.name}</h5>
+                            <p class="text-xs text-gray-600">${category.description || '無描述'}</p>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button onclick="editCategory('${category.id}')" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-300 rounded hover:bg-blue-50">編輯</button>
+                            <button onclick="deleteCategory('${category.id}')" class="text-red-600 hover:text-red-800 text-xs px-2 py-1 border border-red-300 rounded hover:bg-red-50">刪除</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染熱門主題
+        function renderHotTopics() {
+            const hotTopicsDiv = document.getElementById('hotTopics');
+            const hotTopics = topics
+                .filter(topic => topic.status === 'approved')
+                .sort((a, b) => (b.viewCount + b.replyCount) - (a.viewCount + a.replyCount))
+                .slice(0, 5);
+
+            if (hotTopics.length === 0) {
+                hotTopicsDiv.innerHTML = '<p class="text-gray-500 text-sm">暫無熱門主題</p>';
+                return;
+            }
+
+            hotTopicsDiv.innerHTML = hotTopics.map(topic => `
+                <div class="border-l-2 border-orange-400 pl-3 mb-3">
+                    <h5 class="font-medium text-sm">${topic.title}</h5>
+                    <p class="text-xs text-gray-600">${topic.author} | 瀏覽：${topic.viewCount}</p>
+                </div>
+            `).join('');
+        }
+
+        // 更新統計
+        function updateStatistics() {
+            document.getElementById('totalTopics').textContent = topics.length;
+            document.getElementById('totalReplies').textContent = replies.length;
+            document.getElementById('pendingReview').textContent = topics.filter(t => t.status === 'pending').length;
+            document.getElementById('activeUsers').textContent = new Set([...topics.map(t => t.author), ...replies.map(r => r.author)]).size;
+        }
+
+        // 填充分類選項
+        function populateCategoryOptions() {
+            const categorySelects = ['topicCategory', 'categoryFilter'];
+            categorySelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = selectId === 'categoryFilter' ? '<option value="">所有分類</option>' : '<option value="">選擇分類</option>';
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        select.appendChild(option);
+                    });
+                }
+            });
+        }
+
+        // 輔助函數
+        function getStatusColor(status) {
+            const colors = {
+                'approved': 'bg-green-100 text-green-800',
+                'pending': 'bg-yellow-100 text-yellow-800',
+                'rejected': 'bg-red-100 text-red-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'approved': '已審核',
+                'pending': '待審核',
+                'rejected': '已拒絕'
+            };
+            return texts[status] || status;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-TW');
+        }
+
+        // 過濾主題
+        function filterTopics() {
+            const categoryId = document.getElementById('categoryFilter').value;
+            const filteredTopics = categoryId ? topics.filter(topic => topic.categoryId === categoryId) : topics;
+            renderFilteredTopics(filteredTopics);
+        }
+
+        function renderFilteredTopics(filteredTopics) {
+            const topicsList = document.getElementById('topicsList');
+            if (filteredTopics.length === 0) {
+                topicsList.innerHTML = '<p class="text-gray-500">該分類下暫無主題</p>';
+                return;
+            }
+
+            // 重新渲染過濾後的主題
+            renderTopics();
+        }
+
+        // 顯示新增主題模態框
+        function showAddTopicModal() {
+            document.getElementById('topicModalTitle').textContent = '新增主題';
+            document.getElementById('topicForm').reset();
+            document.getElementById('topicId').value = '';
+            document.getElementById('topicModal').classList.remove('hidden');
+        }
+
+        // 顯示編輯主題模態框
+        function editTopic(topicId) {
+            const topic = topics.find(t => t.id === topicId);
+            if (!topic) return;
+
+            document.getElementById('topicModalTitle').textContent = '編輯主題';
+            document.getElementById('topicId').value = topic.id;
+            document.getElementById('topicTitle').value = topic.title;
+            document.getElementById('topicCategory').value = topic.categoryId;
+            document.getElementById('topicTags').value = topic.tags || '';
+            document.getElementById('topicContent').value = topic.content;
+            document.getElementById('topicAuthor').value = topic.author;
+
+            document.getElementById('topicModal').classList.remove('hidden');
+        }
+
+        // 關閉主題模態框
+        function closeTopicModal() {
+            document.getElementById('topicModal').classList.add('hidden');
+        }
+
+        // 處理主題表單提交
+        function handleTopicSubmit(e) {
+            e.preventDefault();
+            
+            const topicId = document.getElementById('topicId').value;
+            const topicData = {
+                title: document.getElementById('topicTitle').value,
+                categoryId: document.getElementById('topicCategory').value,
+                tags: document.getElementById('topicTags').value,
+                content: document.getElementById('topicContent').value,
+                author: document.getElementById('topicAuthor').value,
+                status: 'pending',
+                viewCount: 0,
+                replyCount: 0
+            };
+
+            if (topicId) {
+                // 編輯現有主題
+                const index = topics.findIndex(t => t.id === topicId);
+                if (index !== -1) {
+                    topics[index] = { ...topics[index], ...topicData };
+                }
+            } else {
+                // 新增主題
+                topicData.id = Date.now().toString();
+                topicData.createdAt = new Date().toISOString();
+                topics.push(topicData);
+            }
+
+            localStorage.setItem('forumTopics', JSON.stringify(topics));
+            closeTopicModal();
+            renderData();
+        }
+
+        // 刪除主題
+        function deleteTopic(topicId) {
+            if (confirm('確定要刪除這個主題嗎？相關回覆也會被刪除。')) {
+                topics = topics.filter(t => t.id !== topicId);
+                replies = replies.filter(r => r.topicId !== topicId);
+                localStorage.setItem('forumTopics', JSON.stringify(topics));
+                localStorage.setItem('forumReplies', JSON.stringify(replies));
+                renderData();
+            }
+        }
+
+        // 顯示新增分類模態框
+        function showAddCategoryModal() {
+            document.getElementById('categoryModalTitle').textContent = '新增分類';
+            document.getElementById('categoryForm').reset();
+            document.getElementById('categoryId').value = '';
+            document.getElementById('categoryOrder').value = '0';
+            document.getElementById('categoryModal').classList.remove('hidden');
+        }
+
+        // 顯示編輯分類模態框
+        function editCategory(categoryId) {
+            const category = categories.find(c => c.id === categoryId);
+            if (!category) return;
+
+            document.getElementById('categoryModalTitle').textContent = '編輯分類';
+            document.getElementById('categoryId').value = category.id;
+            document.getElementById('categoryName').value = category.name;
+            document.getElementById('categoryDescription').value = category.description || '';
+            document.getElementById('categoryOrder').value = category.order || 0;
+
+            document.getElementById('categoryModal').classList.remove('hidden');
+        }
+
+        // 關閉分類模態框
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.add('hidden');
+        }
+
+        // 處理分類表單提交
+        function handleCategorySubmit(e) {
+            e.preventDefault();
+            
+            const categoryId = document.getElementById('categoryId').value;
+            const categoryData = {
+                name: document.getElementById('categoryName').value,
+                description: document.getElementById('categoryDescription').value,
+                order: parseInt(document.getElementById('categoryOrder').value) || 0
+            };
+
+            if (categoryId) {
+                // 編輯現有分類
+                const index = categories.findIndex(c => c.id === categoryId);
+                if (index !== -1) {
+                    categories[index] = { ...categories[index], ...categoryData };
+                }
+            } else {
+                // 新增分類
+                categoryData.id = Date.now().toString();
+                categoryData.createdAt = new Date().toISOString();
+                categories.push(categoryData);
+            }
+
+            localStorage.setItem('forumCategories', JSON.stringify(categories));
+            closeCategoryModal();
+            renderData();
+        }
+
+        // 刪除分類
+        function deleteCategory(categoryId) {
+            if (confirm('確定要刪除這個分類嗎？相關主題會變成未分類狀態。')) {
+                categories = categories.filter(c => c.id !== categoryId);
+                // 將相關主題的分類設為空
+                topics.forEach(topic => {
+                    if (topic.categoryId === categoryId) {
+                        topic.categoryId = '';
+                    }
+                });
+                localStorage.setItem('forumCategories', JSON.stringify(categories));
+                localStorage.setItem('forumTopics', JSON.stringify(topics));
+                renderData();
+            }
+        }
+
+        // 顯示回覆模態框
+        function showReplyModal(topicId) {
+            document.getElementById('replyTopicId').value = topicId;
+            document.getElementById('replyForm').reset();
+            document.getElementById('replyModal').classList.remove('hidden');
+        }
+
+        // 關閉回覆模態框
+        function closeReplyModal() {
+            document.getElementById('replyModal').classList.add('hidden');
+        }
+
+        // 處理回覆表單提交
+        function handleReplySubmit(e) {
+            e.preventDefault();
+            
+            const replyData = {
+                topicId: document.getElementById('replyTopicId').value,
+                content: document.getElementById('replyContent').value,
+                author: document.getElementById('replyAuthor').value,
+                status: 'pending'
+            };
+
+            replyData.id = Date.now().toString();
+            replyData.createdAt = new Date().toISOString();
+            replies.push(replyData);
+
+            // 更新主題的回覆數
+            const topic = topics.find(t => t.id === replyData.topicId);
+            if (topic) {
+                topic.replyCount = (topic.replyCount || 0) + 1;
+                localStorage.setItem('forumTopics', JSON.stringify(topics));
+            }
+
+            localStorage.setItem('forumReplies', JSON.stringify(replies));
+            closeReplyModal();
+            renderData();
+        }
+
+        // 顯示審核面板
+        function showReviewPanel() {
+            const pendingTopics = topics.filter(t => t.status === 'pending');
+            const pendingReplies = replies.filter(r => r.status === 'pending');
+            
+            const reviewContent = document.getElementById('reviewContent');
+            reviewContent.innerHTML = `
+                <div class="space-y-4">
+                    <h4 class="font-semibold">待審核主題 (${pendingTopics.length})</h4>
+                    ${pendingTopics.map(topic => `
+                        <div class="border rounded-lg p-3">
+                            <h5 class="font-medium">${topic.title}</h5>
+                            <p class="text-sm text-gray-600">作者：${topic.author}</p>
+                            <p class="text-sm text-gray-600">內容：${topic.content.substring(0, 100)}...</p>
+                            <div class="flex space-x-2 mt-2">
+                                <button onclick="approveContent('topic', '${topic.id}')" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">通過</button>
+                                <button onclick="rejectContent('topic', '${topic.id}')" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">拒絕</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                    
+                    <h4 class="font-semibold">待審核回覆 (${pendingReplies.length})</h4>
+                    ${pendingReplies.map(reply => `
+                        <div class="border rounded-lg p-3">
+                            <p class="text-sm text-gray-600">作者：${reply.author}</p>
+                            <p class="text-sm text-gray-600">內容：${reply.content}</p>
+                            <div class="flex space-x-2 mt-2">
+                                <button onclick="approveContent('reply', '${reply.id}')" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">通過</button>
+                                <button onclick="rejectContent('reply', '${reply.id}')" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">拒絕</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            document.getElementById('reviewModal').classList.remove('hidden');
+        }
+
+        // 關閉審核模態框
+        function closeReviewModal() {
+            document.getElementById('reviewModal').classList.add('hidden');
+        }
+
+        // 審核通過
+        function approveContent(type, id) {
+            if (type === 'topic') {
+                const topic = topics.find(t => t.id === id);
+                if (topic) {
+                    topic.status = 'approved';
+                    localStorage.setItem('forumTopics', JSON.stringify(topics));
+                }
+            } else if (type === 'reply') {
+                const reply = replies.find(r => r.id === id);
+                if (reply) {
+                    reply.status = 'approved';
+                    localStorage.setItem('forumReplies', JSON.stringify(replies));
+                }
+            }
+            showReviewPanel(); // 重新載入審核面板
+        }
+
+        // 審核拒絕
+        function rejectContent(type, id) {
+            if (type === 'topic') {
+                const topic = topics.find(t => t.id === id);
+                if (topic) {
+                    topic.status = 'rejected';
+                    localStorage.setItem('forumTopics', JSON.stringify(topics));
+                }
+            } else if (type === 'reply') {
+                const reply = replies.find(r => r.id === id);
+                if (reply) {
+                    reply.status = 'rejected';
+                    localStorage.setItem('forumReplies', JSON.stringify(replies));
+                }
+            }
+            showReviewPanel(); // 重新載入審核面板
+        }
+
+        // 匯出論壇數據
+        function exportForumData() {
+            const csvContent = generateCSV();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `論壇數據_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 生成CSV數據
+        function generateCSV() {
+            const headers = ['主題標題', '分類', '作者', '狀態', '瀏覽數', '回覆數', '標籤', '內容'];
+            const rows = topics.map(topic => {
+                const category = categories.find(c => c.id === topic.categoryId);
+                return [
+                    topic.title,
+                    category ? category.name : '未分類',
+                    topic.author,
+                    getStatusText(topic.status),
+                    topic.viewCount,
+                    topic.replyCount,
+                    topic.tags || '',
+                    topic.content
+                ];
+            });
+
+            return [headers, ...rows].map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('
+');
+        }
+    </script>
+</body>
+</html>

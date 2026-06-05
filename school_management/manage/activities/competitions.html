@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>競賽管理 - Competitions</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>🏆 競賽管理</h1>
+        <p>聖經知識競賽、詩歌比賽、說故事比賽等</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 活動負責人、教務。</p>
+            <p><b>有什麼功能？</b> 新增競賽、列表、狀態管理。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">➕ 新增競賽</div>
+        <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+            <div><label class="stat-label">名稱</label><br><input name="name" class="module-input" required placeholder="競賽名稱"></div>
+            <div><label class="stat-label">類別</label><br><input name="category" class="module-input" placeholder="如：聖經知識"></div>
+            <div><label class="stat-label">日期</label><br><input name="eventDate" class="module-input" type="date"></div>
+            <div><br><button type="submit" class="module-btn">儲存</button></div>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📋 競賽列表</div>
+        <div id="list"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+            if (db.ensureSeedFull) db.ensureSeedFull();
+
+            const competitions = (db.data.activity && db.data.activity.competitions) || [];
+
+            function draw() {
+                const body = competitions.map(x => '<tr><td>' + x.id + '</td><td>' + (x.name || '—') + '</td><td>' + (x.category || x.status || '—') + '</td><td>' + (x.eventDate || x.date || '—') + '</td><td>' + (x.status || '—') + '</td></tr>').join('');
+                document.getElementById('list').innerHTML = '<table class="module-table"><thead><tr><th>ID</th><th>名稱</th><th>類別／狀態</th><th>日期</th><th>狀態</th></tr></thead><tbody>' + (body || '<tr><td colspan="5">尚無競賽，請上方新增</td></tr>') + '</tbody></table>';
+            }
+
+            document.getElementById('f').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                db.insert('activity.competitions', {
+                    name: (fm.get('name') || '').trim(),
+                    category: (fm.get('category') || '').trim(),
+                    eventDate: fm.get('eventDate') || '',
+                    status: '報名中'
+                });
+                this.reset();
+                draw();
+            };
+
+            draw();
+        })();
+    </script>
+</body>
+</html>

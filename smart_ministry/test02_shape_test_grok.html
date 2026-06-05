@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHAPE 事奉發現 · 進階整合工具</title>
+    <style>
+        body { font-family: "Noto Sans TC","Microsoft YaHei",Arial,sans-serif; background:#f6f7fb; color:#333; font-size:12px; margin:0; padding:16px; }
+        .header { background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%); color:#fff; padding:18px; border-radius:10px; margin-bottom:14px; text-align:center; }
+        .header h1 { margin:0 0 6px; font-size:18px; }
+        .adv-box { max-width:920px; margin:0 auto 14px; padding:12px 14px; background:#fffbeb; border:1px solid #f59e0b; border-radius:8px; font-size:11px; color:#92400e; line-height:1.55; }
+        .form-wrap { max-width:920px; margin:0 auto; background:#fff; padding:18px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+        fieldset { border:1px solid #e2e8f0; border-radius:10px; margin:0 0 18px; padding:14px 16px; }
+        legend { font-weight:800; color:#5b21b6; padding:0 8px; font-size:13px; }
+        .hint { font-size:10px; color:#64748b; margin:0 0 10px; line-height:1.5; }
+        .import-box { background:#f1f5f9; padding:10px 12px; border-radius:8px; font-size:11px; margin-bottom:10px; color:#334155; }
+        label.block { display:block; font-weight:600; margin:10px 0 4px; color:#374151; }
+        textarea, input[type="text"] { width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:11px; font-family:inherit; }
+        textarea { min-height:72px; resize:vertical; }
+        .q-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:8px 0; }
+        .q-row span { flex:1 1 200px; font-size:11px; }
+        .pills { display:flex; gap:6px; flex-wrap:wrap; }
+        .pill { min-width:28px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; cursor:pointer; font-size:11px; }
+        .pill.on { background:#ede9fe; border-color:#7c3aed; color:#5b21b6; font-weight:700; }
+        .chk-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; margin-top:8px; font-size:11px; }
+        .chk-grid label { display:flex; align-items:center; gap:6px; cursor:pointer; }
+        .btn { padding:12px 20px; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; margin-top:8px; }
+        .btn-primary { background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%); color:#fff; }
+        .card-out { max-width:920px; margin:16px auto; padding:18px; background:#faf5ff; border:2px solid #c4b5fd; border-radius:12px; font-size:12px; line-height:1.65; color:#1e1b4b; display:none; }
+        .card-out h2 { margin:0 0 12px; font-size:15px; color:#5b21b6; }
+        .card-out .sect { margin-bottom:12px; }
+        .reflect { margin-top:14px; padding:12px; background:#f0fdf4; border:1px solid #86efac; border-radius:8px; font-size:11px; color:#166534; }
+        .back-link { text-align:center; margin-top:16px; }
+        .back-link a { color:#5b21b6; font-weight:700; font-size:11px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>SHAPE 事奉發現整合</h1>
+        <p>進階工具 · 整合恩賜、負擔、能力、性格自覺與生命故事 · 非自動派工</p>
+    </div>
+
+    <div class="adv-box">
+        <strong>用途：</strong>把<strong>S</strong>恩賜、<strong>H</strong>負擔、<strong>A</strong>能力、<strong>P</strong>性格自覺、<strong>E</strong>經歷整理成「事奉故事卡」，作為與牧者／導師對話的起點。<br>
+        <strong>限制：</strong>不計健康總分、不產生紅黃綠；建議先完成主線<strong>屬靈恩賜測驗</strong>；可選做 MBTI 簡化版與 DISC 以帶入 P。詳見 <code>docs/ADVANCED_SELF_KNOWLEDGE_TOOLS.md</code>。
+    </div>
+
+    <div class="form-wrap" id="formRoot">
+        <fieldset>
+            <legend>S · Spiritual Gifts（屬靈恩賜）</legend>
+            <p class="hint">優先使用你已完成的 <a href="spiritual_gifts.html" target="contentFrame">屬靈恩賜測驗</a> 結果；若尚未完成，可手動填寫。</p>
+            <div class="import-box" id="giftImport">讀取中…</div>
+            <label class="block">手動補充或覆寫（可留空）</label>
+            <textarea id="giftManual" placeholder="例：教導、服事、憐憫…"></textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>H · Heart（負擔）</legend>
+            <p class="hint">下列兩題為 1–5：1＝非常不符合 · 5＝非常符合</p>
+            <div class="q-row" data-hq="1">
+                <span>我常為某些人群或需要特別掛心。</span>
+                <div class="pills" data-name="h1"></div>
+            </div>
+            <div class="q-row" data-hq="2">
+                <span>我願意為心裡牽掛的事多花時間禱告與行動。</span>
+                <div class="pills" data-name="h2"></div>
+            </div>
+            <label class="block">請寫出 1–2 個你特別關心的人群或議題</label>
+            <textarea id="heartText" placeholder="例：獨居長者、青少年、新住民家庭…"></textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>A · Abilities（能力）</legend>
+            <p class="hint">勾選你較有把握的項目，並可補充。</p>
+            <div class="chk-grid" id="abilityChks"></div>
+            <label class="block">別人常因哪些事向你求助？還有哪些專長？</label>
+            <textarea id="abilityExtra" placeholder="例：簡報、接待、音控、會計…"></textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>P · Personality（個性／風格）</legend>
+            <div class="import-box" id="personalityImport">讀取 MBTI 簡化版／DISC 摘要…</div>
+            <label class="block">用你自己的話形容性格或與人互動方式（可留空）</label>
+            <textarea id="personalityText" placeholder="例：我慢熱但願意聽人說…"></textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>E · Experiences（經歷）</legend>
+            <label class="block">故事一（例如：信主、蒙召、或一次深刻的服事經歷）</label>
+            <textarea id="exp1"></textarea>
+            <label class="block">故事二（可選）</label>
+            <textarea id="exp2"></textarea>
+        </fieldset>
+
+        <button type="button" class="btn btn-primary" id="btnBuild">產生事奉故事卡</button>
+    </div>
+
+    <div class="card-out" id="cardOut"></div>
+
+    <div class="back-link">
+        <a href="landing.html#journey" target="contentFrame">← 回智慧事奉路線圖</a>
+        · <a href="mbti_test.html" target="contentFrame">MBTI 簡化版</a>
+        · <a href="test01_disc_test_grok.html" target="contentFrame">DISC</a>
+    </div>
+
+    <script>
+(function () {
+    var SURVEY_STORAGE = 'bible100_smart_ministry_';
+
+    var GIFT_LABELS = {
+        teaching: '教導', evangelism: '傳福音', exhortation: '勸勉', mercy: '憐憫', serving: '服事',
+        administration: '治理／行政', giving: '奉獻', prophecy: '先知性話語'
+    };
+
+    var ABILITY_OPTS = ['行政協調', '財務記帳', '音控／直播', '接待', '帶領查經', '兒童教學',
+        '音樂／敬拜', '美工／設計', '文字／編輯', '翻譯', '輔導陪伴', '禱告守望', '活動企劃'];
+
+    var hScores = { h1: null, h2: null };
+
+    function pillRow(container, name, onPick) {
+        container.innerHTML = '';
+        for (var s = 1; s <= 5; s++) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'pill';
+            b.textContent = s;
+            b.addEventListener('click', function () {
+                var val = parseInt(this.textContent, 10);
+                container.querySelectorAll('.pill').forEach(function (p) { p.classList.remove('on'); });
+                this.classList.add('on');
+                onPick(val);
+            });
+            container.appendChild(b);
+        }
+    }
+
+    function loadGifts() {
+        var el = document.getElementById('giftImport');
+        try {
+            var raw = localStorage.getItem(SURVEY_STORAGE + 'survey_spiritual_gifts');
+            if (!raw) {
+                el.textContent = '尚未偵測到恩賜測驗存檔。請先完成屬靈恩賜測驗，或僅在下方手動填寫。';
+                return;
+            }
+            var data = JSON.parse(raw);
+            var tops = data.topGifts || [];
+            var text = tops.map(function (k) { return GIFT_LABELS[k] || k; }).join('、');
+            el.innerHTML = '<strong>已讀取主線恩賜結果（僅供整合，不重新計分）：</strong> ' + (text || '（無）');
+            if (text) document.getElementById('giftManual').placeholder = '可留空以使用上方結果，或在此補充';
+        } catch (e) {
+            el.textContent = '無法讀取恩賜存檔。';
+        }
+    }
+
+    function loadPersonalitySnippet() {
+        var el = document.getElementById('personalityImport');
+        var parts = [];
+        try {
+            var mbti = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_mbti') || '{}');
+            if (mbti.schemaVersion === 2 && mbti.dimensionNarratives) {
+                parts.push('<strong>MBTI 簡化版摘要：</strong> ' +
+                    ['EI', 'SN', 'TF', 'JP'].map(function (d) { return mbti.dimensionNarratives[d]; }).join('；'));
+            }
+        } catch (e) {}
+        try {
+            var disc = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_disc') || '{}');
+            if (disc.averages) {
+                parts.push('<strong>DISC 平均：</strong> D ' + disc.averages.D + '、I ' + disc.averages.I +
+                    '、S ' + disc.averages.S + '、C ' + disc.averages.C + '（僅供對照，不混合計分）');
+            }
+        } catch (e) {}
+        el.innerHTML = parts.length ? parts.join('<br>') : '尚未偵測到 MBTI 簡化版或 DISC。可先做兩者，或只在下方用話描述。';
+    }
+
+    function buildAbilityChecks() {
+        var g = document.getElementById('abilityChks');
+        ABILITY_OPTS.forEach(function (name) {
+            var id = 'ab_' + name.replace(/\s/g, '_');
+            var lab = document.createElement('label');
+            lab.innerHTML = '<input type="checkbox" id="' + id + '" value="' + name + '"> ' + name;
+            g.appendChild(lab);
+        });
+    }
+
+    function getGiftLine() {
+        var manual = document.getElementById('giftManual').value.trim();
+        if (manual) return manual;
+        try {
+            var raw = localStorage.getItem(SURVEY_STORAGE + 'survey_spiritual_gifts');
+            if (!raw) return '（尚未填寫）';
+            var data = JSON.parse(raw);
+            return (data.topGifts || []).map(function (k) { return GIFT_LABELS[k] || k; }).join('、') || '（尚未填寫）';
+        } catch (e) { return '（尚未填寫）'; }
+    }
+
+    function suggestMinistry(giftLine, heart, abilities) {
+        var ideas = [];
+        var g = giftLine + heart + abilities;
+        if (/教導|查經/.test(g)) ideas.push('查經班、主日學或門訓協助');
+        if (/憐憫|關懷|陪伴/.test(g)) ideas.push('關懷探訪、同行禱告');
+        if (/敬拜|音樂/.test(g)) ideas.push('敬拜團、詩班或節期音樂事奉');
+        if (/行政|協調|音控/.test(g)) ideas.push('行政後勤、活動籌備、技術支援');
+        if (/兒童|青少年/.test(g)) ideas.push('兒童或青少年事工');
+        if (ideas.length < 2) ideas.push('接待與新人同行', '禱告小組與代禱');
+        return ideas.slice(0, 4);
+    }
+
+    document.getElementById('btnBuild').addEventListener('click', function () {
+        var gifts = getGiftLine();
+        var heartT = document.getElementById('heartText').value.trim();
+        var ab = [];
+        document.querySelectorAll('#abilityChks input:checked').forEach(function (c) { ab.push(c.value); });
+        var abExtra = document.getElementById('abilityExtra').value.trim();
+        var abStr = ab.concat(abExtra ? [abExtra] : []).join('、') || '（尚未具體列出）';
+        var pText = document.getElementById('personalityText').value.trim();
+        var pAuto = document.getElementById('personalityImport').innerText.replace(/\s+/g, ' ').slice(0, 400);
+        var e1 = document.getElementById('exp1').value.trim();
+        var e2 = document.getElementById('exp2').value.trim();
+
+        var summary = '你似乎對「' + (heartT || '（可在上方補充負擔）') + '」有所掛心；';
+        summary += '在恩賜與負擔上，目前整理為：' + gifts + '。';
+        summary += '能力與經驗面向包括：' + abStr + '。';
+        if (pText) summary += ' 你形容自己的互動方式：' + pText + '。';
+        summary += ' 生命故事可包括：' + (e1 || '（待補充）') + (e2 ? '；' + e2 : '') + '。';
+        summary += ' 這些線索都可能與你這一季的神學習與服事方向有關，適合與牧者或導師禱告分辨。';
+
+        var ideas = suggestMinistry(gifts, heartT, abStr);
+
+        var html = '<h2>事奉故事卡（草稿）</h2><div class="sect"><strong>整合摘要</strong><p style="margin:6px 0 0;">' + summary + '</p></div>';
+        html += '<div class="sect"><strong>可能合適的服事方向（僅文字建議，非自動派工）</strong><ul style="margin:6px 0 0;padding-left:1.2rem;">';
+        ideas.forEach(function (x) { html += '<li>' + x + '</li>'; });
+        html += '</ul></div>';
+        html += '<div class="sect"><strong>性格參考（若已做進階工具）</strong><p style="margin:6px 0 0;font-size:11px;color:#475569;">' + pAuto + '</p></div>';
+        html += '<div class="reflect"><strong>反思問題</strong><ol style="margin:6px 0 0;padding-left:1.2rem;">' +
+            '<li>這張草稿中，哪一句最觸動你？為什麼？</li>' +
+            '<li>你願意在這個季節如何回應神放在你心裡的負擔？</li>' +
+            '<li>你需要誰與你一起禱告、確認下一步？</li></ol></div>';
+        html += '<div class="reflect" style="margin-top:10px;border-color:#bfdbfe;background:#eff6ff;color:#1e3a5f;"><strong>建議下一步</strong><p style="margin:6px 0 0;">可與你的牧者／導師／小組長約個時間，一起閱讀這張故事卡並禱告回應。</p></div>';
+
+        var payload = {
+            schemaVersion: 1,
+            tool: 'shape_story',
+            giftsLine: gifts,
+            heartScores: hScores,
+            heartText: heartT,
+            abilities: ab,
+            abilityExtra: abExtra,
+            personalityText: pText,
+            experiences: [e1, e2].filter(Boolean),
+            summary: summary,
+            suggestions: ideas,
+            savedAt: new Date().toISOString()
+        };
+        try {
+            localStorage.setItem(SURVEY_STORAGE + 'survey_shape', JSON.stringify(payload));
+        } catch (e) {}
+
+        var out = document.getElementById('cardOut');
+        out.style.display = 'block';
+        out.innerHTML = html + '<p style="margin-top:12px;"><button type="button" class="btn btn-primary" onclick="document.getElementById(\'cardOut\').style.display=\'none\'">關閉預覽</button></p>';
+        out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    pillRow(document.querySelector('[data-name="h1"]'), 'h1', function (v) { hScores.h1 = v; });
+    pillRow(document.querySelector('[data-name="h2"]'), 'h2', function (v) { hScores.h2 = v; });
+    buildAbilityChecks();
+    loadGifts();
+    loadPersonalitySnippet();
+})();
+    </script>
+</body>
+</html>

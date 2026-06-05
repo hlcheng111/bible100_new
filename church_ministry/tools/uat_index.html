@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教會 CRM 工具 · 小白驗收總表</title>
+  <link rel="stylesheet" href="../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../css/church_ministry_ui.css">
+  <script src="../../js/cloud_config.js"></script>
+  <script src="../../js/data_trust_badge.js"></script>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; font-size: 12px; background: #f8fafc; margin: 0; padding: 16px; color: #0f172a; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 20px; margin: 0 0 8px; }
+    .intro { color: #64748b; line-height: 1.55; margin-bottom: 14px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; font-size: 11px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+    th { background: #eff6ff; color: #1e3a8a; font-weight: 700; }
+    .ok { color: #047857; font-weight: 600; }
+    .no { color: #64748b; }
+    .warn { color: #b45309; font-weight: 600; }
+    .pending { color: #94a3b8; }
+    a { color: #2563eb; }
+    .back { display: inline-block; margin-bottom: 12px; text-decoration: none; color: #4338ca; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="../index.html">← 教會事工中心</a>
+    <a class="back" href="../dashboard.html" style="margin-left:12px;">📊 儀表板</a>
+    <h1>📋 教會 CRM 五頁工具 · 驗收總表</h1>
+    <p class="intro">本表追蹤各工具是否內建 <strong>DataTrustBadge</strong>、是否有 <strong>UAT</strong> 頁、demo 種子與<strong>自動通知</strong>（全系預設：否）。</p>
+    <div id="uatHubTrust"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>工具</th>
+          <th>波次</th>
+          <th>DataTrustBadge</th>
+          <th>UAT 頁</th>
+          <th>Demo 種子</th>
+          <th>自動通知</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="uatRows"></tbody>
+    </table>
+    <p class="intro" style="margin-top:10px;">
+      <a href="../admin/demo_data_governance.html" style="font-weight:700;color:#b45309;">⚙️ 管理 demo／正式資料</a>
+      · demo KPI 不可當正式決策 · 不會自動通知
+    </p>
+    <p class="intro" style="margin-top:14px;font-size:10px;">
+      規格：<a href="../../docs/TOOL_KIT_STANDARD.md">TOOL_KIT_STANDARD.md</a> ·
+      <a href="../../docs/DATA_TRUST_LAYER.md">DATA_TRUST_LAYER.md</a>
+    </p>
+  </div>
+  <script>
+    var TOOLS = [
+      {
+        id: 'volunteer_shift',
+        label: '義工智能排班',
+        wave: 'A1 · LIVE',
+        trust: true,
+        uat: 'volunteer_shift/uat.html',
+        demo: 'volunteer_shift/load_a1_demo.html',
+        autoNotify: false,
+        index: 'volunteer_shift/index.html'
+      },
+      {
+        id: 'visitation_followup',
+        label: '探訪跟進',
+        wave: 'A2 · LIVE',
+        trust: true,
+        uat: 'visitation_followup/uat.html',
+        demo: 'visitation_followup/load_a2_demo.html',
+        autoNotify: false,
+        index: 'visitation_followup/index.html'
+      },
+      {
+        id: 'finance_reconciliation',
+        label: '奉獻與財務對帳',
+        wave: 'A3 · LIVE',
+        trust: true,
+        uat: 'finance_reconciliation/uat.html',
+        demo: 'finance_reconciliation/load_a3_demo.html',
+        autoNotify: false,
+        index: 'finance_reconciliation/index.html'
+      },
+      {
+        id: '_other_23',
+        label: '其餘 22 款（見盤點表）',
+        wave: '待接入五頁模板',
+        trust: false,
+        uat: '',
+        demo: '',
+        autoNotify: false,
+        index: '../../docs/CHURCH_ERP_24_TOOLS_INVENTORY.md'
+      }
+    ];
+
+    function cellYes(v) {
+      return v ? '<span class="ok">是</span>' : '<span class="no">否</span>';
+    }
+
+    function cellNotify(v) {
+      return v ? '<span class="warn">是（需文件）</span>' : '<span class="ok">否</span>';
+    }
+
+    var tbody = document.getElementById('uatRows');
+    tbody.innerHTML = TOOLS.map(function (t) {
+      var links = [];
+      if (t.index && t.index.indexOf('.md') >= 0) {
+        links.push('<a href="' + t.index + '" target="_blank">盤點表</a>');
+      } else if (t.index) {
+        links.push('<a href="' + t.index + '">首頁</a>');
+      }
+      if (t.uat) links.push('<a href="' + t.uat + '">UAT</a>');
+      if (t.demo) links.push('<a href="' + t.demo + '">Demo</a>');
+      return '<tr>' +
+        '<td><strong>' + t.label + '</strong><br><code style="font-size:9px;">' + t.id + '</code></td>' +
+        '<td>' + t.wave + '</td>' +
+        '<td>' + cellYes(t.trust) + '</td>' +
+        '<td>' + (t.uat ? '<span class="ok">有</span>' : '<span class="pending">—</span>') + '</td>' +
+        '<td>' + (t.demo ? '<span class="ok">有</span>' : '<span class="pending">—</span>') + '</td>' +
+        '<td>' + cellNotify(t.autoNotify) + '</td>' +
+        '<td>' + (links.length ? links.join(' · ') : '—') + '</td>' +
+        '</tr>';
+    }).join('');
+
+    if (window.DataTrustBadge) {
+      DataTrustBadge.renderDataTrustBadge({
+        mount: 'uatHubTrust',
+        source_key: 'church_ministry/tools/*',
+        source_label_zh: '工具驗收總表（靜態清單）',
+        count: TOOLS.length,
+        write_behavior: 'read_only',
+        notify_behavior: 'none',
+        data_state: 'real',
+        show_clear_demo: false,
+        extra_note: '本頁不寫入業務資料；僅彙總各工具驗收狀態。'
+      });
+    }
+  </script>
+</body>
+</html>

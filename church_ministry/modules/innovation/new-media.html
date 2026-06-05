@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新媒体事工 - Church Ministry · New Media | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <link rel="stylesheet" href="../../assets/css/fontawesome.min.css">
+    <script src="../../../js/simple_database_system.js"></script>
+    <style>body {font-family: 'Microsoft YaHei', sans-serif;}</style>
+</head>
+<body class="bg-gray-50 p-6">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto">
+        <div class="bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg p-6 mb-4">
+            <h1 class="text-3xl font-bold">📱 新媒体事工</h1>
+            <p class="text-purple-100 mt-2">利用社交媒体传播福音</p>
+        </div>
+        <details class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <summary class="cursor-pointer font-semibold text-amber-800">📋 功能說明／計畫願景</summary>
+            <p class="mt-2 text-sm text-gray-700">本頁管理新媒體內容（平台、觸及人數、互動率）。資料來源：simple_database_system。今後可：接社群平台 API、與跨文化事工整合、成效追蹤與報表。</p>
+        </details>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg p-6 shadow"><div class="text-gray-500 text-sm">平台数</div><div class="text-3xl font-bold text-purple-600" id="platforms">0</div></div>
+            <div class="bg-white rounded-lg p-6 shadow"><div class="text-gray-500 text-sm">内容数</div><div class="text-3xl font-bold text-blue-600" id="content">0</div></div>
+            <div class="bg-white rounded-lg p-6 shadow"><div class="text-gray-500 text-sm">触及人数</div><div class="text-3xl font-bold text-green-600" id="reach">0</div></div>
+            <div class="bg-white rounded-lg p-6 shadow"><div class="text-gray-500 text-sm">互动率</div><div class="text-3xl font-bold text-orange-600" id="engagement">0%</div></div>
+        </div>
+        <div class="bg-white rounded-lg p-6 shadow">
+            <button onclick="showModal()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 mb-4"><i class="fas fa-plus mr-2"></i>添加内容</button>
+            <div id="contentList"></div>
+        </div>
+    </div>
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
+            <h2 class="text-2xl font-bold mb-4">添加新媒体内容</h2>
+            <form id="form" onsubmit="save(event)">
+                <div class="space-y-4">
+                    <div><label class="block text-sm font-bold mb-1">内容标题 *</label><input type="text" id="title" required class="w-full border rounded px-3 py-2"></div>
+                    <div><label class="block text-sm font-bold mb-1">平台 *</label>
+                        <select id="platform" required class="w-full border rounded px-3 py-2">
+                            <option value="wechat">微信公众号</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="instagram">Instagram</option>
+                        </select>
+                    </div>
+                    <div><label class="block text-sm font-bold mb-1">触及人数</label><input type="number" id="reach" class="w-full border rounded px-3 py-2"></div>
+                    <div><label class="block text-sm font-bold mb-1">发布日期</label><input type="date" id="date" class="w-full border rounded px-3 py-2"></div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 flex-1">保存</button>
+                    <button type="button" onclick="closeModal()" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 flex-1">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        let contents = [];
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!localStorage.getItem('new_media')) localStorage.setItem('new_media', JSON.stringify([]));
+            contents = JSON.parse(localStorage.getItem('new_media') || '[]');
+            if (contents.length === 0) {
+                contents = [{id:1,title:'主日崇拜直播',platform:'youtube',reach:320,date:'2025-10-06'},{id:2,title:'週報電子版',platform:'wechat',reach:1200,date:'2025-10-05'}];
+                localStorage.setItem('new_media', JSON.stringify(contents));
+            }
+            loadData();
+        });
+        function loadData() {
+            contents = JSON.parse(localStorage.getItem('new_media') || '[]');
+            const platforms = [...new Set(contents.map(c => c.platform))];
+            document.getElementById('platforms').textContent = platforms.length;
+            document.getElementById('content').textContent = contents.length;
+            document.getElementById('reach').textContent = contents.reduce((sum, c) => sum + (parseInt(c.reach) || 0), 0);
+            document.getElementById('engagement').textContent = '85%'; // Placeholder
+            const container = document.getElementById('contentList');
+            if (contents.length === 0) {
+                container.innerHTML = '<p class="text-center py-8 text-gray-500">暂无新媒体内容</p>';
+                return;
+            }
+            container.innerHTML = contents.map(c => `
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-lg">${c.title}</h3>
+                            <p class="text-sm text-gray-600"><i class="fas fa-share-alt mr-2"></i>${getPlatformLabel(c.platform)} | 👥 ${c.reach || 0}人 | 📅 ${c.date || '未设定'}</p>
+                        </div>
+                        <button onclick="deleteContent(${c.id})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        function showModal() { document.getElementById('modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('form').reset(); }
+        function save(event) {
+            event.preventDefault();
+            contents.push({
+                id: Date.now(),
+                title: document.getElementById('title').value,
+                platform: document.getElementById('platform').value,
+                reach: document.getElementById('reach').value,
+                date: document.getElementById('date').value
+            });
+            localStorage.setItem('new_media', JSON.stringify(contents));
+            closeModal();
+            loadData();
+            alert('✅ 内容已保存！');
+        }
+        function deleteContent(id) {
+            if (!confirm('确定删除？')) return;
+            contents = contents.filter(c => c.id !== id);
+            localStorage.setItem('new_media', JSON.stringify(contents));
+            loadData();
+        }
+        function getPlatformLabel(p) {
+            return { wechat: '微信公众号', youtube: 'YouTube', facebook: 'Facebook', instagram: 'Instagram' }[p] || p;
+        }
+    </script>
+</body>
+</html>
+

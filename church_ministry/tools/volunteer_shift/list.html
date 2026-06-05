@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>義工智能排班 · 清單</title>
+  <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <link rel="stylesheet" href="_shared.css">
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../../js/data_trust_badge.js"></script>
+  <script src="tool.js"></script>
+</head>
+<body class="cm-tool-page">
+  <nav class="cm-back-bar">
+    <a class="cm-back-bar__link" href="index.html">← 義工智能排班</a>
+  </nav>
+  <header class="cm-tool-hero">
+    <h1>📋 排班清單</h1>
+    <p>篩選 · 標記確認 · 複製邀請文字</p>
+  </header>
+  <nav class="cm-tool-nav" aria-label="工具分頁" id="toolNav"></nav>
+  <div id="dataTrustMount"></div>
+  <main class="cm-tool-main">
+    <section class="cm-card" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+      <label class="cm-field" style="margin:0;">起日
+        <input type="date" id="filterFrom">
+      </label>
+      <label class="cm-field" style="margin:0;">迄日
+        <input type="date" id="filterTo">
+      </label>
+      <label class="cm-field" style="margin:0;">狀態
+        <select id="filterConfirmed">
+          <option value="">全部</option>
+          <option value="0">待確認</option>
+          <option value="1">已確認</option>
+        </select>
+      </label>
+      <label class="cm-field" style="margin:0;">member_id
+        <input type="text" id="filterMember" placeholder="可選">
+      </label>
+      <button type="button" class="cm-btn cm-btn-primary" id="btnFilter">篩選</button>
+    </section>
+    <section class="cm-card">
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead>
+            <tr style="text-align:left;border-bottom:2px solid #e2e8f0;">
+              <th style="padding:6px;">#</th>
+              <th style="padding:6px;">日期</th>
+              <th style="padding:6px;">會友</th>
+              <th style="padding:6px;">崗位</th>
+              <th style="padding:6px;">班次</th>
+              <th style="padding:6px;">狀態</th>
+              <th style="padding:6px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="listBody"></tbody>
+        </table>
+      </div>
+    </section>
+    <div id="listSnippet" class="cm-snippet" style="display:none;">
+      <p id="listSnippetText"></p>
+      <button type="button" class="cm-btn cm-btn-success" id="btnCopyListSnippet">📋 複製</button>
+    </div>
+  </main>
+  <script>
+    document.getElementById('toolNav').innerHTML = VolunteerShiftTool.renderToolNav('list');
+    VolunteerShiftTool.renderTrustBadge('dataTrustMount', { position: 'top', write_behavior: 'read_only', notify_behavior: 'none' });
+
+    function renderList() {
+      var b = VolunteerShiftTool.bridge();
+      var tbody = document.getElementById('listBody');
+      if (!b || !b.listVolunteerShifts) {
+        tbody.innerHTML = '<tr><td colspan="7" class="cm-muted">Bridge 未就緒</td></tr>';
+        return;
+      }
+      var filters = {};
+      var from = document.getElementById('filterFrom').value;
+      var to = document.getElementById('filterTo').value;
+      var conf = document.getElementById('filterConfirmed').value;
+      var mem = document.getElementById('filterMember').value.trim();
+      if (from) filters.fromDate = from;
+      if (to) filters.toDate = to;
+      if (mem) filters.memberId = mem;
+      if (conf === '0') filters.confirmed = false;
+      if (conf === '1') filters.confirmed = true;
+      var rows = b.listVolunteerShifts(filters);
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="cm-muted" style="padding:8px;">無符合資料</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(function (s) {
+        var st = s.confirmed ? '✅' : '⏳';
+        return '<tr style="border-bottom:1px solid #f1f5f9;">' +
+          '<td style="padding:6px;">' + VolunteerShiftTool.esc(s.id) + '</td>' +
+          '<td style="padding:6px;">' + VolunteerShiftTool.esc(s.date) + '</td>' +
+          '<td style="padding:6px;">' + VolunteerShiftTool.esc(s.memberName || s.memberId) + '</td>' +
+          '<td style="padding:6px;">' + VolunteerShiftTool.esc(s.ministryName || '—') + '</td>' +
+          '<td style="padding:6px;">' + VolunteerShiftTool.esc(s.shift || '—') + '</td>' +
+          '<td style="padding:6px;">' + st + '</td>' +
+          '<td style="padding:6px;"><button type="button" class="cm-btn cm-btn-secondary btn-snippet" data-id="' + VolunteerShiftTool.esc(s.id) + '">邀請稿</button> ' +
+          '<button type="button" class="cm-btn cm-btn-success btn-confirm" data-id="' + VolunteerShiftTool.esc(s.id) + '" ' + (s.confirmed ? 'disabled' : '') + '>確認</button></td></tr>';
+      }).join('');
+
+      tbody.querySelectorAll('.btn-snippet').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          var row = rows.find(function (r) { return String(r.id) === String(id); });
+          if (!row || !b.buildShiftInviteSnippet) return;
+          var text = b.buildShiftInviteSnippet(row);
+          document.getElementById('listSnippet').style.display = 'block';
+          document.getElementById('listSnippetText').textContent = text;
+        });
+      });
+
+      tbody.querySelectorAll('.btn-confirm').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          var row = rows.find(function (r) { return String(r.id) === String(id); });
+          if (!row || !b.saveVolunteerShift) return;
+          try {
+            b.saveVolunteerShift({
+              id: row.id,
+              member_id: row.memberId,
+              ministry_id: row.ministryId,
+              date: row.date,
+              shift: row.shift,
+              confirmed: true,
+              status: 'confirmed'
+            });
+            VolunteerShiftTool.notifySync();
+            renderList();
+          } catch (e) { alert(e.message); }
+        });
+      });
+    }
+
+    document.getElementById('btnFilter').addEventListener('click', renderList);
+    document.getElementById('btnCopyListSnippet').addEventListener('click', function () {
+      VolunteerShiftTool.copySnippet(document.getElementById('listSnippetText').textContent);
+    });
+
+    var t = new Date();
+    document.getElementById('filterFrom').value = t.toISOString().slice(0, 10);
+    t.setDate(t.getDate() + 60);
+    document.getElementById('filterTo').value = t.toISOString().slice(0, 10);
+    renderList();
+    window.addEventListener('storage', function () {
+      VolunteerShiftTool.renderTrustBadge('dataTrustMount', { position: 'top', write_behavior: 'read_only', notify_behavior: 'none' });
+      renderList();
+    });
+  </script>
+</body>
+</html>

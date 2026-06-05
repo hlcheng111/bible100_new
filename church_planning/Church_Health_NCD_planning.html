@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<!--
+  Canonical static page: Church_Health_NCD_planning.html
+  Tool chain & localStorage: Health (chp2026-health-profile, chp2026-health-result)
+  → SWOT (chp2026-swot-v1) → SMART (chp2026-smart-v1) → PDCA (chp2026-pdca-log；舊鍵 chp2026-pdca-v1 可遷移).
+  Legacy file name 教會健康診斷與 AI 戰略系統 2026.html redirects here.
+-->
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教會健康戰略診斷與 AI 系統 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/church_data_bridge_phase1.js"></script>
+    <script src="../js/bible100_backend_init.js"></script>
+    <script src="js/church_toolkit.js"></script>
+    <script src="js/scaling_adapter.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap');
+        /* 全頁基礎字級 +1（約 17px），利於掃讀關鍵字 */
+        html { font-size: 106.25%; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #f0f4f8; scroll-behavior: smooth; }
+        .tab-btn { padding: 0.75rem 1.5rem; font-weight: bold; cursor: pointer; border-bottom: 4px solid transparent; transition: 0.3s; font-size: 0.9rem; }
+        .tab-active { border-bottom-color: #4f46e5; color: #4f46e5; background: white; border-radius: 12px 12px 0 0; }
+        .page-break { page-break-before: always; }
+        .q-row { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid #e2e8f0; }
+        .q-text { flex: 1; font-size: 0.9375rem; padding-right: 1.5rem; }
+        .btn-score { width: 2.2rem; height: 2.2rem; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: bold; transition: 0.2s; font-size: 0.8rem; }
+        .btn-active { background: #4f46e5 !important; color: white !important; border-color: #4f46e5 !important; transform: scale(1.1); }
+        .ai-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; transition: 0.3s; }
+        .ai-card:hover { border-color: #4f46e5; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        /* AI 分頁：略大於舊版 13px，與全頁調升一致 */
+        .ai-tab-root { font-size: 0.9375rem; line-height: 1.55; color: #1a2a3a; }
+        .ai-tab-root h2 { font-size: 1.4rem; line-height: 1.35; }
+        .ai-tab-root h3 { font-size: 1.12rem; }
+        .ai-lead-box {
+            background: #e8f4fd; border-left: 4px solid #0b5fa5; padding: 12px 14px; border-radius: 0 10px 10px 0;
+            font-size: 0.9375rem; font-weight: 600; line-height: 1.55; color: #1a2a3a;
+        }
+        .ai-pcdo-intro {
+            background: #fff8e1; border-left: 4px solid #f9a825; padding: 12px 14px; border-radius: 0 10px 10px 0;
+            font-size: 0.9375rem; line-height: 1.55; color: #374151; margin-left: 2.5rem; margin-bottom: 1rem;
+        }
+        .ai-pcdo-cell { background: #f0f7ff; border: 1px solid #c5d9f0; font-size: 0.8125rem; line-height: 1.45; color: #334155; }
+        .ai-prompt-demo {
+            background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+            border: 1px solid #c5d9f0; border-left: 4px solid #0b5fa5; border-radius: 0 12px 12px 0;
+            padding: 14px 16px; box-shadow: 0 1px 4px rgba(11, 95, 165, 0.08);
+        }
+        .ai-prompt-line { margin: 0 0 0.4rem 0; font-size: 0.9375rem; line-height: 1.45; color: #1e293b; }
+        .ai-prompt-line:last-of-type { margin-bottom: 0; }
+        .ai-prompt-tag { font-weight: 800; color: #0b5fa5; margin-right: 0.2rem; }
+        .ai-ph {
+            display: inline-block; background: #fff8e1; border: 1px dashed #f59e0b;
+            padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 0.8125rem; color: #b45309;
+        }
+        .ai-ex-title { font-size: 1rem; font-weight: 800; color: #0f172a; line-height: 1.28; margin-bottom: 0.35rem; }
+        .ai-ex-box { font-size: 0.9375rem; line-height: 1.48; font-weight: 600; color: #1e293b; }
+        .ai-follow-card {
+            border: 1px solid #e3eaf2; border-radius: 12px; overflow: hidden; background: #fff;
+            box-shadow: 0 2px 8px rgba(15, 45, 85, 0.05);
+        }
+        .ai-follow-card-h {
+            background: #e8f4fd; border-bottom: 1px solid #c5d9f0; padding: 8px 14px;
+            font-size: 0.8125rem; font-weight: 800; color: #0b5fa5; letter-spacing: 0.02em;
+        }
+        .ai-follow-card-body { padding: 12px 14px; font-size: 0.9375rem; line-height: 1.5; color: #374151; font-weight: 500; }
+        .step-guide { border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem 1.15rem; margin-bottom: 1.25rem; background: linear-gradient(180deg, #fafbff 0%, #fff 100%); font-size: 0.9rem; }
+        .step-guide h3 { font-weight: 800; color: #312e81; font-size: 0.88rem; margin-bottom: 0.5rem; }
+        .disclaimer-box { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 0.75rem; padding: 0.9rem 1rem; font-size: 0.85rem; color: #78350f; margin-bottom: 1rem; }
+        .diag-line { border-left: 4px solid #4f46e5; padding-left: 0.75rem; margin-bottom: 0.65rem; font-size: 0.9rem; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+<div id="app" class="min-h-screen">
+    <nav class="bg-slate-900 p-4 text-white sticky top-0 z-50 shadow-md no-print">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="font-black text-sm md:text-lg tracking-tight">教會健康診斷 <span class="text-indigo-400">2026</span></h1>
+            <div v-if="step >= 0 && step <= 8" class="text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">
+                Step {{ step + 1 }} / 10
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto p-4 md:py-8">
+        
+        <!-- Step 0：第二批規格—表單前之牧養聲明／step-guide 已移除；profile 仍存 chp2026-health-profile -->
+        <div v-if="step === 0" class="bg-white rounded-3xl p-8 shadow-xl max-w-4xl mx-auto">
+<h2 class="text-2xl font-black mb-2 text-indigo-600">⛪ 教會背景調查 | Church Profile</h2>
+<p class="text-xs text-slate-600 mb-4 leading-relaxed">
+  這一步收集教會的基本脈絡，供後面診斷報告、SWOT／SMART／PDCA 作背景參考。若時間有限，可先填最重要的欄位，之後再補齊。
+</p>
+
+<!-- A. 教會基本資料 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-base mb-6">
+  <div>
+    <label class="font-bold">教會名稱 Church Name</label>
+    <input v-model="churchInfo.name" type="text"
+           class="w-full p-2 border rounded-lg mt-1 outline-none focus:ring-2 focus:ring-indigo-300 shadow-sm">
+  </div>
+  <div>
+    <label class="font-bold">成立年份 Est. Year</label>
+    <input v-model="churchInfo.year" type="number"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm">
+  </div>
+
+  <div>
+    <label class="font-bold">城市／地區 City / Region</label>
+    <input v-model="churchInfo.city" type="text" placeholder="如：香港・九龍"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm">
+  </div>
+  <div>
+    <label class="font-bold">宗派／傳統 Denomination / Tradition</label>
+    <input v-model="churchInfo.denomination" type="text" placeholder="如：浸信會、靈恩派、獨立教會"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm">
+  </div>
+
+  <div class="md:col-span-2">
+    <label class="font-bold">地址 Address</label>
+    <input v-model="churchInfo.address" type="text"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm">
+  </div>
+</div>
+
+<!-- B. 規模與結構 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-base mb-6">
+  <div>
+    <label class="font-bold">主日平均出席（近 3 個月）<br>Average Sunday Attendance (last 3 months)</label>
+    <input v-model.number="churchInfo.avgAttendance" type="number" min="0"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm">
+  </div>
+  <div>
+    <label class="font-bold">信徒總人數（約數）<br>Total Believers (approx.)</label>
+    <input v-model.number="churchInfo.totalBelievers" type="number" min="0"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm">
+  </div>
+
+  <div>
+    <label class="font-bold">規模等級 Size Category</label>
+    <select v-model="churchInfo.size" class="w-full p-2 border rounded-lg mt-1 shadow-sm text-sm">
+      <option value="10">微型 Micro (&lt;30)</option>
+      <option value="100">小型 Small (30–120)</option>
+      <option value="500">中型 Medium (120–400)</option>
+      <option value="1000">大型 Large (400+)</option>
+    </select>
+  </div>
+
+  <div>
+    <label class="font-bold">主要年齡組合 Main Age Composition</label>
+    <select v-model="churchInfo.ageProfile" class="w-full p-2 border rounded-lg mt-1 shadow-sm text-sm">
+      <option value="">— 請選擇 —</option>
+      <option value="children_families">兒童與家庭為主 Children &amp; Families</option>
+      <option value="youth">青少年為主 Youth</option>
+      <option value="young_adults">青年為主 Young Adults</option>
+      <option value="adults">壯年為主 Adults</option>
+      <option value="seniors">長者為主 Seniors</option>
+      <option value="intergenerational">跨代均衡 Intergenerational Balance</option>
+    </select>
+  </div>
+
+  <div>
+    <label class="font-bold">會友組合 Composition</label>
+    <input v-model="churchInfo.composition" type="text" placeholder="如: 職青為主、小家庭為主、多跨區會友"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm">
+  </div>
+  <div>
+    <label class="font-bold">職業組合 Occupations</label>
+    <input v-model="churchInfo.occupations" type="text" placeholder="如: 學生、公務員、專業人士、藍領"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm">
+  </div>
+</div>
+
+<!-- C. 教會階段與方向 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-base mb-6">
+  <div>
+    <label class="font-bold">教會生命週期階段<br>Church Life-cycle Stage</label>
+    <select v-model="churchInfo.lifeStage" class="w-full p-2 border rounded-lg mt-1 shadow-sm text-sm">
+      <option value="">— 請選擇 —</option>
+      <option value="launching">開拓期 Launching (0–5 年)</option>
+      <option value="building">建立期 Building (5–15 年)</option>
+      <option value="stabilizing">穩定期 Stabilizing (15–40 年)</option>
+      <option value="renewal">轉化更新期 Renewal / Transition (40+ 或明顯停滯)</option>
+    </select>
+  </div>
+
+  <div>
+    <label class="font-bold">主要聚焦人群（目前）<br>Primary Focus Groups</label>
+    <select v-model="churchInfo.primaryFocus" class="w-full p-2 border rounded-lg mt-1 shadow-sm text-sm">
+      <option value="">— 請選擇 —</option>
+      <option value="children">兒童 Children</option>
+      <option value="youth">青少年 Youth</option>
+      <option value="young_pros">大學生／職青 Young Professionals / Campus</option>
+      <option value="families">家庭 Families</option>
+      <option value="seniors">長者 Seniors</option>
+      <option value="outreach">社區弱勢／外展 Outreach &amp; Vulnerable</option>
+      <option value="mixed">多重焦點／跨代 Mixed / Intergenerational</option>
+    </select>
+  </div>
+
+  <div class="md:col-span-2">
+    <label class="font-bold">未來五年願景關鍵字<br>Five-year Vision Keywords</label>
+    <input v-model="churchInfo.visionKeywords" type="text"
+           placeholder="例：門徒化、跨代同行、差傳、城市更新（以逗號分隔）"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm text-sm">
+  </div>
+
+  <div class="md:col-span-2">
+    <label class="font-bold">當前三大壓力點（自由描述）<br>Top 3 Current Pressures</label>
+    <textarea v-model="churchInfo.pressures"
+              class="w-full p-2 border rounded-lg mt-1 h-20 shadow-sm text-sm"
+              placeholder="例：領袖與接棒不足、青少年流失、小組架構不穩、財務壓力等。"></textarea>
+  </div>
+</div>
+
+<!-- D. 本輪診斷焦點 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-base mb-6">
+  <div class="md:col-span-2">
+    <label class="font-bold">本輪診斷季節一句話<br>Season Focus One-liner</label>
+    <input v-model="churchInfo.seasonFocus" type="text"
+           placeholder="例：本季要釐清青少年事工方向。"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm text-sm">
+  </div>
+
+  <div class="md:col-span-2">
+    <label class="font-bold">希望本系統特別幫助的方向（可簡單描述）<br>
+      What Do You Want This System to Help With?</label>
+    <textarea v-model="churchInfo.systemFocus"
+              class="w-full p-2 border rounded-lg mt-1 h-20 shadow-sm text-sm"
+              placeholder="例：想看清整體健康狀況、幫助五年計劃、釐清領袖培育與小組系統的優先次序。"></textarea>
+  </div>
+</div>
+
+<!-- E. 填寫人資料 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-base mb-8">
+  <div>
+    <label class="font-bold">填寫人姓名 Your Name</label>
+    <input v-model="churchInfo.reporterName" type="text"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm">
+  </div>
+  <div>
+    <label class="font-bold">填寫人職分 Your Role</label>
+    <input v-model="churchInfo.reporterRole" type="text" placeholder="如：主任牧師、堂主任、傳道、長老、核心同工"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm">
+  </div>
+
+  <div class="md:col-span-2">
+    <label class="font-bold">聯絡電郵（選填）Contact Email (optional)</label>
+    <input v-model="churchInfo.contactEmail" type="email"
+           class="w-full p-2 border rounded-lg mt-1 shadow-sm text-sm">
+  </div>
+
+  <div class="md:col-span-2">
+    <label class="font-bold">額外補充額外資料 Additional Notes</label>
+    <textarea v-model="churchInfo.notes"
+              class="w-full p-2 border rounded-lg mt-1 h-20 shadow-sm"
+              placeholder="任何你希望在報告中註明的背景，如：剛搬堂、疫情後恢復、領袖變動、特別季節等。"></textarea>
+  </div>
+</div>
+
+<button @click="goFromProfile"
+        class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 transition shadow-lg">
+  開始診斷 (Start Assessment) 🚀
+</button>
+        </div>
+
+        <!-- 8 範疇 Step 1–8：三層 UI（題序與 answers[dim][0..12] 對應不變；開放題存 openAnswers） -->
+        <div v-if="step >= 1 && step <= 8" class="bg-white rounded-2xl p-6 shadow-xl relative animate-fadeIn">
+            <div class="step-guide">
+                <h3>這一步在做什麼？</h3>
+                <p class="text-slate-700 mb-2">本範疇仍為 <strong>13 題計分</strong>（1–5），分三區填寫：① 整體與節奏對齊（第 1、11–13 題）② 具體指標（第 2–10 題）③ 開放式反思（不計分）。</p>
+                <h3>填完之後你會得到什麼？</h3>
+                <p class="text-slate-700 mb-2">13 題合計仍納入八維平衡與報告；開放題僅作文字補充，寫入本機結果檔。</p>
+                <h3>會出現在報告哪裡？</h3>
+                <p class="text-slate-700">分數見柱狀圖與各範疇診斷；開放題可供團隊列印或複製到 SWOT／會議紀錄（報告主表可後續擴充顯示）。</p>
+            </div>
+            <div class="flex justify-between items-center mb-6 border-b pb-2">
+                <h2 class="text-xl font-black text-indigo-600">{{ categories[step-1].name }} <span class="text-xs font-normal text-slate-400 block md:inline md:ml-2">({{ categories[step-1].en }})</span></h2>
+                <div class="text-[10px] text-slate-400 font-bold">1=最低, 5=最高</div>
+            </div>
+
+            <section class="mb-6 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+                <h3 class="text-sm font-black text-indigo-900 mb-1">第 1 層｜整體與節奏對齊（題 1、11–13）</h3>
+                <p class="text-[11px] text-slate-600 mb-3 leading-relaxed">對應分數欄位索引 <code class="text-indigo-800">0</code>、<code class="text-indigo-800">10</code>、<code class="text-indigo-800">11</code>、<code class="text-indigo-800">12</code>（穩定度、同工負荷、方向一致）。</p>
+                <div class="space-y-1">
+                    <div v-for="idx in qIdxOverview" :key="'ov-' + step + '-' + idx" class="q-row hover:bg-white/80 transition-colors rounded-lg px-1">
+                        <div class="q-text">
+                            <p class="font-bold text-slate-700 leading-tight">{{ idx + 1 }}. {{ categories[step-1].questions[idx].cn }}</p>
+                            <p class="text-[10px] text-slate-400 italic">{{ categories[step-1].questions[idx].en }}</p>
+                        </div>
+                        <div class="flex gap-1 shrink-0">
+                            <button type="button" v-for="n in 5" :key="n" @click="answers[step-1][idx] = n"
+                                :class="['btn-score', answers[step-1][idx] === n ? 'btn-active' : 'bg-white text-slate-400']">{{ n }}</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                <h3 class="text-sm font-black text-slate-900 mb-1">第 2 層｜具體指標（題 2–10）</h3>
+                <p class="text-[11px] text-slate-600 mb-3 leading-relaxed">對應分數欄位索引 <code class="text-slate-800">1–9</code>。</p>
+                <div class="space-y-1">
+                    <div v-for="idx in qIdxDetail" :key="'dt-' + step + '-' + idx" class="q-row hover:bg-white/90 transition-colors rounded-lg px-1">
+                        <div class="q-text">
+                            <p class="font-bold text-slate-700 leading-tight">{{ idx + 1 }}. {{ categories[step-1].questions[idx].cn }}</p>
+                            <p class="text-[10px] text-slate-400 italic">{{ categories[step-1].questions[idx].en }}</p>
+                        </div>
+                        <div class="flex gap-1 shrink-0">
+                            <button type="button" v-for="n in 5" :key="n" @click="answers[step-1][idx] = n"
+                                :class="['btn-score', answers[step-1][idx] === n ? 'btn-active' : 'bg-white text-slate-400']">{{ n }}</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6 rounded-xl border border-emerald-100 bg-emerald-50/40 p-4">
+                <h3 class="text-sm font-black text-emerald-900 mb-1">第 3 層｜開放式反思（不計分）</h3>
+                <p class="text-[11px] text-slate-600 mb-3 leading-relaxed">存入 <code class="text-emerald-900">openAnswers[{{ step - 1 }}][0]</code> 與 <code class="text-emerald-900">[1]</code>，不影響總分與圖表。</p>
+                <div class="space-y-4 text-sm">
+                    <div>
+                        <label class="font-bold text-slate-800 block mb-1">你覺得這個範疇目前最大的兩個問題是甚麼？</label>
+                        <textarea v-model="openAnswers[step-1][0]" rows="3" class="w-full p-2 border border-slate-200 rounded-lg text-slate-700 shadow-sm" placeholder="可簡列兩點，或一段話說明。"></textarea>
+                    </div>
+                    <div>
+                        <label class="font-bold text-slate-800 block mb-1">未來 12 個月內，你最希望在本範疇改善的一件事是甚麼？</label>
+                        <textarea v-model="openAnswers[step-1][1]" rows="3" class="w-full p-2 border border-slate-200 rounded-lg text-slate-700 shadow-sm" placeholder="具體、可與同工討論的一句方向即可。"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <div class="flex gap-4 mt-8 no-print">
+                <button type="button" @click="goPrev" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-xl font-bold">上一步 (Back)</button>
+                <button type="button" @click="goNext" class="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg">下一步 (Next)</button>
+            </div>
+        </div>
+
+        <div id="final-report" v-if="step === 9" class="animate-fadeIn">
+            <div class="flex space-x-1 border-b mb-8 no-print overflow-x-auto">
+                <div @click="activeTab = 'report'" :class="['tab-btn', activeTab === 'report' ? 'tab-active' : 'text-slate-400']">📊 診斷報告</div>
+                <div @click="activeTab = 'standard'" :class="['tab-btn', activeTab === 'standard' ? 'tab-active' : 'text-slate-400']">📖 教導原則</div>
+                <div @click="activeTab = 'ai'" :class="['tab-btn', activeTab === 'ai' ? 'tab-active' : 'text-slate-400']">🤖 AI 跟進</div>
+            </div>
+
+            <div v-show="activeTab === 'report'" class="bg-white rounded-2xl p-8 md:p-10 shadow-xl border">
+                <div class="border-b-4 border-slate-900 pb-6 mb-10">
+                    <h1 class="text-4xl font-black text-slate-900">{{ churchInfo.name || '教會名稱' }}</h1>
+                    <p class="text-indigo-600 font-black text-xl mt-2 italic underline text-sm">戰略診斷深度報告 | Church Health Pro Report 2026</p>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8 text-[11px] bg-slate-50 p-4 rounded-xl border">
+                        <div><b>診斷日期:</b> {{ today }}</div>
+                        <div><b>成立年份:</b> {{ churchInfo.year }}</div>
+                        <div><b>教會規模:</b> {{ churchSizeLabel }}</div>
+                        <div><b>填寫職位:</b> {{ churchInfo.reporterRole }}</div>
+                        <div class="col-span-2"><b>地點:</b> {{ churchInfo.address }}</div>
+                        <div class="col-span-3 border-t pt-2" v-if="churchInfo.notes"><b>補充資料:</b> {{ churchInfo.notes }}</div>
+                    </div>
+                </div>
+
+                <section v-if="overallNormalized != null" class="mb-8 p-5 rounded-2xl border-2 shadow-sm" :class="integrationHealthCardClass">
+                    <h3 class="text-base font-black text-slate-900 mb-2">系統整合健康指標</h3>
+                    <p class="text-sm text-slate-800">
+                        全站內部標度均分（1–5）：<strong class="text-lg">{{ overallNormalized }}</strong>／5.0
+                        <span class="ml-2 text-xs font-bold" :class="integrationHealthZoneBadgeClass">（{{ integrationZoneLabel }}）</span>
+                    </p>
+                    <p class="text-sm text-slate-700 mt-3 leading-relaxed border-t border-slate-200/80 pt-3">
+                        <strong class="text-slate-900">治理方針：</strong>{{ integrationGovernanceLine }}
+                    </p>
+                </section>
+
+                <section class="mb-8 p-4 rounded-xl border border-indigo-200 bg-indigo-50/40">
+                  <h3 class="text-base font-black text-indigo-900 mb-1">從 Smart Ministry 匯入人材恩賜統計</h3>
+                  <p class="text-xs text-slate-600 mb-3">可按「一鍵匯入」直接讀取同瀏覽器 localStorage，或手動貼上 JSON。</p>
+
+                  <textarea
+                    id="smartMinistryGiftStatsInput"
+                    v-model="smartMinistryGiftStatsInput"
+                    class="w-full p-2 border border-slate-300 rounded-lg text-xs font-mono h-36 bg-white"
+                    placeholder="請從 Smart Ministry 的『恩賜統計匯出 DEMO』頁複製 JSON 貼上。">
+                  </textarea>
+
+                  <div class="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      @click="importSmartMinistryGiftStats"
+                      class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700">
+                      一鍵匯入（Smart Ministry）
+                    </button>
+                    <button
+                      type="button"
+                      @click="parseSmartMinistryGiftStats"
+                      class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700">
+                      解析並顯示簡要統計
+                    </button>
+                  </div>
+
+                  <p v-if="smartMinistryGiftStatsImportStatus" class="mt-3 text-xs text-emerald-700 font-semibold">
+                    {{ smartMinistryGiftStatsImportStatus }}
+                  </p>
+
+                  <p v-if="smartMinistryGiftStatsError" class="mt-3 text-xs text-red-600 font-semibold">
+                    {{ smartMinistryGiftStatsError }}
+                  </p>
+
+                  <div v-if="smartMinistryGiftStatsSummary" class="mt-4 bg-white border border-slate-200 rounded-lg p-3 text-xs text-slate-800">
+                    <p class="mb-2"><strong>總樣本數：</strong>{{ smartMinistryGiftStatsSummary.peopleCount }}</p>
+
+                    <div class="mb-3">
+                      <p class="font-bold mb-1">每個恩賜向度的平均分（0–100）</p>
+                      <ul class="grid grid-cols-1 md:grid-cols-2 gap-y-1 gap-x-4">
+                        <li v-for="(val, key) in smartMinistryGiftStatsSummary.avgGiftScores" :key="'avg-' + key">{{ key }}: {{ val }}</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <p class="font-bold mb-1">每個恩賜向度在 topGiftIds 中出現次數</p>
+                      <ul class="grid grid-cols-1 md:grid-cols-2 gap-y-1 gap-x-4">
+                        <li v-for="(val, key) in smartMinistryGiftStatsSummary.topGiftFrequency" :key="'freq-' + key">{{ key }}: {{ val }}</li>
+                      </ul>
+                    </div>
+                  </div>
+                </section>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                    <div :class="['p-10 rounded-3xl text-center shadow-xl flex flex-col justify-center', getHealthZone(overallScore).bg]">
+                        <p class="text-xs font-black uppercase tracking-widest opacity-60">總得分 (OVERALL SCORE)</p>
+                        <p class="text-7xl font-black mt-4 leading-none">{{ overallScore }}分</p>
+                        <p v-if="overallNormalized != null" class="mt-3 text-sm font-bold text-slate-800">
+                            內部健康標度（1–5）均分：{{ overallNormalized }} / 5.0
+                        </p>
+                        <p class="mt-6 font-black text-xl px-6 py-2 bg-white/40 rounded-full inline-block mx-auto">{{ healthLabel }}</p>
+                    </div>
+                    <div class="h-[350px] bg-white p-4 border rounded-3xl shadow-inner relative">
+                        <p class="text-[10px] text-slate-600 font-bold px-1 mb-1 leading-snug">
+                            長條為 NCD 原始分（0–65）。請將滑鼠懸停於長條查看<strong>內部健康標度（1.0–5.0）</strong>；全站參考線：<strong>3.0</strong> 邊際／黃燈、<strong>4.0</strong> 健康／綠燈。
+                        </p>
+                        <canvas id="resultChart"></canvas>
+                        <div class="absolute bottom-2 right-4 text-[8px] font-bold text-red-500">── 紅線為原始均分（/65）</div>
+                    </div>
+                </div>
+
+                <section class="mb-12 bg-white p-4 border rounded-2xl shadow-inner">
+                    <h3 class="text-sm font-black text-slate-900 mb-1">前後對比：生命維度雷達圖（Baseline vs Current）</h3>
+                    <p class="text-[11px] text-slate-600 mb-3">
+                        淡色為歷史基線（初診），深色為本次評估。可快速看出各維度是否實質成長。{{ radarCompareMeta }}
+                    </p>
+                    <div class="h-[360px]">
+                        <canvas id="trendRadarChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- 戰略診斷中段｜Before You Plan + 使用建議 + 三則優先焦點 -->
+
+                <section class="mt-6 space-y-8">
+
+                  <!-- A. 長期計劃思考導引｜Before You Plan -->
+                  <div class="bg-white/80 border border-indigo-100 rounded-xl p-4 shadow-sm">
+                    <h2 class="text-lg font-black text-indigo-900 mb-1">
+                      長期計劃思考導引｜Before You Plan
+                    </h2>
+                    <p class="text-xs text-slate-700 mb-4 leading-relaxed">
+                      這一部分幫助你在進入 SWOT／SMART／PDCA 之前，先用簡單的語言整理：教會現況的強項、弱項、機會與風險。
+                      用來引導團隊反思，不是替你作結論。
+                    </p>
+
+                    <div class="text-sm space-y-4">
+                      <!-- S：我要繼續做什麼？ -->
+                      <div class="diag-line border-indigo-100">
+                        <p class="font-semibold text-indigo-950 mb-1">
+                          S｜我要繼續做什麼？（Strengths）
+                        </p>
+                        <p class="text-slate-800 leading-relaxed">
+                          {{ beforeYouPlan.s.body }}
+                        </p>
+                      </div>
+
+                      <!-- W：我不要再／需要少做什麼？ -->
+                      <div class="diag-line border-indigo-100">
+                        <p class="font-semibold text-indigo-950 mb-1">
+                          W｜我不要再／需要少做什麼？（Weaknesses）
+                        </p>
+                        <p class="text-slate-800 leading-relaxed">
+                          {{ beforeYouPlan.w.body }}
+                        </p>
+                      </div>
+
+                      <!-- O：我可以做什麼新的？ -->
+                      <div class="diag-line border-indigo-100">
+                        <p class="font-semibold text-indigo-950 mb-1">
+                          O｜我可以做什麼新的？（Opportunities）
+                        </p>
+                        <p class="text-slate-800 leading-relaxed">
+                          {{ beforeYouPlan.o.body }}
+                        </p>
+                      </div>
+
+                      <!-- T：我要提防什麼？ -->
+                      <div class="diag-line border-indigo-100">
+                        <p class="font-semibold text-indigo-950 mb-1">
+                          T｜我要提防什麼？（Threats）
+                        </p>
+                        <p class="text-slate-800 leading-relaxed">
+                          {{ beforeYouPlan.t.body }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p class="mt-3 text-xs text-slate-600 leading-relaxed border-t border-dashed border-indigo-100 pt-2">
+                      請牧者與核心團隊一起禱告，圈出上面每一欄最真實的 1–2 點，就足夠成為下一步規劃的基礎。
+                    </p>
+                  </div>
+
+                  <!-- B. 如何使用這份報告（給牧者與核心團隊） -->
+                  <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                    <h2 class="text-base font-semibold text-slate-900 mb-2">
+                      如何使用這份報告（給牧者與核心團隊）
+                    </h2>
+                    <ol class="list-decimal list-inside text-xs text-slate-800 space-y-1.5 leading-relaxed">
+                      <li>
+                        一起看「總得分＋圖表」和上面的「Before You Plan」四欄，先確認大家對現況的感覺是否接近。
+                      </li>
+                      <li>
+                        再看「三則優先焦點」和下方各範疇的「現況診斷／起步建議」，圈出團隊最有共鳴的 1–3 個重點範疇。
+                      </li>
+                      <li>
+                        開會時優先談「要繼續什麼、要減少什麼、要嘗試什麼新事」，避免把分數當成對個人的考核。
+                      </li>
+                      <li>
+                        將整理出來的 S／W／O／T 帶到《教會版 SWOT》頁面，先用四格寫清局勢，再轉成 SMART 目標與 PDCA 行動。
+                      </li>
+                    </ol>
+                  </div>
+
+                  <!-- C. 三則優先焦點 -->
+                  <div class="bg-white/90 border border-amber-100 rounded-xl p-4 shadow-sm">
+                    <h2 class="text-base font-semibold text-amber-900 mb-1">
+                      三則優先焦點
+                    </h2>
+                    <p class="text-xs text-amber-900/80 mb-3 leading-relaxed">
+                      這三則是系統根據八個範疇分數濃縮出的「起步重點」，用來幫助你決定先處理哪幾件事。請按堂會實際情況禱告分辨，不必全部照單全收。
+                    </p>
+
+                    <div class="space-y-4 text-sm">
+                      <!-- 焦點 1 -->
+                      <div class="border border-amber-100 rounded-lg p-3 bg-amber-50/60">
+                        <p class="font-semibold text-amber-950 mb-1">
+                          {{ threeSuggestions[0].title }}
+                        </p>
+                        <p class="text-xs text-slate-800 mb-1">
+                          <span class="font-semibold">為何重要：</span>{{ threeSuggestions[0].why }}
+                        </p>
+                        <p class="text-xs text-slate-800 mb-1">
+                          <span class="font-semibold">具體行動：</span>{{ threeSuggestions[0].action }}
+                        </p>
+                        <p class="text-xs text-slate-700">
+                          <span class="font-semibold">預期果效：</span>{{ threeSuggestions[0].effect }}
+                        </p>
+                      </div>
+
+                      <!-- 焦點 2 -->
+                      <div class="border border-amber-100 rounded-lg p-3 bg-amber-50/60">
+                        <p class="font-semibold text-amber-950 mb-1">
+                          {{ threeSuggestions[1].title }}
+                        </p>
+                        <p class="text-xs text-slate-800 mb-1">
+                          <span class="font-semibold">為何重要：</span>{{ threeSuggestions[1].why }}
+                        </p>
+                        <p class="text-xs text-slate-800 mb-1">
+                          <span class="font-semibold">具體行動：</span>{{ threeSuggestions[1].action }}
+                        </p>
+                        <p class="text-xs text-slate-700">
+                          <span class="font-semibold">預期果效：</span>{{ threeSuggestions[1].effect }}
+                        </p>
+                      </div>
+
+                      <!-- 焦點 3 -->
+                      <div class="border border-amber-100 rounded-lg p-3 bg-amber-50/60">
+                        <p class="font-semibold text-amber-950 mb-1">
+                          {{ threeSuggestions[2].title }}
+                        </p>
+                        <p class="text-xs text-slate-800 mb-1">
+                          <span class="font-semibold">為何重要：</span>{{ threeSuggestions[2].why }}
+                        </p>
+                        <p class="text-xs text-slate-800 mb-1">
+                          <span class="font-semibold">具體行動：</span>{{ threeSuggestions[2].action }}
+                        </p>
+                        <p class="text-xs text-slate-700">
+                          <span class="font-semibold">預期果效：</span>{{ threeSuggestions[2].effect }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p class="mt-3 text-xs text-slate-600 leading-relaxed border-t border-dashed border-amber-100 pt-2">
+                      最後，請從三則焦點中選出「本季只做一件最重要的事」，再帶到 SWOT／SMART／PDCA 工具裡寫成具體計劃。
+                    </p>
+                  </div>
+
+                </section>
+
+                <div class="page-break space-y-12">
+                    <h2 class="text-2xl font-black text-slate-800 border-l-8 border-indigo-600 pl-4">各範疇詳細診斷與建議</h2>
+                    <p class="text-xs text-slate-500 mb-6 max-w-3xl">每節「現況診斷」與上方 Before You Plan、三則優先焦點連到同一套分數敘事。顯示分數含 <strong>NCD 原始分（/65）</strong>與經 ScalingAdapter 校準之<strong>內部標度（/5.0）</strong>，與 SWOT、80/20 策略引擎一致。</p>
+                    <div v-for="(cat, idx) in categories" :key="idx" class="border-b pb-10">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-black text-slate-800">{{ cat.name }} ({{ cat.en }})</h3>
+                            <span :class="['px-3 py-1 rounded-full text-[10px] font-black', getHealthZone(catScores[idx]).bg, getHealthZone(catScores[idx]).text]">
+                                得分: {{ catScores[idx] }} / 65
+                                <span v-if="catScoresNormalized[idx] != null" class="font-mono"> · 內部 {{ catScoresNormalized[idx].toFixed(2) }} / 5.0</span>
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-[12px] leading-relaxed">
+                            <div class="bg-slate-50 p-5 rounded-2xl border">
+                                <p class="font-black text-indigo-600 mb-2 italic">🔍 現況診斷 (Diagnosis)</p>
+                                <p class="text-slate-700">{{ getDetailedDiagnosis(cat.name, catScores[idx]) }}</p>
+                            </div>
+                            <div class="bg-emerald-50 p-5 rounded-2xl border border-emerald-100">
+                                <p class="font-black text-emerald-600 mb-2 italic">🚀 三至六個月起步建議 (Action)</p>
+                                <ul class="list-disc ml-4 space-y-1 text-slate-700 font-bold">
+                                    <li v-for="tip in getDetailedTips(cat.name, catScores[idx])">{{ tip }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div v-if="hasOpenObserveRow(idx)" class="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-[12px] leading-relaxed">
+                            <p class="font-black text-slate-800 mb-2">填寫者觀察（不計分）</p>
+                            <p v-if="openObserveTrim0(idx)" class="text-slate-700 mb-2"><span class="font-bold">問題反思：</span>{{ openObserveTrim0(idx) }}</p>
+                            <p v-if="openObserveTrim1(idx)" class="text-slate-700 mb-2"><span class="font-bold">12 個月聚焦：</span>{{ openObserveTrim1(idx) }}</p>
+                            <p class="text-[10px] text-slate-500 mt-2 border-t border-dashed border-slate-200 pt-2">此段為填寫者自由描述，不參與分數計算。螢幕顯示每行約 160 字內截斷；PDF 附錄為全文。</p>
+                        </div>
+                    </div>
+                    <section id="health-open-appendix" v-if="hasAnyOpenObserve" class="page-break mt-12 pt-8 border-t-2 border-slate-200 space-y-4">
+                        <h2 class="text-lg font-black text-slate-900">附錄：填寫者觀察（全文｜不計分）</h2>
+                        <p class="text-xs text-slate-600 leading-relaxed">以下為問卷第 3 層兩則開放題之全文，不參與分數計算，僅供團隊辨認與 SWOT／AI 對話參考。</p>
+                        <template v-for="(cat, aidx) in categories" :key="'oa-app-' + aidx">
+                            <div v-if="hasOpenObserveRow(aidx)" class="rounded-lg border border-slate-200 bg-white p-4 text-xs leading-relaxed">
+                                <p class="font-bold text-slate-900">{{ cat.name }}</p>
+                                <p v-if="openObserveFull0(aidx)" class="mt-2 text-slate-800"><span class="font-semibold">問題反思：</span>{{ openObserveFull0(aidx) }}</p>
+                                <p v-if="openObserveFull1(aidx)" class="mt-2 text-slate-800"><span class="font-semibold">12 個月聚焦：</span>{{ openObserveFull1(aidx) }}</p>
+                            </div>
+                        </template>
+                    </section>
+                    <div class="mt-10 p-5 rounded-2xl border border-slate-200 bg-slate-50 text-sm text-slate-700 leading-relaxed">
+                        <strong class="text-slate-900">與 SWOT／SMART／PDCA 銜接：</strong>{{ beforeYouPlan.bridge }}
+                    </div>
+                </div>
+            </div>
+
+            <div v-show="activeTab === 'standard'" class="bg-white rounded-3xl p-10 shadow-xl border animate-fadeIn">
+                <h2 class="text-2xl font-black mb-4 border-b-4 border-emerald-500 pb-2">📖 教導原則：如何使用四套工具</h2>
+                <p class="text-sm text-slate-700 mb-6 leading-relaxed">四頁是同一條「診斷 → 局勢 → 目標 → 執行」鏈，請<strong>按順序理解</strong>；每頁可獨立開啟，但帶著前頁結論會更準。</p>
+                <ul class="list-decimal ml-5 space-y-3 text-sm text-slate-800 mb-10">
+                    <li><strong>健康診斷（本頁）：</strong>{{ suiteTeach.health }}</li>
+                    <li><strong>SWOT：</strong>{{ suiteTeach.swot }}</li>
+                    <li><strong>SMART：</strong>{{ suiteTeach.smart }}</li>
+                    <li><strong>PDCA：</strong>{{ suiteTeach.pdca }}</li>
+                </ul>
+                <h3 class="text-lg font-black mb-4 text-slate-800">附件：NCD 健康特質提要</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm leading-relaxed">
+                    <div v-for="teach in teachingMaterial" class="p-5 bg-slate-50 rounded-2xl border-l-4 border-emerald-400">
+                        <b class="text-slate-900 block mb-1 font-black text-sm">{{ teach.title }}</b>
+                        <p class="text-slate-600 text-xs">{{ teach.content }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div v-show="activeTab === 'ai'" class="ai-tab-root bg-white rounded-3xl p-8 md:p-9 shadow-xl border animate-fadeIn">
+                <h2 class="font-black mb-5 text-indigo-700 border-b-2 border-indigo-500 pb-3">🤖 AI 戰略深度跟進 <span class="text-slate-500 font-semibold text-sm">(AI Strategy Follow-up)</span></h2>
+                <div class="ai-lead-box mb-10">
+                    當您拿到這份診斷報告後，它僅是一份「體檢表」。要轉化為實際的「治療方案」，最好的方式是利用 AI（如 ChatGPT 或 Gemini）擔任您的<b>虛擬顧問</b>。
+                </div>
+                <div class="border border-indigo-200 bg-indigo-50/80 rounded-xl p-4 mb-10 text-sm text-slate-800">
+                    <strong class="text-indigo-900">與 SWOT／SMART／PDCA 的銜接：</strong>完成後，八維分數與三則優先焦點會寫入本機 <code class="text-xs">chp2026-health-result</code>；診斷報告中的「Before You Plan」與各範疇詳診由同一套分數推導，其他頁讀取結果後可延續同一敘事。請開啟《教會版 SWOT》整理局勢、《教會規劃 SMART》選焦點、《教會版 PDCA》對齊執行。
+                </div>
+
+                <div v-if="openAnswersAiSnippet" class="border border-indigo-200 bg-white rounded-xl p-4 mb-10 text-xs text-slate-800">
+                    <p class="font-black text-indigo-900 mb-2">填寫者觀察摘錄（供複製到 AI；不計分）</p>
+                    <p class="text-slate-600 mb-2 leading-relaxed">每範疇兩行合併至多約 200 字、全卷約 1200 字內；與 SWOT 頁 AI 提示使用同一組摘錄邏輯。全文見「診斷報告」末附錄。</p>
+                    <pre class="whitespace-pre-wrap font-sans leading-relaxed select-all bg-slate-50 border rounded-lg p-3 max-h-48 overflow-y-auto">{{ openAnswersAiSnippet }}</pre>
+                </div>
+
+                <section class="mb-10">
+                    <h3 class="font-black text-indigo-900 mb-2 flex items-center gap-2">
+                        <span class="bg-indigo-600 text-white w-7 h-7 flex items-center justify-center rounded-full text-xs shrink-0">1</span>
+                        第一步：推薦 AI 平台 (Recommended Platforms)
+                    </h3>
+                    <p class="text-slate-600 mb-5 ml-9 text-sm leading-snug">以下為<strong>國際 3 款</strong>與<strong>中文 3 款</strong>，附說明與官方連結（請依各平台條款與合規使用）。</p>
+
+                    <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><span class="text-[#0b5fa5]">▸</span> 國際頂尖（英文／多語）</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                        <div v-for="ai in aiPlatformsIntl" :key="ai.url" class="ai-card flex flex-col justify-between">
+                            <div>
+                                <p class="font-bold text-indigo-700 mb-0.5 text-base">{{ ai.name }} <span class="text-xs font-semibold text-slate-500">{{ ai.subtitle }}</span></p>
+                                <p class="text-sm text-slate-600 leading-snug mb-3">{{ ai.desc }}</p>
+                            </div>
+                            <a :href="ai.url" target="_blank" rel="noopener noreferrer" class="text-xs bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-center block hover:bg-indigo-600 transition">前往平台 ➔</a>
+                        </div>
+                    </div>
+
+                    <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><span class="text-[#0b5fa5]">▸</span> 中文首選（長文本／在地脈絡）</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div v-for="ai in aiPlatformsZh" :key="ai.url" class="ai-card flex flex-col justify-between">
+                            <div>
+                                <p class="font-bold text-indigo-700 mb-0.5 text-base">{{ ai.name }} <span class="text-xs font-semibold text-slate-500">{{ ai.subtitle }}</span></p>
+                                <p class="text-sm text-slate-600 leading-snug mb-3">{{ ai.desc }}</p>
+                            </div>
+                            <a :href="ai.url" target="_blank" rel="noopener noreferrer" class="text-xs bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-center block hover:bg-indigo-600 transition">前往平台 ➔</a>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-10">
+                    <h3 class="font-black text-indigo-900 mb-2 flex items-center gap-2">
+                        <span class="bg-indigo-600 text-white w-7 h-7 flex items-center justify-center rounded-full text-xs shrink-0">2</span>
+                        第二步：萬用 AI 提示語公式 (P-C-D-O)
+                    </h3>
+                    <div class="ai-pcdo-intro">
+                        為了獲得最精準的行動方案，請用 <b>P-C-D-O</b> 四要素組合提示語：<b>角色 (Persona)</b>、<b>背景 (Context)</b>、<b>數據 (Data)</b>、<b>輸出 (Output)</b>。
+                    </div>
+                    <div class="bg-slate-50/90 p-6 md:p-7 rounded-2xl border-2 border-dashed border-[#90caf9]">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div class="ai-pcdo-cell p-3 rounded-lg"><b class="text-[#0b5fa5]">角色 (P):</b><br>賦予專業身份</div>
+                            <div class="ai-pcdo-cell p-3 rounded-lg"><b class="text-[#0b5fa5]">背景 (C):</b><br>規模、地點、會友組成</div>
+                            <div class="ai-pcdo-cell p-3 rounded-lg"><b class="text-[#0b5fa5]">數據 (D):</b><br>報告高低分（尤其危機區）</div>
+                            <div class="ai-pcdo-cell p-3 rounded-lg"><b class="text-[#0b5fa5]">輸出 (O):</b><br>清單／大綱／時間軸等格式</div>
+                        </div>
+                        <div class="mt-5 ai-prompt-demo select-all">
+                            <p class="text-sm font-bold text-slate-600 mb-3 tracking-wide">萬用公式示範（分段如下；數字由本報告帶入，可分段複製或全選）</p>
+                            <p class="text-slate-500 text-sm mb-2 font-serif">「</p>
+                            <p class="ai-prompt-line"><span class="ai-prompt-tag">(P)</span>請扮演專業教會增長顧問。</p>
+                            <p class="ai-prompt-line"><span class="ai-prompt-tag">(D)</span>我有份診斷報告：總分 {{ overallScore }}，最弱項是【{{ worstCat }}】(得分 {{ worstScore }})。</p>
+                            <p class="ai-prompt-line"><span class="ai-prompt-tag">(C)</span>教會背景為 {{ churchSizeLabel }}、填寫人職分是 <span v-if="churchInfo.reporterRole && churchInfo.reporterRole.trim()">{{ churchInfo.reporterRole }}</span><span v-else class="ai-ph">[ 請填寫 ]</span>。</p>
+                            <p class="ai-prompt-line"><span class="ai-prompt-tag">(O)</span>請基於 NCD 原則，為我們提供一份為期 6 個月的轉型行動方案。</p>
+                            <p class="text-slate-500 text-sm mt-2 font-serif">」</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-10">
+                    <h3 class="font-black text-indigo-900 mb-2 flex items-center gap-2">
+                        <span class="bg-indigo-600 text-white w-7 h-7 flex items-center justify-center rounded-full text-xs shrink-0">3</span>
+                        第三步：深度追問具體例題（直接複製修改）
+                    </h3>
+                    <p class="text-slate-600 mb-3 ml-9 text-sm leading-snug">請把 <strong>[ … ]</strong> 內改成您的實況（可保留範例字，也可整段改寫）。方括號代表「這裡要換成你的關鍵資訊」；本頁職分若未填，萬用公式處會顯示 <span class="ai-ph text-xs px-1.5 py-0.5 align-middle">[ 請填寫 ]</span>。</p>
+                    <div class="space-y-4">
+                        <div v-for="ex in aiExamples" :key="ex.title" class="p-4 rounded-xl border border-slate-200 bg-slate-50/80">
+                            <h4 class="ai-ex-title">{{ ex.title }}</h4>
+                            <p class="text-sm font-bold text-slate-600 mb-1.5">提示語</p>
+                            <div class="ai-ex-box bg-white p-3 rounded-lg border border-slate-200 text-slate-800 font-medium select-all whitespace-pre-wrap shadow-sm">{{ ex.content }}</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-4">
+                    <h3 class="font-black text-indigo-900 mb-2 flex items-center gap-2">
+                        <span class="bg-indigo-600 text-white w-7 h-7 flex items-center justify-center rounded-full text-xs shrink-0">4</span>
+                        第四步：萬用提問清單（更多追問技巧）
+                    </h3>
+                    <p class="text-slate-600 mb-4 ml-9 text-sm leading-snug">想進一步挖掘報告價值，可嘗試以下問法（整段複製到 AI 即可）。</p>
+                    <div class="space-y-3">
+                        <div v-for="tip in aiFollowUpPrompts" :key="tip.label" class="ai-follow-card">
+                            <div class="ai-follow-card-h">{{ tip.label }}</div>
+                            <div class="ai-follow-card-body select-all whitespace-pre-wrap">{{ tip.prompt }}</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="no-print mt-10 mb-4 p-3 rounded-xl border border-slate-200 bg-slate-50">
+                <label class="block text-xs font-black text-slate-700 mb-1">本次存檔階段（寫入 chp2026-health-history）</label>
+                <select v-model="snapshotStage" class="w-full md:w-72 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800">
+                    <option value="baseline">Baseline（初診）</option>
+                    <option value="in-progress">In-Progress（執行中）</option>
+                    <option value="final">Final（結案評估）</option>
+                </select>
+                <p class="text-[11px] text-slate-500 mt-1">建議第一輪選 Baseline，追蹤期選 In-Progress，年度回顧選 Final。</p>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-4 mt-2 no-print pb-20">
+                <button @click="step = 8" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-xl font-bold">返回修改 (Back)</button>
+                <button @click="shareHealthReport" class="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-black shadow-lg">分享到 WhatsApp</button>
+                <button @click="downloadPDF" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-black shadow-lg">📥 下載 PDF 報告</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+const DIAG_KEY_BASE = 'diagnostics';
+const NCD_DIM_BILINGUAL = {
+    ev: 'Empowering Leadership 賦權的領導',
+    dis: 'Gift-oriented Ministry 恩賜導向的事奉',
+    fel: 'Passionate Spirituality 充滿熱情的靈性',
+    mis: 'Effective Structures 有效的結構',
+    wor: 'Inspiring Worship Services 激勵人心的敬拜',
+    led: 'Holistic Small Groups 全人小組',
+    ste: 'Need-oriented Evangelism 需求導向的佈道',
+    rel: 'Loving Relationships 充滿愛的人際關係'
+};
+
+function getChurchId() {
+    try {
+        if (window.CURRENT_CHURCH_ID) return String(window.CURRENT_CHURCH_ID).trim();
+        var params = new URLSearchParams(window.location.search || '');
+        return params.get('church_id') || 'default';
+    } catch (e) {
+        return 'default';
+    }
+}
+
+function diagKey() {
+    return 'chp2026_' + getChurchId() + '_' + DIAG_KEY_BASE;
+}
+
+function storageGet(key) {
+    try {
+        if (window.PersistenceProvider && typeof window.PersistenceProvider.getInstance === 'function') {
+            return window.PersistenceProvider.getInstance().getItem(key);
+        }
+    } catch (e) {}
+    return localStorage.getItem(key);
+}
+
+function storageSet(key, value) {
+    try {
+        if (window.PersistenceProvider && typeof window.PersistenceProvider.getInstance === 'function') {
+            window.PersistenceProvider.getInstance().setItem(key, value);
+            return;
+        }
+    } catch (e) {}
+    localStorage.setItem(key, value);
+}
+
+createApp({
+    data() {
+        return {
+            step: 0,
+            activeTab: 'report',
+            today: new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' }),
+            churchInfo: {
+                name: '',
+                year: 2026,
+                address: '',
+                composition: '',
+                occupations: '',
+                reporterRole: '',
+                size: '100',
+                notes: '',
+                city: '',
+                denomination: '',
+                avgAttendance: null,
+                totalBelievers: null,
+                ageProfile: '',
+                lifeStage: '',
+                primaryFocus: '',
+                visionKeywords: '',
+                pressures: '',
+                seasonFocus: '',
+                systemFocus: '',
+                reporterName: '',
+                contactEmail: ''
+            },
+            categories: [
+                { name: '佈道', en: 'Evangelism', questions: [
+                    { cn: "成員向他人分享信仰並邀請他們入會。", en: "Evidence members share faith and invite others." },
+                    { cn: "教會有系統接待新人並跟進需求。", en: "System for greeting and follow-up." },
+                    { cn: "定期舉辦針對非信徒的外展活動。", en: "Regular outreach for unchurched." },
+                    { cn: "講壇信息強調失喪靈魂的寶貴。", en: "Emphasis on prayer for lost people." },
+                    { cn: "信徒擁有深厚的非信徒友誼。", en: "Members build relationships with unchurched." },
+                    { cn: "佈道被視為生活方式而非活動。", en: "Intentional culture of inviting." },
+                    { cn: "定期培訓信徒講述福音見證。", en: "Training individuals in sharing the gospel." },
+                    { cn: "每季至少慶祝一次洗禮慶典。", en: "Baptism is celebrated at least quarterly." },
+                    { cn: "了解社區需求並制定對應策略。", en: "Aware of demographic needs in community." },
+                    { cn: "鼓勵信徒投資社交網絡中的關係。", en: "Investing in social network relationships." },
+                    { cn: "【穩定度】佈道／接待／跟進的節奏，過去一年是否大致穩定（少突停、少臨時救火）？", en: "Stability of outreach rhythm." },
+                    { cn: "【同工負荷】負責佈道與接待的同工，是否常感到過載或難以找到替補？", en: "Volunteer load in evangelism." },
+                    { cn: "【方向一致】牧者、長執與核心同工對「本堂佈道優先序與下一步」是否有一致說法？", en: "Alignment on evangelism priorities." }
+                ]},
+                { name: '門徒訓練', en: 'Discipleship', questions: [
+                    { cn: "牧者在講台上強調門訓的重要性。", en: "Pastor emphasizes discipleship from pulpit." },
+                    { cn: "有清楚的信徒成長成熟計劃。", en: "Clear discipleship plan for maturity in Christ." },
+                    { cn: "小組根據參與人數定期倍增。", en: "Regularly multiplies small groups." },
+                    { cn: "成員清楚知道下一個成長步驟。", en: "Members know what to do next to grow." },
+                    { cn: "為家長提供兒少門訓的資源。", en: "Resources for parents for ongoing discipleship." },
+                    { cn: "小組由分享真實生命、互相守望組成。", en: "Small groups designed to deepen relationships." },
+                    { cn: "培訓領袖去發現他人的恩賜。", en: "Leaders enlisted based on spiritual gifts." },
+                    { cn: "講道旨在教授核心真理立場。", en: "Sermons designed to teach doctrinal positions." },
+                    { cn: "講道附帶可實操的實戰練習。", en: "Sermons accompanied by application exercises." },
+                    { cn: "建立一對一的導師陪伴系統。", en: "Clear discipleship plan for all believers." },
+                    { cn: "【穩定度】門訓路徑（課程／小組／一對一）過去一年是否穩定執行，少因人事變動而中斷？", en: "Stability of discipleship path." },
+                    { cn: "【同工負荷】導師、小組長或課程同工是否常感透支或無人替補？", en: "Load on mentors/coaches." },
+                    { cn: "【方向一致】對「下一步門訓是什麼」牧者、同工與會眾的理解是否大致一致？", en: "Clarity of next step in discipleship." }
+                ]},
+                { name: '團契', en: 'Fellowship', questions: [
+                    { cn: "建立充滿恩慈、接納與支持的環境。", en: "Environment of grace, acceptance, and support." },
+                    { cn: "提供主日以外的建立關係機會。", en: "Opportunities beyond Sunday morning services." },
+                    { cn: "信徒常在教會時間外私下聚會。", en: "Members spend time together outside church time." },
+                    { cn: "為新人提供清晰的連線路徑。", en: "Clear pathway for new or disconnected." },
+                    { cn: "不過度增加志願者負擔。", en: "Careful not to overburden staff and volunteers." },
+                    { cn: "小組議程包含深化關係的部分。", en: "Agendas designed to deepen relationships." },
+                    { cn: "衝突能依照聖經原則真誠化解。", en: "Sermons on community with other Christians." },
+                    { cn: "信徒彼此了解對方的家庭生活。", en: "Relationships with God and His people." },
+                    { cn: "信徒樂於在他人有難時提供幫助。", en: "Stories of needs being met by members." },
+                    { cn: "肯定與讚美多於批評與指責。", en: "grace, acceptance, support, and mutual encouragement." },
+                    { cn: "【穩定度】小組／團契聚會與關懷節奏是否穩定，少反覆改期或臨時取消？", en: "Stability of fellowship rhythm." },
+                    { cn: "【同工負荷】組長、招待、關懷同工是否身兼過多線而疲憊？", en: "Load on fellowship leaders." },
+                    { cn: "【方向一致】對「要建造怎樣的相交與衝突修復文化」是否有共同說法？", en: "Shared vision for fellowship culture." }
+                ]},
+                { name: '宣教/服事', en: 'Mission/Ministry', questions: [
+                    { cn: "有計劃地識別並滿足內外慈惠需求。", en: "Plan to meet benevolent needs in congregation and community." },
+                    { cn: "提供發現恩賜與才幹的途徑。", en: "Pathway to find ministries for gifts and talents." },
+                    { cn: "領袖裝備信徒，事奉由信徒完成。", en: "Leadership equips; ministry performed by members." },
+                    { cn: "提供主日以外的服事參與機會。", en: "Ministry involvement other than Sundays." },
+                    { cn: "服事組織良好，提前排班排位。", en: "Service is well organized; scheduling planned in advance." },
+                    { cn: "定期公開表揚慶祝志願者。", en: "Volunteers publicly acknowledged and celebrated." },
+                    { cn: "有國內外宣教計劃與資金支持。", en: "Plan and resources for local and international missions." },
+                    { cn: "鼓勵並裝備成員參與短宣。", en: "Encouraged and equipped for short term missions." },
+                    { cn: "教會樂意參與開拓新教會。", en: "Open to participating in a new church start." },
+                    { cn: "為事工擴展預留了專門資金。", en: "Financial resources set aside for expanding ministry." },
+                    { cn: "【穩定度】本地／慈惠／短宣等服事節奏是否穩定，少一陣子一陣子？", en: "Stability of ministry rhythm." },
+                    { cn: "【同工負荷】第一線服事者是否常感到人力吃緊或無法請假？", en: "Load on frontline servants." },
+                    { cn: "【方向一致】服事優先序與「為何做」是否在長執與部門間說得清楚？", en: "Alignment on ministry priorities." }
+                ]},
+                { name: '崇拜', en: 'Worship', questions: [
+                    { cn: "崇拜能讓人經歷上帝真實同在。", en: "Experience presence of God." },
+                    { cn: "使用多元創意元素豐富流程。", en: "Variety of creative elements in worship." },
+                    { cn: "音樂水準一致，不讓人分心。", en: "Consistent caliber of musicianship." },
+                    { cn: "對未信者友好並解釋核心術語。", en: "Acknowledge presence of those not yet committed." },
+                    { cn: "忠實且具說服力地宣講聖經。", en: "Word of God proclaimed faithfully." },
+                    { cn: "每場聚會提供福音回應機會。", en: "Opportunity for spiritually lost to respond." },
+                    { cn: "將奉獻視為崇拜的一部分。", en: "Offering as an act of worship." },
+                    { cn: "為不同年齡提供合適崇拜體驗。", en: "Age-appropriate worship experiences." },
+                    { cn: "崇拜後成員感受到受差遣動力。", en: "Value corporate experience." },
+                    { cn: "技術設備輔助而非干擾崇拜。", en: "calibers of musicianship does not detract." },
+                    { cn: "【穩定度】主日／禱告會等崇拜節奏與流程品質是否穩定（少突發大改）？", en: "Stability of worship gatherings." },
+                    { cn: "【同工負荷】音響、招待、敬拜團等是否長期同一批人扛？", en: "Load on worship teams." },
+                    { cn: "【方向一致】崇拜要帶會眾往哪裡（敬拜、聖道、回應）是否一致？", en: "Alignment on worship direction." }
+                ]},
+                { name: '領導力', en: 'Leadership', questions: [
+                    { cn: "有清晰的使命宣言並廣為傳達。", en: "Written mission statement communicated well." },
+                    { cn: "牧者經常與會眾溝通異象。", en: "Pastor communicates vision often." },
+                    { cn: "決策過程透明且無官僚氣息。", en: "Transparent, bureaucracy-free decisions." },
+                    { cn: "領袖團隊表現出合一與和諧。", en: "Leadership is unified and harmonious." },
+                    { cn: "領袖被授權負責其所屬領域。", en: "Leaders empowered to oversee responsibility." },
+                    { cn: "有清楚的領袖發展與傳承途徑。", en: "Pathway to develop new leaders." },
+                    { cn: "領袖關注同工的身心靈健康。", en: "not overburden staff members and volunteers." },
+                    { cn: "決策權責清晰明確。", en: "How, when and by whom decisions are made." },
+                    { cn: "領袖樂於接受建議並自我調整。", en: "Reassess and redesign methods." },
+                    { cn: "已制定或正制定繼任計劃。", en: "Succession plan for senior leader." },
+                    { cn: "【穩定度】會議、決策與溝通節奏是否穩定可預期，少朝令夕改？", en: "Stability of leadership rhythm." },
+                    { cn: "【同工負荷】牧者／長執／核心同工的主觀壓力與責任是否過重？", en: "Load on leaders." },
+                    { cn: "【方向一致】對教會異象與本季優先序，領袖團隊是否說法一致？", en: "Vision alignment among leaders." }
+                ]},
+                { name: '管家職分', en: 'Stewardship', questions: [
+                    { cn: "成員了解教會資金如何流向。", en: "Members know how financial resources are spent." },
+                    { cn: "領袖在奉獻上作好榜樣。", en: "Leaders exemplify Biblical stewardship." },
+                    { cn: "每年至少有一次管家專題教育。", en: "Stewardship emphasis at least once per year." },
+                    { cn: "提供基督徒理財管理課程。", en: "Financial management classes and training." },
+                    { cn: "能按時滿足所有財務承諾。", en: "Consistently meeting financial obligations." },
+                    { cn: "有應付突發情況的備用金。", en: "Cash reserve for unexpected expenses." },
+                    { cn: "牧者待遇充足，無財務壓力。", en: "Pastor's compensation is sufficient." },
+                    { cn: "預算增長支持事工擴張。", en: "Budget growth allowing for expanded ministry." },
+                    { cn: "設施維護良好，滿足現狀。", en: "Building/equipment well maintained." },
+                    { cn: "對外形象印刷物具有高品質。", en: "Printed materials are God-honoring." },
+                    { cn: "【穩定度】奉獻、預算與設施維護的節奏是否穩定（少突發斷糧）？", en: "Stability of stewardship practices." },
+                    { cn: "【同工負荷】財務、總務等同工是否人少事多、長期加班？", en: "Load on stewardship volunteers." },
+                    { cn: "【方向一致】對「錢與設施如何服事使命」長執與會眾是否有共同說法？", en: "Alignment on stewardship messaging." }
+                ]},
+                { name: '人際關係', en: 'Loving Relationships', questions: [
+                    { cn: "信徒之間充滿接納、歡笑與真誠。", en: "Grace, acceptance, laughter and sincerity." },
+                    { cn: "面對衝突能依照聖經原則化解。", en: "Community with other Christians." },
+                    { cn: "成員之間有深厚的歸屬感。", en: "Environment of belonging." },
+                    { cn: "信徒在日常生活中互相守望。", en: "Praying and serving together." },
+                    { cn: "領袖與會友關係平等且親近。", en: "God and His people." },
+                    { cn: "教會文化不注重社交面具。", en: "Authentic designed to deepen relationships." },
+                    { cn: "成員樂於分享個人軟弱。", en: "Sharing life mutually." },
+                    { cn: "對新朋友極具親和力與耐心。", en: "Next steps for guest." },
+                    { cn: "注重實踐彼此相愛的命令。", en: "Living in community with other Christians." },
+                    { cn: "信徒在生活中表現出喜樂。", en: "Enjoy their relationships with one another." },
+                    { cn: "【穩定度】衝突處理與彼此相愛的實踐是否穩定（少只靠一次活動）？", en: "Stability of relational health practices." },
+                    { cn: "【同工負荷】關懷、輔導、調解是否集中在少數人身上？", en: "Load on carers." },
+                    { cn: "【方向一致】對「衝突時如何走聖經步驟」是否有共同理解？", en: "Alignment on conflict resolution." }
+                ]}
+            ],
+            /** 題組 UI：與 answers[dim][i] 對應，勿改順序 */
+            qIdxOverview: [0, 10, 11, 12],
+            qIdxDetail: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            /** 每範疇 2 則開放題，不計分 */
+            openAnswers: Array.from({ length: 8 }, function () { return ['', '']; }),
+            answers: Array.from({ length: 8 }, () => Array(13).fill(0)),
+            aiPlatformsIntl: [
+                { name: 'ChatGPT', subtitle: 'OpenAI', desc: '邏輯與結構強，適合制定複雜的 6 個月轉型計畫與行政架構重組。', url: 'https://chat.openai.com' },
+                { name: 'Claude', subtitle: 'Anthropic', desc: '文筆細膩且具同理心，適合撰寫牧函、家書或同工鼓勵信。', url: 'https://claude.ai' },
+                { name: 'Gemini', subtitle: 'Google', desc: '聯網與檢索能力佳，可輔助查閱教會所在社區的公開統計或趨勢（請自行核實來源）。', url: 'https://gemini.google.com' }
+            ],
+            aiPlatformsZh: [
+                { name: 'Kimi 智能助手', subtitle: '月之暗面', desc: '擅長長文本，可上傳整份報告並總結關鍵痛點；適合中文長文梳理。', url: 'https://kimi.ai' },
+                { name: '通義千問（Qwen）', subtitle: '阿里雲', desc: '對中華文化與在地社會脈絡理解較深，適合設計社區福音外展與本地化策略草案。', url: 'https://tongyi.aliyun.com' },
+                { name: '智譜清言（ChatGLM）', subtitle: '智譜 AI', desc: '邏輯推演清楚，適合把診斷結果轉成可追蹤的 SMART 目標與檢核表草稿。', url: 'https://chatglm.cn' }
+            ],
+            aiExamples: [
+                {
+                    title: '例題 A：針對「危險區域」開發轉型計畫（最短木板）',
+                    content: `「請扮演一位具備 [ 請填：年資，如 20 年 ] 經驗的教會增長顧問。我所在的教會位於 [ 請填：地區，如台北市鬧區 ]，規模約 [ 請填：人數，如 100 人 ]，會友主要是 [ 請填：會友組合，如年輕雙薪家庭 ]。
+
+根據剛完成的診斷報告，我們在 [ 請填：最弱範疇名稱，如全人小組 ] 得分最低，只有 [ 請填：分數，如 15 分 ]，屬於 [ 請填：區間，如危機區 ]。主要問題是 [ 請填：一句話描述現況，如聚會流於形式、缺乏生命敞開 ]。
+
+請根據 NCD 原則，為我們提供一份為期 [ 請填：月數，如 6 個月 ] 的 [ 請填：行動主題，如小組活化行動清單 ]。我需要具體到每個月的主題，以及如何評估進度。」`
+                },
+                {
+                    title: '例題 B：將「教導附件」轉化為同工培訓內容',
+                    content: `「我現在擔任 [ 教會長老 ]。我想利用報告中的 [ 『八種健康特質優美標準』 ] 來培訓我們的 [ 執事團隊 ]。
+
+我們的 [ 賦權型領導 ] 得分是 [ 32 分 ]，屬於 [ 邊際區 ]。請根據這個數據，為我設計一份 [ 請填：時長，如 45 分鐘 ] 的 [ 同工工作坊大綱 ]。
+
+大綱必須包含：[ 請填：數量，如 3 個 ] 啟發性的討論問題、[ 請填：數量，如 1 個 ] 實踐練習（主題：[ 請填，如如何落實授權 ]），以及一個結束禱告的方向。」`
+                },
+                {
+                    title: '例題 C：尋求「福音缺口」的創意策略（強項＋機會）',
+                    content: `「請扮演資深牧養導師。我們教會的優勢是 [ 請填：強項範疇，如充滿愛的人際關係 ]（[ 請填：分數，如 45 分 ]），但劣勢是 [ 請填：弱項範疇，如以需要為導向的佈道 ]（[ 請填：分數，如 18 分 ]）。
+
+社區周邊有許多 [ 請填：對象，如外籍移工與獨居老人 ]。請幫我腦力激盪 [ 請填：數量，如 5 個 ] [ 策略交點 ]，教我們如何利用現有的關係優勢，去滿足這群人的具體需要，並轉化為自然增長的佈道機會。」`
+                }
+            ],
+            aiFollowUpPrompts: [
+                { label: '因果分析', prompt: '「為什麼我們的『崇拜／靈性體驗』分數偏高，但『門徒訓練』卻偏低？這兩者之間可能存在什麼系統性矛盾？請用條列方式說明可能原因與可驗證的假設。」' },
+                { label: '預算分配', prompt: '「如果我明年只有 5 萬元的專案預算，根據這份診斷報告，我應該優先投入哪一個範疇最能產生槓桿效應（以點帶面）？請給出理由與分階段運用建議。」' },
+                { label: '溝通話術', prompt: '「我要向會眾宣布：為修復報告中的健康破口，我們需要暫停或調整某些傳統聚會。請幫我草擬一封溫暖但堅定的牧長家書（約 500 字），包含同理、異象連結與下一步邀請。」' }
+            ],
+            smartMinistryGiftStatsInput: '',
+            smartMinistryGiftStatsError: '',
+            smartMinistryGiftStatsSummary: null,
+            smartMinistryGiftStatsImportStatus: '',
+            snapshotStage: 'in-progress',
+            teachingMaterial: [
+                { title: "賦權型領導 (Empowering)", content: "領袖不僅在做事，更在成全聖徒、分授權力與責任。" },
+                { title: "恩賜導向的事奉 (Gift-oriented)", content: "讓對的人在對的位置，發揮神給的才幹，而非僅填補空位。" },
+                { title: "充滿熱情的靈性 (Passionate)", content: "信徒與神的關係是真實且有生命力的，信仰融入日常生活。" },
+                { title: "全人小組 (Holistic Groups)", content: "在小組中分享生命、互相守望，經歷群體的關懷。" }
+            ]
+        }
+    },
+    computed: {
+        catScores() { return this.answers.map(ans => ans.reduce((a, b) => a + b, 0)); },
+        catScoresNormalized() {
+            var SA = typeof window !== 'undefined' ? window.ScalingAdapter : null;
+            var tool = SA && SA.TOOL ? SA.TOOL.NCD_DIM_65 : 'ncd_dim_65';
+            return this.catScores.map(function (raw) {
+                if (SA && typeof SA.toInternalScale === 'function') {
+                    var v = SA.toInternalScale(raw, tool);
+                    return v != null && isFinite(v) ? Math.round(v * 100) / 100 : null;
+                }
+                return null;
+            });
+        },
+        overallNormalized() {
+            var arr = this.catScoresNormalized.filter(function (x) { return x != null && isFinite(x); });
+            if (!arr.length) return null;
+            var avg = arr.reduce(function (s, x) { return s + x; }, 0) / arr.length;
+            return avg.toFixed(2);
+        },
+        integrationHealthZone() {
+            var n = Number(this.overallNormalized);
+            if (!isFinite(n)) return null;
+            if (n >= 4.0) return "green";
+            if (n >= 3.0) return "yellow";
+            return "red";
+        },
+        integrationZoneLabel() {
+            var z = this.integrationHealthZone;
+            if (z === "green") return "綠燈";
+            if (z === "yellow") return "黃燈";
+            if (z === "red") return "紅燈";
+            return "—";
+        },
+        integrationGovernanceLine() {
+            var z = this.integrationHealthZone;
+            if (z === "green") {
+                return "持續穩定，擴張影響：在守住節奏與牧養前提下，可延伸事工與跨界合作。";
+            }
+            if (z === "yellow") {
+                return "邊際調校，保守擴張：先補強最弱一維並固定檢核日，再談新線。";
+            }
+            if (z === "red") {
+                return "暫停擴張，修復核心：以牧養止血、治理對齊與負荷界線為優先。";
+            }
+            return "";
+        },
+        integrationHealthCardClass() {
+            var z = this.integrationHealthZone;
+            if (z === "green") return "border-emerald-300 bg-emerald-50/90";
+            if (z === "yellow") return "border-amber-300 bg-amber-50/90";
+            if (z === "red") return "border-rose-300 bg-rose-50/90";
+            return "border-slate-200 bg-slate-50";
+        },
+        integrationHealthZoneBadgeClass() {
+            var z = this.integrationHealthZone;
+            if (z === "green") return "text-emerald-800";
+            if (z === "yellow") return "text-amber-800";
+            if (z === "red") return "text-rose-800";
+            return "text-slate-600";
+        },
+        overallScore() { return (this.catScores.reduce((a, b) => a + b, 0) / 8).toFixed(1); },
+        worstCat() { let min = Math.min(...this.catScores); return this.categories[this.catScores.indexOf(min)].name; },
+        worstScore() { return Math.min(...this.catScores); },
+        healthLabel() { let s = Number(this.overallScore); if(s >= 52) return '健康區 (Healthy)'; if(s >= 39) return '邊際區 (Marginal)'; return '危機區 (Critical)'; },
+        churchSizeLabel() { const map = { '10': '10人微型', '100': '100人小型', '500': '中型', '1000': '千人大型' }; return map[this.churchInfo.size] || '未定'; },
+        suiteTeach() { return ChurchToolkit.TOOL_SUITE_TEACHING; },
+        beforeYouPlan() {
+            return ChurchToolkit.beforeYouPlanHealth({
+                overallScore: this.overallScore,
+                healthLabel: this.healthLabel,
+                catScores: this.catScores,
+                categoryNames: this.categories.map(function (c) { return c.name; }),
+                churchSize: this.churchInfo.size
+            });
+        },
+        threeSuggestions() {
+            return ChurchToolkit.buildThreeHealthSuggestions(this.catScores, this.categories.map(function (c) { return c.name; }), this.churchInfo.size);
+        },
+        hasAnyOpenObserve() {
+            for (var i = 0; i < this.categories.length; i++) {
+                if (this.hasOpenObserveRow(i)) return true;
+            }
+            return false;
+        },
+        openAnswersAiSnippet() {
+            return ChurchToolkit.formatHealthOpenContext(
+                this.openAnswers,
+                this.categories.map(function (c) { return c.name; }),
+                200,
+                1200
+            );
+        },
+        healthHistory() {
+            if (window.ChurchToolkit && typeof ChurchToolkit.loadHealthHistory === 'function') {
+                return ChurchToolkit.loadHealthHistory();
+            }
+            return [];
+        },
+        baselineSnapshot() {
+            var hist = this.healthHistory || [];
+            for (var i = 0; i < hist.length; i++) {
+                var s = hist[i];
+                if (!s || !Array.isArray(s.dimensions) || !s.dimensions.length) continue;
+                if (s.stage === 'baseline') return s;
+            }
+            return hist.length ? hist[0] : null;
+        },
+        radarCompareMeta() {
+            var b = this.baselineSnapshot;
+            if (!b || !b.savedAt) return '';
+            var d = new Date(b.savedAt);
+            if (!isFinite(d.getTime())) return '';
+            return '（基線：' + d.toLocaleDateString('zh-TW') + '）';
+        }
+    },
+    mounted() {
+        var p = ChurchToolkit.loadHealthProfile();
+        if (p) this.churchInfo = Object.assign({}, this.churchInfo, p);
+        var hh = ChurchToolkit.loadHealthHistory && ChurchToolkit.loadHealthHistory();
+        this.snapshotStage = !hh || !hh.length ? 'baseline' : 'in-progress';
+        var hr = ChurchToolkit.loadHealthResult && ChurchToolkit.loadHealthResult();
+        if (hr && hr.openAnswers && Array.isArray(hr.openAnswers)) {
+            hr.openAnswers.forEach((function (row, i) {
+                if (i >= 8 || !Array.isArray(row)) return;
+                if (row[0] != null) this.openAnswers[i][0] = String(row[0]);
+                if (row[1] != null) this.openAnswers[i][1] = String(row[1]);
+            }).bind(this));
+        }
+    },
+    methods: {
+        goFromProfile() {
+            ChurchToolkit.saveHealthProfile(this.churchInfo);
+            this.step = 1;
+            window.scrollTo(0, 0);
+        },
+        persistHealthResult() {
+            var SA = typeof window !== 'undefined' ? window.ScalingAdapter : null;
+            var tool = SA && SA.TOOL ? SA.TOOL.NCD_DIM_65 : 'ncd_dim_65';
+            var result = {
+                overallScore: Number(this.overallScore),
+                overallNormalized: this.overallNormalized != null ? Number(this.overallNormalized) : null,
+                healthLabel: this.healthLabel,
+                worstCat: this.worstCat,
+                worstScore: this.worstScore,
+                churchInfo: JSON.parse(JSON.stringify(this.churchInfo)),
+                dimensions: this.categories.map((function (c, i) {
+                    var raw = this.catScores[i];
+                    var norm = this.catScoresNormalized[i];
+                    if (norm == null && SA && typeof SA.toInternalScale === 'function') {
+                        var v = SA.toInternalScale(raw, tool);
+                        norm = v != null && isFinite(v) ? Math.round(v * 100) / 100 : null;
+                    }
+                    return {
+                        id: ChurchToolkit.HEALTH_DIM_IDS[i],
+                        name: c.name,
+                        score: raw,
+                        max: 65,
+                        normalizedScore: norm,
+                        normalizedScale: 'internal_1_5'
+                    };
+                }).bind(this)),
+                suggestions: ChurchToolkit.buildThreeHealthSuggestions(this.catScores, this.categories.map(function (c) { return c.name; }), this.churchInfo.size),
+                openAnswers: JSON.parse(JSON.stringify(this.openAnswers))
+            };
+            ChurchToolkit.saveHealthResult(result, { stage: this.snapshotStage });
+            if (window.CTAOSBridge && window.CTAOSBridge.generate) {
+                try { window.CTAOSBridge.generate('ncd'); } catch (ctaErr) {}
+            }
+            try {
+                var diagnosticsPayload = {
+                    version: 1,
+                    source: 'ncd_planning',
+                    church_id: getChurchId(),
+                    timestamp: new Date().toISOString(),
+                    overallScore: result.overallScore,
+                    overallNormalized: result.overallNormalized,
+                    healthLabel: result.healthLabel,
+                    dimensions: result.dimensions,
+                    dimensionsBilingual: result.dimensions.map(function (d) {
+                        return {
+                            id: d.id,
+                            nameZh: d.name,
+                            nameZhEn: NCD_DIM_BILINGUAL[d.id] || d.name
+                        };
+                    }),
+                    suggestions: result.suggestions
+                };
+                storageSet(diagKey(), JSON.stringify(diagnosticsPayload));
+            } catch (e) {}
+            this.syncNcdResultToBridge(result);
+        },
+        syncNcdResultToBridge(result) {
+            try {
+                if (!window.Bible100Backend || !window.Bible100Backend.getBridge) return;
+                var bridge = window.Bible100Backend.getBridge();
+                if (!bridge || typeof bridge.triggerWorkflow !== 'function') return;
+                var memberId = this.churchInfo && this.churchInfo.memberId ? this.churchInfo.memberId : null;
+                bridge.triggerWorkflow('SURVEY_COMPLETED', {
+                    module: 'PLANNING',
+                    memberId: memberId,
+                    type: 'NCD',
+                    score: Number(result && result.overallScore ? result.overallScore : 0),
+                    maxScale: 65,
+                    payload: result,
+                    submittedAt: new Date().toISOString()
+                });
+            } catch (e) {}
+        },
+        parseSmartMinistryGiftStats() {
+            this.smartMinistryGiftStatsError = '';
+            this.smartMinistryGiftStatsSummary = null;
+
+            var raw = String(this.smartMinistryGiftStatsInput || '').trim();
+            if (!raw) {
+                this.smartMinistryGiftStatsError = '請先貼上 JSON 內容。';
+                return;
+            }
+
+            try {
+                var parsed = JSON.parse(raw);
+                var peopleCount = parsed.peopleCount;
+                var avgGiftScores = parsed.avgGiftScores;
+                var topGiftFrequency = parsed.topGiftFrequency;
+
+                var valid =
+                    typeof peopleCount === 'number' &&
+                    avgGiftScores && typeof avgGiftScores === 'object' && !Array.isArray(avgGiftScores) &&
+                    topGiftFrequency && typeof topGiftFrequency === 'object' && !Array.isArray(topGiftFrequency);
+
+                if (!valid) {
+                    this.smartMinistryGiftStatsError = 'JSON 格式不符合預期：需要 peopleCount、avgGiftScores、topGiftFrequency。';
+                    return;
+                }
+
+                this.smartMinistryGiftStatsSummary = {
+                    peopleCount: peopleCount,
+                    avgGiftScores: avgGiftScores,
+                    topGiftFrequency: topGiftFrequency
+                };
+            } catch (err) {
+                this.smartMinistryGiftStatsError = 'JSON 解析失敗，請確認格式正確。';
+            }
+        },
+        importSmartMinistryGiftStats() {
+            var GIFT_PROFILE_STORAGE_KEY = 'smart_ministry_gift_profiles';
+            this.smartMinistryGiftStatsError = '';
+            this.smartMinistryGiftStatsSummary = null;
+            this.smartMinistryGiftStatsImportStatus = '';
+
+            function aggregateFromProfiles(profiles) {
+                var giftKeysMap = {};
+                var topGiftFrequency = {};
+                var avgGiftScores = {};
+                var peopleCount = profiles.length;
+
+                profiles.forEach(function (profile) {
+                    var scores = profile && profile.scores && typeof profile.scores === 'object' ? profile.scores : {};
+                    Object.keys(scores).forEach(function (key) {
+                        var value = Number(scores[key]);
+                        if (!isFinite(value)) return;
+                        if (!avgGiftScores[key]) avgGiftScores[key] = 0;
+                        avgGiftScores[key] += value;
+                        giftKeysMap[key] = true;
+                    });
+
+                    var topIds = Array.isArray(profile.topGiftIds) ? profile.topGiftIds : [];
+                    topIds.forEach(function (giftId) {
+                        if (!giftId) return;
+                        if (!topGiftFrequency[giftId]) topGiftFrequency[giftId] = 0;
+                        topGiftFrequency[giftId] += 1;
+                        giftKeysMap[giftId] = true;
+                    });
+                });
+
+                Object.keys(giftKeysMap).forEach(function (key) {
+                    var total = avgGiftScores[key] || 0;
+                    avgGiftScores[key] = peopleCount ? Number((total / peopleCount).toFixed(2)) : 0;
+                    if (!topGiftFrequency[key]) topGiftFrequency[key] = 0;
+                });
+
+                return {
+                    schemaVersion: '0.1',
+                    source: GIFT_PROFILE_STORAGE_KEY,
+                    peopleCount: peopleCount,
+                    avgGiftScores: avgGiftScores,
+                    topGiftFrequency: topGiftFrequency,
+                    generatedAt: new Date().toISOString()
+                };
+            }
+
+            try {
+                var raw = storageGet(GIFT_PROFILE_STORAGE_KEY);
+                var parsed = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(parsed)) {
+                    this.smartMinistryGiftStatsError = '本機資料格式錯誤：smart_ministry_gift_profiles 應為陣列。';
+                    return;
+                }
+
+                var validProfiles = parsed.filter(function (row) {
+                    return row && typeof row === 'object' && row.scores && typeof row.scores === 'object';
+                });
+
+                if (!validProfiles.length) {
+                    this.smartMinistryGiftStatsError = '找不到可用 GiftProfile。請先在 Smart Ministry 問卷提交至少一筆資料。';
+                    return;
+                }
+
+                var payload = aggregateFromProfiles(validProfiles);
+                this.smartMinistryGiftStatsInput = JSON.stringify(payload, null, 2);
+                this.smartMinistryGiftStatsImportStatus = '已匯入 ' + String(payload.peopleCount) + ' 筆 GiftProfile，並自動完成解析。';
+                this.parseSmartMinistryGiftStats();
+            } catch (err) {
+                this.smartMinistryGiftStatsError = '一鍵匯入失敗：' + (err && err.message ? err.message : '未知錯誤');
+            }
+        },
+        goNext() {
+            if (this.step < 8) {
+                this.step++;
+                window.scrollTo(0, 0);
+            } else {
+                this.persistHealthResult();
+                this.step = 9;
+                this.$nextTick(function () { this.initChart(); }.bind(this));
+            }
+        },
+        goPrev() { if(this.step > 0) { this.step--; window.scrollTo(0,0); } },
+        getHealthZone(s) { var n = Number(s); if(n >= 52) return { bg: 'bg-emerald-100', text: 'text-emerald-700', label: '健康區', desc: '目前體質良好。' }; if(n >= 39) return { bg: 'bg-blue-100', text: 'text-blue-700', label: '邊際區', desc: '需進行微調。' }; return { bg: 'bg-red-100', text: 'text-red-700', label: '危機區', desc: '需緊急處理。' }; },
+        getDetailedDiagnosis(cat, s) { return ChurchToolkit.healthDiagnosisLine(cat, s, this.churchInfo.size); },
+        getDetailedTips(cat, s) { return ChurchToolkit.healthActionTips(cat, s, this.churchInfo.size); },
+        trimObserveLine(s, max) {
+            if (s == null || s === '') return '';
+            var t = String(s).trim();
+            if (!t) return '';
+            var n = Number(max) > 0 ? Number(max) : 160;
+            if (t.length <= n) return t;
+            return t.slice(0, n) + '…';
+        },
+        hasOpenObserveRow(idx) {
+            var row = this.openAnswers[idx];
+            if (!row || !Array.isArray(row)) return false;
+            return !!(String(row[0] || '').trim() || String(row[1] || '').trim());
+        },
+        openObserveTrim0(idx) {
+            var row = this.openAnswers[idx];
+            if (!row) return '';
+            return this.trimObserveLine(row[0], 160);
+        },
+        openObserveTrim1(idx) {
+            var row = this.openAnswers[idx];
+            if (!row) return '';
+            return this.trimObserveLine(row[1], 160);
+        },
+        openObserveFull0(idx) {
+            var row = this.openAnswers[idx];
+            if (!row) return '';
+            return String(row[0] == null ? '' : row[0]).trim();
+        },
+        openObserveFull1(idx) {
+            var row = this.openAnswers[idx];
+            if (!row) return '';
+            return String(row[1] == null ? '' : row[1]).trim();
+        },
+        initChart() {
+            const el = document.getElementById('resultChart');
+            if (!el) return;
+            if (el._healthChart) { el._healthChart.destroy(); }
+            const avg = Number(this.overallScore);
+            const normList = this.catScoresNormalized;
+            el._healthChart = new Chart(el, {
+                type: 'bar',
+                data: { labels: this.categories.map(c => c.name), datasets: [{ label: 'NCD 原始分（/65）', data: this.catScores, backgroundColor: this.catScores.map(s => s < 39 ? '#ef4444' : '#4f46e5'), borderRadius: 6 }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    scales: { y: { min: 0, max: 65, title: { display: true, text: '原始分 0–65' } } },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (ctx) {
+                                    var i = ctx.dataIndex;
+                                    var raw = ctx.raw;
+                                    var lines = ['原始分：' + raw + ' / 65'];
+                                    var ni = normList[i];
+                                    if (ni != null && isFinite(ni)) {
+                                        lines.push('內部健康標度：' + ni.toFixed(2) + ' / 5.0');
+                                    } else if (window.ScalingAdapter && typeof window.ScalingAdapter.toInternalScale === 'function') {
+                                        var v = window.ScalingAdapter.toInternalScale(raw, window.ScalingAdapter.TOOL.NCD_DIM_65);
+                                        if (v != null) lines.push('內部健康標度：' + Number(v).toFixed(2) + ' / 5.0');
+                                    }
+                                    lines.push('參考：3.0＝邊際（黃燈）、4.0＝健康（綠燈）');
+                                    return lines.join('\n');
+                                }
+                            }
+                        },
+                        afterDraw: function (chart) {
+                            const ctx = chart.ctx;
+                            const left = chart.chartArea.left;
+                            const right = chart.chartArea.right;
+                            const yVal = chart.scales.y.getPixelForValue(avg);
+                            ctx.save();
+                            ctx.strokeStyle = 'red';
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([5, 5]);
+                            ctx.beginPath();
+                            ctx.moveTo(left, yVal);
+                            ctx.lineTo(right, yVal);
+                            ctx.stroke();
+                            ctx.restore();
+                        }
+                    }
+                }
+            });
+            this.initTrendRadarChart();
+        },
+        initTrendRadarChart() {
+            const el = document.getElementById('trendRadarChart');
+            if (!el) return;
+            if (el._trendRadarChart) { el._trendRadarChart.destroy(); }
+            var labels = this.categories.map(function (c) { return c.name; });
+            var current = (this.catScoresNormalized || []).map(function (x) {
+                return x != null && isFinite(x) ? Number(x.toFixed(2)) : null;
+            });
+            var baseline = labels.map(function () { return null; });
+            var b = this.baselineSnapshot;
+            if (b && Array.isArray(b.dimensions)) {
+                var byId = {};
+                b.dimensions.forEach(function (d) {
+                    if (d && d.id) {
+                        byId[d.id] = d.normalizedScore != null ? Number(d.normalizedScore) : null;
+                    }
+                });
+                baseline = ChurchToolkit.HEALTH_DIM_IDS.map(function (id) {
+                    var v = byId[id];
+                    return v != null && isFinite(v) ? Number(v.toFixed(2)) : null;
+                });
+            }
+            el._trendRadarChart = new Chart(el, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Baseline（初診）',
+                            data: baseline,
+                            borderColor: '#94a3b8',
+                            backgroundColor: 'rgba(148,163,184,0.18)',
+                            pointBackgroundColor: '#64748b',
+                            pointRadius: 3
+                        },
+                        {
+                            label: 'Current（本次）',
+                            data: current,
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37,99,235,0.26)',
+                            pointBackgroundColor: '#1d4ed8',
+                            pointRadius: 3.5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            min: 1,
+                            max: 5,
+                            ticks: { stepSize: 1 },
+                            pointLabels: { font: { size: 11 } }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (ctx) {
+                                    var v = ctx.raw;
+                                    if (v == null || !isFinite(v)) return ctx.dataset.label + '：—';
+                                    return ctx.dataset.label + '：' + Number(v).toFixed(2) + ' / 5.0';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        },
+        downloadPDF() { const el = document.getElementById('final-report'); html2pdf().from(el).set({ margin: 0.3, filename: 'Church_Health_Report.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { format: 'a4' }, pagebreak: { mode: 'css', before: '.page-break' } }).save(); },
+        shareHealthReport() {
+            const b = this.beforeYouPlan;
+            ChurchToolkit.shareWhatsApp('【教會健康診斷摘要】', [
+                '教會：' + (this.churchInfo.name || '—'),
+                '均分：' + this.overallScore + '（' + this.healthLabel + '）',
+                '最弱：' + this.worstCat + '（' + this.worstScore + '/65）',
+                (b.shareSnippet || '').slice(0, 320)
+            ]);
+        }
+    }
+}).mount('#app');
+</script>
+<script src="js/cta_os_runtime.js"></script>
+<script src="js/cta_os_bridge.js"></script>
+<script>
+  CTAOSBridge.initPage({
+    toolId: 'ncd',
+    reportAnchor: '#app',
+    watchStorage: ['chp2026-health-result'],
+    pollMs: 6000,
+    fab: true
+  });
+</script>
+</body>
+</html>

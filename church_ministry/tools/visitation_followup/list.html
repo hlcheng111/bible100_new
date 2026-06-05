@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>探訪跟進 · 清單</title>
+  <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <link rel="stylesheet" href="_shared.css">
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../../js/data_trust_badge.js"></script>
+  <script src="tool.js"></script>
+  <style>.cm-tool-hero { background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%); }</style>
+</head>
+<body class="cm-tool-page">
+  <nav class="cm-back-bar">
+    <a class="cm-back-bar__link" href="index.html">← 探訪跟進</a>
+  </nav>
+  <header class="cm-tool-hero">
+    <h1>📋 跟進清單</h1>
+    <p>篩選與更新狀態 · 複製關懷文字（copy_only · 不會自動發送）</p>
+  </header>
+  <nav class="cm-tool-nav" aria-label="工具分頁" id="toolNav"></nav>
+  <div id="dataTrustMount"></div>
+  <main class="cm-tool-main">
+    <section class="cm-card" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+      <label class="cm-field" style="min-width:120px;">優先
+        <select id="filterPriority"><option value="">全部</option><option value="urgent">urgent</option><option value="high">high</option><option value="normal">normal</option><option value="low">low</option></select>
+      </label>
+      <label class="cm-field" style="min-width:120px;">狀態
+        <select id="filterStatus"><option value="">全部</option><option value="pending">pending</option><option value="contacted">contacted</option><option value="completed">completed</option><option value="draft">draft</option></select>
+      </label>
+      <label class="cm-field" style="min-width:100px;">member_id
+        <input type="text" id="filterMember" placeholder="可選">
+      </label>
+      <label class="cm-field" style="min-width:120px;">到期起
+        <input type="date" id="filterFrom">
+      </label>
+      <label class="cm-field" style="min-width:120px;">到期迄
+        <input type="date" id="filterTo">
+      </label>
+      <button type="button" class="cm-btn cm-btn-secondary" id="btnFilter">套用篩選</button>
+    </section>
+    <section class="cm-card">
+      <div id="listHost"></div>
+      <p class="cm-muted" style="font-size:10px;margin-top:10px;">標示 copy_only：關懷稿僅供複製，不會自動通知 LINE/WhatsApp。</p>
+    </section>
+  </main>
+  <script>
+    document.getElementById('toolNav').innerHTML = VisitationFollowupTool.renderToolNav('list');
+    VisitationFollowupTool.renderTrustBadge('dataTrustMount', {
+      write_behavior: 'read_only',
+      notify_behavior: 'copy_only',
+      privacy_level: 'pastoral_sensitive'
+    });
+
+    function renderList() {
+      var b = VisitationFollowupTool.bridge();
+      var host = document.getElementById('listHost');
+      if (!b || !b.listPastoralFollowups) {
+        host.innerHTML = '<p class="cm-muted">Bridge 未就緒</p>';
+        return;
+      }
+      var filters = { excludeArchived: false };
+      var pr = document.getElementById('filterPriority').value;
+      var st = document.getElementById('filterStatus').value;
+      var mid = document.getElementById('filterMember').value.trim();
+      if (pr) filters.priority = pr;
+      if (st) filters.status = st;
+      if (mid) filters.memberId = mid;
+      if (document.getElementById('filterFrom').value) filters.fromDate = document.getElementById('filterFrom').value;
+      if (document.getElementById('filterTo').value) filters.toDate = document.getElementById('filterTo').value;
+      var rows = b.listPastoralFollowups(filters) || [];
+      if (!rows.length) {
+        host.innerHTML = '<p class="cm-muted">尚無符合條件的任務 · <a href="form.html">新增</a></p>';
+        return;
+      }
+      host.innerHTML = rows.map(function (t) {
+        var noteBtn = t.note
+          ? '<button type="button" class="cm-btn cm-btn-secondary btn-sensitive-note" data-id="' + t.id + '">查看敏感備註</button>' +
+            '<div class="sensitive-note-panel" id="note-panel-' + t.id + '" style="display:none;margin-top:8px;padding:10px;background:#fef3c7;border-left:3px solid #d97706;border-radius:6px;">' +
+            '<p style="font-size:10px;color:#92400e;margin:0 0 6px;font-weight:600;">牧養敏感資料，請限牧者／授權同工查看</p>' +
+            '<p class="note-body" style="margin:0;white-space:pre-wrap;font-size:11px;"></p></div>'
+          : '';
+        return '<div class="cm-candidate" style="flex-direction:column;align-items:stretch;" data-task-id="' + t.id + '">' +
+          '<div style="font-size:12px;line-height:1.55;">' +
+          '<div><strong>' + VisitationFollowupTool.esc(t.member_name || t.member_id) + '</strong></div>' +
+          '<div class="cm-muted">原因：' + VisitationFollowupTool.esc(t.reason) +
+          ' · 優先 <span class="cm-tag">' + VisitationFollowupTool.esc(t.priority) + '</span>' +
+          ' · 到期 ' + VisitationFollowupTool.esc(t.due_date) +
+          ' · 狀態 ' + VisitationFollowupTool.esc(t.status) + '</div></div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:flex-start;">' +
+          noteBtn +
+          '<button type="button" class="cm-btn cm-btn-secondary btn-contacted" data-id="' + t.id + '">標記 contacted</button>' +
+          '<button type="button" class="cm-btn cm-btn-secondary btn-completed" data-id="' + t.id + '">標記 completed</button>' +
+          '<button type="button" class="cm-btn cm-btn-success btn-snippet" data-id="' + t.id + '">📋 複製關懷文字</button>' +
+          '<a href="form.html?id=' + encodeURIComponent(t.id) + '" class="cm-btn cm-btn-primary" style="text-decoration:none;">編輯</a>' +
+          '</div></div>';
+      }).join('');
+
+      host.querySelectorAll('.btn-sensitive-note').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          var row = rows.find(function (r) { return String(r.id) === String(id); });
+          var panel = document.getElementById('note-panel-' + id);
+          if (!panel) return;
+          if (panel.style.display === 'none') {
+            panel.querySelector('.note-body').textContent = (row && row.note) ? row.note : '（無備註）';
+            panel.style.display = 'block';
+            btn.textContent = '收起敏感備註';
+          } else {
+            panel.style.display = 'none';
+            panel.querySelector('.note-body').textContent = '';
+            btn.textContent = '查看敏感備註';
+          }
+        });
+      });
+
+      host.querySelectorAll('.btn-contacted').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          updateStatus(btn.getAttribute('data-id'), 'contacted');
+        });
+      });
+      host.querySelectorAll('.btn-completed').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          updateStatus(btn.getAttribute('data-id'), 'completed');
+        });
+      });
+      host.querySelectorAll('.btn-snippet').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          var row = rows.find(function (r) { return String(r.id) === String(id); });
+          if (!row || !b.buildPastoralFollowupSnippet) return;
+          var sn = b.buildPastoralFollowupSnippet(row);
+          VisitationFollowupTool.copySnippet(sn).then(function () {
+            alert('已複製關懷稿（copy_only · 不會自動通知）');
+          });
+        });
+      });
+    }
+
+    function updateStatus(id, status) {
+      var b = VisitationFollowupTool.bridge();
+      if (!b || !b.savePastoralFollowup) return;
+      if (!confirm('確認將任務 #' + id + ' 標為 ' + status + '？（需人工操作）')) return;
+      try {
+        b.savePastoralFollowup({ id: id, status: status });
+        VisitationFollowupTool.notifySync();
+        renderList();
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    }
+
+    document.getElementById('btnFilter').addEventListener('click', renderList);
+    renderList();
+
+    (function () {
+      var params = new URLSearchParams(window.location.search || '');
+      if (params.get('id')) {
+        var tid = params.get('id');
+        var b = VisitationFollowupTool.bridge();
+        if (b && b.listPastoralFollowups) {
+          var row = (b.listPastoralFollowups({}) || []).find(function (r) { return String(r.id) === tid; });
+          if (row && b.buildPastoralFollowupSnippet) {
+            VisitationFollowupTool.copySnippet(b.buildPastoralFollowupSnippet(row));
+          }
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

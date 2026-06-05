@@ -1,0 +1,333 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音頻編輯 · Audio Editing | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">音頻編輯管理</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">音頻項目</h3>
+                        <button onclick="exportData()" class="bg-green-600 text-white py-1 px-3 rounded text-sm hover:bg-green-700">
+                            <i class="fas fa-download mr-1"></i>導出CSV
+                        </button>
+                    </div>
+                    <div id="audioProjects" class="space-y-4">
+                        <!-- 音頻項目將在這裡動態生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">快速操作</h3>
+                    <div class="space-y-3">
+                        <button onclick="showCreateModal()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-plus mr-2"></i>新增項目
+                        </button>
+                        <button onclick="clearAllData()" class="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700">
+                            <i class="fas fa-trash mr-2"></i>清空數據
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">統計信息</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">總項目數</span>
+                            <span class="text-sm font-medium text-gray-900" id="totalProjects">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">進行中</span>
+                            <span class="text-sm font-medium text-gray-900" id="activeProjects">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">已完成</span>
+                            <span class="text-sm font-medium text-gray-900" id="completedProjects">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯模態框 -->
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4" id="modalTitle">新增音頻項目</h3>
+            <form id="form" onsubmit="saveProject(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">項目名稱</label>
+                        <input type="text" id="title" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">類型</label>
+                        <select id="type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <option value="worship">崇拜錄音</option>
+                            <option value="choir">詩班練習</option>
+                            <option value="sermon">講道錄音</option>
+                            <option value="music">音樂製作</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">時長</label>
+                        <input type="text" id="duration" required placeholder="例如：45分鐘" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">負責團隊</label>
+                        <input type="text" id="team" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">格式</label>
+                        <select id="format" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <option value="WAV">WAV</option>
+                            <option value="MP3">MP3</option>
+                            <option value="FLAC">FLAC</option>
+                            <option value="AAC">AAC</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">狀態</label>
+                        <select id="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <option value="planned">已規劃</option>
+                            <option value="active">進行中</option>
+                            <option value="completed">已完成</option>
+                            <option value="cancelled">已取消</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">進度 (%)</label>
+                        <input type="number" id="progress" min="0" max="100" value="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="flex space-x-3 mt-6">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">保存</button>
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let projects = [];
+        let editingId = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProjects();
+            updateStats();
+        });
+
+        function loadProjects() {
+            const saved = localStorage.getItem('audio_editing_projects');
+            projects = saved ? JSON.parse(saved) : [];
+            renderProjects();
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('audio_editing_projects', JSON.stringify(projects));
+        }
+
+        function renderProjects() {
+            const container = document.getElementById('audioProjects');
+            if (projects.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500">暂无项目，点击"新增項目"开始添加</div>';
+                return;
+            }
+            
+            container.innerHTML = projects.map(project => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">${project.title}</h4>
+                            <div class="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+                                <span>類型：${getTypeName(project.type)}</span>
+                                <span>時長：${project.duration}</span>
+                                <span>團隊：${project.team}</span>
+                                <span>格式：${project.format}</span>
+                            </div>
+                            <div class="mt-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm text-gray-600">進度：</span>
+                                    <div class="w-32 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: ${project.progress}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-600">${project.progress}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(project.status)}">
+                                ${getStatusName(project.status)}
+                            </span>
+                            <button onclick="editProject(${project.id})" class="text-blue-600 hover:text-blue-800 p-2">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteProject(${project.id})" class="text-red-600 hover:text-red-800 p-2">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getTypeName(type) {
+            const names = {
+                'worship': '崇拜錄音',
+                'choir': '詩班練習',
+                'sermon': '講道錄音',
+                'music': '音樂製作'
+            };
+            return names[type] || type;
+        }
+
+        function getStatusName(status) {
+            const names = {
+                'planned': '已規劃',
+                'active': '進行中',
+                'completed': '已完成',
+                'cancelled': '已取消'
+            };
+            return names[status] || status;
+        }
+
+        function getStatusBadgeClass(status) {
+            const classes = {
+                'planned': 'bg-yellow-100 text-yellow-800',
+                'active': 'bg-green-100 text-green-800',
+                'completed': 'bg-blue-100 text-blue-800',
+                'cancelled': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function showCreateModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = '新增音頻項目';
+            document.getElementById('form').reset();
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('form').reset();
+            editingId = null;
+        }
+
+        function saveProject(event) {
+            event.preventDefault();
+            
+            const project = {
+                id: editingId || Date.now(),
+                title: document.getElementById('title').value,
+                type: document.getElementById('type').value,
+                duration: document.getElementById('duration').value,
+                team: document.getElementById('team').value,
+                format: document.getElementById('format').value,
+                status: document.getElementById('status').value,
+                progress: parseInt(document.getElementById('progress').value),
+                createdAt: editingId ? projects.find(p => p.id === editingId).createdAt : new Date().toISOString()
+            };
+
+            if (editingId) {
+                const index = projects.findIndex(p => p.id === editingId);
+                projects[index] = project;
+            } else {
+                projects.push(project);
+            }
+
+            saveToStorage();
+            renderProjects();
+            updateStats();
+            closeModal();
+            alert('✅ 項目已保存！');
+        }
+
+        function editProject(id) {
+            const project = projects.find(p => p.id === id);
+            if (!project) return;
+
+            editingId = id;
+            document.getElementById('modalTitle').textContent = '編輯音頻項目';
+            document.getElementById('title').value = project.title;
+            document.getElementById('type').value = project.type;
+            document.getElementById('duration').value = project.duration;
+            document.getElementById('team').value = project.team;
+            document.getElementById('format').value = project.format;
+            document.getElementById('status').value = project.status;
+            document.getElementById('progress').value = project.progress;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function deleteProject(id) {
+            if (!confirm('確定刪除此項目？')) return;
+            
+            projects = projects.filter(p => p.id !== id);
+            saveToStorage();
+            renderProjects();
+            updateStats();
+            alert('✅ 項目已刪除！');
+        }
+
+        function clearAllData() {
+            if (!confirm('確定清空所有數據？此操作不可恢復！')) return;
+            
+            projects = [];
+            saveToStorage();
+            renderProjects();
+            updateStats();
+            alert('✅ 所有數據已清空！');
+        }
+
+        function exportData() {
+            if (projects.length === 0) {
+                alert('⚠️ 没有数据可导出');
+                return;
+            }
+
+            const csvContent = '項目名稱,類型,時長,團隊,格式,狀態,進度,創建日期\n' + 
+                projects.map(p => [
+                    p.title,
+                    getTypeName(p.type),
+                    p.duration,
+                    p.team,
+                    p.format,
+                    getStatusName(p.status),
+                    p.progress + '%',
+                    new Date(p.createdAt).toLocaleDateString('zh-TW')
+                ].join(',')).join('\n');
+
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `音頻編輯項目_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            alert('✅ 數據已導出！');
+        }
+
+        function updateStats() {
+            const totalProjects = projects.length;
+            const activeProjects = projects.filter(p => p.status === 'active').length;
+            const completedProjects = projects.filter(p => p.status === 'completed').length;
+            
+            document.getElementById('totalProjects').textContent = totalProjects;
+            document.getElementById('activeProjects').textContent = activeProjects;
+            document.getElementById('completedProjects').textContent = completedProjects;
+        }
+    </script>
+</body>
+</html>

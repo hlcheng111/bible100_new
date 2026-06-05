@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小組回報 Copilot · Group Report Copilot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../../../js/persistence_provider.js"></script>
+  <script src="../../../js/church_data_bridge_phase1.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <main class="max-w-4xl mx-auto p-4 md:p-6">
+    <header class="bg-white border border-slate-200 rounded-xl p-4 mb-4">
+      <h1 class="text-xl font-bold">🎙️ 小組回報 Copilot</h1>
+      <p class="text-sm text-slate-600 mt-1">口述回報 -> 結構化摘要 -> 人工確認 -> 寫入資料層（Human-in-the-loop）。</p>
+      <p class="text-xs text-slate-500 mt-1">此頁先採文字輸入模擬語音轉文字，可後續串接 Gemini STT。</p>
+    </header>
+
+    <section class="bg-white border border-slate-200 rounded-xl p-4 mb-4">
+      <div class="grid md:grid-cols-3 gap-3 mb-3">
+        <label class="text-sm">小組 ID
+          <input id="groupId" class="mt-1 w-full border rounded px-3 py-2 text-sm" placeholder="e.g. 1">
+        </label>
+        <label class="text-sm">回報者 memberId
+          <input id="reporterId" class="mt-1 w-full border rounded px-3 py-2 text-sm" placeholder="e.g. 101">
+        </label>
+        <label class="text-sm">回報日期
+          <input id="reportDate" type="date" class="mt-1 w-full border rounded px-3 py-2 text-sm">
+        </label>
+      </div>
+      <label class="text-sm font-semibold">口述內容（先以文字代替）</label>
+      <textarea id="rawInput" class="mt-1 w-full min-h-[140px] border rounded px-3 py-2 text-sm" placeholder="例如：這週 8 人出席，1 位新朋友。代禱是王弟兄工作壓力大，姊妹身體不適。下週安排探訪。"></textarea>
+      <div class="mt-3 flex gap-2">
+        <button id="btnAnalyze" class="px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold">1) 產生結構化摘要</button>
+        <button id="btnReset" class="px-4 py-2 rounded border text-sm">重設</button>
+      </div>
+    </section>
+
+    <section class="bg-white border border-slate-200 rounded-xl p-4 mb-4">
+      <h2 class="font-semibold mb-2">2) AI 建議摘要（可編輯）</h2>
+      <textarea id="structuredJson" class="w-full min-h-[220px] border rounded px-3 py-2 text-xs font-mono" placeholder="請先產生摘要"></textarea>
+      <label class="mt-3 flex items-center gap-2 text-sm">
+        <input id="humanConfirm" type="checkbox">
+        我已核對摘要內容，允許寫入資料層
+      </label>
+      <div class="mt-3 flex gap-2">
+        <button id="btnSubmit" class="px-4 py-2 rounded bg-emerald-600 text-white text-sm font-semibold">3) 確認並提交</button>
+        <button id="btnPreview" class="px-4 py-2 rounded border text-sm">預覽提交資料</button>
+      </div>
+      <p id="status" class="mt-3 text-sm"></p>
+    </section>
+
+    <section class="bg-white border border-slate-200 rounded-xl p-4">
+      <h3 class="font-semibold mb-2">最近回報（本機）</h3>
+      <div id="recentList" class="text-sm text-slate-700 space-y-2"></div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = "small_group_report_copilot_records_v1";
+
+      function todayYmd() {
+        return new Date().toISOString().slice(0, 10);
+      }
+
+      function getChurchId() {
+        try {
+          var params = new URLSearchParams(window.location.search || "");
+          return params.get("church_id") || window.CURRENT_CHURCH_ID || "default";
+        } catch (e) {
+          return "default";
+        }
+      }
+
+      function storageGet(key) {
+        try {
+          if (window.PersistenceProvider && typeof window.PersistenceProvider.getInstance === "function") {
+            return window.PersistenceProvider.getInstance().getItem(key);
+          }
+        } catch (e) {}
+        return localStorage.getItem(key);
+      }
+
+      function storageSet(key, value) {
+        try {
+          if (window.PersistenceProvider && typeof window.PersistenceProvider.getInstance === "function") {
+            window.PersistenceProvider.getInstance().setItem(key, value);
+            return;
+          }
+        } catch (e) {}
+        localStorage.setItem(key, value);
+      }
+
+      function parseIntSafe(v) {
+        var n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function parseReport(raw) {
+        var txt = String(raw || "");
+        var attendance = null;
+        var newcomers = 0;
+        var m1 = txt.match(/(\d+)\s*人(出席|參加)/);
+        if (m1) attendance = Number(m1[1]);
+        var m2 = txt.match(/(\d+)\s*位(新朋友|新人)/);
+        if (m2) newcomers = Number(m2[1]);
+
+        var risks = [];
+        if (/壓力|焦慮|低落|憂鬱/.test(txt)) risks.push("情緒/壓力訊號");
+        if (/生病|身體不適|住院/.test(txt)) risks.push("健康關懷訊號");
+        if (/缺席|未到/.test(txt)) risks.push("出席風險訊號");
+
+        var prayerItems = [];
+        if (/代禱/.test(txt)) prayerItems.push("請關注回報內容中的代禱事項");
+        if (/探訪/.test(txt)) prayerItems.push("安排探訪關懷");
+
+        return {
+          attendanceCount: attendance,
+          newcomersCount: newcomers,
+          spiritualMomentum: risks.length ? "stable" : "up",
+          risks: risks,
+          prayerItems: prayerItems,
+          highlights: [txt.slice(0, 80)]
+        };
+      }
+
+      function buildPayload() {
+        var groupId = parseIntSafe(document.getElementById("groupId").value);
+        var reporterId = parseIntSafe(document.getElementById("reporterId").value);
+        var reportDate = document.getElementById("reportDate").value || todayYmd();
+        var rawInput = document.getElementById("rawInput").value.trim();
+        var structured = parseReport(rawInput);
+        return {
+          reportId: "grp_" + Date.now(),
+          church_id: getChurchId(),
+          groupId: groupId,
+          reporterMemberId: reporterId,
+          reportDate: reportDate,
+          channel: "text",
+          rawInput: { text: rawInput },
+          structured: structured,
+          ai: {
+            model: "rule-based-v1",
+            summary: "由規則引擎產生初稿，待人工確認",
+            confidence: 0.6
+          },
+          createdAt: new Date().toISOString()
+        };
+      }
+
+      function showStatus(text, cls) {
+        var el = document.getElementById("status");
+        el.textContent = text;
+        el.className = "mt-3 text-sm " + (cls || "text-slate-700");
+      }
+
+      function loadRecent() {
+        var raw = storageGet(STORAGE_KEY);
+        var list = [];
+        try { list = raw ? JSON.parse(raw) : []; } catch (e) { list = []; }
+        if (!Array.isArray(list)) list = [];
+        var host = document.getElementById("recentList");
+        if (!list.length) {
+          host.innerHTML = '<p class="text-slate-500">尚無提交紀錄。</p>';
+          return;
+        }
+        host.innerHTML = list.slice(-8).reverse().map(function (r) {
+          return '<div class="border rounded p-2 bg-slate-50">' +
+            '<div><strong>' + (r.reportDate || '-') + '</strong> · group ' + (r.groupId == null ? '-' : r.groupId) + ' · member ' + (r.reporterMemberId == null ? '-' : r.reporterMemberId) + '</div>' +
+            '<div class="text-xs text-slate-600 mt-1">出席：' + (r.structured && r.structured.attendanceCount != null ? r.structured.attendanceCount : '-') +
+            '，新朋友：' + (r.structured && r.structured.newcomersCount != null ? r.structured.newcomersCount : 0) + '</div>' +
+            '</div>';
+        }).join("");
+      }
+
+      function appendRecord(payload) {
+        var raw = storageGet(STORAGE_KEY);
+        var list = [];
+        try { list = raw ? JSON.parse(raw) : []; } catch (e) { list = []; }
+        if (!Array.isArray(list)) list = [];
+        list.push(payload);
+        if (list.length > 120) list = list.slice(list.length - 120);
+        storageSet(STORAGE_KEY, JSON.stringify(list));
+      }
+
+      function submitFormalVoiceReport(payload) {
+        try {
+          if (window.ChurchDataBridge && typeof window.ChurchDataBridge.submitSmallGroupVoiceReport === "function") {
+            return Promise.resolve(window.ChurchDataBridge.submitSmallGroupVoiceReport({
+              church_id: payload.church_id,
+              groupId: payload.groupId,
+              reporterMemberId: payload.reporterMemberId,
+              reportDate: payload.reportDate,
+              channel: payload.channel,
+              rawInput: payload.rawInput,
+              structured: payload.structured,
+              ai: payload.ai,
+              humanReview: {
+                confirmed: true,
+                confirmedBy: payload.reporterMemberId != null ? String(payload.reporterMemberId) : "",
+                confirmedAt: new Date().toISOString()
+              }
+            }));
+          }
+        } catch (e) {}
+        return Promise.resolve(null);
+      }
+
+      function triggerBridge(payload) {
+        try {
+          if (window.ChurchDataBridgePhase1 && typeof window.ChurchDataBridgePhase1.getInstance === "function") {
+            var bridge = window.ChurchDataBridgePhase1.getInstance();
+            if (bridge && typeof bridge.triggerWorkflow === "function") {
+              return bridge.triggerWorkflow("SMALL_GROUP_REPORT_SUBMITTED", {
+                church_id: payload.church_id,
+                memberId: payload.reporterMemberId,
+                groupId: payload.groupId,
+                reportDate: payload.reportDate,
+                summary: payload.structured
+              });
+            }
+          }
+        } catch (e) {}
+        return Promise.resolve({ ok: false, reason: "bridge_unavailable" });
+      }
+
+      function init() {
+        document.getElementById("reportDate").value = todayYmd();
+        loadRecent();
+
+        document.getElementById("btnAnalyze").addEventListener("click", function () {
+          var payload = buildPayload();
+          document.getElementById("structuredJson").value = JSON.stringify(payload, null, 2);
+          showStatus("已產生結構化摘要，請人工確認後提交。", "mt-3 text-sm text-blue-700");
+        });
+
+        document.getElementById("btnPreview").addEventListener("click", function () {
+          var payload = buildPayload();
+          document.getElementById("structuredJson").value = JSON.stringify(payload, null, 2);
+          showStatus("預覽完成（尚未提交）。", "mt-3 text-sm text-slate-700");
+        });
+
+        document.getElementById("btnSubmit").addEventListener("click", function () {
+          if (!document.getElementById("humanConfirm").checked) {
+            showStatus("請先勾選人工確認。", "mt-3 text-sm text-red-700");
+            return;
+          }
+          var text = document.getElementById("structuredJson").value.trim();
+          if (!text) {
+            showStatus("請先產生摘要。", "mt-3 text-sm text-red-700");
+            return;
+          }
+          var payload;
+          try { payload = JSON.parse(text); } catch (e) {
+            showStatus("摘要 JSON 格式錯誤，請修正。", "mt-3 text-sm text-red-700");
+            return;
+          }
+          appendRecord(payload);
+          Promise.all([
+            submitFormalVoiceReport(payload),
+            triggerBridge(payload)
+          ]).finally(function () {
+            loadRecent();
+            showStatus("提交完成：已寫入正式回報模型並觸發 workflow。", "mt-3 text-sm text-emerald-700");
+          });
+        });
+
+        document.getElementById("btnReset").addEventListener("click", function () {
+          document.getElementById("rawInput").value = "";
+          document.getElementById("structuredJson").value = "";
+          document.getElementById("humanConfirm").checked = false;
+          showStatus("已重設表單。", "mt-3 text-sm text-slate-700");
+        });
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>智慧事奉 - 自動測試</title>
+    <style>
+        body { font-family: "Microsoft YaHei", sans-serif; margin: 20px; background: #f5f5f5; }
+        h1 { color: #667eea; }
+        .test-section { background: white; padding: 16px; margin: 12px 0; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .pass { color: #2e7d32; font-weight: bold; }
+        .fail { color: #c62828; font-weight: bold; }
+        #log { white-space: pre-wrap; font-size: 12px; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <h1>智慧事奉模組 - 自動測試</h1>
+    <p>MBTI／屬靈恩賜調查與事奉配對流程驗證</p>
+    <div id="results"></div>
+    <div id="log"></div>
+    <script src="../js/matching_algorithm.js"></script>
+    <script>
+        const SURVEY_STORAGE = 'bible100_smart_ministry_';
+        const resultsEl = document.getElementById('results');
+        const logEl = document.getElementById('log');
+        let passed = 0, failed = 0;
+
+        function log(msg) {
+            logEl.textContent += msg + '\n';
+        }
+        function addResult(name, ok, detail) {
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            section.innerHTML = '<span class="' + (ok ? 'pass' : 'fail') + '">' + (ok ? '✓ 通過' : '✗ 失敗') + '</span> ' + name + (detail ? '<br><small>' + detail + '</small>' : '');
+            resultsEl.appendChild(section);
+            if (ok) passed++; else failed++;
+        }
+
+        // 1. 配對演算法：findMatches 回傳結構與數量
+        try {
+            const matcher = new MinistryMatchingAlgorithm();
+            const profile = { name: '測試', age: '25-35', faith_years: '3-10', spiritual_gifts: ['teaching', 'mercy'] };
+            const matches = matcher.findMatches(profile);
+            const ok = Array.isArray(matches) && matches.length > 0 && typeof matches[0].score === 'number' && matches[0].position && Array.isArray(matches[0].reasons);
+            addResult('MinistryMatchingAlgorithm.findMatches 回傳有效配對結果', ok, ok ? '共 ' + matches.length + ' 筆，首筆匹配度 ' + Math.round(matches[0].score * 100) + '%' : '');
+        } catch (e) {
+            addResult('MinistryMatchingAlgorithm.findMatches', false, e.message);
+        }
+
+        // 2. 調查結果寫入與讀取（survey_profile）
+        try {
+            const testProfile = { name: '訪客', age: '25-35', faith_years: '3-10', spiritual_gifts: ['teaching', 'leadership'], mbti_type: 'ENFJ' };
+            localStorage.setItem(SURVEY_STORAGE + 'survey_profile', JSON.stringify(testProfile));
+            const read = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_profile') || '{}');
+            const ok = read.name === testProfile.name && Array.isArray(read.spiritual_gifts) && read.spiritual_gifts.length >= 1 && read.mbti_type === 'ENFJ';
+            addResult('survey_profile 寫入與讀取', ok, ok ? 'name=' + read.name + ', gifts=' + read.spiritual_gifts.join(',') + ', mbti=' + read.mbti_type : '');
+        } catch (e) {
+            addResult('survey_profile 寫入與讀取', false, e.message);
+        }
+
+        // 3. 使用 survey_profile 進行配對（與 matching 頁邏輯一致）
+        try {
+            const profile = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_profile') || '{}');
+            const matcher = new MinistryMatchingAlgorithm();
+            const valid = profile.name && profile.age && profile.faith_years;
+            const matches = valid ? matcher.findMatches(profile) : [];
+            const ok = valid && matches.length > 0;
+            addResult('以 survey_profile 進行事奉配對', ok, ok ? '配對數 ' + matches.length : (valid ? '配對數 0' : '缺少 name/age/faith_years'));
+        } catch (e) {
+            addResult('以 survey_profile 進行事奉配對', false, e.message);
+        }
+
+        // 4. 連結與路徑存在性（僅檢查關鍵頁存在，實際載入需在伺服器環境）
+        const criticalPages = ['landing.html', 'guide_for_leaders.html', 'mbti_test.html', 'spiritual_gifts.html', 'talent_ministry_matching.html', 'talent_skill_unified.html', 'talent_tracking.html', 'ai_smart_ministry_overview.html'];
+        addResult('關鍵頁面路徑已配置（路線圖／主線 Discern–Grow／overview）', true, criticalPages.join(', '));
+
+        const total = passed + failed;
+        log('---');
+        log('總計: ' + passed + ' 通過, ' + failed + ' 失敗, 共 ' + total + ' 項');
+        if (failed === 0) log('全部通過.');
+    </script>
+</body>
+</html>

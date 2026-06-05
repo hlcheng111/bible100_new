@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>兒童預報到 - Church Center</title>
+    <base target="_parent">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", sans-serif; margin: 0; padding: 20px; background: #f8f9fa; font-size: 14px; }
+        .header { text-align: center; padding: 20px; margin-bottom: 24px; background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: #fff; border-radius: 12px; }
+        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+        .form-select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        .child-chk { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; background: #00b894; color: white; width: 100%; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pre-code { font-size: 24px; font-weight: bold; letter-spacing: 6px; text-align: center; padding: 20px; background: #e8f8f5; border-radius: 8px; margin: 16px 0; }
+        .hint { font-size: 12px; color: #666; margin-top: 8px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 兒童預報到</h1>
+        <p>事先選擇要報到的兒童，到場時出示預報碼即可快速報到</p>
+    </div>
+    <div class="card">
+        <div class="form-group">
+            <label class="form-label">選擇活動</label>
+            <select id="eventSelect" class="form-select"></select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">選擇班級</label>
+            <select id="classSelect" class="form-select"></select>
+        </div>
+    </div>
+    <div class="card">
+        <div class="form-label">勾選要報到的兒童</div>
+        <div id="childList"></div>
+        <button class="btn" id="preCheckBtn" onclick="doPreCheck()">取得預報碼</button>
+    </div>
+    <div id="resultCard" class="card" style="display:none;">
+        <div class="form-label">您的預報碼</div>
+        <div class="pre-code" id="preCodeDisplay">----</div>
+        <p class="hint">到場時請將此碼出示給報到站同工，即可快速完成報到。</p>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'checkInsData';
+        const PRE_KEY = 'checkInsPreCodes';
+        let data = { events: [], classes: [], children: [] };
+
+        function loadData() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                data = raw ? JSON.parse(raw) : { events: [], classes: [], children: [] };
+            } catch (e) {}
+        }
+
+        function render() {
+            const eventSel = document.getElementById('eventSelect');
+            eventSel.innerHTML = '<option value="">-- 請選擇活動 --</option>' +
+                data.events.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+            if (data.events.length === 0) {
+                document.getElementById('childList').innerHTML = '<p class="hint">尚無活動資料，請先至教會事工 → 兒童報到 載入示範資料。</p>';
+                return;
+            }
+            eventSel.onchange = function() {
+                const classes = data.classes.filter(c => c.eventId === this.value);
+                const classSel = document.getElementById('classSelect');
+                classSel.innerHTML = '<option value="">-- 請選擇班級 --</option>' +
+                    classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                classSel.onchange = renderChildren;
+                renderChildren();
+            };
+            if (eventSel.value) eventSel.onchange();
+        }
+
+        function renderChildren() {
+            const classId = document.getElementById('classSelect').value;
+            if (!classId) { document.getElementById('childList').innerHTML = ''; return; }
+            const children = data.children.filter(c => c.classId === classId);
+            document.getElementById('childList').innerHTML = children.map(c =>
+                `<label class="child-chk"><input type="checkbox" value="${c.id}" data-name="${c.name}"> ${c.name}</label>`
+            ).join('');
+        }
+
+        function doPreCheck() {
+            const eventId = document.getElementById('eventSelect').value;
+            const classId = document.getElementById('classSelect').value;
+            const checked = Array.from(document.querySelectorAll('#childList input:checked')).map(cb => ({ id: cb.value, name: cb.dataset.name }));
+            if (!eventId || !classId || checked.length === 0) {
+                alert('請選擇活動、班級，並勾選至少一位兒童');
+                return;
+            }
+            const code = String(Math.floor(100000 + Math.random() * 900000));
+            const preData = { code, eventId, classId, children: checked, createdAt: new Date().toISOString() };
+            let preCodes = [];
+            try { preCodes = JSON.parse(localStorage.getItem(PRE_KEY) || '[]'); } catch (e) {}
+            preCodes.push(preData);
+            localStorage.setItem(PRE_KEY, JSON.stringify(preCodes));
+
+            document.getElementById('preCodeDisplay').textContent = code;
+            document.getElementById('resultCard').style.display = 'block';
+        }
+
+        loadData();
+        render();
+    </script>
+</body>
+</html>

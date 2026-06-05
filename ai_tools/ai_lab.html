@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>聖經百步四寶 Bible100 T4 · 聖經 AI 學習環境（index_v5 識別）</title>
+  <meta name="description" content="以 AI 消除學經障礙，以科技點燃屬靈想像——聖經教學半互動工作台與路徑導航。">
+  <link rel="stylesheet" href="assets/css/lab-shell.css">
+  <script>
+    /** 與 ai_lab.html 同目錄 = ai_tools/，所有相對路徑皆以此為準，避免 contentFrame 內 ../ 解析錯位 */
+    window.labAiToolsBaseHref = function () {
+      var href = window.location.href;
+      var i = href.lastIndexOf('/');
+      return i >= 0 ? href.slice(0, i + 1) : href;
+    };
+    window.labResolveAiToolsUrl = function (relUrl) {
+      var u = String(relUrl || '').trim().replace(/^[\\/]+/, '');
+      if (!u) u = 'ai_lab_landing.html';
+      u = u.replace(/\\/g, '/');
+      var base = window.labAiToolsBaseHref();
+      if (/^file:/i.test(base)) {
+        if (base.slice(-1) !== '/' && base.slice(-1) !== '\\') base += '/';
+        return base + u;
+      }
+      try {
+        return new URL(u, base).href;
+      } catch (e) {
+        return base + u;
+      }
+    };
+    window.labLoadContent = function (relUrl) {
+      var full = window.labResolveAiToolsUrl(relUrl);
+      var el = document.getElementById('contentFrame');
+      if (el) el.src = full;
+      try {
+        var fr = window.frames && window.frames['contentFrame'];
+        if (fr && fr.location) fr.location.href = full;
+      } catch (e) {}
+      try {
+        window.postMessage({ type: 'bible100-sidebar-content-nav', url: full }, '*');
+      } catch (e2) {}
+    };
+    window.addEventListener('message', function (event) {
+      var d = event.data;
+      if (!d || typeof d !== 'object') return;
+      if (d.type === 'bible100-sidebar-content-nav' && d.url) {
+        var cf0 = document.getElementById('contentFrame');
+        if (cf0) cf0.src = d.url;
+        return;
+      }
+      function shellToLabContentSrc(rootRel) {
+        var u = String(rootRel || '').replace(/^[\\/]+/, '');
+        if (!u) return 'ai_lab_landing.html';
+        if (u.indexOf('../') === 0) return u;
+        return '../' + u;
+      }
+      if (d.type === 'navigate' && d.url) {
+        var navPath = shellToLabContentSrc(d.url);
+        if (navPath.indexOf('../') === 0) navPath = navPath.replace(/^\.\.\//, '');
+        window.labLoadContent(navPath);
+        return;
+      }
+      if (d.type === 'bible100-shell') {
+        var cf = d.contentUrl || '';
+        if (cf) {
+          var cfPath = shellToLabContentSrc(cf);
+          if (cfPath.indexOf('../') === 0) cfPath = cfPath.replace(/^\.\.\//, '');
+          window.labLoadContent(cfPath);
+        }
+      }
+    });
+  </script>
+  <script src="assets/js/lab-frame-nav.js"></script>
+</head>
+<body class="ai-lab-shell">
+  <header class="lab-topbar" role="banner">
+    <div class="lab-topbar-row1">
+      <a class="lab-brand" href="ai_lab.html" target="_top" title="重新載入 Lab">📖 聖經 AI 學習環境 · Bible100 T4</a>
+      <nav aria-label="左欄分區捷徑（展開對應選單）">
+        <a class="nav-item nav-item--emph" href="#" data-sb-focus="A" id="labTopFocusA">A · 導讀</a>
+        <a class="nav-item" href="#" data-sb-focus="B" id="labTopFocusB">C · 課程</a>
+        <a class="nav-item" href="#" data-sb-focus="C" id="labTopFocusC">D · 媒體</a>
+      </nav>
+    </div>
+    <nav class="lab-pulse-nav" aria-label="模組脈絡（載入右欄 contentFrame）">
+      <a href="#" onclick="event.preventDefault(); window.labLoadContent('vision.html');">🔭 願景</a>
+      <a href="#" onclick="event.preventDefault(); window.labLoadContent('paths/index.html');">🧭 學習路徑</a>
+      <a href="#" onclick="event.preventDefault(); window.labLoadContent('resources/index.html');">📚 教學資源</a>
+      <a href="#" onclick="event.preventDefault(); window.labLoadContent('ethics_ai.html');">🛡️ AI 安全與神學</a>
+      <a href="#" onclick="event.preventDefault(); window.labLoadContent('ai_lab_landing.html');">📋 Lab 總覽</a>
+    </nav>
+  </header>
+
+  <div class="lab-container">
+    <div class="lab-sidebar-wrap" aria-label="功能選單區">
+      <iframe class="lab-sidebar-frame" id="labSidebarFrame" src="sidebar_lab.html" title="AI Lab 功能選單"></iframe>
+    </div>
+    <div class="lab-main-wrap">
+      <iframe id="contentFrame" name="contentFrame" class="lab-content-frame" src="ai_lab_landing.html" title="Lab 內容"></iframe>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      function focusSidebarZone(zone) {
+        var f = document.getElementById('labSidebarFrame');
+        if (f && f.contentWindow) {
+          f.contentWindow.postMessage({ type: 'lab-sidebar-focus', section: zone }, '*');
+        }
+      }
+      document.querySelectorAll('[data-sb-focus]').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          focusSidebarZone(a.getAttribute('data-sb-focus'));
+        });
+      });
+    })();
+  </script>
+  <script src="assets/js/lab-nav.js" defer></script>
+  <script src="../js/module_navigation.js"></script>
+  <div id="global-tools-root"></div>
+  <script src="../js/global-tools.js"></script>
+</body>
+</html>

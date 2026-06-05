@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的課程 - 學員入口</title>
+    <base target="_parent">
+    <style>
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f6f7fb; margin: 0; padding: 20px; font-size: 14px; }
+        .back { margin-bottom: 16px; }
+        .back a { color: #0b5fa5; text-decoration: none; }
+        .header { background: linear-gradient(135deg, #0b5fa5 0%, #2aa5ff 100%); color: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f6f7fb; color: #0b5fa5; }
+        .empty { padding: 40px; text-align: center; color: #9ca3af; }
+    </style>
+</head>
+<body>
+    <div class="back"><a href="index.html">← 返回學員入口</a></div>
+    <div class="header">
+        <h2>📚 我的課程</h2>
+        <p id="studentInfo">請從學員入口選擇學員</p>
+    </div>
+    <div id="courseList"></div>
+    <script src="../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const params = new URLSearchParams(location.search);
+            const studentId = parseInt(params.get('studentId'), 10);
+            if (!studentId || !window.schoolDB) {
+                document.getElementById('courseList').innerHTML = '<p class="empty">請先從學員入口選擇學員，或載入示範資料。</p>';
+                return;
+            }
+            const db = window.schoolDB.data;
+            const student = (db.students || []).find(s => s.id === studentId);
+            if (student) document.getElementById('studentInfo').textContent = student.name + ' 的選課記錄';
+            const enrollments = (db.student && db.student.enrollments) || [];
+            const mine = enrollments.filter(e => e.studentId === studentId);
+            const courses = db.courses || [];
+            const teachers = db.teachers || [];
+            const rows = mine.map(e => {
+                const c = courses.find(cr => cr.id === e.courseId);
+                const t = c && teachers.find(tc => tc.id === c.teacherId);
+                return `<tr><td>${c ? c.name : '—'}</td><td>${c ? c.code : '—'}</td><td>${t ? t.name : '—'}</td><td>${e.semester || '—'}</td><td>${e.status || '—'}</td></tr>`;
+            }).join('');
+            document.getElementById('courseList').innerHTML = rows
+                ? `<table><thead><tr><th>課程</th><th>代碼</th><th>教師</th><th>學期</th><th>狀態</th></tr></thead><tbody>${rows}</tbody></table>`
+                : '<p class="empty">尚無選課記錄</p>';
+        })();
+    </script>
+</body>
+</html>

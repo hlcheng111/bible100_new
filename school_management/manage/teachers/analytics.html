@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教學統計 - Teacher Analytics</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>📊 教學統計 · Teacher Analytics</h1>
+        <p>熱門課程、選課人數、圖表、匯出</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 教務、課程負責人。</p>
+            <p><b>有什麼功能？</b> 依選課人數排序熱門課程 TOP10、匯出 CSV。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📊 概覽</div>
+        <div class="stats-row">
+            <div class="stat-pill"><div class="stat-num" id="statCourses">0</div><div class="stat-label">課程數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statTeachers">0</div><div class="stat-label">教師數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statClasses">0</div><div class="stat-label">班級數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statEnrollments">0</div><div class="stat-label">選課記錄</div></div>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">🔥 熱門課程（按選課人數）TOP10 <button class="module-btn module-btn-secondary" id="btnExport" style="float:right;">📤 匯出 CSV</button></div>
+        <div id="topChart" style="min-height:280px;padding:20px 0;"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+            if (db.ensureSeedFull) db.ensureSeedFull();
+
+            const data = db.data;
+            const courses = data.courses || [];
+            const teachers = data.teachers || [];
+            const classes = (data.class && data.class.classes) || [];
+            const enrollments = (data.student && data.student.enrollments) || [];
+
+            const map = {};
+            enrollments.forEach(e => { map[e.courseId] = (map[e.courseId] || 0) + 1; });
+            const top = Object.entries(map)
+                .map(([cid, c]) => ({ courseId: +cid, count: c }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 10)
+                .map(x => {
+                    const c = courses.find(k => k.id === x.courseId) || {};
+                    return { courseId: x.courseId, name: c.name || ('課程' + x.courseId), count: x.count };
+                });
+
+            document.getElementById('statCourses').textContent = courses.length;
+            document.getElementById('statTeachers').textContent = teachers.length;
+            document.getElementById('statClasses').textContent = classes.length;
+            document.getElementById('statEnrollments').textContent = enrollments.length;
+
+            const W = 880, H = 280, px = 50, py = 20, max = Math.max(1, ...top.map(x => x.count)), bw = ((W - 2 * px) / Math.max(top.length, 1)) - 6 || 40;
+            let svg = '<svg viewBox="0 0 ' + W + ' ' + (H + 40) + '" style="width:100%;max-width:900px;height:auto;">';
+            top.forEach((d, i) => {
+                const h = (d.count / max) * (H - 2 * py);
+                const x = px + i * (bw + 6);
+                const y = H + 20 - h;
+                svg += '<rect x="' + x + '" y="' + y + '" width="' + bw + '" height="' + h + '" fill="#0b5fa5" rx="4"/>';
+                svg += '<text x="' + (x + bw/2) + '" y="' + (H + 38) + '" font-size="10" text-anchor="middle" fill="#374151">' + (d.name || '').slice(0, 8) + '</text>';
+                svg += '<text x="' + (x + bw/2) + '" y="' + (y - 4) + '" font-size="11" text-anchor="middle" font-weight="bold" fill="#0b5fa5">' + d.count + '</text>';
+            });
+            svg += '</svg>';
+            document.getElementById('topChart').innerHTML = top.length ? svg : '<div class="empty-state">尚無選課資料</div>';
+
+            document.getElementById('btnExport').onclick = function() {
+                const cols = ['courseId', 'name', 'count'];
+                const head = cols.join(',');
+                const body = top.map(x => cols.map(k => '"' + String(x[k] ?? '').replace(/"/g, '""') + '"').join(',')).join('\n');
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob(['\ufeff' + head + '\n' + body], { type: 'text/csv;charset=utf-8' }));
+                a.download = 'top_courses_' + new Date().toISOString().slice(0, 10) + '.csv';
+                a.click();
+            };
+        })();
+    </script>
+</body>
+</html>

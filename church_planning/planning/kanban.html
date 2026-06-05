@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>目標看板 · Kanban</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <script src="assets/shell.js"></script>
+  <div class="planning-wrap wide">
+    <div class="step-head-mini">
+      <h2>目標看板</h2>
+      <a class="step-head-back" href="index.html">← 流程總覽</a>
+    </div>
+    <div class="report-dest-strip">
+      <span class="report-dest-icon" aria-hidden="true">📊</span>
+      <span>拖移欄位後，<strong>戰情總覽</strong>會顯示目標狀態統計。</span>
+    </div>
+
+    <div class="usage-hint-box" style="margin-bottom:12px;">
+      <h2 style="font-size:1rem;margin:0 0 6px;color:#0f172a;">建議用法</h2>
+      <p style="margin:0;font-size:14px;">先在 <a href="goals.html">SMART 目標</a> 寫好標題與量度；回到此頁把卡片從「候選」推到「本年度」→「進行中」→「已完成」。</p>
+    </div>
+
+    <p id="kanban-empty-global" style="display:none;font-size:14px;color:var(--muted);">
+      尚無目標，請先到 <a href="goals.html">goals.html</a> 新增。
+    </p>
+
+    <div class="fill-zone" style="padding-top:12px;">
+      <p class="fill-zone-hint" style="margin-top:0;">用「上一欄／下一欄」調整狀態；資料即存本機。</p>
+      <div class="kanban-board" id="kanban-root"></div>
+    </div>
+
+    <p style="margin-top:16px;font-size:13px;color:var(--muted);">移欄時會自動寫入瀏覽器。</p>
+    <p class="nav-back"><a href="goals.html">← SMART 目標</a> · <a href="strategy.html">策略首頁</a> · <a href="../dashboard.html">戰情總覽</a></p>
+  </div>
+
+  <script src="assets/pipeline.js"></script>
+  <script>
+(function () {
+  var P = window.LongTermPipeline;
+  var ORDER = P.GOAL_STATUS_ORDER;
+  var COL_CLASS = {
+    backlog: "c-backlog",
+    this_year: "c-year",
+    in_progress: "c-doing",
+    done: "c-done",
+  };
+
+  var state = P.loadGoals();
+
+  function move(goalId, delta) {
+    var g = state.goals.filter(function (x) {
+      return x.id === goalId;
+    })[0];
+    if (!g) return;
+    var idx = ORDER.indexOf(g.status);
+    var nidx = idx + delta;
+    if (nidx < 0 || nidx >= ORDER.length) return;
+    g.status = ORDER[nidx];
+    P.saveGoals({ goals: state.goals });
+    render();
+  }
+
+  function render() {
+    var root = document.getElementById("kanban-root");
+    var globalEmpty = document.getElementById("kanban-empty-global");
+    if (!state.goals.length) {
+      globalEmpty.style.display = "block";
+      root.innerHTML = "";
+      return;
+    }
+    globalEmpty.style.display = "none";
+
+    root.innerHTML = "";
+    ORDER.forEach(function (st) {
+      var col = document.createElement("div");
+      col.className = "kanban-col " + (COL_CLASS[st] || "");
+      var h = document.createElement("div");
+      h.className = "kanban-col-header";
+      h.textContent = P.goalStatusLabel(st);
+      col.appendChild(h);
+
+      var list = state.goals.filter(function (g) {
+        return (g.status || "backlog") === st;
+      });
+      if (!list.length) {
+        var emp = document.createElement("div");
+        emp.className = "kanban-empty";
+        emp.textContent = "（無）";
+        col.appendChild(emp);
+      }
+      list.forEach(function (g) {
+        col.appendChild(renderCard(g, st));
+      });
+      root.appendChild(col);
+    });
+  }
+
+  function renderCard(g, columnSt) {
+    var card = document.createElement("div");
+    card.className = "kanban-card";
+    card.dataset.id = g.id;
+
+    var hasTitle = !!(g.title || "").trim();
+    if (columnSt !== "backlog" && !hasTitle) {
+      card.classList.add("kb-invalid");
+    }
+
+    var title = document.createElement("div");
+    title.className = "kb-title";
+    if (columnSt !== "backlog" && !hasTitle) {
+      title.textContent = "請先在目標頁填標題";
+    } else {
+      title.textContent = hasTitle ? (g.title || "").trim() : "（無標題）";
+    }
+
+    var v = document.createElement("div");
+    v.className = "kb-line";
+    v.textContent = "主軸：" + ((g.visionAxis || "").trim() || "—");
+
+    var m = document.createElement("div");
+    m.className = "kb-line";
+    var smartM = g.smart && (g.smart.m || g.smart.M) ? String(g.smart.m || g.smart.M) : "";
+    m.textContent = "M（量度）：" + (smartM.trim() || "—");
+
+    var btns = document.createElement("div");
+    btns.className = "kb-btns";
+    var idx = ORDER.indexOf(g.status || "backlog");
+
+    var prev = document.createElement("button");
+    prev.type = "button";
+    prev.textContent = "← 上一欄";
+    prev.disabled = idx <= 0;
+    prev.addEventListener("click", function () {
+      move(g.id, -1);
+    });
+
+    var next = document.createElement("button");
+    next.type = "button";
+    next.textContent = "下一欄 →";
+    next.disabled = idx >= ORDER.length - 1;
+    next.addEventListener("click", function () {
+      move(g.id, 1);
+    });
+
+    btns.appendChild(prev);
+    btns.appendChild(next);
+    card.appendChild(title);
+    card.appendChild(v);
+    card.appendChild(m);
+    card.appendChild(btns);
+    return card;
+  }
+
+  render();
+})();
+  </script>
+</body>
+</html>

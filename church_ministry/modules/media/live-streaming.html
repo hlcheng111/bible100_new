@@ -1,0 +1,619 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频直播管理系统 - 专业版 · Live Streaming | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+        .header { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 15px 20px; }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
+        .tab.active { background: white; color: #e74c3c; font-weight: 600; }
+        .container { max-width: 1800px; margin: 0 auto; padding: 15px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; border-left: 4px solid #e74c3c; padding-left: 10px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 15px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #e74c3c; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; }
+        .stat-label { font-size: 10px; color: #7f8c8d; margin-top: 5px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .platform-card { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid; }
+        .platform-youtube { border-color: #e74c3c; }
+        .platform-facebook { border-color: #3b5998; }
+        .platform-zoom { border-color: #2d8cff; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div class="header">
+        <h1>📺 视频直播管理系统</h1>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 总览</button>
+            <button class="tab" onclick="switchTab('streams')">📹 直播记录</button>
+            <button class="tab" onclick="switchTab('platforms')">📱 平台管理</button>
+            <button class="tab" onclick="switchTab('team')">👥 团队管理</button>
+            <button class="tab" onclick="switchTab('equipment')">🎥 设备清单</button>
+            <button class="tab" onclick="switchTab('checklist')">✅ 直播检查表</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Overview -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-num" id="s1">0</div><div class="stat-label">直播总数</div></div>
+                <div class="stat-card"><div class="stat-num" id="s2">0</div><div class="stat-label">总观看</div></div>
+                <div class="stat-card"><div class="stat-num" id="s3">0</div><div class="stat-label">平均观看</div></div>
+                <div class="stat-card"><div class="stat-num" id="s4">0</div><div class="stat-label">本月直播</div></div>
+                <div class="stat-card"><div class="stat-num" id="s5">0</div><div class="stat-label">在线峰值</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">📊 平台观看分布</div>
+                    <canvas id="platformChart"></canvas>
+                </div>
+                <div class="card">
+                    <div class="card-title">📈 月度观看趋势</div>
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Streams -->
+        <div id="tab-streams" class="tab-content">
+            <div class="card">
+                <div class="card-title">📹 直播记录管理</div>
+                <button class="btn btn-primary" onclick="showAddStreamModal()">➕ 新增直播记录</button>
+                <button class="btn btn-success" onclick="exportStreams()">📤 导出记录</button>
+                <table id="streamsTable">
+                    <thead>
+                        <tr>
+                            <th>日期时间</th>
+                            <th>活动名称</th>
+                            <th>平台</th>
+                            <th>观看人数</th>
+                            <th>峰值</th>
+                            <th>时长</th>
+                            <th>负责人</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Platforms -->
+        <div id="tab-platforms" class="tab-content">
+            <div class="card">
+                <div class="card-title">📱 直播平台管理</div>
+                <div id="platformsList"></div>
+                <button class="btn btn-primary" onclick="showAddPlatformModal()">➕ 新增平台</button>
+            </div>
+        </div>
+        
+        <!-- Team -->
+        <div id="tab-team" class="tab-content">
+            <div class="card">
+                <div class="card-title">👥 直播团队管理</div>
+                <button class="btn btn-primary" onclick="showAddTeamMemberModal()">➕ 新增成员</button>
+                <table id="teamTable">
+                    <thead><tr><th>姓名</th><th>职位</th><th>联系方式</th><th>服事次数</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Equipment -->
+        <div id="tab-equipment" class="tab-content">
+            <div class="card">
+                <div class="card-title">🎥 直播设备清单</div>
+                <button class="btn btn-primary" onclick="showAddEquipmentModal()">➕ 新增设备</button>
+                <table id="equipmentTable">
+                    <thead><tr><th>设备名称</th><th>型号</th><th>状态</th><th>位置</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Checklist -->
+        <div id="tab-checklist" class="tab-content">
+            <div class="card">
+                <div class="card-title">✅ 直播前检查清单</div>
+                <div style="background:#fff3cd;padding:15px;border-radius:8px;border-left:4px solid #f39c12;margin-bottom:20px;">
+                    <strong>📋 标准操作流程（SOP）</strong>
+                    <p style="font-size:11px;color:#856404;margin-top:8px;">确保每次直播顺利进行，请按以下清单逐项检查</p>
+                </div>
+                <div id="checklistItems"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        let data = {
+            streams: [],
+            platforms: [],
+            team: [],
+            equipment: [],
+            checklist: []
+        };
+        let charts = {};
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            if (data.streams.length === 0) {
+                loadDemo();
+            } else {
+                renderAll();
+            }
+        });
+        
+        function loadData() {
+            const saved = localStorage.getItem('streamingData');
+            if (saved) data = JSON.parse(saved);
+        }
+        
+        function saveData() {
+            localStorage.setItem('streamingData', JSON.stringify(data));
+        }
+        
+        function loadDemo() {
+            data.streams = [
+                {id:1, datetime:'2025-10-06 09:30', event:'主日崇拜（第一堂）', platform:'YouTube', viewers:320, peak:380, duration:'90分钟', operator:'王弟兄'},
+                {id:2, datetime:'2025-10-06 11:00', event:'主日崇拜（第二堂）', platform:'YouTube', platform:'Facebook', viewers:280, peak:310, duration:'85分钟', operator:'李姊妹'},
+                {id:3, datetime:'2025-10-09 19:30', event:'周三祷告会', platform:'Zoom', viewers:150, peak:160, duration:'60分钟', operator:'张弟兄'}
+            ];
+            
+            data.platforms = [
+                {id:1, name:'YouTube', account:'教会官方频道', followers:5200, avgViewers:300, status:'active'},
+                {id:2, name:'Facebook', account:'教会粉丝专页', followers:3800, avgViewers:250, status:'active'},
+                {id:3, name:'Zoom', account:'会议室账号', followers:0, avgViewers:150, status:'active'}
+            ];
+            
+            data.team = [
+                {id:1, name:'王弟兄', position:'主播控制', phone:'0912-001', count:25},
+                {id:2, name:'李姊妹', position:'摄像师', phone:'0912-002', count:20},
+                {id:3, name:'张弟兄', position:'技术支援', phone:'0912-003', count:15}
+            ];
+            
+            data.equipment = [
+                {id:1, name:'主摄像机', model:'Sony PXW-Z150', status:'正常', location:'主堂'},
+                {id:2, name:'副摄像机', model:'Canon XA55', status:'正常', location:'主堂'},
+                {id:3, name:'编码器', model:'BlackMagic ATEM Mini', status:'正常', location:'直播间'},
+                {id:4, name:'电脑', model:'Dell Precision', status:'正常', location:'直播间'}
+            ];
+            
+            data.checklist = [
+                {id:1, category:'设备检查', item:'摄像机电池充满', checked:false},
+                {id:2, category:'设备检查', item:'存储卡已清空', checked:false},
+                {id:3, category:'设备检查', item:'编码器连接正常', checked:false},
+                {id:4, category:'网络检查', item:'网速测试（上行≥5Mbps）', checked:false},
+                {id:5, category:'网络检查', item:'备用网络准备', checked:false},
+                {id:6, category:'平台检查', item:'YouTube/Facebook登录', checked:false},
+                {id:7, category:'平台检查', item:'直播标题和描述设置', checked:false},
+                {id:8, category:'音视频', item:'音频测试正常', checked:false},
+                {id:9, category:'音视频', item:'画面清晰度确认', checked:false},
+                {id:10, category:'最终确认', item:'倒计时5分钟提醒', checked:false}
+            ];
+            
+            saveData();
+            renderAll();
+        }
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+            
+            if (tab === 'overview') renderOverview();
+            if (tab === 'checklist') renderChecklist();
+        }
+        
+        function renderAll() {
+            renderOverview();
+            renderStreams();
+            renderPlatforms();
+            renderTeam();
+            renderEquipment();
+            renderChecklist();
+        }
+        
+        function renderOverview() {
+            document.getElementById('s1').textContent = data.streams.length;
+            document.getElementById('s2').textContent = data.streams.reduce((sum, s) => sum + s.viewers, 0);
+            document.getElementById('s3').textContent = data.streams.length > 0 ? Math.round(data.streams.reduce((sum, s) => sum + s.viewers, 0) / data.streams.length) : 0;
+            const thisMonth = new Date().getMonth();
+            document.getElementById('s4').textContent = data.streams.filter(s => new Date(s.datetime).getMonth() === thisMonth).length;
+            document.getElementById('s5').textContent = data.streams.length > 0 ? Math.max(...data.streams.map(s => s.peak)) : 0;
+            
+            // Platform Chart
+            const platformData = {};
+            data.streams.forEach(s => {
+                platformData[s.platform] = (platformData[s.platform] || 0) + s.viewers;
+            });
+            
+            const ctx1 = document.getElementById('platformChart');
+            if (charts.platformChart) charts.platformChart.destroy();
+            charts.platformChart = new Chart(ctx1, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(platformData),
+                    datasets: [{
+                        data: Object.values(platformData),
+                        backgroundColor: ['#e74c3c', '#3b5998', '#2d8cff']
+                    }]
+                }
+            });
+            
+            // Trend Chart
+            const months = ['1月','2月','3月','4月','5月','6月'];
+            const counts = months.map((m, i) => data.streams.filter(s => new Date(s.datetime).getMonth() === i).reduce((sum, s) => sum + s.viewers, 0));
+            
+            const ctx2 = document.getElementById('trendChart');
+            if (charts.trendChart) charts.trendChart.destroy();
+            charts.trendChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '观看人数',
+                        data: counts,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        fill: true
+                    }]
+                }
+            });
+        }
+        
+        function renderStreams() {
+            document.querySelector('#streamsTable tbody').innerHTML = data.streams.map(s => `
+                <tr>
+                    <td>${s.datetime}</td>
+                    <td>${s.event}</td>
+                    <td>${s.platform}</td>
+                    <td>${s.viewers}</td>
+                    <td>${s.peak}</td>
+                    <td>${s.duration}</td>
+                    <td>${s.operator}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteStream(${s.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderPlatforms() {
+            document.getElementById('platformsList').innerHTML = data.platforms.map(p => `
+                <div class="platform-card platform-${p.name.toLowerCase()}">
+                    <div style="font-size:16px;font-weight:600;margin-bottom:8px;">${p.name}</div>
+                    <div style="font-size:11px;color:#555;margin-bottom:5px;">账号：${p.account}</div>
+                    <div style="font-size:11px;color:#555;">
+                        👥 粉丝：${p.followers.toLocaleString()} · 
+                        📊 平均观看：${p.avgViewers}人 · 
+                        ✅ 状态：${p.status === 'active' ? '活跃' : '停用'}
+                    </div>
+                    <button class="btn btn-sm btn-danger" onclick="deletePlatform(${p.id})" style="margin-top:10px;">删除</button>
+                </div>
+            `).join('');
+        }
+        
+        function renderTeam() {
+            document.querySelector('#teamTable tbody').innerHTML = data.team.map(t => `
+                <tr>
+                    <td>${t.name}</td>
+                    <td>${t.position}</td>
+                    <td>${t.phone}</td>
+                    <td>${t.count}次</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteTeamMember(${t.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderEquipment() {
+            document.querySelector('#equipmentTable tbody').innerHTML = data.equipment.map(e => `
+                <tr>
+                    <td>${e.name}</td>
+                    <td>${e.model}</td>
+                    <td>${e.status}</td>
+                    <td>${e.location}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEquipment(${e.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderChecklist() {
+            const categories = [...new Set(data.checklist.map(c => c.category))];
+            document.getElementById('checklistItems').innerHTML = categories.map(cat => `
+                <div style="margin-bottom:20px;">
+                    <h4 style="color:#e74c3c;margin-bottom:10px;">${cat}</h4>
+                    ${data.checklist.filter(c => c.category === cat).map(item => `
+                        <div style="padding:10px;background:#f8f9fa;border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">
+                            <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCheck(${item.id})" style="width:18px;height:18px;cursor:pointer;">
+                            <span style="flex:1;">${item.item}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+        
+        function toggleCheck(id) {
+            const item = data.checklist.find(c => c.id === id);
+            item.checked = !item.checked;
+            saveData();
+            
+            const allChecked = data.checklist.every(c => c.checked);
+            if (allChecked) {
+                alert('✅ 所有项目已确认！可以开始直播了！');
+            }
+        }
+        
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;font-weight:600;margin-bottom:20px;">${title}</div>${content}`;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        function showAddStreamModal() {
+            showModal('➕ 新增直播记录', `
+                <div class="form-group">
+                    <label class="form-label">直播日期时间</label>
+                    <input type="datetime-local" id="sDateTime" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">活动名称</label>
+                    <input type="text" id="sEvent" class="form-input" placeholder="例如：主日崇拜">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">直播平台</label>
+                    <select id="sPlatform" class="form-select">
+                        ${data.platforms.map(p => `<option>${p.name}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">观看人数</label>
+                    <input type="number" id="sViewers" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">在线峰值</label>
+                    <input type="number" id="sPeak" class="form-input" value="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">时长</label>
+                    <input type="text" id="sDuration" class="form-input" placeholder="例如：90分钟">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">负责人</label>
+                    <select id="sOperator" class="form-select">
+                        ${data.team.map(t => `<option>${t.name}</option>`).join('')}
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="addStream()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addStream() {
+            const stream = {
+                id: Date.now(),
+                datetime: document.getElementById('sDateTime').value,
+                event: document.getElementById('sEvent').value,
+                platform: document.getElementById('sPlatform').value,
+                viewers: parseInt(document.getElementById('sViewers').value),
+                peak: parseInt(document.getElementById('sPeak').value),
+                duration: document.getElementById('sDuration').value,
+                operator: document.getElementById('sOperator').value
+            };
+            if (!stream.datetime || !stream.event) return alert('请填写完整信息');
+            data.streams.push(stream);
+            saveData();
+            renderAll();
+            closeModal();
+            alert('✅ 直播记录已添加！');
+        }
+        
+        function deleteStream(id) {
+            if (confirm('确定删除此记录？')) {
+                data.streams = data.streams.filter(s => s.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+        
+        function showAddPlatformModal() {
+            showModal('➕ 新增直播平台', `
+                <div class="form-group">
+                    <label class="form-label">平台名称</label>
+                    <select id="pName" class="form-select">
+                        <option>YouTube</option>
+                        <option>Facebook</option>
+                        <option>Zoom</option>
+                        <option>腾讯会议</option>
+                        <option>其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">账号名称</label>
+                    <input type="text" id="pAccount" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">粉丝/订阅数</label>
+                    <input type="number" id="pFollowers" class="form-input" value="0">
+                </div>
+                <button class="btn btn-primary" onclick="addPlatform()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addPlatform() {
+            const platform = {
+                id: Date.now(),
+                name: document.getElementById('pName').value,
+                account: document.getElementById('pAccount').value,
+                followers: parseInt(document.getElementById('pFollowers').value),
+                avgViewers: 0,
+                status: 'active'
+            };
+            if (!platform.account) return alert('请填写账号名称');
+            data.platforms.push(platform);
+            saveData();
+            renderAll();
+            closeModal();
+            alert('✅ 平台已添加！');
+        }
+        
+        function deletePlatform(id) {
+            if (confirm('确定删除此平台？')) {
+                data.platforms = data.platforms.filter(p => p.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+        
+        function showAddTeamMemberModal() {
+            showModal('➕ 新增团队成员', `
+                <div class="form-group">
+                    <label class="form-label">姓名</label>
+                    <input type="text" id="tName" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">职位</label>
+                    <select id="tPosition" class="form-select">
+                        <option>主播控制</option>
+                        <option>摄像师</option>
+                        <option>技术支援</option>
+                        <option>字幕制作</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">联系电话</label>
+                    <input type="text" id="tPhone" class="form-input">
+                </div>
+                <button class="btn btn-primary" onclick="addTeamMember()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addTeamMember() {
+            const member = {
+                id: Date.now(),
+                name: document.getElementById('tName').value,
+                position: document.getElementById('tPosition').value,
+                phone: document.getElementById('tPhone').value,
+                count: 0
+            };
+            if (!member.name) return alert('请填写姓名');
+            data.team.push(member);
+            saveData();
+            renderAll();
+            closeModal();
+            alert('✅ 成员已添加！');
+        }
+        
+        function deleteTeamMember(id) {
+            if (confirm('确定删除此成员？')) {
+                data.team = data.team.filter(t => t.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+        
+        function showAddEquipmentModal() {
+            showModal('➕ 新增直播设备', `
+                <div class="form-group">
+                    <label class="form-label">设备名称</label>
+                    <input type="text" id="eqName" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">型号</label>
+                    <input type="text" id="eqModel" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">状态</label>
+                    <select id="eqStatus" class="form-select">
+                        <option>正常</option>
+                        <option>待维修</option>
+                        <option>已损坏</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">存放位置</label>
+                    <input type="text" id="eqLocation" class="form-input" value="直播间">
+                </div>
+                <button class="btn btn-primary" onclick="addEquipment()">确定添加</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addEquipment() {
+            const equipment = {
+                id: Date.now(),
+                name: document.getElementById('eqName').value,
+                model: document.getElementById('eqModel').value,
+                status: document.getElementById('eqStatus').value,
+                location: document.getElementById('eqLocation').value
+            };
+            if (!equipment.name) return alert('请填写设备名称');
+            data.equipment.push(equipment);
+            saveData();
+            renderAll();
+            closeModal();
+            alert('✅ 设备已添加！');
+        }
+        
+        function deleteEquipment(id) {
+            if (confirm('确定删除此设备？')) {
+                data.equipment = data.equipment.filter(e => e.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+        
+        function exportStreams() {
+            const csv = '日期时间,活动,平台,观看人数,峰值,时长,负责人\n' + 
+                data.streams.map(s => `${s.datetime},${s.event},${s.platform},${s.viewers},${s.peak},${s.duration},${s.operator}`).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'}));
+            a.download = '直播记录.csv';
+            a.click();
+            alert('✅ 记录已导出！');
+        }
+    </script>
+</body>
+</html>

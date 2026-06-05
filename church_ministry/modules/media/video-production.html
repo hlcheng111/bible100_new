@@ -1,0 +1,517 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影片制作管理系统 - 专业版 · Video Production | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+        .header { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; padding: 15px 20px; }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
+        .tab.active { background: white; color: #9b59b6; font-weight: 600; }
+        .container { max-width: 1800px; margin: 0 auto; padding: 15px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; border-left: 4px solid #9b59b6; padding-left: 10px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 15px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #9b59b6; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; }
+        .stat-label { font-size: 10px; color: #7f8c8d; margin-top: 5px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .status-tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+        .status-planning { background: #fff3cd; color: #856404; }
+        .status-filming { background: #cce5ff; color: #004085; }
+        .status-editing { background: #f8d7da; color: #721c24; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #9b59b6 0%, #8e44ad 100%); }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div class="header">
+        <h1>🎬 影片制作管理系统</h1>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 总览</button>
+            <button class="tab" onclick="switchTab('projects')">🎬 制作项目</button>
+            <button class="tab" onclick="switchTab('team')">👥 制作团队</button>
+            <button class="tab" onclick="switchTab('equipment')">📹 设备管理</button>
+            <button class="tab" onclick="switchTab('library')">📚 影片库</button>
+            <button class="tab" onclick="switchTab('workflow')">📋 制作流程</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Overview -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-num" id="s1">0</div><div class="stat-label">进行中项目</div></div>
+                <div class="stat-card"><div class="stat-num" id="s2">0</div><div class="stat-label">已完成</div></div>
+                <div class="stat-card"><div class="stat-num" id="s3">0</div><div class="stat-label">制作团队</div></div>
+                <div class="stat-card"><div class="stat-num" id="s4">0</div><div class="stat-label">设备数</div></div>
+                <div class="stat-card"><div class="stat-num" id="s5">0</div><div class="stat-label">影片库</div></div>
+                <div class="stat-card"><div class="stat-num" id="s6">0%</div><div class="stat-label">本月完成率</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 项目类型分布</div><canvas id="typeChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 月度制作量</div><canvas id="productionChart"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎬 本月制作计划</div>
+                <table id="monthPlanTable">
+                    <thead><tr><th>项目名</th><th>类型</th><th>状态</th><th>进度</th><th>预计完成</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Projects -->
+        <div id="tab-projects" class="tab-content">
+            <div class="card">
+                <div class="card-title">🎬 制作项目管理</div>
+                <button class="btn btn-primary" onclick="showAddProjectModal()">➕ 新增项目</button>
+                <button class="btn btn-success" onclick="exportProjects()">📤 导出</button>
+                <table id="projectsTable">
+                    <thead>
+                        <tr>
+                            <th>项目名称</th>
+                            <th>类型</th>
+                            <th>导演/负责人</th>
+                            <th>状态</th>
+                            <th>进度</th>
+                            <th>开始日期</th>
+                            <th>预计完成</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Team -->
+        <div id="tab-team" class="tab-content">
+            <div class="card">
+                <div class="card-title">👥 制作团队</div>
+                <button class="btn btn-primary" onclick="showAddTeamModal()">➕ 新增成员</button>
+                <table id="teamTable">
+                    <thead><tr><th>姓名</th><th>职位</th><th>专长</th><th>参与项目</th><th>联系方式</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Equipment -->
+        <div id="tab-equipment" class="tab-content">
+            <div class="card">
+                <div class="card-title">📹 设备清单</div>
+                <button class="btn btn-primary" onclick="showAddEquipmentModal()">➕ 新增设备</button>
+                <div class="grid-3" style="margin-top:20px;" id="equipmentList"></div>
+            </div>
+        </div>
+        
+        <!-- Library -->
+        <div id="tab-library" class="tab-content">
+            <div class="card">
+                <div class="card-title">📚 影片库</div>
+                <button class="btn btn-primary" onclick="showAddVideoModal()">➕ 新增影片</button>
+                <input type="text" id="searchVideo" placeholder="🔍 搜索影片..." class="form-input" style="max-width:300px;margin-bottom:15px;" onkeyup="renderLibrary()">
+                <table id="libraryTable">
+                    <thead><tr><th>影片名称</th><th>类型</th><th>时长</th><th>制作日期</th><th>观看次数</th><th>操作</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Workflow -->
+        <div id="tab-workflow" class="tab-content">
+            <div class="card">
+                <div class="card-title">📋 影片制作标准流程（SOP）</div>
+                <div style="background:#e3f2fd;padding:25px;border-radius:8px;border-left:4px solid #2196f3;">
+                    <h3 style="color:#1565c0;margin-bottom:20px;">🎬 制作流程7步骤</h3>
+                    <div id="workflowSteps"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+    
+    <script>
+        let data = { projects: [], team: [], equipment: [], library: [], workflow: [] };
+        let charts = {};
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('videoProductionData');
+            if (saved) data = JSON.parse(saved);
+            if (data.projects.length === 0) loadDemo();
+            else renderAll();
+        });
+        
+        function loadDemo() {
+            data.projects = [
+                {id:1, name:'主日见证视频', type:'见证分享', director:'王弟兄', status:'filming', progress:40, startDate:'2025-10-01', deadline:'2025-10-20'},
+                {id:2, name:'教会宣传片', type:'宣传片', director:'李姊妹', status:'editing', progress:70, startDate:'2025-09-15', deadline:'2025-10-15'},
+                {id:3, name:'圣诞音乐会录像', type:'活动记录', director:'张弟兄', status:'planning', progress:20, startDate:'2025-11-01', deadline:'2025-12-20'}
+            ];
+            data.team = [
+                {id:1, name:'王弟兄', position:'导演', specialty:'剧本、导演', projects:5, phone:'0912-001'},
+                {id:2, name:'李姊妹', position:'摄像师', specialty:'拍摄、打光', projects:8, phone:'0912-002'},
+                {id:3, name:'张弟兄', position:'剪辑师', specialty:'Final Cut Pro', projects:10, phone:'0912-003'},
+                {id:4, name:'陈姊妹', position:'后期制作', specialty:'特效、调色', projects:6, phone:'0912-004'}
+            ];
+            data.equipment = [
+                {id:1, name:'主摄像机', model:'Sony A7S III', status:'可用', location:'器材室'},
+                {id:2, name:'副摄像机', model:'Canon R5', status:'可用', location:'器材室'},
+                {id:3, name:'无人机', model:'DJI Mavic 3', status:'可用', location:'器材室'},
+                {id:4, name:'稳定器', model:'DJI Ronin', status:'维修中', location:'维修部'},
+                {id:5, name:'打光灯组', model:'Godox SL60', status:'可用', location:'器材室'},
+                {id:6, name:'收音设备', model:'RODE Wireless GO', status:'可用', location:'器材室'}
+            ];
+            data.library = [
+                {id:1, name:'2024圣诞音乐会', type:'活动记录', duration:'120分钟', date:'2024-12-24', views:850},
+                {id:2, name:'李弟兄受洗见证', type:'见证分享', duration:'8分钟', date:'2025-05-15', views:320},
+                {id:3, name:'教会简介2025', type:'宣传片', duration:'5分钟', date:'2025-01-10', views:1200}
+            ];
+            data.workflow = [
+                {step:1, name:'前期策划', tasks:['确定主题', '撰写脚本', '分镜设计', '预算规划'], status:'必须'},
+                {step:2, name:'筹备阶段', tasks:['组建团队', '场地勘景', '设备准备', '演员/受访者沟通'], status:'必须'},
+                {step:3, name:'拍摄阶段', tasks:['按分镜拍摄', '打光布景', '收音录制', '素材备份'], status:'必须'},
+                {step:4, name:'后期剪辑', tasks:['素材整理', '粗剪', '精剪', '配乐'], status:'必须'},
+                {step:5, name:'后期制作', tasks:['调色', '特效', '字幕', '混音'], status:'必须'},
+                {step:6, name:'审核修改', tasks:['内部审核', '修改调整', '最终确认'], status:'必须'},
+                {step:7, name:'发布归档', tasks:['导出成片', '多平台发布', '归档备份', '效果追踪'], status:'必须'}
+            ];
+            localStorage.setItem('videoProductionData', JSON.stringify(data));
+            renderAll();
+        }
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+            if (tab === 'overview') renderOverview();
+            if (tab === 'workflow') renderWorkflow();
+        }
+        
+        function renderAll() {
+            renderOverview();
+            renderProjects();
+            renderTeam();
+            renderEquipment();
+            renderLibrary();
+            renderWorkflow();
+        }
+        
+        function renderOverview() {
+            document.getElementById('s1').textContent = data.projects.filter(p => p.status !== 'completed').length;
+            document.getElementById('s2').textContent = data.projects.filter(p => p.status === 'completed').length;
+            document.getElementById('s3').textContent = data.team.length;
+            document.getElementById('s4').textContent = data.equipment.length;
+            document.getElementById('s5').textContent = data.library.length;
+            const monthCompleted = data.projects.filter(p => p.status === 'completed' && new Date(p.deadline).getMonth() === new Date().getMonth()).length;
+            const monthTotal = data.projects.filter(p => new Date(p.deadline).getMonth() === new Date().getMonth()).length;
+            document.getElementById('s6').textContent = monthTotal > 0 ? Math.round((monthCompleted/monthTotal)*100) : 0;
+            document.getElementById('s6').textContent += '%';
+            
+            const ctx1 = document.getElementById('typeChart');
+            if (charts.typeChart) charts.typeChart.destroy();
+            const typeCounts = {};
+            data.projects.forEach(p => typeCounts[p.type] = (typeCounts[p.type] || 0) + 1);
+            charts.typeChart = new Chart(ctx1, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(typeCounts),
+                    datasets: [{
+                        data: Object.values(typeCounts),
+                        backgroundColor: ['#9b59b6', '#3498db', '#e74c3c', '#f39c12', '#27ae60']
+                    }]
+                }
+            });
+            
+            const thisMonth = data.projects.filter(p => new Date(p.startDate).getMonth() === new Date().getMonth());
+            document.querySelector('#monthPlanTable tbody').innerHTML = thisMonth.map(p => `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>${p.type}</td>
+                    <td><span class="status-tag status-${p.status}">${getStatusText(p.status)}</span></td>
+                    <td>
+                        <div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%"></div></div>
+                        ${p.progress}%
+                    </td>
+                    <td>${p.deadline}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" style="text-align:center;color:#7f8c8d;">本月暂无项目</td></tr>';
+        }
+        
+        function renderProjects() {
+            document.querySelector('#projectsTable tbody').innerHTML = data.projects.map(p => `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>${p.type}</td>
+                    <td>${p.director}</td>
+                    <td><span class="status-tag status-${p.status}">${getStatusText(p.status)}</span></td>
+                    <td>
+                        <div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%"></div></div>
+                        ${p.progress}%
+                    </td>
+                    <td>${p.startDate}</td>
+                    <td>${p.deadline}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editProject(${p.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProject(${p.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderTeam() {
+            document.querySelector('#teamTable tbody').innerHTML = data.team.map(t => `
+                <tr>
+                    <td>${t.name}</td>
+                    <td>${t.position}</td>
+                    <td>${t.specialty}</td>
+                    <td>${t.projects}个</td>
+                    <td>${t.phone}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteTeam(${t.id})">删除</button></td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderEquipment() {
+            const statusMap = {};
+            data.equipment.forEach(e => statusMap[e.status] = (statusMap[e.status] || 0) + 1);
+            
+            document.getElementById('equipmentList').innerHTML = data.equipment.map(e => `
+                <div style="background:#f8f9fa;padding:15px;border-radius:8px;border-left:4px solid ${e.status==='可用'?'#27ae60':'#f39c12'};">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:8px;">${e.name}</div>
+                    <div style="font-size:11px;color:#7f8c8d;margin-bottom:5px;">型号：${e.model}</div>
+                    <div style="font-size:11px;color:#555;">
+                        📍 ${e.location} · 
+                        <span style="color:${e.status==='可用'?'#27ae60':'#f39c12'};font-weight:600;">${e.status}</span>
+                    </div>
+                    <button class="btn btn-sm btn-danger" onclick="deleteEquipment(${e.id})" style="margin-top:8px;">删除</button>
+                </div>
+            `).join('');
+        }
+        
+        function renderLibrary() {
+            const search = document.getElementById('searchVideo')?.value.toLowerCase() || '';
+            const filtered = data.library.filter(v => v.name.toLowerCase().includes(search));
+            
+            document.querySelector('#libraryTable tbody').innerHTML = filtered.map(v => `
+                <tr>
+                    <td>${v.name}</td>
+                    <td>${v.type}</td>
+                    <td>${v.duration}</td>
+                    <td>${v.date}</td>
+                    <td>${v.views}次</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteVideo(${v.id})">删除</button></td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderWorkflow() {
+            document.getElementById('workflowSteps').innerHTML = data.workflow.map(w => `
+                <div style="background:white;padding:20px;border-radius:8px;margin-bottom:15px;border-left:4px solid #9b59b6;">
+                    <h4 style="color:#9b59b6;margin-bottom:12px;font-size:14px;">步骤${w.step}：${w.name}</h4>
+                    <ul style="line-height:2;margin-left:20px;font-size:11px;">
+                        ${w.tasks.map(task => `<li>${task}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('');
+        }
+        
+        function getStatusText(status) {
+            return {planning:'策划中', filming:'拍摄中', editing:'剪辑中', completed:'已完成'}[status];
+        }
+        
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;font-weight:600;margin-bottom:20px;">${title}</div>${content}`;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() { document.getElementById('modal').classList.remove('active'); }
+        
+        function showAddProjectModal() {
+            showModal('➕ 新增制作项目', `
+                <div class="form-group"><label class="form-label">项目名称</label><input type="text" id="pName" class="form-input"></div>
+                <div class="form-group"><label class="form-label">类型</label><select id="pType" class="form-select"><option>见证分享</option><option>宣传片</option><option>活动记录</option><option>教学视频</option><option>纪录片</option></select></div>
+                <div class="form-group"><label class="form-label">导演/负责人</label><select id="pDirector" class="form-select">${data.team.filter(t=>t.position==='导演'||t.position==='制片人').map(t=>`<option>${t.name}</option>`).join('')}</select></div>
+                <div class="form-group"><label class="form-label">开始日期</label><input type="date" id="pStart" class="form-input"></div>
+                <div class="form-group"><label class="form-label">预计完成</label><input type="date" id="pDeadline" class="form-input"></div>
+                <div class="form-group"><label class="form-label">当前状态</label><select id="pStatus" class="form-select"><option value="planning">策划中</option><option value="filming">拍摄中</option><option value="editing">剪辑中</option><option value="completed">已完成</option></select></div>
+                <button class="btn btn-primary" onclick="addProject()">确定</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addProject() {
+            const p = {
+                id: Date.now(),
+                name: document.getElementById('pName').value,
+                type: document.getElementById('pType').value,
+                director: document.getElementById('pDirector').value,
+                status: document.getElementById('pStatus').value,
+                progress: 0,
+                startDate: document.getElementById('pStart').value,
+                deadline: document.getElementById('pDeadline').value
+            };
+            if (!p.name) return alert('请填写项目名称');
+            data.projects.push(p);
+            localStorage.setItem('videoProductionData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 项目已添加！');
+        }
+        
+        function deleteProject(id) {
+            if (confirm('确定删除？')) {
+                data.projects = data.projects.filter(p => p.id !== id);
+                localStorage.setItem('videoProductionData', JSON.stringify(data));
+                renderAll();
+            }
+        }
+        
+        function showAddTeamModal() {
+            showModal('➕ 新增团队成员', `
+                <div class="form-group"><label class="form-label">姓名</label><input type="text" id="tName" class="form-input"></div>
+                <div class="form-group"><label class="form-label">职位</label><select id="tPosition" class="form-select"><option>导演</option><option>制片人</option><option>摄像师</option><option>剪辑师</option><option>后期制作</option><option>音效师</option></select></div>
+                <div class="form-group"><label class="form-label">专长</label><input type="text" id="tSpecialty" class="form-input"></div>
+                <div class="form-group"><label class="form-label">联系方式</label><input type="text" id="tPhone" class="form-input"></div>
+                <button class="btn btn-primary" onclick="addTeam()">确定</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addTeam() {
+            const t = {
+                id: Date.now(),
+                name: document.getElementById('tName').value,
+                position: document.getElementById('tPosition').value,
+                specialty: document.getElementById('tSpecialty').value,
+                projects: 0,
+                phone: document.getElementById('tPhone').value
+            };
+            if (!t.name) return alert('请填写姓名');
+            data.team.push(t);
+            localStorage.setItem('videoProductionData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 成员已添加！');
+        }
+        
+        function deleteTeam(id) {
+            if (confirm('确定删除？')) {
+                data.team = data.team.filter(t => t.id !== id);
+                localStorage.setItem('videoProductionData', JSON.stringify(data));
+                renderAll();
+            }
+        }
+        
+        function showAddEquipmentModal() {
+            showModal('➕ 新增设备', `
+                <div class="form-group"><label class="form-label">设备名称</label><input type="text" id="eName" class="form-input"></div>
+                <div class="form-group"><label class="form-label">型号</label><input type="text" id="eModel" class="form-input"></div>
+                <div class="form-group"><label class="form-label">状态</label><select id="eStatus" class="form-select"><option>可用</option><option>维修中</option><option>已借出</option></select></div>
+                <div class="form-group"><label class="form-label">存放位置</label><input type="text" id="eLocation" class="form-input" value="器材室"></div>
+                <button class="btn btn-primary" onclick="addEquipment()">确定</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addEquipment() {
+            const e = {
+                id: Date.now(),
+                name: document.getElementById('eName').value,
+                model: document.getElementById('eModel').value,
+                status: document.getElementById('eStatus').value,
+                location: document.getElementById('eLocation').value
+            };
+            if (!e.name) return alert('请填写设备名称');
+            data.equipment.push(e);
+            localStorage.setItem('videoProductionData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 设备已添加！');
+        }
+        
+        function deleteEquipment(id) {
+            if (confirm('确定删除？')) {
+                data.equipment = data.equipment.filter(e => e.id !== id);
+                localStorage.setItem('videoProductionData', JSON.stringify(data));
+                renderAll();
+            }
+        }
+        
+        function showAddVideoModal() {
+            showModal('➕ 新增影片', `
+                <div class="form-group"><label class="form-label">影片名称</label><input type="text" id="vName" class="form-input"></div>
+                <div class="form-group"><label class="form-label">类型</label><select id="vType" class="form-select"><option>见证分享</option><option>宣传片</option><option>活动记录</option><option>教学视频</option></select></div>
+                <div class="form-group"><label class="form-label">时长</label><input type="text" id="vDuration" class="form-input" placeholder="例如：5分钟"></div>
+                <div class="form-group"><label class="form-label">制作日期</label><input type="date" id="vDate" class="form-input"></div>
+                <button class="btn btn-primary" onclick="addVideo()">确定</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function addVideo() {
+            const v = {
+                id: Date.now(),
+                name: document.getElementById('vName').value,
+                type: document.getElementById('vType').value,
+                duration: document.getElementById('vDuration').value,
+                date: document.getElementById('vDate').value,
+                views: 0
+            };
+            if (!v.name) return alert('请填写影片名称');
+            data.library.push(v);
+            localStorage.setItem('videoProductionData', JSON.stringify(data));
+            renderAll();
+            closeModal();
+            alert('✅ 影片已添加到库！');
+        }
+        
+        function deleteVideo(id) {
+            if (confirm('确定删除？')) {
+                data.library = data.library.filter(v => v.id !== id);
+                localStorage.setItem('videoProductionData', JSON.stringify(data));
+                renderAll();
+            }
+        }
+        
+        function exportProjects() {
+            const csv = '项目名称,类型,负责人,状态,进度,开始日期,预计完成\n' + 
+                data.projects.map(p => `${p.name},${p.type},${p.director},${getStatusText(p.status)},${p.progress}%,${p.startDate},${p.deadline}`).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'}));
+            a.download = '影片制作项目.csv';
+            a.click();
+            alert('✅ 已导出！');
+        }
+    </script>
+</body>
+</html>

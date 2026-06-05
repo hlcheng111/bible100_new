@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💾 数据备份中心 - Bible100</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        h1 { color: #2c3e50; text-align: center; font-size: 2.5em; margin-bottom: 20px; }
+        .card { background: #f8f9fa; border-radius: 10px; padding: 25px; margin: 20px 0; border-left: 5px solid #3498db; }
+        .btn { padding: 15px 30px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; margin: 5px; transition: background 0.2s; }
+        .btn:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #229954; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-warning { background: #f39c12; }
+        .btn-warning:hover { background: #e67e22; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+        .stat-box { background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .stat-box .number { font-size: 2.5em; font-weight: bold; color: #3498db; }
+        .stat-box .label { color: #7f8c8d; margin-top: 5px; }
+        .alert { padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .alert.warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .alert.success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .alert.info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        .data-list { background: white; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .data-item { padding: 12px; background: #f8f9fa; margin: 8px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .progress-bar { width: 100%; height: 30px; background: #ecf0f1; border-radius: 15px; overflow: hidden; margin: 20px 0; }
+        .progress-fill { height: 100%; background: #27ae60; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💾 数据备份与恢复中心</h1>
+
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="number" id="totalDataSize">0</div>
+                <div class="label">总数据量 (KB)</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="totalTables">0</div>
+                <div class="label">数据表数量</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="totalRecords">0</div>
+                <div class="label">总记录数</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="lastBackup">从未</div>
+                <div class="label">最后备份</div>
+            </div>
+        </div>
+
+        <div class="alert warning">
+            <strong>⚠️ 重要提醒：</strong><br>
+            • 所有数据保存在浏览器LocalStorage中<br>
+            • 清除浏览器缓存会导致数据丢失<br>
+            • 建议每周备份一次数据<br>
+            • 升级浏览器或更换电脑前请先备份
+        </div>
+
+        <!-- 备份操作 -->
+        <div class="card">
+            <h2 style="color: #27ae60; margin-bottom: 20px;">📥 数据备份</h2>
+            <div style="background: white; padding: 20px; border-radius: 5px;">
+                <p style="margin-bottom: 15px;">点击下方按钮备份所有LocalStorage数据：</p>
+                <button class="btn btn-success" onclick="backupAllData()">
+                    💾 一键备份所有数据
+                </button>
+                <button class="btn" onclick="backupByModule()">
+                    📦 按模块备份
+                </button>
+                <div id="backupProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="backupProgressFill" style="width: 0%;">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 恢复操作 -->
+        <div class="card" style="border-left-color: #e74c3c;">
+            <h2 style="color: #e74c3c; margin-bottom: 20px;">📤 数据恢复</h2>
+            <div style="background: white; padding: 20px; border-radius: 5px;">
+                <p style="margin-bottom: 15px;">选择之前备份的JSON文件进行恢复：</p>
+                <input type="file" id="restoreFile" accept=".json" style="margin-bottom: 15px;">
+                <br>
+                <button class="btn btn-danger" onclick="restoreData()">
+                    📤 恢复数据
+                </button>
+                <div class="alert warning" style="margin-top: 15px;">
+                    <strong>⚠️ 警告：</strong>恢复数据会覆盖现有数据！请先备份当前数据。
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据清理 -->
+        <div class="card" style="border-left-color: #95a5a6;">
+            <h2 style="color: #95a5a6; margin-bottom: 20px;">🗑️ 数据清理</h2>
+            <div style="background: white; padding: 20px; border-radius: 5px;">
+                <p style="margin-bottom: 15px;">清除特定模块或所有数据：</p>
+                <button class="btn btn-warning" onclick="clearByModule()">
+                    🗑️ 按模块清除
+                </button>
+                <button class="btn btn-danger" onclick="clearAllData()">
+                    ⚠️ 清空所有数据
+                </button>
+            </div>
+        </div>
+
+        <!-- 数据浏览 -->
+        <div class="card" style="border-left-color: #9b59b6;">
+            <h2 style="color: #9b59b6; margin-bottom: 20px;">🔍 数据浏览</h2>
+            <div id="dataOverview" class="data-list">
+                <p style="text-align: center; color: #7f8c8d;">点击"刷新数据"查看所有LocalStorage数据</p>
+            </div>
+            <button class="btn" style="background: #9b59b6;" onclick="refreshDataOverview()">
+                🔄 刷新数据
+            </button>
+        </div>
+
+        <!-- 返回导航 -->
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="../index.html" class="btn" style="text-decoration: none;">返回主页</a>
+            <a href="index.html" class="btn btn-success" style="text-decoration: none;">站点导航</a>
+        </div>
+    </div>
+
+    <script>
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshDataOverview();
+            updateStats();
+        });
+
+        function updateStats() {
+            let totalSize = 0;
+            let totalTables = 0;
+            let totalRecords = 0;
+
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    totalTables++;
+                    const value = localStorage.getItem(key);
+                    totalSize += new Blob([value]).size;
+                    
+                    try {
+                        const data = JSON.parse(value);
+                        if (Array.isArray(data)) {
+                            totalRecords += data.length;
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            document.getElementById('totalDataSize').textContent = Math.round(totalSize / 1024);
+            document.getElementById('totalTables').textContent = totalTables;
+            document.getElementById('totalRecords').textContent = totalRecords;
+
+            const lastBackup = localStorage.getItem('last_backup_date');
+            if (lastBackup) {
+                const date = new Date(lastBackup);
+                document.getElementById('lastBackup').textContent = date.toLocaleDateString('zh-CN');
+            }
+        }
+
+        function backupAllData() {
+            const backupData = {};
+            const progressDiv = document.getElementById('backupProgress');
+            const progressFill = document.getElementById('backupProgressFill');
+            
+            progressDiv.style.display = 'block';
+
+            let processed = 0;
+            const total = Object.keys(localStorage).length;
+
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    backupData[key] = localStorage.getItem(key);
+                    processed++;
+                    const percentage = Math.round((processed / total) * 100);
+                    progressFill.style.width = percentage + '%';
+                    progressFill.textContent = percentage + '%';
+                }
+            }
+
+            const backupObj = {
+                timestamp: new Date().toISOString(),
+                version: '2.0',
+                data: backupData
+            };
+
+            const dataStr = JSON.stringify(backupObj, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            const exportFileDefaultName = `bible100_backup_${new Date().toISOString().split('T')[0]}_${Date.now()}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+
+            localStorage.setItem('last_backup_date', new Date().toISOString());
+            
+            setTimeout(() => {
+                progressDiv.style.display = 'none';
+                alert('✅ 数据备份成功！\n\n文件已下载到"下载"文件夹。');
+                updateStats();
+            }, 500);
+        }
+
+        function restoreData() {
+            const fileInput = document.getElementById('restoreFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('请先选择备份文件！');
+                return;
+            }
+
+            if (!confirm('⚠️ 警告：恢复数据会覆盖所有现有数据！\n\n确定要继续吗？建议先备份当前数据。')) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupObj = JSON.parse(e.target.result);
+                    
+                    if (!backupObj.data) {
+                        alert('❌ 无效的备份文件格式！');
+                        return;
+                    }
+
+                    // Clear existing data
+                    localStorage.clear();
+
+                    // Restore data
+                    for (let key in backupObj.data) {
+                        localStorage.setItem(key, backupObj.data[key]);
+                    }
+
+                    alert(`✅ 数据恢复成功！\n\n恢复了 ${Object.keys(backupObj.data).length} 个数据表。\n备份时间：${new Date(backupObj.timestamp).toLocaleString('zh-CN')}`);
+                    refreshDataOverview();
+                    updateStats();
+
+                } catch (error) {
+                    alert('❌ 恢复失败：' + error.message);
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        function refreshDataOverview() {
+            const container = document.getElementById('dataOverview');
+            const data = [];
+
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    const value = localStorage.getItem(key);
+                    const size = new Blob([value]).size;
+                    
+                    let recordCount = 0;
+                    try {
+                        const parsed = JSON.parse(value);
+                        if (Array.isArray(parsed)) {
+                            recordCount = parsed.length;
+                        }
+                    } catch (e) {}
+
+                    data.push({ key, size, recordCount });
+                }
+            }
+
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">暂无数据</p>';
+                return;
+            }
+
+            data.sort((a, b) => b.size - a.size);
+
+            container.innerHTML = data.map(item => `
+                <div class="data-item">
+                    <div>
+                        <strong>${item.key}</strong>
+                        <small style="color: #7f8c8d; margin-left: 10px;">
+                            ${item.recordCount > 0 ? `${item.recordCount} 条记录 | ` : ''}
+                            ${Math.round(item.size / 1024)} KB
+                        </small>
+                    </div>
+                    <div>
+                        <button class="btn" style="padding: 5px 15px; font-size: 12px;" onclick="exportSingle('${item.key}')">导出</button>
+                        <button class="btn btn-danger" style="padding: 5px 15px; font-size: 12px;" onclick="deleteSingle('${item.key}')">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function exportSingle(key) {
+            const data = localStorage.getItem(key);
+            if (!data) return;
+
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(data);
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', `${key}_${new Date().toISOString().split('T')[0]}.json`);
+            linkElement.click();
+        }
+
+        function deleteSingle(key) {
+            if (!confirm(`确定要删除"${key}"吗？此操作不可恢复！`)) return;
+            
+            localStorage.removeItem(key);
+            refreshDataOverview();
+            updateStats();
+            alert('✅ 已删除');
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠️ 严重警告：此操作将删除所有数据！\n\n确定要继续吗？建议先备份！')) return;
+            if (!confirm('⚠️ 最后确认：真的要删除所有数据吗？')) return;
+
+            localStorage.clear();
+            refreshDataOverview();
+            updateStats();
+            alert('✅ 所有数据已清除');
+        }
+
+        function backupByModule() {
+            alert('💡 提示：请使用"数据浏览"区域中每个表的"导出"按钮进行单独备份。');
+        }
+
+        function clearByModule() {
+            alert('💡 提示：请使用"数据浏览"区域中每个表的"删除"按钮进行单独清除。');
+        }
+    </script>
+</body>
+</html>
+

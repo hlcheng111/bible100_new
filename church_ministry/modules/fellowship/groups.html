@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小組管理 · Groups | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <!-- 頁面標題和導航 -->
+    <div class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <button onclick="goBack()" class="text-gray-600 hover:text-gray-900" title="返回上一頁">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </button>
+                <a href="../../dashboard.html" class="text-gray-600 hover:text-gray-900 text-sm" title="教會事工中心">⛪ 教會事工中心</a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">小組管理</h1>
+                    <p class="text-sm text-gray-600">管理教會各小組、成員分配與活動安排</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button id="addGroupBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-plus mr-2"></i>新增小組
+                </button>
+                <button id="addMemberBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                    <i class="fas fa-user-plus mr-2"></i>新增成員
+                </button>
+                <button id="scheduleActivityBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-calendar-plus mr-2"></i>安排活動
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-6">
+        <!-- 統計卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-blue-500 p-3 rounded-lg">
+                        <i class="fas fa-users text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">總小組數</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalGroups">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-green-500 p-3 rounded-lg">
+                        <i class="fas fa-user-friends text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">總成員數</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalMembers">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-purple-500 p-3 rounded-lg">
+                        <i class="fas fa-calendar-check text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">本月活動</p>
+                        <p class="text-2xl font-bold text-gray-900" id="monthlyActivities">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-orange-500 p-3 rounded-lg">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">活躍度</p>
+                        <p class="text-2xl font-bold text-gray-900" id="activityRate">0%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要功能區域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 小組列表 -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">小組列表</h3>
+                        <div class="flex space-x-2">
+                            <button onclick="filterGroups('all')" class="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">全部</button>
+                            <button onclick="filterGroups('active')" class="px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full">活躍</button>
+                            <button onclick="filterGroups('inactive')" class="px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full">非活躍</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div id="groupsList" class="space-y-4">
+                        <!-- 小組列表將通過 JavaScript 動態生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快速操作和統計 -->
+            <div class="space-y-6">
+                <!-- 快速操作 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">快速操作</h4>
+                    <div class="space-y-3">
+                        <button onclick="quickAddGroup()" class="w-full bg-blue-50 text-blue-700 p-3 rounded-lg hover:bg-blue-100 text-left">
+                            <i class="fas fa-plus mr-2"></i>新增小組
+                        </button>
+                        <button onclick="quickAddMember()" class="w-full bg-green-50 text-green-700 p-3 rounded-lg hover:bg-green-100 text-left">
+                            <i class="fas fa-user-plus mr-2"></i>新增成員
+                        </button>
+                        <button onclick="quickScheduleActivity()" class="w-full bg-purple-50 text-purple-700 p-3 rounded-lg hover:bg-purple-100 text-left">
+                            <i class="fas fa-calendar-plus mr-2"></i>安排活動
+                        </button>
+                        <button onclick="exportGroupsReport()" class="w-full bg-orange-50 text-orange-700 p-3 rounded-lg hover:bg-orange-100 text-left">
+                            <i class="fas fa-download mr-2"></i>匯出報表
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 小組統計 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">小組統計</h4>
+                    <div id="groupsStats" class="space-y-3">
+                        <!-- 統計信息將通過 JavaScript 動態生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 成員管理表格 -->
+        <div class="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">成員管理</h3>
+                    <div class="flex items-center space-x-4">
+                        <input type="text" id="searchMembers" placeholder="搜尋成員..." 
+                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <select id="memberFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">全部成員</option>
+                            <option value="leader">小組長</option>
+                            <option value="member">一般成員</option>
+                            <option value="new">新成員</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">姓名</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">小組</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">角色</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">聯絡方式</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">加入日期</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">狀態</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- 成員列表將通過 JavaScript 動態生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 活動安排 -->
+        <div class="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">活動安排</h3>
+                    <div class="flex items-center space-x-4">
+                        <select id="activityFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">全部活動</option>
+                            <option value="upcoming">即將到來</option>
+                            <option value="ongoing">進行中</option>
+                            <option value="completed">已完成</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="activitiesList" class="space-y-4">
+                    <!-- 活動列表將通過 JavaScript 動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯小組模態框 -->
+    <div id="groupModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" id="modalTitle">新增小組</h3>
+                    <button onclick="closeGroupModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="groupForm" class="space-y-4">
+                    <input type="hidden" id="groupId" name="groupId">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="groupName" class="block text-sm font-medium text-gray-700 mb-1">小組名稱 *</label>
+                            <input type="text" id="groupName" name="groupName" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="groupType" class="block text-sm font-medium text-gray-700 mb-1">小組類型 *</label>
+                            <select id="groupType" name="groupType" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">請選擇類型</option>
+                                <option value="年齡層">年齡層</option>
+                                <option value="興趣">興趣</option>
+                                <option value="職場">職場</option>
+                                <option value="家庭">家庭</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="groupLeader" class="block text-sm font-medium text-gray-700 mb-1">小組長 *</label>
+                            <input type="text" id="groupLeader" name="groupLeader" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="memberCount" class="block text-sm font-medium text-gray-700 mb-1">成員數</label>
+                            <input type="number" id="memberCount" name="memberCount" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="meetingTime" class="block text-sm font-medium text-gray-700 mb-1">聚會時間</label>
+                            <input type="text" id="meetingTime" name="meetingTime" placeholder="例：週五晚上7:00"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="meetingLocation" class="block text-sm font-medium text-gray-700 mb-1">聚會地點</label>
+                            <input type="text" id="meetingLocation" name="meetingLocation" placeholder="例：教會副堂"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="groupStatus" class="block text-sm font-medium text-gray-700 mb-1">狀態 *</label>
+                        <select id="groupStatus" name="groupStatus" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="active">活躍</option>
+                            <option value="inactive">非活躍</option>
+                            <option value="planning">籌備中</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="groupDescription" class="block text-sm font-medium text-gray-700 mb-1">小組描述</label>
+                        <textarea id="groupDescription" name="groupDescription" rows="3"
+                                  placeholder="描述小組的目標、特色或注意事項..."
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeGroupModal()" 
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                            取消
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <span id="submitBtnText">新增小組</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 小組詳情模態框 -->
+    <div id="groupDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">小組詳情</h3>
+                    <button onclick="closeGroupDetailModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div id="groupDetailContent" class="space-y-4">
+                    <!-- 詳情內容將通過 JavaScript 動態生成 -->
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button onclick="closeGroupDetailModal()" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        關閉
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯成員模態框 -->
+    <div id="memberModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" id="memberModalTitle">新增成員</h3>
+                    <button onclick="closeMemberModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="memberForm" class="space-y-4">
+                    <input type="hidden" id="memberId" name="memberId">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="memberName" class="block text-sm font-medium text-gray-700 mb-1">姓名 *</label>
+                            <input type="text" id="memberName" name="memberName" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="memberGroup" class="block text-sm font-medium text-gray-700 mb-1">所屬小組 *</label>
+                            <select id="memberGroup" name="memberGroup" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">請選擇小組</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="memberRole" class="block text-sm font-medium text-gray-700 mb-1">角色 *</label>
+                            <select id="memberRole" name="memberRole" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">請選擇角色</option>
+                                <option value="leader">小組長</option>
+                                <option value="member">一般成員</option>
+                                <option value="new">新成員</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="memberPhone" class="block text-sm font-medium text-gray-700 mb-1">聯絡電話</label>
+                            <input type="tel" id="memberPhone" name="memberPhone"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="memberEmail" class="block text-sm font-medium text-gray-700 mb-1">電子郵件</label>
+                            <input type="email" id="memberEmail" name="memberEmail"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="memberJoinDate" class="block text-sm font-medium text-gray-700 mb-1">加入日期</label>
+                            <input type="date" id="memberJoinDate" name="memberJoinDate"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="memberStatus" class="block text-sm font-medium text-gray-700 mb-1">狀態 *</label>
+                        <select id="memberStatus" name="memberStatus" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="active">活躍</option>
+                            <option value="inactive">非活躍</option>
+                            <option value="pending">待確認</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeMemberModal()" 
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                            取消
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <span id="memberSubmitBtnText">新增成員</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 小組管理數據存儲
+        let groups = [];
+        let groupMembers = [];
+        let activities = [];
+        let currentGroupFilter = 'all';
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('小組管理模組已載入');
+            loadSampleData();
+            bindEvents();
+            updateStats();
+            renderGroupsList();
+            renderMembersTable();
+            renderActivitiesList();
+            renderGroupsStats();
+        });
+
+        // 載入示例數據
+        function loadSampleData() {
+            // 載入小組示例數據
+            const sampleGroups = [
+                {
+                    id: 1,
+                    name: '青年小組',
+                    type: '年齡層',
+                    leader: '張小明',
+                    memberCount: 15,
+                    meetingTime: '週五晚上7:00',
+                    meetingLocation: '教會副堂',
+                    status: 'active',
+                    description: '針對18-35歲青年的小組，專注於信仰成長和團契生活',
+                    createdAt: '2024-01-01'
+                },
+                {
+                    id: 2,
+                    name: '成人小組',
+                    type: '年齡層',
+                    leader: '李美華',
+                    memberCount: 20,
+                    meetingTime: '週六下午2:00',
+                    meetingLocation: '教會主堂',
+                    status: 'active',
+                    description: '針對35-60歲成人的小組，注重家庭和職場見證',
+                    createdAt: '2024-01-01'
+                },
+                {
+                    id: 3,
+                    name: '長者小組',
+                    type: '年齡層',
+                    leader: '王奶奶',
+                    memberCount: 12,
+                    meetingTime: '週二上午9:00',
+                    meetingLocation: '教會長者中心',
+                    status: 'active',
+                    description: '針對60歲以上長者的小組，關懷長者靈命和生活',
+                    createdAt: '2024-01-01'
+                }
+            ];
+
+            // 載入成員示例數據
+            const sampleMembers = [
+                {
+                    id: 1,
+                    name: '張小明',
+                    groupId: 1,
+                    groupName: '青年小組',
+                    role: 'leader',
+                    phone: '0912-345-678',
+                    email: 'zhang@example.com',
+                    joinDate: '2024-01-01',
+                    status: 'active'
+                },
+                {
+                    id: 2,
+                    name: '李美華',
+                    groupId: 2,
+                    groupName: '成人小組',
+                    role: 'leader',
+                    phone: '0923-456-789',
+                    email: 'li@example.com',
+                    joinDate: '2024-01-01',
+                    status: 'active'
+                },
+                {
+                    id: 3,
+                    name: '王奶奶',
+                    groupId: 3,
+                    groupName: '長者小組',
+                    role: 'leader',
+                    phone: '0934-567-890',
+                    email: 'wang@example.com',
+                    joinDate: '2024-01-01',
+                    status: 'active'
+                }
+            ];
+
+            // 載入活動示例數據
+            const sampleActivities = [
+                {
+                    id: 1,
+                    title: '青年小組戶外活動',
+                    groupId: 1,
+                    groupName: '青年小組',
+                    date: '2024-02-15',
+                    time: '14:00',
+                    location: '陽明山',
+                    description: '戶外踏青活動，增進小組成員感情',
+                    status: 'upcoming'
+                },
+                {
+                    id: 2,
+                    title: '成人小組讀書會',
+                    groupId: 2,
+                    groupName: '成人小組',
+                    date: '2024-02-10',
+                    time: '19:00',
+                    location: '教會副堂',
+                    description: '討論《活出美好》一書',
+                    status: 'completed'
+                }
+            ];
+
+            // 從 LocalStorage 載入或使用示例數據
+            const savedGroups = localStorage.getItem('groups');
+            const savedMembers = localStorage.getItem('groupMembers');
+            const savedActivities = localStorage.getItem('activities');
+            
+            if (savedGroups) {
+                groups = JSON.parse(savedGroups);
+            } else {
+                groups = sampleGroups;
+                localStorage.setItem('groups', JSON.stringify(groups));
+            }
+            
+            if (savedMembers) {
+                groupMembers = JSON.parse(savedMembers);
+            } else {
+                groupMembers = sampleMembers;
+                localStorage.setItem('groupMembers', JSON.stringify(groupMembers));
+            }
+            
+            if (savedActivities) {
+                activities = JSON.parse(savedActivities);
+            } else {
+                activities = sampleActivities;
+                localStorage.setItem('activities', JSON.stringify(activities));
+            }
+        }
+
+        // 綁定事件
+        function bindEvents() {
+            document.getElementById('addGroupBtn').addEventListener('click', () => showAddGroupModal());
+            document.getElementById('addMemberBtn').addEventListener('click', () => showAddMemberModal());
+            document.getElementById('scheduleActivityBtn').addEventListener('click', () => showComingSoon('此功能暫未開放','../../dashboard.html'));
+            document.getElementById('searchMembers').addEventListener('input', filterMembers);
+            document.getElementById('memberFilter').addEventListener('change', filterMembers);
+            document.getElementById('activityFilter').addEventListener('change', filterActivities);
+            
+            // 綁定表單提交事件
+            document.getElementById('groupForm').addEventListener('submit', handleGroupSubmit);
+            document.getElementById('memberForm').addEventListener('submit', handleMemberSubmit);
+        }
+
+        // 返回上一頁
+        function goBack() {
+            window.history.back();
+        }
+
+        // 更新統計數據
+        function updateStats() {
+            document.getElementById('totalGroups').textContent = groups.length;
+            document.getElementById('totalMembers').textContent = groupMembers.length;
+            
+            const currentMonth = new Date().getMonth();
+            const monthlyActivities = activities.filter(a => {
+                const activityMonth = new Date(a.date).getMonth();
+                return activityMonth === currentMonth;
+            }).length;
+            document.getElementById('monthlyActivities').textContent = monthlyActivities;
+            
+            // 計算活躍度 (有活動的小組比例)
+            const activeGroups = groups.filter(g => g.status === 'active').length;
+            const activityRate = groups.length > 0 ? Math.round((activeGroups / groups.length) * 100) : 0;
+            document.getElementById('activityRate').textContent = activityRate + '%';
+        }
+
+        // 渲染小組列表
+        function renderGroupsList() {
+            const groupsList = document.getElementById('groupsList');
+            const filteredGroups = currentGroupFilter === 'all' ? groups : 
+                                 groups.filter(g => g.status === currentGroupFilter);
+
+            groupsList.innerHTML = filteredGroups.map(group => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                                group.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }">
+                                ${group.status === 'active' ? '活躍' : '非活躍'}
+                            </span>
+                            <h4 class="font-medium text-gray-900">${group.name}</h4>
+                            <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">${group.type}</span>
+                        </div>
+                                                 <div class="flex items-center space-x-2">
+                             <button onclick="showEditGroupModal(${group.id})" class="text-blue-600 hover:text-blue-900" title="編輯小組">
+                                 <i class="fas fa-edit"></i>
+                             </button>
+                             <button onclick="viewGroupDetails(${group.id})" class="text-green-600 hover:text-green-900" title="查看詳情">
+                                 <i class="fas fa-eye"></i>
+                             </button>
+                             <button onclick="deleteGroup(${group.id})" class="text-red-600 hover:text-red-900" title="刪除小組">
+                                 <i class="fas fa-trash"></i>
+                             </button>
+                         </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div>
+                            <span class="font-medium">小組長：</span>
+                            ${group.leader}
+                        </div>
+                        <div>
+                            <span class="font-medium">成員數：</span>
+                            ${group.memberCount}人
+                        </div>
+                        <div>
+                            <span class="font-medium">聚會時間：</span>
+                            ${group.meetingTime}
+                        </div>
+                        <div>
+                            <span class="font-medium">聚會地點：</span>
+                            ${group.meetingLocation}
+                        </div>
+                    </div>
+                    ${group.description ? `<div class="mt-3 text-sm text-gray-600"><span class="font-medium">描述：</span>${group.description}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // 渲染成員表格
+        function renderMembersTable() {
+            const tableBody = document.getElementById('membersTableBody');
+            tableBody.innerHTML = groupMembers.map(member => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.groupName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                            member.role === 'leader' ? 'bg-blue-100 text-blue-800' :
+                            member.role === 'member' ? 'bg-green-100 text-green-800' :
+                            'bg-yellow-100 text-yellow-800'
+                        }">
+                            ${member.role === 'leader' ? '小組長' : 
+                              member.role === 'member' ? '一般成員' : '新成員'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div>${member.phone}</div>
+                        <div class="text-xs text-gray-500">${member.email}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.joinDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                            member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }">
+                            ${member.status === 'active' ? '活躍' : '非活躍'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="viewMember(${member.id})" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="showEditMemberModal(${member.id})" class="text-green-600 hover:text-green-900">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteMember(${member.id})" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 渲染活動列表
+        function renderActivitiesList() {
+            const activitiesList = document.getElementById('activitiesList');
+            activitiesList.innerHTML = activities.map(activity => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                                activity.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
+                                activity.status === 'ongoing' ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
+                            }">
+                                ${activity.status === 'upcoming' ? '即將到來' : 
+                                  activity.status === 'ongoing' ? '進行中' : '已完成'}
+                            </span>
+                            <h4 class="font-medium text-gray-900">${activity.title}</h4>
+                            <span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">${activity.groupName}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="editActivity(${activity.id})" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteActivity(${activity.id})" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div>
+                            <span class="font-medium">日期：</span>
+                            ${activity.date}
+                        </div>
+                        <div>
+                            <span class="font-medium">時間：</span>
+                            ${activity.time}
+                        </div>
+                        <div>
+                            <span class="font-medium">地點：</span>
+                            ${activity.location}
+                        </div>
+                        <div>
+                            <span class="font-medium">狀態：</span>
+                            ${activity.status === 'upcoming' ? '即將到來' : 
+                              activity.status === 'ongoing' ? '進行中' : '已完成'}
+                        </div>
+                    </div>
+                    ${activity.description ? `<div class="mt-3 text-sm text-gray-600"><span class="font-medium">描述：</span>${activity.description}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // 渲染小組統計
+        function renderGroupsStats() {
+            const statsDiv = document.getElementById('groupsStats');
+            
+            const groupTypes = {};
+            groups.forEach(group => {
+                groupTypes[group.type] = (groupTypes[group.type] || 0) + 1;
+            });
+            
+            const statsHTML = Object.entries(groupTypes).map(([type, count]) => `
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">${type}小組</span>
+                    <span class="text-sm font-medium text-gray-900">${count}個</span>
+                </div>
+            `).join('');
+            
+            statsDiv.innerHTML = statsHTML;
+        }
+
+        // 篩選小組
+        function filterGroups(type) {
+            currentGroupFilter = type;
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('[onclick^="filterGroups"]').forEach(btn => {
+                btn.className = 'px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full';
+            });
+            event.target.className = 'px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full';
+            
+            renderGroupsList();
+        }
+
+        // 篩選成員
+        function filterMembers() {
+            const searchTerm = document.getElementById('searchMembers').value.toLowerCase();
+            const roleFilter = document.getElementById('memberFilter').value;
+            
+            const filteredMembers = groupMembers.filter(member => {
+                const matchesSearch = member.name.toLowerCase().includes(searchTerm) ||
+                                    member.groupName.toLowerCase().includes(searchTerm);
+                const matchesRole = !roleFilter || member.role === roleFilter;
+                
+                return matchesSearch && matchesRole;
+            });
+            
+            renderFilteredMembers(filteredMembers);
+        }
+
+        // 篩選活動
+        function filterActivities() {
+            const statusFilter = document.getElementById('activityFilter').value;
+            
+            const filteredActivities = activities.filter(activity => {
+                return !statusFilter || activity.status === statusFilter;
+            });
+            
+            renderFilteredActivities(filteredActivities);
+        }
+
+        // 渲染篩選後的成員
+        function renderFilteredMembers(members) {
+            const tableBody = document.getElementById('membersTableBody');
+            tableBody.innerHTML = members.map(member => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.groupName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                            member.role === 'leader' ? 'bg-blue-100 text-blue-800' :
+                            member.role === 'member' ? 'bg-green-100 text-green-800' :
+                            'bg-yellow-100 text-yellow-800'
+                        }">
+                            ${member.role === 'leader' ? '小組長' : 
+                              member.role === 'member' ? '一般成員' : '新成員'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div>${member.phone}</div>
+                        <div class="text-xs text-gray-500">${member.email}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.joinDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                            member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }">
+                            ${member.status === 'active' ? '活躍' : '非活躍'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="viewMember(${member.id})" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="showEditMemberModal(${member.id})" class="text-green-600 hover:text-green-900">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteMember(${member.id})" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 渲染篩選後的活動
+        function renderFilteredActivities(activities) {
+            const activitiesList = document.getElementById('activitiesList');
+            activitiesList.innerHTML = activities.map(activity => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                                activity.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
+                                activity.status === 'ongoing' ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
+                            }">
+                                ${activity.status === 'upcoming' ? '即將到來' : 
+                                  activity.status === 'ongoing' ? '進行中' : '已完成'}
+                            </span>
+                            <h4 class="font-medium text-gray-900">${activity.title}</h4>
+                            <span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">${activity.groupName}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="editActivity(${activity.id})" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteActivity(${activity.id})" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div>
+                            <span class="font-medium">日期：</span>
+                            ${activity.date}
+                        </div>
+                        <div>
+                            <span class="font-medium">時間：</span>
+                            ${activity.time}
+                        </div>
+                        <div>
+                            <span class="font-medium">地點：</span>
+                            ${activity.location}
+                        </div>
+                        <div>
+                            <span class="font-medium">狀態：</span>
+                            ${activity.status === 'upcoming' ? '即將到來' : 
+                              activity.status === 'ongoing' ? '進行中' : '已完成'}
+                        </div>
+                    </div>
+                    ${activity.description ? `<div class="mt-3 text-sm text-gray-600"><span class="font-medium">描述：</span>${activity.description}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // 小組管理核心功能
+        function showAddGroupModal() {
+            resetGroupForm();
+            document.getElementById('modalTitle').textContent = '新增小組';
+            document.getElementById('submitBtnText').textContent = '新增小組';
+            document.getElementById('groupModal').classList.remove('hidden');
+        }
+
+        function showEditGroupModal(groupId) {
+            const group = groups.find(g => g.id === groupId);
+            if (!group) {
+                showMessage('找不到小組資料', 'error');
+                return;
+            }
+            
+            // 填充表單數據
+            document.getElementById('groupId').value = group.id;
+            document.getElementById('groupName').value = group.name;
+            document.getElementById('groupType').value = group.type;
+            document.getElementById('groupLeader').value = group.leader;
+            document.getElementById('memberCount').value = group.memberCount;
+            document.getElementById('meetingTime').value = group.meetingTime;
+            document.getElementById('meetingLocation').value = group.meetingLocation;
+            document.getElementById('groupStatus').value = group.status;
+            document.getElementById('groupDescription').value = group.description || '';
+            
+            document.getElementById('modalTitle').textContent = '編輯小組';
+            document.getElementById('submitBtnText').textContent = '更新小組';
+            document.getElementById('groupModal').classList.remove('hidden');
+        }
+
+        function closeGroupModal() {
+            document.getElementById('groupModal').classList.add('hidden');
+            resetGroupForm();
+        }
+
+        function closeGroupDetailModal() {
+            document.getElementById('groupDetailModal').classList.add('hidden');
+        }
+
+        function resetGroupForm() {
+            document.getElementById('groupForm').reset();
+            document.getElementById('groupId').value = '';
+        }
+
+        function handleGroupSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const groupData = {
+                id: formData.get('groupId') || generateId(),
+                name: formData.get('groupName'),
+                type: formData.get('groupType'),
+                leader: formData.get('groupLeader'),
+                memberCount: parseInt(formData.get('memberCount')) || 0,
+                meetingTime: formData.get('meetingTime'),
+                meetingLocation: formData.get('meetingLocation'),
+                status: formData.get('groupStatus'),
+                description: formData.get('groupDescription'),
+                createdAt: formData.get('groupId') ? groups.find(g => g.id === formData.get('groupId'))?.createdAt : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            // 驗證必填欄位
+            if (!groupData.name || !groupData.type || !groupData.leader || !groupData.status) {
+                showMessage('請填寫所有必填欄位', 'error');
+                return;
+            }
+            
+            if (formData.get('groupId')) {
+                // 更新現有小組
+                const index = groups.findIndex(g => g.id === formData.get('groupId'));
+                if (index !== -1) {
+                    groups[index] = { ...groups[index], ...groupData };
+                    showMessage('小組更新成功！', 'success');
+                }
+            } else {
+                // 新增小組
+                groups.push(groupData);
+                showMessage('小組新增成功！', 'success');
+            }
+            
+            // 保存到 LocalStorage
+            localStorage.setItem('groups', JSON.stringify(groups));
+            
+            // 關閉模態框並刷新顯示
+            closeGroupModal();
+            updateStats();
+            renderGroupsList();
+            renderGroupsStats();
+        }
+
+        function viewGroupDetails(groupId) {
+            const group = groups.find(g => g.id === groupId);
+            if (!group) {
+                showMessage('找不到小組資料', 'error');
+                return;
+            }
+            
+            const detailContent = document.getElementById('groupDetailContent');
+            detailContent.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">小組名稱</label>
+                        <p class="text-sm text-gray-900">${group.name}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">小組類型</label>
+                        <p class="text-sm text-gray-900">${group.type}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">小組長</label>
+                        <p class="text-sm text-gray-900">${group.leader}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">成員數</label>
+                        <p class="text-sm text-gray-900">${group.memberCount}人</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">聚會時間</label>
+                        <p class="text-sm text-gray-900">${group.meetingTime || '未設定'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">聚會地點</label>
+                        <p class="text-sm text-gray-900">${group.meetingLocation || '未設定'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">狀態</label>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                            group.status === 'active' ? 'bg-green-100 text-green-800' : 
+                            group.status === 'inactive' ? 'bg-gray-100 text-gray-800' : 
+                            'bg-yellow-100 text-yellow-800'
+                        }">
+                            ${group.status === 'active' ? '活躍' : 
+                              group.status === 'inactive' ? '非活躍' : '籌備中'}
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">創建時間</label>
+                        <p class="text-sm text-gray-900">${new Date(group.createdAt).toLocaleDateString('zh-TW')}</p>
+                    </div>
+                </div>
+                ${group.description ? `
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">小組描述</label>
+                    <p class="text-sm text-gray-900">${group.description}</p>
+                </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('groupDetailModal').classList.remove('hidden');
+        }
+
+        function deleteGroup(id) {
+            if (confirm('確定要刪除這個小組嗎？此操作無法復原。')) {
+                groups = groups.filter(g => g.id !== id);
+                localStorage.setItem('groups', JSON.stringify(groups));
+                updateStats();
+                renderGroupsList();
+                renderGroupsStats();
+                showMessage('小組已刪除', 'success');
+            }
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // 成員管理核心功能
+        function showAddMemberModal() {
+            resetMemberForm();
+            populateGroupOptions();
+            document.getElementById('memberModalTitle').textContent = '新增成員';
+            document.getElementById('memberSubmitBtnText').textContent = '新增成員';
+            document.getElementById('memberModal').classList.remove('hidden');
+        }
+
+        function showEditMemberModal(memberId) {
+            const member = groupMembers.find(m => m.id === memberId);
+            if (!member) {
+                showMessage('找不到成員資料', 'error');
+                return;
+            }
+            
+            // 填充表單數據
+            document.getElementById('memberId').value = member.id;
+            document.getElementById('memberName').value = member.name;
+            document.getElementById('memberGroup').value = member.groupId;
+            document.getElementById('memberRole').value = member.role;
+            document.getElementById('memberPhone').value = member.phone || '';
+            document.getElementById('memberEmail').value = member.email || '';
+            document.getElementById('memberJoinDate').value = member.joinDate || '';
+            document.getElementById('memberStatus').value = member.status;
+            
+            populateGroupOptions();
+            document.getElementById('memberModalTitle').textContent = '編輯成員';
+            document.getElementById('memberSubmitBtnText').textContent = '更新成員';
+            document.getElementById('memberModal').classList.remove('hidden');
+        }
+
+        function closeMemberModal() {
+            document.getElementById('memberModal').classList.add('hidden');
+            resetMemberForm();
+        }
+
+        function resetMemberForm() {
+            document.getElementById('memberForm').reset();
+            document.getElementById('memberId').value = '';
+            document.getElementById('memberJoinDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        function populateGroupOptions() {
+            const groupSelect = document.getElementById('memberGroup');
+            groupSelect.innerHTML = '<option value="">請選擇小組</option>';
+            
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.id;
+                option.textContent = group.name;
+                groupSelect.appendChild(option);
+            });
+        }
+
+        function handleMemberSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const memberData = {
+                id: formData.get('memberId') || generateId(),
+                name: formData.get('memberName'),
+                groupId: parseInt(formData.get('memberGroup')),
+                groupName: groups.find(g => g.id === parseInt(formData.get('memberGroup')))?.name || '',
+                role: formData.get('memberRole'),
+                phone: formData.get('memberPhone'),
+                email: formData.get('memberEmail'),
+                joinDate: formData.get('memberJoinDate'),
+                status: formData.get('memberStatus')
+            };
+            
+            // 驗證必填欄位
+            if (!memberData.name || !memberData.groupId || !memberData.role || !memberData.status) {
+                showMessage('請填寫所有必填欄位', 'error');
+                return;
+            }
+            
+            if (formData.get('memberId')) {
+                // 更新現有成員
+                const index = groupMembers.findIndex(m => m.id === formData.get('memberId'));
+                if (index !== -1) {
+                    groupMembers[index] = { ...groupMembers[index], ...memberData };
+                    showMessage('成員更新成功！', 'success');
+                }
+            } else {
+                // 新增成員
+                groupMembers.push(memberData);
+                showMessage('成員新增成功！', 'success');
+                
+                // 更新小組成員數
+                const group = groups.find(g => g.id === memberData.groupId);
+                if (group) {
+                    group.memberCount = (group.memberCount || 0) + 1;
+                    localStorage.setItem('groups', JSON.stringify(groups));
+                }
+            }
+            
+            // 保存到 LocalStorage
+            localStorage.setItem('groupMembers', JSON.stringify(groupMembers));
+            
+            // 關閉模態框並刷新顯示
+            closeMemberModal();
+            updateStats();
+            renderMembersTable();
+            renderGroupsList();
+            renderGroupsStats();
+        }
+
+        // 快速操作功能
+        function quickAddGroup() {
+            showAddGroupModal();
+        }
+
+        function quickAddMember() {
+            showAddMemberModal();
+        }
+
+        function quickScheduleActivity() {
+            showComingSoon('此功能暫未開放','../../dashboard.html');
+        }
+
+        // 匯出小組報表
+        function exportGroupsReport() {
+            const csvContent = generateGroupsCSVReport();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `小組管理報表_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showMessage('小組報表匯出成功！', 'success');
+        }
+
+        // 生成小組CSV報表
+        function generateGroupsCSVReport() {
+            const headers = ['小組名稱', '類型', '小組長', '成員數', '聚會時間', '聚會地點', '狀態', '描述'];
+            const csvRows = [headers.join(',')];
+            
+            groups.forEach(group => {
+                const row = [
+                    `"${group.name}"`,
+                    `"${group.type}"`,
+                    `"${group.leader}"`,
+                    group.memberCount,
+                    `"${group.meetingTime}"`,
+                    `"${group.meetingLocation}"`,
+                    group.status === 'active' ? '活躍' : '非活躍',
+                    `"${group.description || ''}"`
+                ];
+                csvRows.push(row.join(','));
+            });
+            
+            return csvRows.join('
+');
+        }
+
+
+
+        function viewMember(id) {
+            const member = groupMembers.find(m => m.id === id);
+            if (member) {
+                showMessage(`查看成員：${member.name}`, 'info');
+            }
+        }
+
+        function editMember(id) {
+            const member = groupMembers.find(m => m.id === id);
+            if (member) {
+                showMessage(`編輯成員：${member.name}`, 'info');
+            }
+        }
+
+        function deleteMember(id) {
+            if (confirm('確定要刪除這個成員嗎？')) {
+                groupMembers = groupMembers.filter(m => m.id !== id);
+                localStorage.setItem('groupMembers', JSON.stringify(groupMembers));
+                updateStats();
+                renderMembersTable();
+                showMessage('成員已刪除', 'success');
+            }
+        }
+
+        function editActivity(id) {
+            const activity = activities.find(a => a.id === id);
+            if (activity) {
+                showMessage(`編輯活動：${activity.title}`, 'info');
+            }
+        }
+
+        function deleteActivity(id) {
+            if (confirm('確定要刪除這個活動嗎？')) {
+                activities = activities.filter(a => a.id !== id);
+                localStorage.setItem('activities', JSON.stringify(activities));
+                updateStats();
+                renderActivitiesList();
+                showMessage('活動已刪除', 'success');
+            }
+        }
+
+        // 顯示消息
+        function showMessage(message, type = 'info') {
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#3B82F6'};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1000;
+                font-size: 14px;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                max-width: 300px;
+                word-wrap: break-word;
+            `;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => messageDiv.style.transform = 'translateX(0)', 100);
+            setTimeout(() => {
+                messageDiv.style.transform = 'translateX(100%)';
+                setTimeout(() => messageDiv.remove(), 300);
+            }, 3000);
+        }
+    </script>
+<script src="../../../js/coming-soon.js"></script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新事工规划 - 看板管理 · New Ministry Planning | Church Ministry</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%); padding: 20px; font-size: 11px; min-height: 100vh; }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .header { background: white; padding: 25px 30px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+        .header h1 { font-size: 26px; background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        /* Kanban Board */
+        .kanban-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .kanban-column { background: rgba(255,255,255,0.95); border-radius: 12px; padding: 20px; min-height: 500px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .column-header { font-size: 16px; font-weight: 600; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; color: white; }
+        .planning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .in-progress { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .review { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .completed { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        
+        /* Project Cards */
+        .project-card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: move; transition: all 0.2s; border-left: 4px solid; }
+        .project-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+        .project-card.planning { border-color: #f5576c; }
+        .project-card.in-progress { border-color: #00f2fe; }
+        .project-card.review { border-color: #38f9d7; }
+        .project-card.completed { border-color: #fee140; }
+        
+        .project-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #2c3e50; }
+        .project-meta { font-size: 10px; color: #7f8c8d; margin-bottom: 6px; }
+        .project-budget { display: inline-block; padding: 4px 8px; background: #e8f5e9; color: #2e7d32; border-radius: 4px; font-size: 10px; font-weight: 600; margin-top: 6px; }
+        .project-progress { width: 100%; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #0093E9 0%, #80D0C7 100%); transition: width 0.3s; }
+        
+        .add-btn { width: 100%; padding: 12px; background: rgba(0,0,0,0.05); border: 2px dashed rgba(0,0,0,0.2); border-radius: 8px; cursor: pointer; color: #7f8c8d; font-size: 12px; text-align: center; transition: all 0.2s; }
+        .add-btn:hover { background: rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.3); }
+        
+        .load-btn { display: block; margin: 20px auto; padding: 15px 30px; background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%); color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(0,147,233,0.3); }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container">
+        <div class="header">
+            <h1>🎯 新事工规划 - 看板管理系统 (Kanban)</h1>
+            <p style="color:#7f8c8d;margin-top:10px;font-size:12px;">📋 拖拽式项目管理 · 可视化进度追踪 · 4阶段工作流</p>
+        </div>
+        
+        <button class="load-btn" onclick="loadDemo()" id="loadBtn">🎯 载入示例项目（6个新事工·4个阶段）</button>
+        
+        <div class="kanban-board">
+            <!-- Planning Column -->
+            <div class="kanban-column">
+                <div class="column-header planning">📝 规划中 (Planning)</div>
+                <div id="planningCards"></div>
+                <div class="add-btn" onclick="addProject('planning')">+ 新增项目</div>
+            </div>
+            
+            <!-- In Progress Column -->
+            <div class="kanban-column">
+                <div class="column-header in-progress">🚀 进行中 (In Progress)</div>
+                <div id="in-progressCards"></div>
+                <div class="add-btn" onclick="addProject('in-progress')">+ 新增项目</div>
+            </div>
+            
+            <!-- Review Column -->
+            <div class="kanban-column">
+                <div class="column-header review">👀 审核中 (Review)</div>
+                <div id="reviewCards"></div>
+                <div class="add-btn" onclick="addProject('review')">+ 新增项目</div>
+            </div>
+            
+            <!-- Completed Column -->
+            <div class="kanban-column">
+                <div class="column-header completed">✅ 已完成 (Completed)</div>
+                <div id="completedCards"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let projects = [];
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('new_ministry_projects');
+            projects = saved ? JSON.parse(saved) : [];
+            if (projects.length > 0) {
+                document.getElementById('loadBtn').style.display = 'none';
+                renderAll();
+            }
+        });
+        
+        function loadDemo() {
+            projects = [
+                {id:1, name:'青年团契重启计划', type:'青年事工', leader:'李传道', budget:50000, status:'planning', progress:20, startDate:'2025-02-01'},
+                {id:2, name:'长者关怀事工', type:'长者事工', leader:'张长老', budget:30000, status:'in-progress', progress:60, startDate:'2025-01-15'},
+                {id:3, name:'社区英语班', type:'社区事工', leader:'王姊妹', budget:20000, status:'planning', progress:15, startDate:'2025-03-01'},
+                {id:4, name:'儿童主日学扩展', type:'儿童事工', leader:'陈姊妹', budget:35000, status:'in-progress', progress:75, startDate:'2024-12-01'},
+                {id:5, name:'婚姻辅导事工', type:'家庭事工', leader:'林牧师', budget:25000, status:'review', progress:90, startDate:'2024-11-01'},
+                {id:6, name:'职场团契', type:'职场事工', leader:'黄弟兄', budget:15000, status:'completed', progress:100, startDate:'2024-10-01'}
+            ];
+            localStorage.setItem('new_ministry_projects', JSON.stringify(projects));
+            renderAll();
+            document.getElementById('loadBtn').style.display = 'none';
+        }
+        
+        function renderAll() {
+            ['planning', 'in-progress', 'review', 'completed'].forEach(status => {
+                const filtered = projects.filter(p => p.status === status);
+                const container = document.getElementById(status + 'Cards');
+                container.innerHTML = filtered.map(p => `
+                    <div class="project-card ${status}" draggable="true">
+                        <div class="project-title">${p.name}</div>
+                        <div class="project-meta">
+                            👤 负责人：${p.leader}<br>
+                            📅 开始：${p.startDate}<br>
+                            📂 类型：${p.type}
+                        </div>
+                        <span class="project-budget">💰 $${p.budget.toLocaleString()}</span>
+                        <div class="project-progress">
+                            <div class="progress-bar" style="width:${p.progress}%"></div>
+                        </div>
+                        <div style="text-align:right;font-size:10px;color:#7f8c8d;margin-top:6px;">${p.progress}% 完成</div>
+                    </div>
+                `).join('');
+            });
+        }
+        
+        function addProject(status) {
+            const name = prompt('项目名称：');
+            if (!name) return;
+            const type = prompt('类型：', '青年事工');
+            const leader = prompt('负责人：');
+            const budget = parseInt(prompt('预算：', 30000));
+            projects.push({
+                id: Date.now(),
+                name, type, leader, budget, status,
+                progress: status === 'planning' ? 0 : 50,
+                startDate: new Date().toISOString().split('T')[0]
+            });
+            localStorage.setItem('new_ministry_projects', JSON.stringify(projects));
+            renderAll();
+        }
+    </script>
+</body>
+</html>

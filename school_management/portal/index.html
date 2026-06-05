@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學員入口 · 學校／主日學</title>
+    <base target="_parent">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gradient(135deg, #e8f4fd 0%, #f0f9ff 100%); margin: 0; padding: 20px; color: #333; font-size: 14px; }
+        .header { text-align: center; padding: 20px 16px; margin-bottom: 20px; background: linear-gradient(135deg, #0b5fa5 0%, #2aa5ff 100%); color: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(11,95,165,0.3); }
+        .header h1 { margin: 0 0 6px 0; font-size: 1.4rem; }
+        .header p { margin: 0; opacity: 0.95; font-size: 0.85rem; }
+        .back { margin-bottom: 12px; }
+        .back a { color: #0b5fa5; text-decoration: none; font-size: 13px; }
+        .back a:hover { text-decoration: underline; }
+        .picker { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .picker h2 { color: #0b5fa5; font-size: 1rem; margin: 0 0 10px 0; }
+        .picker select { width: 100%; max-width: 320px; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .picker .hint { color: #666; font-size: 0.8rem; margin-top: 8px; }
+        .dashboard { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); display: none; }
+        .dashboard.show { display: block; }
+        .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; }
+        .tabs a { padding: 10px 16px; color: #64748b; text-decoration: none; font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+        .tabs a:hover { color: #0b5fa5; }
+        .tabs a.active { color: #0b5fa5; border-bottom-color: #0b5fa5; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f6f7fb; color: #0b5fa5; font-weight: 600; }
+        .empty { color: #9ca3af; padding: 24px; text-align: center; }
+        .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+        .stat { padding: 10px 16px; background: #e8f4fd; border-radius: 8px; font-weight: 600; color: #0b5fa5; font-size: 13px; }
+        .btn-enroll { padding: 4px 12px; background: #0b5fa5; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-enroll:hover { background: #0a4d8c; }
+    </style>
+</head>
+<body>
+    <div class="nav-bar" style="background:#e8f4fd;padding:10px 16px;margin:-20px -20px 16px -20px;font-size:12px;">
+        <span style="color:#0b5fa5;">📚 學員入口</span> · 功能說明請至儀表板「📖 功能說明」tab
+    </div>
+    <div class="header">
+        <h1>📚 學員入口</h1>
+        <p>課程、繳費、成績 · 選科報名 · 即點即用</p>
+        <p style="font-size:11px;opacity:0.9;margin-top:6px;">一般應用：選學員身份查看。若查看他人資料需管理員權限。</p>
+    </div>
+
+    <section class="picker">
+        <h2>請選擇學員身份</h2>
+        <select id="studentSelect">
+            <option value="">-- 選擇學員（模擬登入）--</option>
+        </select>
+        <p class="hint">無帳號時以學員選擇模擬登入。新生請先至「新生註冊」。</p>
+        <div class="permission-notice" id="permissionNotice" style="display:none; margin-top:10px; padding:10px; background:#fff3cd; border-left:4px solid #f59e0b; border-radius:0 6px 6px 0; font-size:11px;">
+            <b>⚠️ 權限說明：</b>選擇學員身份查看該學員的選課、繳費與成績，需具備管理員或該學員本人權限。本系統為示範，目前以選擇模擬登入。
+        </div>
+    </section>
+
+    <section class="dashboard" id="dashboard">
+        <h2 style="margin:0 0 12px 0;color:#0b5fa5;font-size:1.1rem;">👤 <span id="studentName"></span></h2>
+        <div class="stats">
+            <span class="stat">📚 選課 <span id="enrollmentCount">0</span></span>
+            <span class="stat">💰 待繳 <span id="pendingPayments">0</span></span>
+            <span class="stat">📊 成績 <span id="gradeCount">0</span></span>
+        </div>
+        <div class="tabs">
+            <a href="#" class="tab-link active" data-tab="courses">📚 我的課程</a>
+            <a href="#" class="tab-link" data-tab="payments">💰 我的繳費</a>
+            <a href="#" class="tab-link" data-tab="grades">📊 我的成績</a>
+            <a href="#" class="tab-link" data-tab="enroll">📝 選科報名</a>
+        </div>
+        <div id="panel-courses" class="tab-panel active"></div>
+        <div id="panel-payments" class="tab-panel"></div>
+        <div id="panel-grades" class="tab-panel"></div>
+        <div id="panel-enroll" class="tab-panel"></div>
+    </section>
+
+    <section class="standalone-tabs" style="background:#fff; padding:20px; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.08); margin-top:16px;">
+        <h2 style="color:#0b5fa5; font-size:1rem; margin:0 0 12px 0;">📋 其他</h2>
+        <div class="tabs" style="margin-bottom:12px;">
+            <a href="#" class="tab-link" data-tab="register">🆕 新生註冊</a>
+        </div>
+        <div id="panel-register" class="tab-panel"></div>
+    </section>
+
+    <script src="../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const studentSelect = document.getElementById('studentSelect');
+            const dashboard = document.getElementById('dashboard');
+            const studentName = document.getElementById('studentName');
+            const enrollmentCount = document.getElementById('enrollmentCount');
+            const pendingPayments = document.getElementById('pendingPayments');
+            const gradeCount = document.getElementById('gradeCount');
+            const panels = { courses: document.getElementById('panel-courses'), payments: document.getElementById('panel-payments'), grades: document.getElementById('panel-grades'), enroll: document.getElementById('panel-enroll') };
+
+            function loadStudents() {
+                if (!window.schoolDB || !window.schoolDB.data) return;
+                if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+                const students = window.schoolDB.data.students || [];
+                studentSelect.innerHTML = '<option value="">-- 選擇學員（模擬登入）--</option>' +
+                    students.slice(0, 50).map(s => '<option value="' + s.id + '">' + s.name + ' (' + (s.studentNumber || s.id) + ')</option>').join('');
+                const saved = sessionStorage.getItem('schoolPortalStudentId');
+                if (saved) { studentSelect.value = saved; showDashboard(parseInt(saved, 10)); }
+            }
+
+            function renderPanels(studentId) {
+                if (!window.schoolDB || !window.schoolDB.data) return;
+                const db = window.schoolDB.data;
+                const enrollments = (db.student && db.student.enrollments) ? db.student.enrollments.filter(e => e.studentId === studentId) : [];
+                const payments = (db.finance && db.finance.payments) ? db.finance.payments.filter(p => p.studentId === studentId) : [];
+                const pending = payments.filter(p => p.status === 'pending');
+                const grades = (db.grade && db.grade.grades) ? db.grade.grades.filter(g => g.studentId === studentId) : [];
+                const courses = db.courses || [];
+                const teachers = db.teachers || [];
+
+                enrollmentCount.textContent = enrollments.length;
+                pendingPayments.textContent = pending.length;
+                gradeCount.textContent = grades.length;
+
+                const enrollRows = enrollments.map(e => {
+                    const c = courses.find(cr => cr.id === e.courseId);
+                    const t = c && teachers.find(tc => tc.id === c.teacherId);
+                    return '<tr><td>' + (c ? c.name : '—') + '</td><td>' + (t ? t.name : '—') + '</td><td>' + (e.semester || '—') + '</td><td>' + (e.status || '—') + '</td></tr>';
+                }).join('');
+                panels.courses.innerHTML = enrollRows
+                    ? '<table><thead><tr><th>課程</th><th>教師</th><th>學期</th><th>狀態</th></tr></thead><tbody>' + enrollRows + '</tbody></table>'
+                    : '<p class="empty">尚無選課記錄</p>';
+
+                const payRows = payments.slice(-15).reverse().map(p =>
+                    '<tr><td>' + (p.paymentDate || '—') + '</td><td>¥' + (p.amount || 0).toLocaleString() + '</td><td><span style="color:' + (p.status === 'paid' ? '#10b981' : '#f59e0b') + '">' + (p.status === 'paid' ? '已繳' : '待繳') + '</span></td></tr>'
+                ).join('');
+                panels.payments.innerHTML = payRows
+                    ? '<table><thead><tr><th>日期</th><th>金額</th><th>狀態</th></tr></thead><tbody>' + payRows + '</tbody></table>'
+                    : '<p class="empty">尚無繳費記錄</p>';
+
+                const gradeRows = grades.slice(-15).reverse().map(g => {
+                    const c = courses.find(cr => cr.id === g.courseId);
+                    return '<tr><td>' + (c ? c.name : '—') + '</td><td>' + (g.score ?? '—') + '</td><td>' + (g.grade || '—') + '</td><td>' + (g.examDate || '—') + '</td></tr>';
+                }).join('');
+                panels.grades.innerHTML = gradeRows
+                    ? '<table><thead><tr><th>課程</th><th>分數</th><th>等第</th><th>考試日期</th></tr></thead><tbody>' + gradeRows + '</tbody></table>'
+                    : '<p class="empty">尚無成績記錄</p>';
+
+                var enrolledIds = enrollments.map(e => e.courseId);
+                var available = courses.filter(c => c.status !== 'inactive' && !enrolledIds.includes(c.id));
+                var enrollRows = available.slice(0, 20).map(c => {
+                    var t = teachers.find(tc => tc.id === c.teacherId);
+                    return '<tr><td>' + (c.name || '—') + '</td><td>' + (t ? t.name : '—') + '</td><td>' + (c.semester || '—') + '</td><td><button class="btn-enroll" data-cid="' + c.id + '">報名</button></td></tr>';
+                }).join('');
+                panels.enroll.innerHTML = enrollRows
+                    ? '<p class="hint" style="margin-bottom:10px;">可選課程（點報名加入選課）：</p><table><thead><tr><th>課程</th><th>教師</th><th>學期</th><th></th></tr></thead><tbody>' + enrollRows + '</tbody></table>'
+                    : '<p class="empty">已選滿或無可選課程。管理員可至「統一管理→學生選課」加選。</p>';
+            }
+
+            function showDashboard(studentId) {
+                const db = window.schoolDB && window.schoolDB.data;
+                const student = (db && db.students) ? db.students.find(s => s.id === studentId) : null;
+                if (!student) { dashboard.classList.remove('show'); return; }
+                sessionStorage.setItem('schoolPortalStudentId', studentId);
+                studentName.textContent = student.name;
+                renderPanels(studentId);
+                dashboard.classList.add('show');
+            }
+
+            document.querySelectorAll('.tab-link').forEach(a => {
+                a.onclick = function(e) {
+                    e.preventDefault();
+                    var tab = this.dataset.tab;
+                    document.querySelectorAll('.tab-link').forEach(x => x.classList.remove('active'));
+                    document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+                    this.classList.add('active');
+                    var p = document.getElementById('panel-' + tab);
+                    if (p) p.classList.add('active');
+                    if (tab === 'register') renderRegister();
+                };
+            });
+
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('btn-enroll')) {
+                    var cid = parseInt(e.target.dataset.cid, 10);
+                    var sid = sessionStorage.getItem('schoolPortalStudentId');
+                    if (!sid || !window.schoolDB) return alert('請先選擇學員');
+                    sid = parseInt(sid, 10);
+                    var db = window.schoolDB.data;
+                    var enrollments = (db.student && db.student.enrollments) || [];
+                    if (enrollments.some(x => x.studentId === sid && x.courseId === cid)) return alert('已選過此課程');
+                    window.schoolDB.insert('student.enrollments', { studentId: sid, courseId: cid, semester: '2025-1', status: 'active' });
+                    renderPanels(sid);
+                }
+            });
+
+            function renderRegister() {
+                var el = document.getElementById('panel-register');
+                if (!el) return;
+                el.innerHTML = '<p class="hint">新生請填寫以下資料完成註冊。本系統為示範，資料存於本機。</p>' +
+                    '<form id="regForm" style="max-width:400px; margin-top:12px;">' +
+                    '<p>姓名 <input name="name" required style="padding:6px; width:120px;"></p>' +
+                    '<p>性別 <select name="gender"><option>男</option><option>女</option></select></p>' +
+                    '<p>聯絡 <input name="contact" placeholder="電話或Email" style="padding:6px; width:180px;"></p>' +
+                    '<button type="submit" style="padding:8px 16px; background:#0b5fa5; color:#fff; border:none; border-radius:6px; cursor:pointer;">送出註冊</button>' +
+                    '</form><p id="regMsg" style="margin-top:10px; color:#27ae60;"></p>';
+                var f = document.getElementById('regForm');
+                if (f) f.onsubmit = function(e) {
+                    e.preventDefault();
+                    var fm = new FormData(this);
+                    if (!window.schoolDB) return alert('資料庫未載入');
+                    var maxId = Math.max(0, ...(window.schoolDB.data.students || []).map(s => s.id));
+                    var rec = { id: maxId + 1, name: fm.get('name').trim(), gender: fm.get('gender'), contact: fm.get('contact'), status: 'active', enrollmentDate: new Date().toISOString().split('T')[0] };
+                    window.schoolDB.insert('students', rec);
+                    document.getElementById('regMsg').textContent = '已註冊：' + rec.name + '（ID ' + rec.id + '）。請重新選擇學員身份。';
+                    loadStudents();
+                };
+            }
+
+            studentSelect.onchange = function() {
+                var v = this.value;
+                document.getElementById('permissionNotice').style.display = v ? 'block' : 'none';
+                if (!v) { dashboard.classList.remove('show'); sessionStorage.removeItem('schoolPortalStudentId'); return; }
+                showDashboard(parseInt(v, 10));
+            };
+
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadStudents);
+            else loadStudents();
+        })();
+    </script>
+</body>
+</html>

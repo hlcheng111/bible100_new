@@ -1,0 +1,583 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>財務管理報表 · Finance Reports | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+    <script src="assets/js/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">財務管理統計報表</h1>
+        
+        <!-- 報表類型選擇 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('overview')">
+                <div class="text-4xl text-blue-600 mb-2">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <h3 class="text-lg font-semibold">總覽報表</h3>
+                <p class="text-sm text-gray-600">整體財務概況</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('income')">
+                <div class="text-4xl text-green-600 mb-2">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <h3 class="text-lg font-semibold">收入分析</h3>
+                <p class="text-sm text-gray-600">收入來源統計</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('expense')">
+                <div class="text-4xl text-red-600 mb-2">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <h3 class="text-lg font-semibold">支出分析</h3>
+                <p class="text-sm text-gray-600">支出分類統計</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center cursor-pointer hover:shadow-lg transition-all" onclick="generateReport('budget')">
+                <div class="text-4xl text-purple-600 mb-2">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="text-lg font-semibold">預算分析</h3>
+                <p class="text-sm text-gray-600">預算執行情況</p>
+            </div>
+        </div>
+
+        <!-- 報表參數設置 -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="px-6 py-4 border-b">
+                <h3 class="text-lg font-semibold">報表參數設置</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
+                        <input type="date" id="startDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
+                        <input type="date" id="endDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">報表類型</label>
+                        <select id="reportType" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="overview">總覽報表</option>
+                            <option value="income">收入分析</option>
+                            <option value="expense">支出分析</option>
+                            <option value="budget">預算分析</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-6 flex space-x-3">
+                    <button onclick="generateReport()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-chart-bar mr-2"></i>生成報表
+                    </button>
+                    <button onclick="exportReport()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>匯出報表
+                    </button>
+                    <button onclick="printReport()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-print mr-2"></i>列印報表
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 報表內容顯示 -->
+        <div id="reportContent" class="space-y-8">
+            <!-- 報表將在這裡動態生成 -->
+        </div>
+    </div>
+
+    <script>
+        // 註冊 Chart.js 插件
+        Chart.register(ChartDataLabels);
+
+        // 數據存儲
+        let incomes = [];
+        let expenses = [];
+        let budgets = [];
+
+        // 頁面載入
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setDefaultDates();
+            generateReport('overview'); // 自動生成總覽報表
+        });
+
+        // 載入數據
+        function loadData() {
+            incomes = JSON.parse(localStorage.getItem('incomes')) || [];
+            expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+            budgets = JSON.parse(localStorage.getItem('budgets')) || [];
+            
+            // 如果沒有數據，載入示例數據
+            if (incomes.length === 0) {
+                loadSampleData();
+            }
+        }
+
+        // 載入示例數據
+        function loadSampleData() {
+            const sampleIncomes = [
+                {
+                    id: 1,
+                    amount: 5000,
+                    category: '奉獻',
+                    date: '2024-01-15',
+                    description: '主日奉獻'
+                },
+                {
+                    id: 2,
+                    amount: 2000,
+                    category: '活動收入',
+                    date: '2024-01-20',
+                    description: '活動收費'
+                }
+            ];
+
+            const sampleExpenses = [
+                {
+                    id: 1,
+                    amount: 1500,
+                    category: '水電費',
+                    date: '2024-01-10',
+                    description: '水電費支出'
+                },
+                {
+                    id: 2,
+                    amount: 800,
+                    category: '辦公用品',
+                    date: '2024-01-18',
+                    description: '辦公用品採購'
+                }
+            ];
+
+            localStorage.setItem('incomes', JSON.stringify(sampleIncomes));
+            localStorage.setItem('expenses', JSON.stringify(sampleExpenses));
+            
+            incomes = sampleIncomes;
+            expenses = sampleExpenses;
+        }
+
+        // 設置默認日期
+        function setDefaultDates() {
+            const today = new Date();
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+            document.getElementById('startDate').value = startOfMonth.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endOfMonth.toISOString().split('T')[0];
+        }
+
+        // 生成報表
+        function generateReport(type = null) {
+            const reportType = type || document.getElementById('reportType').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate || !endDate) {
+                alert('請選擇開始和結束日期');
+                return;
+            }
+
+            const reportData = analyzeData(startDate, endDate, reportType);
+            displayReport(reportData, reportType);
+        }
+
+        // 分析數據
+        function analyzeData(startDate, endDate, reportType) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            const filteredIncomes = incomes.filter(income => {
+                const incomeDate = new Date(income.date);
+                return incomeDate >= start && incomeDate <= end;
+            });
+
+            const filteredExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= start && expenseDate <= end;
+            });
+
+            const totalIncome = filteredIncomes.reduce((sum, income) => sum + income.amount, 0);
+            const totalExpense = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const netIncome = totalIncome - totalExpense;
+
+            // 收入分類統計
+            const incomeCategoryStats = {};
+            filteredIncomes.forEach(income => {
+                incomeCategoryStats[income.category] = (incomeCategoryStats[income.category] || 0) + income.amount;
+            });
+
+            // 支出分類統計
+            const expenseCategoryStats = {};
+            filteredExpenses.forEach(expense => {
+                expenseCategoryStats[expense.category] = (expenseCategoryStats[expense.category] || 0) + expense.amount;
+            });
+
+            return {
+                totalIncome,
+                totalExpense,
+                netIncome,
+                incomeCategoryStats,
+                expenseCategoryStats,
+                filteredIncomes,
+                filteredExpenses,
+                startDate,
+                endDate
+            };
+        }
+
+        // 顯示報表
+        function displayReport(data, reportType) {
+            const reportContent = document.getElementById('reportContent');
+            const reportTitle = getReportTitle(reportType, data.startDate, data.endDate);
+            
+            let content = `
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-900">${reportTitle}</h3>
+                        <p class="text-sm text-gray-600">報表期間：${data.startDate} 至 ${data.endDate}</p>
+                    </div>
+                    <div class="p-6">
+                        <!-- 關鍵指標 -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div class="text-center p-4 bg-green-50 rounded-lg">
+                                <div class="text-3xl font-bold text-green-600">$${data.totalIncome.toLocaleString()}</div>
+                                <div class="text-sm text-gray-600">總收入</div>
+                            </div>
+                            <div class="text-center p-4 bg-red-50 rounded-lg">
+                                <div class="text-3xl font-bold text-red-600">$${data.totalExpense.toLocaleString()}</div>
+                                <div class="text-sm text-gray-600">總支出</div>
+                            </div>
+                            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                                <div class="text-3xl font-bold text-blue-600">$${data.netIncome.toLocaleString()}</div>
+                                <div class="text-sm text-gray-600">淨收入</div>
+                            </div>
+                        </div>
+
+                        <!-- 圖表區域 -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-gray-900 mb-3">收入分類分布</h4>
+                                <canvas id="incomeChart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-gray-900 mb-3">支出分類分布</h4>
+                                <canvas id="expenseChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+            `;
+
+            // 根據報表類型添加不同內容
+            if (reportType === 'income') {
+                content += generateIncomeAnalysis(data);
+            } else if (reportType === 'expense') {
+                content += generateExpenseAnalysis(data);
+            } else if (reportType === 'budget') {
+                content += generateBudgetAnalysis(data);
+            } else {
+                content += generateOverviewAnalysis(data);
+            }
+
+            content += `
+                        <!-- 詳細列表 -->
+                        <div class="mt-8">
+                            <h4 class="font-semibold text-gray-900 mb-3">財務記錄列表</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">類型</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">金額</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分類</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">日期</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">描述</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${data.filteredIncomes.map(income => `
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                                        收入
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$${income.amount.toLocaleString()}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${income.category}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${income.date}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${income.description}</td>
+                                            </tr>
+                                        `).join('')}
+                                        ${data.filteredExpenses.map(expense => `
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                                        支出
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">$${expense.amount.toLocaleString()}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${expense.category}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${expense.date}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${expense.description}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            reportContent.innerHTML = content;
+            
+            // 渲染圖表
+            renderCharts(data);
+        }
+
+        // 生成收入分析
+        function generateIncomeAnalysis(data) {
+            return `
+                <div class="bg-green-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-green-900 mb-3">收入分析詳情</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${Object.entries(data.incomeCategoryStats).map(([category, amount]) => `
+                            <div class="flex justify-between items-center p-3 bg-white rounded">
+                                <span class="text-sm font-medium text-gray-700">${category}</span>
+                                <span class="font-semibold text-green-600">$${amount.toLocaleString()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成支出分析
+        function generateExpenseAnalysis(data) {
+            return `
+                <div class="bg-red-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-red-900 mb-3">支出分析詳情</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${Object.entries(data.expenseCategoryStats).map(([category, amount]) => `
+                            <div class="flex justify-between items-center p-3 bg-white rounded">
+                                <span class="text-sm font-medium text-gray-700">${category}</span>
+                                <span class="font-semibold text-red-600">$${amount.toLocaleString()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成預算分析
+        function generateBudgetAnalysis(data) {
+            return `
+                <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-blue-900 mb-3">預算分析詳情</h4>
+                    <div class="text-center p-3 bg-white rounded">
+                        <div class="text-lg font-semibold text-gray-900">預算執行率</div>
+                        <div class="text-sm text-gray-600">${data.totalExpense > 0 ? Math.round((data.totalExpense / (data.totalIncome + data.totalExpense)) * 100) : 0}%</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成總覽分析
+        function generateOverviewAnalysis(data) {
+            return `
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">綜合分析</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">主要收入來源</div>
+                            <div class="text-sm text-gray-600">${getMainIncomeSource(data.incomeCategoryStats)}</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">主要支出類別</div>
+                            <div class="text-sm text-gray-600">${getMainExpenseCategory(data.expenseCategoryStats)}</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded">
+                            <div class="text-lg font-semibold text-gray-900">財務狀況</div>
+                            <div class="text-sm text-gray-600">${data.netIncome >= 0 ? '盈餘' : '虧損'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 獲取主要收入來源
+        function getMainIncomeSource(incomeCategoryStats) {
+            if (Object.keys(incomeCategoryStats).length === 0) return '無數據';
+            const maxCategory = Object.entries(incomeCategoryStats).reduce((a, b) => a[1] > b[1] ? a : b);
+            return `${maxCategory[0]} ($${maxCategory[1].toLocaleString()})`;
+        }
+
+        // 獲取主要支出類別
+        function getMainExpenseCategory(expenseCategoryStats) {
+            if (Object.keys(expenseCategoryStats).length === 0) return '無數據';
+            const maxCategory = Object.entries(expenseCategoryStats).reduce((a, b) => a[1] > b[1] ? a : b);
+            return `${maxCategory[0]} ($${maxCategory[1].toLocaleString()})`;
+        }
+
+        // 渲染圖表
+        function renderCharts(data) {
+            // 收入分類圖
+            renderIncomeChart(data.incomeCategoryStats);
+            
+            // 支出分類圖
+            renderExpenseChart(data.expenseCategoryStats);
+        }
+
+        // 渲染收入分類圖
+        function renderIncomeChart(incomeCategoryStats) {
+            const ctx = document.getElementById('incomeChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(incomeCategoryStats),
+                    datasets: [{
+                        data: Object.values(incomeCategoryStats),
+                        backgroundColor: [
+                            '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => '$' + value.toLocaleString()
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染支出分類圖
+        function renderExpenseChart(expenseCategoryStats) {
+            const ctx = document.getElementById('expenseChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(expenseCategoryStats),
+                    datasets: [{
+                        data: Object.values(expenseCategoryStats),
+                        backgroundColor: [
+                            '#EF4444', '#F59E0B', '#8B5CF6', '#3B82F6', '#10B981'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (value) => '$' + value.toLocaleString()
+                        }
+                    }
+                }
+            });
+        }
+
+        // 獲取報表標題
+        function getReportTitle(type, startDate, endDate) {
+            switch(type) {
+                case 'overview':
+                    return `財務管理總覽報表`;
+                case 'income':
+                    return `收入分析報表`;
+                case 'expense':
+                    return `支出分析報表`;
+                case 'budget':
+                    return `預算分析報表`;
+                default:
+                    return '財務管理報表';
+            }
+        }
+
+        // 匯出報表
+        function exportReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent.innerHTML.trim()) {
+                alert('請先生成報表');
+                return;
+            }
+
+            const reportData = generateReportData();
+            const csvContent = generateCSV(reportData);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `財務管理報表_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 生成報表數據
+        function generateReportData() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const reportType = document.getElementById('reportType').value;
+            
+            return analyzeData(startDate, endDate, reportType);
+        }
+
+        // 生成CSV
+        function generateCSV(data) {
+            const headers = ['類型', '金額', '分類', '日期', '描述'];
+            const rows = [
+                ...data.filteredIncomes.map(income => ['收入', income.amount, income.category, income.date, income.description]),
+                ...data.filteredExpenses.map(expense => ['支出', expense.amount, expense.category, expense.date, expense.description])
+            ];
+
+            return [headers, ...rows].map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('
+');
+        }
+
+        // 列印報表
+        function printReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent.innerHTML.trim()) {
+                alert('請先生成報表');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>財務管理報表</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            table { border-collapse: collapse; width: 100%; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                            .chart-container { margin: 20px 0; }
+                        </style>
+                    </head>
+                    <body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>                        ${reportContent.innerHTML}
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    </script>
+</body>
+</html>

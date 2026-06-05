@@ -1,0 +1,501 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>測驗與作業產生器</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../js/toc-styles.css">
+    <style>
+    /* 動態目錄樣式 */
+    .toc-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 300px;
+        max-height: 80vh;
+        background: white;
+        border: 2px solid #2e7d32;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        overflow-y: auto;
+        font-size: 12px;
+        font-family: "Microsoft YaHei", "SimSun", Arial, sans-serif;
+    }
+    .toc-header {
+        background: #2e7d32;
+        color: white;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-weight: bold;
+        border-radius: 6px 6px 0 0;
+        user-select: none;
+    }
+    .toc-toggle {
+        float: right;
+        transition: transform 0.3s ease;
+    }
+    .toc-toggle.rotated {
+        transform: rotate(180deg);
+    }
+    .toc-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        background: #f8f9fa;
+    }
+    .toc-content.show {
+        max-height: 75vh;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #2e7d32 #f8f9fa;
+    }
+    .toc-content.show::-webkit-scrollbar {
+        width: 6px;
+    }
+    .toc-content.show::-webkit-scrollbar-track {
+        background: #f8f9fa;
+        border-radius: 3px;
+    }
+    .toc-content.show::-webkit-scrollbar-thumb {
+        background: #2e7d32;
+        border-radius: 3px;
+    }
+    .toc-content.show::-webkit-scrollbar-thumb:hover {
+        background: #1b5e20;
+    }
+    .toc-item {
+        display: block;
+        padding: 6px 12px;
+        color: #333;
+        text-decoration: none;
+        border-bottom: 1px solid #e0e0e0;
+        transition: background-color 0.2s ease;
+    }
+    .toc-item:hover {
+        background-color: #e8f5e8;
+        color: #2e7d32;
+    }
+    .toc-item.h1 { font-weight: bold; padding-left: 12px; }
+    .toc-item.h2 { padding-left: 20px; }
+    .toc-item.h3 { padding-left: 28px; font-size: 11px; }
+    .toc-item.h4 { padding-left: 36px; font-size: 11px; }
+    .toc-item.h5 { padding-left: 44px; font-size: 10px; }
+    .toc-item.h6 { padding-left: 52px; font-size: 10px; }
+    @media (max-width: 768px) {
+        .toc-container {
+            width: 250px;
+            right: 10px;
+            top: 10px;
+        }
+    }
+    </style>
+<script src="../../../scripts/image_path_rewriter.js"></script>
+</head>
+<body bgcolor="#FFFFFF" text="#333333" link="#0044CC" vlink="#663399" alink="#FF0000">
+<!-- 動態目錄 -->
+<div class="toc-container" id="tocContainer">
+    <div class="toc-header" onclick="toggleTOC()">
+        目錄 <span class="toc-toggle">▼</span>
+    </div>
+    <div class="toc-content" id="tocContent">
+        <!-- 目錄內容將由JavaScript動態生成 -->
+    </div>
+</div>
+
+<center>
+<table width="100%" border="0" cellspacing="0" cellpadding="8">
+
+  <!-- Header -->
+  <tr>
+    <td bgcolor="#2E7D32">
+      <font color="#FFFFFF" face="Arial, SimSun" size="5"><b>測驗與作業產生器</b></font>
+      <p><font face="Arial, SimSun" size="3">簡介：用 AI 快速生成選擇題、是非題、填充題與作業單，
+      並附上答案與解析，節省備課時間，提升學習效果。</font></p>
+    </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+
+  <!-- 推薦工具連結 -->
+  <tr>
+    <td>
+      <table width="100%" border="1" cellspacing="0" cellpadding="8">
+        <tr>
+          <td bgcolor="#EEEEEE"><font face="Arial, SimSun" size="4"><b>推薦工具</b></font></td>
+        </tr>
+        <tr>
+          <td>
+            <p>
+              <a href="https://chat.deepseek.com" target="_blank">DeepSeek</a> |
+              <a href="https://poe.com" target="_blank">Poe</a>
+            </p>
+            <p>在 FrontPage：選中文字 → 插入 → 超連結… → 修改為你常用的 AI 工具網址。（提示：DeepSeek、Poe 一般可於香港/越南/印尼使用）</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <!-- 試用框（Frame） -->
+  <tr>
+    <td>
+      <table width="100%" border="1" cellspacing="0" cellpadding="8">
+        <tr>
+          <td bgcolor="#EEEEEE"><font face="Arial, SimSun" size="4"><b>試用框（Frame）</b></font></td>
+        </tr>
+        <tr>
+          <td>
+            <p align="center"><b>DeepSeek | Poe（建議體驗，請選用）</b></p>
+            <p align="center">
+              <a href="https://chat.deepseek.com" target="demo_frame">DeepSeek</a>
+              &nbsp;|&nbsp;
+              <a href="https://poe.com" target="demo_frame">Poe</a>
+            </p>
+            <iframe name="demo_frame" src="https://chat.deepseek.com" width="100%" height="520" frameborder="0"></iframe>
+            <p>提示：若框無法顯示，表示該站限制嵌入，請點上方連結於新分頁開啟。</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+
+  <!-- 工具詳細介紹（DeepSeek / Poe） -->
+  <tr>
+    <td>
+      <table width="100%" border="1" cellspacing="0" cellpadding="8">
+        <tr>
+          <td bgcolor="#EEEEEE"><font face="Arial, SimSun" size="4"><b>工具詳細介紹</b></font></td>
+        </tr>
+        <tr>
+          <td>
+            <table width="100%" border="1" cellspacing="0" cellpadding="8">
+              <tr>
+                <td width="50%" valign="top">
+                  <p><b>DeepSeek</b></p>
+                  <ul>
+                    <li><b>功能</b>：中文體驗佳，長文本處理、結構化輸出（表格/清單）方便生成測驗題庫與解析。</li>
+                    <li><b>限制</b>：需登入；功能以官網公告為準。</li>
+                    <li><b>開始使用</b>：登入 → 貼教學目標/經文 → 指定題型與數量 → 要求附答案與解析。</li>
+                    <li><b>為什麼推薦</b>：中文能力強、生成穩定，易於反覆修訂。</li>
+                  </ul>
+                </td>
+                <td width="50%" valign="top">
+                  <p><b>Poe</b></p>
+                  <ul>
+                    <li><b>功能</b>：同一網站可選多種模型，便於比較不同生成風格的測驗題。</li>
+                    <li><b>限制</b>：部分模型可能需帳號或有配額；以官網為準。</li>
+                    <li><b>開始使用</b>：登入 → 選模型 → 貼提示 → 比較多版本 → 複製可用輸出。</li>
+                    <li><b>為什麼推薦</b>：介面簡潔、切換模型快速，適合新手。</li>
+                  </ul>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+
+  <!-- 成功案例：如何用測驗輔助聖經學習與教導 -->
+  <tr>
+    <td>
+      <table width="100%" border="1" cellspacing="0" cellpadding="8">
+        <tr>
+          <td bgcolor="#EEEEEE"><font face="Arial, SimSun" size="4"><b>成功案例：如何用測驗輔助聖經學習與教導</b></font></td>
+        </tr>
+        <tr>
+          <td>
+            <ul>
+              <li>課前先備：依《詩篇23篇》生成 5 題基礎選擇題，導入時檢核先備知識。（<a href="https://chat.deepseek.com" target="_blank">DeepSeek</a>）</li>
+              <li>分層練習：A 組（理解/應用）、B 組（記憶/理解），同課目標不同題度。（DeepSeek/Poe）</li>
+              <li>討論帶領：開放式問答題引導生活應用（家庭/校園），最後統整要點。（DeepSeek/Poe）</li>
+              <li>在家延伸：生成可列印作業單（含答案），親子共學使用。（DeepSeek/Poe）</li>
+              <li>評量回饋：依錯題類型讓 AI 建議補強重點與追加練習題。（DeepSeek）</li>
+              <li>真偽混合題：混入常見誤解題，培養分辨力。（DeepSeek）</li>
+              <li>情境題：將經文轉為生活情境選擇題，訓練應用。（DeepSeek）</li>
+              <li>互動投影片：每題 1 頁，課堂搶答。（<a href="https://www.canva.com/zh_tw/" target="_blank">Canva</a>）</li>
+              <li>QR 測驗：生成短連結或 QR，學生手機作答。（Canva/表單）</li>
+              <li>題庫累積：每課 10 題，期末彙整成大題庫。（DeepSeek/Poe）</li>
+            </ul>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+
+  <!-- 教學與資源（網站＋影片） -->
+  <tr>
+    <td>
+      <table width="100%" border="1" cellspacing="0" cellpadding="8">
+        <tr>
+          <td bgcolor="#EEEEEE"><font face="Arial, SimSun" size="4"><b>教學與資源（網站＋影片）</b></font></td>
+        </tr>
+        <tr>
+          <td>
+            <ul>
+              <li><a href="https://chat.deepseek.com" target="_blank">DeepSeek 官方</a></li>
+              <li><a href="https://poe.com" target="_blank">Poe 官方</a></li>
+              <li><a href="https://www.bilibili.com/" target="_blank">Bilibili：搜尋「DeepSeek 測驗 教學」「Poe 生成 題庫」</a></li>
+            </ul>
+            <p>說明：連結為第三方或官方入口，內容更新頻繁；若無法開啟，請改用關鍵字搜尋等替代方式。</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+
+  <!-- 其他可選工具（中文／越南／印尼地區） -->
+  <tr>
+    <td>
+      <table width="100%" border="1" cellspacing="0" cellpadding="8">
+        <tr>
+          <td bgcolor="#EEEEEE"><font face="Arial, SimSun" size="4"><b>其他可選工具（中文／越南／印尼地區）</b></font></td>
+        </tr>
+        <tr>
+          <td>
+            <ul>
+              <li><a href="https://kimi.moonshot.cn" target="_blank"><b>Kimi Chat</b></a>（中國）：長文處理良好，適合生成條列重點與題庫草案。</li>
+              <li><a href="https://tongyi.aliyun.com" target="_blank"><b>通義千問</b></a>（中國）：中文能力佳，可生成各式題型與解析。</li>
+              <li><a href="https://yiyan.baidu.com" target="_blank"><b>文心一言</b></a>（中國）：中文生成穩定，用於課後練習題草稿。</li>
+              <li><a href="https://gemini.google.com" target="_blank"><b>Gemini</b></a>（全球）：需 Google 帳號；適合生成題庫結構與表格。</li>
+              <li><a href="https://www.perplexity.ai" target="_blank"><b>Perplexity</b></a>（全球）：檢索輔助題目設計，適合找參考素材。</li>
+            </ul>
+            <p>注意：各平台可用性與授權條款會變動，請以官網公告為準；若地區受限，請依所在學校/教會網路政策使用。</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+
+  <!-- 使用步驟 -->
+  <tr>
+    <td>
+      <table width="100%" border="1" cellspacing="0" cellpadding="8">
+        <tr>
+          <td bgcolor="#EEEEEE"><font face="Arial, SimSun" size="4"><b>使用步驟</b></font></td>
+        </tr>
+        <tr>
+          <td>
+            <ol>
+              <li>說明對象年齡、經文範圍與題型數量。</li>
+              <li>要求附答案與解析，並標註對應經文節數。</li>
+              <li>設定難度分層（基礎／進階）。</li>
+              <li>請 AI 輸出為可列印的條列格式。</li>
+            </ol>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+
+  <!-- 範例提示（詩篇23篇） -->
+  <tr>
+    <td>
+      <table width="100%" border="1" cellspacing="0" cellpadding="8">
+        <tr>
+          <td bgcolor="#EEEEEE"><font face="Arial, SimSun" size="4"><b>範例提示：以《詩篇23篇》為主題</b></font></td>
+        </tr>
+        <tr>
+          <td>
+            <p>可直接複製以下提示到工具中：</p>
+            <p>1) 「《詩篇23篇》出 10 題單選題，標註節數，附答案與一句解析，難度中等。」</p>
+            <p>2) 「《詩篇23篇》出 8 題是非題，指出常見誤解並說明正確觀點。」</p>
+            <p>3) 「《詩篇23篇》出 6 題填充題，填入關鍵詞，附答案。」</p>
+            <p>4) 「寫 5 題開放式問答，聚焦生活應用（家庭/學校），附示範作答要點。」</p>
+            <p>5) 「依 Bloom 階層從記憶到評鑑，為《詩篇23篇》各出 1 題，附解析。」</p>
+            <p>6) 「混合題型小卷：單選 5 題、是非 5 題、填充 5 題，附答案解析。」</p>
+            <p>7) 「製作 10 題『真偽混合題』，澄清對《詩篇23篇》的常見迷思。」</p>
+            <p>8) 「出 5 題情境選擇題，把經文意象轉成校園/家庭情境。」</p>
+            <p>9) 「生成可列印的測驗卷（A4），含作答區，最後附答案。」</p>
+            <p>10) 「請製作家長版共學作業單：3 題討論題＋1 段禱告指引。」</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td align="center">
+      <a href="index.html">← 返回目錄</a>
+    </td>
+  </tr>
+
+</table>
+</center>
+        <!-- 第二大段：進一步學習資源 - 改為一個接一個排列 -->
+        <div class="resources-section slide-in">
+            <h2>進一步學習資源</h2>
+            
+            <div class="resource-item">
+                <h3>🎬 多媒體資源</h3>
+                <p>觀看創世記動畫視頻，了解神創造的過程和意義。</p>
+            </div>
+            
+            <div class="resource-item">
+                <h3>🔍 歷史背景</h3>
+                <p>探索古代近東的歷史背景和考古發現。</p>
+            </div>
+            
+            <div class="resource-item">
+                <h3>🎵 經文學習</h3>
+                <p>聆聽創世記經文的朗讀和相關聖詩。</p>
+            </div>
+            
+            <div class="resource-item">
+                <h3>📚 課後作業</h3>
+                <p>完成創世記1-12章的經文閱讀和思考問題。</p>
+            </div>
+            
+            <div class="resource-item">
+                <h3>✅ 今日任務</h3>
+                <p>查看每日學習任務，保持學習的連續性。</p>
+            </div>
+            
+            <div class="resource-item">
+                <h3>🧠 互動測驗</h3>
+                <p>通過趣味測驗檢驗學習成果，鞏固知識。</p>
+            </div>
+            
+            <div class="resource-item">
+                <h3>📈 學習進度</h3>
+                <p>追蹤學習進度，設定目標，獲得成就感。</p>
+            </div>
+        </div>
+
+        <!-- 第三大段：AI助手與自助學習工具 -->
+        <div class="self-learning-section slide-in">
+            <h2>AI 助手與自助學習工具</h2>
+            
+            <div class="ai-tools-grid">
+                <a class="ai-tool-card" href="../../../../ai_tools/pages/ai_qa_system.html" target="_blank"><div class="icon">❓</div>
+                    <h3>AI 問功課, 對談, 辧論</h3>
+                    <p>使用 AI 助手解答學習中的疑問，獲得個性化指導。</p>
+                </a>
+                
+                <a class="ai-tool-card" href="../../../../ai_tools/pages/ai_lesson_plan.html" target="_blank"><div class="icon">🎨</div>
+                    <h3>AI 文生圖, 文生故事書</h3>
+                    <p>將聖經故事轉化為視覺圖像，加深理解和記憶。</p>
+                </a>
+                
+                <a class="ai-tool-card" href="../../../../ai_tools/pages/ai_lesson_plan.html" target="_blank"><div class="icon">🎵</div>
+                    <h3>AI 文生音樂</h3>
+                    <p>為聖經經文創作背景音樂，營造學習氛圍。</p>
+                </a>
+                
+                <a class="ai-tool-card" href="../../../../ai_tools/pages/ai_lesson_plan.html" target="_blank"><div class="icon">📊</div>
+                    <h3>AI 文生PPT, 論文</h3>
+                    <p>自動生成課程演示文稿，便於分享和複習。</p>
+                </a>
+            </div>
+        </div>
+
+    <script src="../../js/toc-generator.js"></script>
+    <script>
+    // 動態目錄功能
+    function generateTOC() {
+        const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        const tocContent = document.getElementById('tocContent');
+        
+        if (!tocContent || headings.length < 2) {
+            const tocContainer = document.getElementById('tocContainer');
+            if (tocContainer) {
+                tocContainer.style.display = 'none';
+            }
+            return;
+        }
+        
+        let tocHTML = '';
+        headings.forEach((heading, index) => {
+            const id = 'heading-' + index;
+            heading.id = id;
+            const level = parseInt(heading.tagName.charAt(1));
+            const text = heading.textContent.trim();
+            if (text.length < 2) return;
+            tocHTML += `<a href="#${id}" class="toc-item h${level}">${text}</a>`;
+        });
+        
+        tocContent.innerHTML = tocHTML;
+        
+        document.querySelectorAll('.toc-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = this.getAttribute('href');
+                smoothScrollTo(target);
+            });
+        });
+    }
+
+    function toggleTOC() {
+        const content = document.getElementById('tocContent');
+        const toggle = document.querySelector('.toc-toggle');
+        
+        if (content && toggle) {
+            content.classList.toggle('show');
+            toggle.classList.toggle('rotated');
+        }
+    }
+
+    function smoothScrollTo(target) {
+        const element = document.querySelector(target);
+        if (element) {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }
+
+    function handleResize() {
+        const toc = document.getElementById('tocContainer');
+        if (toc) {
+            if (window.innerWidth < 768) {
+                toc.style.width = '250px';
+                toc.style.right = '10px';
+            } else {
+                toc.style.width = '300px';
+                toc.style.right = '20px';
+            }
+        }
+    }
+
+    function checkPageLength() {
+        const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        const pageHeight = document.body.scrollHeight;
+        const viewportHeight = window.innerHeight;
+        
+        return headings.length >= 2 && pageHeight > viewportHeight * 1.2;
+    }
+
+    function initTOC() {
+        if (checkPageLength()) {
+            generateTOC();
+            handleResize();
+        } else {
+            const tocContainer = document.getElementById('tocContainer');
+            if (tocContainer) {
+                tocContainer.style.display = 'none';
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initTOC);
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('load', initTOC);
+    </script>
+
+<!-- smart_tools 頂部工具箱 (由 inject_smart_header.py 注入) -->
+<script>window.localConfig = window.localConfig || {};</script>
+<script src="../../../js/smart_tools.js"></script>
+
+</body>
+</html>
+
+
+
+

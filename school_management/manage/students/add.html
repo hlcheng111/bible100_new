@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增學生 - Add Student</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>➕ 新增學生 · Add Student</h1>
+        <p>填寫學生基本資料</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 註冊組、行政同工。</p>
+            <p><b>有什麼功能？</b> 新增單一學生，資料存入 SchoolMasterDatabase。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">學生資料</div>
+        <form id="f">
+            <div class="module-form-row"><label>姓名</label><input name="name" class="module-input" required></div>
+            <div class="module-form-row"><label>性別</label><select name="gender" class="module-input"><option>男</option><option>女</option></select></div>
+            <div class="module-form-row"><label>班級ID</label><input name="class_id" class="module-input" value="1" size="4"></div>
+            <div class="module-form-row"><label>聯絡</label><input name="contact" class="module-input" placeholder="電話或 Email"></div>
+            <button type="submit" class="module-btn">儲存</button>
+        </form>
+        <p id="msg" style="margin-top:12px;color:#27ae60;"></p>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        document.getElementById('f').onsubmit = function(e) {
+            e.preventDefault();
+            const fm = new FormData(this);
+            const name = fm.get('name').trim();
+            if (!name) return alert('請填寫姓名');
+            if (!window.schoolDB) return alert('資料庫未載入');
+            const rec = window.schoolDB.insert('students', {
+                name: name,
+                gender: fm.get('gender'),
+                class_id: +(fm.get('class_id') || 1),
+                contact: fm.get('contact') || '',
+                status: 'active'
+            });
+            document.getElementById('msg').textContent = '已儲存：ID ' + rec.id + '（' + rec.name + '）';
+            this.reset();
+        };
+        if (window.schoolDB && window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+    </script>
+</body>
+</html>

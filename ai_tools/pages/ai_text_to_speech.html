@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文字轉語音 Text to Speech － 聖經朗讀配音</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Microsoft YaHei", 微軟正黑體, sans-serif; font-size: 14px; }
+    body { background: #f5f7fa; color: #333; line-height: 1.7; padding: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    td { padding: 12px; border: 1px solid #e0e0e0; }
+    .nav-bar { background: #f8f9fa; padding: 8px 12px; border-radius: 5px; margin-bottom: 15px; }
+    .nav-bar a { color: #2E7D32; text-decoration: none; margin: 0 8px; font-size: 0.85rem; }
+    .nav-bar a:hover { text-decoration: underline; }
+    .header-cell { background: linear-gradient(135deg, #2E7D32, #4CAF50); color: white; text-align: center; padding: 20px 15px; }
+    .header-cell h1 { font-size: 1.5rem; margin-bottom: 8px; text-shadow: 1px 1px 3px rgba(0,0,0,0.2); }
+    .header-cell p { font-size: 0.9rem; opacity: 0.9; max-width: 800px; margin: 0 auto; }
+    button { background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; margin: 4px 4px 4px 0; }
+    button:hover { background: #388E3C; }
+    button.secondary { background: #2196F3; }
+    button.secondary:hover { background: #1976D2; }
+    textarea, select, input { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; margin: 6px 0; resize: vertical; }
+    textarea { min-height: 90px; line-height: 1.6; }
+    .platform-links a { display: inline-block; color: #2196F3; text-decoration: none; margin: 0 6px 6px 0; padding: 5px 10px; background: #e3f2fd; border-radius: 4px; font-size: 0.9rem; }
+    .platform-links a:hover { background: #bbdefb; }
+    .prompt-example { background: #f1f8e9; padding: 12px; border-radius: 6px; margin: 8px 0; border-left: 4px solid #4CAF50; }
+    .prompt-example b { color: #2E7D32; font-size: 0.95rem; }
+    .prompt-example p { font-size: 0.9rem; line-height: 1.6; }
+    #speechPlatformHost { width: 100%; height: 520px; background: #f8f9fa; }
+    .platform-frame-wrap { border: 2px solid #4CAF50; border-radius: 8px; overflow: hidden; margin-top: 10px; }
+    .platform-frame-bar { background: #4CAF50; color: white; padding: 8px 12px; font-weight: bold; font-size: 0.95rem; }
+    .lab-pf-icon-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+    button.lab-pf-icon { width: 44px; height: 44px; border-radius: 10px; border: 2px solid #4caf50; background: #f1f8e9; font-size: 1.35rem; cursor: pointer; line-height: 1; padding: 0; }
+    button.lab-pf-icon:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(46,125,50,0.25); }
+    .lab-pf-hint { font-size: 0.78rem; color: #666; margin: 0 0 8px; }
+    .bible-theme-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .bible-theme-btn { background: #f1f8e9; border: 1px solid #4CAF50; color: #2E7D32; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+    .bible-theme-btn:hover { background: #dcedc8; }
+    .tutorial-section { background: #f0f8f0; padding: 15px; border-radius: 8px; margin-top: 20px; border-top: 3px solid #2E7D32; }
+    .tutorial-section h3 { color: #2E7D32; font-size: 1.1rem; margin-bottom: 12px; }
+    .tutorial-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px; }
+    .tutorial-link-card { background: white; padding: 10px; border-radius: 6px; border-left: 3px solid #2196F3; }
+    .tutorial-link-card h4 { font-size: 0.95rem; color: #1976D2; margin-bottom: 5px; }
+    .tutorial-link-card a { display: block; color: #2E7D32; text-decoration: none; font-size: 0.9rem; margin: 4px 0; }
+    .tutorial-link-card a:hover { text-decoration: underline; }
+    .lang-tag { display: inline-block; font-size: 0.75rem; padding: 2px 6px; border-radius: 3px; margin-right: 5px; color: white; }
+    .lang-cn { background: #4CAF50; }
+    .lang-en { background: #2196F3; }
+    .reference-note { margin-top: 20px; padding: 10px 15px; background: #f8f9fa; border-radius: 6px; border: 1px dashed #ccc; }
+    .reference-note p { font-size: 0.75rem; color: #666; line-height: 1.6; }
+    .copy-prompt-btn { font-size: 0.85rem; padding: 4px 10px; margin-left: 8px; cursor: pointer; background: #e8f5e9; color: #2E7D32; border: 1px solid #4CAF50; border-radius: 4px; }
+    .copy-prompt-btn:hover { background: #c8e6c9; }
+    .status-msg { padding: 10px; border-radius: 6px; margin: 8px 0; display: none; font-size: 0.9rem; }
+    .status-msg.success { background: #e8f5e8; color: #2e7d32; border: 1px solid #c8e6c9; }
+    .status-msg.error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    .status-msg.info { background: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb; }
+    .btn-dashboard { display: inline-block; background: #2196F3; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 8px; }
+    .btn-dashboard:hover { color: white; }
+    @media screen and (max-width: 768px) {
+      .header-cell h1 { font-size: 1.3rem; }
+      td { padding: 8px; }
+      .platform-links a { display: block; width: 100%; }
+      #speechPlatformHost { height: 400px; }
+    }
+  </style>
+  <script src="../assets/js/lab-frame-nav.js"></script>
+  <script src="../assets/js/lab-platform-embed.js"></script>
+</head>
+<body>
+<center>
+<table>
+  <tr>
+    <td class="nav-bar">
+      <a href="javascript:void(0)" onclick="labNav('../../index.html'); return false;">← 返回主站</a>
+      <a href="javascript:void(0)" onclick="labNav('dashboard.html'); return false;">← 儀表板</a>
+      <a href="javascript:void(0)" onclick="labNav('index.html'); return false;">← AI 工具目錄</a>
+      <a href="javascript:void(0)" onclick="labNav('guides/prompt_writing_guide.html'); return false;" style="float:right;">📖 Prompt 設計指南 →</a>
+    </td>
+  </tr>
+  <tr>
+    <td class="header-cell">
+      <h1>🔊 文字轉語音 Text to Speech</h1>
+      <p>聖經朗讀配音／多媒體製作 Bible Reading & Voice-over · 經文朗讀、禱告朗讀、故事朗讀 · 语速、停頓、語氣（給學生超清楚）</p>
+    </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+
+  <!-- 第一區塊：平台置頂，一啟動即可用 -->
+  <tr>
+    <td>
+      <h3 style="color: #2E7D32; margin-bottom: 12px; font-size: 1.1rem;">🚀 文轉語音 · 一行圖示任選</h3>
+      <p class="lab-pf-hint">可內嵌者在下方格子；Google／部分站可能僅能新分頁。</p>
+      <div class="lab-pf-icon-row">
+        <button type="button" class="lab-pf-icon" title="TTSMaker" onclick="labSpeechPf('https://ttsmaker.com','TTSMaker')">🎤</button>
+        <button type="button" class="lab-pf-icon" title="ElevenLabs" onclick="labSpeechPf('https://elevenlabs.io','ElevenLabs')">🎙️</button>
+        <button type="button" class="lab-pf-icon" title="Google TTS" onclick="labSpeechPf('https://cloud.google.com/text-to-speech','Google TTS')">🗣️</button>
+        <button type="button" class="lab-pf-icon" title="Kimi" onclick="labSpeechPf('https://www.kimi.com','Kimi')">🤖</button>
+      </div>
+      <div id="speechPlatformPh" style="display:none;padding:12px;font-size:0.85rem;background:#fff8e1;border-radius:6px;margin-bottom:8px;"></div>
+      <div class="platform-frame-wrap" style="margin-top: 12px;">
+        <div id="speechPlatformBar" class="platform-frame-bar">📌 預設 TTSMaker · 點圖示切換</div>
+        <div id="speechPlatformHost" title="AI 文轉語音平台"></div>
+      </div>
+    </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+
+  <!-- 創作配置工具 -->
+  <tr>
+    <td>
+      <h3 style="color: #2E7D32; margin-bottom: 12px; font-size: 1.1rem;">🔊 聖經朗讀創作配置工具</h3>
+      <div class="bible-theme-buttons">
+        <button class="bible-theme-btn" onclick="setTheme('兒童朗讀')">兒童朗讀</button>
+        <button class="bible-theme-btn" onclick="setTheme('經文莊重朗讀')">經文莊重朗讀</button>
+        <button class="bible-theme-btn" onclick="setTheme('禱告朗讀')">禱告朗讀</button>
+        <button class="bible-theme-btn" onclick="setTheme('詩篇23篇')">詩篇23篇</button>
+        <button class="bible-theme-btn" onclick="setTheme('八福')">八福</button>
+      </div>
+      <p><strong>朗讀內容／Prompt 描述：</strong></p>
+      <textarea id="speechTheme" placeholder="請輸入經文或描述，例如：請用溫和的女聲朗讀詩篇23篇，語速緩慢，每節停頓2秒..." style="height: 90px;">請用溫和的女聲朗讀詩篇23篇，語速緩慢，每節停頓2秒，突出安慰和依靠的語氣，適合靈修使用。</textarea>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0;">
+        <div style="flex: 1; min-width: 160px;">
+          <p><strong>語速：</strong></p>
+          <select id="speechSpeed">
+            <option value="較慢">較慢（靈修／經文）</option>
+            <option value="適中" selected>適中</option>
+            <option value="較快">較快</option>
+          </select>
+        </div>
+        <div style="flex: 1; min-width: 160px;">
+          <p><strong>停頓：</strong></p>
+          <select id="speechPause">
+            <option value="每節約2秒" selected>每節約2秒</option>
+            <option value="每句停頓">每句停頓</option>
+            <option value="自然停頓">自然停頓</option>
+          </select>
+        </div>
+        <div style="flex: 1; min-width: 160px;">
+          <p><strong>語氣：</strong></p>
+          <select id="speechTone">
+            <option value="莊重虔誠">莊重虔誠（敬拜）</option>
+            <option value="溫和">溫和（靈修）</option>
+            <option value="活潑">活潑（兒童）</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin: 15px 0;">
+        <button onclick="generatePrompt()">💡 生成專屬 Prompt</button>
+        <button class="secondary" onclick="copyGeneratedPrompt()">📋 複製 Prompt</button>
+      </div>
+      <div id="promptResult" class="prompt-example" style="display: none;">
+        <h4 style="margin-bottom: 8px; color: #2E7D32; font-size: 1rem;">✅ 聖經朗讀 Prompt（可直接複製使用）</h4>
+        <div id="promptContent" style="white-space: pre-line; font-size: 0.9rem;"></div>
+      </div>
+      <div id="statusMessage" class="status-msg"></div>
+    </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+
+  <!-- 精品 Prompt 範例 -->
+  <tr>
+    <td>
+      <h3 style="color: #2E7D32; margin-bottom: 12px; font-size: 1.1rem;">💡 聖經朗讀精品 Prompt 範例</h3>
+      <div class="prompt-example">
+        <b>範例 1：兒童朗讀 Children narration</b>
+        <p>請用活潑的兒童向語音朗讀「大衛與歌利亞」故事，語速較慢，音調變化豐富，每句後停頓約 2 秒，適合 3–8 歲兒童聆聽。</p>
+        <button type="button" class="copy-prompt-btn" onclick="copyPromptText(document.getElementById('ex1').textContent)">📋 複製此範例</button>
+        <span id="ex1" style="display:none;">請用活潑的兒童向語音朗讀「大衛與歌利亞」故事，語速較慢，音調變化豐富，每句後停頓約 2 秒，適合 3–8 歲兒童聆聽。</span>
+      </div>
+      <div class="prompt-example">
+        <b>範例 2：經文莊重朗讀 Solemn scripture reading</b>
+        <p>請用莊重虔誠的語音朗讀馬太福音 5 章 3–12 節（八福），語速適中、每節停頓約 2 秒，適合教會敬拜或主日學使用。</p>
+        <button type="button" class="copy-prompt-btn" onclick="copyPromptText(document.getElementById('ex2').textContent)">📋 複製此範例</button>
+        <span id="ex2" style="display:none;">請用莊重虔誠的語音朗讀馬太福音 5 章 3–12 節（八福），語速適中、每節停頓約 2 秒，適合教會敬拜或主日學使用。</span>
+      </div>
+      <div class="prompt-example">
+        <b>範例 3：禱告朗讀</b>
+        <p>請用平靜安詳的語音朗讀主禱文（馬太福音6:9-13），語速緩慢，每句停頓，適合聚會禱告使用。</p>
+        <button type="button" class="copy-prompt-btn" onclick="copyPromptText(document.getElementById('ex3').textContent)">📋 複製此範例</button>
+        <span id="ex3" style="display:none;">請用平靜安詳的語音朗讀主禱文（馬太福音6:9-13），語速緩慢，每句停頓，適合聚會禱告使用。</span>
+      </div>
+    </td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+
+  <!-- 教程（中英雙語） -->
+  <tr>
+    <td class="tutorial-section">
+      <h3>📚 聖經朗讀／語音創作教程（中英雙語）</h3>
+      <p style="font-size: 0.9rem; margin-bottom: 10px; color: #555;">經文朗讀、禱告朗讀、故事朗讀 · 语速、停頓、語氣給學生超清楚</p>
+      <div class="tutorial-links">
+        <div class="tutorial-link-card">
+          <h4>🎤 TTSMaker / ElevenLabs</h4>
+          <a href="https://ttsmaker.com" target="contentFrame"><span class="lang-tag lang-cn">中文</span>TTSMaker</a>
+          <a href="https://www.youtube.com/results?search_query=text+to+speech+bible+reading" target="_blank"><span class="lang-tag lang-en">EN</span>Bible TTS Tutorial</a>
+        </div>
+        <div class="tutorial-link-card">
+          <h4>💡 Prompt 設計</h4>
+          <a href="../guides/prompt_writing_guide.html" target="contentFrame"><span class="lang-tag lang-cn">中文</span>Prompt 設計指南</a>
+        </div>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td class="reference-note">
+      <p><strong>📝 模板設計參考：</strong>本頁為「文轉語音」標準模板。架構：1. 導航欄 2. AI 平台區（一啟動即可用）3. 創作配置＋生成專屬 Prompt 4. 精品範例 5. 教學資源。</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="text-align: center;">
+      <a href="../dashboard.html" target="contentFrame" class="btn-dashboard">← 回到儀表板 Back to Dashboard</a>
+    </td>
+  </tr>
+</table>
+</center>
+
+<script>
+function labSpeechPf(url, name) {
+  if (typeof labEmbedPlatform === 'function') {
+    labEmbedPlatform({
+      containerId: 'speechPlatformHost',
+      barId: 'speechPlatformBar',
+      placeholderId: 'speechPlatformPh',
+      url: url,
+      name: name || 'AI',
+      height: '520px'
+    });
+  }
+}
+
+function setTheme(name) {
+  var t = document.getElementById('speechTheme');
+  if (name === '兒童朗讀') t.value = '請用活潑的兒童向語音朗讀「大衛與歌利亞」故事，語速較慢，音調變化豐富，每句後停頓約 2 秒，適合 3–8 歲兒童聆聽。';
+  else if (name === '經文莊重朗讀') t.value = '請用莊重虔誠的語音朗讀馬太福音 5 章 3–12 節（八福），語速適中、每節停頓約 2 秒，適合教會敬拜或主日學使用。';
+  else if (name === '禱告朗讀') t.value = '請用平靜安詳的語音朗讀主禱文（馬太福音6:9-13），語速緩慢，每句停頓，適合聚會禱告使用。';
+  else if (name === '詩篇23篇') t.value = '請用溫和的女聲朗讀詩篇23篇，語速緩慢，每節停頓2秒，突出安慰和依靠的語氣，適合靈修使用。';
+  else t.value = '請用莊重虔誠的語音朗讀馬太福音5章3-12節（八福），語速適中，每節停頓，適合教會敬拜或主日學使用。';
+  showStatus('已選擇主題：' + name, 'success');
+}
+
+function generatePrompt() {
+  var theme = document.getElementById('speechTheme').value.trim();
+  if (!theme) { showStatus('請先輸入朗讀內容或描述！', 'error'); return; }
+  var speed = document.getElementById('speechSpeed').value;
+  var pause = document.getElementById('speechPause').value;
+  var tone = document.getElementById('speechTone').value;
+  var prompt = '【聖經朗讀】' + theme + '\n【語速】' + speed + '\n【停頓】' + pause + '\n【語氣】' + tone;
+  document.getElementById('promptContent').textContent = prompt;
+  document.getElementById('promptResult').style.display = 'block';
+  document.getElementById('promptResult').scrollIntoView({ behavior: 'smooth' });
+  window.currentPrompt = prompt;
+  showStatus('Prompt 已生成，可複製使用', 'success');
+}
+
+function copyGeneratedPrompt() {
+  if (!window.currentPrompt) { showStatus('請先生成 Prompt！', 'error'); return; }
+  copyPromptText(window.currentPrompt);
+}
+
+function copyPromptText(text) {
+  if (!text) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      alert('已複製聖經專用 Prompt');
+      showStatus('已複製到剪貼板', 'success');
+    }).catch(function() { fallbackCopy(text); });
+  } else fallbackCopy(text);
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); alert('已複製聖經專用 Prompt'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+function openInContentFrame(url) {
+  labSpeechPf(url, '平台');
+  showStatus('已在下方格子載入', 'success');
+}
+
+function showStatus(msg, type) {
+  var el = document.getElementById('statusMessage');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'status-msg ' + (type || 'info');
+  el.style.display = 'block';
+  setTimeout(function() { el.style.display = 'none'; }, 3000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  labSpeechPf('https://ttsmaker.com', 'TTSMaker');
+});
+</script>
+</body>
+</html>

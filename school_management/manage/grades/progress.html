@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>進度追蹤 - 學校管理系統</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f6fb; color: #333; font-size: 12px; padding: 16px; }
+        .header { background: linear-gradient(135deg, #0b5fa5 0%, #2aa5ff 100%); color: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(11,95,165,0.2); }
+        .header h1 { font-size: 18px; margin-bottom: 8px; }
+        .header p { font-size: 11px; opacity: 0.9; }
+        details { margin-top: 10px; padding: 10px 14px; background: rgba(255,255,255,0.12); border-radius: 8px; font-size: 11px; }
+        summary { cursor: pointer; font-weight: 600; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; }
+        .card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #0b5fa5; border-left: 4px solid #0b5fa5; padding-left: 10px; }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .stat-pill { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; text-align: center; }
+        .stat-num { font-size: 22px; font-weight: 700; color: #0b5fa5; }
+        .stat-label { font-size: 10px; color: #6b7280; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f8fafc; font-weight: 600; color: #374151; }
+        tr:hover { background: #f9fafb; }
+        .btn { display: inline-block; padding: 8px 16px; background: #0b5fa5; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; text-decoration: none; margin-right: 8px; margin-top: 8px; }
+        .btn:hover { background: #0a4d8c; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #9ca3af; }
+        .grade-A { color: #059669; font-weight: 600; }
+        .grade-B { color: #2563eb; }
+        .grade-C { color: #d97706; }
+        .grade-D { color: #dc2626; }
+        .grade-F { color: #991b1b; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📈 進度追蹤 · Progress Tracking</h1>
+        <p>追蹤學生學習進度、成績分布與課程完成狀況</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div style="margin-top: 8px; opacity: 0.95;">
+                <p><b>此頁是為誰而設？</b> 主日學負責人、教師、教育事工同工，檢視學員學習進度與成績表現。</p>
+                <p style="margin-top: 6px;"><b>有什麼功能？</b> 成績統計、課程完成率、學員排名、匯出報告。</p>
+                <p style="margin-top: 6px;"><b>如何入手？</b> 資料來自 SchoolMasterDatabase，首次使用請先至儀表板載入示範資料。</p>
+            </div>
+        </details>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📊 進度統計</div>
+        <div class="stats-row">
+            <div class="stat-pill"><div class="stat-num" id="statTotalGrades">0</div><div class="stat-label">成績筆數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statAvgScore">0</div><div class="stat-label">平均分數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statEnrollments">0</div><div class="stat-label">選課記錄</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statCompletion">0%</div><div class="stat-label">完成率</div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📋 成績報告（依課程）</div>
+        <div id="reportByCourse"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📋 最近成績記錄（前 20 筆）</div>
+        <div id="recentGrades"></div>
+    </div>
+
+    <div>
+        <button class="btn" onclick="exportReport()">📤 匯出報告 (JSON)</button>
+        <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+    </div>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        function loadProgressReport() {
+            if (!window.schoolDB) {
+                document.getElementById('reportByCourse').innerHTML = '<div class="empty-state">請先載入 SchoolMasterDatabase</div>';
+                return;
+            }
+            if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+            const db = window.schoolDB.data;
+            const grades = db.grade && db.grade.grades ? db.grade.grades : [];
+            const enrollments = db.student && db.student.enrollments ? db.student.enrollments : [];
+            const courses = db.courses || [];
+            const students = db.students || [];
+
+            const totalGrades = grades.length;
+            const avgScore = totalGrades > 0 ? (grades.reduce((s, g) => s + (g.score || 0), 0) / totalGrades).toFixed(1) : 0;
+            const totalEnroll = enrollments.length;
+            const completion = totalEnroll > 0 ? Math.round((totalGrades / totalEnroll) * 100) : 0;
+
+            document.getElementById('statTotalGrades').textContent = totalGrades;
+            document.getElementById('statAvgScore').textContent = avgScore;
+            document.getElementById('statEnrollments').textContent = totalEnroll;
+            document.getElementById('statCompletion').textContent = completion + '%';
+
+            const byCourse = {};
+            grades.forEach(g => {
+                const cid = g.courseId;
+                if (!byCourse[cid]) byCourse[cid] = { count: 0, sum: 0, scores: [] };
+                byCourse[cid].count++;
+                byCourse[cid].sum += g.score || 0;
+                byCourse[cid].scores.push(g.score || 0);
+            });
+
+            let courseHtml = '';
+            if (Object.keys(byCourse).length === 0) {
+                courseHtml = '<div class="empty-state">尚無成績資料，請先至成績管理或載入示範資料。</div>';
+            } else {
+                courseHtml = '<table><thead><tr><th>課程</th><th>成績筆數</th><th>平均分</th><th>最高分</th></tr></thead><tbody>';
+                Object.entries(byCourse).forEach(([cid, v]) => {
+                    const course = courses.find(c => c.id == cid);
+                    const name = course ? course.name : '課程 #' + cid;
+                    const avg = (v.sum / v.count).toFixed(1);
+                    const max = Math.max(...v.scores);
+                    courseHtml += `<tr><td>${name}</td><td>${v.count}</td><td>${avg}</td><td>${max}</td></tr>`;
+                });
+                courseHtml += '</tbody></table>';
+            }
+            document.getElementById('reportByCourse').innerHTML = courseHtml;
+
+            const recent = grades.slice(-20).reverse();
+            let recentHtml = '';
+            if (recent.length === 0) {
+                recentHtml = '<div class="empty-state">尚無成績記錄</div>';
+            } else {
+                recentHtml = '<table><thead><tr><th>學員</th><th>課程</th><th>分數</th><th>等第</th><th>日期</th></tr></thead><tbody>';
+                recent.forEach(g => {
+                    const stu = students.find(s => s.id == g.studentId);
+                    const course = courses.find(c => c.id == g.courseId);
+                    const gradeClass = 'grade-' + (g.grade || '');
+                    recentHtml += `<tr><td>${stu ? stu.name : '—'}</td><td>${course ? course.name : '—'}</td><td>${g.score ?? '—'}</td><td class="${gradeClass}">${g.grade || '—'}</td><td>${g.examDate || '—'}</td></tr>`;
+                });
+                recentHtml += '</tbody></table>';
+            }
+            document.getElementById('recentGrades').innerHTML = recentHtml;
+        }
+
+        function exportReport() {
+            if (!window.schoolDB) return alert('無資料可匯出');
+            const db = window.schoolDB.data;
+            const report = {
+                generatedAt: new Date().toISOString(),
+                summary: {
+                    totalGrades: (db.grade && db.grade.grades) ? db.grade.grades.length : 0,
+                    totalEnrollments: (db.student && db.student.enrollments) ? db.student.enrollments.length : 0
+                },
+                grades: (db.grade && db.grade.grades) ? db.grade.grades : []
+            };
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }));
+            a.download = 'progress_report_' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProgressReport);
+    </script>
+</body>
+</html>

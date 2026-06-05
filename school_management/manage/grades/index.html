@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成績管理 - Grade Management</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+    <style>
+        body { background: #f5f6fb; }
+        .header { background: linear-gradient(135deg, #0b5fa5 0%, #2aa5ff 100%); color: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(11,95,165,0.2); }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header p { margin: 5px 0 0 0; opacity: 0.9; }
+        .content { background: white; padding: 24px; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 14px; }
+        .field label { display:block; font-size:12px; color:#475569; margin-bottom:6px; font-weight:600; }
+        .field input, .field select { width:100%; padding:9px 10px; border:1px solid #d1d5db; border-radius:8px; font-size:12px; }
+        .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+        .btn { border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:12px; font-weight:600; }
+        .btn-primary { background:#0b5fa5; color:#fff; }
+        .btn-secondary { background:#e2e8f0; color:#1e293b; }
+        .tip { background:#ecfeff; border:1px solid #67e8f9; color:#0f766e; padding:10px 12px; border-radius:8px; font-size:12px; margin-bottom:12px; }
+        .hint { font-size:11px; color:#64748b; margin-top:8px; }
+        .recent { margin-top:16px; border-top:1px solid #e5e7eb; padding-top:14px; }
+        .recent table { width:100%; border-collapse:collapse; font-size:11px; }
+        .recent th, .recent td { border-bottom:1px solid #eef2f7; padding:8px; text-align:left; }
+        .recent th { color:#475569; background:#f8fafc; }
+        .route-badge { display:inline-block; margin-left:6px; font-size:10px; color:#b45309; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:1px 6px; }
+        .toast-wrap { position:fixed; right:12px; top:12px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+        .toast { min-width:280px; max-width:360px; border-radius:8px; padding:10px 12px; font-size:12px; box-shadow:0 6px 18px rgba(0,0,0,0.15); }
+        .toast.ok { background:#ecfdf5; border:1px solid #10b981; color:#065f46; }
+        .toast.info { background:#eff6ff; border:1px solid #60a5fa; color:#1e3a8a; }
+        .toast.warn { background:#fff7ed; border:1px solid #fb923c; color:#9a3412; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 成績管理系統</h1>
+        <p>Grade Management System</p>
+    </div>
+
+    <div class="content">
+        <div class="tip">
+            成績儲存將自動觸發 Phase 1.2 pipeline workflow。標記為 <strong>領袖路徑 🚀</strong> 的課程，將直接參與 Stage 判定。
+        </div>
+        <div class="grid">
+            <div class="field">
+                <label>學員</label>
+                <select id="studentSelect"></select>
+            </div>
+            <div class="field">
+                <label>課程</label>
+                <select id="courseSelect"></select>
+            </div>
+            <div class="field">
+                <label>分數</label>
+                <input id="scoreInput" type="number" min="0" max="100" value="80">
+            </div>
+            <div class="field">
+                <label>測驗日期</label>
+                <input id="examDateInput" type="date">
+            </div>
+        </div>
+        <div class="actions">
+            <button class="btn btn-primary" id="btnSaveGrade">儲存成績</button>
+            <button class="btn btn-secondary" id="btnFlushQueue">重新同步（flushQueue）</button>
+            <a class="btn btn-secondary" href="progress.html">進度追蹤</a>
+            <a class="btn btn-secondary" href="reports.html">成績報表</a>
+        </div>
+        <p class="hint" id="statusHint">尚未操作。</p>
+
+        <div class="recent">
+            <h3 style="margin:0 0 8px;color:#0b5fa5;">最近 10 筆成績</h3>
+            <table>
+                <thead><tr><th>學員</th><th>課程</th><th>分數</th><th>等第</th><th>日期</th></tr></thead>
+                <tbody id="recentBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="toast-wrap" id="toastWrap"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../../../js/church_data_bridge_phase1.js"></script>
+    <script src="../../../js/bible100_backend_init.js"></script>
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function () {
+            function gradeLetter(score) {
+                var n = Number(score || 0);
+                if (n >= 90) return 'A';
+                if (n >= 80) return 'B';
+                if (n >= 70) return 'C';
+                if (n >= 60) return 'D';
+                return 'F';
+            }
+
+            function toast(text, type) {
+                var wrap = document.getElementById('toastWrap');
+                if (!wrap) return;
+                var t = document.createElement('div');
+                t.className = 'toast ' + (type || 'info');
+                t.textContent = text;
+                wrap.appendChild(t);
+                setTimeout(function () {
+                    if (t && t.parentNode) t.parentNode.removeChild(t);
+                }, 4200);
+            }
+
+            function setStatus(msg) {
+                var el = document.getElementById('statusHint');
+                if (el) el.textContent = msg;
+            }
+
+            function isLeaderTrackCourse(course) {
+                if (!course) return false;
+                var code = String(course.code || '').toUpperCase();
+                if (code === 'LEADER_STAGE3' || code === 'DISCIPLE_MASTER') return true;
+                if (course.leaderTrack === true) return true;
+                var tags = Array.isArray(course.tags) ? course.tags : [];
+                return tags.some(function (t) { return /leader|領袖|門訓大師/i.test(String(t)); });
+            }
+
+            function getBridgeAndPolicy() {
+                var bridge = null;
+                if (window.Bible100Backend && typeof window.Bible100Backend.getBridge === 'function') {
+                    bridge = window.Bible100Backend.getBridge();
+                }
+                var policy = (bridge && bridge.config && bridge.config.leaderPipelinePolicy) || {
+                    mode: 'hybrid',
+                    thresholdCourseIds: ['LEADER_STAGE3', 'DISCIPLE_MASTER'],
+                    stage3Credits: 12
+                };
+                return { bridge: bridge, policy: policy };
+            }
+
+            function getMemberStateByStudent(student) {
+                var memberId = student && (student.memberId != null ? student.memberId : student.member_id);
+                var out = { memberId: memberId, credits: 0, stage: 1 };
+                if (memberId == null) return out;
+                try {
+                    var raw = localStorage.getItem('memberSystemData');
+                    var data = raw ? JSON.parse(raw) : null;
+                    var list = data && Array.isArray(data.members) ? data.members : [];
+                    var row = list.find(function (m) {
+                        var id = m && (m.memberId != null ? m.memberId : m.id);
+                        return String(id) === String(memberId);
+                    });
+                    if (!row) return out;
+                    out.credits = Number(row.training_credits != null ? row.training_credits : (row.trainingCredits || 0)) || 0;
+                    out.stage = Number(row.spiritual_stage != null ? row.spiritual_stage : (row.spiritualStage || 1)) || 1;
+                    return out;
+                } catch (e) {
+                    return out;
+                }
+            }
+
+            function projectedStage(policy, courseCode, creditsAfter) {
+                var mode = String((policy && policy.mode) || 'hybrid').toLowerCase();
+                var thresholdCourseIds = Array.isArray(policy && policy.thresholdCourseIds) ? policy.thresholdCourseIds : [];
+                var stage3Credits = Number((policy && policy.stage3Credits) || 12);
+                var hitCourse = courseCode && thresholdCourseIds.indexOf(String(courseCode)) >= 0;
+                var hitCredits = Number(creditsAfter || 0) >= stage3Credits;
+                if (mode === 'threshold') return hitCourse ? 3 : 1;
+                if (mode === 'credits') return hitCredits ? 3 : 1;
+                return (hitCourse || hitCredits) ? 3 : 1;
+            }
+
+            function renderRecent() {
+                var body = document.getElementById('recentBody');
+                if (!body || !window.schoolDB) return;
+                var db = window.schoolDB.data || {};
+                var grades = (db.grade && db.grade.grades) ? db.grade.grades.slice(-10).reverse() : [];
+                var students = db.students || [];
+                var courses = db.courses || [];
+                if (!grades.length) {
+                    body.innerHTML = '<tr><td colspan="5" style="color:#64748b;">尚無成績資料。</td></tr>';
+                    return;
+                }
+                body.innerHTML = grades.map(function (g) {
+                    var s = students.find(function (x) { return String(x.id) === String(g.studentId); });
+                    var c = courses.find(function (x) { return String(x.id) === String(g.courseId); });
+                    return '<tr><td>' + (s ? s.name : '-') + '</td><td>' + (c ? c.name : '-') + '</td><td>' + (g.score != null ? g.score : '-') + '</td><td>' + (g.grade || gradeLetter(g.score)) + '</td><td>' + (g.examDate || '-') + '</td></tr>';
+                }).join('');
+            }
+
+            function initSelectors() {
+                if (!window.schoolDB) return;
+                if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+                var db = window.schoolDB.data || {};
+                var students = db.students || [];
+                var courses = db.courses || [];
+                var sEl = document.getElementById('studentSelect');
+                var cEl = document.getElementById('courseSelect');
+                if (sEl) {
+                    sEl.innerHTML = students.map(function (s) {
+                        var m = s.memberId != null ? s.memberId : s.member_id;
+                        var suffix = m != null && m !== '' ? ('（member:' + m + '）') : '（未連結會友）';
+                        return '<option value="' + s.id + '">' + s.name + suffix + '</option>';
+                    }).join('');
+                }
+                if (cEl) {
+                    cEl.innerHTML = courses.map(function (c) {
+                        var marker = isLeaderTrackCourse(c) ? ' 🚀' : '';
+                        return '<option value="' + c.id + '">' + (c.name || ('課程#' + c.id)) + marker + '</option>';
+                    }).join('');
+                }
+                var dateEl = document.getElementById('examDateInput');
+                if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0, 10);
+                renderRecent();
+            }
+
+            async function onSaveGrade() {
+                if (!window.schoolDB) {
+                    toast('❌ schoolDB 尚未初始化。', 'warn');
+                    return;
+                }
+                var db = window.schoolDB.data || {};
+                var studentId = document.getElementById('studentSelect').value;
+                var courseId = document.getElementById('courseSelect').value;
+                var score = Number(document.getElementById('scoreInput').value);
+                var examDate = document.getElementById('examDateInput').value || new Date().toISOString().slice(0, 10);
+
+                var student = (db.students || []).find(function (s) { return String(s.id) === String(studentId); });
+                var course = (db.courses || []).find(function (c) { return String(c.id) === String(courseId); });
+                if (!student || !course) {
+                    toast('❌ 學員或課程不存在。', 'warn');
+                    return;
+                }
+
+                var bp = getBridgeAndPolicy();
+                var before = getMemberStateByStudent(student);
+                var addCredits = Number(course.credits != null ? course.credits : 1) || 1;
+                var afterCredits = before.credits + addCredits;
+                var code = isLeaderTrackCourse(course) ? String(course.code || 'LEADER_STAGE3').toUpperCase() : String(course.code || course.id || 'COURSE_GENERAL');
+                var stageAfter = projectedStage(bp.policy, code, afterCredits);
+
+                try {
+                    window.schoolDB.saveGrade({
+                        studentId: Number(studentId),
+                        courseId: Number(courseId),
+                        score: score,
+                        grade: gradeLetter(score),
+                        examDate: examDate
+                    });
+                    setStatus('✅ 成績已儲存並嘗試同步至 Bridge。');
+                    renderRecent();
+                    if (score >= 60 && stageAfter >= 3 && before.stage < 3) {
+                        toast('🎉 該學員已自動晉升至 Stage 3 領袖管線。', 'ok');
+                    } else {
+                        toast('📈 已同步更新至會友 360 數據中心。', 'info');
+                    }
+                } catch (e) {
+                    setStatus('❌ 儲存失敗：' + (e && e.message ? e.message : e));
+                    toast('❌ 成績儲存失敗。', 'warn');
+                }
+            }
+
+            async function onFlushQueue() {
+                try {
+                    var bridge = window.Bible100Backend && window.Bible100Backend.getBridge ? window.Bible100Backend.getBridge() : null;
+                    if (!bridge || typeof bridge.flushQueue !== 'function') {
+                        toast('⚠️ Bridge 尚未就緒，無法 flushQueue。', 'warn');
+                        return;
+                    }
+                    var res = await bridge.flushQueue();
+                    setStatus('🔄 同步完成：processed=' + (res && res.processed != null ? res.processed : 0) + ', remain=' + (res && res.remain != null ? res.remain : 0));
+                    toast('🔄 已執行重新同步。', 'info');
+                } catch (e) {
+                    setStatus('❌ 重新同步失敗：' + (e && e.message ? e.message : e));
+                    toast('❌ 重新同步失敗。', 'warn');
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                initSelectors();
+                var btnSave = document.getElementById('btnSaveGrade');
+                var btnFlush = document.getElementById('btnFlushQueue');
+                if (btnSave) btnSave.onclick = onSaveGrade;
+                if (btnFlush) btnFlush.onclick = onFlushQueue;
+                console.log('✅ 成績管理（Phase 1.2b）已載入');
+            });
+        })();
+    </script>
+</body>
+</html>

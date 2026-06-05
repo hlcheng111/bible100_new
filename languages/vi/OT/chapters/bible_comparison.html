@@ -1,0 +1,225 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Comparison</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+        #container {
+            display: flex;
+            height: 100%;
+        }
+        .bible-container {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .controls {
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+<script src="../../../scripts/image_path_rewriter.js"></script>
+</head>
+<body>
+    <div id="container">
+        <div class="bible-container" id="bible-left">
+            <div class="controls">
+                <select id="version-left"></select>
+                <select id="book-left"></select>
+                <select id="chapter-left"></select>
+            </div>
+            <iframe id="iframe-left" src="../../../../data/bibles/bible_reader_final.html"></iframe>
+        </div>
+        <div class="bible-container" id="bible-right">
+            <div class="controls">
+                <select id="version-right"></select>
+                <select id="book-right"></select>
+                <select id="chapter-right"></select>
+            </div>
+            <iframe id="iframe-right" src="../../../../data/bibles/bible_reader_final.html"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const iframes = {
+            left: document.getElementById('iframe-left'),
+            right: document.getElementById('iframe-right')
+        };
+
+        const controls = {
+            left: {
+                version: document.getElementById('version-left'),
+                book: document.getElementById('book-left'),
+                chapter: document.getElementById('chapter-left')
+            },
+            right: {
+                version: document.getElementById('version-right'),
+                book: document.getElementById('book-right'),
+                chapter: document.getElementById('chapter-right')
+            }
+        };
+
+        let windows = { left: null, right: null };
+        let bibleData = null;
+        let isInitialized = false;
+
+        const init = () => {
+            if (isInitialized || !iframes.left.contentWindow || !iframes.right.contentWindow) {
+                return;
+            }
+
+            windows.left = iframes.left.contentWindow;
+            windows.right = iframes.right.contentWindow;
+
+            const dataPoll = setInterval(() => {
+                if (windows.left && windows.left.bibleData) {
+                    bibleData = windows.left.bibleData;
+                    clearInterval(dataPoll);
+                    main();
+                } else if (windows.right && windows.right.bibleData) {
+                    bibleData = windows.right.bibleData;
+                    clearInterval(dataPoll);
+                    main();
+                }
+            }, 200);
+        };
+
+        iframes.left.onload = init;
+        iframes.right.onload = init;
+
+        function main() {
+            if (isInitialized) return;
+            isInitialized = true;
+            
+            populateInitialControls();
+
+            Object.keys(controls).forEach(side => {
+                controls[side].version.addEventListener('change', () => onSelectionChange(side));
+                controls[side].book.addEventListener('change', () => {
+                    updateChapters(side);
+                    onSelectionChange(side);
+                });
+                controls[side].chapter.addEventListener('change', () => onSelectionChange(side));
+            });
+
+            syncScroll(windows.left, windows.right);
+            syncScroll(windows.right, windows.left);
+        }
+
+        function populateInitialControls() {
+            const versions = Object.keys(bibleData);
+            const books = Object.keys(bibleData[versions[0]]);
+
+            Object.keys(controls).forEach((side, index) => {
+                versions.forEach(version => {
+                    controls[side].version.add(new Option(version, version));
+                });
+                controls[side].version.selectedIndex = index % versions.length;
+
+                books.forEach(book => {
+                    controls[side].book.add(new Option(book, book));
+                });
+                
+                updateChapters(side);
+            });
+            
+            onSelectionChange('left', true);
+            onSelectionChange('right', true);
+        }
+        
+        function updateChapters(side) {
+            const selectedVersion = controls[side].version.value;
+            const selectedBook = controls[side].book.value;
+            
+            controls[side].chapter.innerHTML = '';
+            if (!bibleData[selectedVersion] || !bibleData[selectedVersion][selectedBook]) {
+                return;
+            }
+            const chapters = Object.keys(bibleData[selectedVersion][selectedBook]);
+            
+            chapters.forEach(chapter => {
+                controls[side].chapter.add(new Option(chapter, chapter));
+            });
+        }
+
+        function onSelectionChange(side, initialLoad = false) {
+            if (!windows[side]) return;
+
+            const selectedBook = controls[side].book.value;
+            const selectedChapter = controls[side].chapter.value;
+
+            if (!initialLoad) {
+                const otherSide = side === 'left' ? 'right' : 'left';
+                controls[otherSide].book.value = selectedBook;
+                updateChapters(otherSide);
+                if (controls[otherSide].chapter.querySelector(`[value="${selectedChapter}"]`)) {
+                    controls[otherSide].chapter.value = selectedChapter;
+                } else {
+                    controls[otherSide].chapter.selectedIndex = 0;
+                }
+                loadContent(otherSide);
+            }
+
+            loadContent(side);
+        }
+
+        function loadContent(side) {
+            if (!windows[side] || !bibleData) return;
+
+            const { version, book, chapter } = controls[side];
+            if (!bibleData[version.value] || !bibleData[version.value][book.value] || !bibleData[version.value][book.value][chapter.value]) {
+                const bibleVersesElement = windows[side].document.getElementById('bible-verses');
+                if (bibleVersesElement) {
+                    bibleVersesElement.innerHTML = 'Data not available for this selection.';
+                }
+                return;
+            }
+            const verses = bibleData[version.value][book.value][chapter.value];
+            const bibleVersesElement = windows[side].document.getElementById('bible-verses');
+            if (bibleVersesElement) {
+                windows[side].displayVerses(bibleVersesElement, verses, book.value, chapter.value);
+            }
+        }
+
+        function syncScroll(source, target) {
+            if (!source || !target) return;
+            let scrolling = false;
+
+            const scrollableSource = source.document.documentElement;
+            const scrollableTarget = target.document.documentElement;
+
+            scrollableSource.addEventListener('scroll', () => {
+                if (!scrolling) {
+                    scrolling = true;
+                    scrollableTarget.scrollTop = scrollableSource.scrollTop;
+                    scrollableTarget.scrollLeft = scrollableSource.scrollLeft;
+                    setTimeout(() => { scrolling = false; }, 50);
+                }
+            });
+        }
+    </script>
+
+
+<!-- smart_tools 頂部工具箱 (由 inject_smart_header.py 注入) -->
+<script>window.localConfig = window.localConfig || {};</script>
+<script src="../../../js/smart_tools.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人才發展追蹤 - 智慧事奉中心</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        body {font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;background:#f6f7fb;color:#1e293b;font-size:15px;line-height:1.6;margin:0;padding:20px;}
+        .header {background:linear-gradient(135deg,#9b59b6 0%,#8e44ad 100%);color:white;padding:20px;border-radius:8px;margin-bottom:20px;text-align:center;}
+        .header h1 {font-size:1.15rem;margin:0 0 8px 0;}
+        .header p {font-size:0.92rem;margin:0;opacity:0.95;}
+        .header-sub {font-size:0.82rem;opacity:0.9;margin-top:6px;}
+        .first-screen { font-size:0.88rem; color:#334155; margin:0 0 14px; max-width:48rem; line-height:1.55; }
+        .first-screen strong { color:#6a1b9a; }
+        details.kpi-fold { background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:15px; border:1px solid #e2e8f0; }
+        details.kpi-fold > summary { cursor:pointer; padding:12px 16px; font-weight:700; color:#4a148c; list-style:none; }
+        details.kpi-fold > summary::-webkit-details-marker { display: none; }
+        .kpi-fold-inner { padding:0 16px 16px; }
+        .tab-container {display:flex;margin-bottom:15px;background:white;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+        .tab {flex:1;padding:10px 8px;text-align:center;cursor:pointer;font-weight:bold;font-size:11px;color:#555;}
+        .tab.active {background:#9b59b6;color:white;}
+        .content-card {background:white;padding:16px 18px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin-bottom:15px;}
+        .content-card h3 {font-size:14px;margin:0 0 10px 0;color:#4a148c;}
+        .content-card p {font-size:12px;color:#555;margin:0 0 10px 0;}
+        .timeline {position:relative;margin:12px 0 6px;padding-left:30px;}
+        .timeline-item {margin-bottom:16px;position:relative;font-size:11px;}
+        .timeline-item::before {content:'';position:absolute;left:-8px;top:6px;width:12px;height:12px;background:#9b59b6;border-radius:50%;}
+        .timeline-item::after {content:'';position:absolute;left:-2px;top:16px;bottom:-16px;width:2px;background:#e0e0e0;}
+        .timeline-item:last-child::after {display:none;}
+        .badge {display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;color:white;margin-left:6px;}
+        .badge-test {background:#42a5f5;}
+        .badge-serve {background:#66bb6a;}
+        .badge-eval {background:#ffa726;}
+        .badge-grow {background:#ab47bc;}
+        .badge-promote {background:#ef5350;}
+        .badge-ai {background:#26c6da;}
+        .meta {font-size:10px;color:#888;margin-top:2px;}
+        .kpi-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:10px;}
+        .kpi-item {background:#f8f9fa;border-radius:6px;padding:8px 10px;font-size:11px;}
+        .kpi-label {color:#666;margin-bottom:4px;}
+        .kpi-value {font-weight:bold;color:#4a148c;font-size:13px;}
+        .kpi-sub {font-size:10px;color:#888;}
+        .back-link {text-align:center;margin-top:20px;}
+        .back-link a {color:#9b59b6;text-decoration:none;font-weight:bold;padding:10px 20px;border:2px solid #9b59b6;border-radius:5px;display:inline-block;}
+        .back-link a:hover {background:#9b59b6;color:white;}
+        .btn {padding:6px 12px;border:none;border-radius:4px;cursor:pointer;font-size:11px;}
+        .btn-primary {background:linear-gradient(135deg,#9b59b6 0%,#8e44ad 100%);color:white;}
+        .btn-secondary {background:#6c757d;color:white;}
+        .member-table {width:100%;border-collapse:collapse;font-size:11px;margin-top:6px;}
+        .member-table th,.member-table td {padding:6px 8px;border-bottom:1px solid #eee;text-align:left;}
+        .member-table th {background:#fafafa;color:#555;}
+        .th-sort { border:none; background:transparent; color:inherit; font-size:11px; font-weight:700; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:4px; }
+        .sort-mark { color:#64748b; font-size:9px; }
+        .member-mobile-list { display:none; margin-top:8px; }
+        .member-card {
+            border:1px solid #e2e8f0;
+            border-radius:6px;
+            background:#fff;
+            padding:8px 9px;
+            margin-bottom:7px;
+        }
+        .member-card .line1 { font-size:11px; font-weight:700; color:#1f2937; margin-bottom:3px; display:flex; justify-content:space-between; gap:8px; }
+        .member-card .line2 { font-size:9px; color:#64748b; line-height:1.45; }
+        @media (max-width:760px) {
+            .member-table-wrap { display:none; }
+            .member-mobile-list { display:block; }
+        }
+        .pill {display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;background:#ede7f6;color:#5e35b1;margin-right:4px;}
+        .hint {font-size:10px;color:#888;margin-top:4px;}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 人才發展追蹤</h1>
+        <p>路線圖第 ④ 步主線 · 感恩、調整與回顧，不評斷你在神面前的價值</p>
+        <div class="header-sub">整合測驗與<strong>配對邀請紀錄</strong>（<code>ministry_assignment</code>），幫助牧者與同工看見<strong>時間軸上的恩典</strong>；下方「趨勢圖表」僅內部參考，取代不了禱告與面談。</div>
+    </div>
+    <p class="first-screen"><strong>首屏一句話：</strong>本頁<strong>幫個人與牧者</strong>用<strong>時間軸</strong>回顧服事里程碑與邀請紀錄。<strong>不做</strong>績效考核、<strong>不</strong>以分數定價值。</p>
+
+    <!-- Tab 切換 -->
+    <div class="tab-container" title="個人：自己看；牧者：看會眾列表（示例列可替換為真實資料）">
+        <div class="tab active" onclick="switchTab(0)" title="給會友／自己：看測驗與邀請紀錄時間軸">👤 個人視角（自己）</div>
+        <div class="tab" onclick="switchTab(1)" title="給牧者／同工幹部：概覽與內部趨勢（非考核）">👨‍💼 牧者視角（同工）</div>
+    </div>
+
+    <!-- 個人視角 -->
+    <div id="personalView">
+        <div class="content-card">
+            <h3>📈 我的服事與邀請時間軸</h3>
+            <p class="hint"><strong>資料從哪來：</strong>本機問卷鍵 <code>bible100_smart_ministry_*</code> 與 canonical <code>bible100_smart_ministry_main</code> 之 <code>ministry_assignment</code>（含配對頁寫入的 <code>metadata</code>）。<strong>下一步：</strong>與牧者面談時可對照此軸感恩與調整。</p>
+            <div class="timeline" id="timeline"></div>
+        </div>
+
+        <details class="kpi-fold">
+            <summary>展開：內部趨勢圖表（示例／非正式成績）</summary>
+            <div class="kpi-fold-inner">
+            <p class="hint">以下為<strong>版面示範</strong>，數字非真實教會 KPI；僅供「是否有參與節奏」的內部對話，不作排名。</p>
+            <div class="kpi-grid" id="kpiGrid"></div>
+            <canvas id="kpiChart" height="80" style="margin-top:12px;"></canvas>
+            </div>
+        </details>
+
+        <div class="content-card">
+            <h3>🎯 培訓方向參考（非命令）</h3>
+            <p id="aiTrainingText"><strong>提示：</strong>完成屬靈恩賜測試與 MBTI / DISC 後，此區以規則產生 2–3 個<strong>可討論</strong>方向（非自動派訓）。</p>
+            <div id="aiTrainingList" style="margin-top:8px;"></div>
+        </div>
+    </div>
+
+    <!-- 牧者視角 -->
+    <div id="pastorView" style="display:none;">
+        <div class="content-card">
+            <h3>👥 全會眾概覽（示例列）</h3>
+            <p class="hint"><strong>資料從哪來：</strong>表內為示範列；真實部署可改讀 canonical 人才與 assignment。<strong>不做</strong>績效排名；「牧者簡記」僅示意欄位。</p>
+            <div class="member-table-wrap">
+                <table class="member-table">
+                    <thead>
+                        <tr>
+                            <th><button type="button" class="th-sort" onclick="setMemberSort('name')">姓名 <span class="sort-mark" id="sortName">↕</span></button></th>
+                            <th><button type="button" class="th-sort" onclick="setMemberSort('gifts')">主要恩賜 <span class="sort-mark" id="sortGifts">↕</span></button></th>
+                            <th><button type="button" class="th-sort" onclick="setMemberSort('role')">目前事奉 <span class="sort-mark" id="sortRole">↕</span></button></th>
+                            <th><button type="button" class="th-sort" onclick="setMemberSort('score')">牧者簡記 <span class="sort-mark" id="sortScore">↕</span></button></th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="memberTable"></tbody>
+                </table>
+            </div>
+            <div id="memberMobileList" class="member-mobile-list"></div>
+        </div>
+
+        <div class="content-card">
+            <h3>🧭 牧者速覽（本機 canonical）</h3>
+            <p class="hint"><strong>資料從哪來：</strong>即時讀取 <code>bible100_smart_ministry_main</code>。<strong>下一步：</strong>需要細節時開配對頁或個人追蹤，不作考核儀表。</p>
+            <div class="kpi-grid" id="pastorKpiGrid"></div>
+        </div>
+    </div>
+
+    <div class="back-link">
+        <a href="../smart_ministry/index.html" target="_parent">← 返回智慧事奉中心</a>
+    </div>
+
+    <script>
+        const SURVEY_STORAGE = 'bible100_smart_ministry_';
+
+        // ---- 模擬 + 整合資料 ----
+        function loadProfile() {
+            let profile = {};
+            try {
+                profile = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_profile') || '{}');
+            } catch (e) {}
+
+            let gifts = [];
+            try {
+                const giftsData = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_gifts') || '{}');
+                gifts = (giftsData.gifts || []).map(([g]) => g);
+            } catch (e) {}
+
+            let mbti = '';
+            try {
+                const mbtiData = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_mbti') || '{}');
+                mbti = mbtiData.mbtiType || '';
+            } catch (e) {}
+
+            let disc = '';
+            try {
+                const discData = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_disc') || '{}');
+                disc = discData.discType || '';
+            } catch (e) {}
+
+            return { profile, gifts, mbti, disc };
+        }
+
+        function loadCanonicalAssessments() {
+            try {
+                const raw = localStorage.getItem('bible100_smart_ministry_main');
+                if (!raw) return { talents: [], assessments: [], ministry_assignment: [], ministries: [] };
+                const data = JSON.parse(raw);
+                return {
+                    talents: Array.isArray(data.talents) ? data.talents : [],
+                    assessments: Array.isArray(data.assessments) ? data.assessments : [],
+                    ministry_assignment: Array.isArray(data.ministry_assignment) ? data.ministry_assignment : [],
+                    ministries: Array.isArray(data.ministries) ? data.ministries : []
+                };
+            } catch (e) {
+                return { talents: [], assessments: [], ministry_assignment: [], ministries: [] };
+            }
+        }
+
+        function profileTalentId(profile) {
+            if (!profile) return '';
+            return String(profile.member_id || profile.talent_id || profile.personId || profile.id || '').trim();
+        }
+
+        function ministryNameFromStore(store, mid) {
+            const id = String(mid || '');
+            const m = (store.ministries || []).find(x => String(x.ministry_id || x.id) === id);
+            return m ? (m.name || id) : id;
+        }
+
+        function assignmentTimelineItems(profile, year, store) {
+            const tid = profileTalentId(profile);
+            const assigns = store.ministry_assignment || [];
+            const rows = tid
+                ? assigns.filter(a => String(a.talent_id) === tid)
+                : assigns.slice(0, 12);
+            return rows.map(a => {
+                const meta = a.metadata || {};
+                const d = (meta.assignDate || meta.invite_record_date || a.created_at || '').slice(0, 10);
+                const datePrefix = d && d.length >= 7 ? d.slice(0, 7) : (year + '-06');
+                const mname = a.ministry_name || ministryNameFromStore(store, a.ministry_id);
+                const stage = meta.invite_stage ? ' · 跟進：' + meta.invite_stage : '';
+                const note = meta.invite_note ? ' · 備註：' + meta.invite_note : '';
+                const trial = meta.trial_followup_due ? ' · 試用跟進建議日：' + meta.trial_followup_due : '';
+                const cref = meta.canonical_ref ? ' · 對照：' + meta.canonical_ref : '';
+                return {
+                    date: datePrefix,
+                    event: '事工邀請紀錄（配對頁寫入）：' + mname + ' · 狀態 ' + (a.status || '') + stage + note + trial + cref,
+                    type: '邀請紀錄',
+                    badgeClass: 'badge-serve',
+                    sourceLink: 'talent_ministry_matching.html',
+                    sourceLabel: '回到配對主線'
+                };
+            });
+        }
+
+        function getTalentNameById(talents, tid) {
+            const id = String(tid || '');
+            const row = talents.find(t => String(t.talent_id || t.id || '') === id);
+            return row ? (row.name || id) : id;
+        }
+
+        function buildCanonicalGrowthEvents(profile, year) {
+            const store = loadCanonicalAssessments();
+            const list = (store.assessments || [])
+                .filter(a => a && (a.type === 'growth_path_v1' || a.type === 'ai_assessment_v1'))
+                .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+            const profileId = String((profile && (profile.member_id || profile.talent_id || profile.personId || profile.id)) || '');
+            const profileName = profile && profile.name ? String(profile.name) : '';
+            let target = [];
+            if (profileId) {
+                target = list.filter(a => String(a.talent_id || '') === profileId);
+            } else if (profileName) {
+                target = list.filter(a => getTalentNameById(store.talents, a.talent_id) === profileName);
+            }
+            const picked = (target.length ? target : list).slice(0, 3);
+            return picked.map((a, idx) => {
+                const talentName = getTalentNameById(store.talents, a.talent_id) || '未命名';
+                const mm = String(idx + 4).padStart(2, '0');
+                if (a.type === 'growth_path_v1') {
+                    return {
+                        date: year + '-' + mm,
+                        event: '生成成長路徑（' + talentName + '）：30/60/90 天服事目標已建立（來源：growth_path_v1）',
+                        type: '成長路徑',
+                        badgeClass: 'badge-grow',
+                        sourceLink: 'talent_skill_unified.html',
+                        sourceLabel: '查看來源'
+                    };
+                }
+                return {
+                    date: year + '-' + mm,
+                    event: 'AI 評估摘要（' + talentName + '）：準備度 ' + ((a.summary && a.summary.readiness) || '-') + '/100（僅內部參考 · ai_assessment_v1）',
+                    type: 'AI建議',
+                    badgeClass: 'badge-ai',
+                    sourceLink: 'talent_skill_unified.html',
+                    sourceLabel: '查看來源'
+                };
+            });
+        }
+
+        function buildTimeline() {
+            const { profile, gifts, mbti, disc } = loadProfile();
+            const store = loadCanonicalAssessments();
+            const now = new Date();
+            const year = now.getFullYear();
+
+            const items = [];
+
+            if (gifts.length) {
+                items.push({
+                    date: year + '-01',
+                    event: '完成屬靈恩賜測試，主要恩賜：' + gifts.join('、'),
+                    type: '測試',
+                    badgeClass: 'badge-test'
+                });
+            }
+            if (mbti) {
+                items.push({
+                    date: year + '-02',
+                    event: '完成 MBTI 測驗，類型：' + mbti + '（僅性格傾向參考）',
+                    type: '測試',
+                    badgeClass: 'badge-test'
+                });
+            }
+            if (disc) {
+                items.push({
+                    date: year + '-03',
+                    event: '完成 DISC 測驗，主要風格：' + disc,
+                    type: '測試',
+                    badgeClass: 'badge-test'
+                });
+            }
+            buildCanonicalGrowthEvents(profile, year).forEach(it => items.push(it));
+            const assignItems = assignmentTimelineItems(profile, year, store);
+            assignItems.forEach(it => items.push(it));
+
+            if (!assignItems.length && (!store.ministry_assignment || !store.ministry_assignment.length)) {
+                items.push({
+                    date: year + '-04',
+                    event: '（提示）尚無配對邀請紀錄：完成資料後可在「人才事工配對」寫入，紀錄會出現在此軸。',
+                    type: '提醒',
+                    badgeClass: 'badge-grow',
+                    sourceLink: 'talent_ministry_matching.html',
+                    sourceLabel: '打開配對主線'
+                });
+            }
+
+            items.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+            const container = document.getElementById('timeline');
+            container.innerHTML = items.map(item => `
+                <div class="timeline-item">
+                    <strong>${item.date}</strong> - ${item.event}
+                    <span class="badge ${item.badgeClass}">${item.type}</span>
+                    ${item.sourceLink ? `<div class="meta"><a href="${item.sourceLink}" target="_blank" rel="noopener noreferrer">↗ ${item.sourceLabel || '查看來源頁'}</a></div>` : ''}
+                </div>
+            `).join('') || '<div style="font-size:11px;color:#777;">目前尚未有資料。建議先完成屬靈恩賜與 MBTI / DISC 測驗，並在配對主線留下邀請紀錄。</div>';
+        }
+
+        function buildKPI() {
+            const kpiGrid = document.getElementById('kpiGrid');
+            const data = [
+                { label: '聚會參與（示範）', value: '—', sub: '非真實數據；可改接教會系統' },
+                { label: '事奉節奏（示範）', value: '—', sub: '鼓勵用「有／無參與」對話，非工時排名' },
+                { label: '培訓紀錄（示範）', value: '—', sub: '實際以教會課程登記為準' },
+                { label: '牧者同行筆記（示範）', value: '—', sub: '非評分；僅供感恩與調整' }
+            ];
+            kpiGrid.innerHTML = data.map(d => `
+                <div class="kpi-item">
+                    <div class="kpi-label">${d.label}</div>
+                    <div class="kpi-value">${d.value}</div>
+                    <div class="kpi-sub">${d.sub}</div>
+                </div>
+            `).join('');
+
+            if (window.Chart) {
+                new Chart(document.getElementById('kpiChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['靈命成長', '事奉參與', '團隊合作', '領袖潛力'],
+                        datasets: [{
+                            label: '示範柱狀（非正式評分）',
+                            data: [6, 7, 6.5, 7],
+                            backgroundColor: '#9b59b6'
+                        }]
+                    },
+                    options: {
+                        scales: { y: { beginAtZero: true, max: 10 } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        }
+
+        function buildTrainingRecommendations() {
+            const { profile, gifts, mbti, disc } = loadProfile();
+            const container = document.getElementById('aiTrainingList');
+            const text = document.getElementById('aiTrainingText');
+
+            if (!gifts.length && !mbti && !disc) {
+                text.innerHTML = '<strong>提示：</strong>尚未偵測到測驗結果。請先完成「屬靈恩賜測試」「MBTI / DISC」等問卷。';
+                container.innerHTML = '';
+                return;
+            }
+
+            const recs = [];
+
+            if (gifts.includes('teaching') || gifts.includes('leadership')) {
+                recs.push({
+                    title: '小組帶領進階訓練',
+                    reason: '因你在教導／領導恩賜上有明顯傾向，適合接受更具系統性的門徒帶領裝備。',
+                    score: '94%'
+                });
+            }
+            if (gifts.includes('mercy') || gifts.includes('service')) {
+                recs.push({
+                    title: '關懷探訪與陪伴事奉工作坊',
+                    reason: '你的憐憫與服事恩賜，使你很適合在關懷團隊中長期陪伴有需要的人。',
+                    score: '91%'
+                });
+            }
+            if (mbti && /[EI][NS][FT]J/.test(mbti)) {
+                recs.push({
+                    title: '團隊協作與溝通訓練',
+                    reason: `你的 MBTI 類型（${mbti}）顯示你擅長與人互動，透過溝通訓練可更好牧養與帶領團隊。`,
+                    score: '89%'
+                });
+            }
+
+            if (!recs.length) {
+                recs.push({
+                    title: '事奉入門與恩賜探索課程',
+                    reason: '建議先從基礎課程開始，循序認識自己的恩賜、負擔與服事路線。',
+                    score: '—'
+                });
+            }
+
+            text.innerHTML = '<strong>根據目前偵測到的測驗結果，建議優先考慮以下培訓：</strong>';
+            container.innerHTML = recs.map(r => `
+                <div class="kpi-item">
+                    <div class="kpi-label">${r.title}</div>
+                    <div class="kpi-sub">${r.reason}</div>
+                    <div class="kpi-value" style="margin-top:4px;">適合度（參考）：${r.score}</div>
+                    <button class="btn btn-primary" style="margin-top:6px;" onclick="alert('已將「${r.title}」加入個人培訓清單（示意）');">加入培訓計畫</button>
+                </div>
+            `).join('');
+        }
+
+        // 牧者視角假資料
+        const members = [
+            {name:'陳小明', gifts:'勸勉、教導', role:'兒童主日學', score:'忠心可塑（示例）'},
+            {name:'李美華', gifts:'憐憫、服事', role:'關懷探訪', score:'溫柔穩定（示例）'},
+            {name:'王志強', gifts:'治理、施捨', role:'行政協調', score:'條理清楚（示例）'}
+        ];
+        let memberSort = { key: 'name', dir: 'asc' };
+
+        function sortIndicator(key) {
+            if (memberSort.key !== key) return '↕';
+            return memberSort.dir === 'asc' ? '↑' : '↓';
+        }
+
+        function setMemberSort(key) {
+            if (memberSort.key === key) memberSort.dir = memberSort.dir === 'asc' ? 'desc' : 'asc';
+            else { memberSort.key = key; memberSort.dir = 'asc'; }
+            renderMemberTable();
+        }
+
+        function renderMemberTable() {
+            const tbody = document.getElementById('memberTable');
+            const list = members.slice().sort((a,b) => {
+                let av;
+                let bv;
+                if (memberSort.key === 'score') {
+                    av = String(a.score || '').toLowerCase();
+                    bv = String(b.score || '').toLowerCase();
+                } else {
+                    av = String(a[memberSort.key] || '').toLowerCase();
+                    bv = String(b[memberSort.key] || '').toLowerCase();
+                }
+                if (memberSort.key === 'score') {
+                    if (av < bv) return memberSort.dir === 'asc' ? -1 : 1;
+                    if (av > bv) return memberSort.dir === 'asc' ? 1 : -1;
+                    return 0;
+                }
+                if (typeof av === 'number' && typeof bv === 'number') return memberSort.dir === 'asc' ? av - bv : bv - av;
+                if (av < bv) return memberSort.dir === 'asc' ? -1 : 1;
+                if (av > bv) return memberSort.dir === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            document.getElementById('sortName').textContent = sortIndicator('name');
+            document.getElementById('sortGifts').textContent = sortIndicator('gifts');
+            document.getElementById('sortRole').textContent = sortIndicator('role');
+            document.getElementById('sortScore').textContent = sortIndicator('score');
+
+            tbody.innerHTML = list.map(m => `
+                <tr>
+                    <td>${m.name}</td>
+                    <td>${m.gifts}</td>
+                    <td>${m.role}</td>
+                    <td>${m.score}</td>
+                    <td><button class="btn btn-secondary" onclick="openShapeProfile('${m.name}')">查看 SHAPE 檔案</button></td>
+                </tr>
+            `).join('');
+            document.getElementById('memberMobileList').innerHTML = list.map(m => `
+                <div class="member-card">
+                    <div class="line1"><span>${m.name}</span><span>${m.score}</span></div>
+                    <div class="line2">主要恩賜：${m.gifts}</div>
+                    <div class="line2">目前事奉：${m.role}</div>
+                    <div class="line2"><button class="btn btn-secondary" onclick="openShapeProfile('${m.name}')">查看 SHAPE 檔案</button></div>
+                </div>
+            `).join('');
+        }
+
+        function openShapeProfile(name) {
+            if (window.loadContent) {
+                window.loadContent('ai_smart_ministry_overview.html');
+            } else {
+                alert('示意：將開啟 ' + name + ' 的 SHAPE / 智慧事奉完整檔案。');
+            }
+        }
+
+        function buildPastorKpi() {
+            const grid = document.getElementById('pastorKpiGrid');
+            const st = loadCanonicalAssessments();
+            const nA = (st.ministry_assignment || []).length;
+            const nT = (st.talents || []).length;
+            const data = [
+                { label: '本機人才列（canonical）', value: nT + ' 人', sub: '來自 bible100_smart_ministry_main.talents；下一步：配對頁邀請' },
+                { label: '已存邀請／配對紀錄', value: nA + ' 筆', sub: 'ministry_assignment；下一步：追蹤時間軸回顧' },
+                { label: '牧養提醒', value: '—', sub: '不以數字排名；以禱告、面談、感恩為主' },
+                { label: '資料補齊', value: '—', sub: '見 talent_skill_unified、配對主線' }
+            ];
+            grid.innerHTML = data.map(d => `
+                <div class="kpi-item">
+                    <div class="kpi-label">${d.label}</div>
+                    <div class="kpi-value">${d.value}</div>
+                    <div class="kpi-sub">${d.sub}</div>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(n) {
+            document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i === n));
+            document.getElementById('personalView').style.display = n === 0 ? 'block' : 'none';
+            document.getElementById('pastorView').style.display = n === 1 ? 'block' : 'none';
+        }
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            buildTimeline();
+            buildKPI();
+            buildTrainingRecommendations();
+            renderMemberTable();
+            buildPastorKpi();
+            console.log('✅ 人才發展追踪頁面升級版載入完成');
+        });
+    </script>
+</body>
+</html>

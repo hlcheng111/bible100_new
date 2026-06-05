@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>樂譜管理 Music Stand · Sheet Music | Church Ministry</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%); padding: 20px; font-size: 11px; color: white; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.2); }
+        .header h1 { font-size: 24px; }
+        .catalog { display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
+        .sidebar { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 12px; padding: 20px; height: fit-content; border: 1px solid rgba(255,255,255,0.2); }
+        .category { padding: 10px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .category:hover { background: rgba(255,255,255,0.2); }
+        .category.active { background: rgba(255,255,255,0.3); }
+        .music-list { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.2); }
+        .music-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #3498db; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .music-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+        .music-meta { font-size: 10px; opacity: 0.8; }
+        .music-practice { font-size: 10px; color: #7fddff; }
+        .load-btn { display: block; margin: 20px auto; padding: 15px 30px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; }
+        .btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; background: #3498db; color: white; }
+        .btn:hover { opacity: 0.9; }
+        .btn-success { background: #27ae60; }
+        .viewer-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .viewer-modal.active { display: flex; }
+        .viewer-toolbar { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
+        .viewer-canvas { max-width: 100%; max-height: 70vh; background: #1a1a2e; border-radius: 8px; }
+        .viewer-placeholder { width: 400px; height: 280px; background: #1a1a2e; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 14px; }
+        .viewer-close { position: absolute; top: 20px; right: 20px; font-size: 28px; cursor: pointer; color: white; }
+        .viewer-annotate { position: relative; display: inline-block; }
+        .annotate-canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
+        .annotate-tool { margin-left: 10px; padding: 4px 10px; font-size: 10px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .annotate-tool.active { background: #2980b9; }
+        details { margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; }
+        details summary { cursor: pointer; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div class="container">
+        <div class="header">
+            <h1>🎼 樂譜管理 Music Stand</h1>
+            <details style="margin-top:12px;">
+                <summary>📋 功能與使用說明</summary>
+                <div style="margin-top:8px;opacity:0.95;font-size:11px;">
+                    <p><b>此頁是為誰而設？</b> 敬拜樂手、詩班成員，管理樂譜與練習紀錄。</p>
+                    <p style="margin-top:4px;"><b>有什麼功能？</b> 樂譜目錄、檢視樂譜、練習紀錄（次數、最後練習日）、縮放與翻頁。</p>
+                    <p style="margin-top:4px;"><b>典型情境</b> 例：週六排練前打開樂譜複習；點「完成練習」記錄今日練習。</p>
+                    <p style="margin-top:4px;"><b>如何入手？</b> 載入樂譜庫，點選詩歌「檢視」→ 可上傳圖片連結或使用預覽，完成後點「完成練習」。</p>
+                </div>
+            </details>
+        </div>
+        <button class="load-btn" onclick="loadDemo()" id="loadBtn">🎯 載入樂譜庫（5首·3類別）</button>
+        <div class="catalog">
+            <div class="sidebar">
+                <h3 style="margin-bottom:15px;">📚 分類瀏覽</h3>
+                <div class="category active" data-cat="all">📂 全部樂譜</div>
+                <div class="category" data-cat="traditional">🎵 傳統詩歌</div>
+                <div class="category" data-cat="worship">🙏 敬拜讚美</div>
+                <div class="category" data-cat="special">⭐ 特別音樂</div>
+            </div>
+            <div class="music-list" id="musicList"></div>
+        </div>
+
+        <div style="margin-top:24px;background:rgba(255,255,255,0.1);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.2);">
+            <h2 style="font-size:16px;margin-bottom:8px;">🔧 譜架・踏板・燈光等器材保養紀錄</h2>
+            <p style="font-size:10px;opacity:0.9;margin-bottom:10px;">輔助團隊管理實物資產；與 <a href="congregational-songs.html" style="color:#7fddff;">會眾詩歌</a>、<a href="song-library.html" style="color:#7fddff;">詩歌庫</a> 分工（此處管<strong>器材</strong>與現場樂譜檔）。資料：<code>church_ministry_sheet_equip_v1</code></p>
+            <button type="button" class="btn btn-success" onclick="addEquipRow()">➕ 新增保養／巡檢紀錄</button>
+            <div id="equipMaint" style="margin-top:12px;"></div>
+        </div>
+    </div>
+
+    <div id="viewerModal" class="viewer-modal">
+        <span class="viewer-close" onclick="closeViewer()">&times;</span>
+        <div class="viewer-toolbar">
+            <button class="btn" onclick="prevPage()">上一頁</button>
+            <button class="btn" onclick="nextPage()">下一頁</button>
+            <span id="viewerPage" style="margin:0 10px;">1/1</span>
+            <button class="btn" onclick="zoomOut()">縮小</button>
+            <span id="viewerZoom">100%</span>
+            <button class="btn" onclick="zoomIn()">放大</button>
+            <button class="annotate-tool" id="btnHighlight" onclick="setAnnotateMode('highlight')">高亮</button>
+            <button class="annotate-tool" id="btnText" onclick="setAnnotateMode('text')">文字</button>
+            <span style="margin-left:15px;font-size:10px;">腳踏板：空白鍵翻頁</span>
+            <select id="syncMode" onchange="toggleSyncMode()" style="margin-left:10px;padding:4px;font-size:10px;">
+                <option value="off">同步：關閉</option>
+                <option value="leader">領袖</option>
+                <option value="follower">跟隨</option>
+            </select>
+            <input type="text" id="syncRoomId" placeholder="房間ID" style="width:80px;padding:4px;font-size:10px;display:none;">
+            <button class="btn btn-success" onclick="recordPractice()">✓ 完成練習</button>
+        </div>
+        <div id="viewerContent"></div>
+    </div>
+
+    <script>
+        let sheets = [];
+        let currentCategory = 'all';
+        let currentSheet = null;
+        let viewerZoom = 100;
+        let currentPageIndex = 0;
+        let syncPollTimer = null;
+        const SYNC_STORAGE = 'sheet_music_sync';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('sheet_music_data');
+            sheets = saved ? JSON.parse(saved) : [];
+            sheets.forEach(s => { if (s.practiceCount == null) s.practiceCount = 0; if (!s.lastPracticeDate) s.lastPracticeDate = null; });
+            if (sheets.length === 0) loadDemo();
+            else { render(); document.getElementById('loadBtn').style.display = 'none'; }
+            document.querySelectorAll('.category').forEach(el => {
+                el.addEventListener('click', function() {
+                    document.querySelectorAll('.category').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    currentCategory = this.dataset.cat;
+                    render();
+                });
+            });
+            loadEquipLog();
+        });
+
+        function loadDemo() {
+            sheets = [
+                {id:1, name:'奇異恩典', category:'traditional', key:'G大調', difficulty:'簡單', imageUrl:'', practiceCount:0, lastPracticeDate:null},
+                {id:2, name:'主禱文', category:'traditional', key:'C大調', difficulty:'簡單', imageUrl:'', practiceCount:0, lastPracticeDate:null},
+                {id:3, name:'讚美之泉', category:'worship', key:'D大調', difficulty:'中等', imageUrl:'', practiceCount:0, lastPracticeDate:null},
+                {id:4, name:'如鹿渴慕', category:'worship', key:'A大調', difficulty:'中等', imageUrl:'', practiceCount:0, lastPracticeDate:null},
+                {id:5, name:'哈利路亞', category:'special', key:'F大調', difficulty:'困難', imageUrl:'', practiceCount:0, lastPracticeDate:null}
+            ];
+            localStorage.setItem('sheet_music_data', JSON.stringify(sheets));
+            render();
+            document.getElementById('loadBtn').style.display = 'none';
+        }
+
+        function render() {
+            let list = currentCategory === 'all' ? sheets : sheets.filter(s => s.category === currentCategory);
+            document.getElementById('musicList').innerHTML = list.map(s => {
+                const p = s.practiceCount || 0;
+                const d = s.lastPracticeDate ? new Date(s.lastPracticeDate).toLocaleDateString('zh-TW') : '-';
+                return `<div class="music-item">
+                    <div>
+                        <div class="music-title">🎵 ${s.name}</div>
+                        <div class="music-meta">調號：${s.key} · 難度：${s.difficulty}</div>
+                        <div class="music-practice">練習 ${p} 次 · 最後：${d}</div>
+                    </div>
+                    <div>
+                        <button class="btn" onclick="openViewer(${s.id})">檢視</button>
+                        <button class="btn btn-success" onclick="recordPracticeQuick(${s.id})">完成練習</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        const ANNOT_KEY = 'sheet_music_annotations';
+        let annotateMode = '';
+        let annotations = {};
+        let drawStart = null;
+
+        function getAnnotations() {
+            try { return JSON.parse(localStorage.getItem(ANNOT_KEY) || '{}'); } catch (e) { return {}; }
+        }
+        function saveAnnotations() { localStorage.setItem(ANNOT_KEY, JSON.stringify(annotations)); }
+        function getAnnotKey() { return 's' + (currentSheet?.id || '') + '_p' + (currentPageIndex || 0); }
+
+        function setAnnotateMode(mode) {
+            annotateMode = annotateMode === mode ? '' : mode;
+            document.querySelectorAll('.annotate-tool').forEach(b => b.classList.remove('active'));
+            if (annotateMode) document.getElementById('btn' + mode.charAt(0).toUpperCase() + mode.slice(1))?.classList.add('active');
+        }
+
+        function getPages(sheet) {
+            if (!sheet) return [];
+            const u = sheet.imageUrl;
+            if (Array.isArray(u)) return u.length ? u : [];
+            return u ? [u] : [];
+        }
+
+        function openViewer(id) {
+            currentSheet = sheets.find(s => s.id === id);
+            if (!currentSheet) return;
+            viewerZoom = 100;
+            currentPageIndex = 0;
+            annotateMode = '';
+            document.querySelectorAll('.annotate-tool').forEach(b => b.classList.remove('active'));
+            document.getElementById('viewerModal').classList.add('active');
+            document.getElementById('viewerZoom').textContent = '100%';
+            updateViewerPage();
+            const content = document.getElementById('viewerContent');
+            annotations = getAnnotations();
+            const key = getAnnotKey();
+            if (!annotations[key]) annotations[key] = [];
+            renderViewerContent();
+        }
+
+        function renderViewerContent() {
+            const content = document.getElementById('viewerContent');
+            const pages = getPages(currentSheet);
+            const url = pages[currentPageIndex] || '';
+            if (url) {
+                content.innerHTML = '<div class="viewer-annotate" style="display:inline-block;position:relative;"><img class="viewer-canvas" id="viewerImg" src="' + url + '" alt="' + currentSheet.name + '" style="display:block" onload="initAnnotCanvas()"><canvas id="annotCanvas" class="annotate-canvas" style="pointer-events:auto"></canvas></div>';
+            } else {
+                content.innerHTML = '<div class="viewer-annotate" style="width:400px;height:280px;position:relative;"><div class="viewer-placeholder" id="viewerPlaceholder">📄 ' + currentSheet.name + '<br>' + currentSheet.key + ' · ' + currentSheet.difficulty + '<br><br>可於樂譜項目中設定圖片連結</div><canvas id="annotCanvas" class="annotate-canvas" width="400" height="280"></canvas></div>';
+                setTimeout(function() { initAnnotCanvas(); }, 50);
+            }
+            broadcastSyncState();
+        }
+
+        function updateViewerPage() {
+            const pages = getPages(currentSheet);
+            const total = Math.max(1, pages.length);
+            const page = pages.length ? currentPageIndex + 1 : 1;
+            document.getElementById('viewerPage').textContent = page + '/' + total;
+        }
+
+        function prevPage() {
+            const pages = getPages(currentSheet);
+            if (pages.length <= 1) return;
+            currentPageIndex = Math.max(0, currentPageIndex - 1);
+            renderViewerContent();
+            updateViewerPage();
+        }
+
+        function nextPage() {
+            const pages = getPages(currentSheet);
+            if (pages.length <= 1) return;
+            currentPageIndex = Math.min(pages.length - 1, currentPageIndex + 1);
+            renderViewerContent();
+            updateViewerPage();
+        }
+
+        function toggleSyncMode() {
+            const mode = document.getElementById('syncMode').value;
+            const roomInput = document.getElementById('syncRoomId');
+            roomInput.style.display = (mode !== 'off') ? 'inline-block' : 'none';
+            if (mode === 'follower') startSyncPoll();
+            else stopSyncPoll();
+        }
+
+        function broadcastSyncState() {
+            const mode = document.getElementById('syncMode').value;
+            if (mode !== 'leader') return;
+            const roomId = document.getElementById('syncRoomId').value || 'default';
+            const state = { sheetId: currentSheet?.id, pageIndex: currentPageIndex, ts: Date.now() };
+            try { localStorage.setItem(SYNC_STORAGE + '_' + roomId, JSON.stringify(state)); } catch(e) {}
+        }
+
+        function startSyncPoll() {
+            stopSyncPoll();
+            syncPollTimer = setInterval(function() {
+                const roomId = document.getElementById('syncRoomId').value || 'default';
+                try {
+                    const raw = localStorage.getItem(SYNC_STORAGE + '_' + roomId);
+                    if (!raw) return;
+                    const state = JSON.parse(raw);
+                    if (state.sheetId === currentSheet?.id && state.pageIndex !== currentPageIndex) {
+                        currentPageIndex = state.pageIndex;
+                        renderViewerContent();
+                        updateViewerPage();
+                    }
+                } catch(e) {}
+            }, 2000);
+        }
+
+        function stopSyncPoll() {
+            if (syncPollTimer) { clearInterval(syncPollTimer); syncPollTimer = null; }
+        }
+
+        function initAnnotCanvas() {
+            const canvas = document.getElementById('annotCanvas');
+            if (!canvas) return;
+            const img = document.getElementById('viewerImg');
+            const w = (img && (img.offsetWidth || img.naturalWidth)) ? (img.offsetWidth || img.naturalWidth) : 400;
+            const h = (img && (img.offsetHeight || img.naturalHeight)) ? (img.offsetHeight || img.naturalHeight) : 280;
+            canvas.width = w;
+            canvas.height = h;
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            canvas.style.left = '0';
+            canvas.style.top = '0';
+
+            function redraw() {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, w, h);
+                const key = getAnnotKey();
+                (annotations[key] || []).forEach(a => {
+                    if (a.type === 'highlight') {
+                        ctx.fillStyle = 'rgba(255,255,0,0.3)';
+                        ctx.fillRect(a.x * w, a.y * h, a.w * w, a.h * h);
+                        ctx.strokeStyle = '#ff0';
+                        ctx.strokeRect(a.x * w, a.y * h, a.w * w, a.h * h);
+                    } else if (a.type === 'text') {
+                        ctx.font = '14px sans-serif';
+                        ctx.fillStyle = '#f00';
+                        ctx.fillText(a.text || '', a.x * w, a.y * h);
+                    }
+                });
+            }
+
+            canvas.onmousedown = function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = (e.clientY - rect.top) / rect.height;
+                if (annotateMode === 'highlight') drawStart = { x, y };
+                else if (annotateMode === 'text') {
+                    const t = prompt('輸入註記文字：');
+                    if (t) {
+                        const key = getAnnotKey();
+                        if (!annotations[key]) annotations[key] = [];
+                        annotations[key].push({ type: 'text', x, y, text: t });
+                        saveAnnotations();
+                        redraw();
+                    }
+                }
+            };
+            canvas.onmousemove = function(e) {
+                if (annotateMode !== 'highlight' || !drawStart) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = (e.clientY - rect.top) / rect.height;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, w, h);
+                redraw();
+                ctx.fillStyle = 'rgba(255,255,0,0.3)';
+                const x1 = Math.min(drawStart.x, x), x2 = Math.max(drawStart.x, x);
+                const y1 = Math.min(drawStart.y, y), y2 = Math.max(drawStart.y, y);
+                ctx.fillRect(x1 * w, y1 * h, (x2 - x1) * w, (y2 - y1) * h);
+            };
+            canvas.onmouseup = function(e) {
+                if (annotateMode !== 'highlight' || !drawStart) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = (e.clientY - rect.top) / rect.height;
+                const x1 = Math.min(drawStart.x, x), x2 = Math.max(drawStart.x, x);
+                const y1 = Math.min(drawStart.y, y), y2 = Math.max(drawStart.y, y);
+                if ((x2 - x1) > 0.02 && (y2 - y1) > 0.02) {
+                    const key = getAnnotKey();
+                    if (!annotations[key]) annotations[key] = [];
+                    annotations[key].push({ type: 'highlight', x: x1, y: y1, w: x2 - x1, h: y2 - y1 });
+                    saveAnnotations();
+                }
+                drawStart = null;
+                redraw();
+            };
+
+            redraw();
+        }
+
+        function closeViewer() {
+            stopSyncPoll();
+            document.getElementById('viewerModal').classList.remove('active');
+            currentSheet = null;
+        }
+
+        function zoomIn() {
+            viewerZoom = Math.min(200, viewerZoom + 20);
+            document.getElementById('viewerZoom').textContent = viewerZoom + '%';
+            const img = document.getElementById('viewerImg');
+            if (img) img.style.transform = 'scale(' + (viewerZoom/100) + ')';
+        }
+
+        function zoomOut() {
+            viewerZoom = Math.max(50, viewerZoom - 20);
+            document.getElementById('viewerZoom').textContent = viewerZoom + '%';
+            const img = document.getElementById('viewerImg');
+            if (img) img.style.transform = 'scale(' + (viewerZoom/100) + ')';
+        }
+
+        function recordPractice() {
+            if (currentSheet) {
+                currentSheet.practiceCount = (currentSheet.practiceCount || 0) + 1;
+                currentSheet.lastPracticeDate = new Date().toISOString();
+                localStorage.setItem('sheet_music_data', JSON.stringify(sheets));
+                render();
+                closeViewer();
+            }
+        }
+
+        function recordPracticeQuick(id) {
+            const s = sheets.find(x => x.id === id);
+            if (s) {
+                s.practiceCount = (s.practiceCount || 0) + 1;
+                s.lastPracticeDate = new Date().toISOString();
+                localStorage.setItem('sheet_music_data', JSON.stringify(sheets));
+                render();
+            }
+        }
+
+        var equipLog = [];
+        function loadEquipLog() {
+            try { equipLog = JSON.parse(localStorage.getItem('church_ministry_sheet_equip_v1') || '[]'); } catch (e) { equipLog = []; }
+            renderEquipLog();
+        }
+        function renderEquipLog() {
+            var el = document.getElementById('equipMaint');
+            if (!el) return;
+            el.innerHTML = '<table style="width:100%;font-size:11px;border-collapse:collapse;"><thead><tr><th style="border:1px solid rgba(255,255,255,0.2);padding:6px;">日期</th><th style="border:1px solid rgba(255,255,255,0.2);padding:6px;">項目</th><th style="border:1px solid rgba(255,255,255,0.2);padding:6px;">狀況</th><th style="border:1px solid rgba(255,255,255,0.2);padding:6px;">負責</th><th></th></tr></thead><tbody>' +
+                equipLog.map(function (r) {
+                    return '<tr><td style="border:1px solid rgba(255,255,255,0.15);padding:6px;"><input type="date" value="' + r.date + '" onchange="updEquip(\'' + r.id + '\',\'date\',this.value)" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.3);"></td><td style="border:1px solid rgba(255,255,255,0.15);padding:6px;"><input value="' + (r.item || '') + '" onchange="updEquip(\'' + r.id + '\',\'item\',this.value)" style="width:100%;background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.3);"></td><td style="border:1px solid rgba(255,255,255,0.15);padding:6px;"><input value="' + (r.status || '') + '" onchange="updEquip(\'' + r.id + '\',\'status\',this.value)" style="width:100%;background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.3);"></td><td style="border:1px solid rgba(255,255,255,0.15);padding:6px;"><input value="' + (r.keeper || '') + '" onchange="updEquip(\'' + r.id + '\',\'keeper\',this.value)" style="width:100%;background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.3);"></td><td><button type="button" class="btn" onclick="delEquip(\'' + r.id + '\')">刪</button></td></tr>';
+                }).join('') + '</tbody></table>';
+        }
+        function addEquipRow() {
+            equipLog.push({ id: String(Date.now()), date: new Date().toISOString().slice(0, 10), item: '譜架／譜燈', status: '正常', keeper: '' });
+            localStorage.setItem('church_ministry_sheet_equip_v1', JSON.stringify(equipLog));
+            renderEquipLog();
+        }
+        function updEquip(id, k, v) {
+            var r = equipLog.filter(function (x) { return x.id === id; })[0];
+            if (r) { r[k] = v; localStorage.setItem('church_ministry_sheet_equip_v1', JSON.stringify(equipLog)); }
+        }
+        function delEquip(id) {
+            equipLog = equipLog.filter(function (x) { return x.id !== id; });
+            localStorage.setItem('church_ministry_sheet_equip_v1', JSON.stringify(equipLog));
+            renderEquipLog();
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Escape') closeViewer();
+            if (e.code === 'Space' && document.getElementById('viewerModal').classList.contains('active')) {
+                e.preventDefault();
+                const pages = getPages(currentSheet);
+                if (pages.length > 1) {
+                    if (currentPageIndex < pages.length - 1) nextPage();
+                    else prevPage();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

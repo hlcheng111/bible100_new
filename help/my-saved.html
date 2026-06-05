@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>我的收藏 - 全站工具</title>
+  <style>
+    body { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; margin: 20px; max-width: 720px; line-height: 1.5; color: #333; }
+    h1 { font-size: 1.25rem; color: #0b5fa5; }
+    .back { display: inline-block; margin-bottom: 1em; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { padding: 10px 12px; margin: 8px 0; background: #f5f7fa; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    li a { color: #0b5fa5; text-decoration: none; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    li a:hover { text-decoration: underline; }
+    .del { padding: 4px 10px; background: #c00; color: #fff; border: 0; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .del:hover { background: #a00; }
+    .empty { color: #666; padding: 20px 0; }
+  </style>
+</head>
+<body>
+  <a href="javascript:history.back()" class="back">← 返回</a>
+  <h1>我的收藏</h1>
+  <p>以下為由全站工具列「我的收藏」儲存的連結（僅存於本機，無後端）。</p>
+  <ul id="list"></ul>
+  <script>
+    (function () {
+      var key = 'global-tools-saved';
+      function load() {
+        var raw = localStorage.getItem(key);
+        var list = raw ? JSON.parse(raw) : [];
+        var ul = document.getElementById('list');
+        ul.innerHTML = '';
+        if (list.length === 0) {
+          ul.innerHTML = '<li class="empty">尚無收藏。請在任一入口頁使用工具列「我的收藏」按鈕加入。</li>';
+          return;
+        }
+        for (var i = 0; i < list.length; i++) {
+          (function (idx) {
+            var item = list[idx];
+            var li = document.createElement('li');
+            var a = document.createElement('a');
+            a.href = item.url;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.textContent = item.title || item.url;
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'del';
+            btn.textContent = '刪除';
+            btn.onclick = function () {
+              list.splice(idx, 1);
+              localStorage.setItem(key, JSON.stringify(list));
+              load();
+            };
+            li.appendChild(a);
+            li.appendChild(btn);
+            ul.appendChild(li);
+          })(i);
+        }
+      }
+      load();
+    })();
+  </script>
+</body>
+</html>

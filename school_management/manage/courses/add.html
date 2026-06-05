@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增課程 - Add Course</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>➕ 新增課程 · Add Course</h1>
+        <p>網上課、電子書、線上測驗、Zoom 課等情境支援</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 教務、課程負責人。</p>
+            <p><b>有什麼功能？</b> 新增課程，含授課方式、平台、教材／測驗連結。</p>
+            <p><b>授課方式</b> 實體、線上、混成、電子書；可填 Zoom 連結、電子書 URL、線上測驗 URL。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">基本資料</div>
+        <form id="f">
+            <div class="module-form-row"><label>課程名稱</label><input name="name" class="module-input" required placeholder="例：聖經基礎"></div>
+            <div class="module-form-row"><label>課程代碼</label><input name="code" class="module-input" placeholder="例：C01"></div>
+            <div class="module-form-row"><label>科目</label><input name="subject" class="module-input" placeholder="例：聖經故事"></div>
+            <div class="module-form-row"><label>學分</label><input name="credits" class="module-input" type="number" value="2" min="1" style="width:70px;"></div>
+            <div class="module-form-row"><label>年級</label><select name="grade" class="module-input">
+                <option value="">不限</option>
+                <option>幼幼班</option><option>小班</option><option>中班</option><option>大班</option>
+                <option>一年級</option><option>二年級</option><option>三年級</option><option>四年級</option><option>五年級</option><option>六年級</option>
+                <option>國一</option><option>國二</option><option>國三</option><option>高一</option><option>高二</option><option>高三</option>
+                <option>成人主日學</option>
+            </select></div>
+            <div class="module-form-row"><label>授課教師</label><select name="teacherId" class="module-input" required style="min-width:180px;"></select></div>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">授課方式與連結</div>
+        <form id="f2" style="margin-top:0;">
+            <div class="module-form-row"><label>授課方式</label>
+                <select name="deliveryMode" class="module-input" id="deliveryMode">
+                    <option value="onsite">實體課</option>
+                    <option value="online">線上課</option>
+                    <option value="hybrid">混成課</option>
+                    <option value="ebook">電子書</option>
+                </select>
+            </div>
+            <div class="module-form-row" id="rowPlatform"><label>平台</label>
+                <select name="platform" class="module-input">
+                    <option value="">—</option>
+                    <option value="Zoom">Zoom</option>
+                    <option value="Google Meet">Google Meet</option>
+                    <option value="Teams">Teams</option>
+                    <option value="eBook">電子書</option>
+                </select>
+            </div>
+            <div class="module-form-row" id="rowZoom"><label>Zoom／會議連結</label>
+                <input name="zoomLink" class="module-input" placeholder="https://zoom.us/j/xxx" style="width:100%;max-width:400px;">
+            </div>
+            <div class="module-form-row" id="rowEbook"><label>電子書 URL</label>
+                <input name="ebookUrl" class="module-input" placeholder="/ebooks/xxx.pdf 或完整網址" style="width:100%;max-width:400px;">
+            </div>
+            <div class="module-form-row" id="rowExam"><label>線上測驗 URL</label>
+                <input name="examUrl" class="module-input" placeholder="/exams/xxx 或完整網址" style="width:100%;max-width:400px;">
+            </div>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <button type="button" class="module-btn" id="btnSave">儲存課程</button>
+        <p id="msg" style="margin-top:12px;color:#27ae60;"></p>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (db && db.ensureSeedFull) db.ensureSeedFull();
+
+            const teachers = (db && db.data && db.data.teachers) || [];
+            const sel = document.querySelector('select[name="teacherId"]');
+            sel.innerHTML = '<option value="">-- 選擇教師 --</option>' + teachers.map(t => '<option value="' + t.id + '">' + (t.name || t.teacherNumber || t.id) + '</option>').join('');
+
+            function toggleDeliveryFields() {
+                const dm = document.getElementById('deliveryMode').value;
+                document.getElementById('rowPlatform').style.display = (dm === 'online' || dm === 'hybrid' || dm === 'ebook') ? 'block' : 'none';
+                document.getElementById('rowZoom').style.display = (dm === 'online' || dm === 'hybrid') ? 'block' : 'none';
+                document.getElementById('rowEbook').style.display = (dm === 'ebook' || dm === 'hybrid') ? 'block' : 'none';
+            }
+            document.getElementById('deliveryMode').onchange = toggleDeliveryFields;
+            toggleDeliveryFields();
+
+            document.getElementById('btnSave').onclick = function() {
+                const f = document.getElementById('f');
+                const f2 = document.getElementById('f2');
+                const fm = new FormData(f);
+                const fm2 = new FormData(f2);
+                const name = (fm.get('name') || '').trim();
+                if (!name) { alert('請填寫課程名稱'); return; }
+                const teacherId = parseInt(fm.get('teacherId'), 10);
+                if (!teacherId) { alert('請選擇授課教師'); return; }
+                if (!db) { alert('資料庫未載入'); return; }
+
+                const deliveryMode = fm2.get('deliveryMode') || 'onsite';
+                const rec = db.insert('courses', {
+                    name: name,
+                    code: (fm.get('code') || '').trim() || ('C' + Date.now().toString().slice(-4)),
+                    subject: (fm.get('subject') || '').trim(),
+                    credits: parseInt(fm.get('credits'), 10) || 2,
+                    grade: fm.get('grade') || '',
+                    teacherId: teacherId,
+                    deliveryMode: deliveryMode,
+                    platform: (deliveryMode === 'online' || deliveryMode === 'hybrid' || deliveryMode === 'ebook') ? (fm2.get('platform') || '') : undefined,
+                    zoomLink: (deliveryMode === 'online' || deliveryMode === 'hybrid') ? (fm2.get('zoomLink') || '').trim() || undefined,
+                    ebookUrl: (deliveryMode === 'ebook' || deliveryMode === 'hybrid') ? (fm2.get('ebookUrl') || '').trim() || undefined,
+                    examUrl: (fm2.get('examUrl') || '').trim() || undefined,
+                    status: 'active'
+                });
+                document.getElementById('msg').textContent = '已儲存：ID ' + rec.id + '（' + rec.name + '）';
+                f.reset();
+                f2.reset();
+                toggleDeliveryFields();
+            };
+        })();
+    </script>
+</body>
+</html>

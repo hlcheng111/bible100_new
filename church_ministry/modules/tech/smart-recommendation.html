@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能推薦 · Smart Recommendation | Church Ministry</title>
+    <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+    <link href="../../assets/css/fontawesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">智能推薦系統</h1>
+        <details class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <summary class="cursor-pointer font-semibold text-amber-800">📋 功能說明／計畫願景</summary>
+            <p class="mt-2 text-sm text-gray-700">本頁為示意：個性化推薦（活動、志工、資源、培訓）。目前為固定 4 筆示範。今後可：依會友興趣／恩賜／事工參與做推薦、接 memberSystemData、與 AI 助手連動。</p>
+        </details>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左側：推薦內容 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">個性化推薦</h3>
+                    <div id="recommendationsList" class="space-y-4">
+                        <!-- 推薦內容將在這裡動態生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：推薦設置 -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">推薦偏好</h3>
+                    <div class="space-y-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="activityRecommend" class="mr-2" checked>
+                            <span class="text-sm text-gray-700">活動推薦</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="volunteerRecommend" class="mr-2" checked>
+                            <span class="text-sm text-gray-700">志工機會</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="resourceRecommend" class="mr-2" checked>
+                            <span class="text-sm text-gray-700">資源推薦</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="trainingRecommend" class="mr-2" checked>
+                            <span class="text-sm text-gray-700">培訓建議</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">推薦統計</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">今日推薦</span>
+                            <span class="text-sm font-medium text-gray-900" id="todayRecommendations">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">點擊率</span>
+                            <span class="text-sm font-medium text-gray-900" id="clickRate">0%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">滿意度</span>
+                            <span class="text-sm font-medium text-gray-900" id="satisfaction">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let recommendations = [];
+        let clickCount = 0;
+        let totalRecommendations = 0;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRecommendations();
+            updateStats();
+        });
+
+        function loadRecommendations() {
+            // 模擬推薦數據
+            recommendations = [
+                {
+                    id: 1,
+                    type: 'activity',
+                    title: '青年團契聚會',
+                    description: '基於您的興趣，推薦參加本週的青年團契聚會',
+                    priority: 'high',
+                    category: 'fellowship'
+                },
+                {
+                    id: 2,
+                    type: 'volunteer',
+                    title: '主日學助教',
+                    description: '根據您的技能和時間，建議擔任主日學助教',
+                    priority: 'medium',
+                    category: 'education'
+                },
+                {
+                    id: 3,
+                    type: 'resource',
+                    title: '聖經研讀資源',
+                    description: '推薦適合您的聖經研讀材料和工具',
+                    priority: 'low',
+                    category: 'education'
+                },
+                {
+                    id: 4,
+                    type: 'training',
+                    title: '領導力培訓',
+                    description: '建議參加下個月的領導力培訓課程',
+                    priority: 'high',
+                    category: 'development'
+                }
+            ];
+
+            renderRecommendations();
+        }
+
+        function renderRecommendations() {
+            const container = document.getElementById('recommendationsList');
+            container.innerHTML = recommendations.map(rec => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ${getPriorityBadgeClass(rec.priority)}">
+                                    ${getPriorityName(rec.priority)}
+                                </span>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ${getCategoryBadgeClass(rec.category)}">
+                                    ${getCategoryName(rec.category)}
+                                </span>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">${rec.title}</h4>
+                            <p class="text-sm text-gray-600 mb-3">${rec.description}</p>
+                            <div class="flex space-x-2">
+                                <button onclick="acceptRecommendation(${rec.id})" 
+                                        class="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700">
+                                    接受推薦
+                                </button>
+                                <button onclick="rejectRecommendation(${rec.id})" 
+                                        class="px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded hover:bg-gray-400">
+                                    不感興趣
+                                </button>
+                                <button onclick="viewDetails(${rec.id})" 
+                                        class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">
+                                    查看詳情
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-gray-500">推薦度</div>
+                            <div class="text-lg font-bold text-blue-600">${getRecommendationScore(rec)}%</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getPriorityBadgeClass(priority) {
+            const classes = {
+                'high': 'bg-red-100 text-red-800',
+                'medium': 'bg-yellow-100 text-yellow-800',
+                'low': 'bg-green-100 text-green-800'
+            };
+            return classes[priority] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getCategoryBadgeClass(category) {
+            const classes = {
+                'fellowship': 'bg-blue-100 text-blue-800',
+                'education': 'bg-purple-100 text-purple-800',
+                'development': 'bg-orange-100 text-orange-800',
+                'volunteer': 'bg-green-100 text-green-800'
+            };
+            return classes[category] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getPriorityName(priority) {
+            const names = {
+                'high': '高優先',
+                'medium': '中優先',
+                'low': '低優先'
+            };
+            return names[priority] || priority;
+        }
+
+        function getCategoryName(category) {
+            const names = {
+                'fellowship': '團契',
+                'education': '教育',
+                'development': '發展',
+                'volunteer': '志工'
+            };
+            return names[category] || category;
+        }
+
+        function getRecommendationScore(rec) {
+            // 基於優先級和類別的簡單評分算法
+            const priorityScores = { 'high': 90, 'medium': 70, 'low': 50 };
+            const categoryScores = { 'fellowship': 85, 'education': 80, 'development': 75, 'volunteer': 70 };
+            
+            return Math.round((priorityScores[rec.priority] + categoryScores[rec.category]) / 2);
+        }
+
+        function acceptRecommendation(id) {
+            const rec = recommendations.find(r => r.id === id);
+            if (rec) {
+                alert(`已接受推薦：${rec.title}`);
+                clickCount++;
+                updateStats();
+            }
+        }
+
+        function rejectRecommendation(id) {
+            const rec = recommendations.find(r => r.id === id);
+            if (rec) {
+                alert(`已拒絕推薦：${rec.title}`);
+                recommendations = recommendations.filter(r => r.id !== id);
+                renderRecommendations();
+            }
+        }
+
+        function viewDetails(id) {
+            const rec = recommendations.find(r => r.id === id);
+            if (rec) {
+                alert(`查看詳情：${rec.title}
+
+${rec.description}`);
+                clickCount++;
+                updateStats();
+            }
+        }
+
+        function updateStats() {
+            totalRecommendations = recommendations.length;
+            const clickRate = totalRecommendations > 0 ? Math.round((clickCount / totalRecommendations) * 100) : 0;
+            const satisfaction = Math.min(95, 70 + clickRate);
+            
+            document.getElementById('todayRecommendations').textContent = totalRecommendations;
+            document.getElementById('clickRate').textContent = clickRate + '%';
+            document.getElementById('satisfaction').textContent = satisfaction + '%';
+        }
+    </script>
+</body>
+</html>

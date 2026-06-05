@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智慧事奉 · 恩賜統計匯出（橋 1 DEMO）</title>
+  <style>
+    body { font-family: "Noto Sans TC", "Microsoft YaHei", sans-serif; background: #f4f6fb; color: #1e293b; margin: 0; padding: 20px; font-size: 14px; line-height: 1.5; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 1.35rem; color: #4338ca; margin-bottom: 0.35rem; }
+    .lead { color: #334155; margin-bottom: 0.25rem; }
+    .lead-en { font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; }
+    .card { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06); margin-bottom: 1rem; }
+    textarea {
+      width: 100%;
+      min-height: 280px;
+      box-sizing: border-box;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.78rem;
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #0f172a;
+      color: #e2e8f0;
+      resize: vertical;
+    }
+    button { background: #4f46e5; color: #fff; border: none; padding: 0.55rem 1rem; border-radius: 8px; font-size: 0.95rem; cursor: pointer; margin-bottom: 12px; }
+    button:hover { background: #4338ca; }
+    .note { font-size: 0.82rem; color: #64748b; margin-top: 12px; }
+    .status {
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      color: #334155;
+    }
+    .status.warn { border-color: #f59e0b; background: #fffbeb; color: #92400e; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    code { font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>恩賜統計匯出 · 橋 1 原型（DEMO）</h1>
+    <p class="lead">此頁示範如何由 Smart Ministry 的 <code>GiftProfile</code> 匯出教會層級恩賜統計 JSON，供 <code>church_planning</code> 模組（例如 <code>ChurchHealthProfile.giftDistribution</code> 方向）使用。</p>
+    <p class="lead-en">Demo only – export aggregate gift stats for Church Planning module. No data is sent to any server.</p>
+
+    <div class="card">
+      <div id="sourceStatus" class="status"></div>
+      <div class="btn-row">
+        <button type="button" id="recalc">重新計算</button>
+        <button type="button" id="downloadJson">下載 JSON</button>
+      </div>
+      <textarea id="out" readonly aria-label="匯出 JSON"></textarea>
+      <p class="note">
+        聚合邏輯（見下方內嵌註解）：<code>avgGiftScores</code> 為各向度李克特 1–5 之<strong>樣本平均</strong>再線性映射至 0–100；
+        <code>topGiftFrequency</code> 為各向度在 <code>topGiftIds</code> 陣列中出現的次數（每人 3 個標籤）。
+        與 <code>docs/DATA_CONTRACT_v0.1.md</code> §3.11 <code>giftDistribution</code> 的正式欄位對應，見文件「變更建議」補充。
+      </p>
+    </div>
+  </div>
+
+  <script src="matching_demo.js"></script>
+  <script src="demo_gift_fixtures.js"></script>
+  <script>
+    /**
+     * 橋 1 原型：由多筆 GiftProfile（DEMO）聚合教會層統計。
+     * 命名對齊 DATA_CONTRACT §3.11 ChurchHealthProfile.giftDistribution 精神（比例／分布）；
+     * 本頁額外輸出 avgGiftScores、topGiftFrequency 供 SWOT／健康診斷草稿使用。
+     *
+     * 量尺：輸入 scores 為 1–5；avgGiftScores 為 0–100 整數，公式 round(((meanLikert - 1) / 4) * 100)。
+     * 向度鍵名：與 matching_demo.js 之 DEMO_GIFT_KEYS 一致。
+     */
+    (function () {
+      var GIFT_PROFILE_STORAGE_KEY = "smart_ministry_gift_profiles";
+      var GIFT_KEYS = typeof DEMO_GIFT_KEYS !== "undefined" ? DEMO_GIFT_KEYS : [];
+      var lastPayload = null;
+
+      function likertMeanTo100(mean) {
+        if (mean == null || isNaN(mean)) return 0;
+        return Math.round(((mean - 1) / 4) * 100);
+      }
+
+      function aggregate(fixtures) {
+        var peopleCount = fixtures.length;
+        var sumByGift = {};
+        var topGiftFrequency = {};
+        GIFT_KEYS.forEach(function (k) {
+          sumByGift[k] = 0;
+          topGiftFrequency[k] = 0;
+        });
+
+        fixtures.forEach(function (fp) {
+          var sc = fp.scores || {};
+          GIFT_KEYS.forEach(function (k) {
+            var v = sc[k];
+            if (typeof v === "number" && !isNaN(v)) sumByGift[k] += v;
+          });
+          (fp.topGiftIds || []).forEach(function (gid) {
+            if (topGiftFrequency[gid] != null) topGiftFrequency[gid] += 1;
+          });
+        });
+
+        var avgGiftScores = {};
+        GIFT_KEYS.forEach(function (k) {
+          var m = peopleCount > 0 ? sumByGift[k] / peopleCount : 0;
+          avgGiftScores[k] = likertMeanTo100(m);
+        });
+
+        return {
+          schemaVersion: "0.1",
+          demoSource: "smart_ministry_gift_profiles",
+          peopleCount: peopleCount,
+          avgGiftScores: avgGiftScores,
+          topGiftFrequency: topGiftFrequency,
+          generatedAt: new Date().toISOString(),
+        };
+      }
+
+      function loadLocalGiftProfiles() {
+        try {
+          var raw = localStorage.getItem(GIFT_PROFILE_STORAGE_KEY);
+          if (!raw) return [];
+          var parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return [];
+          return parsed.filter(function (row) {
+            return row && typeof row === "object" && row.scores && typeof row.scores === "object";
+          });
+        } catch (err) {
+          console.warn("loadLocalGiftProfiles failed", err);
+          return [];
+        }
+      }
+
+      function render() {
+        var localProfiles = loadLocalGiftProfiles();
+        var source = "smart_ministry_gift_profiles";
+        var fixtures = localProfiles;
+        if (!fixtures.length) {
+          fixtures = typeof DEMO_GIFT_FIXTURES !== "undefined" ? DEMO_GIFT_FIXTURES : [];
+          source = "DEMO_GIFT_FIXTURES(fallback)";
+        }
+        var payload = aggregate(fixtures);
+        payload.demoSource = source;
+        payload.sourceMeta = {
+          mode: source === "smart_ministry_gift_profiles" ? "local" : "demo_fallback",
+          records: fixtures.length,
+          key: GIFT_PROFILE_STORAGE_KEY
+        };
+        lastPayload = payload;
+        document.getElementById("out").value = JSON.stringify(payload, null, 2);
+        var statusEl = document.getElementById("sourceStatus");
+        if (payload.sourceMeta.mode === "local") {
+          statusEl.className = "status";
+          statusEl.innerHTML = "目前資料來源：<strong>本機真實資料</strong>（" + fixtures.length + " 筆，key=<code>" + GIFT_PROFILE_STORAGE_KEY + "</code>）";
+        } else {
+          statusEl.className = "status warn";
+          statusEl.innerHTML = "目前資料來源：<strong>DEMO fallback</strong>（" + fixtures.length + " 筆）。若要橋接正式流程，請先完成主問卷並產生本機 GiftProfile。";
+        }
+      }
+
+      function downloadJson() {
+        if (!lastPayload) render();
+        var sourceTag = lastPayload && lastPayload.sourceMeta && lastPayload.sourceMeta.mode === "local" ? "local" : "demo";
+        var blob = new Blob([JSON.stringify(lastPayload, null, 2)], { type: "application/json" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "gift_stats_" + sourceTag + "_" + new Date().toISOString().slice(0, 10) + ".json";
+        a.click();
+      }
+
+      document.getElementById("recalc").addEventListener("click", render);
+      document.getElementById("downloadJson").addEventListener("click", downloadJson);
+      document.addEventListener("DOMContentLoaded", render);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>課程報表 - Course Reports</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>📋 課程報表 · Course Reports</h1>
+        <p>選課與成績概覽、篩選、匯出</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 主日學負責人、教務、教育事工同工。</p>
+            <p><b>有什麼功能？</b> 依課程統計選課數、成績平均、評估平均；可篩選、匯出 CSV／JSON。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📊 總覽</div>
+        <div class="stats-row">
+            <div class="stat-pill"><div class="stat-num" id="statCourses">0</div><div class="stat-label">課程數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statEnrollments">0</div><div class="stat-label">選課記錄</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statGrades">0</div><div class="stat-label">成績筆數</div></div>
+            <div class="stat-pill"><div class="stat-num" id="statEvals">0</div><div class="stat-label">評估筆數</div></div>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">篩選</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+            <div><label class="stat-label">科目</label><br><select id="filterSubject" class="module-input" style="min-width:140px;"><option value="">全部</option></select></div>
+            <div><label class="stat-label">授課方式</label><br><select id="filterDelivery" class="module-input"><option value="">全部</option><option value="onsite">實體</option><option value="online">線上</option><option value="hybrid">混成</option><option value="ebook">電子書</option></select></div>
+            <button class="module-btn" id="btnApply">套用</button>
+            <button class="module-btn module-btn-secondary" id="btnReset">清除</button>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📊 課程選課與成績概覽 <button class="module-btn module-btn-secondary" id="btnExportCsv" style="float:right;">📤 匯出 CSV</button> <button class="module-btn module-btn-secondary" id="btnExportJson" style="float:right;margin-right:8px;">📤 匯出 JSON</button></div>
+        <div id="reportTable"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) {
+                document.getElementById('reportTable').innerHTML = '<div class="empty-state">請先載入 SchoolMasterDatabase</div>';
+                return;
+            }
+            if (db.ensureSeedFull) db.ensureSeedFull();
+
+            const data = db.data;
+            const courses = data.courses || [];
+            const enrollments = (data.student && data.student.enrollments) || [];
+            const grades = (data.grade && data.grade.grades) || [];
+            const evals = (data.course && data.course.evaluations) || [];
+
+            const subjects = [...new Set(courses.map(c => c.subject).filter(Boolean))];
+            const selSub = document.getElementById('filterSubject');
+            selSub.innerHTML = '<option value="">全部</option>' + subjects.map(s => '<option value="' + s + '">' + s + '</option>').join('');
+
+            function calc() {
+                const sub = document.getElementById('filterSubject').value;
+                const dm = document.getElementById('filterDelivery').value;
+                let list = courses;
+                if (sub) list = list.filter(c => c.subject === sub);
+                if (dm) list = list.filter(c => c.deliveryMode === dm);
+
+                const enrollMap = {};
+                enrollments.forEach(e => { enrollMap[e.courseId] = (enrollMap[e.courseId] || 0) + 1; });
+                const gradeMap = {};
+                grades.forEach(g => {
+                    if (g.score == null) return;
+                    if (!gradeMap[g.courseId]) gradeMap[g.courseId] = [];
+                    gradeMap[g.courseId].push(g.score);
+                });
+                const evalMap = {};
+                evals.forEach(e => {
+                    if (e.score == null) return;
+                    if (!evalMap[e.courseId]) evalMap[e.courseId] = [];
+                    evalMap[e.courseId].push(e.score);
+                });
+
+                return list.map(c => {
+                    const gs = gradeMap[c.id] || [];
+                    const es = evalMap[c.id] || [];
+                    const avgGrade = gs.length ? (gs.reduce((a, b) => a + b, 0) / gs.length).toFixed(2) : null;
+                    const avgEval = es.length ? (es.reduce((a, b) => a + b, 0) / es.length).toFixed(2) : null;
+                    return {
+                        courseId: c.id,
+                        name: c.name,
+                        code: c.code,
+                        subject: c.subject || '—',
+                        deliveryMode: c.deliveryMode || 'onsite',
+                        enrolled: enrollMap[c.id] || 0,
+                        avgGrade: avgGrade,
+                        avgEval: avgEval,
+                        gradeCount: gs.length,
+                        evalCount: es.length
+                    };
+                });
+            }
+
+            function render() {
+                document.getElementById('statCourses').textContent = courses.length;
+                document.getElementById('statEnrollments').textContent = enrollments.length;
+                document.getElementById('statGrades').textContent = grades.length;
+                document.getElementById('statEvals').textContent = evals.length;
+
+                const res = calc();
+                let html = res.length ? '<table class="module-table"><thead><tr><th>課程</th><th>代碼</th><th>科目</th><th>授課方式</th><th>選課數</th><th>成績平均</th><th>評估平均</th><th>成績筆數</th><th>評估筆數</th></tr></thead><tbody>' + res.map(r => {
+                    const dmLabel = { onsite: '實體', online: '線上', hybrid: '混成', ebook: '電子書' }[r.deliveryMode] || r.deliveryMode;
+                    return '<tr><td>' + (r.name || '—') + '</td><td>' + (r.code || '—') + '</td><td>' + r.subject + '</td><td>' + dmLabel + '</td><td>' + r.enrolled + '</td><td>' + (r.avgGrade != null ? r.avgGrade : '—') + '</td><td>' + (r.avgEval != null ? r.avgEval : '—') + '</td><td>' + r.gradeCount + '</td><td>' + r.evalCount + '</td></tr>';
+                }).join('') + '</tbody></table>' : '<div class="empty-state">尚無符合條件的課程</div>';
+                document.getElementById('reportTable').innerHTML = html;
+                return res;
+            }
+
+            document.getElementById('btnApply').onclick = render;
+            document.getElementById('btnReset').onclick = function() {
+                document.getElementById('filterSubject').value = '';
+                document.getElementById('filterDelivery').value = '';
+                render();
+            };
+
+            document.getElementById('btnExportCsv').onclick = function() {
+                const res = calc();
+                const cols = ['courseId', 'name', 'code', 'subject', 'deliveryMode', 'enrolled', 'avgGrade', 'avgEval', 'gradeCount', 'evalCount'];
+                const head = cols.join(',');
+                const body = res.map(r => cols.map(k => '"' + String(r[k] ?? '').replace(/"/g, '""') + '"').join(',')).join('\n');
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob(['\ufeff' + head + '\n' + body], { type: 'text/csv;charset=utf-8' }));
+                a.download = 'course_report_' + new Date().toISOString().slice(0, 10) + '.csv';
+                a.click();
+            };
+
+            document.getElementById('btnExportJson').onclick = function() {
+                const res = calc();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(res, null, 2)], { type: 'application/json' }));
+                a.download = 'course_report_' + new Date().toISOString().slice(0, 10) + '.json';
+                a.click();
+            };
+
+            render();
+        })();
+    </script>
+</body>
+</html>

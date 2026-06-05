@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖經收藏閱讀器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 頂部狀態欄 */
+        .status-bar {
+            background: #000;
+            color: white;
+            padding: 4px 15px;
+            font-size: 11px;
+            height: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 收藏工具欄 */
+        .favorites-toolbar {
+            background: #f39c12;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .favorites-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .favorites-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .favorites-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background: white;
+            color: #f39c12;
+        }
+
+        .action-btn.active {
+            background: white;
+            color: #f39c12;
+        }
+
+        /* 收藏分類 */
+        .favorite-categories {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .category-tab {
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .category-tab.active {
+            background: white;
+            color: #f39c12;
+        }
+
+        /* 收藏列表 */
+        .favorites-list {
+            padding: 20px;
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+        }
+
+        .favorite-item {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .favorite-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .favorite-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .favorite-reference {
+            color: #9b59b6;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .favorite-date {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+
+        .favorite-text {
+            line-height: 1.6;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .favorite-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .favorite-tag {
+            background: #ecf0f1;
+            color: #7f8c8d;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+
+        .favorite-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .favorite-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-read {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-remove {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-copy {
+            background: #95a5a6;
+            color: white;
+        }
+
+        /* 收藏統計 */
+        .favorites-stats {
+            background: #ecf0f1;
+            padding: 10px 20px;
+            border-bottom: 1px solid #bdc3c7;
+            font-size: 14px;
+            color: #7f8c8d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stats-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* 無收藏提示 */
+        .no-favorites {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+
+        .no-favorites h3 {
+            margin-bottom: 10px;
+            color: #95a5a6;
+        }
+
+        /* 底部工具欄 */
+        .bottom-toolbar {
+            background: #9b59b6;
+            color: white;
+            padding: 8px 15px;
+            height: 50px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .tool-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .tool-item:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .tool-item.active {
+            background: white;
+            color: #9b59b6;
+        }
+
+        .tool-icon {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .tool-label {
+            font-size: 10px;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .favorites-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .favorites-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .favorite-categories {
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="index.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回聖經研讀中心</a></div>
+    <!-- 頂部狀態欄 -->
+    <div class="status-bar">
+        <div class="status-left">
+            <span>11:04</span>
+            <span>📶</span>
+        </div>
+        <div class="status-right">
+            <span>0.28 KB/s</span>
+            <span>📶</span>
+            <span>Vo LTE</span>
+            <span>4G+</span>
+            <span>🔋 90%</span>
+        </div>
+    </div>
+
+    <!-- 收藏工具欄 -->
+    <div class="favorites-toolbar">
+        <div class="favorites-header">
+            <div class="favorites-title">⭐ 我的收藏</div>
+            <div class="favorites-actions">
+                <button class="action-btn" onclick="exportFavorites()">導出</button>
+                <button class="action-btn" onclick="importFavorites()">導入</button>
+                <button class="action-btn" onclick="clearAllFavorites()">清空</button>
+            </div>
+        </div>
+        
+        <div class="favorite-categories">
+            <span class="category-tab active" data-category="all">全部</span>
+            <span class="category-tab" data-category="verse">節經文</span>
+            <span class="category-tab" data-category="chapter">章節</span>
+            <span class="category-tab" data-category="study">研經</span>
+            <span class="category-tab" data-category="prayer">禱告</span>
+        </div>
+    </div>
+
+    <!-- 收藏統計 -->
+    <div class="favorites-stats" id="favoritesStats">
+        <div class="stats-item">
+            <span>📖</span>
+            <span id="totalCount">0</span>
+            <span>個收藏</span>
+        </div>
+        <div class="stats-item">
+            <span>📅</span>
+            <span>最近更新：</span>
+            <span id="lastUpdate">-</span>
+        </div>
+    </div>
+
+    <!-- 收藏列表 -->
+    <div class="favorites-list" id="favoritesList">
+        <div class="no-favorites">
+            <h3>⭐ 還沒有收藏</h3>
+            <p>在閱讀時點擊星號收藏你喜歡的經文</p>
+        </div>
+    </div>
+
+    <!-- 底部工具欄 -->
+    <div class="bottom-toolbar">
+        <div class="tool-item" onclick="goToReader()">
+            <div class="tool-icon">📖</div>
+            <div class="tool-label">閱讀</div>
+        </div>
+        <div class="tool-item" onclick="goToSearch()">
+            <div class="tool-icon">🔍</div>
+            <div class="tool-label">搜索</div>
+        </div>
+        <div class="tool-item" onclick="goToNotes()">
+            <div class="tool-icon">📝</div>
+            <div class="tool-label">筆記</div>
+        </div>
+        <div class="tool-item active">
+            <div class="tool-icon">⭐</div>
+            <div class="tool-label">收藏</div>
+        </div>
+        <div class="tool-item">
+            <div class="tool-icon">🌍</div>
+            <div class="tool-label">原文</div>
+        </div>
+        <div class="tool-item">
+            <div class="tool-icon">💬</div>
+            <div class="tool-label">註解</div>
+        </div>
+    </div>
+
+    <!-- SQLite.js 庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/sql-wasm.js"></script>
+    <script src="db.js"></script>
+    <script>
+        let currentCategory = 'all';
+        let favorites = [];
+
+        // 初始化
+        function init() {
+            console.log('聖經收藏閱讀器初始化...');
+            loadFavorites();
+            setupEventListeners();
+        }
+
+        // 設置事件監聽器
+        function setupEventListeners() {
+            // 分類切換
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentCategory = this.dataset.category;
+                    filterFavorites();
+                });
+            });
+
+            // 工具欄點擊
+            document.querySelectorAll('.tool-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.tool-item').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        // 載入收藏
+        function loadFavorites() {
+            try {
+                const savedFavorites = localStorage.getItem('bible_favorites');
+                if (savedFavorites) {
+                    favorites = JSON.parse(savedFavorites);
+                } else {
+                    favorites = [];
+                }
+                console.log('載入收藏:', favorites.length, '個');
+                updateStats();
+                displayFavorites();
+            } catch (error) {
+                console.error('載入收藏失敗:', error);
+                favorites = [];
+            }
+        }
+
+        // 保存收藏
+        function saveFavorites() {
+            try {
+                localStorage.setItem('bible_favorites', JSON.stringify(favorites));
+                console.log('收藏已保存');
+            } catch (error) {
+                console.error('保存收藏失敗:', error);
+            }
+        }
+
+        // 更新統計
+        function updateStats() {
+            document.getElementById('totalCount').textContent = favorites.length;
+            
+            if (favorites.length > 0) {
+                const lastUpdate = new Date(Math.max(...favorites.map(f => new Date(f.date))));
+                document.getElementById('lastUpdate').textContent = lastUpdate.toLocaleDateString('zh-TW');
+            } else {
+                document.getElementById('lastUpdate').textContent = '-';
+            }
+        }
+
+        // 顯示收藏
+        function displayFavorites() {
+            const container = document.getElementById('favoritesList');
+            
+            if (favorites.length === 0) {
+                container.innerHTML = `
+                    <div class="no-favorites">
+                        <h3>⭐ 還沒有收藏</h3>
+                        <p>在閱讀時點擊星號收藏你喜歡的經文</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const filteredFavorites = filterFavoritesByCategory(favorites);
+            
+            let html = '';
+            filteredFavorites.forEach((favorite, index) => {
+                const date = new Date(favorite.date).toLocaleDateString('zh-TW');
+                
+                html += `
+                    <div class="favorite-item">
+                        <div class="favorite-header">
+                            <span class="favorite-reference">${favorite.reference}</span>
+                            <span class="favorite-date">${date}</span>
+                        </div>
+                        <div class="favorite-text">${favorite.text}</div>
+                        <div class="favorite-tags">
+                            ${favorite.tags.map(tag => `<span class="favorite-tag">${tag}</span>`).join('')}
+                        </div>
+                        <div class="favorite-actions">
+                            <button class="favorite-btn btn-read" onclick="readFavorite(${index})">閱讀</button>
+                            <button class="favorite-btn btn-copy" onclick="copyFavorite(${index})">複製</button>
+                            <button class="favorite-btn btn-remove" onclick="removeFavorite(${index})">移除</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // 按分類過濾收藏
+        function filterFavoritesByCategory(favoritesList) {
+            if (currentCategory === 'all') {
+                return favoritesList;
+            }
+            return favoritesList.filter(favorite => favorite.category === currentCategory);
+        }
+
+        // 過濾收藏
+        function filterFavorites() {
+            displayFavorites();
+        }
+
+        // 閱讀收藏
+        function readFavorite(index) {
+            const favorite = favorites[index];
+            // 跳轉到閱讀器並定位到指定經文
+            const url = `refined_bible_reader.html?book=${favorite.book}&chapter=${favorite.chapter}&verse=${favorite.verse}`;
+            window.location.assign(url);
+        }
+
+        // 複製收藏
+        function copyFavorite(index) {
+            const favorite = favorites[index];
+            const text = `${favorite.reference}
+${favorite.text}`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已複製到剪貼板');
+            }).catch(err => {
+                console.error('複製失敗:', err);
+                // 降級方案
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('已複製到剪貼板');
+            });
+        }
+
+        // 移除收藏
+        function removeFavorite(index) {
+            if (confirm('確定要移除這個收藏嗎？')) {
+                favorites.splice(index, 1);
+                saveFavorites();
+                updateStats();
+                displayFavorites();
+            }
+        }
+
+        // 導出收藏
+        function exportFavorites() {
+            if (favorites.length === 0) {
+                alert('沒有收藏可以導出');
+                return;
+            }
+
+            const dataStr = JSON.stringify(favorites, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `bible_favorites_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        // 導入收藏
+        function importFavorites() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const importedFavorites = JSON.parse(e.target.result);
+                            if (Array.isArray(importedFavorites)) {
+                                favorites = importedFavorites;
+                                saveFavorites();
+                                updateStats();
+                                displayFavorites();
+                                alert('收藏導入成功！');
+                            } else {
+                                alert('文件格式不正確');
+                            }
+                        } catch (error) {
+                            alert('導入失敗：' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        // 清空所有收藏
+        function clearAllFavorites() {
+            if (confirm('確定要清空所有收藏嗎？此操作無法撤銷！')) {
+                favorites = [];
+                saveFavorites();
+                updateStats();
+                displayFavorites();
+            }
+        }
+
+        // 跳轉到閱讀器
+        function goToReader() {
+            window.location.assign('refined_bible_reader.html');
+        }
+
+        // 跳轉到搜索
+        function goToSearch() {
+            window.location.assign('search_reader.html');
+        }
+
+        // 跳轉到筆記（站內尚無獨立 notes_reader；導向雙欄閱讀器）
+        function goToNotes() {
+            window.location.assign('reader.html');
+        }
+
+        // 頁面載入完成後初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>會眾 360 Timeline | Church Ministry</title>
+  <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
+</head>
+<body class="bg-slate-50">
+  <div class="max-w-5xl mx-auto p-6">
+    <a href="../../dashboard.html" class="text-sm text-blue-700">⛪ 返回教會事工中心</a>
+    <h1 class="text-2xl font-bold mt-3 mb-2">會眾 360 Timeline</h1>
+    <p class="text-sm text-slate-600 mb-4">整併問卷、恩賜測評、小組回報、<strong>探訪工作桌牧養事件</strong>、服事配對、出席。</p>
+    <p class="text-xs text-slate-500 mb-4">探訪記錄請自 <a href="../support/visitation_index.html" class="text-blue-700 underline">探訪工作桌 1.0</a> 儲存（CRM-1a 已寫入 <code>pastoral_events_v1</code>）。</p>
+
+    <div class="bg-white border rounded-xl p-4 mb-4">
+      <div class="flex gap-3 items-end">
+        <label class="text-sm">Member ID
+          <input id="memberIdInput" class="mt-1 border rounded px-3 py-2 text-sm w-44" placeholder="例如 101">
+        </label>
+        <button id="btnLoad" class="px-4 py-2 bg-blue-600 text-white rounded text-sm">載入 Timeline</button>
+      </div>
+      <p id="metaLine" class="text-xs text-slate-500 mt-2"></p>
+    </div>
+
+    <div id="timelineList" class="space-y-3"></div>
+  </div>
+
+  <script src="../../../js/persistence_provider.js"></script>
+  <script src="../../../js/church_crm_constants.js"></script>
+  <script src="../../../js/smart_ministry_canonical_store.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script>
+    function renderEvents(memberId) {
+      var host = document.getElementById('timelineList');
+      var meta = document.getElementById('metaLine');
+      if (!window.ChurchDataBridge || typeof window.ChurchDataBridge.getMember360Timeline !== 'function') {
+        host.innerHTML = '<div class="bg-white border rounded p-3 text-sm text-red-700">ChurchDataBridge 尚未就緒。</div>';
+        return;
+      }
+      var events = window.ChurchDataBridge.getMember360Timeline(memberId, 100);
+      meta.textContent = '共 ' + events.length + ' 筆事件';
+      if (!events.length) {
+        host.innerHTML = '<div class="bg-white border rounded p-3 text-sm text-slate-500">尚無資料。</div>';
+        return;
+      }
+      host.innerHTML = events.map(function (e) {
+        return '<div class="bg-white border rounded-xl p-4">' +
+          '<div class="text-xs text-slate-500">' + (e.ts || '-') + ' · ' + (e.source || '-') + '</div>' +
+          '<div class="font-semibold mt-1">' + (e.event_type || 'event') + '</div>' +
+          '<div class="text-sm text-slate-700 mt-1">' + (e.summary || '') + '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    document.getElementById('btnLoad').addEventListener('click', function () {
+      var id = document.getElementById('memberIdInput').value.trim();
+      if (!id) return;
+      renderEvents(id);
+    });
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📖 Open Bible Stories - Việt Nam</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 40px; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+
+        /* 自動生成工具 */
+        .generator-tool { background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 25px; border-radius: 15px; margin-bottom: 40px; }
+        .generator-title { font-size: 1.3rem; margin-bottom: 15px; text-align: center; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.9rem; }
+        .generate-btn { width: 100%; padding: 12px; background: #FF6B35; color: white; border: none; border-radius: 20px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        .generate-btn:hover { background: #e55a2e; }
+
+        /* 分類區域 */
+        .category-section { margin-bottom: 40px; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .category-header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; font-size: 1.3rem; font-weight: bold; text-align: center; }
+        .category-content { padding: 25px; }
+
+        /* 標籤選單樣式 */
+        .tabs-layout { margin-bottom: 20px; }
+        .tabs { display: flex; border-bottom: 2px solid #e1e5e9; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab { padding: 12px 24px; background: none; border: none; cursor: pointer; font-size: 1rem; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s; white-space: nowrap; }
+        .tab.active { color: #667eea; border-bottom-color: #667eea; }
+        .tab:hover { color: #667eea; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* 系列卡片 */
+        .series-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .series-card { border: 2px solid #e1e5e9; border-radius: 12px; padding: 20px; background: white; cursor: pointer; transition: all 0.3s ease; }
+        .series-card:hover { border-color: #667eea; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15); }
+        .series-card.expanded { border-color: #4CAF50; background: #f8fff8; }
+        .series-title { font-size: 1.1rem; font-weight: bold; color: #333; margin-bottom: 8px; }
+        .series-subtitle { color: #666; font-size: 0.9rem; margin-bottom: 12px; }
+        .series-stats { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .story-count { background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+        .expand-btn { background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 0.8rem; }
+        .expand-btn:hover { background: #45a049; }
+        .collapse-btn { background: #f44336; }
+
+        /* 故事網格 - 8格布局 */
+        .stories-container { display: none; margin-top: 15px; padding-top: 15px; border-top: 2px solid #e1e5e9; }
+        .stories-container.active { display: block; }
+        .stories-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
+        .story-card { border: 1px solid #e1e5e9; border-radius: 8px; overflow: hidden; background: white; transition: all 0.3s ease; min-height: 160px; }
+        .story-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); border-color: #667eea; }
+        .story-image { width: 100%; height: 70px; position: relative; overflow: hidden; background: linear-gradient(45deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; }
+        .story-number { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.7); color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 10px; z-index: 2; }
+        .story-thumbnail { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        .read-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 150, 0, 0.8); color: white; border: none; border-radius: 50%; width: 25px; height: 25px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .story-info { padding: 8px; }
+        .story-title { font-size: 0.7rem; font-weight: bold; color: #333; margin-bottom: 2px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .story-title-en { font-size: 0.6rem; color: #888; margin-bottom: 2px; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .story-title-cn { font-size: 0.6rem; color: #666; margin-bottom: 4px; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .story-description { font-size: 0.6rem; color: #666; }
+
+        /* 響應式設計 */
+        @media (max-width: 1400px) { .stories-grid { grid-template-columns: repeat(6, 1fr); } }
+        @media (max-width: 1200px) { .stories-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 900px) { .stories-grid { grid-template-columns: repeat(3, 1fr); } .series-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { body { padding: 10px; } .stories-grid { grid-template-columns: repeat(2, 1fr); } .header h1 { font-size: 1.8rem; } }
+        @media (max-width: 400px) { .stories-grid { grid-template-columns: 1fr; } }
+
+        .success-message { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 6px; margin: 10px 0; display: none; }
+        .error-message { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 6px; margin: 10px 0; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📖 Open Bible Stories</h1>
+            <p>Câu chuyện Kinh Thánh Mở - Tiếng Việt</p>
+            <p style="font-size: 0.9rem; margin-top: 10px; opacity: 0.9;">50 câu chuyện Kinh Thánh - 8格網格布局</p>
+        </div>
+
+        <!-- 主要內容區域 - 標籤選單型式 -->
+        <div class="category-section">
+            <div class="category-header">📚 Câu chuyện Kinh Thánh Mở</div>
+            <div class="category-content">
+                <!-- 標籤選單 -->
+                <div class="tabs-layout">
+                    <div class="tabs">
+                        <button class="tab active" onclick="showTab(event, 'old-testament')">Cựu Ước</button>
+                        <button class="tab" onclick="showTab(event, 'new-testament')">Tân Ước</button>
+                        <button class="tab" onclick="showTab(event, 'all-stories')">Tất cả câu chuyện</button>
+                    </div>
+
+                    <!-- Cựu Ước標籤內容 -->
+                    <div id="old-testament" class="tab-content active">
+                        <div class="series-grid">
+                            <!-- 創世記到出埃及記 -->
+                            <div class="series-card" onclick="toggleStories(this, 'genesis-exodus')">
+                                <div class="series-title">Sáng Thế Ký - Xuất Ai Cập Ký</div>
+                                <div class="series-subtitle">Từ sự sáng tạo đến giải thoát</div>
+                                <div class="series-stats">
+                                    <span class="story-count">📖 12 câu chuyện</span>
+                                    <button class="expand-btn">Xem câu chuyện</button>
+                                </div>
+                                <div class="stories-container" id="genesis-exodus-stories">
+                                    <div class="stories-grid" id="genesis-exodus-grid"></div>
+                                </div>
+                            </div>
+
+                            <!-- 士師記到列王紀 -->
+                            <div class="series-card" onclick="toggleStories(this, 'judges-kings')">
+                                <div class="series-title">Các Quan Xét - Các Vua</div>
+                                <div class="series-subtitle">Từ các quan xét đến các vua</div>
+                                <div class="series-stats">
+                                    <span class="story-count">📖 8 câu chuyện</span>
+                                    <button class="expand-btn">Xem câu chuyện</button>
+                                </div>
+                                <div class="stories-container" id="judges-kings-stories">
+                                    <div class="stories-grid" id="judges-kings-grid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tân Ước標籤內容 -->
+                    <div id="new-testament" class="tab-content">
+                        <div class="series-grid">
+                            <!-- 耶穌的生平 -->
+                            <div class="series-card" onclick="toggleStories(this, 'jesus-life')">
+                                <div class="series-title">Cuộc Đời Chúa Giê-su</div>
+                                <div class="series-subtitle">Từ sinh ra đến phục sinh</div>
+                                <div class="series-stats">
+                                    <span class="story-count">📖 20 câu chuyện</span>
+                                    <button class="expand-btn">Xem câu chuyện</button>
+                                </div>
+                                <div class="stories-container" id="jesus-life-stories">
+                                    <div class="stories-grid" id="jesus-life-grid"></div>
+                                </div>
+                            </div>
+
+                            <!-- 早期教會 -->
+                            <div class="series-card" onclick="toggleStories(this, 'early-church')">
+                                <div class="series-title">Hội Thánh Đầu Tiên</div>
+                                <div class="series-subtitle">Từ Ngũ Tuần đến truyền bá</div>
+                                <div class="series-stats">
+                                    <span class="story-count">📖 10 câu chuyện</span>
+                                    <button class="expand-btn">Xem câu chuyện</button>
+                                </div>
+                                <div class="stories-container" id="early-church-stories">
+                                    <div class="stories-grid" id="early-church-grid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tất cả câu chuyện標籤內容 -->
+                    <div id="all-stories" class="tab-content">
+                        <div class="series-grid">
+                            <!-- 完整50個故事 -->
+                            <div class="series-card" onclick="toggleStories(this, 'all-50-stories')">
+                                <div class="series-title">50 Câu Chuyện Kinh Thánh</div>
+                                <div class="series-subtitle">Toàn bộ bộ sưu tập Open Bible Stories</div>
+                                <div class="series-stats">
+                                    <span class="story-count">📖 50 câu chuyện</span>
+                                    <button class="expand-btn">Xem tất cả</button>
+                                </div>
+                                <div class="stories-container" id="all-50-stories-stories">
+                                    <div class="stories-grid" id="all-50-stories-grid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 自動生成工具 - 移到最後 -->
+        <div class="generator-tool">
+            <h2 class="generator-title">📚 Thêm câu chuyện mới</h2>
+            <div class="input-group">
+                <label for="storyUrl">🔗 Liên kết câu chuyện:</label>
+                <input type="url" id="storyUrl" placeholder="https://door43.org/u/Door43-Catalog/vi_obs/v4.1/01.html">
+            </div>
+            <div class="input-group">
+                <label for="storyTitle">📝 Tiêu đề câu chuyện:</label>
+                <input type="text" id="storyTitle" placeholder="Ví dụ: Sự Sáng Tạo">
+            </div>
+            <div class="input-group">
+                <label for="storyDescription">📄 Mô tả ngắn:</label>
+                <textarea id="storyDescription" rows="3" placeholder="Mô tả ngắn về câu chuyện này..."></textarea>
+            </div>
+            <div class="input-group">
+                <label for="categorySelect">📂 Chọn danh mục:</label>
+                <select id="categorySelect">
+                    <option value="genesis-exodus">Sáng Thế Ký - Xuất Ai Cập Ký</option>
+                    <option value="judges-kings">Các Quan Xét - Các Vua</option>
+                    <option value="jesus-life">Cuộc Đời Chúa Giê-su</option>
+                    <option value="early-church">Hội Thánh Đầu Tiên</option>
+                    <option value="all-50-stories">Tất cả câu chuyện</option>
+                </select>
+            </div>
+            <button class="generate-btn" onclick="addNewStory()">🚀 Thêm câu chuyện vào trang</button>
+            <div id="successMessage" class="success-message"></div>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+    </div>
+
+    <script>
+        // 聖經故事數據庫
+        const storiesDatabase = {
+            'genesis-exodus': {
+                stories: [
+                    { id: '01', title: 'Sự Sáng Tạo', titleEn: 'The Creation', titleCn: '創造', description: 'Đức Chúa Trời sáng tạo thế giới', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/01.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-01-01.jpg' },
+                    { id: '02', title: 'Tội Lỗi Vào Thế Gian', titleEn: 'Sin Enters the World', titleCn: '罪入世界', description: 'A-đam và Ê-va bất tuân Đức Chúa Trời', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/02.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-02-01.jpg' },
+                    { id: '03', title: 'Nước Lụt', titleEn: 'The Flood', titleCn: '大洪水', description: 'Đức Chúa Trời cứu Nô-ê và gia đình', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/03.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-03-01.jpg' },
+                    { id: '04', title: 'Giao Ước của Đức Chúa Trời với Áp-ra-ham', titleEn: 'God\'s Covenant with Abraham', titleCn: '神與亞伯拉罕立約', description: 'Đức Chúa Trời kêu gọi Áp-ra-ham', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/04.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-04-01.jpg' },
+                    { id: '05', title: 'Con Trai Được Hứa', titleEn: 'The Son of Promise', titleCn: '應許之子', description: 'Y-sác được sinh ra', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/05.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-05-01.jpg' },
+                    { id: '06', title: 'Đức Chúa Trời Cung Cấp cho Y-sác', titleEn: 'God Provides for Isaac', titleCn: '神為以撒預備', description: 'Áp-ra-ham dâng Y-sác', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/06.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-06-01.jpg' },
+                    { id: '07', title: 'Đức Chúa Trời Ban Phước cho Gia-cốp', titleEn: 'God Blesses Jacob', titleCn: '神賜福雅各', description: 'Gia-cốp và Ê-sau', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/07.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-07-01.jpg' },
+                    { id: '08', title: 'Đức Chúa Trời Cứu Giô-sép và Gia Đình Người', titleEn: 'God Saves Joseph and His Family', titleCn: '神拯救約瑟和他的家人', description: 'Giô-sép ở Ai Cập', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/08.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-08-01.jpg' },
+                    { id: '09', title: 'Đức Chúa Trời Kêu Gọi Môi-se', titleEn: 'God Calls Moses', titleCn: '神呼召摩西', description: 'Bụi gai cháy', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/09.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-09-01.jpg' },
+                    { id: '10', title: 'Mười Tai Vạ', titleEn: 'The Ten Plagues', titleCn: '十災', description: 'Đức Chúa Trời phạt Ai Cập', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/10.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-10-01.jpg' },
+                    { id: '11', title: 'Lễ Vượt Qua', titleEn: 'The Passover', titleCn: '逾越節', description: 'Đêm cuối cùng ở Ai Cập', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/11.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-11-01.jpg' },
+                    { id: '12', title: 'Cuộc Xuất Hành', titleEn: 'The Exodus', titleCn: '出埃及', description: 'Ra khỏi Ai Cập qua Biển Đỏ', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/12.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-12-01.jpg' }
+                ]
+            },
+            'judges-kings': {
+                stories: [
+                    { id: '13', title: 'Giao Ước của Đức Chúa Trời với Y-sơ-ra-ên', description: 'Luật pháp tại núi Si-nai', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/13.html' },
+                    { id: '14', title: 'Lang Thang trong Đồng Vắng', description: '40 năm trong sa mạc', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/14.html' },
+                    { id: '15', title: 'Đất Hứa', description: 'Vào đất Ca-na-an', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/15.html' },
+                    { id: '16', title: 'Các Quan Xét', description: 'Thời kỳ các quan xét', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/16.html' },
+                    { id: '17', title: 'Giao Ước của Đức Chúa Trời với Đa-vít', description: 'Vua Đa-vít', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/17.html' },
+                    { id: '18', title: 'Vương Quốc Chia Đôi', description: 'Y-sơ-ra-ên và Giu-đa', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/18.html' },
+                    { id: '19', title: 'Các Tiên Tri', description: 'Thông điệp của các tiên tri', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/19.html' },
+                    { id: '20', title: 'Lưu Đày và Trở Về', description: 'Ba-by-lôn và trở về', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/20.html' }
+                ]
+            },
+            'jesus-life': {
+                stories: [
+                    { id: '21', title: 'Đức Chúa Trời Hứa về Đấng Mê-si', titleEn: 'God Promises the Messiah', titleCn: '神應許彌賽亞', description: 'Lời hứa về Đấng Cứu Thế', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/21.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-21-01.jpg' },
+                    { id: '22', title: 'Sự Giáng Sinh của Giê-su', titleEn: 'The Birth of Jesus', titleCn: '耶穌誕生', description: 'Giê-su được sinh ra', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/22.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-22-01.jpg' },
+                    { id: '23', title: 'Giê-su Bắt Đầu Chức Vụ', titleEn: 'Jesus Begins His Ministry', titleCn: '耶穌開始事工', description: 'Báp-têm và cám dỗ', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/23.html', image: 'https://cdn.door43.org/obs/jpg/360px/obs-en-23-01.jpg' },
+                    { id: '24', title: 'Giô-an Báp-tít', description: 'Người tiền phong', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/24.html' },
+                    { id: '25', title: 'Sa-tan Cám Dỗ Giê-su', description: 'Cám dỗ trong sa mạc', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/25.html' },
+                    { id: '26', title: 'Giê-su Bắt Đầu Chức Vụ', description: 'Bắt đầu giảng dạy', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/26.html' },
+                    { id: '27', title: 'Câu Chuyện về Người Sa-ma-ri Nhân Từ', description: 'Ai là người lân cận?', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/27.html' },
+                    { id: '28', title: 'Giê-su Chữa Lành một Người Bị Quỷ Ám', description: 'Quyền năng trên quỷ dữ', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/28.html' },
+                    { id: '29', title: 'Câu Chuyện về Người Đầy Tớ Không Thương Xót', description: 'Tha thứ', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/29.html' },
+                    { id: '30', title: 'Giê-su Nuôi Năm Ngàn Người', description: 'Phép lạ bánh và cá', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/30.html' },
+                    { id: '31', title: 'Giê-su Đi Trên Mặt Nước', description: 'Phép lạ trên biển', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/31.html' },
+                    { id: '32', title: 'Giê-su Chữa Lành một Người Bị Quỷ Ám và một Người Đàn Bà Bị Xuất Huyết', description: 'Quyền năng chữa lành', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/32.html' },
+                    { id: '33', title: 'Câu Chuyện về Người Gieo Giống', description: 'Hạt giống và đất', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/33.html' },
+                    { id: '34', title: 'Giê-su Dạy Những Câu Chuyện Khác', description: 'Các thí dụ khác', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/34.html' },
+                    { id: '35', title: 'Câu Chuyện về Người Cha Nhân Từ', description: 'Con trai hoang đàng', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/35.html' },
+                    { id: '36', title: 'Sự Biến Hình', description: 'Giê-su biến hình', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/36.html' },
+                    { id: '37', title: 'Giê-su Làm cho La-xa-rơ Sống Lại', description: 'Quyền năng trên sự chết', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/37.html' },
+                    { id: '38', title: 'Giê-su Bị Phản Bội', description: 'Giu-đa phản bội', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/38.html' },
+                    { id: '39', title: 'Giê-su Bị Xử', description: 'Trước tòa án', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/39.html' },
+                    { id: '40', title: 'Giê-su Bị Đóng Đinh', description: 'Cái chết trên thập tự giá', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/40.html' }
+                ]
+            },
+            'early-church': {
+                stories: [
+                    { id: '41', title: 'Đức Chúa Trời Làm cho Giê-su Sống Lại từ Cõi Chết', description: 'Sự phục sinh', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/41.html' },
+                    { id: '42', title: 'Giê-su Trở Về Thiên Đàng', description: 'Sự thăng thiên', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/42.html' },
+                    { id: '43', title: 'Hội Thánh Bắt Đầu', description: 'Ngày Ngũ Tuần', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/43.html' },
+                    { id: '44', title: 'Phi-e-rơ và Giô-an Chữa Lành một Người Tàn Tật', description: 'Phép lạ đầu tiên', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/44.html' },
+                    { id: '45', title: 'Phi-líp và Quan Thái Giám Ê-thi-ô-bi', description: 'Truyền bá ra xa', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/45.html' },
+                    { id: '46', title: 'Đức Chúa Trời Biến Đổi Sau-lơ', description: 'Sự cải đạo của Phao-lô', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/46.html' },
+                    { id: '47', title: 'Phao-lô Truyền Bá ở Phi-líp', description: 'Chuyến truyền đạo đầu tiên', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/47.html' },
+                    { id: '48', title: 'Phao-lô Gặp Giê-su', description: 'Khải tượng trên đường Đa-mách', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/48.html' },
+                    { id: '49', title: 'Tin Lành', description: 'Tin mừng cứu rỗi', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/49.html' },
+                    { id: '50', title: 'Giê-su Trở Lại', description: 'Sự tái lâm', url: 'https://door43.org/u/Door43-Catalog/vi_obs/v4.1/50.html' }
+                ]
+            },
+            'all-50-stories': {
+                stories: [] // 將在初始化時合併所有故事
+            }
+        };
+
+        // 初始化：合併所有故事到 all-50-stories
+        function initializeDatabase() {
+            const allStories = [];
+            Object.keys(storiesDatabase).forEach(category => {
+                if (category !== 'all-50-stories') {
+                    allStories.push(...storiesDatabase[category].stories);
+                }
+            });
+            storiesDatabase['all-50-stories'].stories = allStories;
+        }
+
+        // 初始化數據庫
+        initializeDatabase();
+
+        // 切換故事顯示
+        function toggleStories(card, seriesId) {
+            const container = card.querySelector('.stories-container');
+            const btn = card.querySelector('.expand-btn');
+            const grid = document.getElementById(seriesId + '-grid');
+
+            if (container.classList.contains('active')) {
+                container.classList.remove('active');
+                card.classList.remove('expanded');
+                btn.textContent = 'Xem câu chuyện';
+                btn.classList.remove('collapse-btn');
+            } else {
+                container.classList.add('active');
+                card.classList.add('expanded');
+                btn.textContent = 'Thu gọn';
+                btn.classList.add('collapse-btn');
+
+                if (grid.children.length === 0) {
+                    loadStories(seriesId, grid);
+                }
+            }
+        }
+
+        // 載入故事卡片
+        function loadStories(seriesId, grid) {
+            const series = storiesDatabase[seriesId];
+            if (!series) return;
+
+            series.stories.forEach(story => {
+                const storyCard = createStoryCard(story);
+                grid.appendChild(storyCard);
+            });
+        }
+
+        // 創建故事卡片
+        function createStoryCard(story) {
+            const card = document.createElement('div');
+            card.className = 'story-card';
+
+            // 構建圖片HTML
+            const imageHtml = story.image
+                ? `<img src="${story.image}" alt="${story.title}" class="story-thumbnail" onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(45deg, #667eea, #764ba2)'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center';">`
+                : '';
+
+            card.innerHTML = `
+                <div class="story-image" onclick="readStory('${story.url}')">
+                    ${imageHtml}
+                    <div class="story-number">${story.id}</div>
+                    <button class="read-overlay">📖</button>
+                </div>
+                <div class="story-info">
+                    <div class="story-title">${story.title}</div>
+                    ${story.titleEn ? `<div class="story-title-en">${story.titleEn}</div>` : ''}
+                    ${story.titleCn ? `<div class="story-title-cn">${story.titleCn}</div>` : ''}
+                    <div class="story-description">${story.description}</div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // 閱讀故事
+        function readStory(url) {
+            window.open(url, '_blank');
+        }
+
+        // 標籤切換功能
+        function showTab(event, tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // 添加新故事
+        function addNewStory() {
+            const storyUrl = document.getElementById('storyUrl').value.trim();
+            const storyTitle = document.getElementById('storyTitle').value.trim();
+            const storyDescription = document.getElementById('storyDescription').value.trim();
+            const category = document.getElementById('categorySelect').value;
+
+            const successMsg = document.getElementById('successMessage');
+            const errorMsg = document.getElementById('errorMessage');
+
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            if (!storyUrl || !storyTitle) {
+                showError('Vui lòng nhập liên kết và tiêu đề câu chuyện!');
+                return;
+            }
+
+            try {
+                const newStory = {
+                    id: String(Date.now()).substr(-2), // 使用時間戳的最後兩位作為ID
+                    title: storyTitle,
+                    description: storyDescription || 'Câu chuyện mới',
+                    url: storyUrl
+                };
+
+                // 添加到對應分類
+                if (storiesDatabase[category]) {
+                    storiesDatabase[category].stories.push(newStory);
+
+                    // 如果不是 all-50-stories，也添加到全部故事中
+                    if (category !== 'all-50-stories') {
+                        storiesDatabase['all-50-stories'].stories.push(newStory);
+                    }
+
+                    showSuccess(`✅ Đã thêm thành công câu chuyện "${storyTitle}" vào danh mục!`);
+
+                    // 清空輸入框
+                    document.getElementById('storyUrl').value = '';
+                    document.getElementById('storyTitle').value = '';
+                    document.getElementById('storyDescription').value = '';
+
+                    // 如果該分類正在展開，重新載入
+                    const expandedGrid = document.getElementById(category + '-grid');
+                    if (expandedGrid && expandedGrid.parentElement.parentElement.classList.contains('expanded')) {
+                        expandedGrid.innerHTML = '';
+                        loadStories(category, expandedGrid);
+                    }
+                }
+
+            } catch (error) {
+                showError('Thêm câu chuyện thất bại: ' + error.message);
+            }
+        }
+
+        function showSuccess(message) {
+            const successMsg = document.getElementById('successMessage');
+            successMsg.textContent = message;
+            successMsg.style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

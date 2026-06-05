@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>崇拜詩歌流程建設器 - Hymn Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial; background: #f0f4f8; color: #2c3e50; font-size: 12px; }
+        .topbar { position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #1a5f7a 0%, #159895 100%); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar h1 { font-size: 18px; font-weight: 600; }
+        .topbar-actions { display: flex; gap: 8px; }
+        .topbar-actions button { padding: 8px 14px; border: none; background: rgba(255,255,255,0.9); color: #1a5f7a; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+        .topbar-actions button:hover { background: white; }
+        .topbar-actions button.primary { background: #ffc107; color: #1a5f7a; }
+        .main { display: grid; grid-template-columns: 220px 1fr 280px; gap: 12px; padding: 12px; height: calc(100vh - 56px); }
+        .panel { background: white; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .panel-header { padding: 12px 14px; background: #f8fafc; font-weight: 600; font-size: 13px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .panel-body { flex: 1; overflow-y: auto; padding: 12px; }
+        .service-item { padding: 10px 12px; margin-bottom: 6px; background: #f8fafc; border-radius: 6px; cursor: pointer; border-left: 4px solid transparent; transition: all 0.15s; }
+        .service-item:hover { background: #e8f4f8; }
+        .service-item.selected { background: #d4edff; border-left-color: #1a5f7a; }
+        .service-item .date { font-weight: 600; color: #1a5f7a; font-size: 11px; }
+        .service-item .theme { font-size: 12px; margin-top: 2px; }
+        .detail-form { margin-bottom: 16px; }
+        .detail-form label { display: block; font-size: 11px; color: #64748b; margin-bottom: 4px; }
+        .detail-form input, .detail-form select, .detail-form textarea { width: 100%; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; margin-bottom: 10px; }
+        .flow-list { min-height: 120px; }
+        .flow-item { display: flex; align-items: center; padding: 10px 12px; margin-bottom: 6px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .flow-item .order { width: 28px; height: 28px; background: #1a5f7a; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; margin-right: 10px; flex-shrink: 0; }
+        .flow-item .type-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-right: 8px; background: #e0f2fe; color: #0369a1; }
+        .flow-item .type-badge.scripture { background: #fef3c7; color: #b45309; }
+        .flow-item .type-badge.sermon { background: #fce7f3; color: #be185d; }
+        .flow-item .type-badge.benediction { background: #d1fae5; color: #047857; }
+        .flow-item .type-badge.custom { background: #e0e7ff; color: #4338ca; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal-box { background: white; border-radius: 12px; width: 90%; max-width: 480px; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; }
+        .modal-title { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-weight: 600; font-size: 13px; }
+        .modal-body { padding: 16px; overflow-y: auto; flex: 1; }
+        .modal-body label { display: block; font-size: 11px; color: #64748b; margin-bottom: 4px; margin-top: 10px; }
+        .modal-body label:first-child { margin-top: 0; }
+        .modal-body input, .modal-body select, .modal-body textarea { width: 100%; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; margin-bottom: 6px; }
+        .modal-body textarea { min-height: 80px; resize: vertical; }
+        .modal-footer { padding: 12px 16px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; justify-content: flex-end; }
+        .modal-footer button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .modal-footer .btn-cancel { background: #e2e8f0; color: #475569; }
+        .modal-footer .btn-ok { background: #1a5f7a; color: white; }
+        .flow-item .content { flex: 1; min-width: 0; }
+        .flow-item .actions { display: flex; gap: 4px; }
+        .flow-item .actions button { padding: 4px 8px; font-size: 10px; border: none; background: #e2e8f0; border-radius: 4px; cursor: pointer; }
+        .flow-item .actions button:hover { background: #cbd5e1; }
+        .flow-item .actions button.del { background: #fee2e2; color: #dc2626; }
+        .add-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .add-btns button { padding: 8px 14px; border: 1px dashed #94a3b8; background: white; color: #64748b; border-radius: 6px; cursor: pointer; font-size: 11px; }
+        .add-btns button:hover { border-color: #1a5f7a; color: #1a5f7a; background: #f0f9ff; }
+        .add-btns button.add-primary { background: #1a5f7a; color: white; border-color: #1a5f7a; font-weight: 600; }
+        .add-btns button.add-primary:hover { background: #159895; border-color: #159895; color: white; }
+        .hymn-item { padding: 8px 10px; margin-bottom: 4px; background: #f8fafc; border-radius: 4px; cursor: pointer; border-left: 3px solid transparent; }
+        .hymn-item:hover { background: #e8f4f8; border-left-color: #1a5f7a; }
+        .hymn-item .name { font-size: 12px; font-weight: 500; }
+        .hymn-item .meta { font-size: 10px; color: #64748b; margin-top: 2px; }
+        .search-box input { width: 100%; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; margin-bottom: 10px; }
+        .empty-msg { text-align: center; padding: 30px 20px; color: #94a3b8; font-size: 12px; }
+        .msg { position: fixed; top: 70px; right: 20px; padding: 12px 18px; background: #059669; color: white; border-radius: 8px; font-size: 12px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .msg.error { background: #dc2626; }
+        .step-hint { background: #e0f2fe; color: #0369a1; padding: 10px 12px; border-radius: 6px; font-size: 11px; margin-bottom: 12px; line-height: 1.5; }
+        .panel-hint { font-size: 10px; color: #64748b; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>📋 崇拜詩歌流程建設器</h1>
+        <div class="topbar-actions">
+            <button class="primary" onclick="newService()">➕ 新建崇拜</button>
+            <button onclick="saveCurrentService()">💾 儲存</button>
+            <button onclick="generatePPT()">📊 生成 PPT</button>
+            <button onclick="location.href='index_playlist.html'">🏠 返回</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="panel">
+            <div class="panel-header"><span>📅 崇拜場次</span></div>
+            <div class="panel-body">
+                <div id="serviceList"></div>
+                <div class="empty-msg" id="serviceListEmpty">點擊「新建崇拜」開始</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header"><span>📝 當前場次詳情</span></div>
+            <div class="panel-body">
+                <div id="serviceDetail" style="display:none;">
+                    <div class="step-hint">
+                        <strong>使用步驟：</strong> 1️⃣ 填寫場次 → 2️⃣ 加入程序（右側點詩歌或下方按鈕）→ 3️⃣ 儲存 → 4️⃣ 生成 PPT
+                    </div>
+                    <div class="detail-form">
+                        <label>日期</label>
+                        <input type="date" id="serviceDate">
+                        <label>主題／崇拜類型</label>
+                        <select id="serviceThemeSelect" onchange="toggleThemeCustom()">
+                            <option value="主日崇拜">主日崇拜</option>
+                            <option value="禱告會">禱告會</option>
+                            <option value="聖餐崇拜">聖餐崇拜</option>
+                            <option value="復活節">復活節</option>
+                            <option value="聖誕節">聖誕節</option>
+                            <option value="青年崇拜">青年崇拜</option>
+                            <option value="_custom_">其他（自訂）</option>
+                        </select>
+                        <input type="text" id="serviceThemeCustom" placeholder="輸入自訂主題" style="display:none;margin-top:4px;">
+                        <label>地點</label>
+                        <select id="serviceLocationSelect" onchange="toggleLocationCustom()">
+                            <option value="主堂">主堂</option>
+                            <option value="副堂">副堂</option>
+                            <option value="戶外">戶外</option>
+                            <option value="_custom_">其他（自訂）</option>
+                        </select>
+                        <input type="text" id="serviceLocationCustom" placeholder="輸入自訂地點" style="display:none;margin-top:4px;">
+                        <label>崇拜負責人</label>
+                        <input type="text" id="serviceLeader" placeholder="如：張弟兄">
+                        <label>備註</label>
+                        <textarea id="serviceNotes" rows="2" placeholder="特別提醒..."></textarea>
+                    </div>
+                    <label style="font-size:11px;color:#64748b;margin-bottom:6px;display:block;">流程項目（可拖曳排序）</label>
+                    <div class="flow-list" id="flowList"></div>
+                    <div class="add-btns">
+                        <button class="add-primary" onclick="openHymnPicker()" title="從詩歌庫選一首加入流程最後">🎵 加入詩歌</button>
+                        <span style="font-size:10px;color:#94a3b8;margin:0 4px;align-self:center;">或 指定位置：</span>
+                        <button onclick="openAddProgramModal('front')">➕ 前</button>
+                        <button onclick="openAddProgramModal('middle')">➕ 中</button>
+                        <button onclick="openAddProgramModal('back')">➕ 後</button>
+                    </div>
+                </div>
+                <div id="serviceDetailEmpty" class="empty-msg">請選擇或新建崇拜場次</div>
+            </div>
+        </div>
+
+        <div class="panel" id="hymnPanel">
+            <div class="panel-header"><span>🎵 詩歌庫</span><span id="hymnCount">0</span></div>
+            <div class="panel-body">
+                <p class="panel-hint">👆 點擊詩歌即加入流程（最後）</p>
+                <div class="search-box"><input type="text" id="hymnSearch" placeholder="🔍 搜尋詩歌（2015首）" onkeyup="filterHymns()"></div>
+                <div id="hymnList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="hymnPickerModal" class="modal-overlay">
+        <div class="modal-box" style="max-width:500px;">
+            <div class="modal-title">選擇詩歌加入流程</div>
+            <div style="padding:12px;overflow-y:auto;flex:1;" id="hymnPickerList"></div>
+            <div class="modal-footer"><button class="btn-cancel" onclick="closeHymnPicker()">關閉</button></div>
+        </div>
+    </div>
+
+    <div id="addProgramModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title" id="addProgramModalTitle">加入程序</div>
+            <div class="modal-body">
+                <label>類型</label>
+                <select id="programTypeSelect" onchange="toggleProgramForm()">
+                    <option value="hymn">詩歌</option>
+                    <option value="scripture">經文</option>
+                    <option value="sermon">講道</option>
+                    <option value="benediction">祝福</option>
+                    <option value="custom">其他（自訂場境）</option>
+                </select>
+                <div id="programFormHymn" style="display:none;">
+                    <p style="font-size:11px;color:#64748b;margin:8px 0;">點擊下方「選擇詩歌」從詩歌庫加入</p>
+                    <button type="button" style="padding:8px 14px;border:1px dashed #94a3b8;background:white;color:#64748b;border-radius:6px;cursor:pointer;font-size:11px;" onclick="openHymnPickerFromProgram()">選擇詩歌</button>
+                </div>
+                <div id="programFormScripture" style="display:none;">
+                    <label>經文內容（可從聖經軟件複製後貼上）</label>
+                    <textarea id="programScriptureText" rows="4" placeholder="貼上經文，如：詩篇 23:1-6 耶和華是我的牧者..."></textarea>
+                    <label>負責人</label>
+                    <input type="text" id="programScriptureLeader" placeholder="如：李弟兄">
+                </div>
+                <div id="programFormSermon" style="display:none;">
+                    <label>講道主題</label>
+                    <input type="text" id="programSermonTitle" placeholder="如：信心的功課">
+                    <label>經文（可從聖經軟件複製後貼上）</label>
+                    <textarea id="programSermonScripture" rows="3" placeholder="貼上經文"></textarea>
+                    <label>負責人</label>
+                    <input type="text" id="programSermonLeader" placeholder="如：王牧師">
+                </div>
+                <div id="programFormBenediction" style="display:none;">
+                    <label>祝福經文（可從聖經軟件複製後貼上）</label>
+                    <textarea id="programBenedictionText" rows="4" placeholder="貼上祝福經文，如：民數記 6:24-26 願耶和華賜福給你..."></textarea>
+                    <label>負責人</label>
+                    <input type="text" id="programBenedictionLeader" placeholder="如：張弟兄">
+                </div>
+                <div id="programFormCustom" style="display:none;">
+                    <label>自訂程序名稱（如：進堂樂、宣召、禱告、殿樂...）</label>
+                    <input type="text" id="programCustomLabel" placeholder="輸入自訂場境名稱">
+                    <label>備註／內容（選填）</label>
+                    <textarea id="programCustomNote" rows="2" placeholder="可填經文、說明等"></textarea>
+                    <label>負責人</label>
+                    <input type="text" id="programCustomLeader" placeholder="如：李弟兄">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeAddProgramModal()">取消</button>
+                <button class="btn-ok" onclick="submitAddProgram()">加入</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="data/source-hymns-loader.js"></script>
+    <script>
+        var allHymns = [];
+        var HYMNAL_NAMES = { hymn_00:'世紀頌讚', hymn_22:'新編讚美詩', hymn_most:'常用', hymn_pwc:'敬拜短歌', hymn_chi:'華人', hymn_world:'世界' };
+        var services = [];
+        var currentServiceId = null;
+        var STORAGE_KEY = 'hymn_playlist_services';
+        var addProgramPosition = 'back';
+        var addProgramFromModal = false;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadServices();
+            loadHymns();
+        });
+
+        function loadServices() {
+            try {
+                var s = localStorage.getItem(STORAGE_KEY);
+                services = s ? JSON.parse(s) : [];
+                services.forEach(function(svc){ normalizeService(svc); });
+            } catch(e) { services = []; }
+            renderServiceList();
+            if (currentServiceId && services.find(function(x){ return x.id === currentServiceId; })) {
+                selectService(currentServiceId);
+            } else if (services.length > 0) {
+                selectService(services[0].id);
+            } else {
+                showDetailEmpty();
+            }
+        }
+
+        function saveServices() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(services));
+        }
+
+        function newService() {
+            var id = 'svc_' + Date.now();
+            var today = new Date().toISOString().slice(0, 10);
+            services.unshift({ id: id, date: today, theme: '主日崇拜', themeSelect: '主日崇拜', themeCustom: '', location: '主堂', locationSelect: '主堂', locationCustom: '', leader: '', notes: '', items: [] });
+            saveServices();
+            renderServiceList();
+            selectService(id);
+            msg('已新建崇拜場次');
+        }
+
+        function toggleThemeCustom() {
+            var sel = document.getElementById('serviceThemeSelect').value;
+            document.getElementById('serviceThemeCustom').style.display = sel === '_custom_' ? 'block' : 'none';
+        }
+        function toggleLocationCustom() {
+            var sel = document.getElementById('serviceLocationSelect').value;
+            document.getElementById('serviceLocationCustom').style.display = sel === '_custom_' ? 'block' : 'none';
+        }
+
+        function saveCurrentService() {
+            if (!currentServiceId) { msg('請先選擇或新建崇拜', 'error'); return; }
+            var svc = services.find(function(x){ return x.id === currentServiceId; });
+            if (!svc) return;
+            svc.date = document.getElementById('serviceDate').value || svc.date;
+            var themeSel = document.getElementById('serviceThemeSelect').value;
+            svc.themeSelect = themeSel;
+            svc.themeCustom = document.getElementById('serviceThemeCustom').value || '';
+            svc.theme = themeSel === '_custom_' ? svc.themeCustom : themeSel;
+            var locSel = document.getElementById('serviceLocationSelect').value;
+            svc.locationSelect = locSel;
+            svc.locationCustom = document.getElementById('serviceLocationCustom').value || '';
+            svc.location = locSel === '_custom_' ? svc.locationCustom : locSel;
+            svc.leader = document.getElementById('serviceLeader').value || '';
+            svc.notes = document.getElementById('serviceNotes').value || '';
+            saveServices();
+            renderServiceList();
+            msg('已儲存');
+        }
+
+        function renderServiceList() {
+            var el = document.getElementById('serviceList');
+            var empty = document.getElementById('serviceListEmpty');
+            if (services.length === 0) {
+                el.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+            el.innerHTML = services.map(function(s) {
+                var sel = s.id === currentServiceId ? ' selected' : '';
+                return '<div class="service-item' + sel + '" onclick="selectService(\'' + s.id + '\')">' +
+                    '<div class="date">' + (s.date || '—') + '</div>' +
+                    '<div class="theme">' + (s.theme || '未命名') + '</div></div>';
+            }).join('');
+        }
+
+        function normalizeService(svc) {
+            if (!svc.themeSelect) {
+                var themes = ['主日崇拜','禱告會','聖餐崇拜','復活節','聖誕節','青年崇拜'];
+                svc.themeSelect = themes.indexOf(svc.theme) >= 0 ? svc.theme : '_custom_';
+                svc.themeCustom = svc.themeSelect === '_custom_' ? (svc.theme || '') : '';
+            }
+            svc.theme = svc.themeSelect === '_custom_' ? (svc.themeCustom || '') : svc.themeSelect;
+            if (!svc.locationSelect) {
+                var locs = ['主堂','副堂','戶外'];
+                svc.locationSelect = locs.indexOf(svc.location) >= 0 ? svc.location : '_custom_';
+                svc.locationCustom = svc.locationSelect === '_custom_' ? (svc.location || '') : '';
+            }
+            svc.location = svc.locationSelect === '_custom_' ? (svc.locationCustom || '') : svc.locationSelect;
+            return svc;
+        }
+
+        function selectService(id) {
+            currentServiceId = id;
+            var svc = services.find(function(x){ return x.id === id; });
+            if (!svc) { showDetailEmpty(); return; }
+            svc = normalizeService(svc);
+            document.getElementById('serviceDetail').style.display = 'block';
+            document.getElementById('serviceDetailEmpty').style.display = 'none';
+            document.getElementById('serviceDate').value = svc.date || '';
+            document.getElementById('serviceThemeSelect').value = svc.themeSelect || '主日崇拜';
+            document.getElementById('serviceThemeCustom').value = svc.themeCustom || '';
+            document.getElementById('serviceThemeCustom').style.display = svc.themeSelect === '_custom_' ? 'block' : 'none';
+            document.getElementById('serviceLocationSelect').value = svc.locationSelect || '主堂';
+            document.getElementById('serviceLocationCustom').value = svc.locationCustom || '';
+            document.getElementById('serviceLocationCustom').style.display = svc.locationSelect === '_custom_' ? 'block' : 'none';
+            document.getElementById('serviceLeader').value = svc.leader || '';
+            document.getElementById('serviceNotes').value = svc.notes || '';
+            renderFlowList();
+            renderServiceList();
+        }
+
+        function showDetailEmpty() {
+            document.getElementById('serviceDetail').style.display = 'none';
+            document.getElementById('serviceDetailEmpty').style.display = 'block';
+        }
+
+        function renderFlowList() {
+            var svc = services.find(function(x){ return x.id === currentServiceId; });
+            if (!svc || !svc.items) return;
+            var list = document.getElementById('flowList');
+            if (svc.items.length === 0) {
+                list.innerHTML = '<div class="empty-msg" style="padding:20px;">流程為空，點擊下方按鈕加入程序</div>';
+                return;
+            }
+            list.innerHTML = svc.items.map(function(it, i) {
+                var typeCls = it.type === 'scripture' ? 'scripture' : (it.type === 'sermon' ? 'sermon' : (it.type === 'benediction' ? 'benediction' : (it.type === 'custom' ? 'custom' : '')));
+                var typeLabel = it.type === 'scripture' ? '經文' : (it.type === 'sermon' ? '講道' : (it.type === 'benediction' ? '祝福' : (it.type === 'custom' ? (it.customLabel || it.text || '自訂') : '詩歌')));
+                var raw = it.type === 'hymn' ? (it.name || it.hymnId || '—') : (it.type === 'sermon' ? (it.title || it.text || '—') : (it.text || '—'));
+                var text = (raw && raw.length > 60) ? raw.slice(0, 60) + '…' : raw;
+                var leader = (it.leader && it.type !== 'hymn') ? ' <span style="color:#94a3b8;font-size:10px;">(' + escapeHtml(it.leader) + ')</span>' : '';
+                return '<div class="flow-item" data-idx="' + i + '">' +
+                    '<span class="order">' + (i + 1) + '</span>' +
+                    '<span class="type-badge ' + typeCls + '">' + typeLabel + '</span>' +
+                    '<span class="content">' + escapeHtml(text) + leader + '</span>' +
+                    '<div class="actions"><button onclick="moveFlowItem(' + i + ',-1)">⬆</button><button onclick="moveFlowItem(' + i + ',1)">⬇</button><button class="del" onclick="removeFlowItem(' + i + ')">✕</button></div></div>';
+            }).join('');
+        }
+
+        function escapeHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        function getInsertIndex(svc, position) {
+            if (!svc.items || svc.items.length === 0) return 0;
+            if (position === 'front') return 0;
+            if (position === 'back') return svc.items.length;
+            if (position === 'middle') return Math.floor(svc.items.length / 2);
+            return svc.items.length;
+        }
+
+        function addFlowItem(item, position) {
+            var svc = services.find(function(x){ return x.id === currentServiceId; });
+            if (!svc) { msg('請先選擇崇拜場次', 'error'); return; }
+            if (!svc.items) svc.items = [];
+            var idx = getInsertIndex(svc, position || 'back');
+            svc.items.splice(idx, 0, item);
+            saveServices();
+            renderFlowList();
+        }
+
+        function removeFlowItem(idx) {
+            var svc = services.find(function(x){ return x.id === currentServiceId; });
+            if (!svc || !svc.items) return;
+            svc.items.splice(idx, 1);
+            saveServices();
+            renderFlowList();
+        }
+
+        function moveFlowItem(idx, dir) {
+            var svc = services.find(function(x){ return x.id === currentServiceId; });
+            if (!svc || !svc.items) return;
+            var newIdx = idx + dir;
+            if (newIdx < 0 || newIdx >= svc.items.length) return;
+            var t = svc.items[idx];
+            svc.items[idx] = svc.items[newIdx];
+            svc.items[newIdx] = t;
+            saveServices();
+            renderFlowList();
+        }
+
+        function openAddProgramModal(position) {
+            addProgramPosition = position;
+            document.getElementById('addProgramModalTitle').textContent = '加入程序（' + (position === 'front' ? '前' : position === 'middle' ? '中' : '後') + '）';
+            document.getElementById('programTypeSelect').value = 'hymn';
+            document.getElementById('programScriptureText').value = '';
+            document.getElementById('programScriptureLeader').value = '';
+            document.getElementById('programSermonTitle').value = '';
+            document.getElementById('programSermonScripture').value = '';
+            document.getElementById('programSermonLeader').value = '';
+            document.getElementById('programBenedictionText').value = '';
+            document.getElementById('programBenedictionLeader').value = '';
+            document.getElementById('programCustomLabel').value = '';
+            document.getElementById('programCustomNote').value = '';
+            document.getElementById('programCustomLeader').value = '';
+            toggleProgramForm();
+            document.getElementById('addProgramModal').classList.add('show');
+        }
+
+        function closeAddProgramModal() {
+            document.getElementById('addProgramModal').classList.remove('show');
+        }
+
+        function toggleProgramForm() {
+            var t = document.getElementById('programTypeSelect').value;
+            document.getElementById('programFormHymn').style.display = t === 'hymn' ? 'block' : 'none';
+            document.getElementById('programFormScripture').style.display = t === 'scripture' ? 'block' : 'none';
+            document.getElementById('programFormSermon').style.display = t === 'sermon' ? 'block' : 'none';
+            document.getElementById('programFormBenediction').style.display = t === 'benediction' ? 'block' : 'none';
+            document.getElementById('programFormCustom').style.display = t === 'custom' ? 'block' : 'none';
+        }
+
+        function submitAddProgram() {
+            var t = document.getElementById('programTypeSelect').value;
+            if (t === 'hymn') {
+                msg('請點擊「選擇詩歌」從詩歌庫加入', 'error');
+                return;
+            }
+            if (t === 'scripture') {
+                var text = document.getElementById('programScriptureText').value.trim();
+                if (!text) { msg('請輸入經文', 'error'); return; }
+                addFlowItem({ type: 'scripture', text: text, leader: document.getElementById('programScriptureLeader').value.trim() }, addProgramPosition);
+            } else if (t === 'sermon') {
+                var title = document.getElementById('programSermonTitle').value.trim();
+                if (!title) { msg('請輸入講道主題', 'error'); return; }
+                addFlowItem({ type: 'sermon', title: title, text: title, scripture: document.getElementById('programSermonScripture').value.trim(), leader: document.getElementById('programSermonLeader').value.trim() }, addProgramPosition);
+            } else if (t === 'benediction') {
+                var text = document.getElementById('programBenedictionText').value.trim();
+                if (!text) { msg('請輸入祝福經文', 'error'); return; }
+                addFlowItem({ type: 'benediction', text: text, leader: document.getElementById('programBenedictionLeader').value.trim() }, addProgramPosition);
+            } else if (t === 'custom') {
+                var label = document.getElementById('programCustomLabel').value.trim();
+                if (!label) { msg('請輸入自訂程序名稱', 'error'); return; }
+                addFlowItem({ type: 'custom', text: label, customLabel: label, note: document.getElementById('programCustomNote').value.trim(), leader: document.getElementById('programCustomLeader').value.trim() }, addProgramPosition);
+            }
+            closeAddProgramModal();
+            msg('已加入程序');
+        }
+
+        function openHymnPickerFromProgram() {
+            addProgramFromModal = true;
+            closeAddProgramModal();
+            document.getElementById('hymnPickerModal').classList.add('show');
+            renderHymnPickerList();
+        }
+
+        function openHymnPicker() {
+            addProgramFromModal = false;
+            addProgramPosition = 'back';
+            document.getElementById('hymnPickerModal').classList.add('show');
+            renderHymnPickerList();
+        }
+
+        function closeHymnPicker() {
+            document.getElementById('hymnPickerModal').classList.remove('show');
+        }
+
+        function renderHymnPickerList() {
+            var q = (document.getElementById('hymnSearch').value || '').toLowerCase();
+            var list = allHymns.filter(function(h){
+                if (!q) return true;
+                return (h.name||'').toLowerCase().indexOf(q)>=0 || (h.number||'').toLowerCase().indexOf(q)>=0 || (h.book||'').toLowerCase().indexOf(q)>=0;
+            }).slice(0, 80);
+            document.getElementById('hymnPickerList').innerHTML = list.length === 0 ? '<div class="empty-msg">無符合詩歌</div>' :
+                list.map(function(h){
+                    return '<div class="hymn-item" onclick="addHymnToFlow(\'' + (h.id||'').replace(/'/g,"\\'") + '\',\'' + (h.name||'').replace(/'/g,"\\'") + '\')">' +
+                        '<div class="name">' + escapeHtml(h.name||'—') + ' <span style="color:#94a3b8;font-size:10px;">#' + (h.number||'') + '</span></div>' +
+                        '<div class="meta">' + escapeHtml(h.book||'') + '</div></div>';
+                }).join('');
+        }
+
+        function addHymnToFlow(id, name) {
+            var pos = addProgramFromModal ? addProgramPosition : 'back';
+            addFlowItem({ type: 'hymn', hymnId: id, name: name }, pos);
+            closeHymnPicker();
+            if (addProgramFromModal) {
+                closeAddProgramModal();
+                addProgramFromModal = false;
+                msg('已加入詩歌');
+            }
+        }
+
+        function filterHymns() {
+            renderHymnList();
+            if (document.getElementById('hymnPickerModal').classList.contains('show')) renderHymnPickerList();
+        }
+
+        function loadHymns() {
+            (window.loadSourceHymns || function(){ return fetch('data/source-hymns.json').then(function(r){ return r.ok ? r.json() : null; }); })().then(function(data){
+                allHymns = (data && data.hymns) ? data.hymns.filter(function(h){ return h.sourcePath; }).map(function(h){
+                    var m = (h.title_zh || h.title_en || '').match(/[\u4e00-\u9fff\u3000-\u303f\u3100-\u312f\uff00-\uffef]+/g);
+                    var name = m ? m.join(' ') : (h.title_zh || h.title_en || h.number || '—');
+                    return { id: h.id, name: name || (h.title_zh || h.title_en || '—'), number: h.number || '', book: (HYMNAL_NAMES[h.hymnal] || h.hymnal || '') };
+                }) : [];
+                renderHymnList();
+                msg('已載入 ' + allHymns.length + ' 首詩歌');
+            }).catch(function(){
+                allHymns = [];
+                renderHymnList();
+                msg('無法載入詩歌資料', 'error');
+            });
+        }
+
+        function renderHymnList() {
+            var q = (document.getElementById('hymnSearch').value || '').toLowerCase();
+            var list = allHymns.filter(function(h){
+                if (!q) return true;
+                return (h.name||'').toLowerCase().indexOf(q)>=0 || (h.number||'').toLowerCase().indexOf(q)>=0 || (h.book||'').toLowerCase().indexOf(q)>=0;
+            }).slice(0, 100);
+            document.getElementById('hymnList').innerHTML = list.length === 0 ? '<div class="empty-msg">無詩歌</div>' :
+                list.map(function(h){
+                    return '<div class="hymn-item" onclick="addHymnToFlow(\'' + (h.id||'').replace(/'/g,"\\'") + '\',\'' + (h.name||'').replace(/'/g,"\\'") + '\')">' +
+                        '<div class="name">' + escapeHtml(h.name||'—') + ' <span style="color:#94a3b8;font-size:10px;">#' + (h.number||'') + '</span></div>' +
+                        '<div class="meta">' + escapeHtml(h.book||'') + '</div></div>';
+                }).join('');
+            document.getElementById('hymnCount').textContent = list.length;
+        }
+
+        function generatePPT() {
+            var svc = services.find(function(x){ return x.id === currentServiceId; });
+            if (!svc || !svc.items || svc.items.length === 0) {
+                msg('請先：1) 選擇崇拜 2) 點「加入詩歌」或右側詩歌庫加入詩歌', 'error');
+                return;
+            }
+            var ids = svc.items.filter(function(it){ return it.type === 'hymn' && it.hymnId; }).map(function(it){ return it.hymnId; });
+            if (ids.length === 0) {
+                msg('流程中無詩歌。請點「加入詩歌」或右側詩歌庫點擊詩歌加入', 'error');
+                return;
+            }
+            localStorage.setItem('ppt_generator_hymn_ids', JSON.stringify(ids));
+            window.open('ppt_generator.html?from=playlist&ids=' + encodeURIComponent(ids.join(',')), '_blank');
+            msg('已開啟 PPT 生成器，將載入 ' + ids.length + ' 首詩歌');
+        }
+
+        function msg(text, type) {
+            var div = document.createElement('div');
+            div.className = 'msg' + (type === 'error' ? ' error' : '');
+            div.textContent = text;
+            document.body.appendChild(div);
+            setTimeout(function(){ div.remove(); }, 2500);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SWOT · 策略收斂</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <script src="assets/shell.js"></script>
+  <div class="planning-wrap wide">
+    <div class="step-head-mini">
+      <h2>SWOT</h2>
+      <a class="step-head-back" href="index.html">← 流程總覽</a>
+    </div>
+    <div class="report-dest-strip">
+      <span class="report-dest-icon" aria-hidden="true">📊</span>
+      <span>儲存後戰情總覽會顯示四象限摘要；下一步到 <a href="goals.html">SMART 目標</a>。</span>
+    </div>
+    <div class="usage-hint-box" style="margin-bottom:14px;">
+      <h2 style="font-size:1rem;margin:0 0 8px;color:#0f172a;">建議用法</h2>
+      <p style="margin:0;font-size:14px;line-height:1.55;">約 90 分鐘，左欄對照 Step 0／Step 3，邊談邊填四象限。</p>
+    </div>
+
+    <div class="planning-layout cols-2">
+      <aside class="ref-panel" id="ref-panel">
+        <div class="ref-block">
+          <h3>Step 0 · 摘要</h3>
+          <div id="snap-milestones"></div>
+          <div id="snap-scores" class="score-mini" style="margin-top:8px;"></div>
+          <p id="snap-reflect" style="margin:8px 0 0;font-size:12px;color:var(--muted);"></p>
+        </div>
+        <div class="ref-block">
+          <h3>Step 3 · 整理重點</h3>
+          <ul class="compact" id="snap-bullets"><li>（尚未在 Step 3 產生摘要）</li></ul>
+        </div>
+      </aside>
+
+      <div class="fill-zone" style="margin:0;">
+        <p class="fill-zone-hint" style="margin-top:0;">四欄可各加多條；「來源」方便追溯問卷／歷史或自由補充。</p>
+        <div class="swot-grid-2x2" id="swot-root"></div>
+        <p style="margin-top:14px;">
+          <button type="button" class="btn-big" id="btn-save" style="display:inline-block;width:auto;max-width:none;">儲存 SWOT</button>
+          <span id="save-status" class="status-saved"></span>
+        </p>
+        <a class="btn-big step-jump" href="goals.html">前往 SMART 目標</a>
+        <p class="nav-back"><a href="strategy.html">策略首頁</a> · <a href="index.html">流程總覽</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/pipeline.js"></script>
+  <script>
+(function () {
+  var P = window.LongTermPipeline;
+  var QUAD = ["S", "W", "O", "T"];
+  var QUAD_TITLE = { S: "S 優勢", W: "W 弱點", O: "O 機會", T: "T 威脅" };
+  var QUAD_CLASS = { S: "s", W: "w", O: "o", T: "t" };
+  var SOURCE_OPTS = [
+    { v: "step0", t: "Step 0" },
+    { v: "step3", t: "Step 3" },
+    { v: "free", t: "自由補充" },
+  ];
+  var HEALTH_LABELS = {
+    leadership: "領導與接班", mission: "使命匹配", finance: "財務", culture: "文化",
+    tech: "科技", worship: "敬拜", fellowship: "相交", discipleship: "門訓", evangelism: "福音",
+  };
+
+  function genId() {
+    return "sw-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+  }
+
+  var state = P.loadSwot();
+  QUAD.forEach(function (q) {
+    if (!state.items[q].length) {
+      state.items[q].push({ id: genId(), text: "", sourceRef: "free" });
+    }
+  });
+
+  function fillRefPanel() {
+    var snap = P.getStep0SnapshotForSwot();
+    var mh = document.getElementById("snap-milestones");
+    if (snap.recentMilestones && snap.recentMilestones.length) {
+      mh.innerHTML = "<strong>最近里程碑</strong><ul class=\"compact\">" +
+        snap.recentMilestones.map(function (m) {
+          return "<li>" + (m.year || "—") + " · " + (m.event || "").slice(0, 80) + "</li>";
+        }).join("") + "</ul>";
+    } else {
+      mh.innerHTML = "<span class=\"score-mini\">（Step 0 尚無里程碑）</span>";
+    }
+    var sc = document.getElementById("snap-scores");
+    var parts = [];
+    Object.keys(snap.healthScores || {}).forEach(function (k) {
+      if (HEALTH_LABELS[k]) parts.push(HEALTH_LABELS[k] + " <span>" + snap.healthScores[k] + "</span>/5");
+    });
+    sc.innerHTML = parts.length ? "<strong>健康自評</strong><br>" + parts.join(" · ") : "";
+
+    var ref = document.getElementById("snap-reflect");
+    ref.textContent = snap.reflectionPreview
+      ? "反思節錄：" + snap.reflectionPreview + (snap.reflectionPreview.length >= 200 ? "…" : "")
+      : "";
+
+    var sum = P.loadSummary();
+    var ul = document.getElementById("snap-bullets");
+    if (sum.summaryBullets && sum.summaryBullets.length) {
+      ul.innerHTML = sum.summaryBullets.map(function (b) {
+        return "<li>" + escapeHtml(b) + "</li>";
+      }).join("");
+    }
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function persist() {
+    P.saveSwot({ items: state.items });
+    var el = document.getElementById("save-status");
+    el.textContent = "已儲存";
+    setTimeout(function () { el.textContent = ""; }, 1500);
+  }
+
+  function render() {
+    var root = document.getElementById("swot-root");
+    root.innerHTML = "";
+    QUAD.forEach(function (q) {
+      var col = document.createElement("div");
+      col.className = "swot-col " + QUAD_CLASS[q];
+      col.innerHTML = "<h3>" + QUAD_TITLE[q] + "</h3><div class=\"swot-items\" data-q=\"" + q + "\"></div>" +
+        "<button type=\"button\" class=\"btn-row add-line\" data-q=\"" + q + "\">＋ 新增一條</button>";
+      root.appendChild(col);
+      var container = col.querySelector(".swot-items");
+      state.items[q].forEach(function (item) {
+        container.appendChild(renderItem(q, item));
+      });
+      col.querySelector(".add-line").addEventListener("click", function () {
+        state.items[q].push({ id: genId(), text: "", sourceRef: "free" });
+        render();
+        persist();
+      });
+    });
+  }
+
+  function renderItem(q, item) {
+    var wrap = document.createElement("div");
+    wrap.className = "swot-item";
+    wrap.dataset.id = item.id;
+    var ta = document.createElement("textarea");
+    ta.className = "mini";
+    ta.value = item.text || "";
+    ta.placeholder = "條目內容…";
+    ta.addEventListener("input", function () {
+      item.text = ta.value;
+      persist();
+    });
+    var tools = document.createElement("div");
+    tools.className = "row-tools";
+    var lab = document.createElement("span");
+    lab.textContent = "來源：";
+    var sel = document.createElement("select");
+    sel.className = "source-ref";
+    SOURCE_OPTS.forEach(function (o) {
+      var opt = document.createElement("option");
+      opt.value = o.v;
+      opt.textContent = o.t;
+      if (item.sourceRef === o.v) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", function () {
+      item.sourceRef = sel.value;
+      persist();
+    });
+    var del = document.createElement("button");
+    del.type = "button";
+    del.className = "btn-tiny";
+    del.textContent = "刪除";
+    del.addEventListener("click", function () {
+      state.items[q] = state.items[q].filter(function (x) {
+        return x.id !== item.id;
+      });
+      if (!state.items[q].length) {
+        state.items[q].push({ id: genId(), text: "", sourceRef: "free" });
+      }
+      render();
+      persist();
+    });
+    tools.appendChild(lab);
+    tools.appendChild(sel);
+    tools.appendChild(del);
+    wrap.appendChild(ta);
+    wrap.appendChild(tools);
+    return wrap;
+  }
+
+  document.getElementById("btn-save").addEventListener("click", function () {
+    P.saveSwot({ items: state.items });
+    document.getElementById("save-status").textContent = "已儲存於 localStorage";
+  });
+
+  fillRefPanel();
+  render();
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公告欄 - Notices</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>📢 公告欄</h1>
+        <p>發布公告、範圍設定、匯出 CSV</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 行政、班導。</p>
+            <p><b>有什麼功能？</b> 發布公告、設定範圍（all／班級／年級）、匯出。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📤 發布公告</div>
+        <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+            <div><label class="stat-label">標題</label><br><input name="title" class="module-input" required placeholder="公告標題" style="min-width:180px;"></div>
+            <div><label class="stat-label">內容</label><br><input name="content" class="module-input" placeholder="公告內容" style="min-width:220px;"></div>
+            <div><label class="stat-label">範圍</label><br><input name="scope" class="module-input" value="all" placeholder="all、班級、年級" style="width:100px;"></div>
+            <div><br><button type="submit" class="module-btn">發布</button></div>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📋 公告列表 <button class="module-btn module-btn-secondary" id="btnExport" style="float:right;">📤 匯出 CSV</button></div>
+        <div id="list"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+            if (db.ensureSeedFull) db.ensureSeedFull();
+
+            const notices = (db.data.communication && db.data.communication.notices) || [];
+
+            function draw() {
+                const a = notices.slice(-200).reverse();
+                const body = a.map(x => '<tr><td>' + x.id + '</td><td>' + (x.title || '—') + '</td><td>' + (x.content || '—') + '</td><td>' + (x.scope || '—') + '</td><td>' + (x.createdAt || '').slice(0, 16) + '</td></tr>').join('');
+                document.getElementById('list').innerHTML = '<table class="module-table"><thead><tr><th>ID</th><th>標題</th><th>內容</th><th>範圍</th><th>時間</th></tr></thead><tbody>' + (body || '<tr><td colspan="5">尚無公告</td></tr>') + '</tbody></table>';
+            }
+
+            document.getElementById('f').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                db.insert('communication.notices', {
+                    title: (fm.get('title') || '').trim(),
+                    content: (fm.get('content') || '').trim(),
+                    scope: (fm.get('scope') || 'all').trim()
+                });
+                this.reset();
+                draw();
+            };
+
+            document.getElementById('btnExport').onclick = function() {
+                const cols = ['id', 'title', 'content', 'scope', 'createdAt'];
+                const head = cols.join(',');
+                const body = notices.map(r => cols.map(k => '"' + String(r[k] ?? '').replace(/"/g, '""') + '"').join(',')).join('\n');
+                const A = document.createElement('a');
+                A.href = URL.createObjectURL(new Blob(['\ufeff' + head + '\n' + body], { type: 'text/csv;charset=utf-8' }));
+                A.download = 'notices_' + new Date().toISOString().slice(0, 10) + '.csv';
+                A.click();
+            };
+
+            draw();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+---
+description: 外界網站材料考證、匯入本站模組（含 QnA／AI）之標準流程
+globs: "**/qna/**/*"
+alwaysApply: false
+---
+
+# 外界網站材料 · 考證 → 定案 → 計策 → 落地
+
+適用：將第三方網站之目錄／題目／文章連結納入 `bible100_new`（如 `qna/`、日後其他模組）或供 AI 提示詞引用。
+
+## 1. 考證（先讀原站，再動手）
+
+- 打開原站 **列表頁／目錄／sitemap**，確認：分類是「書卷／主題／標籤」哪一種？是否穩定？
+- 抽查 **10～20 條連結**：是否直達 **單篇答案**（非僅首頁、非僅總目錄）？是否有 `#錨點`？
+- 記錄 **語言**、**立場／版權聲明**（是否禁止 iframe／轉載）與 **技術限制**（登入牆、地區封鎖）。
+- 若站方禁止 **framing**（如 ChristianAnswers 條款），預設 **新分頁或頂層導覽**，勿假設 iframe 可用。
+
+## 2. 定案（資訊架構對齊本站）
+
+- **頂層大類**（對齊 `qna_nav_config.js`）：`A` 聖經書卷、`A_OT`、`A_NT`、`B` 神學教義、`C` 信徒教會；必要時每題另帶 `topicTag`。
+- **頂層第二列（來源）**：**一鈕＝一可識別來源**（`sourceId`）；細分書卷 **不放頂欄**，放側欄。
+- **側欄層級**：目標 `來源 →（書卷或主題）→ 題目 → URL`；避免單一「未分類」大桶；可合併多 JSON 時用 **前綴** 區分系列。
+- **AI 使用**：題目＋URL 可進提示詞模板；**不**以 AI 自動生成分類樹為唯一權威；人工可校對欄位必留。
+
+## 3. 計策（資料與維護）
+
+- **結構化儲存**：爬蟲／匯出為 `qna/data/qna_data_*.json`（`subcategories` → `{ title, url }[]`）。
+- **導航對照**：在 `qna/tools/build_sidebar_bundle.mjs` 的 `NAV_SOURCE_FILES` 加上 `sourceId → [json 檔名]`；執行 `node qna/tools/build_sidebar_bundle.mjs` 產生 `qna_sidebar_bundle.js`。
+- **導航列**：在 `qna/qna_nav_config.js` 為每個 `sourceId` 增列：`label`、`category`、`landing`、**`sidebar`**（相對 `.htm` 備援，或 **完整 `https://` 時** 在 V2 左欄 iframe 直載該目錄頁）。
+- **去重與抽樣**：上線前抽樣點擊；同 URL 只保留一筆或標註 `alternateLabels`（文件層記於 `qna/SOURCES_PLAN.md`）。
+
+## 4. 落地（驗收）
+
+- 離線：`file://` 下 `<script src="data/qna_sidebar_bundle.js">` 可載入；無 bundle 時左欄 fallback 行為正確。
+- 首頁／列表 URL **不得**當作唯一「答案」連結（除非明確標為「目錄入口」）。
+- 大表 `qna_list_auto.htm` 僅作 **「全部來源」備援**，不作為有 bundle 來源的主要體驗。
+
+## 5. 延伸閱讀（本 repo）
+
+- 十七類來源細部對照、URL、JSON 檔名：**`qna/SOURCES_PLAN.md`**

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>教會健康戰略診斷系統 | Church SWOT AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800" x-data="churchStrategy()">
+
+    <nav class="bg-indigo-900 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <span class="text-xl font-bold">⛪ 教會戰略 AI 導航儀</span>
+            <span class="text-sm opacity-75">五年計劃預備工具</span>
+        </div>
+    </nav>
+
+    <main class="container mx-auto max-w-4xl p-6">
+        
+        <div x-show="step === 'chat'" class="bg-white rounded-2xl shadow-xl p-8 border border-indigo-100">
+            <div class="mb-8">
+                <div class="flex justify-between mb-2">
+                    <span class="text-indigo-600 font-bold" x-text="isProbing ? '🔍 深度察驗中...' : '📊 基礎診斷'"></span>
+                    <span x-text="`${currentQ + 1} / ${questions.length}`"></span>
+                </div>
+                <div class="w-full bg-gray-200 h-2 rounded-full"><div class="bg-indigo-600 h-2 rounded-full transition-all" :style="`width: ${((currentQ+1)/questions.length)*100}%`"></div></div>
+            </div>
+
+            <div class="space-y-6">
+                <h2 class="text-2xl font-bold text-gray-700" x-text="questions[currentQ].text"></h2>
+                
+                <template x-if="questions[currentQ].type === 'choice'">
+                    <div class="grid grid-cols-1 gap-3">
+                        <template x-for="opt in questions[currentQ].options">
+                            <button @click="handleAnswer(opt)" class="p-4 text-left border rounded-xl hover:bg-indigo-50 hover:border-indigo-500 transition-all text-lg" x-text="opt"></button>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="questions[currentQ].type === 'text'">
+                    <div class="space-y-4">
+                        <textarea x-model="tempInput" class="w-full p-4 border rounded-xl focus:ring-2 focus:ring-indigo-500 h-40 text-lg" :placeholder="questions[currentQ].placeholder"></textarea>
+                        <button @click="handleAnswer(tempInput)" class="bg-indigo-600 text-white px-10 py-4 rounded-xl font-bold hover:bg-indigo-700 transition-all w-full md:w-auto">確認提交</button>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <div x-show="step === 'report'" id="final-report" class="bg-white p-10 rounded-lg shadow-2xl border border-gray-200 hidden" :class="{ 'block': step === 'report' }">
+            <div class="text-center border-b-4 border-indigo-900 pb-6 mb-8">
+                <h1 class="text-4xl font-extrabold text-gray-900 mb-2">教會五年發展戰略規劃書</h1>
+                <p class="text-gray-500 uppercase tracking-widest">正式公文報告範本 (2026-2030)</p>
+            </div>
+
+            <section class="mb-10">
+                <h2 class="text-2xl font-bold text-indigo-900 mb-4 flex items-center">
+                    <span class="bg-indigo-900 text-white w-8 h-8 rounded-full flex items-center justify-center mr-2 text-sm">01</span>
+                    屬靈體質 SWOT 深度分析
+                </h2>
+                <div class="swot-grid text-sm">
+                    <div class="bg-green-50 p-5 rounded-lg border-l-4 border-green-500">
+                        <h3 class="font-bold text-green-700 text-lg mb-2">S 優勢 (Strengths)</h3>
+                        <p class="text-gray-700 leading-relaxed" x-text="analysis.S"></p>
+                    </div>
+                    <div class="bg-red-50 p-5 rounded-lg border-l-4 border-red-500">
+                        <h3 class="font-bold text-red-700 text-lg mb-2">W 劣勢 (Weaknesses)</h3>
+                        <p class="text-gray-700 leading-relaxed" x-text="analysis.W"></p>
+                    </div>
+                    <div class="bg-blue-50 p-5 rounded-lg border-l-4 border-blue-500">
+                        <h3 class="font-bold text-blue-700 text-lg mb-2">O 機會 (Opportunities)</h3>
+                        <p class="text-gray-700 leading-relaxed" x-text="analysis.O"></p>
+                    </div>
+                    <div class="bg-gray-50 p-5 rounded-lg border-l-4 border-gray-500">
+                        <h3 class="font-bold text-gray-700 text-lg mb-2">T 威脅 (Threats)</h3>
+                        <p class="text-gray-700 leading-relaxed" x-text="analysis.T"></p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-10">
+                <h2 class="text-2xl font-bold text-indigo-900 mb-4 flex items-center">
+                    <span class="bg-indigo-900 text-white w-8 h-8 rounded-full flex items-center justify-center mr-2 text-sm">02</span>
+                    五年分階段行動路線圖
+                </h2>
+                <div class="space-y-4">
+                    <div class="border-l-4 border-indigo-200 pl-6 py-2">
+                        <h4 class="font-bold text-indigo-700">第1-2年：重整與扎根 (Fixing the Core)</h4>
+                        <p class="text-gray-600 text-sm italic" x-text="analysis.phase1"></p>
+                    </div>
+                    <div class="border-l-4 border-indigo-400 pl-6 py-2">
+                        <h4 class="font-bold text-indigo-700">第3-4年：擴張與外展 (Strategic Outgrowth)</h4>
+                        <p class="text-gray-600 text-sm italic" x-text="analysis.phase2"></p>
+                    </div>
+                    <div class="border-l-4 border-indigo-600 pl-6 py-2">
+                        <h4 class="font-bold text-indigo-700">第5年：傳承與倍增 (Legacy & Multiplication)</h4>
+                        <p class="text-gray-600 text-sm italic" x-text="analysis.phase3"></p>
+                    </div>
+                </div>
+            </section>
+
+            <div class="flex justify-center mt-10 print:hidden">
+                <button @click="exportPDF" class="bg-green-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:bg-green-700 transition-all flex items-center">
+                    💾 下載完整五年計劃 PDF
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function churchStrategy() {
+            return {
+                step: 'chat',
+                currentQ: 0,
+                tempInput: '',
+                isProbing: false,
+                responses: {},
+                questions: [
+                    { id: 'role', text: '請問您在教會中主要擔任的角色？', type: 'choice', options: ['核心長執/牧長', '小組長/事奉領袖', '一般會友'] },
+                    { id: 'S', text: '您覺得教會目前「最強」且最受神祝福的特點是什麼？', type: 'text', placeholder: '例如：敬拜氛圍強、小組關係緊密...' },
+                    { id: 'W', text: '在事奉或運作中，目前最明顯的「破口」或讓人力不從心的地方？', type: 'text', placeholder: '例如：行政效率低、同工年齡斷層...' },
+                    { id: 'O', text: '您觀察到社區中有什麼新的福音機會？', type: 'text', placeholder: '例如：有很多新搬來的年輕家庭、心理諮商需求大...' },
+                    { id: 'T', text: '面對未來五年，您最擔心的外部挑戰是什麼？', type: 'text', placeholder: '例如：世俗化、會眾遷移、財務緊縮...' }
+                ],
+                analysis: {},
+                
+                handleAnswer(val) {
+                    if(!val) return;
+                    this.responses[this.questions[this.currentQ].id] = val;
+                    
+                    // 深度追問邏輯 (5 Whys 簡化版)
+                    if (this.questions[this.currentQ].id === 'W' && val.length > 5 && !this.isProbing) {
+                        this.isProbing = true;
+                        this.questions.splice(this.currentQ + 1, 0, {
+                            id: 'W_Deep',
+                            text: `為什麼您認為「${val}」是根源問題？如果是為了未來五年計劃，我們需要處理到什麼程度？`,
+                            type: 'text',
+                            placeholder: '請深挖原因...'
+                        });
+                    }
+
+                    if (this.currentQ < this.questions.length - 1) {
+                        this.currentQ++;
+                        this.tempInput = '';
+                    } else {
+                        this.generateStrategy();
+                    }
+                },
+
+                generateStrategy() {
+                    const res = this.responses;
+                    // AI 模擬分析邏輯
+                    this.analysis = {
+                        S: res.S,
+                        W: `${res.W} (深層分析：${res.W_Deep || '需建立系統化流程解決'})`,
+                        O: res.O,
+                        T: res.T,
+                        phase1: `優先修復「${res.W}」相關破口，建立內部管理標準化，釋放同工壓力。`,
+                        phase2: `發揮「${res.S}」的優勢，直接對接「${res.O}」，啟動新的外展事工，擴大社區影響力。`,
+                        phase3: `針對「${res.T}」建立防禦機制，強化二代領袖培訓，確保異象永續傳承。`
+                    };
+                    this.step = 'report';
+                },
+
+                exportPDF() {
+                    const element = document.getElementById('final-report');
+                    const opt = {
+                        margin: 1,
+                        filename: '教會五年戰略規劃書.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2 },
+                        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                    };
+                    html2pdf().set(opt).from(element).save();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

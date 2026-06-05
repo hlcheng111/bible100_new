@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>诗歌编辑器 - Hymn Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f5f5; padding: 12px; font-size: 12px; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; border-radius: 6px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        h1 { color: #2c3e50; margin-bottom: 12px; font-size: 16px; }
+        .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 3px; font-size: 11px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; font-size: 12px; }
+        .form-group textarea { min-height: 200px; font-size: 12px; line-height: 1.6; }
+        .btn { padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 6px; }
+        .btn:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #229954; }
+        .preview { padding: 12px; background: #f8f9fa; border-radius: 4px; min-height: 200px; font-size: 12px; }
+        .preview h2 { color: #2c3e50; margin-bottom: 8px; font-size: 14px; }
+        .preview .lyrics { white-space: pre-line; line-height: 1.6; font-size: 12px; }
+        .toolbar { margin-bottom: 12px; padding: 10px; background: #ecf0f1; border-radius: 4px; }
+        .hymn-list { margin-top: 16px; }
+        .hymn-item { background: #f8f9fa; padding: 10px; margin-bottom: 6px; border-radius: 4px; border-left: 3px solid #3498db; }
+        .hymn-item h3 { color: #2c3e50; margin-bottom: 3px; font-size: 13px; }
+        .hymn-item p { color: #7f8c8d; font-size: 11px; }
+        .hymn-item button { padding: 4px 10px; margin-right: 4px; background: #3498db; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; }
+        .hymn-item button:hover { background: #2980b9; }
+        .hymn-item button.delete { background: #e74c3c; }
+        .hymn-item button.delete:hover { background: #c0392b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 诗歌编辑器</h1>
+        
+        <div class="toolbar">
+            <button class="btn btn-success" onclick="saveHymn()">💾 保存诗歌</button>
+            <button class="btn" onclick="clearEditor()">🗑️ 清空编辑器</button>
+            <button class="btn" onclick="loadHymns()">📋 刷新列表</button>
+            <button class="btn" onclick="loadFromSource()" title="從 2015 首中選取載入（需 HTTP）">📚 從資料庫載入</button>
+            <button class="btn" onclick="exportJSON()">📥 导出JSON</button>
+            <button class="btn" onclick="exportOverride()" title="複製到 hymn-overrides.json">📋 匯出覆寫</button>
+        </div>
+
+        <div class="editor-grid">
+            <div>
+                <div class="form-group">
+                    <label for="title">诗歌标题（中）*</label>
+                    <input type="text" id="title" placeholder="如：赞美之泉">
+                </div>
+                <div class="form-group">
+                    <label for="titleEn">诗歌标题（英）</label>
+                    <input type="text" id="titleEn" placeholder="如：Guide Me, O Thou Great Jehovah">
+                </div>
+                <div class="form-group">
+                    <label for="number">诗歌编号</label>
+                    <input type="text" id="number" placeholder="如：001">
+                </div>
+                <div class="form-group">
+                    <label for="hymnal">詩集</label>
+                    <input type="text" id="hymnal" placeholder="如：hymn_00">
+                </div>
+                <div class="form-group">
+                    <label for="category">类别</label>
+                    <select id="category">
+                        <option value="worship">敬拜赞美</option>
+                        <option value="gospel">福音诗歌</option>
+                        <option value="praise">颂赞诗歌</option>
+                        <option value="prayer">祷告诗歌</option>
+                        <option value="christmas">圣诞诗歌</option>
+                        <option value="easter">复活节诗歌</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="author">词曲作者</label>
+                    <input type="text" id="author" placeholder="如：张三">
+                </div>
+                <div class="form-group">
+                    <label for="tune">曲調名</label>
+                    <input type="text" id="tune" placeholder="如：CWM RHONDDA">
+                </div>
+                <div class="form-group">
+                    <label for="catalogNumber">分類編號</label>
+                    <input type="text" id="catalogNumber" placeholder="如：H1854">
+                </div>
+                <div class="form-group">
+                    <label for="copyright">版权信息</label>
+                    <input type="text" id="copyright" placeholder="如：©2020 某某出版社">
+                </div>
+
+                <div class="form-group">
+                    <label for="lyrics">歌词内容 *</label>
+                    <textarea id="lyrics" placeholder="请输入歌词，每段之间空一行..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="youtube">YouTube / 媒體連結</label>
+                    <textarea id="youtube" rows="2" placeholder="每行一個URL，如：https://youtu.be/xxx"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="imageUrls">圖片 URL</label>
+                    <textarea id="imageUrls" rows="2" placeholder="每行一個圖片網址，或樂譜圖片"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="extraLinks">外部連結</label>
+                    <textarea id="extraLinks" rows="2" placeholder="每行：標題|URL 或 純URL"></textarea>
+                </div>
+            </div>
+
+            <div>
+                <h2>实时预览</h2>
+                <div class="preview">
+                    <h2 id="previewTitle">（未命名）</h2>
+                    <p style="color: #7f8c8d; margin-bottom: 15px;">
+                        <span id="previewNumber"></span>
+                        <span id="previewAuthor"></span>
+                    </p>
+                    <div class="lyrics" id="previewLyrics">请在左侧输入歌词...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hymn-list">
+            <h2>📚 已保存的诗歌</h2>
+            <div id="hymnsList"></div>
+        </div>
+        <div id="sourceListPanel" style="display:none; margin-top:20px; max-height:300px; overflow:auto; border:1px solid #ddd; border-radius:5px; padding:10px;">
+            <h3>從 2015 首選取</h3>
+            <input type="text" id="sourceSearch" placeholder="搜尋編號、標題..." style="width:100%; padding:8px; margin-bottom:10px;">
+            <div id="sourceList"></div>
+        </div>
+    </div>
+
+    <script src="data/source-hymns-loader.js"></script>
+    <script>
+        let hymns = [];
+        let currentEditId = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!localStorage.getItem('hymns')) {
+                localStorage.setItem('hymns', JSON.stringify([]));
+            }
+            loadHymns();
+            
+            // Real-time preview
+            ['title', 'titleEn', 'lyrics', 'number', 'author'].forEach(id => {
+                var el = document.getElementById(id);
+                if (el) el.addEventListener('input', updatePreview);
+            });
+            // 若有 ?id= 則從 source 載入既有詩歌
+            var idParam = new URLSearchParams(window.location.search).get('id');
+            if (idParam) loadHymnById(idParam);
+        });
+
+        async function loadHymnById(id) {
+            try {
+                var base = window.location.pathname.replace(/\/[^/]*$/, '') || '.';
+                var [dataRes, ovRes] = await Promise.all([
+                    (window.loadSourceHymns || function(){ return fetch(base + '/data/source-hymns.json').then(r => r.ok ? r.json() : null); })(),
+                    fetch(base + '/data/hymn-overrides.json').then(r => r.ok ? r.json() : null).catch(() => null)
+                ]);
+                if (!dataRes || !dataRes.hymns) return;
+                var h = dataRes.hymns.find(x => x.id === id);
+                if (!h) return;
+                var ov = (ovRes && (ovRes.overrides || ovRes)) || {};
+                var o = ov[id] || {};
+                h = { ...h, ...o };
+                currentEditId = id;
+                document.getElementById('title').value = h.title_zh || '';
+                document.getElementById('titleEn').value = h.title_en || '';
+                document.getElementById('number').value = h.number || '';
+                document.getElementById('hymnal').value = h.hymnal || '';
+                document.getElementById('category').value = hymnCategoryFromCatalog(h.catalogNumber) || 'worship';
+                document.getElementById('author').value = h.author || '';
+                document.getElementById('tune').value = h.tune || '';
+                document.getElementById('catalogNumber').value = h.catalogNumber || '';
+                document.getElementById('lyrics').value = h.lyrics || h.lyrics_zh || h.lyrics_en || '';
+                document.getElementById('youtube').value = Array.isArray(h.youtube) ? h.youtube.join('\n') : (h.youtube || '');
+                document.getElementById('imageUrls').value = Array.isArray(h.scoreImages) ? h.scoreImages.join('\n') : (h.scoreImage || '');
+                document.getElementById('extraLinks').value = Array.isArray(h.extraLinks) ? h.extraLinks.map(function(x){ return (x.title || '') + (x.title && x.url ? '|' : '') + (x.url || ''); }).join('\n') : (h.extraLinks || '');
+                updatePreview();
+                document.querySelector('h1').innerHTML = '✏️ 編輯詩歌：' + (h.title_zh || h.title_en || id);
+            } catch (e) { console.warn('載入詩歌失敗（需 HTTP）：', e); }
+        }
+        function hymnCategoryFromCatalog(c) { return c ? 'praise' : 'worship'; }
+
+        async function loadFromSource() {
+            try {
+                var base = window.location.pathname.replace(/\/[^/]*$/, '') || '.';
+                var data = await (window.loadSourceHymns || function(){ return fetch(base + '/data/source-hymns.json').then(r => r.ok ? r.json() : null); })();
+                if (!data || !data.hymns) { alert('需以 HTTP 開啟才能載入'); return; }
+                var panel = document.getElementById('sourceListPanel');
+                var list = document.getElementById('sourceList');
+                var search = document.getElementById('sourceSearch');
+                panel.style.display = 'block';
+                function renderList(filter) {
+                    var hymns = (data.hymns || []).filter(function(h) {
+                        if (!filter) return true;
+                        var q = filter.toLowerCase();
+                        return (h.id||'').toLowerCase().indexOf(q)>=0 || (h.number||'').toLowerCase().indexOf(q)>=0 || (h.title_zh||'').toLowerCase().indexOf(q)>=0 || (h.title_en||'').toLowerCase().indexOf(q)>=0 || (h.author||'').toLowerCase().indexOf(q)>=0;
+                    }).slice(0, 100);
+                    list.innerHTML = hymns.map(function(h) {
+                        var t = (h.title_zh || h.title_en || h.id || '').substring(0, 50);
+                        return '<div class="hymn-item" style="cursor:pointer" onclick="loadHymnById(\'' + (h.id||'').replace(/'/g, "\\'") + '\'); document.getElementById(\'sourceListPanel\').style.display=\'none\'">' + (h.number||'') + ' ' + t + '</div>';
+                    }).join('') || '<p>無符合結果</p>';
+                }
+                search.oninput = function() { renderList(search.value); };
+                renderList('');
+            } catch (e) { alert('載入失敗，請以 HTTP 開啟（如 http://localhost:57353/...）'); }
+        }
+
+        function updatePreview() {
+            const title = document.getElementById('title').value || document.getElementById('titleEn').value || '（未命名）';
+            const lyrics = document.getElementById('lyrics').value || '请在左侧输入歌词...';
+            const number = document.getElementById('number').value;
+            const author = document.getElementById('author').value;
+
+            document.getElementById('previewTitle').textContent = title;
+            document.getElementById('previewNumber').textContent = number ? `#${number} | ` : '';
+            document.getElementById('previewAuthor').textContent = author ? `词曲：${author}` : '';
+            document.getElementById('previewLyrics').textContent = lyrics;
+        }
+
+        function saveHymn() {
+            const title = document.getElementById('title').value;
+            const lyrics = document.getElementById('lyrics').value;
+
+            if (!title || !lyrics) {
+                alert('请填写诗歌标题和歌词！');
+                return;
+            }
+
+            var yt = (document.getElementById('youtube').value || '').trim().split(/\n+/).filter(Boolean);
+            var imgs = (document.getElementById('imageUrls').value || '').trim().split(/\n+/).filter(Boolean);
+            var links = (document.getElementById('extraLinks').value || '').trim().split(/\n+/).filter(Boolean).map(function(line){
+                var p = line.indexOf('|');
+                return p >= 0 ? { title: line.slice(0,p).trim(), url: line.slice(p+1).trim() } : { title: '', url: line.trim() };
+            });
+            const hymn = {
+                id: currentEditId || 'hymn_new_' + Date.now(),
+                title: title,
+                title_zh: document.getElementById('title').value,
+                title_en: document.getElementById('titleEn').value,
+                number: document.getElementById('number').value,
+                hymnal: document.getElementById('hymnal').value,
+                category: document.getElementById('category').value,
+                author: document.getElementById('author').value,
+                tune: document.getElementById('tune').value,
+                catalogNumber: document.getElementById('catalogNumber').value,
+                copyright: document.getElementById('copyright').value,
+                lyrics: lyrics,
+                youtube: yt,
+                scoreImages: imgs,
+                extraLinks: links,
+                createdAt: currentEditId && hymns.find(h => h.id === currentEditId) ? hymns.find(h => h.id === currentEditId).createdAt : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            if (currentEditId) {
+                hymns = hymns.map(h => h.id === currentEditId ? hymn : h);
+            } else {
+                hymns.push(hymn);
+            }
+
+            localStorage.setItem('hymns', JSON.stringify(hymns));
+            alert('✅ 诗歌已保存！');
+            clearEditor();
+            loadHymns();
+        }
+
+        function loadHymns() {
+            hymns = JSON.parse(localStorage.getItem('hymns') || '[]');
+            const container = document.getElementById('hymnsList');
+
+            if (hymns.length === 0) {
+                container.innerHTML = '<p style="color: #7f8c8d; padding: 20px; text-align: center;">暂无已保存的诗歌</p>';
+                return;
+            }
+
+            container.innerHTML = hymns.map(hymn => `
+                <div class="hymn-item">
+                    <h3>${hymn.number ? `#${hymn.number} ` : ''}${hymn.title_zh || hymn.title || '（未命名）'}</h3>
+                    <p>${hymn.author ? `词曲：${hymn.author} | ` : ''}${getCategoryLabel(hymn.category)}</p>
+                    <button onclick="editHymn('${String(hymn.id).replace(/'/g, "\\'")}')">✏️ 编辑</button>
+                    <button onclick="viewHymn('${String(hymn.id).replace(/'/g, "\\'")}')">👁️ 查看</button>
+                    <button class="delete" onclick="deleteHymn('${String(hymn.id).replace(/'/g, "\\'")}')">🗑️ 删除</button>
+                </div>
+            `).join('');
+        }
+
+        function editHymn(id) {
+            const hymn = hymns.find(h => h.id === id);
+            if (!hymn) return;
+
+            currentEditId = id;
+            document.getElementById('title').value = hymn.title_zh || hymn.title || '';
+            document.getElementById('titleEn').value = hymn.title_en || '';
+            document.getElementById('number').value = hymn.number || '';
+            document.getElementById('hymnal').value = hymn.hymnal || '';
+            document.getElementById('category').value = hymn.category || 'worship';
+            document.getElementById('author').value = hymn.author || '';
+            document.getElementById('tune').value = hymn.tune || '';
+            document.getElementById('catalogNumber').value = hymn.catalogNumber || '';
+            document.getElementById('copyright').value = hymn.copyright || '';
+            document.getElementById('lyrics').value = hymn.lyrics || '';
+            document.getElementById('youtube').value = Array.isArray(hymn.youtube) ? hymn.youtube.join('\n') : (hymn.youtube || '');
+            document.getElementById('imageUrls').value = Array.isArray(hymn.scoreImages) ? hymn.scoreImages.join('\n') : (hymn.scoreImage || '');
+            document.getElementById('extraLinks').value = Array.isArray(hymn.extraLinks) ? hymn.extraLinks.map(function(x){ return (x.title || '') + (x.title && x.url ? '|' : '') + (x.url || ''); }).join('\n') : (hymn.extraLinks || '');
+            
+            updatePreview();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function viewHymn(id) {
+            const hymn = hymns.find(h => h.id === id);
+            if (!hymn) return;
+            
+            alert(`${hymn.title}\n\n${hymn.lyrics}`);
+        }
+
+        function deleteHymn(id) {
+            if (!confirm('确定要删除这首诗歌吗？')) return;
+            
+            hymns = hymns.filter(h => h.id !== id);
+            localStorage.setItem('hymns', JSON.stringify(hymns));
+            loadHymns();
+            alert('✅ 诗歌已删除');
+        }
+
+        function clearEditor() {
+            currentEditId = null;
+            document.getElementById('title').value = '';
+            document.getElementById('titleEn').value = '';
+            document.getElementById('number').value = '';
+            document.getElementById('hymnal').value = '';
+            document.getElementById('category').value = 'worship';
+            document.getElementById('author').value = '';
+            document.getElementById('tune').value = '';
+            document.getElementById('catalogNumber').value = '';
+            document.getElementById('copyright').value = '';
+            document.getElementById('lyrics').value = '';
+            document.getElementById('youtube').value = '';
+            document.getElementById('imageUrls').value = '';
+            document.getElementById('extraLinks').value = '';
+            document.querySelector('h1').innerHTML = '🎵 诗歌编辑器';
+            updatePreview();
+        }
+
+        function exportJSON() {
+            if (hymns.length === 0) {
+                alert('暂无诗歌可导出');
+                return;
+            }
+
+            const dataStr = JSON.stringify(hymns, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            const exportFileDefaultName = `hymns_${new Date().toISOString().split('T')[0]}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            alert('✅ 诗歌数据已导出！');
+        }
+
+        function exportOverride() {
+            if (!currentEditId || currentEditId.toString().startsWith('hymn_new_')) {
+                alert('請先載入或編輯既有詩歌');
+                return;
+            }
+            var o = {};
+            o[currentEditId] = {
+                title_zh: document.getElementById('title').value || undefined,
+                title_en: document.getElementById('titleEn').value || undefined,
+                author: document.getElementById('author').value || undefined,
+                tune: document.getElementById('tune').value || undefined,
+                catalogNumber: document.getElementById('catalogNumber').value || undefined
+            };
+            Object.keys(o[currentEditId]).forEach(function(k) { if (o[currentEditId][k] === '') delete o[currentEditId][k]; });
+            var json = JSON.stringify({ overrides: o }, null, 2);
+            navigator.clipboard.writeText(json).then(function() { alert('已複製到剪貼簿，請貼到 data/hymn-overrides.json 的 overrides 中'); }).catch(function() { prompt('請複製以下 JSON 到 hymn-overrides.json：', json); });
+        }
+
+        function getCategoryLabel(category) {
+            const labels = {
+                worship: '敬拜赞美',
+                gospel: '福音诗歌',
+                praise: '颂赞诗歌',
+                prayer: '祷告诗歌',
+                christmas: '圣诞诗歌',
+                easter: '复活节诗歌'
+            };
+            return labels[category] || category;
+        }
+    </script>
+</body>
+</html>
+

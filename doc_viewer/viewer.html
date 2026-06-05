@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>文檔檢視器 - Doc Viewer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 12px; height: 100vh; overflow: hidden; }
+    .topbar {
+      height: 44px; background: linear-gradient(135deg, #0b5fa5 0%, #0d47a1 100%);
+      color: #fff; display: flex; align-items: center; padding: 0 14px; flex-shrink: 0;
+    }
+    .topbar .brand { font-weight: 600; font-size: 14px; }
+    .topbar .nav { margin-left: 16px; display: flex; gap: 8px; }
+    .topbar .nav a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 11px; padding: 4px 0; }
+    .topbar .nav a:hover { color: #fff; text-decoration: underline; }
+    .main { display: flex; height: calc(100vh - 44px); }
+    .sidebar {
+      width: 260px; min-width: 260px; background: #eef6ff; overflow-y: auto;
+      padding: 12px; border-right: 2px solid #2aa5ff;
+    }
+    .sidebar h3 { font-size: 13px; color: #0b5fa5; margin-bottom: 10px; padding-left: 8px; border-left: 4px solid #0b5fa5; }
+    .sidebar-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+    .sidebar-tabs button { padding: 6px 10px; font-size: 11px; border: 1px solid #0b5fa5; background: #fff; color: #0b5fa5; border-radius: 4px; cursor: pointer; }
+    .sidebar-tabs button.active { background: #0b5fa5; color: #fff; }
+    .sidebar-tabs button:hover { background: #e3f2fd; }
+    .toc-panel, .hymn-panel { display: none; }
+    .toc-panel.active, .hymn-panel.active { display: block; }
+    .hymn-search { width: 100%; padding: 6px 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 11px; }
+    .toc-item { display: block; padding: 6px 10px; margin: 2px 0; color: #333; text-decoration: none; border-radius: 4px; font-size: 11px; }
+    .toc-item:hover { background: #e3f2fd; color: #0b5fa5; }
+    .toc-item.l1 { padding-left: 8px; font-weight: 600; }
+    .toc-item.l2 { padding-left: 18px; font-size: 11px; }
+    .toc-item.l3 { padding-left: 28px; font-size: 10px; color: #555; }
+    .toc-item.l4 { padding-left: 36px; font-size: 10px; color: #666; }
+    .toc-item.l5 { padding-left: 44px; font-size: 10px; color: #555; }
+    .toc-item.l6 { padding-left: 52px; font-size: 10px; color: #666; }
+    .toc-group details { margin: 2px 0; }
+    .toc-group summary { cursor: pointer; padding: 6px 10px; border-radius: 4px; list-style: none; }
+    .toc-group summary::-webkit-details-marker { display: none; }
+    .toc-group summary::before { content: '▶'; font-size: 8px; margin-right: 6px; display: inline-block; transition: transform 0.2s; }
+    .toc-group details[open] summary::before { transform: rotate(90deg); }
+    .toc-group-children { padding-left: 8px; border-left: 1px solid #ccc; margin-left: 8px; }
+    .content { flex: 1; min-width: 0; }
+    .content iframe { width: 100%; height: 100%; border: none; display: block; }
+    .toc-empty { padding: 20px; color: #95a5a6; font-size: 11px; }
+    .toc-empty code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; }
+    @media (max-width: 600px) {
+      .sidebar { width: 100%; max-height: 200px; }
+      .main { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="brand">📚 文檔檢視器</span>
+    <div class="nav">
+      <a href="hymnology_practical/hymn-table.html" target="_blank">聖詩表格</a>
+      <a href="index.html">書架</a>
+      <a href="../index.html">返回 Bible100</a>
+    </div>
+  </div>
+  <div class="main">
+    <div class="sidebar">
+      <h3 id="tocTitle">目錄</h3>
+      <div class="sidebar-tabs">
+        <button type="button" class="active" data-tab="toc">章節 TOC</button>
+        <button type="button" data-tab="hymn">詩歌索引</button>
+      </div>
+      <div id="tocPanel" class="toc-panel active">
+        <div id="tocContent"></div>
+      </div>
+      <div id="hymnPanel" class="hymn-panel">
+        <input type="text" class="hymn-search" id="hymnSearch" placeholder="搜尋中/英詩歌名、作者、調名...">
+        <select id="hymnCatFilter" style="width:100%;padding:4px 6px;margin-bottom:6px;font-size:11px;border:1px solid #ccc;border-radius:4px;">
+          <option value="">全部</option>
+          <option value="hymn" selected>聖詩（歌名）</option>
+          <option value="author">作者</option>
+          <option value="tune">調名</option>
+          <option value="reference">參考</option>
+        </select>
+        <div id="hymnContent"></div>
+      </div>
+    </div>
+    <div class="content">
+      <iframe id="docFrame" name="docFrame" title="文檔內容"></iframe>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var books = {
+        hymnology_practical: {
+          title: '《 實用聖詩學 》(鄭翰龍) V.11 (2023)',
+          path: 'hymnology_practical/hyH00《 實用聖詩學 》(鄭翰龍)  V.11  (2023) v2.htm',
+          tocFile: 'hymnology_practical/toc.json'
+        }
+      };
+
+      var params = new URLSearchParams(location.search);
+      var bookId = params.get('book') || 'hymnology_practical';
+      var book = books[bookId] || books.hymnology_practical;
+
+      document.getElementById('docFrame').src = book.path;
+      document.getElementById('tocTitle').textContent = book.title + ' - 目錄';
+
+      var tocEl = document.getElementById('tocContent');
+      var hymnEl = document.getElementById('hymnContent');
+      var hymnSearch = document.getElementById('hymnSearch');
+
+      document.querySelectorAll('.sidebar-tabs button').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.sidebar-tabs button').forEach(function(b) { b.classList.remove('active'); });
+          document.querySelectorAll('.toc-panel, .hymn-panel').forEach(function(p) { p.classList.remove('active'); });
+          btn.classList.add('active');
+          var tab = btn.getAttribute('data-tab');
+          document.getElementById(tab + 'Panel').classList.add('active');
+        });
+      });
+
+      function decodeHtmlEntities(str) {
+        var t = document.createElement('textarea');
+        t.innerHTML = str.replace(/&#(\d+);/g, function(_, n) { return String.fromCharCode(parseInt(n, 10)); });
+        return t.value || str;
+      }
+
+      function buildTocTree(items) {
+        var tree = [], stack = [{ children: tree, level: 0 }];
+        for (var i = 0; i < items.length; i++) {
+          var it = items[i], lvl = it.level || 1;
+          while (stack.length > 1 && stack[stack.length - 1].level >= lvl) stack.pop();
+          var node = { item: it, children: [], level: lvl };
+          stack[stack.length - 1].children.push(node);
+          if (lvl < 6) stack.push(node);
+        }
+        return tree;
+      }
+      function renderTocItem(node, depth) {
+        var it = node.item, href = it.anchor ? (book.path + '#' + it.anchor) : '#', title = decodeHtmlEntities(it.title || it.text || '');
+        var cls = 'toc-item l' + Math.min(it.level || 1, 6);
+        if (node.children.length > 0 && depth < 5) {
+          return '<details class="toc-group">' +
+            '<summary class="' + cls + '"><a href="' + href + '" target="docFrame" data-anchor="' + (it.anchor || '') + '" onclick="event.stopPropagation()">' + escapeHtml(title) + '</a></summary>' +
+            '<div class="toc-group-children">' + node.children.map(function(c) { return renderTocItem(c, depth + 1); }).join('') + '</div></details>';
+        }
+        return '<a href="' + href + '" class="' + cls + '" target="docFrame" data-anchor="' + (it.anchor || '') + '">' + escapeHtml(title) + '</a>';
+      }
+      function renderToc(items) {
+        if (!items || items.length === 0) {
+          tocEl.innerHTML = '<div class="toc-empty">尚無目錄。<br><br>請執行：<br><code>node scripts/build-toc.js</code><br>以產生 toc.json</div>';
+          return;
+        }
+        var tree = buildTocTree(items);
+        tocEl.innerHTML = tree.map(function(n) { return renderTocItem(n, 0); }).join('');
+
+        tocEl.querySelectorAll('.toc-item[data-anchor], a[data-anchor]').forEach(function(a) {
+          a.addEventListener('click', function(e) {
+            var anchor = a.getAttribute('data-anchor');
+            if (!anchor) return;
+            var frame = document.getElementById('docFrame');
+            try {
+              var doc = frame.contentDocument || frame.contentWindow.document;
+              var el = doc.getElementById(anchor) || doc.querySelector('[name="' + anchor + '"]');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            } catch (_) {}
+          });
+        });
+      }
+
+      function renderHymnIndex(items) {
+        if (!items || items.length === 0) {
+          hymnEl.innerHTML = '<div class="toc-empty">尚無詩歌索引。<br><br>請執行：<br><code>node scripts/build-hymn-index.js</code></div>';
+          return;
+        }
+        window._hymnItems = items;
+        filterHymns();
+      }
+
+      var catLabels = { section: '區段', subsection: '章節', author: '作者', tune: '調名', hymn: '聖詩', reference: '參考' };
+      function filterHymns() {
+        if (!hymnEl) return;
+        var q = (hymnSearch ? hymnSearch.value : '').toLowerCase().trim();
+        var catFilter = (document.getElementById('hymnCatFilter') || {}).value || '';
+        var items = window._hymnItems || [];
+        var list = items;
+        if (catFilter) list = list.filter(function(it) { return (it.category || '') === catFilter; });
+        if (q) list = list.filter(function(it) {
+          var t = ((it.title || '') + ' ' + (it.titleZh || '') + ' ' + (it.titleEn || '')).toLowerCase();
+          return t.indexOf(q) >= 0;
+        });
+        var html = '';
+        var lastCat = '';
+        var shown = 0;
+        var maxShow = (q ? 2000 : 800);
+        for (var i = 0; i < list.length && shown < maxShow; i++) {
+          var it = list[i];
+          var cat = it.category || 'hymn';
+          if (cat !== lastCat) {
+            lastCat = cat;
+            html += '<div class="toc-cat" style="font-size:10px;color:#0b5fa5;font-weight:600;margin-top:8px;margin-bottom:4px;">' + (catLabels[cat] || cat) + '</div>';
+          }
+          var href = book.path + '#' + (it.anchor || '');
+          var title = escapeHtml(it.title || '');
+          html += '<a href="' + href + '" class="toc-item l2" target="docFrame" data-anchor="' + (it.anchor || '') + '">' + title + '</a>';
+          shown++;
+        }
+        if (list.length > maxShow) html += '<div class="toc-empty" style="padding:8px;">（顯示前 ' + maxShow + ' 筆，共 ' + list.length + ' 筆）</div>';
+        hymnEl.innerHTML = html;
+        hymnEl.querySelectorAll('.toc-item[data-anchor]').forEach(function(a) {
+          a.addEventListener('click', function(e) {
+            var anchor = a.getAttribute('data-anchor');
+            if (!anchor) return;
+            var frame = document.getElementById('docFrame');
+            try {
+              var doc = frame.contentDocument || frame.contentWindow.document;
+              var el = doc.getElementById(anchor) || doc.querySelector('[name="' + anchor + '"]');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            } catch (_) {}
+          });
+        });
+      }
+
+      function escapeHtml(s) {
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      function loadToc() {
+        if (window.DOC_TOC && window.DOC_TOC.items && window.DOC_TOC.items.length > 0) {
+          renderToc(window.DOC_TOC.items);
+          return;
+        }
+        fetch(book.tocFile + '?t=' + Date.now(), { cache: 'no-store' }).then(function(r) {
+          if (r.ok) return r.json();
+          throw new Error('fetch failed');
+        }).then(function(data) {
+          var items = data.items || data.toc || [];
+          if (items.length > 0) { renderToc(items); return; }
+          throw new Error('empty');
+        }).catch(function() {
+          var script = document.createElement('script');
+          script.src = book.tocFile.replace('.json', '-embedded.js') + '?t=' + Date.now();
+          script.onload = function() {
+            if (window.DOC_TOC && window.DOC_TOC.items) renderToc(window.DOC_TOC.items);
+            else renderToc([]);
+          };
+          script.onerror = function() { renderToc([]); };
+          document.head.appendChild(script);
+        });
+      }
+      loadToc();
+
+      function loadHymnIndex() {
+        if (window.DOC_HYMN_INDEX && window.DOC_HYMN_INDEX.items && window.DOC_HYMN_INDEX.items.length > 0) {
+          renderHymnIndex(window.DOC_HYMN_INDEX.items);
+          return;
+        }
+        var hymnUrl = book.tocFile.replace('toc.json', 'hymn-index.json') + '?t=' + Date.now();
+        fetch(hymnUrl, { cache: 'no-store' }).then(function(r) {
+          if (r.ok) return r.json();
+          throw new Error('fetch failed');
+        }).then(function(data) {
+          var items = data.items || [];
+          if (items.length > 0) { renderHymnIndex(items); return; }
+          throw new Error('empty');
+        }).catch(function() {
+          var script = document.createElement('script');
+          script.src = book.tocFile.replace('toc.json', 'hymn-index-embedded.js') + '?t=' + Date.now();
+          script.onload = function() {
+            if (window.DOC_HYMN_INDEX && window.DOC_HYMN_INDEX.items) renderHymnIndex(window.DOC_HYMN_INDEX.items);
+            else hymnEl.innerHTML = '<div class="toc-empty">尚無詩歌索引。請執行 node scripts/build-hymn-index.js</div>';
+          };
+          script.onerror = function() { hymnEl.innerHTML = '<div class="toc-empty">尚無詩歌索引。請執行 node scripts/build-hymn-index.js</div>'; };
+          document.head.appendChild(script);
+        });
+      }
+      loadHymnIndex();
+
+      if (hymnSearch) { hymnSearch.addEventListener('input', filterHymns); hymnSearch.addEventListener('keyup', filterHymns); }
+      var catSel = document.getElementById('hymnCatFilter');
+      if (catSel) catSel.addEventListener('change', filterHymns);
+    })();
+  </script>
+</body>
+</html>

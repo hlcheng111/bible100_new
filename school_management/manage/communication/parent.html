@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家長溝通 - Parent Communication</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>👪 家長溝通</h1>
+        <p>發送家校訊息、LINE／WhatsApp／WeChat 管道</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <div><p><b>此頁是為誰而設？</b> 班導、行政、家長聯絡人。</p>
+            <p><b>有什麼功能？</b> 發送家長訊息，可選管道（parent 家長／line／whatsapp／wechat）。</p></div>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📤 發送家校訊息</div>
+        <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+            <div><label class="stat-label">收件人</label><br><input name="toUser" class="module-input" placeholder="parent_1 或 class_1" style="min-width:140px;"></div>
+            <div><label class="stat-label">內容</label><br><input name="content" class="module-input" placeholder="訊息內容" style="min-width:220px;"></div>
+            <div><label class="stat-label">管道</label><br><select name="channel" class="module-input"><option value="parent">家長</option><option value="line">LINE</option><option value="whatsapp">WhatsApp</option><option value="wechat">WeChat</option></select></div>
+            <div><label class="stat-label">優先</label><br><select name="priority" class="module-input"><option value="normal">一般</option><option value="high">高</option></select></div>
+            <div><br><button type="submit" class="module-btn">發送</button></div>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📋 最近訊息</div>
+        <div id="list"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+            if (db.ensureSeedFull) db.ensureSeedFull();
+
+            const messages = (db.data.communication && db.data.communication.messages) || [];
+
+            function draw() {
+                const a = messages.filter(m => (m.channel || '').includes('parent') || (m.channel || '').includes('line') || (m.channel || '').includes('whatsapp') || (m.channel || '').includes('wechat') || !m.channel).slice(-100).reverse();
+                const body = a.map(m => '<tr><td>' + m.id + '</td><td>' + (m.toUser || m.to_user || '—') + '</td><td>' + (m.content || '—') + '</td><td>' + (m.priority || '—') + '</td><td>' + (m.channel || '—') + '</td><td>' + (m.createdAt || m.created_at || '').slice(0, 16) + '</td></tr>').join('');
+                document.getElementById('list').innerHTML = '<table class="module-table"><thead><tr><th>ID</th><th>收件人</th><th>內容</th><th>優先</th><th>管道</th><th>時間</th></tr></thead><tbody>' + (body || '<tr><td colspan="6">尚無訊息</td></tr>') + '</tbody></table>';
+            }
+
+            document.getElementById('f').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                db.insert('communication.messages', {
+                    fromUser: 'school',
+                    toUser: (fm.get('toUser') || '').trim(),
+                    channel: fm.get('channel') || 'parent',
+                    content: (fm.get('content') || '').trim(),
+                    priority: fm.get('priority') || 'normal'
+                });
+                this.reset();
+                draw();
+            };
+
+            draw();
+        })();
+    </script>
+</body>
+</html>

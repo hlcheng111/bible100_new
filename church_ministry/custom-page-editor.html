@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會眾入口自訂頁面 · Custom Page Editor | Church Ministry</title>
+    <link rel="stylesheet" href="assets/css/tailwind.min.css">
+    <style>
+        .block-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 12px; background: #fff; }
+        .block-card:hover { border-color: #0b5fa5; }
+        .block-type { font-size: 10px; color: #6b7280; text-transform: uppercase; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div style="padding:10px 20px;"><a href="dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">會眾入口自訂頁面</h1>
+        <p class="text-sm text-gray-600 mb-6">新增自訂區塊，顯示於會眾入口卡片上方。支援：文字、圖片、連結、活動列表。</p>
+
+        <details class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <summary class="cursor-pointer font-semibold text-blue-900">使用說明</summary>
+            <div class="mt-3 text-sm text-gray-700">
+                <p>區塊會依序顯示在會眾入口的卡片上方。可拖曳調整順序（進階）。儲存後會眾端會即時套用。</p>
+            </div>
+        </details>
+
+        <div class="flex gap-4 mb-6">
+            <button onclick="addBlock('text')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">+ 文字區塊</button>
+            <button onclick="addBlock('image')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">+ 圖片</button>
+            <button onclick="addBlock('link')" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm">+ 連結</button>
+            <button onclick="addBlock('activityList')" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 text-sm">+ 活動列表</button>
+        </div>
+
+        <div id="blocksContainer" class="space-y-3">
+            <!-- 動態生成 -->
+        </div>
+
+        <div class="mt-6 flex gap-3">
+            <button onclick="saveBlocks()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">儲存</button>
+            <button onclick="previewInNewTab()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700">預覽</button>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'churchCenterCustomBlocks';
+        let blocks = [];
+
+        document.addEventListener('DOMContentLoaded', loadBlocks);
+
+        function loadBlocks() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                blocks = raw ? JSON.parse(raw) : [];
+            } catch (e) { blocks = []; }
+            renderBlocks();
+        }
+
+        function renderBlocks() {
+            const container = document.getElementById('blocksContainer');
+            if (blocks.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 py-8 text-center">尚無自訂區塊，點上方按鈕新增。</div>';
+                return;
+            }
+            container.innerHTML = blocks.map((b, i) => renderBlockCard(b, i)).join('');
+        }
+
+        function renderBlockCard(b, i) {
+            const typeLabels = { text: '文字', image: '圖片', link: '連結', activityList: '活動列表' };
+            let preview = '';
+            if (b.type === 'text') preview = (b.title || '') + ' ' + (b.content || '').slice(0, 50);
+            if (b.type === 'image') preview = b.url || '(未設定圖片)';
+            if (b.type === 'link') preview = (b.text || '') + ' → ' + (b.url || '');
+            if (b.type === 'activityList') preview = (b.items || []).length + ' 個活動';
+            return `
+                <div class="block-card" data-index="${i}">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="block-type">${typeLabels[b.type] || b.type}</span>
+                        <div class="flex gap-2">
+                            <button onclick="moveBlock(${i}, -1)" class="text-gray-500 hover:text-blue-600 text-sm">↑</button>
+                            <button onclick="moveBlock(${i}, 1)" class="text-gray-500 hover:text-blue-600 text-sm">↓</button>
+                            <button onclick="removeBlock(${i})" class="text-red-600 hover:text-red-800 text-sm">刪除</button>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-700">${preview || '(空)'}</div>
+                    <div class="mt-3 block-editor-${i}" style="display:none;">
+                        ${getBlockEditorHtml(b, i)}
+                    </div>
+                    <button onclick="toggleEdit(${i})" class="mt-2 text-blue-600 text-sm">編輯</button>
+                </div>
+            `;
+        }
+
+        function getBlockEditorHtml(b, i) {
+            if (b.type === 'text') {
+                return `
+                    <input type="text" id="b${i}_title" placeholder="標題" class="w-full px-2 py-1 border rounded mb-2" value="${escapeHtml(b.title || '')}">
+                    <textarea id="b${i}_content" placeholder="內容" class="w-full px-2 py-1 border rounded" rows="3">${escapeHtml(b.content || '')}</textarea>
+                `;
+            }
+            if (b.type === 'image') {
+                return `
+                    <input type="text" id="b${i}_url" placeholder="圖片網址" class="w-full px-2 py-1 border rounded mb-2" value="${escapeHtml(b.url || '')}">
+                    <input type="text" id="b${i}_alt" placeholder="替代文字" class="w-full px-2 py-1 border rounded" value="${escapeHtml(b.alt || '')}">
+                `;
+            }
+            if (b.type === 'link') {
+                return `
+                    <input type="text" id="b${i}_text" placeholder="連結文字" class="w-full px-2 py-1 border rounded mb-2" value="${escapeHtml(b.text || '')}">
+                    <input type="text" id="b${i}_url" placeholder="連結網址" class="w-full px-2 py-1 border rounded" value="${escapeHtml(b.url || '')}">
+                `;
+            }
+            if (b.type === 'activityList') {
+                const items = b.items || [];
+                const itemsHtml = items.map((it, j) =>
+                    `<div class="flex gap-2 mb-2"><input type="text" id="b${i}_item${j}_name" placeholder="活動名稱" class="flex-1 px-2 py-1 border rounded" value="${escapeHtml(it.name || '')}"><input type="text" id="b${i}_item${j}_url" placeholder="連結" class="flex-1 px-2 py-1 border rounded" value="${escapeHtml(it.url || '')}"><button onclick="removeActivityItem(${i},${j})" class="text-red-600">×</button></div>`
+                ).join('');
+                return `
+                    <div class="mb-2">活動項目：</div>
+                    <div id="b${i}_items">${itemsHtml}</div>
+                    <button onclick="addActivityItem(${i})" class="mt-2 text-blue-600 text-sm">+ 新增活動</button>
+                `;
+            }
+            return '';
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function toggleEdit(i) {
+            const el = document.querySelector('.block-editor-' + i);
+            if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function addBlock(type) {
+            const b = { type, id: 'b' + Date.now() };
+            if (type === 'text') b.title = '', b.content = '';
+            if (type === 'image') b.url = '', b.alt = '';
+            if (type === 'link') b.text = '', b.url = '';
+            if (type === 'activityList') b.items = [];
+            blocks.push(b);
+            renderBlocks();
+        }
+
+        function removeBlock(i) {
+            blocks.splice(i, 1);
+            renderBlocks();
+        }
+
+        function moveBlock(i, delta) {
+            const j = i + delta;
+            if (j < 0 || j >= blocks.length) return;
+            [blocks[i], blocks[j]] = [blocks[j], blocks[i]];
+            renderBlocks();
+        }
+
+        function addActivityItem(blockIdx) {
+            const b = blocks[blockIdx];
+            if (!b.items) b.items = [];
+            b.items.push({ name: '', url: '' });
+            renderBlocks();
+        }
+
+        function removeActivityItem(blockIdx, itemIdx) {
+            const b = blocks[blockIdx];
+            if (b.items) b.items.splice(itemIdx, 1);
+            renderBlocks();
+        }
+
+        function collectBlockData() {
+            blocks.forEach((b, i) => {
+                if (b.type === 'text') {
+                    const t = document.getElementById('b' + i + '_title');
+                    const c = document.getElementById('b' + i + '_content');
+                    if (t) b.title = t.value;
+                    if (c) b.content = c.value;
+                }
+                if (b.type === 'image') {
+                    const u = document.getElementById('b' + i + '_url');
+                    const a = document.getElementById('b' + i + '_alt');
+                    if (u) b.url = u.value;
+                    if (a) b.alt = a.value;
+                }
+                if (b.type === 'link') {
+                    const t = document.getElementById('b' + i + '_text');
+                    const u = document.getElementById('b' + i + '_url');
+                    if (t) b.text = t.value;
+                    if (u) b.url = u.value;
+                }
+                if (b.type === 'activityList') {
+                    const items = b.items || [];
+                    b.items = items.map((it, j) => {
+                        const n = document.getElementById('b' + i + '_item' + j + '_name');
+                        const u = document.getElementById('b' + i + '_item' + j + '_url');
+                        return { name: n ? n.value : it.name, url: u ? u.value : it.url };
+                    });
+                }
+            });
+        }
+
+        function saveBlocks() {
+            collectBlockData();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(blocks));
+            alert('已儲存！會眾入口將顯示自訂區塊。');
+        }
+
+        function previewInNewTab() {
+            collectBlockData();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(blocks));
+            window.open('congregation/index.html', '_blank');
+        }
+    </script>
+</body>
+</html>

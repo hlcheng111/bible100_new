@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活動管理 - 學校管理系統</title>
+    <style>
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f6f7fb; color: #333; padding: 20px; font-size: 12px; }
+        .page-header { margin-bottom: 20px; }
+        .page-header h1 { color: #0b5fa5; font-size: 20px; margin-bottom: 6px; }
+        .page-header p { color: #666; font-size: 13px; }
+        .usage { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 12px 16px; margin-bottom: 20px; border-radius: 0 8px 8px 0; font-size: 12px; }
+        .usage summary { cursor: pointer; font-weight: 600; color: #2e7d32; }
+        .usage .who { margin-top: 8px; color: #1b5e20; }
+        .usage .when { color: #666; line-height: 1.5; margin-top: 4px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
+        .stat-card .icon { font-size: 24px; margin-bottom: 6px; }
+        .stat-card .number { font-size: 20px; font-weight: bold; color: #0b5fa5; }
+        .stat-card .label { color: #666; font-size: 11px; }
+        .data-section { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .data-section h3 { color: #0b5fa5; font-size: 14px; margin-bottom: 12px; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .data-table th, .data-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        .data-table th { background: #f6f7fb; color: #0b5fa5; font-weight: 600; }
+        .data-table tr:hover { background: #f9fafb; }
+        .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; }
+        .btn-primary { background: #2aa5ff; color: white; }
+        .btn-primary:hover { background: #0b5fa5; }
+        .empty-state { color: #9ca3af; padding: 30px; text-align: center; }
+        .nav { margin-bottom: 12px; }
+        .nav a { color: #0b5fa5; text-decoration: none; margin-right: 12px; font-size: 12px; }
+        .nav a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="../../dashboard.html" target="contentFrame">← 儀表板</a>
+        <a href="../../portal/usage.html" target="contentFrame">📖 功能說明</a>
+    </div>
+    <div class="page-header">
+        <h1>🎉 活動管理</h1>
+        <p>活動排程、報名、競賽、社團（參考 <a href="https://www.planningcenter.com/calendar" target="_blank">Planning Center Calendar</a> · <a href="https://www.planningcenter.com/registrations" target="_blank">Registrations</a>）</p>
+    </div>
+
+    <details class="usage">
+        <summary>📋 誰會用到？典型情境？</summary>
+        <div class="who">誰會用到？</div>
+        <div class="when">活動策劃、營會負責人、社團輔導</div>
+        <div class="who" style="margin-top:8px;">典型情境</div>
+        <div class="when">營會／退修會排程、活動報名、競賽管理、社團名單</div>
+        <div class="who" style="margin-top:8px;">下一步</div>
+        <div class="when">下方表格顯示真實資料；首次使用請先至儀表板「載入示範資料」</div>
+    </details>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="icon">🎉</div>
+            <div class="number" id="actCount">0</div>
+            <div class="label">活動數</div>
+        </div>
+        <div class="stat-card">
+            <div class="icon">👥</div>
+            <div class="number" id="clubCount">0</div>
+            <div class="label">社團數</div>
+        </div>
+        <div class="stat-card">
+            <div class="icon">🏆</div>
+            <div class="number" id="compCount">0</div>
+            <div class="label">競賽數</div>
+        </div>
+    </div>
+
+    <div class="data-section">
+        <h3>📅 活動列表（真實資料）</h3>
+        <table class="data-table">
+            <thead><tr><th>活動名稱</th><th>類型</th><th>日期</th><th>地點</th><th>狀態</th></tr></thead>
+            <tbody id="activityList"></tbody>
+        </table>
+    </div>
+
+    <div class="data-section">
+        <h3>👥 社團列表</h3>
+        <table class="data-table">
+            <thead><tr><th>社團名稱</th><th>成員數</th><th>狀態</th></tr></thead>
+            <tbody id="clubList"></tbody>
+        </table>
+    </div>
+
+    <div class="data-section">
+        <h3>🏆 競賽列表</h3>
+        <table class="data-table">
+            <thead><tr><th>競賽名稱</th><th>日期</th><th>狀態</th></tr></thead>
+            <tbody id="compList"></tbody>
+        </table>
+    </div>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        function render() {
+            if (!window.schoolDB) {
+                document.getElementById('activityList').innerHTML = '<tr><td colspan="5" class="empty-state">請先載入 SchoolMasterDatabase，至儀表板「載入示範資料」</td></tr>';
+                return;
+            }
+            if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+            const db = window.schoolDB.data;
+            const acts = (db.activity && db.activity.activities) || [];
+            const clubs = (db.activity && db.activity.clubs) || [];
+            const comps = (db.activity && db.activity.competitions) || [];
+
+            document.getElementById('actCount').textContent = acts.length;
+            document.getElementById('clubCount').textContent = clubs.length;
+            document.getElementById('compCount').textContent = comps.length;
+
+            document.getElementById('activityList').innerHTML = acts.length === 0
+                ? '<tr><td colspan="5" class="empty-state">尚無活動，請載入示範資料</td></tr>'
+                : acts.map(a => `<tr><td>${a.name || ''}</td><td>${a.type || ''}</td><td>${a.startDate || ''}</td><td>${a.venue || ''}</td><td>${a.status || ''}</td></tr>`).join('');
+
+            document.getElementById('clubList').innerHTML = clubs.length === 0
+                ? '<tr><td colspan="3" class="empty-state">尚無社團</td></tr>'
+                : clubs.map(c => `<tr><td>${c.name || ''}</td><td>${c.memberCount || 0}</td><td>${c.status || ''}</td></tr>`).join('');
+
+            document.getElementById('compList').innerHTML = comps.length === 0
+                ? '<tr><td colspan="3" class="empty-state">尚無競賽</td></tr>'
+                : comps.map(c => `<tr><td>${c.name || ''}</td><td>${c.eventDate || ''}</td><td>${c.status || ''}</td></tr>`).join('');
+        }
+        document.addEventListener('DOMContentLoaded', render);
+    </script>
+</body>
+</html>

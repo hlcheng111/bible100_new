@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班級資料 · Class Info</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+    <style>
+        .module-header { background: linear-gradient(135deg, #0b5fa5 0%, #2aa5ff 100%); }
+        .module-header h1 { font-size: 18px; margin-bottom: 8px; }
+        .module-header p { font-size: 11px; opacity: 0.9; }
+        details { margin-top: 10px; padding: 10px 14px; background: rgba(255,255,255,0.12); border-radius: 8px; font-size: 11px; }
+        summary { cursor: pointer; font-weight: 600; }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-pill { background: white; border-radius: 10px; padding: 14px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .stat-num { font-size: 24px; font-weight: 700; color: #e67e22; }
+        .stat-label { font-size: 10px; color: #6b7280; margin-top: 4px; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #e67e22; border-left: 4px solid #e67e22; padding-left: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f8fafc; font-weight: 600; }
+        tr:hover { background: #f9fafb; }
+        .btn { display: inline-block; padding: 6px 12px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; text-decoration: none; margin-right: 6px; }
+        .btn:hover { background: #d35400; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #9ca3af; }
+        .capacity-bar { height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+        .capacity-fill { height: 100%; background: #27ae60; }
+        .capacity-fill.warn { background: #f39c12; }
+        .capacity-fill.full { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="module-header">
+        <h1>📖 班級資料 · Class Info</h1>
+        <p>主日學班級、年級分班、班主任</p>
+        <details>
+            <summary>📋 功能與使用說明</summary>
+            <p style="margin-top:8px;"><b>此頁是為誰而設？</b> 主日學負責人、班主任。</p>
+            <p><b>有什麼功能？</b> 班級列表、學生人數、班主任、匯出。</p>
+            <p><b>如何入手？</b> 資料來自 SchoolMasterDatabase，首次使用請先至儀表板載入示範資料（20 班級）。</p>
+        </details>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-pill"><div class="stat-num" id="statTotal">0</div><div class="stat-label">班級總數</div></div>
+        <div class="stat-pill"><div class="stat-num" id="statStudents">0</div><div class="stat-label">已分班學生</div></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">🏫 班級列表 <button class="module-btn" onclick="exportData()" style="float:right;">📤 匯出 JSON</button></div>
+        <div id="classList"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a> <a href="../../student_class_unified.html" target="contentFrame" class="module-btn">學生分班管理</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        function loadClasses() {
+            if (!window.schoolDB) {
+                document.getElementById('classList').innerHTML = '<div class="empty-state">請先載入 SchoolMasterDatabase</div>';
+                return;
+            }
+            if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+
+            const db = window.schoolDB.data;
+            const classes = (db.class && db.class.classes) || [];
+            const classStudents = (db.class && db.class.classStudents) || [];
+            const teachers = db.teachers || [];
+
+            document.getElementById('statTotal').textContent = classes.length;
+            document.getElementById('statStudents').textContent = classStudents.length;
+
+            let html = '';
+            if (classes.length === 0) {
+                html = '<div class="empty-state">尚無班級，請先至儀表板載入示範資料。</div>';
+            } else {
+                html = '<table><thead><tr><th>班級名稱</th><th>年級</th><th>班主任</th><th>人數</th><th>容量</th><th>使用率</th></tr></thead><tbody>';
+                classes.forEach(c => {
+                    const count = classStudents.filter(cs => cs.classId === c.id).length;
+                    const cap = c.capacity || 30;
+                    const pct = Math.min(100, Math.round((count / cap) * 100));
+                    const t = teachers.find(t => t.id === c.teacherId);
+                    const barClass = pct >= 100 ? 'full' : pct >= 90 ? 'warn' : '';
+                    html += '<tr><td>' + (c.name || '—') + '</td><td>' + (c.grade || '—') + '</td><td>' + (t ? t.name : '—') + '</td><td>' + count + '</td><td>' + cap + '</td><td><div class="capacity-bar"><div class="capacity-fill ' + barClass + '" style="width:' + pct + '%"></div></div>' + pct + '%</td></tr>';
+                });
+                html += '</tbody></table>';
+            }
+            document.getElementById('classList').innerHTML = html;
+        }
+
+        function exportData() {
+            if (!window.schoolDB) return alert('無資料可匯出');
+            const db = window.schoolDB.data;
+            const data = { generatedAt: new Date().toISOString(), classes: (db.class && db.class.classes) || [], classStudents: (db.class && db.class.classStudents) || [] };
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+            a.download = 'classes_' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+        }
+
+        document.addEventListener('DOMContentLoaded', loadClasses);
+    </script>
+</body>
+</html>

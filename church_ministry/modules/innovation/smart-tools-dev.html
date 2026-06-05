@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>智能工具开发 - 甘特图 · Smart Tools Dev | Church Ministry</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei'; background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%); padding: 20px; font-size: 11px; min-height: 100vh; color: white; }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .header { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.2); }
+        .header h1 { font-size: 26px; }
+        
+        /* Gantt Chart */
+        .gantt-container { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 12px; padding: 25px; border: 1px solid rgba(255,255,255,0.2); overflow-x: auto; }
+        .gantt-table { width: 100%; border-collapse: collapse; }
+        .gantt-table th { padding: 12px; text-align: left; border-bottom: 2px solid rgba(255,255,255,0.3); font-size: 12px; }
+        .gantt-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .project-name { font-weight: 600; font-size: 13px; }
+        .timeline-bar { height: 30px; background: linear-gradient(90deg, #8E2DE2 0%, #4A00E0 100%); border-radius: 15px; position: relative; display: flex; align-items: center; padding: 0 10px; color: white; font-size: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .progress-overlay { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.3); border-radius: 15px; }
+        
+        .load-btn { display: block; margin: 20px auto; padding: 15px 30px; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container">
+        <div class="header">
+            <h1>🤖 智能工具开发 - 甘特图时间轴</h1>
+            <p style="opacity:0.8;margin-top:10px;">📅 项目进度管理 · 时间轴可视化 · 依赖关系</p>
+        </div>
+        
+        <button class="load-btn" onclick="loadDemo()" id="loadBtn">🎯 载入开发项目（5个项目）</button>
+        
+        <div class="gantt-container">
+            <table class="gantt-table">
+                <thead>
+                    <tr>
+                        <th style="width:200px;">项目名称</th>
+                        <th style="width:100px;">开始日期</th>
+                        <th style="width:100px;">结束日期</th>
+                        <th style="width:80px;">进度</th>
+                        <th>时间轴（2025年）</th>
+                    </tr>
+                </thead>
+                <tbody id="ganttBody"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        let projects = [];
+        
+        function loadDemo() {
+            projects = [
+                {name:'会友管理系统', start:'2025-01-01', end:'2025-03-31', progress:100},
+                {name:'奉献管理工具', start:'2025-02-01', end:'2025-05-31', progress:70},
+                {name:'活动报名系统', start:'2025-03-01', end:'2025-06-30', progress:40},
+                {name:'在线课程平台', start:'2025-04-01', end:'2025-08-31', progress:20},
+                {name:'数据分析仪表板', start:'2025-05-01', end:'2025-09-30', progress:10}
+            ];
+            
+            render();
+            document.getElementById('loadBtn').style.display = 'none';
+        }
+        
+        function render() {
+            document.getElementById('ganttBody').innerHTML = projects.map(p => {
+                const start = new Date(p.start);
+                const end = new Date(p.end);
+                const startMonth = start.getMonth() + 1;
+                const duration = Math.ceil((end - start) / (1000*60*60*24*30));
+                
+                return `
+                    <tr>
+                        <td class="project-name">${p.name}</td>
+                        <td>${p.start}</td>
+                        <td>${p.end}</td>
+                        <td>${p.progress}%</td>
+                        <td>
+                            <div style="display:flex;gap:2px;">
+                                ${Array.from({length:12}, (_,i)=>i+1).map(month => {
+                                    if (month >= startMonth && month < startMonth + duration) {
+                                        return `<div style="flex:1;height:30px;background:rgba(142,45,226,0.3);border-radius:4px;"></div>`;
+                                    }
+                                    return `<div style="flex:1;"></div>`;
+                                }).join('')}
+                            </div>
+                            <div class="timeline-bar" style="width:${duration * 8.33}%;margin-left:${(startMonth-1) * 8.33}%;">
+                                <div class="progress-overlay" style="width:${p.progress}%;"></div>
+                                <span style="position:relative;z-index:1;">${p.progress}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

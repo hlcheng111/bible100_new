@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>探訪跟進 · 首頁</title>
+  <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <link rel="stylesheet" href="_shared.css">
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../../js/data_trust_badge.js"></script>
+  <script src="tool.js"></script>
+  <style>.cm-tool-hero { background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%); }</style>
+</head>
+<body class="cm-tool-page">
+  <nav class="cm-back-bar">
+    <a class="cm-back-bar__link" href="../../dashboard.html">⛪ 教會事工儀表板</a>
+    <span class="cm-muted">探訪跟進 · CRM 小白入口（不取代探訪模組）</span>
+  </nav>
+  <header class="cm-tool-hero">
+    <h1>🤝 探訪跟進</h1>
+    <p>新人／久未出席／風險關懷 → 建立跟進任務 → 人工確認 → 複製關懷文字（不會自動通知）</p>
+  </header>
+  <nav class="cm-tool-nav" aria-label="工具分頁" id="toolNav"></nav>
+  <div id="dataTrustMount"></div>
+  <main class="cm-tool-main">
+    <section class="cm-card cm-card--uat" style="border-left:4px solid #059669;background:#f0fdf4;">
+      <h2 style="font-size:15px;margin:0 0 8px;color:#047857;">✅ 小白驗收檢查（A2）</h2>
+      <p class="cm-muted" style="margin:0 0 10px;">確認 Bridge、跟進寫入、清單與關懷稿複製（約 1 分鐘）。</p>
+      <a href="uat.html" class="cm-btn cm-btn-success" style="text-decoration:none;display:inline-block;font-size:13px;">▶ 開始驗收（UAT）</a>
+      <a href="../uat_index.html" class="cm-btn cm-btn-secondary" style="text-decoration:none;display:inline-block;margin-left:8px;">📋 全工具驗收總表</a>
+    </section>
+    <section class="cm-card">
+      <h2 style="font-size:14px;margin:0 0 8px;">小白三步</h2>
+      <ol class="cm-steps">
+        <li><strong>選對象</strong>：從 <a href="../../load_central_member_seed.html" target="_parent">試用會友</a> 或會友名單選 <code>member_id</code>。</li>
+        <li><strong>安排跟進</strong>：到 <a href="form.html">新增跟進任務</a>，設定原因、優先級與到期日；勾選人工確認後儲存。</li>
+        <li><strong>複製關懷文字</strong>：儲存或清單頁產生牧養稿，用 LINE／面談<strong>親自</strong>送出（系統不會自動發送）。</li>
+      </ol>
+    </section>
+    <section class="cm-card">
+      <h2 style="font-size:14px;margin:0 0 8px;">與既有探訪模組</h2>
+      <p class="cm-muted" style="line-height:1.6;margin:0;">
+        本工具是 CRM 決策路徑的<strong>跟進任務</strong>入口，不取代
+        <a href="../../modules/support/visitation_index.html" target="_parent">探訪工作桌</a>。
+        完整探訪紀錄仍請在探訪模組維護。
+      </p>
+    </section>
+    <section class="cm-card cm-kpi-grid" id="quickKpi">
+      <div class="cm-kpi"><span class="cm-muted">待跟進</span><strong id="kpiPending">—</strong></div>
+      <div class="cm-kpi"><span class="cm-muted">今日到期</span><strong id="kpiToday">—</strong></div>
+      <div class="cm-kpi"><span class="cm-muted">高優先</span><strong id="kpiHigh">—</strong></div>
+    </section>
+    <section class="cm-card">
+      <h2 style="font-size:14px;margin:0 0 8px;">牧者試用 · A2 demo</h2>
+      <p class="cm-muted" style="margin:0 0 10px;line-height:1.55;">3 筆跟進任務（含 urgent、今日到期、已完成）。清除 demo 不刪正式資料。</p>
+      <a href="load_a2_demo.html" class="cm-btn cm-btn-secondary" style="text-decoration:none;display:inline-block;">📥 載入 A2 試用資料</a>
+    </section>
+    <p style="margin-top:8px;">
+      <a href="form.html" class="cm-btn cm-btn-primary" style="text-decoration:none;display:inline-block;">➕ 新增跟進</a>
+      <a href="dashboard.html" class="cm-btn cm-btn-secondary" style="text-decoration:none;display:inline-block;margin-left:6px;">📊 儀表板</a>
+      <a href="list.html" class="cm-btn cm-btn-secondary" style="text-decoration:none;display:inline-block;margin-left:6px;">📋 清單</a>
+    </p>
+  </main>
+  <script>
+    document.getElementById('toolNav').innerHTML = VisitationFollowupTool.renderToolNav('index');
+    VisitationFollowupTool.renderTrustBadge('dataTrustMount', {
+      write_behavior: 'read_only',
+      notify_behavior: 'none',
+      privacy_level: 'pastoral_sensitive'
+    });
+    (function () {
+      var b = VisitationFollowupTool.bridge();
+      if (!b || !b.getPastoralFollowupSummary) return;
+      var s = b.getPastoralFollowupSummary(7);
+      document.getElementById('kpiPending').textContent = s.pending;
+      document.getElementById('kpiToday').textContent = s.due_today;
+      document.getElementById('kpiHigh').textContent = s.high_priority;
+    })();
+  </script>
+</body>
+</html>

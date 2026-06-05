@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ministry OS 整體理順存案（2026-05-28）</title>
+  <style>
+    body { font-family: "Microsoft JhengHei", Arial, sans-serif; margin: 24px; color: #1f2937; background: #f8fafc; }
+    h1, h2 { margin: 0 0 12px 0; }
+    .meta { color: #475569; font-size: 14px; margin-bottom: 16px; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    ul { margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { border: 1px solid #e2e8f0; padding: 10px; vertical-align: top; font-size: 14px; }
+    th { background: #f1f5f9; text-align: left; }
+    code { background: #eef2ff; padding: 1px 4px; border-radius: 4px; }
+    .ok { color: #166534; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Ministry OS 整體理順存案</h1>
+  <div class="meta">日期：2026-05-28（今日討論與落地）｜主題：不拆 iframe 架構下完成資料收口與新能力落地</div>
+
+  <div class="card">
+    <h2>一、今日結論摘要</h2>
+    <ul>
+      <li>按既定順序完成：Stabilize（剩餘項）+ 4 項新能力，共 5 項全部落地。</li>
+      <li>維持既有頁面佈局與操作習慣，不做破壞式改版。</li>
+      <li>資料層採「優先 <code>PersistenceProvider</code> / <code>ChurchDataBridge</code>，保留 fallback」原則。</li>
+      <li>已做語法檢查與 smoke check，結果均為 <span class="ok">通過</span>。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>二、修改與新增對照表（存案）</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>功能 / 功能頁</th>
+          <th>改前的功能</th>
+          <th>操作（本次改動）</th>
+          <th>改的意義</th>
+          <th>改後的功能變化</th>
+          <th>效果</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>church_ministry/modules/fellowship/small-groups-integrated.html</code></td>
+          <td>小組資料直接讀寫 <code>localStorage</code>（<code>smallGroupsSystemData</code>），與橋接層分離。</td>
+          <td>加入 storage wrapper，優先走 <code>PersistenceProvider</code>；保留 fallback。</td>
+          <td>避免同資料多份存放，降低跨頁不一致。</td>
+          <td>資料讀寫路徑收口，並新增 Copilot 入口。</td>
+          <td>小組頁資料更穩定，後續雲端同步改造成本下降。</td>
+        </tr>
+        <tr>
+          <td><code>church_ministry/modules/tech/automation-workflow.html</code></td>
+          <td>流程清單與統計主要是示範值。</td>
+          <td>改讀 <code>ChurchDataBridgePhase1</code> queue / observer；Run All 改呼叫 <code>flushQueue()</code>。</td>
+          <td>從展示頁改為可用營運頁。</td>
+          <td>可見待處理流程、可實際執行佇列。</td>
+          <td>流程管理可反映真實運行狀態，不再只看假數字。</td>
+        </tr>
+        <tr>
+          <td><code>church_ministry/modules/tech/ai-assistant.html</code></td>
+          <td>關鍵字 mock 回覆，資料上下文弱。</td>
+          <td>接入 bridge 上下文（會友/小組摘要）；回覆附 <code>source</code>；聊天記錄改 wrapper 儲存。</td>
+          <td>提高可追溯性與資料感知能力。</td>
+          <td>回覆含資料快照提示，顯示來源標記（bridge/fallback）。</td>
+          <td>同工可判斷回覆依據，降低「黑箱建議」風險。</td>
+        </tr>
+        <tr>
+          <td><code>js/church_data_bridge.js</code>（新能力 1）</td>
+          <td>缺正式「小組語音回報」統一模型。</td>
+          <td>新增 <code>submitSmallGroupVoiceReport</code> / <code>listSmallGroupVoiceReports</code>。</td>
+          <td>建立語音回報 SSOT 與可追溯欄位。</td>
+          <td>具備 schema_version、human_review、ai 欄位的正式記錄。</td>
+          <td>語音回報可持續分析、可做稽核與後續 AI 訓練。</td>
+        </tr>
+        <tr>
+          <td><code>js/church_data_bridge.js</code>（新能力 2）</td>
+          <td>恩賜測評缺版本化與快照，難追溯。</td>
+          <td>新增 <code>createGiftAssessmentSnapshot</code> / <code>listGiftAssessmentSnapshots</code>。</td>
+          <td>確保量表版本、計分版本與 AI 摘要可追溯。</td>
+          <td>每次測評可留存 instrument/scoring version 快照。</td>
+          <td>可比較不同版本測評結果，避免歷史資料失真。</td>
+        </tr>
+        <tr>
+          <td><code>js/smart_ministry_canonical_store.js</code></td>
+          <td>測評 attach 只落在 canonical assessments，未同步快照庫。</td>
+          <td><code>attachAssessmentToTalent</code> 增加 version 欄位並自動同步 bridge snapshot。</td>
+          <td>打通 Smart Ministry 與全站快照治理。</td>
+          <td>同一步操作同時完成「業務資料 + 快照資料」落地。</td>
+          <td>減少漏紀錄風險，提升資料治理完整度。</td>
+        </tr>
+        <tr>
+          <td><code>js/church_data_bridge.js</code>（新能力 3） + <code>church_ministry/modules/members/member-360-timeline.html</code></td>
+          <td>缺 360 Timeline 聚合視角。</td>
+          <td>新增 <code>getMember360Timeline</code>；新增 360 Timeline 視圖頁。</td>
+          <td>把問卷、回報、關懷、服事整併到同一時間軸。</td>
+          <td>輸入 memberId 即可查看整合事件序列。</td>
+          <td>關懷與門訓判斷更完整，減少資訊孤島。</td>
+        </tr>
+        <tr>
+          <td><code>js/church_data_bridge.js</code>（新能力 4） + <code>church_planning/dashboard-query-model.html</code></td>
+          <td>Dashboard 多依賴頁面側直接掃交易資料。</td>
+          <td>新增 <code>getDashboardQueryModel</code>；新增讀模型檢視頁。</td>
+          <td>建立 KPI 讀模型層，隔離交易資料複雜度。</td>
+          <td>儀表板可直接取統一模型（totals/trend/kpi）。</td>
+          <td>KPI 邏輯可集中維護，跨頁一致性提高。</td>
+        </tr>
+        <tr>
+          <td><code>church_ministry/modules/research/trend-analysis.html</code></td>
+          <td>趨勢圖與表格主要是靜態示範數據。</td>
+          <td>改讀 query model + 語音回報資料，重建圖表與表格。</td>
+          <td>讓研究頁反映實際資料狀態。</td>
+          <td>卡片/圖表/監控表改為真實聚合值。</td>
+          <td>趨勢頁可直接用於管理決策，不再是純展示頁。</td>
+        </tr>
+        <tr>
+          <td><code>docs/SYSTEM_RATIONALIZATION_BASELINE.md</code></td>
+          <td>僅有前段理順紀錄。</td>
+          <td>補記本日 Stabilize 第二輪與 5 項新能力落地。</td>
+          <td>保留治理脈絡與變更通知。</td>
+          <td>文件與實作一致。</td>
+          <td>後續交接與稽核可追蹤。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>三、自動測試紀錄（本日）</h2>
+    <ul>
+      <li>語法檢查：<code>node --check js/church_data_bridge.js</code>、<code>node --check js/smart_ministry_canonical_store.js</code>（通過）。</li>
+      <li>Smoke Check：5 項交付關鍵點（API/頁面關聯）檢查結果 <span class="ok">SMOKE_OK</span>。</li>
+      <li>頁面 lint 檢查：本輪相關頁面未出現 lint 錯誤。</li>
+    </ul>
+  </div>
+</body>
+</html>
+

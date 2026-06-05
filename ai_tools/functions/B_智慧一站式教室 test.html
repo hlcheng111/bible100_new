@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖經一百步 - 智慧一站式教室</title>
+    <style>
+        :root {
+            --primary-green: #27ae60;
+            --dark-blue: #2c3e50;
+            --bg-light: #f9fbf9;
+            --text-main: #333;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            margin: 0;
+            background-color: #f0f2f0;
+            color: var(--text-main);
+        }
+
+        /* 頂部橫幅：沿用教材頁風格 */
+        .top-banner {
+            background: linear-gradient(135deg, var(--dark-blue), #34495e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .step-selector-wrap {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #main-step-picker {
+            padding: 10px;
+            border-radius: 20px;
+            border: none;
+            font-size: 16px;
+            width: 300px;
+            cursor: pointer;
+        }
+
+        /* 主佈局：左右並排 */
+        .main-layout {
+            display: flex;
+            max-width: 1200px;
+            margin: 20px auto;
+            gap: 20px;
+            padding: 0 15px;
+        }
+
+        /* 左側：教材閱讀區 (仿 chapter2.html) */
+        .reader-section {
+            flex: 1.5;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            min-height: 80vh;
+        }
+
+        .bible-title {
+            color: var(--primary-green);
+            border-bottom: 2px solid var(--primary-green);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bible-content {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #444;
+        }
+
+        /* 右側：AI 工具箱 (仿 B_test.html) */
+        .toolbox-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            position: sticky;
+            top: 20px;
+        }
+
+        /* 工具箱內的小 Tab */
+        .tab-nav {
+            display: flex;
+            background: #eee;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: bold;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: var(--primary-green);
+        }
+
+        .tab-content {
+            padding: 20px;
+        }
+
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* 影片容器 */
+        .video-box {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            background: #000;
+        }
+
+        .video-box iframe {
+            position: absolute;
+            top:0; left:0; width:100%; height:100%; border:0;
+        }
+
+        /* AI 拼裝車樣式 */
+        .ai-inner-box {
+            background: #f0fdf4;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .btn-green { background: var(--primary-green); color: white; }
+        .btn-blue { background: #3498db; color: white; }
+
+        /* 手機版適配 */
+        @media (max-width: 900px) {
+            .main-layout { flex-direction: column; }
+            .toolbox-section { order: -1; } /* 工具箱排到上方方便操作 */
+        }
+    </style>
+  <script src="../assets/js/lab-frame-nav.js"></script>
+</head>
+<body>
+
+    <div class="top-banner">
+        <h1 style="margin:0;">新約歷史一百步 (互動教室)</h1>
+        <div class="step-selector-wrap">
+            <span>📍 當前進度：</span>
+            <select id="main-step-picker" onchange="loadStepData()">
+                </select>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <article class="reader-section">
+            <h2 id="view-title" class="bible-title">載入中...</h2>
+            <div id="view-content" class="bible-content">
+                </div>
+        </article>
+
+        <aside class="toolbox-section">
+            <div class="tool-card">
+                <div class="tab-nav">
+                    <button class="tab-btn active" onclick="openTab(event, 'p-video')">🎬 影片</button>
+                    <button class="tab-btn" onclick="openTab(event, 'p-ai')">🤖 AI 指令</button>
+                    <button class="tab-btn" onclick="openTab(event, 'p-quiz')">📝 測驗</button>
+                </div>
+
+                <div class="tab-content">
+                    <div id="p-video" class="panel active">
+                        <div class="video-box">
+                            <iframe id="video-frame" src="" allowfullscreen></iframe>
+                        </div>
+                    </div>
+
+                    <div id="p-ai" class="panel">
+                        <div class="ai-inner-box">
+                            <small>選擇教學重心 (OIA)：</small>
+                            <select id="oia-select" style="width:100%; padding:5px; margin:5px 0;">
+                                <option value="觀察">觀察 (O) - 重視歷史還原</option>
+                                <option value="解釋">解釋 (I) - 重視真理神學</option>
+                                <option value="應用">應用 (A) - 重視生活轉化</option>
+                            </select>
+                            <button class="btn btn-green" onclick="generateAI()">✨ 生成 AI 教案指令</button>
+                            <textarea id="ai-output" readonly></textarea>
+                            <button class="btn btn-blue" onclick="copyPrompt()">📋 複製指令</button>
+                        </div>
+                    </div>
+
+                    <div id="p-quiz" class="panel">
+                        <div id="quiz-area"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+<script>
+    // 示範數據：前 10 步 (結合教材與工具數據)
+    const stepDatabase = [
+        { id: 1, title: "第 1 步：兩約中間的沉默", content: "在舊約完結後，上帝沉默了四百年。這段時間政治局勢劇變，希臘文化興起，為福音鋪路...", video: "S2p6I_vM6cI", quiz: "這段沉默期大約是多少年？" },
+        { id: 2, title: "第 2 步：羅馬政權的影響", content: "羅馬帝國統一了地中海，修築道路，讓福音的傳播變得前所未有的快速...", video: "f9S3_G6-q9U", quiz: "羅馬帝國對福音傳播最大的貢獻是什麼？" },
+        { id: 3, title: "第 3 步：希律王與聖殿", content: "大希律為了討好猶太人，大規模重修耶路撒冷聖殿，這就是耶穌時代的聖殿...", video: "8uEa5O22i2w", quiz: "重建聖殿的君王是誰？" },
+        { id: 4, title: "第 4 步：施洗約翰的預備", content: "約翰在曠野呼喊：天國近了，你們應當悔改！他是彌賽亞的先鋒...", video: "S2p6I_vM6cI", quiz: "約翰的核心信息是什麼？" },
+        { id: 5, title: "第 5 步：道成肉身", content: "上帝的兒子降生在馬槽，這是一場卑微的革命...", video: "f9S3_G6-q9U", quiz: "耶穌降生地在哪裡？" },
+        { id: 6, title: "第 6 步：逃往埃及", content: "為了躲避希律的屠殺，約瑟帶着瑪利亞和嬰孩耶穌逃往埃及...", video: "8uEa5O22i2w", quiz: "為什麼約瑟要帶家人逃亡？" },
+        { id: 7, title: "第 7 步：拿撒勒的成長", content: "耶穌在拿撒勒長大，身量與智慧，以及上帝和人喜愛他的心，都一起增長...", video: "S2p6I_vM6cI", quiz: "耶穌成長的小鎮叫什麼？" },
+        { id: 8, title: "第 8 步：十二歲上聖殿", content: "少年耶穌在聖殿中聽道、問難，展現了他對天父之事的專注...", video: "f9S3_G6-q9U", quiz: "耶穌在哪裡與教師們辯論？" },
+        { id: 9, title: "第 9 步：曠野的試探", content: "在受洗之後，耶穌被靈引到曠野，面對撒但的三次試探...", video: "8uEa5O22i2w", quiz: "耶穌用什麼武器戰勝試探？" },
+        { id: 10, title: "第 10 步：呼召門徒", content: "在加利利海邊，耶穌對彼得和安得烈說：來跟從我，我要叫你們得人如得魚...", video: "S2p6I_vM6cI", quiz: "耶穌在什麼地方呼召第一批門徒？" }
+    ];
+
+    // 初始化下拉選單
+    const picker = document.getElementById('main-step-picker');
+    stepDatabase.forEach(item => {
+        let opt = document.createElement('option');
+        opt.value = item.id;
+        opt.innerHTML = item.title;
+        picker.appendChild(opt);
+    });
+
+    // 核心：加載數據
+    function loadStepData() {
+        const id = document.getElementById('main-step-picker').value;
+        const data = stepDatabase.find(x => x.id == id);
+
+        // 更新左側教材內容
+        document.getElementById('view-title').innerText = data.title;
+        document.getElementById('view-content').innerHTML = `<p>${data.content}</p><p>(此處可放入更長、更有深度的 PDF 教材文字內容...)</p>`;
+
+        // 更新右側工具
+        document.getElementById('video-frame').src = `https://www.youtube.com/embed/${data.video}`;
+        document.getElementById('quiz-area').innerHTML = `<p><strong>思考題：</strong></p><p>${data.quiz}</p>`;
+        document.getElementById('ai-output').value = ""; // 清空舊指令
+    }
+
+    // Tab 切換
+    function openTab(evt, tabId) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    }
+
+    // 生成 AI 指令
+    function generateAI() {
+        const title = document.getElementById('main-step-picker').options[picker.selectedIndex].text;
+        const oia = document.getElementById('oia-select').value;
+        const prompt = `你是一位資深牧師與聖經學者。請針對《${title}》，以「${oia}」為教學導向，為我寫出一份主日學教案。
+要求：包含背景解說、三個討論題、一份本週實踐清單。請用繁體中文。`;
+        document.getElementById('ai-output').value = prompt;
+    }
+
+    // 複製指令
+    function copyPrompt() {
+        const out = document.getElementById('ai-output');
+        if(!out.value) return alert("請先生成指令");
+        out.select();
+        document.execCommand('copy');
+        alert("✅ 指令已複製！請至 ChatGPT 貼上使用。");
+    }
+
+    // 啟動首頁
+    window.onload = loadStepData;
+</script>
+
+</body>
+</html>

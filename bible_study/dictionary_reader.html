@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖經詞典工具</title>
+    <link rel="stylesheet" href="css/landing_dashboard_standard.css">
+    <style>
+        .search-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #27ae60;
+        }
+        .search-btn {
+            width: 100%;
+            padding: 12px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .search-btn:hover {
+            background: #229954;
+        }
+        .result-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-height: 300px;
+        }
+        .result-item {
+            padding: 15px;
+            border-left: 4px solid #27ae60;
+            background: #f8f9fa;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .result-item h4 {
+            color: #27ae60;
+            margin: 0 0 8px 0;
+            font-size: 16px;
+        }
+        .result-item p {
+            margin: 0;
+            line-height: 1.6;
+            color: #555;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="index.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回聖經研讀中心</a></div>
+    <div class="page-header">
+        <h1>
+            📚 聖經詞典工具
+            <small class="multi-lang">
+                <a href="#" onclick="translatePage('en'); return false;">Bible Dictionary</a> / 
+                <a href="#" onclick="translatePage('vi'); return false;">Từ Điển Kinh Thánh</a> / 
+                <a href="#" onclick="translatePage('id'); return false;">Kamus Alkitab</a>
+            </small>
+        </h1>
+        <p class="description">
+            查詢聖經詞彙、人物、地名的詳細解釋
+        </p>
+    </div>
+
+    <div class="info-bar success">
+        <strong>💡 使用提示：</strong>
+        輸入詞彙、人物或地名進行搜索，系統將顯示詳細的定義和解釋。
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" class="search-input" placeholder="請輸入要查詢的詞彙，例如：愛、摩西、耶路撒冷..." onkeypress="if(event.key==='Enter') searchDictionary()">
+        <button class="search-btn" onclick="searchDictionary()">🔍 搜索</button>
+    </div>
+
+    <div class="result-container" id="resultContainer">
+        <div class="empty-state">
+            <div class="empty-state-icon">📖</div>
+            <h3>請輸入詞彙開始搜索</h3>
+            <p>支持搜索聖經詞彙、人物、地名等</p>
+        </div>
+    </div>
+
+    <script>
+        let dictionaryData = null;
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const d = document.createElement('div');
+            d.textContent = String(s);
+            return d.innerHTML;
+        }
+
+        // 載入詞典資料（相對於本頁，支援 file:// 與 iframe / index_v5）
+        async function loadDictionary() {
+            try {
+                const path = new URL('../data/cd/圣经语汇词典.json', window.location.href).href;
+                const response = await fetch(path);
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                dictionaryData = await response.json();
+                console.log('✅ 詞典資料載入成功', dictionaryData);
+            } catch (error) {
+                console.error('❌ 詞典資料載入失敗:', error);
+                showError('詞典資料載入失敗。若用 file:// 開啟，請改以本機 HTTP 伺服器開啟專案根目錄，或確認 ../data/cd/圣经语汇词典.json 存在。');
+            }
+        }
+
+        // 搜索詞典
+        function searchDictionary() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            if (!keyword) {
+                alert('請輸入搜索詞彙');
+                return;
+            }
+
+            if (!dictionaryData) {
+                showError('詞典資料尚未載入，請稍候...');
+                loadDictionary();
+                return;
+            }
+
+            const results = searchInDictionary(keyword);
+            displayResults(results, keyword);
+        }
+
+        // 在詞典中搜索（支援 Dictionary.data[] 格式：Word, Description, ComeFrom）
+        function searchInDictionary(keyword) {
+            const results = [];
+            const q = keyword.toLowerCase();
+            
+            const data = dictionaryData?.Dictionary?.data || dictionaryData?.data || 
+                (Array.isArray(dictionaryData) ? dictionaryData : []);
+            
+            if (Array.isArray(data)) {
+                data.forEach(item => {
+                    const term = item.Word || item.term || item.title || item.name;
+                    const def = item.Description || item.definition || item.content || item.value;
+                    if ((term && String(term).toLowerCase().includes(q)) || 
+                        (def && String(def).toLowerCase().includes(q))) {
+                        results.push({
+                            term: term || '未知',
+                            definition: (def || '') + (item.ComeFrom ? '\n\n來源：' + item.ComeFrom : '')
+                        });
+                    }
+                });
+            } else if (typeof dictionaryData === 'object') {
+                for (const key in dictionaryData) {
+                    if (key.toLowerCase().includes(q) || 
+                        (dictionaryData[key] && String(dictionaryData[key]).toLowerCase().includes(q))) {
+                        results.push({
+                            term: key,
+                            definition: dictionaryData[key]
+                        });
+                    }
+                }
+            }
+            return results;
+        }
+
+        // 顯示結果
+        function displayResults(results, keyword) {
+            const container = document.getElementById('resultContainer');
+            
+            if (results.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <h3>沒有找到「${keyword}」的相關結果</h3>
+                        <p>請嘗試其他關鍵詞或檢查拼寫</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `<h3 style="color: #27ae60; margin-bottom: 15px;">找到 ${results.length} 個結果：</h3>`;
+            
+            results.forEach(item => {
+                const term = item.term || item.title || item.name || '未知詞彙';
+                const definition = item.definition || item.content || item.description || '無詳細說明';
+                
+                html += `
+                    <div class="result-item">
+                        <h4>${escapeHtml(term)}</h4>
+                        <p>${escapeHtml(definition).replace(/\n/g, '<br>')}</p>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 顯示錯誤
+        function showError(message) {
+            const container = document.getElementById('resultContainer');
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">⚠️</div>
+                    <h3>載入錯誤</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // 多語言翻譯功能
+        function translatePage(targetLang) {
+            const langMap = {
+                'en': { code: 'en', name: '英文' },
+                'vi': { code: 'vi', name: '越南文' },
+                'id': { code: 'id', name: '印尼文' }
+            };
+            
+            const lang = langMap[targetLang];
+            if (!lang) return;
+            
+            const currentURL = encodeURIComponent(window.location.href);
+            const translateURL = `https://translate.google.com/translate?sl=zh-TW&tl=${lang.code}&u=${currentURL}`;
+            
+            if (confirm(`即將使用 Google 翻譯將本頁翻譯為${lang.name}。\n\n繼續？`)) {
+                window.open(translateURL, '_blank');
+            }
+        }
+
+        // 頁面載入時載入詞典
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ 詞典工具已載入');
+            loadDictionary();
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

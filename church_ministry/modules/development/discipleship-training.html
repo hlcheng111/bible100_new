@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>門徒培訓管理 · Discipleship Training | Church Ministry</title>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f6fa; font-size: 12px; }
+.header { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 15px 20px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 15px; }
+.card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.page-guide { font-size: 11px; color: #475569; margin-bottom: 14px; padding: 12px 14px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; line-height: 1.55; }
+.btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; background: #e74c3c; color: white; margin: 5px; }
+table { width: 100%; border-collapse: collapse; }
+table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+table th { background: #f8f9fa; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+.modal.active { display: flex; }
+.modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; position: relative; }
+.modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+.form-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+.hint { font-size: 10px; color: #64748b; margin-top: 8px; line-height: 1.45; }</style></head>
+<body>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div class="header"><h1>👥 門徒培訓管理</h1></div>
+<div class="container">
+    <div class="page-guide">
+        <strong>本頁用途：</strong>在教會事工內快速記錄「門徒班級」進度（簡版）。<br>
+        <strong>適合誰用：</strong>門訓負責人、牧者。若要完整門徒路徑／教材進度，請用 <a href="../../../disciple_dynamics/dashboard.html" target="_blank" rel="noopener" style="color:#4f46e5;">門訓動力站</a>。<br>
+        <strong>如何開始：</strong>① 按「新增班級」② 填寫導師與人數 ③ 儲存經 <code>ChurchDataBridge</code> 寫入 <code>discipleData</code> 鍵與 <code>churchMasterDatabase.discipleship</code>（不經頁面直寫 localStorage）。<br>
+        <strong>與會友主檔：</strong>進階可為每班加入 <code>memberId</code> 名單（後端 API 階段）；現階段以班級為單位。
+    </div>
+    <div class="card"><h3 style="margin-bottom:15px;">🎓 培訓班級</h3>
+        <button class="btn" onclick="showAddModal()">➕ 新增班級</button>
+        <p class="hint">資料經 Bridge SSOT（<code>discipleData</code>／主庫 discipleship）· 詳見 <code>church_ministry/docs/CHURCH_MINISTRY_HUB_AUDIT.md</code></p>
+        <table id="table"><thead><tr><th>班級名稱</th><th>導師</th><th>學員數</th><th>進度</th><th>操作</th></tr></thead><tbody></tbody></table>
+    </div>
+</div>
+<div id="modal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+<script src="../../../js/church_data_bridge.js"></script>
+<style>body.cm-saving-disc { pointer-events: none; opacity: 0.9; }</style>
+<script>
+let classes = [];
+async function persistDiscipleClasses() {
+    if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.saveDiscipleClasses) {
+        alert('ChurchDataBridge 不可用');
+        return false;
+    }
+    document.body.classList.add('cm-saving-disc');
+    try {
+        if (ChurchDataBridge.saveDiscipleClassesAsync) {
+            await ChurchDataBridge.saveDiscipleClassesAsync(classes);
+        } else {
+            ChurchDataBridge.saveDiscipleClasses(classes);
+        }
+        if (typeof ChurchDataBridge.logActivity === 'function') {
+            ChurchDataBridge.logActivity('discipleship_training_save', { count: classes.length }, 'discipleship');
+        }
+        return true;
+    } catch (e) {
+        console.error(e);
+        alert('儲存失敗：' + (e.message || e));
+        return false;
+    } finally {
+        document.body.classList.remove('cm-saving-disc');
+    }
+}
+async function loadClasses() {
+    if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getDiscipleClasses) {
+        classes = [];
+        return;
+    }
+    try {
+        if (ChurchDataBridge.getDiscipleClassesAsync) {
+            classes = await ChurchDataBridge.getDiscipleClassesAsync();
+        } else {
+            classes = ChurchDataBridge.getDiscipleClasses();
+        }
+    } catch (e) {
+        console.warn(e);
+        classes = [];
+    }
+}
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.whenReady) {
+            await ChurchDataBridge.whenReady({ timeoutMs: 5000 });
+        }
+    } catch (e) {
+        console.warn('[discipleship-training] whenReady', e && e.message ? e.message : e);
+    }
+    await loadClasses();
+    if (classes.length === 0) await loadDemo();
+    render();
+});
+async function loadDemo() {
+    if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.isProductionMode && ChurchDataBridge.isProductionMode()) {
+        alert('正式環境禁止載入示範資料');
+        return;
+    }
+    classes = [
+        { id: 1, name: '門徒一階', mentor: '李牧師', students: 12, progress: 60 },
+        { id: 2, name: '門徒二階', mentor: '王長老', students: 8, progress: 40 }
+    ];
+    await persistDiscipleClasses();
+    render();
+}
+function render() {
+    document.querySelector('#table tbody').innerHTML = classes.map(c => `<tr><td>${c.name}</td><td>${c.mentor}</td><td>${c.students}人</td><td>${c.progress}%</td><td><button class="btn" style="padding:6px 12px;" onclick="del(${c.id})">刪除</button></td></tr>`).join('');
+}
+function showModal(title, content) {
+    document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;margin-bottom:20px;">${title}</div>${content}`;
+    document.getElementById('modal').classList.add('active');
+}
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+function showAddModal() {
+    showModal('➕ 新增班級', `<div class="form-group"><label class="form-label">班級名稱</label><input id="name" class="form-input"></div><div class="form-group"><label class="form-label">導師</label><input id="mentor" class="form-input"></div><div class="form-group"><label class="form-label">學員數</label><input type="number" id="students" class="form-input" value="10"></div><button class="btn" onclick="add()">確定</button>`);
+}
+async function add() {
+    classes.push({
+        id: Date.now(),
+        name: document.getElementById('name').value,
+        mentor: document.getElementById('mentor').value,
+        students: parseInt(document.getElementById('students').value, 10) || 0,
+        progress: 0
+    });
+    await persistDiscipleClasses();
+    render();
+    closeModal();
+    alert('✅ 已添加！');
+}
+async function del(id) {
+    if (confirm('刪除？')) {
+        classes = classes.filter(c => c.id !== id);
+        await persistDiscipleClasses();
+        render();
+    }
+}
+</script>
+</body>
+</html>

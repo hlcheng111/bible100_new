@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>敬拜事工完整系统 - Worship Ministry · Worship Integrated | Church Ministry</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../../js/church-master-database.js"></script>
+    <link rel="stylesheet" href="../../css/module_onboarding.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f0f2f5; color: #333; font-size: 12px; }
+        
+        /* 顶部导航栏 */
+        .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header-nav { margin-bottom: 8px; }
+        .header-nav a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 12px; margin-right: 12px; }
+        .header-nav a:hover { text-decoration: underline; }
+        .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+        
+        /* 标签页 */
+        .tabs { display: flex; gap: 5px; margin-top: 10px; }
+        .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; transition: all 0.3s; }
+        .tab.active { background: white; color: #f5576c; font-weight: 600; }
+        .tab:hover:not(.active) { background: rgba(255,255,255,0.3); }
+        
+        /* 容器 */
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* 统计卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid; }
+        .stat-card.pink { border-color: #f5576c; }
+        .stat-card.purple { border-color: #9b59b6; }
+        .stat-card.blue { border-color: #3498db; }
+        .stat-card.green { border-color: #27ae60; }
+        .stat-card.orange { border-color: #e67e22; }
+        .stat-card.teal { border-color: #1abc9c; }
+        .stat-num { font-size: 28px; font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
+        .stat-label { font-size: 10px; color: #7f8c8d; }
+        
+        /* 卡片 */
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #2c3e50; border-left: 4px solid #f5576c; padding-left: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        
+        /* 按钮 */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; margin-right: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #e67e22; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-info { background: #3498db; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        
+        /* 表格 */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
+        table th { background: #f8f9fa; font-weight: 600; }
+        table tr:hover { background: #f8f9fa; }
+        
+        /* 表单 */
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        
+        /* 模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #7f8c8d; }
+        
+        /* 标签 */
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; margin-right: 5px; }
+        .tag.worship { background: #fce4ec; color: #880e4f; }
+        .tag.sound { background: #e3f2fd; color: #0d47a1; }
+        .tag.projection { background: #fff3e0; color: #e65100; }
+        .tag.hospitality { background: #f3e5f5; color: #4a148c; }
+        .tag.confirmed { background: #d4edda; color: #155724; }
+        .tag.pending { background: #fff3cd; color: #856404; }
+        
+        /* 日历 */
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 15px; }
+        .calendar-day { background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px; min-height: 100px; font-size: 10px; }
+        .calendar-day.has-service { background: #fce4ec; border-color: #f5576c; }
+        .calendar-date { font-weight: 600; margin-bottom: 5px; color: #2c3e50; }
+        .calendar-event { background: #f5576c; color: white; padding: 3px 6px; border-radius: 3px; margin-top: 3px; font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+        .calendar-event:hover { background: #d63447; }
+        
+        /* 列表项 */
+        .list-item { padding: 10px; margin-bottom: 8px; background: #f8f9fa; border-radius: 4px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s; }
+        .list-item:hover { background: #e9ecef; }
+        .list-item.selected { background: #fce4ec; border-left-color: #f5576c; }
+        .list-item-title { font-weight: 600; font-size: 11px; margin-bottom: 3px; }
+        .list-item-meta { font-size: 9px; color: #7f8c8d; }
+        
+        /* 歌曲列表 */
+        .song-list { margin-top: 15px; }
+        .song-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 4px; margin-bottom: 8px; }
+        .song-order { width: 30px; height: 30px; background: #f5576c; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+        .song-details { flex: 1; margin: 0 15px; }
+        .song-name { font-weight: 600; font-size: 12px; margin-bottom: 3px; }
+        .song-key { font-size: 10px; color: #7f8c8d; }
+        .song-actions button { margin-left: 5px; }
+        
+        /* 消息提示 */
+        .message { position: fixed; top: 80px; right: 20px; padding: 12px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1001; animation: slideIn 0.3s; font-size: 12px; }
+        .message.success { background: #27ae60; color: white; }
+        .message.error { background: #e74c3c; color: white; }
+        .message.info { background: #3498db; color: white; }
+        @keyframes slideIn { from { transform: translateX(300px); } to { transform: translateX(0); } }
+        
+        /* 搜索框 */
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
+        
+        /* 空状态 */
+        .empty-state { text-align: center; padding: 60px 20px; color: #95a5a6; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
+        .empty-state-text { font-size: 14px; }
+        
+        /* 团队卡片 */
+        .team-card { background: white; border-radius: 8px; padding: 15px; border-left: 4px solid; }
+        .team-card.worship { border-color: #f5576c; }
+        .team-card.sound { border-color: #3498db; }
+        .team-card.projection { border-color: #e67e22; }
+        .team-card.hospitality { border-color: #9b59b6; }
+        .team-header { font-weight: 600; font-size: 14px; margin-bottom: 10px; }
+        .team-members { font-size: 11px; color: #7f8c8d; }
+        .worship-map-item {
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: #fafbfc;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+        .worship-map-item a { font-weight: 600; color: #c2185b; text-decoration: none; display: block; margin-bottom: 4px; }
+        .worship-map-item a:hover { text-decoration: underline; }
+        .worship-map-item .role { color: #555; }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a>
+        <a href="../../load_central_member_seed.html" target="_parent" style="font-size:12px;color:#27ae60;text-decoration:none;">📥 載入 500 人（若本頁無資料請點此）</a>
+    </div>    <div class="header">
+        <div class="header-nav"><a href="../../dashboard.html">⛪ 教會事工中心</a><a href="../../activities-overview.html">🎯 A 模組總覽</a></div>
+        <h1>🎵 敬拜事工完整系统</h1>
+        <details style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,0.15);border-radius:8px;font-size:11px;">
+            <summary style="cursor:pointer;font-weight:600;">📋 功能與使用說明</summary>
+            <div style="margin-top:8px;opacity:0.95;">
+                <div style="font-weight:600;margin-bottom:4px;">此頁是為誰而設？</div>
+                <p style="margin:0 0 10px;">為敬拜領袖、團隊負責人，管理敬拜團隊、主日排班與詩歌庫。</p>
+                <div style="font-weight:600;margin-bottom:4px;">有什麼功能？</div>
+                <ul style="margin:0 0 10px;padding-left:18px;line-height:1.5;">
+                    <li><b>總覽</b>：團隊數、成員數、主日場次、詩歌庫、參與率</li>
+                    <li><b>團隊管理</b>：敬拜團隊、詩班、器樂團隊</li>
+                    <li><b>主日排班</b>：本週／本月服事安排</li>
+                    <li><b>詩歌庫</b>、<b>事奉記錄</b>、<b>參與分析</b></li>
+                    <li><b>目標·進度·成果</b>：設定年度目標、記錄成果，數據回傳 A 模組總覽</li>
+                </ul>
+                <div style="font-weight:600;margin-bottom:4px;">典型情境</div>
+                <p style="margin:0 0 10px;font-style:italic;">例：週六排班前，敬拜領袖在此確認本週詩歌與人員；或月底檢視參與率，決定是否調整輪值。</p>
+                <div style="font-weight:600;margin-bottom:4px;">如何入手？</div>
+                <ol style="margin:0;padding-left:18px;line-height:1.5;">
+                    <li>切換至「團隊管理」→ 新增團隊與成員</li>
+                    <li>於「主日排班」安排本週服事人員</li>
+                    <li>在「目標·進度·成果」分頁設定目標、更新進度、記錄見證</li>
+                </ol>
+                <p class="member-id-principle" style="margin-top:10px;">跨模組原則：敬拜團員／服事者以 <code>memberId</code> 對齊會友主檔；排班與詩歌庫為本模組資料，人名不重複自建主檔。</p>
+            </div>
+        </details>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 总览</button>
+            <button class="tab" onclick="switchTab('teams')">🎤 团队管理</button>
+            <button class="tab" onclick="switchTab('schedule')">📅 主日排班</button>
+            <button class="tab" onclick="switchTab('songs')">🎵 诗歌库</button>
+            <button class="tab" onclick="switchTab('records')">📝 事奉记录</button>
+            <button class="tab" onclick="switchTab('analysis')">📊 参与分析</button>
+            <button class="tab" onclick="switchTab('goals')">🎯 目標·進度·成果</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 标签页1：总览 -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>總覽團隊數、服事人次、詩歌庫與本週排程。<br>
+                <strong>適合誰用：</strong>敬拜牧者、敬拜統籌。<br>
+                <strong>如何開始：</strong>① 無資料時先 <a href="../../load_central_member_seed.html">載入試用會友</a> ② 「團隊管理」建立團隊並綁定 <code>memberId</code> ③ 「主日排班」安排場次。<br>
+                <span class="data-source-note">本機敬拜模組 JSON／localStorage；與 churchMasterDatabase 透過成員 memberId 對齊。</span>
+            </div>
+            <div class="card" style="margin-bottom:16px;border-left:4px solid #f5576c;">
+                <div class="card-title">🗺️ 敬拜模組全頁導覽（角色與入口）</div>
+                <p style="font-size:11px;color:#666;margin-bottom:10px;">除註明外，資料存於本機瀏覽器。與「講台排期／出席」相關者請與 <a href="pulpit-ministry.html" style="color:#c2185b;">講壇事奉</a>、<a href="worship-management.html" style="color:#c2185b;">崇拜禮儀管理</a> 搭配使用。</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:10px;">
+                    <div class="worship-map-item"><a href="pulpit-ministry.html">講壇事奉</a><span class="role">講員排期、主題經文、講台儀表板</span></div>
+                    <div class="worship-map-item"><a href="sermon-notes-admin.html">講道筆記模板</a><span class="role">講員預備、筆記與存檔</span></div>
+                    <div class="worship-map-item"><a href="hospitality.html">招待事奉</a><span class="role">現場接待、匯報人數與代禱</span></div>
+                    <div class="worship-map-item"><a href="worship-team-management.html">敬拜團隊</a><span class="role">敬拜團行政與排班入口</span></div>
+                    <div class="worship-map-item"><a href="choir-team.html">詩班團隊</a><span class="role">聲部、年度／練習／編配／匯報流程</span></div>
+                    <div class="worship-map-item"><a href="instrument-team.html">器樂團隊</a><span class="role">樂手、樂器與事工流程表</span></div>
+                    <div class="worship-map-item"><a href="congregational-songs.html">會眾詩歌</a><span class="role">主日選歌、使用次數、採購／借用紀錄</span></div>
+                    <div class="worship-map-item"><a href="sheet-music.html">樂譜管理</a><span class="role">樂譜資產、練習與器材保養</span></div>
+                    <div class="worship-map-item"><a href="song-library.html">詩歌庫</a><span class="role">全教會詩歌索引、搜尋、匯出 CSV</span></div>
+                    <div class="worship-map-item"><a href="worship-management.html">崇拜禮儀管理</a><span class="role">聚會場次、講員／司會、禮儀流程條目</span></div>
+                    <div class="worship-map-item"><a href="worship-reports.html">崇拜統計報表</a><span class="role">區間統計、圖表（與出席資料連動）</span></div>
+                    <div class="worship-map-item"><a href="attendance-management.html">崇拜出席管理</a><span class="role">點名與出席率（與招待匯報可對照）</span></div>
+                    <div class="worship-map-item"><a href="../media/audio-team.html">音響團隊</a><span class="role">媒體模組 · 音控與現場聲音</span></div>
+                    <div class="worship-map-item"><a href="../media/live-streaming.html">視頻直播</a><span class="role">媒體模組 · 直播排程與設備</span></div>
+                </div>
+            </div>
+            <div class="module-links">
+                <strong>跨模組快速連結（同一 memberId）</strong>
+                <ul>
+                    <li><a href="../members/member-integrated.html#tab-members">會友檔案</a> — 團員恩賜／聯絡</li>
+                    <li><a href="../members/member-integrated.html#tab-ministry">事工參與</a> — 與崗位對齊</li>
+                    <li><a href="../support/visitation.html">探訪關懷</a> — 關懷服事者</li>
+                </ul>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card pink"><div class="stat-num" id="stat-teams">0</div><div class="stat-label">团队数</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-members">0</div><div class="stat-label">成员数</div></div>
+                <div class="stat-card blue"><div class="stat-num" id="stat-services">0</div><div class="stat-label">主日场次</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-this-month">0</div><div class="stat-label">本月服事</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-songs">0</div><div class="stat-label">诗歌库</div></div>
+                <div class="stat-card teal"><div class="stat-num" id="stat-participation">0%</div><div class="stat-label">参与率</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 团队分布</div><canvas id="teamChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 月度服事趋势</div><canvas id="serviceChart"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📅 本周主日安排</div>
+                <div id="weeklySchedule"></div>
+            </div>
+        </div>
+        
+        <!-- 标签页2：团队管理 -->
+        <div id="tab-teams" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>管理敬拜／音響／投影片等團隊與成員名單。<br>
+                <strong>適合誰用：</strong>敬拜統籌、各團隊長。<br>
+                <strong>如何開始：</strong>① 新增團隊 ② 加入成員（使用會友 <code>memberId</code>）③ 與排班表連動。<br>
+                <span class="data-source-note">成員列應可回溯至 members 主檔；示範資料可能為內建種子。</span>
+            </div>
+            <div class="card">
+                <div class="card-title">🎤 敬拜团队管理</div>
+                <p style="color: #666; margin-bottom: 15px;">点击"详细管理"可进入各团队的专业管理页面</p>
+                <button class="btn btn-primary" onclick="showAddTeamModal()">➕ 新增团队</button>
+                <button class="btn btn-success" onclick="showAddMemberModal()">➕ 添加成员</button>
+                <div class="grid-2" style="margin-top: 20px;">
+                    <div id="teamsDisplay"></div>
+                </div>
+                
+                <!-- 专业管理页面链接 -->
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                    <h4 style="margin-bottom: 15px; color: #2c3e50;">🔍 专业管理页面</h4>
+                    <div class="grid-3">
+                        <div class="team-card" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 20px; border-radius: 8px;">
+                            <h4 style="margin-bottom: 10px;">🎸 器乐团</h4>
+                            <p style="margin: 5px 0; font-size: 12px;">吉他:3 | 键盘:2 | 鼓:2 | 贝斯:1</p>
+                            <p style="margin: 5px 0; font-size: 12px;">成员：8人 | 本月：4次练习</p>
+                            <button class="btn btn-sm" style="background: white; color: #f39c12; margin-top: 10px;" onclick="location.href='instrument-team.html'">
+                                🎸 乐器管理（5个标签页）
+                            </button>
+                        </div>
+                        
+                        <div class="team-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px;">
+                            <h4 style="margin-bottom: 10px;">🎼 诗班团</h4>
+                            <p style="margin: 5px 0; font-size: 12px;">女高音:5 | 女中音:4 | 男高音:3 | 男低音:4</p>
+                            <p style="margin: 5px 0; font-size: 12px;">成员：16人 | 本月：3次练习</p>
+                            <button class="btn btn-sm" style="background: white; color: #667eea; margin-top: 10px;" onclick="location.href='choir-team.html'">
+                                🎵 声部平衡器
+                            </button>
+                        </div>
+                        
+                        <div class="team-card" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 20px; border-radius: 8px;">
+                            <h4 style="margin-bottom: 10px;">🎤 敬拜团</h4>
+                            <p style="margin: 5px 0; font-size: 12px;">主领:2 | 伴唱:4 | 和声:3</p>
+                            <p style="margin: 5px 0; font-size: 12px;">成员：9人 | 本月：4次服事</p>
+                            <button class="btn btn-sm" style="background: white; color: #27ae60; margin-top: 10px;" onclick="location.href='worship-team-management.html'">
+                                🎤 团队管理
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 标签页3：主日排班 -->
+        <div id="tab-schedule" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>檢視與編輯主日各場次服事排程。<br>
+                <strong>適合誰用：</strong>排班同工、敬拜統籌。<br>
+                <strong>如何開始：</strong>① 點選日曆或列表 ② 指派服事者（memberId）③ 發布前與團隊確認。<br>
+                <span class="data-source-note">排班資料屬本模組；服事者身份以 memberId 一致。</span>
+            </div>
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="stat-card blue"><div class="stat-num" id="stat-scheduled">0</div><div class="stat-label">已排班</div></div>
+                <div class="stat-card orange"><div class="stat-num" id="stat-pending">0</div><div class="stat-label">待确认</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-confirmed">0</div><div class="stat-label">已确认</div></div>
+                <div class="stat-card purple"><div class="stat-num" id="stat-next-week">0</div><div class="stat-label">下周服事</div></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📅 主日排班日历</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <button class="btn btn-primary" onclick="showAddServiceModal()">➕ 新增主日</button>
+                    <button class="btn btn-success" onclick="autoSchedule()">🤖 智能排班</button>
+                    <button class="btn btn-info" onclick="exportSchedule()">📤 导出排班表</button>
+                </div>
+                <div class="calendar" id="scheduleCalendar"></div>
+            </div>
+        </div>
+        
+        <!-- 标签页4：诗歌库 -->
+        <div id="tab-songs" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>維護詩歌庫、調性與排序，供主日與排練使用。<br>
+                <strong>適合誰用：</strong>音樂負責、敬拜領袖。<br>
+                <strong>如何開始：</strong>① 新增曲目 ② 標註調性／版權備註 ③ 與「主日排班」選歌連動。<br>
+                <span class="data-source-note">詩歌為本模組資產庫，與人員主檔分離。</span>
+            </div>
+            <div class="card">
+                <div class="card-title">🎵 诗歌库管理</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="search-box" style="flex: 1; margin: 0 10px 0 0;">
+                        <input type="text" id="songSearch" placeholder="🔍 搜索诗歌（名称/主题）" onkeyup="filterSongs()">
+                    </div>
+                    <button class="btn btn-primary" onclick="showAddSongModal()">➕ 新增诗歌</button>
+                    <button class="btn btn-info" onclick="importSongs()">📥 导入诗歌</button>
+                </div>
+                <table id="songsTable">
+                    <thead>
+                        <tr>
+                            <th>诗歌名称</th>
+                            <th>类别</th>
+                            <th>调性</th>
+                            <th>速度</th>
+                            <th>时长</th>
+                            <th>使用次数</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 标签页5：事奉记录 -->
+        <div id="tab-records" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>查詢歷史服事紀錄與出席／輪值狀況。<br>
+                <strong>適合誰用：</strong>牧者、行政。<br>
+                <strong>如何開始：</strong>① 依日期或團隊篩選 ② 核對服事者 memberId ③ 作為評估與關懷依據。<br>
+                <span class="data-source-note">紀錄存本模組；人名解析請對齊會友主檔。</span>
+            </div>
+            <div class="card">
+                <div class="card-title">📝 事奉记录管理</div>
+                <table id="recordsTable">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>主日</th>
+                            <th>团队</th>
+                            <th>成员</th>
+                            <th>岗位</th>
+                            <th>出席</th>
+                            <th>评价</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">🏆 本月之星</div>
+                    <div id="topPerformers"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📈 个人服事统计</div>
+                    <div id="personalStats"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 标签页6：参与分析 -->
+        <div id="tab-analysis" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>分析服事參與率與團隊負荷。<br>
+                <strong>適合誰用：</strong>敬拜牧者、核心同工。<br>
+                <strong>如何開始：</strong>① 確認排班與紀錄已有資料 ② 檢視圖表 ③ 與會友事工參與交叉檢查。<br>
+                <span class="data-source-note">圖表由本模組匯總；進階報表未來可接 API。</span>
+            </div>
+            <div class="module-links">
+                <strong>跨模組快速連結</strong>
+                <ul>
+                    <li><a href="../members/member-integrated.html#tab-ministry">會友 · 事工參與</a></li>
+                    <li><a href="../members/member-integrated.html#tab-analysis">會友 · 資料分析</a></li>
+                    <li><a href="../support/visitation.html">探訪關懷</a></li>
+                </ul>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">📊 成员服事频率</div><canvas id="frequencyChart"></canvas></div>
+                <div class="card"><div class="card-title">📈 岗位分布</div><canvas id="positionChart"></canvas></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><div class="card-title">⏰ 服事时间分布</div><canvas id="timeChart"></canvas></div>
+                <div class="card"><div class="card-title">⚠️ 需要关注</div><div id="attentionList"></div></div>
+            </div>
+        </div>
+        <!-- 标签页7：目標·進度·成果（A 模組） -->
+        <div id="tab-goals" class="tab-content">
+            <div class="page-guide">
+                <strong>本頁用途：</strong>訂定敬拜事工年度目標、進度與見證，回傳 A 模組總覽。<br>
+                <strong>適合誰用：</strong>敬拜負責人、牧者。<br>
+                <strong>如何開始：</strong>① 新增目標 ② 更新進度 ③ 記錄成果與見證。<br>
+                <span class="data-source-note">與其他整合頁之 A 模組區塊同構；本機儲存。</span>
+            </div>
+            <div class="card">
+                <div class="card-title">🎯 年度／季度目標</div>
+                <p style="font-size:11px;color:#7f8c8d;margin-bottom:12px;">設定敬拜事工的目標與達成值，追蹤進度並記錄成果與見證。</p>
+                <button class="btn btn-primary" onclick="showAddGoalModalW()">➕ 新增目標</button>
+                <div id="goalsListW" style="margin-top:15px;"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📋 成果與見證</div>
+                <button class="btn btn-success" onclick="showAddOutcomeModalW()">➕ 新增成果／見證</button>
+                <div id="outcomesListW" style="margin-top:15px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        // ========================================
+        // 使用统一数据库（全站互联）
+        // ========================================
+        const db = window.churchDB;
+        const data = db.data.worship;
+        if (!data.songLists) data.songLists = [];
+        
+        let charts = {};
+        let selectedService = null;
+        
+        function saveData() { db.save(); }
+        
+        // ========================================
+        // 初始化
+        // ========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            const needDemo = data.teams.length === 0 || !data.services || data.services.length === 0 || !data.songs || data.songs.length === 0;
+            if (needDemo) loadDemo();
+            renderAll();
+        });
+        
+        // ========================================
+        // 数据管理
+        // ========================================
+        function loadData() {
+            if (db.data.members.length === 0) {
+                var fromMember = trySeedFromMemberSystemData();
+                if (fromMember) {
+                    showMessage('✅ 已從會友系統載入 ' + db.data.members.length + ' 人至敬拜事工', 'success');
+                } else {
+                    db.generateSampleData();
+                    showMessage('✅ 已自動載入示例資料，您可立即體驗！', 'success');
+                }
+            }
+            if (data.teams.length === 0 && db.data.members.length > 0) {
+                seedWorshipFromMembers();
+            }
+            console.log('✅ 已載入:', db.data.members.length, '人', data.teams.length, '團隊');
+        }
+        function trySeedFromMemberSystemData() {
+            try {
+                var raw = localStorage.getItem('memberSystemData');
+                if (!raw) return false;
+                var d = JSON.parse(raw);
+                var list = d.members || [];
+                if (list.length === 0) return false;
+                db.data.members = list.map(function (m, i) { return { id: m.id || (i + 1), name: m.name, gender: m.gender, memberId: m.id || (i + 1) }; });
+                db.save();
+                return true;
+            } catch (e) { return false; }
+        }
+        function seedWorshipFromMembers() {
+            var mems = db.data.members;
+            data.teams = [
+                { id: 1, name: '敬拜團', category: 'worship', leader: mems[0] ? mems[0].name : '', leaderMemberId: 1 },
+                { id: 2, name: '詩班', category: 'choir', leader: mems[1] ? mems[1].name : '', leaderMemberId: 2 },
+                { id: 3, name: '音控組', category: 'sound', leader: mems[2] ? mems[2].name : '', leaderMemberId: 3 },
+                { id: 4, name: '招待組', category: 'hospitality', leader: mems[3] ? mems[3].name : '', leaderMemberId: 4 }
+            ];
+            data.teamMembers = mems.slice(0, 20).map(function (m, i) { return { id: i + 1, teamId: (i % 4) + 1, memberId: m.id, memberName: m.name, position: ['主領', '伴唱', '音控', '招待'][i % 4], confirmed: true }; });
+            if (!data.services || !data.services.length) {
+                data.services = [];
+                for (var w = 0; w < 4; w++) { var d = new Date(); d.setDate(d.getDate() + w * 7); data.services.push({ id: w + 1, date: d.toISOString().split('T')[0], serviceType: '主日崇拜', theme: '主日', status: w === 0 ? 'confirmed' : 'pending' }); }
+            }
+            if (!data.assignments || !data.assignments.length) { data.assignments = []; data.services.forEach(function (s) { [1, 2].forEach(function (tid) { data.teamMembers.filter(function (tm) { return tm.teamId === tid; }).slice(0, 2).forEach(function (tm) { data.assignments.push({ id: data.assignments.length + 1, serviceId: s.id, teamId: tid, memberId: tm.memberId, role: tm.position, confirmed: true }); }); }); }); }
+            if (!data.songs || !data.songs.length) { data.songs = [{ id: 1, name: '奇異恩典', category: '敬拜', key: 'C', tempo: 80, usageCount: 5 }, { id: 2, name: '讚美之泉', category: '敬拜', key: 'G', tempo: 85, usageCount: 3 }]; }
+            if (!data.serviceRecords || !data.serviceRecords.length) { data.serviceRecords = mems.slice(0, 5).map(function (m, i) { var d = new Date(); d.setDate(d.getDate() - 7); return { id: i + 1, memberId: m.id, serviceId: 1, teamId: 1, date: d.toISOString().split('T')[0], attendance: true, performance: '良好', notes: '' }; }); }
+            db.save();
+        }
+        
+        // 统一数据库自动保存，无需手动saveData
+        
+        function loadDemo() {
+            data.teamMembers = [];
+            data.services = [];
+            data.assignments = [];
+            data.songs = [];
+            data.songLists = [];
+            data.serviceRecords = [];
+            data.teams = [
+                {id: 1, name: '敬拜团', category: 'worship', leader: '王姊妹', leaderMemberId: 1},
+                {id: 2, name: '音控组', category: 'sound', leader: '李弟兄', leaderMemberId: 2},
+                {id: 3, name: '投影组', category: 'projection', leader: '张弟兄', leaderMemberId: 3},
+                {id: 4, name: '招待组', category: 'hospitality', leader: '赵姊妹', leaderMemberId: 4}
+            ];
+            
+            // 生成团队成员（关联会友memberId）
+            const positions = {
+                worship: ['主领', '和音', '键盘', '吉他', '鼓手'],
+                sound: ['音控师', '助理'],
+                projection: ['投影师', '助理'],
+                hospitality: ['招待', '引导']
+            };
+            
+            let memberId = 1;
+            data.teams.forEach(team => {
+                const teamPositions = positions[team.category];
+                teamPositions.forEach((pos, i) => {
+                    data.teamMembers.push({
+                        id: memberId,
+                        teamId: team.id,
+                        memberId: memberId,  // 👈 关联会友系统
+                        memberName: `成员${memberId}`,
+                        position: pos,
+                        instrument: team.category === 'worship' && i >= 2 ? pos : null,
+                        joinDate: '2024-01-15'
+                    });
+                    memberId++;
+                });
+            });
+            
+            // 生成主日安排（未来4周）
+            for (let i = 0; i < 4; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() + (7 * i));
+                data.services.push({
+                    id: i + 1,
+                    date: date.toISOString().split('T')[0],
+                    serviceType: '主日崇拜',
+                    theme: ['神的恩典', '赞美之泉', '感恩的心', '主爱长存'][i],
+                    status: i === 0 ? 'confirmed' : 'pending'
+                });
+            }
+            
+            // 生成排班记录
+            data.services.forEach(service => {
+                // 每个主日安排敬拜团和音控组
+                [1, 2].forEach(teamId => {
+                    const teamMems = data.teamMembers.filter(tm => tm.teamId === teamId).slice(0, 3);
+                    teamMems.forEach(tm => {
+                        data.assignments.push({
+                            id: data.assignments.length + 1,
+                            serviceId: service.id,
+                            teamId: teamId,
+                            memberId: tm.memberId,
+                            role: tm.position,
+                            confirmed: service.status === 'confirmed'
+                        });
+                    });
+                });
+            });
+            
+            // 生成诗歌库
+            const songNames = ['奇异恩典', '赞美之泉', '如鹿渴慕', '主爱长存', '恩典之路', '赞美主', '神羔羊', '十架的爱'];
+            data.songs = songNames.map((name, i) => ({
+                id: i + 1,
+                name: name,
+                category: ['敬拜', '赞美', '感恩'][i % 3],
+                key: ['C', 'D', 'G', 'F'][i % 4],
+                tempo: 80 + (i * 5),
+                duration: '4:30',
+                usageCount: Math.floor(Math.random() * 20) + 5
+            }));
+            
+            // 生成诗歌清单（每个主日3首歌）
+            data.services.forEach(service => {
+                for (let i = 0; i < 3; i++) {
+                    data.songLists.push({
+                        id: data.songLists.length + 1,
+                        serviceId: service.id,
+                        songId: (i + 1),
+                        songName: data.songs[i].name,
+                        order: i + 1,
+                        key: data.songs[i].key,
+                        tempo: data.songs[i].tempo
+                    });
+                }
+            });
+            
+            // 生成事奉记录（过去的主日）
+            const pastDate = new Date();
+            pastDate.setDate(pastDate.getDate() - 7);
+            for (let i = 0; i < 5; i++) {
+                data.serviceRecords.push({
+                    id: i + 1,
+                    memberId: i + 1,
+                    serviceId: 1,
+                    teamId: 1,
+                    date: pastDate.toISOString().split('T')[0],
+                    attendance: true,
+                    performance: ['优秀', '良好', '优秀'][i % 3],
+                    notes: '服事认真'
+                });
+            }
+            
+            saveData();
+            renderAll();
+            showMessage('✅ 示例数据已载入！包含4个团队、15个成员、4周主日安排', 'success');
+        }
+        
+        // ========================================
+        // 标签页切换
+        // ========================================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            if (tabName === 'overview') renderOverview();
+            if (tabName === 'teams') renderTeamsTab();
+            if (tabName === 'schedule') renderScheduleTab();
+            if (tabName === 'songs') renderSongsTab();
+            if (tabName === 'records') renderRecordsTab();
+            if (tabName === 'analysis') renderAnalysisTab();
+            if (tabName === 'goals') { loadAModuleDataW(); renderGoalsListW(); renderOutcomesListW(); }
+        }
+        
+        // A 模組：目標·進度·成果（church_ministry_a_worship）
+        const A_MODULE_KEY_W = 'church_ministry_a_worship';
+        let aModuleW = { goals: [], outcomes: [] };
+        function loadAModuleDataW() {
+            try {
+                const raw = localStorage.getItem(A_MODULE_KEY_W);
+                aModuleW = raw ? JSON.parse(raw) : { goals: [], outcomes: [] };
+                if (!aModuleW.goals) aModuleW.goals = []; if (!aModuleW.outcomes) aModuleW.outcomes = [];
+            } catch (e) { aModuleW = { goals: [], outcomes: [] }; }
+        }
+        function saveAModuleDataW() {
+            try { localStorage.setItem(A_MODULE_KEY_W, JSON.stringify(aModuleW)); return true; } catch (e) { return false; }
+        }
+        function renderGoalsListW() {
+            const el = document.getElementById('goalsListW'); if (!el) return;
+            if (aModuleW.goals.length === 0) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎯</div><div class="empty-state-text">暫無目標，點擊「新增目標」開始設定。</div></div>'; return; }
+            el.innerHTML = aModuleW.goals.map(g => {
+                const current = g.currentValue != null ? Number(g.currentValue) : 0;
+                const target = g.targetValue != null ? Number(g.targetValue) : 100;
+                const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+                return `<div class="list-item" style="display:flex;justify-content:space-between;align-items:center;"><div><div class="list-item-title">${g.title || '未命名目標'}</div><div class="list-item-meta">${g.period || ''} · 目標：${g.targetValue || '-'} ${g.targetUnit || ''} · 目前：${current}</div><div class="progress-bar" style="margin-top:6px;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#f5576c,#e74c3c);"></div></div></div><div><button class="btn btn-sm btn-primary" onclick="editGoalProgressW(${g.id})">更新進度</button> <button class="btn btn-sm btn-danger" onclick="deleteAModuleGoalW(${g.id})">刪除</button></div></div>`;
+            }).join('');
+        }
+        function renderOutcomesListW() {
+            const el = document.getElementById('outcomesListW'); if (!el) return;
+            if (aModuleW.outcomes.length === 0) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">暫無成果或見證記錄。</div></div>'; return; }
+            el.innerHTML = aModuleW.outcomes.map(o => `<div class="list-item"><div class="list-item-title">${o.type === '見證' ? '💬' : '📌'} ${o.title || '未命名'}</div><div class="list-item-meta">${o.date || ''} ${o.description ? ' · ' + (o.description.substring(0, 60) + (o.description.length > 60 ? '…' : '')) : ''}</div><button class="btn btn-sm btn-danger" style="margin-top:6px;" onclick="deleteAModuleOutcomeW(${o.id})">刪除</button></div>`).join('');
+        }
+        function showAddGoalModalW() {
+            const id = (aModuleW.goals.length ? Math.max(...aModuleW.goals.map(g => g.id)) : 0) + 1;
+            showModal('新增目標', `<div class="form-group"><label class="form-label">目標名稱 *</label><input type="text" id="goalTitleW" class="form-input" placeholder="例：本年度主日敬拜參與率 90%"></div><div class="form-group"><label class="form-label">期別</label><input type="text" id="goalPeriodW" class="form-input" placeholder="例：2025 年度"></div><div class="form-group"><label class="form-label">目標數值</label><input type="number" id="goalTargetW" class="form-input"></div><div class="form-group"><label class="form-label">單位</label><input type="text" id="goalUnitW" class="form-input" placeholder="%、人、場"></div><div class="form-group"><label class="form-label">目前數值</label><input type="number" id="goalCurrentW" class="form-input" placeholder="0"></div><button class="btn btn-primary" onclick="saveNewGoalW(${id})">儲存</button>`);
+        }
+        function saveNewGoalW(id) {
+            aModuleW.goals.push({ id, title: document.getElementById('goalTitleW')?.value?.trim() || '未命名目標', period: document.getElementById('goalPeriodW')?.value?.trim() || '', targetValue: document.getElementById('goalTargetW')?.value, targetUnit: document.getElementById('goalUnitW')?.value?.trim() || '', currentValue: document.getElementById('goalCurrentW')?.value || 0 }); saveAModuleDataW(); closeModal(); renderGoalsListW(); showMessage('目標已新增', 'success');
+        }
+        function editGoalProgressW(id) {
+            const g = aModuleW.goals.find(x => x.id === id); if (!g) return;
+            const current = prompt('請輸入目前數值', g.currentValue != null ? g.currentValue : ''); if (current === null) return;
+            g.currentValue = current; saveAModuleDataW(); renderGoalsListW(); showMessage('進度已更新', 'success');
+        }
+        function deleteAModuleGoalW(id) {
+            if (!confirm('確定刪除此目標？')) return; aModuleW.goals = aModuleW.goals.filter(x => x.id !== id); saveAModuleDataW(); renderGoalsListW(); showMessage('已刪除', 'success');
+        }
+        function showAddOutcomeModalW() {
+            const id = (aModuleW.outcomes.length ? Math.max(...aModuleW.outcomes.map(o => o.id)) : 0) + 1;
+            showModal('新增成果／見證', `<div class="form-group"><label class="form-label">標題 *</label><input type="text" id="outcomeTitleW" class="form-input"></div><div class="form-group"><label class="form-label">類型</label><select id="outcomeTypeW" class="form-select"><option value="成果">成果</option><option value="見證">見證</option><option value="報告">報告</option></select></div><div class="form-group"><label class="form-label">日期</label><input type="date" id="outcomeDateW" class="form-input" value="${new Date().toISOString().split('T')[0]}"></div><div class="form-group"><label class="form-label">簡述</label><textarea id="outcomeDescW" class="form-textarea"></textarea></div><button class="btn btn-primary" onclick="saveNewOutcomeW(${id})">儲存</button>`);
+        }
+        function saveNewOutcomeW(id) {
+            aModuleW.outcomes.push({ id, title: document.getElementById('outcomeTitleW')?.value?.trim() || '未命名', type: document.getElementById('outcomeTypeW')?.value || '成果', date: document.getElementById('outcomeDateW')?.value || new Date().toISOString().split('T')[0], description: document.getElementById('outcomeDescW')?.value?.trim() || '' }); saveAModuleDataW(); closeModal(); renderOutcomesListW(); showMessage('已新增', 'success');
+        }
+        function deleteAModuleOutcomeW(id) {
+            if (!confirm('確定刪除此筆記錄？')) return; aModuleW.outcomes = aModuleW.outcomes.filter(x => x.id !== id); saveAModuleDataW(); renderOutcomesListW(); showMessage('已刪除', 'success');
+        }
+        
+        // ========================================
+        // 渲染所有
+        // ========================================
+        function renderAll() {
+            renderOverview();
+        }
+        
+        // ========================================
+        // 标签页1：总览
+        // ========================================
+        function renderOverview() {
+            // 更新统计卡片
+            document.getElementById('stat-teams').textContent = data.teams.length;
+            document.getElementById('stat-members').textContent = data.teamMembers.length;
+            document.getElementById('stat-services').textContent = data.services.length;
+            
+            const thisMonth = new Date().getMonth();
+            const thisMonthServices = data.services.filter(s => new Date(s.date).getMonth() === thisMonth).length;
+            document.getElementById('stat-this-month').textContent = thisMonthServices;
+            
+            document.getElementById('stat-songs').textContent = data.songs.length;
+            
+            const totalSlots = data.assignments.length;
+            const filledSlots = data.assignments.filter(a => a.confirmed).length;
+            const participation = totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
+            document.getElementById('stat-participation').textContent = participation + '%';
+            
+            // 团队分布饼图
+            const teamCounts = {};
+            data.teams.forEach(t => {
+                const count = data.teamMembers.filter(tm => tm.teamId === t.id).length;
+                teamCounts[t.name] = count;
+            });
+            
+            const teamCtx = document.getElementById('teamChart');
+            if (charts.teamChart) charts.teamChart.destroy();
+            charts.teamChart = new Chart(teamCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(teamCounts),
+                    datasets: [{
+                        data: Object.values(teamCounts),
+                        backgroundColor: ['#f5576c', '#3498db', '#e67e22', '#9b59b6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            
+            // 月度服事趋势折线图
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
+            const serviceData = months.map(() => Math.floor(Math.random() * 5) + 3);
+            
+            const serviceCtx = document.getElementById('serviceChart');
+            if (charts.serviceChart) charts.serviceChart.destroy();
+            charts.serviceChart = new Chart(serviceCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '主日场次',
+                        data: serviceData,
+                        borderColor: '#f5576c',
+                        backgroundColor: 'rgba(245,87,108,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // 本周主日安排
+            renderWeeklySchedule();
+        }
+        
+        function renderWeeklySchedule() {
+            const today = new Date();
+            const weekServices = data.services.filter(s => {
+                const diff = (new Date(s.date) - today) / (1000*60*60*24);
+                return diff >= 0 && diff <= 7;
+            });
+            
+            const html = weekServices.length > 0
+                ? weekServices.map(s => {
+                    const assignments = data.assignments.filter(a => a.serviceId === s.id);
+                    const teams = [...new Set(assignments.map(a => a.teamId))];
+                    return `<div class="list-item">
+                        <div class="list-item-title">📅 ${s.date} - ${s.serviceType}</div>
+                        <div class="list-item-meta">主题：${s.theme} | 参与团队：${teams.length}个 | 状态：<span class="tag ${s.status}">${s.status === 'confirmed' ? '已确认' : '待确认'}</span></div>
+                    </div>`;
+                }).join('')
+                : '<div class="empty-state"><div class="empty-state-icon">📅</div><div class="empty-state-text">本周暂无主日安排</div></div>';
+            
+            document.getElementById('weeklySchedule').innerHTML = html;
+        }
+        
+        // ========================================
+        // 标签页2：团队管理
+        // ========================================
+        function renderTeamsTab() {
+            const html = data.teams.map(team => {
+                const members = data.teamMembers.filter(tm => tm.teamId === team.id);
+                return `<div class="team-card ${team.category}">
+                    <div class="team-header">${team.name}</div>
+                    <div class="team-members">
+                        <p><strong>组长：</strong>${team.leader}</p>
+                        <p><strong>成员数：</strong>${members.length}人</p>
+                        <p><strong>成员：</strong>${members.map(m => `${m.memberName}(${m.position})`).join(', ')}</p>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button class="btn btn-info btn-sm" onclick="viewTeam(${team.id})">查看详情</button>
+                        <button class="btn btn-warning btn-sm" onclick="editTeam(${team.id})">编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteTeam(${team.id})">删除</button>
+                    </div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('teamsDisplay').innerHTML = html || '<div class="empty-state-text">暂无团队</div>';
+        }
+        
+        function showAddTeamModal() {
+            showMessage('➕ 新增团队功能开发中...', 'info');
+        }
+        
+        function showAddMemberModal() {
+            showMessage('➕ 添加成员功能开发中...', 'info');
+        }
+        
+        function viewTeam(id) {
+            const team = data.teams.find(t => t.id === id);
+            const members = data.teamMembers.filter(tm => tm.teamId === id);
+            showMessage(`查看团队：${team.name}，成员：${members.length}人`, 'info');
+        }
+        
+        function editTeam(id) {
+            showMessage('编辑团队功能开发中...', 'info');
+        }
+        
+        function deleteTeam(id) {
+            if (!confirm('确定删除此团队？')) return;
+            data.teams = data.teams.filter(t => t.id !== id);
+            data.teamMembers = data.teamMembers.filter(tm => tm.teamId !== id);
+            saveData();
+            renderTeamsTab();
+            showMessage('✅ 团队已删除', 'success');
+        }
+        
+        // ========================================
+        // 标签页3：主日排班
+        // ========================================
+        function renderScheduleTab() {
+            updateScheduleStats();
+            renderScheduleCalendar();
+        }
+        
+        function updateScheduleStats() {
+            document.getElementById('stat-scheduled').textContent = data.services.length;
+            const pending = data.services.filter(s => s.status === 'pending').length;
+            document.getElementById('stat-pending').textContent = pending;
+            const confirmed = data.services.filter(s => s.status === 'confirmed').length;
+            document.getElementById('stat-confirmed').textContent = confirmed;
+            
+            const today = new Date();
+            const nextWeek = data.services.filter(s => {
+                const diff = (new Date(s.date) - today) / (1000*60*60*24);
+                return diff >= 0 && diff <= 7;
+            }).length;
+            document.getElementById('stat-next-week').textContent = nextWeek;
+        }
+        
+        function renderScheduleCalendar() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDay = firstDay.getDay();
+            
+            let html = '';
+            ['日', '一', '二', '三', '四', '五', '六'].forEach(day => {
+                html += `<div style="font-weight:600;text-align:center;padding:8px;background:#f5576c;color:white;border-radius:4px;">${day}</div>`;
+            });
+            
+            for (let i = 0; i < startDay; i++) html += '<div class="calendar-day"></div>';
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const dayServices = data.services.filter(s => s.date === dateStr);
+                const hasService = dayServices.length > 0;
+                
+                html += `<div class="calendar-day ${hasService ? 'has-service' : ''}">
+                    <div class="calendar-date">${day}</div>
+                    ${dayServices.map(s => `<div class="calendar-event" onclick="viewService(${s.id})">${s.serviceType}</div>`).join('')}
+                </div>`;
+            }
+            
+            document.getElementById('scheduleCalendar').innerHTML = html;
+        }
+        
+        function showAddServiceModal() {
+            showModal('➕ 新增主日', `
+                <div class="form-group">
+                    <label class="form-label">日期 *</label>
+                    <input type="date" id="serviceDate" class="form-input" value="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">类型 *</label>
+                    <select id="serviceType" class="form-select">
+                        <option>主日崇拜</option>
+                        <option>祷告会</option>
+                        <option>特别聚会</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">主题</label>
+                    <input type="text" id="serviceTheme" class="form-input" placeholder="例如：神的恩典">
+                </div>
+                <button class="btn btn-primary" onclick="saveService()">保存</button>
+                <button class="btn" onclick="closeModal()">取消</button>
+            `);
+        }
+        
+        function saveService() {
+            const newService = {
+                id: data.services.length + 1,
+                date: document.getElementById('serviceDate').value,
+                serviceType: document.getElementById('serviceType').value,
+                theme: document.getElementById('serviceTheme').value,
+                status: 'pending'
+            };
+            
+            data.services.push(newService);
+            saveData();
+            renderScheduleTab();
+            closeModal();
+            showMessage('✅ 主日已添加', 'success');
+        }
+        
+        function viewService(id) {
+            selectedService = data.services.find(s => s.id === id);
+            const assignments = data.assignments.filter(a => a.serviceId === id);
+            showMessage(`查看主日：${selectedService.theme}，已安排${assignments.length}人`, 'info');
+        }
+        
+        function autoSchedule() {
+            showMessage('🤖 智能排班功能开发中...', 'info');
+        }
+        
+        function exportSchedule() {
+            const dataStr = JSON.stringify({services: data.services, assignments: data.assignments}, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `排班表_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showMessage('✅ 排班表已导出', 'success');
+        }
+        
+        // ========================================
+        // 标签页4：诗歌库
+        // ========================================
+        function renderSongsTab() {
+            const searchTerm = (document.getElementById('songSearch')?.value || '').toLowerCase();
+            const filtered = data.songs.filter(s => s.name.toLowerCase().includes(searchTerm));
+            
+            const tbody = document.querySelector('#songsTable tbody');
+            tbody.innerHTML = filtered.map(s => `
+                <tr>
+                    <td>${s.name}</td>
+                    <td><span class="tag worship">${s.category}</span></td>
+                    <td>${s.key}调</td>
+                    <td>${s.tempo} BPM</td>
+                    <td>${s.duration}</td>
+                    <td>${s.usageCount}次</td>
+                    <td>
+                        <button class="btn btn-info btn-sm" onclick="playSong(${s.id})">播放</button>
+                        <button class="btn btn-warning btn-sm" onclick="editSong(${s.id})">编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteSong(${s.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function filterSongs() {
+            renderSongsTab();
+        }
+        
+        function showAddSongModal() {
+            showMessage('➕ 新增诗歌功能开发中...', 'info');
+        }
+        
+        function importSongs() {
+            showMessage('📥 导入诗歌功能开发中...', 'info');
+        }
+        
+        function playSong(id) {
+            const song = data.songs.find(s => s.id === id);
+            showMessage(`🎵 播放：${song.name}`, 'info');
+        }
+        
+        function editSong(id) {
+            showMessage('编辑诗歌功能开发中...', 'info');
+        }
+        
+        function deleteSong(id) {
+            if (!confirm('确定删除此诗歌？')) return;
+            data.songs = data.songs.filter(s => s.id !== id);
+            saveData();
+            renderSongsTab();
+            showMessage('✅ 诗歌已删除', 'success');
+        }
+        
+        // ========================================
+        // 标签页5：事奉记录
+        // ========================================
+        function renderRecordsTab() {
+            const tbody = document.querySelector('#recordsTable tbody');
+            tbody.innerHTML = data.serviceRecords.map(r => {
+                const member = data.teamMembers.find(tm => tm.memberId === r.memberId);
+                const service = data.services.find(s => s.id === r.serviceId);
+                const team = data.teams.find(t => t.id === r.teamId);
+                return `<tr>
+                    <td>${r.date}</td>
+                    <td>${service?.theme || '-'}</td>
+                    <td><span class="tag ${team?.category}">${team?.name || '-'}</span></td>
+                    <td>${member?.memberName || '-'}</td>
+                    <td>${member?.position || '-'}</td>
+                    <td><span class="tag ${r.attendance ? 'confirmed' : 'pending'}">${r.attendance ? '出席' : '缺席'}</span></td>
+                    <td><span class="tag ${r.performance === '优秀' ? 'confirmed' : ''}">${r.performance}</span></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">删除</button></td>
+                </tr>`;
+            }).join('');
+            
+            renderTopPerformers();
+            renderPersonalStats();
+        }
+        
+        function renderTopPerformers() {
+            const stats = {};
+            data.serviceRecords.forEach(r => {
+                if (!stats[r.memberId]) {
+                    stats[r.memberId] = {count: 0, excellent: 0};
+                }
+                stats[r.memberId].count++;
+                if (r.performance === '优秀') stats[r.memberId].excellent++;
+            });
+            
+            const sorted = Object.entries(stats)
+                .sort((a, b) => b[1].excellent - a[1].excellent)
+                .slice(0, 5);
+            
+            const html = sorted.map(([memberId, stat]) => {
+                const member = data.teamMembers.find(tm => tm.memberId === parseInt(memberId));
+                return `<div class="list-item">
+                    <div class="list-item-title">🏆 ${member?.memberName || '未知'}</div>
+                    <div class="list-item-meta">服事${stat.count}次 | 优秀${stat.excellent}次</div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('topPerformers').innerHTML = html || '<div class="empty-state-text">暂无数据</div>';
+        }
+        
+        function renderPersonalStats() {
+            const member = data.teamMembers[0];
+            if (!member) {
+                document.getElementById('personalStats').innerHTML = '<div class="empty-state-text">暂无数据</div>';
+                return;
+            }
+            
+            const records = data.serviceRecords.filter(r => r.memberId === member.memberId);
+            const html = `<div class="list-item">
+                <div class="list-item-title">${member.memberName}</div>
+                <div class="list-item-meta">
+                    总服事：${records.length}次 | 
+                    出席率：${records.length > 0 ? Math.round((records.filter(r => r.attendance).length / records.length) * 100) : 0}%
+                </div>
+            </div>`;
+            
+            document.getElementById('personalStats').innerHTML = html;
+        }
+        
+        function deleteRecord(id) {
+            if (!confirm('确定删除此记录？')) return;
+            data.serviceRecords = data.serviceRecords.filter(r => r.id !== id);
+            saveData();
+            renderRecordsTab();
+            showMessage('✅ 记录已删除', 'success');
+        }
+        
+        // ========================================
+        // 标签页6：参与分析
+        // ========================================
+        function renderAnalysisTab() {
+            // 成员服事频率柱状图
+            const memberFreq = {};
+            data.serviceRecords.forEach(r => {
+                const member = data.teamMembers.find(tm => tm.memberId === r.memberId);
+                if (member) {
+                    if (!memberFreq[member.memberName]) memberFreq[member.memberName] = 0;
+                    memberFreq[member.memberName]++;
+                }
+            });
+            
+            const ctx1 = document.getElementById('frequencyChart');
+            if (charts.frequency) charts.frequency.destroy();
+            charts.frequency = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(memberFreq).slice(0, 8),
+                    datasets: [{
+                        label: '服事次数',
+                        data: Object.values(memberFreq).slice(0, 8),
+                        backgroundColor: '#f5576c'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // 岗位分布饼图
+            const positionCount = {};
+            data.teamMembers.forEach(tm => {
+                if (!positionCount[tm.position]) positionCount[tm.position] = 0;
+                positionCount[tm.position]++;
+            });
+            
+            const ctx2 = document.getElementById('positionChart');
+            if (charts.position) charts.position.destroy();
+            charts.position = new Chart(ctx2, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(positionCount),
+                    datasets: [{
+                        data: Object.values(positionCount),
+                        backgroundColor: ['#f5576c', '#3498db', '#e67e22', '#9b59b6', '#27ae60']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            
+            // 服事时间分布（示例数据）
+            const ctx3 = document.getElementById('timeChart');
+            if (charts.time) charts.time.destroy();
+            charts.time = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['早堂', '午堂', '晚堂'],
+                    datasets: [{
+                        label: '服事人次',
+                        data: [45, 52, 38],
+                        backgroundColor: ['#3498db', '#f5576c', '#e67e22']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // 需要关注的成员
+            renderAttentionList();
+        }
+        
+        function renderAttentionList() {
+            // 找出最近4周未服事的成员
+            const recentRecords = data.serviceRecords.filter(r => {
+                const diff = (new Date() - new Date(r.date)) / (1000*60*60*24);
+                return diff <= 28;
+            });
+            
+            const activeMembers = [...new Set(recentRecords.map(r => r.memberId))];
+            const inactiveMembers = data.teamMembers.filter(tm => !activeMembers.includes(tm.memberId)).slice(0, 5);
+            
+            const html = inactiveMembers.length > 0
+                ? '<div style="color: #e74c3c; font-weight: bold; margin-bottom: 10px;">⚠️ 以下成员最近4周未服事：</div>' +
+                  inactiveMembers.map(m => `<div class="list-item" style="border-left-color: #e74c3c;">
+                    <div class="list-item-title">${m.memberName}</div>
+                    <div class="list-item-meta">${m.position} | 建议：联系确认状态</div>
+                  </div>`).join('')
+                : '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">所有成员状态正常</div></div>';
+            
+            document.getElementById('attentionList').innerHTML = html;
+        }
+        
+        // ========================================
+        // 工具函数
+        // ========================================
+        function showModal(title, content) {
+            document.getElementById('modalContent').innerHTML = `
+                <div class="modal-header">${title}</div>
+                ${content}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        function showMessage(text, type = 'success') {
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            document.body.appendChild(msg);
+            
+            setTimeout(() => {
+                msg.remove();
+            }, 3000);
+        }
+        
+        window.onclick = (e) => {
+            if (e.target.id === 'modal') closeModal();
+        };
+    </script>
+</body>
+</html>
+

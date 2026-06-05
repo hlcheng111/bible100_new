@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>釋經閱讀器 - 簡化版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        /* 頂部導航條 */
+        .top-nav {
+            background: linear-gradient(135deg, #0b5fa5 0%, #2aa5ff 100%);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .nav-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        /* 簡化導航控制 */
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-group label {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .nav-group select {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            background: white;
+            font-size: 14px;
+            min-width: 120px;
+        }
+        
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 主內容區 */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 釋經內容 */
+        .commentary-content {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .commentary-item {
+            border-bottom: 1px solid #eee;
+            padding: 20px;
+        }
+        
+        .commentary-item:last-child {
+            border-bottom: none;
+        }
+        
+        .verse-range {
+            font-size: 14px;
+            color: #0b5fa5;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .commentary-text {
+            font-size: 15px;
+            line-height: 1.8;
+            white-space: pre-line;
+        }
+        
+        /* 狀態消息 */
+        .status-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .status-message h3 {
+            color: #0b5fa5;
+            margin-bottom: 15px;
+        }
+        
+        /* 載入狀態 */
+        .loading {
+            color: #2aa5ff;
+        }
+        
+        /* 載入進度條 */
+        .loading-bar {
+            height: 3px;
+            background: linear-gradient(90deg, #2aa5ff, #0b5fa5);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+        
+        /* 快速鍵提示 */
+        .keyboard-hint {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        
+        .keyboard-hint.show {
+            display: block;
+        }
+        
+        /* 優化的響應式設計 */
+        @media (max-width: 768px) {
+            .top-nav {
+                padding: 12px 15px;
+            }
+            
+            .nav-title {
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+            
+            .nav-controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .nav-group {
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .nav-group label {
+                font-size: 13px;
+                min-width: 50px;
+            }
+            
+            .nav-group select {
+                min-width: auto;
+                flex: 1;
+                margin-left: 10px;
+                font-size: 13px;
+                padding: 5px 8px;
+            }
+            
+            .nav-btn {
+                font-size: 13px;
+                padding: 5px 10px;
+            }
+            
+            .main-content {
+                padding: 12px;
+            }
+            
+            .commentary-item {
+                padding: 15px;
+            }
+            
+            .commentary-text {
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .nav-controls {
+                gap: 6px;
+            }
+            
+            .nav-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+            }
+            
+            .nav-group label {
+                font-size: 12px;
+                text-align: left;
+            }
+            
+            .nav-group select {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .main-content {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding:10px 20px;"><a href="index.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回聖經研讀中心</a></div>
+    <!-- 頂部導航 -->
+    <div class="top-nav">
+        <div class="nav-title">📖 聖經釋經閱讀器</div>
+        <div class="loading-bar" id="loadingBar"></div>
+        <div class="nav-controls">
+            <div class="nav-group">
+                <label>釋經書:</label>
+                <select id="exegesisSelect">
+                    <option value="综合解读测试版">綜合解讀測試版</option>
+                    <option value="拾穗">拾穗</option>
+                    <option value="新旧约辅读">新舊約輔讀</option>
+                    <option value="新约圣经逐节汇查">新約聖經逐節匯查</option>
+                    <option value="每日研经丛书">每日研經叢書</option>
+                    <option value="灵修版圣经注释">靈修版聖經註釋</option>
+                    <option value="简明圣经史地图解">簡明聖經史地圖解</option>
+                    <option value="精读本圣经注释">精讀本聖經註釋</option>
+                    <option value="纲目">綱目</option>
+                    <option value="证主21世纪圣经新释">證主21世紀聖經新釋</option>
+                    <option value="陈终道新约书信读经讲义">陳終道新約書信讀經講義</option>
+                    <option value="雷历研读本注释">雷歷研讀本註釋</option>
+                </select>
+            </div>
+            
+            <div class="nav-group">
+                <label>書卷:</label>
+                <select id="bookSelect">
+                    <option value="">請選擇書卷</option>
+                </select>
+            </div>
+            
+            <div class="nav-group">
+                <label>章節:</label>
+                <select id="chapterSelect">
+                    <option value="">請選擇章節</option>
+                </select>
+            </div>
+            
+            <div class="nav-group">
+                <button class="nav-btn" id="prevBook">← 上書</button>
+                <button class="nav-btn" id="nextBook">下書 →</button>
+                <button class="nav-btn" id="prevChapter">← 上章</button>
+                <button class="nav-btn" id="nextChapter">下章 →</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 快速鍵提示 -->
+    <div class="keyboard-hint" id="keyboardHint">
+        ←/→ 羻章 | Ctrl+←/→ 羻書 | Enter 選擇
+    </div>
+    
+    <!-- 主內容區 -->
+    <div class="main-content">
+        <div class="commentary-content" id="commentaryContent">
+            <div class="status-message">
+                <h3>📖 選擇書卷和章節查看釋經</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- 載入必要腳本 -->
+    <script src="./js/sql-wasm.js"></script>
+    <script src="./js/universal-data-loader.js"></script>
+    <script>
+        // 修復簡化版釋經閱讀器數據庫連接
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🔧 修復簡化版釋經閱讀器數據庫連接...');
+            
+            if (window.universalDataLoader) {
+                console.log('✅ 通用數據載入器已載入');
+                
+                // 初始化數據載入器
+                const success = await window.universalDataLoader.initialize();
+                if (success) {
+                    console.log('✅ 簡化版釋經閱讀器數據庫連接修復成功');
+                    
+                    // 測試數據載入
+                    try {
+                        const testData = await window.universalDataLoader.queryCommentary('comprehensive', 1, 1);
+                        console.log('✅ 簡化版測試載入成功:', testData.length, '條記錄');
+                    } catch (error) {
+                        console.warn('⚠️ 簡化版測試載入失敗，使用備用模式:', error.message);
+                    }
+                } else {
+                    console.error('❌ 簡化版數據載入器初始化失敗');
+                }
+            } else {
+                console.error('❌ 簡化版通用數據載入器未找到');
+            }
+        });
+    </script>
+
+    <script>
+        // 聖經書卷數據
+        const bibleBooks = {
+            books: [
+                "創世記", "出埃及記", "利未記", "民數記", "申命記",
+                "約書亞記", "士師記", "路得記", "撒母耳記上", "撒母耳記下",
+                "列王紀上", "列王紀下", "歷代志上", "歷代志下", "以斯拉記",
+                "尼希米記", "以斯帖記", "約伯記", "詩篇", "箴言",
+                "傳道書", "雅歌", "以賽亞書", "耶利米書", "耶利米哀歌",
+                "以西結書", "但以理書", "何西阿書", "約珥書", "阿摩司書",
+                "俄巴底亞書", "約拿書", "彌迦書", "那鴻書", "哈巴谷書",
+                "西番雅書", "哈該書", "撒迦利亞書", "瑪拉基書", "馬太福音",
+                "馬可福音", "路加福音", "約翰福音", "使徒行傳", "羅馬書",
+                "哥林多前書", "哥林多後書", "加拉太書", "以弗所書", "腓立比書",
+                "歌羅西書", "帖撒羅尼迦前書", "帖撒羅尼迦後書", "提摩太前書", "提摩太後書",
+                "提多書", "腓利門書", "希伯來書", "雅各書", "彼得前書",
+                "彼得後書", "約翰一書", "約翰二書", "約翰三書", "猶大書", "啟示錄"
+            ],
+            chapters: {
+                "創世記": 50, "出埃及記": 40, "利未記": 27, "民數記": 36, "申命記": 34,
+                "約書亞記": 24, "士師記": 21, "路得記": 4, "撒母耳記上": 31, "撒母耳記下": 24,
+                "列王紀上": 22, "列王紀下": 25, "歷代志上": 29, "歷代志下": 36, "以斯拉記": 10,
+                "尼希米記": 13, "以斯帖記": 10, "約伯記": 42, "詩篇": 150, "箴言": 31,
+                "傳道書": 12, "雅歌": 8, "以賽亞書": 66, "耶利米書": 52, "耶利米哀歌": 5,
+                "以西結書": 48, "但以理書": 12, "何西阿書": 14, "約珥書": 3, "阿摩司書": 9,
+                "俄巴底亞書": 1, "約拿書": 4, "彌迦書": 7, "那鴻書": 3, "哈巴谷書": 3,
+                "西番雅書": 3, "哈該書": 2, "撒迦利亞書": 14, "瑪拉基書": 4, "馬太福音": 28,
+                "馬可福音": 16, "路加福音": 24, "約翰福音": 21, "使徒行傳": 28, "羅馬書": 16,
+                "哥林多前書": 16, "哥林多後書": 13, "加拉太書": 6, "以弗所書": 6, "腓立比書": 4,
+                "歌羅西書": 4, "帖撒羅尼迦前書": 5, "帖撒羅尼迦後書": 3, "提摩太前書": 6, "提摩太後書": 4,
+                "提多書": 3, "腓利門書": 1, "希伯來書": 13, "雅各書": 5, "彼得前書": 5,
+                "彼得後書": 3, "約翰一書": 5, "約翰二書": 1, "約翰三書": 1, "猶大書": 1, "啟示錄": 22
+            }
+        };
+        
+        // 全局變量
+        let currentExegesis = '综合解读测试版';
+        let currentBook = '創世記';
+        let currentChapter = 1;
+        let userPreferences = {
+            lastExegesis: '综合解读测试版',
+            lastBook: '創世記',
+            lastChapter: 1,
+            autoLoad: true
+        };
+        
+        // DOM 元素
+        const exegesisSelect = document.getElementById('exegesisSelect');
+        const bookSelect = document.getElementById('bookSelect');
+        const chapterSelect = document.getElementById('chapterSelect');
+        const prevBookButton = document.getElementById('prevBook');
+        const nextBookButton = document.getElementById('nextBook');
+        const prevButton = document.getElementById('prevChapter');
+        const nextButton = document.getElementById('nextChapter');
+        const commentaryContent = document.getElementById('commentaryContent');
+        
+        // 本地儲存管理
+        function saveUserPreferences() {
+            try {
+                userPreferences.lastExegesis = currentExegesis;
+                userPreferences.lastBook = currentBook;
+                userPreferences.lastChapter = currentChapter;
+                localStorage.setItem('bible-reader-preferences', JSON.stringify(userPreferences));
+            } catch (error) {
+                console.warn('無法保存用戶設定:', error);
+            }
+        }
+        
+        function loadUserPreferences() {
+            try {
+                const saved = localStorage.getItem('bible-reader-preferences');
+                if (saved) {
+                    userPreferences = { ...userPreferences, ...JSON.parse(saved) };
+                }
+            } catch (error) {
+                console.warn('無法載入用戶設定:', error);
+            }
+        }
+        
+        // 初始化
+        async function init() {
+            console.log('🚀 初始化釋經閱讀器...');
+            
+            // 載入用戶設定
+            loadUserPreferences();
+            
+            try {
+                // 初始化數據系統
+                if (typeof initUniversalDataLoader !== 'undefined') {
+                    await initUniversalDataLoader();
+                    console.log('✅ 數據系統初始化成功');
+                } else {
+                    console.log('⚠️ 使用靜態模式');
+                }
+            } catch (error) {
+                console.warn('數據系統初始化失敗:', error);
+            }
+            
+            // 初始化界面
+            initializeBookSelector();
+            initializeEventListeners();
+            
+            // 設定預設值並載入
+            exegesisSelect.value = currentExegesis;
+            bookSelect.value = currentBook;
+            
+            // 強制載入創世記第1章（無論有無保存的設定）
+            setTimeout(() => {
+                // 更新章節選擇器
+                updateChapterSelector();
+                // 載入創世記第1章
+                loadChapter('創世記', 1);
+                updateNavigationButtons();
+            }, 100);
+            
+            console.log('✅ 釋經閱讀器初始化完成');
+        }
+        
+        // 初始化書卷選擇器
+        function initializeBookSelector() {
+            bibleBooks.books.forEach(book => {
+                const option = document.createElement('option');
+                option.value = book;
+                option.textContent = book;
+                bookSelect.appendChild(option);
+            });
+        }
+        
+        // 初始化事件監聽器
+        function initializeEventListeners() {
+            exegesisSelect.addEventListener('change', () => {
+                currentExegesis = exegesisSelect.value;
+                saveUserPreferences();
+                if (currentBook && currentChapter) {
+                    loadChapter(currentBook, currentChapter);
+                }
+            });
+            
+            bookSelect.addEventListener('change', () => {
+                const selectedBook = bookSelect.value;
+                if (selectedBook) {
+                    selectBook(selectedBook);
+                }
+            });
+            
+            chapterSelect.addEventListener('change', () => {
+                const selectedChapter = parseInt(chapterSelect.value);
+                if (selectedChapter && currentBook) {
+                    loadChapter(currentBook, selectedChapter);
+                }
+            });
+            
+            prevBookButton.addEventListener('click', () => {
+                const currentIndex = bibleBooks.books.indexOf(currentBook);
+                if (currentIndex > 0) {
+                    const prevBook = bibleBooks.books[currentIndex - 1];
+                    bookSelect.value = prevBook;
+                    selectBook(prevBook);
+                    loadChapter(prevBook, 1); // 載入第一章
+                }
+            });
+            
+            nextBookButton.addEventListener('click', () => {
+                const currentIndex = bibleBooks.books.indexOf(currentBook);
+                if (currentIndex < bibleBooks.books.length - 1) {
+                    const nextBook = bibleBooks.books[currentIndex + 1];
+                    bookSelect.value = nextBook;
+                    selectBook(nextBook);
+                    loadChapter(nextBook, 1); // 載入第一章
+                }
+            });
+            
+            prevButton.addEventListener('click', () => {
+                if (currentChapter > 1) {
+                    loadChapter(currentBook, currentChapter - 1);
+                }
+            });
+            
+            nextButton.addEventListener('click', () => {
+                if (currentChapter < bibleBooks.chapters[currentBook]) {
+                    loadChapter(currentBook, currentChapter + 1);
+                }
+            });
+            
+            // 鍵盤導航
+            document.addEventListener('keydown', handleKeyboardNavigation);
+            
+            // 移動設備滑動支持
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            document.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+            
+            document.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipeGesture();
+            });
+            
+            function handleSwipeGesture() {
+                const swipeThreshold = 50;
+                const diff = touchStartX - touchEndX;
+                
+                if (Math.abs(diff) > swipeThreshold) {
+                    if (diff > 0 && currentChapter < bibleBooks.chapters[currentBook]) {
+                        // 左滑 - 下一章
+                        loadChapter(currentBook, currentChapter + 1);
+                    } else if (diff < 0 && currentChapter > 1) {
+                        // 右滑 - 上一章
+                        loadChapter(currentBook, currentChapter - 1);
+                    }
+                }
+            }
+        }
+        
+        // 鍵盤導航處理
+        function handleKeyboardNavigation(e) {
+            const keyboardHint = document.getElementById('keyboardHint');
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (e.ctrlKey) {
+                        // Ctrl + ← = 上一書
+                        const currentIndex = bibleBooks.books.indexOf(currentBook);
+                        if (currentIndex > 0) {
+                            const prevBook = bibleBooks.books[currentIndex - 1];
+                            bookSelect.value = prevBook;
+                            selectBook(prevBook);
+                            loadChapter(prevBook, 1);
+                        }
+                    } else if (currentChapter > 1) {
+                        // ← = 上一章
+                        loadChapter(currentBook, currentChapter - 1);
+                    }
+                    showKeyboardHint();
+                    break;
+                    
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (e.ctrlKey) {
+                        // Ctrl + → = 下一書
+                        const currentIndex = bibleBooks.books.indexOf(currentBook);
+                        if (currentIndex < bibleBooks.books.length - 1) {
+                            const nextBook = bibleBooks.books[currentIndex + 1];
+                            bookSelect.value = nextBook;
+                            selectBook(nextBook);
+                            loadChapter(nextBook, 1);
+                        }
+                    } else if (currentChapter < bibleBooks.chapters[currentBook]) {
+                        // → = 下一章
+                        loadChapter(currentBook, currentChapter + 1);
+                    }
+                    showKeyboardHint();
+                    break;
+                    
+                case 'Enter':
+                    e.preventDefault();
+                    if (document.activeElement.tagName === 'SELECT') {
+                        document.activeElement.blur();
+                    }
+                    break;
+            }
+        }
+        
+        // 顏示鍵盤提示
+        function showKeyboardHint() {
+            const keyboardHint = document.getElementById('keyboardHint');
+            keyboardHint.classList.add('show');
+            
+            setTimeout(() => {
+                keyboardHint.classList.remove('show');
+            }, 2000);
+        }
+        
+        // 選擇書卷
+        function selectBook(book) {
+            currentBook = book;
+            updateChapterSelector();
+            
+            // 自動載入第一章
+            if (bibleBooks.chapters[book] >= 1) {
+                loadChapter(book, 1);
+            }
+        }
+        
+        // 更新章節選擇器
+        function updateChapterSelector() {
+            chapterSelect.innerHTML = '<option value="">請選擇章節</option>';
+            
+            if (currentBook && bibleBooks.chapters[currentBook]) {
+                const maxChapter = bibleBooks.chapters[currentBook];
+                for (let i = 1; i <= maxChapter; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `第 ${i} 章`;
+                    chapterSelect.appendChild(option);
+                }
+            }
+        }
+        
+        // 載入章節
+        function loadChapter(book, chapter) {
+            currentBook = book;
+            currentChapter = chapter;
+            
+            // 保存用戶設定
+            saveUserPreferences();
+            
+            // 更新選擇器
+            chapterSelect.value = chapter;
+            
+            // 顯示載入狀態
+            showLoading();
+            
+            // 載入內容
+            loadCommentaryContent(book, chapter);
+            
+            // 更新導航按鈕
+            updateNavigationButtons();
+        }
+        
+        // 為題期狀態
+        function showLoading() {
+            const loadingBar = document.getElementById('loadingBar');
+            loadingBar.style.width = '0%';
+                    
+            commentaryContent.innerHTML = `
+                <div class="status-message loading">
+                    <h3>🔄 載入 ${currentBook} 第${currentChapter}章</h3>
+                </div>
+            `;
+                    
+            // 動畫載入進度條
+            setTimeout(() => {
+                loadingBar.style.width = '30%';
+            }, 100);
+                    
+            setTimeout(() => {
+                loadingBar.style.width = '60%';
+            }, 300);
+                    
+            setTimeout(() => {
+                loadingBar.style.width = '100%';
+            }, 800);
+                    
+            setTimeout(() => {
+                loadingBar.style.width = '0%';
+            }, 1200);
+        }
+        
+        // 載入釋經內容
+        async function loadCommentaryContent(book, chapter) {
+            try {
+                // 優先使用通用數據載入器
+                if (window.universalDataLoader) {
+                    const bookId = getBookId(book);
+                    // 使用當前選擇的釋經書
+                    const exegesisKey = getExegesisKey(currentExegesis);
+                    const content = await window.universalDataLoader.queryCommentary(exegesisKey, bookId, chapter);
+                    
+                    if (content && content.length > 0) {
+                        displayCommentaryContent(content);
+                        return;
+                    }
+                }
+                
+                // 使用示例數據
+                const exampleContent = generateExampleContent(book, chapter);
+                displayCommentaryContent(exampleContent);
+                
+            } catch (error) {
+                console.error('載入釋經內容失敗:', error);
+                showError('載入釋經內容失敗，請稍後再試');
+            }
+        }
+        
+        // 獲取釋經書的鍵值
+        function getExegesisKey(exegesisName) {
+            const keyMap = {
+                '综合解读测试版': 'comprehensive',
+                '拾穗': 'pickup',
+                '新旧约辅读': 'auxiliary_reading',
+                '新约圣经逐节汇查': 'verse_by_verse',
+                '每日研经丛书': 'daily_study',
+                '灵修版圣经注释': 'devotional_commentary',
+                '简明圣经史地图解': 'bible_atlas',
+                '精读本圣经注释': 'intensive_reading',
+                '纲目': 'outline',
+                '证主21世纪圣经新释': 'ccbible21',
+                '陈终道新约书信读经讲义': 'chen_zhongdao',
+                '雷历研读本注释': 'ryrie_study'
+            };
+            return keyMap[exegesisName] || 'comprehensive';
+        }
+        
+        // 獲取書卷ID
+        function getBookId(bookName) {
+            const bookIndex = bibleBooks.books.indexOf(bookName);
+            return bookIndex + 1;
+        }
+        
+        // 生成示例內容
+        function generateExampleContent(book, chapter) {
+            return [{
+                content: `【${currentExegesis} - ${book} 第${chapter}章 釋經注釋】
+
+本章節包含重要的聖經真理和實用的生活應用。
+
+主要內容：
+• 經文背景分析
+• 原文詞彙研究
+• 神學主題探討
+• 實際生活應用
+
+這是示例釋經內容，實際系統會載入真實的注釋數據。
+
+建議您仔細研讀並思考其中的教導，將聖經真理應用到日常生活中。`,
+                fromVerse: 1,
+                toVerse: chapter <= 10 ? 10 : 31
+            }];
+        }
+        
+        // 顯示釋經內容
+        function displayCommentaryContent(commentaries) {
+            let html = '';
+            
+            commentaries.forEach(commentary => {
+                const verseRange = commentary.fromVerse === commentary.toVerse 
+                    ? `第${commentary.fromVerse}節` 
+                    : `第${commentary.fromVerse}-${commentary.toVerse}節`;
+                
+                html += `
+                    <div class="commentary-item">
+                        <div class="verse-range">📖 ${verseRange}</div>
+                        <div class="commentary-text">${commentary.content}</div>
+                    </div>
+                `;
+            });
+            
+            commentaryContent.innerHTML = html;
+        }
+        
+        // 顯示錯誤
+        function showError(message) {
+            commentaryContent.innerHTML = `
+                <div class="status-message">
+                    <h3>❌ 載入失敗</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+        
+        // 更新導航按鈕
+        function updateNavigationButtons() {
+            if (currentBook && currentChapter) {
+                const currentBookIndex = bibleBooks.books.indexOf(currentBook);
+                
+                // 書卷導航
+                prevBookButton.disabled = currentBookIndex <= 0;
+                nextBookButton.disabled = currentBookIndex >= bibleBooks.books.length - 1;
+                
+                // 章節導航
+                prevButton.disabled = currentChapter <= 1;
+                nextButton.disabled = currentChapter >= bibleBooks.chapters[currentBook];
+            } else {
+                prevBookButton.disabled = true;
+                nextBookButton.disabled = true;
+                prevButton.disabled = true;
+                nextButton.disabled = true;
+            }
+        }
+        
+        // 啟動應用
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
