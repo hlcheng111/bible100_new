@@ -30,6 +30,10 @@ REQUIRED_V5 = [
     "openBibleAILabLearnShell",
     "btnToolsOverviewTop",
     "document.body.classList.toggle('mode-qna', mode === 'qna')",
+    "function renderChurchContextBar(sub, navItems)",
+    "CHURCH_NAV_GROUPS",
+    "sub-nav-group",
+    "nav-group-brain",
     "setContextOpen(!hideSecondary)",
 ]
 

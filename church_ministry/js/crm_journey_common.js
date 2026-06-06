@@ -16,6 +16,80 @@
     leader: { id: "leader", emoji: "⛪", pickZh: "我是牧者／長執", shortZh: "牧者／長執" }
   };
 
+  var JOURNEY_ROLES = ["member", "teacher", "staff"];
+  var ROLE_STEP_LIMITS = { member: 5, teacher: 7, staff: 8, leader: 6 };
+
+  function buildVersionSuffix() {
+    try {
+      if (global.bible100CacheBust) return "";
+      if (global.BIBLE100_BUILD_VERSION) return (global.location.search.indexOf("v=") >= 0 ? "" : "");
+    } catch (e0) {}
+    return "";
+  }
+
+  function appendHubContextToUrl(href, role, step) {
+    if (!href || href.indexOf("javascript:") === 0 || href.indexOf("#") === 0) return href;
+    if (/^https?:\/\//i.test(href)) return href;
+    var sep = href.indexOf("?") >= 0 ? "&" : "?";
+    var q = "crm_from=hub";
+    if (role) q += "&role=" + encodeURIComponent(role);
+    if (step != null && step !== "") q += "&step=" + encodeURIComponent(String(step));
+    var out = href + sep + q;
+    if (global.bible100CacheBust) return global.bible100CacheBust(out);
+    return out + (out.indexOf("v=") >= 0 ? "" : sep + "v=" + Date.now());
+  }
+
+  function automationConsoleHref(from, pain) {
+    var base = "../ai_tools/pages/crm_automation_console.html";
+    var q = [];
+    if (from) q.push("from=" + encodeURIComponent(from));
+    if (pain) q.push("pain=" + encodeURIComponent(pain));
+    q.push("crm_from=hub");
+    var out = base + (q.length ? "?" + q.join("&") : "");
+    if (global.bible100CacheBust) return global.bible100CacheBust(out);
+    return out;
+  }
+
+  var CAPABILITY_PILLS = {
+    trial: { text: "✓ 試用", cls: "crm-cap-pill--trial" },
+    demo: { text: "Demo", cls: "crm-cap-pill--demo" },
+    "ai-sim": { text: "AI 模擬", cls: "crm-cap-pill--ai" },
+    ai: { text: "AI 草稿", cls: "crm-cap-pill--ai" }
+  };
+
+  function capabilityForHref(href) {
+    if (!href) return null;
+    var h = String(href).replace(/\\/g, "/").toLowerCase();
+    if (h.indexOf("crm_automation") >= 0) return "ai-sim";
+    if (
+      h.indexOf("volunteer_shift") >= 0 ||
+      h.indexOf("member-integrated") >= 0 ||
+      h.indexOf("visitation_index") >= 0 ||
+      h.indexOf("visitation_followup") >= 0 ||
+      h.indexOf("load_crm") >= 0 ||
+      h.indexOf("finance-integrated") >= 0 ||
+      (h.indexOf("dashboard.html") >= 0 && h.indexOf("church_ministry") >= 0) ||
+      h.indexOf("church_planning/") >= 0 ||
+      h.indexOf("assessment-os") >= 0 ||
+      h.indexOf("cta-os") >= 0
+    ) return "trial";
+    if (h.indexOf("copilot") >= 0 || h.indexOf("group-report") >= 0) return "ai";
+    if (
+      h.indexOf("spiritual_gifts") >= 0 ||
+      h.indexOf("talent_ministry") >= 0 ||
+      h.indexOf("/_landing/") >= 0 ||
+      h.indexOf("roadmap-overview") >= 0
+    ) return "demo";
+    return null;
+  }
+
+  function capabilityPillHtml(href) {
+    var cap = capabilityForHref(href);
+    if (!cap || !CAPABILITY_PILLS[cap]) return "";
+    var p = CAPABILITY_PILLS[cap];
+    return ' <span class="crm-cap-pill ' + p.cls + '" title="功能成熟度">' + esc(p.text) + "</span>";
+  }
+
   var PAIN_ACCORDION = [
     {
       id: "admin",
@@ -157,9 +231,9 @@
       steps: [
         {
           id: 0,
-          labelZh: "就緒",
-          labelEn: "Ready",
-          contextZh: "每週開班前繁瑣的行政準備",
+          labelZh: "週四",
+          labelEn: "Thursday",
+          contextZh: "週四備課前：對名冊、重複登打",
           contextEn: "Weekly class prep stress",
           descZh: "一鍵查看班級學員名冊，減少重複登打。",
           descEn: "Class roster — less duplicate data entry.",
@@ -170,9 +244,9 @@
         },
         {
           id: 1,
-          labelZh: "認識人",
-          labelEn: "Discover",
-          contextZh: "面對新學員不知如何切入",
+          labelZh: "週五",
+          labelEn: "Friday",
+          contextZh: "週五聚會前：備課時間不夠",
           contextEn: "New students in class",
           descZh: "AI 依年齡與背景產生破冰與教材草稿 — 請人工審核後使用。",
           descEn: "AI Lab drafts — you review before use.",
@@ -182,9 +256,9 @@
         },
         {
           id: 2,
-          labelZh: "配對",
-          labelEn: "Match",
-          contextZh: "要把學生分到合適小組",
+          labelZh: "週六",
+          labelEn: "Saturday",
+          contextZh: "週六預備：要把學生分到合適小組",
           contextEn: "Group students well",
           descZh: "參考恩賜數據建議分組 — 邀請仍由牧者／組長人工發出。",
           descEn: "Gift-aware grouping — invites stay human-led.",
@@ -195,9 +269,9 @@
         },
         {
           id: 3,
-          labelZh: "執行",
-          labelEn: "Action",
-          contextZh: "聚會後寫週報沒時間",
+          labelZh: "週日",
+          labelEn: "Sunday",
+          contextZh: "週日聚會後：寫週報沒時間",
           contextEn: "No time for reports",
           descZh: "口述或貼上筆記，Copilot 整理週報草稿。",
           descEn: "Group report Copilot — draft only.",
@@ -208,10 +282,23 @@
         },
         {
           id: 4,
-          labelZh: "戰情",
-          labelEn: "Dashboard",
-          contextZh: "不清楚班級出席與關懷警示",
+          labelZh: "週一",
+          labelEn: "Monday care",
+          contextZh: "週一跟進：誰很久沒來了？",
           contextEn: "Who has been absent?",
+          descZh: "探訪工作桌 — 貼文字整理關懷紀錄，下一棒不斷線。",
+          descEn: "Visitation desk — paste notes, keep care chain.",
+          toolNameZh: "探訪工作跟進台",
+          toolNameEn: "Visitation desk",
+          url: "modules/support/visitation_index.html",
+          gate: "staff"
+        },
+        {
+          id: 5,
+          labelZh: "週二",
+          labelEn: "Tuesday stats",
+          contextZh: "週二檢視：班級出席與關懷警示",
+          contextEn: "Class attendance KPIs",
           descZh: "圖表化出席與 KPI 白話摘要。",
           descEn: "School dashboard — plain-language KPIs.",
           toolNameZh: "學校管理統計",
@@ -220,11 +307,11 @@
           gate: "staff"
         },
         {
-          id: 5,
-          labelZh: "決策",
-          labelEn: "Plan ahead",
-          contextZh: "優化下一季教學與牧養",
-          contextEn: "Next quarter",
+          id: 6,
+          labelZh: "週三",
+          labelEn: "Wednesday plan",
+          contextZh: "週三規劃：優化下一季教學與牧養",
+          contextEn: "Next quarter pastoral plan",
           descZh: "依班級痛點產生牧養策略草稿 — 決策權在您。",
           descEn: "Pastoral draft — decisions stay with you.",
           toolNameZh: "AI 牧養草稿",
@@ -267,7 +354,19 @@
         },
         {
           id: 2,
-          labelZh: "配對",
+          labelZh: "媒合",
+          labelEn: "Match board",
+          contextZh: "排班有缺口、找不到合適同工",
+          contextEn: "Scheduling gaps — need workers",
+          descZh: "開啟事奉媒合中心，看部門急缺與 CTV 建議方向。",
+          descEn: "Open matchmaker — urgent roles & CTV hints.",
+          toolNameZh: "事奉媒合中心",
+          toolNameEn: "Matchmaker hub",
+          switchToMatchmakerTab: true
+        },
+        {
+          id: 3,
+          labelZh: "權責",
           labelEn: "Align",
           contextZh: "跨部門分工混亂、權責不清",
           contextEn: "Unclear RACI",
@@ -279,7 +378,20 @@
           gate: "staff"
         },
         {
-          id: 3,
+          id: 4,
+          labelZh: "名冊",
+          labelEn: "Roster",
+          contextZh: "不知道誰有空、聯絡方式散落各處",
+          contextEn: "Scattered member contacts",
+          descZh: "會友通訊錄整合頁 — 一頁看清基本資料與事奉標記。",
+          descEn: "Member hub — contacts & ministry tags.",
+          toolNameZh: "會友通訊錄",
+          toolNameEn: "Member directory",
+          url: "modules/members/member-integrated.html",
+          gate: "staff"
+        },
+        {
+          id: 5,
           labelZh: "執行",
           labelEn: "Action",
           contextZh: "關懷記錄散落在個人 LINE",
@@ -292,7 +404,7 @@
           gate: "staff"
         },
         {
-          id: 4,
+          id: 6,
           labelZh: "戰情",
           labelEn: "Dashboard",
           contextZh: "執行到一半，看不清成效",
@@ -305,7 +417,7 @@
           gate: "staff"
         },
         {
-          id: 5,
+          id: 7,
           labelZh: "決策",
           labelEn: "Automate",
           contextZh: "年度事工流於形式",
@@ -314,7 +426,7 @@
           descEn: "CRM automation — prefill only.",
           toolNameZh: "營運自動化",
           toolNameEn: "CRM automation",
-          url: "../ai_tools/pages/crm_automation_console.html",
+          url: automationConsoleHref("staff", "automate"),
           gate: "staff"
         }
       ]
@@ -331,25 +443,25 @@
           id: 0,
           labelZh: "就緒",
           labelEn: "Ready",
-          contextZh: "教會發展方向模糊、缺乏體檢",
-          contextEn: "Need a health check",
-          descZh: "全面盤點教會健康度；demo 資料不可當正式 KPI。",
-          descEn: "Assessment OS — don't use demo as real KPIs.",
-          toolNameZh: "教會評估 OS",
-          toolNameEn: "Assessment OS",
-          url: "../church_planning/assessment-os-hub.html"
+          contextZh: "先看見成果，才有信心推行",
+          contextEn: "See value fast",
+          descZh: "先載入試用種子資料，再看戰情儀表板；這是上雲試用的第一步。",
+          descEn: "Load demo seed, then open dashboard (trial first step).",
+          toolNameZh: "載入試用資料（種子）",
+          toolNameEn: "Load seed",
+          url: "load_central_member_seed.html"
         },
         {
           id: 1,
           labelZh: "認識人",
           labelEn: "Discover",
-          contextZh: "不了解各部門真實負荷",
-          contextEn: "Workload unclear",
-          descZh: "全局俯瞰事工路線，避免同工過勞。",
-          descEn: "Roadmap overview across ministries.",
-          toolNameZh: "路線圖總覽",
-          toolNameEn: "Roadmap",
-          url: "roadmap-overview.html",
+          contextZh: "先看戰情，再談治理與評估",
+          contextEn: "Start with dashboard",
+          descZh: "查看 CRM 就緒度與四類工作桌待辦（demo 可先達到 ≥70% 的示範效果）。",
+          descEn: "Open dashboard to see maturity and work desks.",
+          toolNameZh: "開啟戰情儀表板",
+          toolNameEn: "Dashboard",
+          url: "dashboard.html",
           gate: "staff"
         },
         {
@@ -366,16 +478,16 @@
         },
         {
           id: 3,
-          labelZh: "執行",
-          labelEn: "Action",
-          contextZh: "跨部門溝通成本高",
-          contextEn: "Slow decisions",
-          descZh: "A3 財務對帳可選 — 後勤與前端事工咬合。",
-          descEn: "Optional A3 finance reconciliation.",
-          toolNameZh: "A3 財務對帳（可選）",
-          toolNameEn: "A3 Finance",
-          url: "tools/finance_reconciliation/index.html",
-          gate: "leader"
+          labelZh: "評估",
+          labelEn: "Assess",
+          contextZh: "看不清教會成熟度與下一步重點",
+          contextEn: "Church maturity unclear",
+          descZh: "教會評估 OS — 白話問卷與雷達圖，輔助長執決策。",
+          descEn: "Assessment OS — plain surveys & radar.",
+          toolNameZh: "教會評估 OS",
+          toolNameEn: "Assessment OS",
+          url: "../church_planning/assessment-os-hub.html",
+          gate: "staff"
         },
         {
           id: 4,
@@ -971,7 +1083,7 @@
   var GIFTS_URL = "../smart_ministry/spiritual_gifts.html";
   var REGISTER_URL = "../smart_ministry/registration.html";
 
-  var state = { masterTab: "intro", role: "member", step: 0, matchDept: "worship" };
+  var state = { masterTab: "journey", role: "member", step: 0, matchDept: "worship" };
 
   var ROLE_ALIASES = { student: "member", pastor: "leader" };
 
@@ -997,19 +1109,62 @@
     });
   }
 
+  function showGateToast(msg) {
+    var t = global.document.getElementById("crmGateToast");
+    if (!t) {
+      t = global.document.createElement("div");
+      t.id = "crmGateToast";
+      t.className = "crm-gate-toast";
+      t.setAttribute("role", "status");
+      global.document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add("is-visible");
+    clearTimeout(showGateToast._tid);
+    showGateToast._tid = setTimeout(function () {
+      t.classList.remove("is-visible");
+    }, 3200);
+  }
+
   function bindGateHints(root) {
     (root || global.document).querySelectorAll("a[data-gate]").forEach(function (a) {
       a.addEventListener("click", function (ev) {
         var gate = a.getAttribute("data-gate");
         var role = state.role || "member";
+        if (gate === "staff" && (role === "staff" || role === "teacher")) {
+          showGateToast("💡 溫馨提示：此功能已為【" + (ROLES[role] ? ROLES[role].shortZh : "同工") + "】開通，請放心點擊。");
+          return;
+        }
         if (gate === "staff" && role === "member") {
-          if (!global.confirm("此頁主要給同工使用。是否仍要開啟？")) ev.preventDefault();
+          if (!global.confirm("此功能主要給同工／老師。會友可先走綠色旅程前幾站；仍要開啟嗎？")) ev.preventDefault();
         }
         if (gate === "leader" && role !== "leader" && role !== "staff") {
-          if (!global.confirm("此頁含教會管理資訊。是否仍要開啟？")) ev.preventDefault();
+          if (!global.confirm("此頁含教會管理資訊。建議先走「執事牧者」藍色 Tab；仍要開啟嗎？")) ev.preventDefault();
         }
       });
     });
+  }
+
+  function renderRoleBadge(role) {
+    var el = global.document.getElementById("crmRoleBadge");
+    if (!el) return;
+    role = normalizeRole(role);
+    if (!ROLES[role] || role === "leader") {
+      el.hidden = true;
+      return;
+    }
+    var r = ROLES[role];
+    var modeHint =
+      role === "staff"
+        ? "可跨部門媒合、A1 排班、5F 口述預填"
+        : role === "teacher"
+          ? "牧養週 7 站：備課、週報、探訪"
+          : "成長 5 站：恩賜、小組、服事";
+    el.hidden = false;
+    el.className = "crm-role-badge crm-role-badge--" + role;
+    el.innerHTML =
+      "<span class=\"crm-role-badge__emoji\">" + r.emoji + "</span>" +
+      "<span class=\"crm-role-badge__text\"><strong>您目前：【" + esc(r.shortZh) + "】模式</strong> — " + esc(modeHint) + "</span>";
   }
 
   function setRoleStorage(role) {
@@ -1036,7 +1191,7 @@
   function getTabFromStorage() {
     try {
       var t = global.localStorage.getItem(TAB_KEY);
-      if (t === "intro" || t === "journey" || t === "matchmaker") return t;
+      if (t === "intro" || t === "journey" || t === "vision" || t === "matchmaker") return t;
     } catch (e) {}
     return null;
   }
@@ -1068,7 +1223,11 @@
   function switchMasterTab(tabKey, options) {
     options = options || {};
     state.masterTab = tabKey;
-    ["intro", "journey", "matchmaker"].forEach(function (key) {
+    try {
+      global.document.body.classList.remove("crm-hub-tab-intro", "crm-hub-tab-journey", "crm-hub-tab-vision", "crm-hub-tab-matchmaker");
+      global.document.body.classList.add("crm-hub-tab-" + tabKey);
+    } catch (bodyCls) {}
+    ["intro", "journey", "vision", "matchmaker"].forEach(function (key) {
       var sec = global.document.getElementById("master-sec-" + key);
       var btn = global.document.getElementById("tab-btn-" + key);
       if (sec) sec.hidden = key !== tabKey;
@@ -1084,17 +1243,26 @@
       global.history.replaceState({}, "", u.pathname + u.search);
     } catch (e) {}
     if (tabKey === "journey") {
-      if (!state.role || !JOURNEY_MAPS[state.role]) {
+      var journeyRole = state.role;
+      if (!journeyRole || JOURNEY_ROLES.indexOf(journeyRole) < 0) {
         try {
           var saved = global.localStorage.getItem(ROLE_KEY);
-          state.role = saved && JOURNEY_MAPS[saved] ? saved : "member";
+          journeyRole = saved && JOURNEY_ROLES.indexOf(saved) >= 0 ? saved : "member";
         } catch (e2) {
-          state.role = "member";
+          journeyRole = "member";
         }
       }
+      state.role = journeyRole;
       state.step = getStepIndex();
-      selectRole(state.role, state.step);
-      highlightRoleNav(state.role);
+      syncOnboardUI(journeyRole);
+      selectRole(journeyRole, state.step);
+      highlightRoleNav(journeyRole);
+    }
+    if (tabKey === "vision") {
+      state.role = "leader";
+      state.step = getStepIndex();
+      setRoleStorage("leader");
+      renderVisionPanel(state.step);
     }
     if (tabKey === "matchmaker") {
       var dept = options.dept || state.matchDept || getDeptFromStorage() || "worship";
@@ -1153,7 +1321,7 @@
         return '<button type="button" class="crm-intro-inline-link crm-intro-inline-link--btn" data-switch-tab="' + esc(it.dataSwitchTab) + '">' + esc(it.zh) + " ➔</button>";
       }
       var gate = it.gate ? ' data-gate="' + it.gate + '"' : "";
-      return '<a class="crm-journey-link crm-intro-inline-link" href="' + esc(it.href) + '" target="' + tgt + '"' + gate + ">" + esc(it.zh) + " ➔</a>";
+      return '<a class="crm-journey-link crm-intro-inline-link" href="' + esc(it.href) + '" target="' + tgt + '"' + gate + ">" + esc(it.zh) + capabilityPillHtml(it.href) + " ➔</a>";
     }).join('<span class="crm-intro-inline-sep" aria-hidden="true">·</span>');
   }
 
@@ -1425,8 +1593,9 @@
     host.innerHTML = "<p class=\"crm-journey-kicker\"><strong>" + esc(map.roleNameZh) + "</strong> — 減壓故事線</p>" + hitl;
   }
 
-  function renderStepper(role, stepIdx) {
-    var host = global.document.getElementById("crmStepper");
+  function renderStepper(role, stepIdx, opts) {
+    opts = opts || {};
+    var host = global.document.getElementById(opts.hostId || "crmStepper");
     var map = JOURNEY_MAPS[role];
     if (!host || !map) return;
     host.innerHTML = map.steps.map(function (s) {
@@ -1437,24 +1606,29 @@
     }).join("");
     host.querySelectorAll(".crm-step-dot").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        goToStep(role, Number(btn.getAttribute("data-step")));
+        var nextStep = Number(btn.getAttribute("data-step"));
+        if (opts.onStep) opts.onStep(nextStep);
+        else goToStep(role, nextStep);
       });
     });
   }
 
-  function renderStepCard(role, stepIdx) {
-    var host = global.document.getElementById("crmStepCard");
+  function renderStepCard(role, stepIdx, opts) {
+    opts = opts || {};
+    var host = global.document.getElementById(opts.hostId || "crmStepCard");
     var map = JOURNEY_MAPS[role];
     if (!host || !map) return;
     var step = map.steps[stepIdx];
     if (!step) return;
+    var maxStep = map.steps.length - 1;
     var tgt = linkTarget();
     var action = "";
     if (step.switchToMatchmakerTab) {
       action = '<button type="button" class="crm-cta-primary crm-cta-primary--btn" data-goto-matchmaker-tab">📍 ' + esc(step.toolNameZh) + "</button>";
     } else if (step.url) {
       var gate = step.gate ? ' data-gate="' + step.gate + '"' : "";
-      action = '<a class="crm-journey-link crm-cta-primary" href="' + esc(step.url) + '" target="' + tgt + '"' + gate + ">⚡ " + esc(step.toolNameZh) + "</a>";
+      var cardHref = appendHubContextToUrl(step.url, role, stepIdx);
+      action = '<a class="crm-journey-link crm-cta-primary" href="' + esc(cardHref) + '" target="' + tgt + '"' + gate + ">⚡ " + esc(step.toolNameZh) + capabilityPillHtml(step.url) + "</a>";
     }
     var inviteBlock = "";
     if (role === "member" && stepIdx === 1) {
@@ -1473,7 +1647,7 @@
       '<div class="crm-step-card__actions">' + action + "</div>" +
       '<div class="crm-step-nav">' +
       (stepIdx > 0 ? '<button type="button" class="crm-btn-ghost" data-step-prev>← 上一步</button>' : "<span></span>") +
-      (stepIdx < 5 ? '<button type="button" class="crm-btn-ghost" data-step-next>下一步 →</button>' : "<span></span>") +
+      (stepIdx < maxStep ? '<button type="button" class="crm-btn-ghost" data-step-next>下一步 →</button>' : "<span></span>") +
       "</div>";
     var copyBtn = host.querySelector("#btnCopyInviteDraft");
     if (copyBtn) {
@@ -1494,8 +1668,18 @@
     if (matchTabBtn) matchTabBtn.addEventListener("click", function () { switchMasterTab("matchmaker"); });
     var prev = host.querySelector("[data-step-prev]");
     var next = host.querySelector("[data-step-next]");
-    if (prev) prev.addEventListener("click", function () { goToStep(role, stepIdx - 1); });
-    if (next) next.addEventListener("click", function () { goToStep(role, stepIdx + 1); });
+    if (prev) {
+      prev.addEventListener("click", function () {
+        if (opts.onPrev) opts.onPrev(stepIdx - 1);
+        else goToStep(role, stepIdx - 1);
+      });
+    }
+    if (next) {
+      next.addEventListener("click", function () {
+        if (opts.onNext) opts.onNext(stepIdx + 1);
+        else goToStep(role, stepIdx + 1);
+      });
+    }
     bindLinks(host);
     bindGateHints(host);
   }
@@ -1559,6 +1743,295 @@
     );
   }
 
+  // --- Onboarding (3-screen) -------------------------------------------------
+
+  function renderOnboardRoleButtons(role) {
+    var host = global.document.getElementById("crmOnboardRoleButtons");
+    if (!host) return;
+    var html = "";
+    JOURNEY_ROLES.forEach(function (k) {
+      var r = ROLES[k];
+      if (!r) return;
+      var active = role === r.id ? " is-active" : "";
+      html +=
+        '<button type="button" class="crm-onboard-role-btn crm-onboard-role-btn--' +
+        r.id +
+        active +
+        '" data-role="' +
+        r.id +
+        '">' +
+        r.emoji +
+        " " +
+        esc(r.shortZh) +
+        "</button>";
+    });
+    host.innerHTML = html;
+  }
+
+  var VISION_META = {
+    titleZh: "執事牧者 · 戰略視野",
+    needZh: "你遇到：會議多、戰情看不清、推動數位化沒信心",
+    useZh: "可以用：種子示範 → 戰情儀表 → RACI 治理 → 評估 OS → CTA 戰情 → 規劃落地",
+    floorZh: "1F 戰情 → 2F 決策 → 3F 規劃（鳥瞰全棧）"
+  };
+
+  var ONBOARD_ROLE_META = {
+    leader: VISION_META,
+    staff: {
+      titleZh: "事工主責／同工",
+      needZh: "你遇到：排班追到心累、缺人、權責亂、探訪記錄斷線",
+      useZh: "可以用：A1 排班 → CTV 配對 → 媒合中心 → RACI → 探訪 → 自動化（8 站最完整）",
+      floorZh: "3F 人才 → 4F 執行 → 5F 輔助"
+    },
+    teacher: {
+      titleZh: "老師／小組長",
+      needZh: "你遇到：帶班行政多、週報沒時間、誰久沒來不清楚",
+      useZh: "可以用：週四名冊 → 週五備課 → 週日週報 → 週一探訪 → 週二戰情 → 週三策略（7 站牧養週）",
+      floorZh: "4F 執行 → 5F 輔助"
+    },
+    member: {
+      titleZh: "會友／學生",
+      needZh: "你遇到：剛來教會不知下一步、想服事不知從哪開始",
+      useZh: "可以用：認識自己 → 恩賜測驗 → 媒合中心 → 加入小組 → 更深裝備（5 站成長線）",
+      floorZh: "3F 人才（人求事）"
+    }
+  };
+
+  var ONBOARD_STORY_LABELS = {
+    member: [
+      "我剛來，想認識自己",
+      "尋找恩賜方向",
+      "想服事，找對位置",
+      "加入屬靈家庭",
+      "更深裝備成長"
+    ],
+    teacher: [
+      "週四｜班級名冊",
+      "週五｜聚會前備課",
+      "週六｜恩賜分組",
+      "週日聚會後｜寫週報",
+      "週一｜探訪跟進",
+      "週二｜出席戰情",
+      "週三｜牧養策略"
+    ],
+    staff: [
+      "痛點① 排班心累",
+      "痛點② 缺人苦求",
+      "痛點③ 跨部門媒合",
+      "痛點④ 權責混亂",
+      "痛點⑤ 名冊分散",
+      "痛點⑥ 探訪斷線",
+      "痛點⑦ 跟進漏接",
+      "痛點⑧ 流程瓶頸"
+    ],
+    leader: [
+      "先看見成果",
+      "戰情一頁清",
+      "權責共識",
+      "教會評估 OS",
+      "跨工具戰情",
+      "異象落地規劃"
+    ]
+  };
+
+  var ROLE_FLOORS = {
+    member: ["3F 人才", "3F 人才", "3F 媒合", "4F 小組", "4F 裝備"],
+    teacher: ["4F 執行", "4F 執行", "3F 人才", "4F 執行", "4F 執行", "4F 戰情", "5F 輔助"],
+    staff: ["4F 執行", "3F 人才", "3F 媒合", "2F 決策", "4F 執行", "4F 執行", "4F 執行", "5F 輔助"],
+    leader: ["1F 戰情", "1F 戰情", "2F 決策", "2F 評估", "2F 戰情室", "3F 規劃"]
+  };
+
+  var ONBOARD_COPY = {
+    leader: {
+      0: { pain: "系統空空如也，長執看不出價值。", tool: "載入試用種子", solve: "3 分鐘內看見示範會友與資料就緒。" },
+      1: { pain: "會議資料分散，抓不到待辦。", tool: "戰情儀表板", solve: "CRM 就緒度與四類工作桌一頁看清。" },
+      2: { pain: "權責不清，重複派工內耗。", tool: "RACI 治理", solve: "誰主責、誰配合，會議不再互推。" },
+      3: { pain: "看不清教會成熟度與下一步。", tool: "教會評估 OS", solve: "白話問卷與雷達圖，輔助長執決策。" },
+      4: { pain: "跨工具開會，風險看不全。", tool: "CTA 戰情室", solve: "白話合成評估與預警。" },
+      5: { pain: "異象有了，落地路徑模糊。", tool: "教會規劃索引", solve: "將異象化為可執行規劃與自動化架構。" }
+    },
+    staff: {
+      0: { pain: "排班追到心累、LINE 散落。", tool: "A1 義工排班", solve: "預填空檔，你核對後複製邀請稿。" },
+      1: { pain: "活動缺人，只能群組苦求。", tool: "CTV 事奉配對", solve: "看恩賜建議名單；人工邀請。" },
+      2: { pain: "排班有缺口、找不到合適同工。", tool: "事奉媒合中心", solve: "看部門急缺與八大後台入口。" },
+      3: { pain: "跨部門分工混亂。", tool: "RACI 權責", solve: "減少重複與漏接。" },
+      4: { pain: "不知道誰有空、聯絡方式散落。", tool: "會友通訊錄", solve: "一頁看清基本資料與事奉標記。" },
+      5: { pain: "探訪記錄在各人手機。", tool: "探訪工作桌", solve: "貼文字整理，下一棒不斷線。" },
+      6: { pain: "跟進待辦容易漏。", tool: "A2 探訪跟進", solve: "白話待辦清單。" },
+      7: { pain: "年度事工流於形式。", tool: "營運自動化", solve: "口述需求，只預填表單。" }
+    },
+    teacher: {
+      0: { pain: "週四開班前要對名冊、重複登打。", tool: "主日學簡表", solve: "一頁看清班級學員。" },
+      1: { pain: "週五備課時間不夠。", tool: "AI Lab 備課", solve: "產生草稿，你審核後使用。" },
+      2: { pain: "週六分組只靠印象。", tool: "團契小組", solve: "參考恩賜建議；邀請仍人工。" },
+      3: { pain: "週日聚會後寫週報沒時間。", tool: "小組報告 Copilot", solve: "口述變結構化週報草稿。" },
+      4: { pain: "週一跟進：誰很久沒來？", tool: "探訪工作跟進台", solve: "貼文字整理關懷紀錄。" },
+      5: { pain: "週二檢視出席與 KPI。", tool: "學校統計", solve: "出席與 KPI 白話摘要。" },
+      6: { pain: "週三規劃下一季牧養。", tool: "AI 牧養草稿", solve: "依痛點產生策略草稿，你決定。" }
+    },
+    member: {
+      0: { pain: "新人不知怎麼登記。", tool: "會友註冊", solve: "口述或貼上，AI 只預填基本資料。" },
+      1: { pain: "不知道自己恩賜方向。", tool: "恩賜測驗", solve: "5 分鐘起點；與牧者對談，非自動派工。" },
+      2: { pain: "想服事不知找誰。", tool: "事奉媒合中心", solve: "看部門缺工與方向提示。" },
+      3: { pain: "想加入團契不知入口。", tool: "團契小組", solve: "向小組長表達意願。" },
+      4: { pain: "想更深裝備。", tool: "聖經研讀／學校", solve: "學習軌跡與課程銜接。" }
+    }
+  };
+
+  function renderRoleNeedBanner(role) {
+    var host = global.document.getElementById("crmRoleNeedBanner");
+    if (!host) return;
+    var meta = ONBOARD_ROLE_META[role] || ONBOARD_ROLE_META.member;
+    host.className = "crm-role-need-banner crm-role-need-banner--" + role;
+    host.innerHTML =
+      '<h3 class="crm-role-need-banner__title">' + esc(meta.titleZh) + " 專屬路線</h3>" +
+      '<p class="crm-role-need-banner__need"><strong>你遇到／需要：</strong>' + esc(meta.needZh) + "</p>" +
+      '<p class="crm-role-need-banner__use"><strong>可以用：</strong>' + esc(meta.useZh) + "</p>" +
+      '<p class="crm-role-need-banner__floor"><span class="crm-onboard-floor-chip">' + esc(meta.floorZh) + "</span></p>";
+  }
+
+  function renderTimelineToHost(host, role) {
+    if (!host) return;
+    role = normalizeRole(role);
+    var journey = JOURNEY_MAPS[role] || JOURNEY_MAPS.member;
+    var limit = ROLE_STEP_LIMITS[role] || 5;
+    var storyLabels = ONBOARD_STORY_LABELS[role] || [];
+    var floors = ROLE_FLOORS[role] || [];
+    var html = "";
+    journey.steps.slice(0, limit).forEach(function (s, idx) {
+      var c = (ONBOARD_COPY[role] && ONBOARD_COPY[role][s.id]) || null;
+      var floor = floors[idx] || "";
+      var storyTitle = storyLabels[idx] || ("步驟 " + (idx + 1));
+      html += '<article class="crm-onboard-step crm-onboard-step--' + esc(role) + '">';
+      html += '<div class="crm-onboard-step__idx"><span>' + (idx + 1) + "</span></div>";
+      html += '<div class="crm-onboard-step__body">';
+      html += '<h4 class="crm-onboard-step__title">' + esc(storyTitle) + "</h4>";
+      if (floor) html += '<span class="crm-onboard-floor-chip">' + esc(floor) + "</span>";
+      html += '<ul class="crm-onboard-step__four">';
+      html += "<li><strong>你遇到</strong>：" + esc((c && c.pain) || s.contextZh || s.descZh || "—") + "</li>";
+      html += "<li><strong>可以用</strong>：" + esc((c && c.tool) || s.toolNameZh || "本步工具") + "</li>";
+      html += "<li><strong>AI 做什麼</strong>：只預填、提醒、整理草稿（不取代牧者）。</li>";
+      html += "<li><strong>看見／解決</strong>：" + esc((c && c.solve) || s.descZh || "完成本步即可往下。") + "</li>";
+      html += "</ul>";
+
+      if (s.switchToMatchmakerTab) {
+        html += '<button type="button" class="crm-onboard-step__cta" data-goto-matchmaker-tab>💼 開啟事奉媒合中心</button>';
+      } else if (s.url) {
+        var stepHref = appendHubContextToUrl(s.url, role, s.id);
+        html +=
+          '<a class="crm-journey-link crm-onboard-step__link" href="' + esc(stepHref) + '"' +
+          (s.gate ? ' data-gate="' + esc(s.gate) + '"' : "") + ">" +
+          esc("👉 前往：" + (s.toolNameZh || "開啟")) + capabilityPillHtml(s.url) + "</a>";
+      }
+      if (role === "staff" && s.id === 0) {
+        html +=
+          '<a class="crm-journey-link crm-onboard-step__link crm-onboard-step__link--5f" href="' +
+          esc(automationConsoleHref("staff", "shift")) + '"' +
+          (s.gate ? ' data-gate="' + esc(s.gate) + '"' : "") +
+          ">☕ 排班太累？先去 5F 口述預填</a>";
+      }
+      if (role === "teacher" && s.id === 3) {
+        html +=
+          '<a class="crm-journey-link crm-onboard-step__link crm-onboard-step__link--5f" href="' +
+          esc(automationConsoleHref("teacher", "report")) + '"' +
+          (s.gate ? ' data-gate="' + esc(s.gate) + '"' : "") +
+          ">☕ 週報太累？5F 口述整理草稿</a>";
+      }
+      if (role === "teacher" && s.id === 4) {
+        html +=
+          '<a class="crm-journey-link crm-onboard-step__link crm-onboard-step__link--5f" href="' +
+          esc(automationConsoleHref("teacher", "visit")) + '"' +
+          (s.gate ? ' data-gate="' + esc(s.gate) + '"' : "") +
+          ">☕ 探訪筆記難整理？5F 預填跟進</a>";
+      }
+      html += "</div></article>";
+    });
+    host.innerHTML = html;
+    bindLinks(host);
+    bindGateHints(host);
+    host.querySelectorAll("[data-goto-matchmaker-tab]").forEach(function (btn) {
+      btn.addEventListener("click", function () { switchMasterTab("matchmaker"); });
+    });
+  }
+
+  function renderOnboardTimeline(role) {
+    renderTimelineToHost(global.document.getElementById("crmOnboardTimeline"), role);
+  }
+
+  function renderVisionBanner() {
+    var host = global.document.getElementById("crmVisionBanner");
+    if (!host) return;
+    var meta = VISION_META;
+    host.className = "crm-role-need-banner crm-role-need-banner--leader";
+    host.innerHTML =
+      '<h3 class="crm-role-need-banner__title">' + esc(meta.titleZh) + "</h3>" +
+      '<p class="crm-role-need-banner__need"><strong>你遇到／需要：</strong>' + esc(meta.needZh) + "</p>" +
+      '<p class="crm-role-need-banner__use"><strong>可以用：</strong>' + esc(meta.useZh) + "</p>" +
+      '<p class="crm-role-need-banner__floor"><span class="crm-onboard-floor-chip">' + esc(meta.floorZh) + "</span></p>";
+  }
+
+  function goToVisionStep(stepIdx) {
+    state.role = "leader";
+    state.step = stepIdx;
+    setRoleStorage("leader");
+    setStepStorage(stepIdx);
+    renderVisionPanel(stepIdx);
+    updateUrlRoleStep("leader", stepIdx);
+  }
+
+  function renderVisionPanel(stepIdx) {
+    stepIdx = stepIdx != null && isFinite(stepIdx) ? stepIdx : getStepIndex();
+    renderVisionBanner();
+    renderTimelineToHost(global.document.getElementById("crmVisionTimeline"), "leader");
+    var stages = BELIEVER_JOURNEY_BY_ROLE.leader || BELIEVER_JOURNEY_BY_ROLE.member;
+    renderJourneyRoadmap({
+      hostId: "crmVisionRoadmap",
+      kicker: "⛪ 牧者戰略 · 鳥瞰六站",
+      ariaLabel: "牧者戰略路線",
+      scrollIdPrefix: "crm-vision-stage-",
+      stages: stages
+    });
+    var headerHost = global.document.getElementById("crmVisionHeader");
+    var map = JOURNEY_MAPS.leader;
+    if (headerHost && map) {
+      var hitl = map.hitl ? '<p class="crm-hitl">' + esc(map.hitl.zh) + "</p>" : "";
+      headerHost.innerHTML = "<p class=\"crm-journey-kicker\"><strong>" + esc(map.roleNameZh) + "</strong> — 從高度看、從遠處看</p>" + hitl;
+    }
+    renderStepper("leader", stepIdx, { hostId: "crmVisionStepper", onStep: goToVisionStep });
+    renderStepCard("leader", stepIdx, { hostId: "crmVisionStepCard", onPrev: goToVisionStep, onNext: goToVisionStep });
+  }
+
+  function syncOnboardUI(role) {
+    role = normalizeRole(role || state.role || "member");
+    if (JOURNEY_ROLES.indexOf(role) < 0) role = "member";
+    renderOnboardRoleButtons(role);
+    renderRoleNeedBanner(role);
+    renderRoleBadge(role);
+    renderOnboardTimeline(role);
+    highlightRoleNav(role);
+  }
+
+  function bindOnboardRoleButtons() {
+    var host = global.document.getElementById("crmOnboardRoleButtons");
+    if (!host) return;
+    host.addEventListener("click", function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest("button[data-role]") : null;
+      if (!btn) return;
+      var role = btn.getAttribute("data-role") || "member";
+      setRoleStorage(role);
+      switchMasterTab("journey");
+      syncOnboardUI(role);
+      selectRole(role, getStepIndex());
+      try {
+        var params = new URLSearchParams(global.location.search || "");
+        params.set("role", role);
+        params.set("tab", "journey");
+        var next = global.location.pathname + "?" + params.toString();
+        global.history.replaceState(null, "", next);
+      } catch (urlErr) {}
+    });
+  }
+
   function filterMatch(deptKey) {
     var data = MATCHMAKER_DATA[deptKey];
     var board = global.document.getElementById("matchmaker-board");
@@ -1610,7 +2083,7 @@
       '<div id="crm-match-shift" class="crm-matchmaker__section">' +
       "<h4>📅 智能排班</h4>" +
       "<p>同工答應後，用 A1 把「誰、何時、哪崗」排清楚；系統只預填，您核對後再發佈，絕不代發群組訊息。</p>" +
-      '<p><a class="crm-journey-link crm-intro-inline-link" href="tools/volunteer_shift/index.html" target="' + tgt + '" data-gate="staff">📅 開啟 A1 義工排班桌 ➔</a></p></div>";
+      '<p><a class="crm-journey-link crm-intro-inline-link" href="tools/volunteer_shift/index.html" target="' + tgt + '" data-gate="staff">📅 開啟 A1 義工排班桌 ➔</a></p></div>';
 
     var pastoralBlock =
       '<div id="crm-match-pastoral" class="crm-matchmaker__section">' +
@@ -1673,24 +2146,43 @@
       if (banner) banner.hidden = true;
       if (tab === "matchmaker") {
         switchMasterTab("matchmaker", { dept: dept || state.matchDept });
-        if (role && JOURNEY_MAPS[role]) selectRole(role, getStepIndex());
+        if (role && JOURNEY_ROLES.indexOf(role) >= 0) syncOnboardUI(role);
         return;
       }
-      if (role && JOURNEY_MAPS[role]) {
+      if (tab === "intro") {
+        switchMasterTab("intro");
+        if (role && JOURNEY_ROLES.indexOf(role) >= 0) syncOnboardUI(role);
+        return;
+      }
+      if (tab === "vision" || role === "leader") {
+        var visionStep = Number(params.get("step"));
+        if (!isFinite(visionStep)) visionStep = getStepIndex();
+        setRoleStorage("leader");
+        setStepStorage(visionStep);
+        switchMasterTab("vision");
+        renderVisionPanel(visionStep);
+        return;
+      }
+      if (role && JOURNEY_ROLES.indexOf(role) >= 0) {
         var step = Number(params.get("step"));
         if (!isFinite(step)) step = getStepIndex();
-        switchMasterTab(tab === "intro" ? "intro" : "journey");
-        if (tab !== "intro") selectRole(role, step);
-        return;
-      }
-      if (tab === "journey") {
+        state.role = role;
+        setRoleStorage(role);
         switchMasterTab("journey");
+        syncOnboardUI(role);
+        selectRole(role, step);
         return;
       }
-      var stored = getTabFromStorage();
-      switchMasterTab(tab || stored || "intro");
+      var savedTab = getTabFromStorage();
+      if (savedTab === "vision") {
+        switchMasterTab("vision");
+        return;
+      }
+      switchMasterTab(tab === "journey" ? "journey" : savedTab || "journey");
+      syncOnboardUI(JOURNEY_ROLES.indexOf(state.role) >= 0 ? state.role : "member");
     } catch (e2) {
-      switchMasterTab("intro");
+      switchMasterTab("journey");
+      syncOnboardUI(state.role || "member");
     }
   }
 
@@ -1719,8 +2211,11 @@
     bindIntroStaticPanel();
     bindJourneyPanel();
     bindMatchmakerPanel();
-    if (state.role && JOURNEY_MAPS[state.role]) {
-      renderJourneyTabPanel(state.role);
+    bindOnboardRoleButtons();
+    var onboardRole = JOURNEY_ROLES.indexOf(state.role) >= 0 ? state.role : "member";
+    syncOnboardUI(onboardRole);
+    if (onboardRole && JOURNEY_MAPS[onboardRole]) {
+      renderJourneyTabPanel(onboardRole);
     }
     global.document.querySelectorAll(".crm-master-tab").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -1734,9 +2229,10 @@
   function initRedirect(roleOrEntry) {
     var url = "guide_crm_journey_hub.html";
     if (roleOrEntry === "learning") url += "?entry=learning";
-    else if (roleOrEntry && ROLES[roleOrEntry]) url += "?role=" + roleOrEntry;
+    else if (roleOrEntry === "leader") url += "?tab=vision&role=leader";
+    else if (roleOrEntry && ROLES[roleOrEntry]) url += "?role=" + roleOrEntry + "&tab=journey";
     else if (roleOrEntry === "teachers") url += "?role=teacher";
-    else if (roleOrEntry === "leaders") url += "?role=leader";
+    else if (roleOrEntry === "leaders") url += "?tab=vision&role=leader";
     try {
       global.location.replace(url);
     } catch (e) {

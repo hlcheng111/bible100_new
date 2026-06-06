@@ -1,0 +1,63 @@
+---
+description: 全站 UI 名詞白名單與教會模式 IA 側欄分流鎖；改 modes.json、index_v5 頂欄2、church 側欄時必讀
+globs:
+  - config/modes.json
+  - js/config-embedded.js
+  - index_v5.html
+  - church_ministry/sidebar*.html
+  - help/sidebar_help.html
+  - tests/test_church_nav_ui_contract.py
+alwaysApply: false
+---
+
+# UI 名詞憲法與 IA 保護鎖（教會模式頂欄2 + 側欄）
+
+## 禁止自作主張
+
+- **不得**為了修一個 UI Bug 而改動未在任務中列出的名詞、分組標籤、或 sidebar 路由。
+- **不得**把內部樓層代號（4F、5F、A1、CTA-OS）當成牧長／長執看得到的**按鈕主標**。
+- **不得**把 CRM 事工側欄（`sidebar_crm_journey.html`）綁到全站公共頁（文集、憲法、help）。
+
+## 頂欄第二列 · 分組標籤（`index_v5.html` → `CHURCH_NAV_GROUPS`）
+
+| navGroup | 允許標籤 | 禁止 |
+|----------|----------|------|
+| story | CRM 旅程 | 故事入口（可接受但優先 CRM 旅程） |
+| daily | 👥 教會事工 | 日常手腳、日常手腳、4F |
+| admin | 行政支援 | 後勤行政（除非任務明確要求） |
+| brain | 長執決策大腦 | 長執大腦、5F 規劃、5F |
+| meta | 全站導覽 | 導覽（單字易歧義） |
+
+## 頂欄按鈕 · labelShort（`config/modes.json` church.secondaryNav）
+
+| 項目 | labelShort |
+|------|------------|
+| 教會規劃 | 🧭 教會規劃 |
+| A–D | A. 敬拜 / B. 牧養 / C. 門訓 / D. 外展 |
+| E | E. 行政支援 |
+| 憲法 | ❓ 導覽憲法 |
+
+**禁止** labelShort：`5F 規劃`、`E. 行政`（缺「支援」）、任何以 `5F` 開頭的短標。
+
+## 側欄路由契約（church.secondaryNav → sidebar）
+
+| 入口 | sidebar |
+|------|---------|
+| CRM 旅程地圖 | `church_ministry/sidebar_crm_journey.html` |
+| A–D、E 行政 | `church_ministry/sidebar_church_layout_v1.html?focus=…` |
+| 教會規劃 OS | `church_planning/sidebar_plan.html` |
+| 三層文集、導覽憲法 | `help/sidebar_help.html`（**禁止** crm_journey / church layout） |
+
+## 改動後必跑
+
+```powershell
+node scripts/generate_config_embedded.js
+python tests/test_church_nav_ui_contract.py
+python tests/test_config_embedded_sync.py
+```
+
+`test_church_nav_ui_contract.py` 會檢查禁止名詞與公共頁側欄；**測試紅燈不得提交**。
+
+## 驗收
+
+從 `index_v5.html`（非子頁直開）Ctrl+F5；點「文集／憲法」左欄應為「全站公共導覽」，不是 CRM 旅程。

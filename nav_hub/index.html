@@ -230,13 +230,8 @@
             }
         }
 
-        /* 高亮搜索結果 */
-        .highlight {
-            background: #ffeb3b;
-            padding: 2px 4px;
-            border-radius: 3px;
-        }
     </style>
+    <link rel="stylesheet" href="../css/site_search.css">
 </head>
 <body>
     <div class="nav-hub">
@@ -259,14 +254,17 @@
                     <a href="../data/bibles/bible_reader_final.html" class="toc-item" target="contentFrame">
                         📖 聖經閱讀 Bible Reading
                     </a>
-                    <a href="../bible_study/index.html" class="toc-item" target="contentFrame">
+                    <a href="../bible_study/dashboard.html" class="toc-item" target="contentFrame">
                         📚 聖經研讀 Bible Study
                     </a>
                     <a href="../ai_tools/index.html" class="toc-item" target="contentFrame">
                         🤖 AI 工具 AI Tools
                     </a>
-                    <a href="../church_ministry/index.html" class="toc-item" target="contentFrame">
-                        ⛪ 教會事工 Church Ministry
+                    <a href="../church_ministry/guide_crm_journey_hub.html" class="toc-item" target="contentFrame">
+                        ⛪ 教會事工 CRM 旅程
+                    </a>
+                    <a href="../knowledge/index.html" class="toc-item" target="contentFrame">
+                        📚 三層文集總覽 Knowledge
                     </a>
                     <a href="../school_management/index.html" class="toc-item" target="contentFrame">
                         🏫 學校管理 School Management
@@ -324,9 +322,16 @@
                     🔍 智能搜索
                 </h2>
                 
+                <div class="b100-search-layer-filters" id="searchLayerFilters" aria-label="三層過濾">
+                    <button type="button" class="b100-search-layer-btn is-active" data-layer="all">全部</button>
+                    <button type="button" class="b100-search-layer-btn" data-layer="foundation">📖 根基</button>
+                    <button type="button" class="b100-search-layer-btn" data-layer="execution">👥 執行</button>
+                    <button type="button" class="b100-search-layer-btn" data-layer="strategy">🧭 戰略</button>
+                    <button type="button" class="b100-search-layer-btn" data-layer="infra">🔧 橫向</button>
+                </div>
                 <input type="text" 
                        class="search-box" 
-                       placeholder="搜索頁面標題、內容或關鍵詞..."
+                       placeholder="搜索頁面標題、內容或關鍵詞（三層智慧過濾）..."
                        id="searchInput">
                 
                 <div class="search-results" id="searchResults">
@@ -365,109 +370,31 @@
         </div>
     </div>
 
+    <script src="../js/site_search.js"></script>
     <script>
-        // 搜索功能
-        class SimpleSearch {
-            constructor() {
-                this.pages = [
-                    // 主要模組
-                    { title: "聖經閱讀", path: "../data/bibles/bible_reader_final.html", keywords: "聖經,閱讀,bible,reading" },
-                    { title: "聖經研讀", path: "../bible_study/index.html", keywords: "聖經,研讀,bible,study" },
-                    { title: "AI 工具", path: "../ai_tools/index.html", keywords: "AI,工具,artificial,intelligence" },
-                    { title: "教會事工", path: "../church_ministry/index.html", keywords: "教會,事工,church,ministry" },
-                    { title: "學校管理", path: "../school_management/index.html", keywords: "學校,管理,school,management" },
-                    { title: "智慧事奉", path: "../smart_ministry/index.html", keywords: "智慧,事奉,smart,ministry" },
-                    { title: "詩歌管理", path: "../hymn_management/index.html", keywords: "詩歌,聖詩,hymn,崇拜,playlist" },
-                    
-                    // 語言版本
-                    { title: "中文版", path: "../languages/index_cn.html", keywords: "中文,chinese,cn" },
-                    { title: "英文版", path: "../languages/index_en.html", keywords: "英文,english,en" },
-                    { title: "越南語版", path: "../languages/index_vi.html", keywords: "越南語,vietnamese,vi" },
-                    { title: "印尼語版", path: "../languages/index_id.html", keywords: "印尼語,indonesian,id" },
-                    { title: "兒童版", path: "../languages/index_ch.html", keywords: "兒童,children,ch" },
-                    { title: "進階版", path: "../languages/index_ad.html", keywords: "進階,advanced,ad" },
-                    
-                    // 工具功能
-                    { title: "聖經閱讀器", path: "../data/bibles/bible_reader_final.html", keywords: "聖經,閱讀器,bible,reader" },
-                    { title: "站點導航", path: "sitemap_navigation.html", keywords: "站點,導航,site,navigation" }
-                ];
-                
-                this.init();
-            }
-
-            init() {
-                const searchInput = document.getElementById('searchInput');
-                const searchResults = document.getElementById('searchResults');
-                
-                searchInput.addEventListener('input', (e) => {
-                    this.search(e.target.value);
-                });
-            }
-
-            search(query) {
-                const searchResults = document.getElementById('searchResults');
-                
-                if (!query.trim()) {
-                    searchResults.innerHTML = '<div class="no-results">輸入關鍵詞開始搜索...</div>';
-                    return;
-                }
-
-                const results = this.pages.filter(page => {
-                    return page.title.toLowerCase().includes(query.toLowerCase()) ||
-                           page.keywords.toLowerCase().includes(query.toLowerCase());
-                });
-
-                if (results.length === 0) {
-                    searchResults.innerHTML = '<div class="no-results">沒有找到相關結果</div>';
-                    return;
-                }
-
-                let html = '';
-                results.forEach(page => {
-                    const highlightedTitle = this.highlightText(page.title, query);
-                    html += `
-                        <div class="search-result-item">
-                            <div class="search-result-title">${highlightedTitle}</div>
-                            <div class="search-result-path">${page.path}</div>
-                        </div>
-                    `;
-                });
-
-                searchResults.innerHTML = html;
-
-                // 為搜索結果添加點擊事件
-                document.querySelectorAll('.search-result-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        const path = item.querySelector('.search-result-path').textContent;
-                        window.parent.postMessage({
-                            type: 'navigate',
-                            url: path
-                        }, '*');
-                    });
-                });
-            }
-
-            highlightText(text, query) {
-                if (!query) return text;
-                const regex = new RegExp(`(${query})`, 'gi');
-                return text.replace(regex, '<span class="highlight">$1</span>');
-            }
-        }
-
-        // 工具函數
         function refreshTOC() {
-            alert('目錄已刷新！');
+            if (window.Bible100SiteSearch) {
+                console.log('索引條目：', Bible100SiteSearch.getIndex().length);
+            }
         }
 
         function clearSearch() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('searchResults').innerHTML = '<div class="no-results">輸入關鍵詞開始搜索...</div>';
+            var input = document.getElementById('searchInput');
+            var results = document.getElementById('searchResults');
+            if (input) input.value = '';
+            if (results) results.innerHTML = '<div class="no-results">輸入關鍵詞開始搜索...</div>';
         }
 
-        // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            new SimpleSearch();
-            console.log('🗺️ 目錄搜索中心已加載');
+            if (window.Bible100SiteSearch) {
+                Bible100SiteSearch.mount({
+                    input: '#searchInput',
+                    results: '#searchResults',
+                    layerFilter: '#searchLayerFilters',
+                    basePrefix: '../'
+                });
+            }
+            console.log('🗺️ 目錄搜索中心（中央探照燈）已加載');
         });
     </script>
   <script src="../js/module_navigation.js"></script>

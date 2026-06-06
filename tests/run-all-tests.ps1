@@ -12,6 +12,22 @@ if ($v5Result -ne 0) {
     exit 1
 }
 
+$configSyncResult = 0
+python "$scriptDir\test_config_embedded_sync.py"
+$configSyncResult = $LASTEXITCODE
+if ($configSyncResult -ne 0) {
+    Write-Host "config-embedded sync test failed (exit $configSyncResult). Run: node scripts/generate_config_embedded.js" -ForegroundColor Red
+    exit 1
+}
+
+$churchNavResult = 0
+python "$scriptDir\test_church_nav_ui_contract.py"
+$churchNavResult = $LASTEXITCODE
+if ($churchNavResult -ne 0) {
+    Write-Host "church nav UI contract test failed (exit $churchNavResult)." -ForegroundColor Red
+    exit 1
+}
+
 $tocResult = 0
 $gtResult = 0
 & "$scriptDir\run-toc-test.ps1"

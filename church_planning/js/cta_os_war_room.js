@@ -324,7 +324,7 @@
             vectorLine: rep && rep.vectorLine,
             syncedAt: entry.syncedAt,
             sourceNote: rep && rep.sourceNote,
-            href: TOOL_LINKS[id] || "#"
+            href: TOOL_LINKS[id] || null
           };
         })
         .sort(function (a, b) {
@@ -420,9 +420,9 @@
           t.syncedAt && Date.now() - new Date(t.syncedAt).getTime() > 1000 * 60 * 60 * 24 * 90;
         return (
           "<tr>" +
-          '<td><a class="wr-link" href="' +
-          t.href +
-          '" target="contentFrame">' +
+          '<td><a class="wr-link" href="#" onclick="return planningOpenByToolId(event,\'' +
+          t.toolId +
+          "');\">" +
           t.name +
           "</a></td>" +
           "<td class=\"wr-mono\">" +
@@ -476,7 +476,7 @@
       '<button type="button" class="wr-btn wr-btn-primary" id="wr-scan">🔍 掃描本機各工具分數</button>' +
       '<button type="button" class="wr-btn" id="wr-copy">💬 複製戰情摘要</button>' +
       '<button type="button" class="wr-btn" onclick="window.print()">🖨️ 打印</button>' +
-      '<a class="wr-btn" href="assessment-os-hub.html" target="contentFrame">分層選用中心</a>' +
+      '<a class="wr-btn" href="#" onclick="return planningOpenContent(event,\'assessment-os-hub.html\');">健康診斷中心</a>' +
       "</div>" +
       '<p class="wr-meta">已同步 <strong id="wr-tool-count">' +
       state.toolCount +
@@ -514,7 +514,7 @@
         ? '<table class="wr-table"><thead><tr><th>工具</th><th>CTV</th><th>同步時間</th><th>來源</th></tr></thead><tbody>' +
           toolRows +
           "</tbody></table>"
-        : '<p class="wr-note">尚無資料。請先到各工具頁完成測評，或按上方「掃描本機」。</p>') +
+        : '<p class="wr-note">尚無資料。請先到 <a href="#" onclick="return planningOpenContent(event,\'assessment-os-hub.html\');">健康診斷中心</a> 選量表填寫，或按上方「掃描本機」。</p>') +
       "</section>";
 
     var scanBtn = root.querySelector("#wr-scan");

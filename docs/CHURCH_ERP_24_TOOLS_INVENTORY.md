@@ -31,6 +31,8 @@
 
 **統計**：LIVE 6 · PARTIAL 12 · STUB 7 · MISSING 1
 
+**路徑 SSOT（機器）**：[`js/church_tools_manifest.js`](../js/church_tools_manifest.js) · 人讀 [`church_planning/docs/TOOL_PATH_SSOT.md`](../church_planning/docs/TOOL_PATH_SSOT.md)
+
 **A 收口（牧者一條路）**：`getSyncHealthSummary`（Bridge／Phase1）+ 總站同步抽屜；Intent 支援 A1/A2/A3（A3 可選，不影響 `finance-integrated` 等既有財務頁）。
 
 **模板**：`church_ministry/_templates/tool-kit/`

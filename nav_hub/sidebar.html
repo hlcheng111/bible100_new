@@ -231,6 +231,7 @@
         }
     </style>
     <link rel="stylesheet" href="../css/sidebar_shared.css">
+    <link rel="stylesheet" href="../css/site_search.css">
 </head>
 <body>
     <div class="nav-hub-sidebar">
@@ -252,9 +253,15 @@
                 <span class="section-toggle">▼</span>
             </div>
             <div class="section-content" id="search-section">
+                <div class="b100-search-layer-filters" id="searchLayerFilters" style="margin-bottom:8px;">
+                    <button type="button" class="b100-search-layer-btn is-active" data-layer="all">全部</button>
+                    <button type="button" class="b100-search-layer-btn" data-layer="foundation">根基</button>
+                    <button type="button" class="b100-search-layer-btn" data-layer="execution">執行</button>
+                    <button type="button" class="b100-search-layer-btn" data-layer="strategy">戰略</button>
+                </div>
                 <input type="text" 
                        class="search-box" 
-                       placeholder="搜索頁面標題或關鍵詞..."
+                       placeholder="搜索頁面標題或關鍵詞（三層過濾）..."
                        id="searchInput">
                 
                 <div class="search-results" id="searchResults">
@@ -513,82 +520,8 @@
         </div>
     </div>
 
+    <script src="../js/site_search.js"></script>
     <script>
-        // 搜索功能
-        class NavHubSearch {
-            constructor() {
-                this.pages = [
-                    // 主要模組
-                    { title: "聖經閱讀", path: "../data/bibles/bible_reader_final.html", keywords: "聖經,閱讀,bible,reading" },
-                    { title: "聖經研讀", path: "../bible_study/index.html", keywords: "聖經,研讀,bible,study" },
-                    { title: "AI 工具", path: "../ai_tools/index.html", keywords: "AI,工具,artificial,intelligence" },
-                    { title: "教會事工", path: "../church_ministry/index.html", keywords: "教會,事工,church,ministry" },
-                    { title: "學校管理", path: "../school_management/index.html", keywords: "學校,管理,school,management" },
-                    { title: "智慧事奉", path: "../smart_ministry/index.html", keywords: "智慧,事奉,smart,ministry" },
-                    
-                    // 語言版本
-                    { title: "中文版", path: "../languages/index_cn.html", keywords: "中文,chinese,cn" },
-                    { title: "英文版", path: "../languages/index_en.html", keywords: "英文,english,en" },
-                    { title: "越南語版", path: "../languages/index_vi.html", keywords: "越南語,vietnamese,vi" },
-                    { title: "印尼語版", path: "../languages/index_id.html", keywords: "印尼語,indonesian,id" },
-                    { title: "兒童版", path: "../languages/index_ch.html", keywords: "兒童,children,ch" },
-                    { title: "進階版", path: "../languages/index_ad.html", keywords: "進階,advanced,ad" },
-                    { title: "柬埔寨語版", path: "../languages/index_kh.html", keywords: "柬埔寨語,khmer,kh" },
-                    { title: "老撾語版", path: "../languages/index_lo.html", keywords: "老撾語,lao,lo" },
-                    { title: "緬甸語版", path: "../languages/my/index.html", keywords: "緬甸語,myanmar,my" },
-                    
-                    // 工具功能
-                    { title: "聖經閱讀器", path: "../data/bibles/bible_reader_final.html", keywords: "聖經,閱讀器,bible,reader" },
-                    { title: "站點導航", path: "sitemap_navigation.html", keywords: "站點,導航,site,navigation" }
-                ];
-                
-                this.init();
-            }
-
-            init() {
-                const searchInput = document.getElementById('searchInput');
-                const searchResults = document.getElementById('searchResults');
-                
-                searchInput.addEventListener('input', (e) => {
-                    this.search(e.target.value);
-                });
-            }
-
-            search(query) {
-                const searchResults = document.getElementById('searchResults');
-                
-                if (!query.trim()) {
-                    searchResults.innerHTML = '<div class="no-results">輸入關鍵詞開始搜索...</div>';
-                    searchResults.classList.remove('active');
-                    return;
-                }
-
-                const results = this.pages.filter(page => {
-                    return page.title.toLowerCase().includes(query.toLowerCase()) ||
-                           page.keywords.toLowerCase().includes(query.toLowerCase());
-                });
-
-                if (results.length === 0) {
-                    searchResults.innerHTML = '<div class="no-results">沒有找到相關結果</div>';
-                    searchResults.classList.add('active');
-                    return;
-                }
-
-                let html = '';
-                results.forEach(page => {
-                    html += `
-                        <div class="search-result" onclick="navigateToPage('${page.path}')">
-                            <div class="search-result-title">${page.title}</div>
-                            <div class="search-result-path">${page.path}</div>
-                        </div>
-                    `;
-                });
-
-                searchResults.innerHTML = html;
-                searchResults.classList.add('active');
-            }
-        }
-
         // 工具函數
         function toggleSection(sectionId) {
             const section = document.getElementById(sectionId);
@@ -612,20 +545,23 @@
             }
         }
 
-        function navigateToPage(path) {
-            // 發送消息給父窗口導航
-            window.parent.postMessage({
-                type: 'navigate',
-                url: path
-            }, '*');
-            
-            // 隱藏搜索結果
-            document.getElementById('searchResults').classList.remove('active');
-        }
-
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            new NavHubSearch();
+            if (window.Bible100SiteSearch) {
+                var searchApi = Bible100SiteSearch.mount({
+                    input: '#searchInput',
+                    results: '#searchResults',
+                    layerFilter: '#searchLayerFilters',
+                    basePrefix: '../'
+                });
+                var resultsEl = document.getElementById('searchResults');
+                var inputEl = document.getElementById('searchInput');
+                if (inputEl && resultsEl) {
+                    inputEl.addEventListener('input', function() {
+                        resultsEl.classList.toggle('active', !!inputEl.value.trim());
+                    });
+                }
+            }
             
             // 默認展開本站地圖
             document.getElementById('sitemap-section').classList.add('active');

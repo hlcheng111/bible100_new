@@ -1,1 +1,78 @@
-// 全站清單（單一真相來源）— file:// 可直接引用\nwindow.SITE_MAP = {\n  root: "bible100_new/",\n  modules: [\n    {\n      id: "school",\n      title: "學校管理",\n      index: "school_management/index.html",\n      pages: [\n        "school_management/student_management.html",\n        "school_management/course_management.html",\n        "school_management/teacher_management.html",\n        "school_management/activity_management.html",\n        "school_management/financial_management.html",\n        "school_management/communication_management.html",\n        "school_management/report_statistics.html",\n        "school_management/system_settings.html",\n        "school_management/database_management.html",\n        // 通信四頁（已存在的實際檔名，帶特殊符號）\n        "school_management/notice_board—1.html",\n        "school_management/parent_communication—1.html",\n        "school_management/internal_messaging—！.html",\n        "school_management/emergency_alert—1.html"\n      ]\n    },\n    {\n      id: "church",\n      title: "教會事工",\n      index: "church_ministry/index.html",\n      pages: [\n        "church_ministry/content.html",\n        "church_ministry/modules/fellowship/groups.html",\n        "church_ministry/modules/fellowship/groups-reports.html",\n        "church_ministry/modules/fellowship/visitation-ministry.html",\n        "church_ministry/modules/fellowship/visitation-reports.html",\n        "church_ministry/modules/worship/attendance-management.html",\n        "church_ministry/modules/worship/worship-management.html",\n        "church_ministry/modules/worship/worship-team-management.html",\n        "church_ministry/modules/worship/worship-reports.html",\n        "church_ministry/modules/administration/financial-management.html",\n        "church_ministry/modules/volunteer/volunteer-management.html",\n        "church_ministry/modules/volunteer/volunteer-reports.html",\n        "church_ministry/modules/finance/finance-management.html",\n        "church_ministry/modules/finance/finance-reports.html",\n        "church_ministry/modules/library/library-management.html",\n        "church_ministry/modules/equipment/equipment-management.html",\n        "church_ministry/modules/analytics/statistical-reports.html"\n      ]\n    },\n    {\n      id: "bible",\n      title: "聖經研讀",\n      index: "bible_study/index.html",\n      pages: [\n        "bible_study/commentary_sidebar.html",\n        "bible_study/sidebar.html",\n        "bible_study/tests/commentary_smoke.html",\n        "bible_study/commentaries/reader.html",\n        // 主閱讀器（位於全站 data/ 目錄）\n        "data/bibles/bible_reader_final.html"\n      ]\n    },\n    {\n      id: "ai",\n      title: "AI 工具",\n      index: "ai_tools/index.html",\n      pages: [\n        "ai_tools/test_ai_platforms.html",\n        "ai_tools/index.html"\n      ]\n    }\n  ]\n};
+// 全站清單（單一真相來源）— file:// 可直接引用
+window.SITE_MAP = {
+  root: "bible100_new/",
+  modules: [
+    {
+      id: "school",
+      title: "學校管理",
+      index: "school_management/dashboard.html",
+      pages: [
+        "school_management/student_management.html",
+        "school_management/course_management.html",
+        "school_management/teacher_management.html",
+        "school_management/activity_management.html",
+        "school_management/financial_management.html",
+        "school_management/communication_management.html",
+        "school_management/report_statistics.html",
+        "school_management/system_settings.html",
+        "school_management/database_management.html",
+        "school_management/notice_board—1.html",
+        "school_management/parent_communication—1.html",
+        "school_management/internal_messaging—！.html",
+        "school_management/emergency_alert—1.html"
+      ]
+    },
+    {
+      id: "church",
+      title: "教會事工",
+      index: "church_ministry/guide_crm_journey_hub.html",
+      pages: [
+        "church_ministry/guide_crm_journey_hub.html",
+        "church_ministry/dashboard.html",
+        "church_ministry/modules/members/member-integrated.html",
+        "church_ministry/modules/support/visitation_index.html",
+        "church_ministry/tools/volunteer_shift/index.html",
+        "church_ministry/tools/visitation_followup/index.html"
+      ]
+    },
+    {
+      id: "bible",
+      title: "聖經研讀",
+      index: "bible_study/dashboard.html",
+      pages: [
+        "bible_study/dashboard.html",
+        "bible_study/search_reader.html",
+        "bible_study/comprehensive_exegesis_reader.html",
+        "bible_study/sidebar.html",
+        "bible_study/commentaries/reader.html",
+        "data/bibles/bible_reader_final.html"
+      ]
+    },
+    {
+      id: "planning",
+      title: "教會規劃",
+      index: "church_planning/index_plan.html",
+      pages: [
+        "church_planning/index_plan.html",
+        "church_planning/vision.html",
+        "church_planning/swot-planning.html",
+        "church_planning/cta-os-war-room.html"
+      ]
+    },
+    {
+      id: "knowledge",
+      title: "三層文集",
+      index: "knowledge/index.html",
+      pages: ["knowledge/index.html"]
+    },
+    {
+      id: "ai",
+      title: "AI 工具",
+      index: "ai_tools/ai_lab_landing.html",
+      pages: [
+        "ai_tools/ai_lab_landing.html",
+        "ai_tools/pages/crm_automation_console.html"
+      ]
+    }
+  ]
+};

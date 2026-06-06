@@ -3,18 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>營運自動化控制台 · CRM Automation</title>
+  <title>🎙️ AI 語音免填表助理 (口述自動輸入)</title>
   <link rel="stylesheet" href="../assets/css/lab-shell.css">
+  <link rel="stylesheet" href="../assets/css/crm_automation_theater.css">
   <script src="../../js/cloud_config.js"></script>
   <script src="../../js/crm_intent_router.js"></script>
   <script src="../../js/data_trust_badge.js"></script>
   <script src="../assets/js/lab-frame-nav.js"></script>
+  <script src="../../config/build_version.js"></script>
+  <script src="../assets/js/crm_automation_theater.js"></script>
+  <script src="../../js/page_capability_badge.js" data-status="ai-sim"></script>
   <style>
     body { margin: 0; font-family: "Microsoft YaHei", sans-serif; background: #f8fafc; color: #0f172a; font-size: 13px; }
     .wrap { max-width: 920px; margin: 0 auto; padding: 16px; }
-    .hero { background: linear-gradient(135deg, #0f766e, #0369a1); color: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
-    .hero h1 { margin: 0 0 6px; font-size: 18px; }
-    .hero p { margin: 0; font-size: 12px; opacity: 0.92; }
     .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
     .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
     textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 100px; }
@@ -24,116 +25,134 @@
     .btn-mic { background: #7c3aed; color: #fff; }
     .btn-mic.listening { background: #dc2626; }
     .btn-mic.hidden { display: none; }
-    .mono { font-family: ui-monospace, monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; min-height: 200px; width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
+    .mono { font-family: ui-monospace, monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; min-height: 160px; width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
     .hint { font-size: 11px; color: #64748b; line-height: 1.5; }
-    .intent-pick { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-top: 8px; }
+    .intent-pick { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-top: 8px; display: block; font-size: 12px; }
     nav.lab-context-nav { margin-bottom: 12px; }
-    .mode-banner {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .mode-pill {
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 11px;
-      line-height: 1.45;
-    }
+    .mode-banner { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+    .mode-pill { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; font-size: 11px; line-height: 1.45; }
     .mode-pill strong { display: block; font-size: 12px; color: #0f172a; margin-bottom: 4px; }
-    .mode-pill.ok strong { color: #047857; }
     .mode-pill.warn strong { color: #b45309; }
+    .mode-pill.ok strong { color: #047857; }
     .mode-pill.off strong { color: #64748b; }
   </style>
 </head>
-<body>
+<body class="crm5f-page">
   <div class="wrap">
     <nav class="lab-context-nav" aria-label="模組脈絡">
       <a href="javascript:void(0)" onclick="labNav('ai_lab_landing.html'); return false;">🔭 Lab 總覽</a>
-      <a href="javascript:void(0)" onclick="labNav('pages/crm_automation_console.html'); return false;" aria-current="page">⚙️ 營運自動化</a>
+      <a href="javascript:void(0)" onclick="labNav('pages/crm_automation_console.html'); return false;" aria-current="page">⚙️ 5F 口述預填</a>
       <a href="javascript:void(0)" onclick="if(window.parent&amp;&amp;window.parent.applyMode){window.parent.applyMode('church');} return false;">⛪ 教會事工</a>
     </nav>
 
-    <header class="hero">
-      <h1>⚙️ CRM 意圖中樞（HITL）</h1>
-      <p>文字／語音 → Intent JSON → <strong>只預填</strong>工具表單 · 不自動儲存 · 不自動通知</p>
+    <header class="crm5f-hero">
+      <h1>🎙️ AI 語音免填表助理 (口述自動輸入)</h1>
+      <p class="crm5f-hero__sub">你不是來學新系統的 — 在 4F 做事累了，口述一句，AI 幫你把表單填好<strong>草稿</strong>，存不存由你決定。</p>
+      <span class="crm5f-hero__tag">AI 看見與提醒，人只做愛與決定</span>
     </header>
 
-    <div id="dataTrustMount"></div>
+    <div id="crm5fContext" class="crm5f-context" aria-live="polite"></div>
 
-    <section class="mode-banner" aria-label="目前能力說明">
-      <div class="mode-pill warn">
-        <strong>文字解析</strong>
-        本機<strong>規則 demo</strong>（關鍵字），非 Gemini 真理解。請人工核對 Intent 再預填。
-      </div>
-      <div class="mode-pill warn" id="pillSpeech">
-        <strong>語音輸入</strong>
-        <span id="pillSpeechDetail">偵測中…</span>
-      </div>
-      <div class="mode-pill ok">
-        <strong>寫入</strong>
-        <code>prefill_only</code>：只開表單並預填，<strong>不自動儲存</strong>到 localStorage。
-      </div>
-      <div class="mode-pill off">
-        <strong>通知</strong>
-        尚未串 LINE／WhatsApp／簡訊 API。義工排班僅可<strong>產生邀請文字</strong>，請人手複製發送。
-      </div>
+    <section class="crm5f-screen" aria-labelledby="crm5f-elevator-title">
+      <h2 id="crm5f-elevator-title" class="crm5f-screen__title">🛗 屏 1 · 你在整棟 CRM 大樓的哪一層？</h2>
+      <p class="crm5f-screen__lead"><strong>4F 是入口，5F 是減壓閥。</strong> 日常排班、探訪在 4F；填表太累就上 5F 泡杯咖啡、口述需求。</p>
+      <div id="crm5fElevator" class="crm5f-elevator"></div>
     </section>
 
-    <section class="card">
-      <label for="crmIntentText"><strong>1) 說出或輸入需求</strong></label>
-      <textarea id="crmIntentText" placeholder="例：王弟兄下週不能守門請找代班；他最近壓力大請牧者關心。"></textarea>
-      <div class="row">
-        <button type="button" class="btn btn-mic hidden" id="btnMic">🎤 語音</button>
-        <div>
-          <button type="button" class="btn btn-primary" id="btnParse">2) 解析 Intent</button>
-          <div id="trustParseNotice"></div>
+    <section class="crm5f-screen" aria-labelledby="crm5f-scripts-title">
+      <h2 id="crm5f-scripts-title" class="crm5f-screen__title">🎭 屏 2 · 三條實戰劇本（點一下就會帶入台詞）</h2>
+      <p class="crm5f-screen__lead">選一條跟你有關的，按 <strong>👉 一鍵帶入範例句</strong>，再到下方按「解析」→「預填」— 30 秒體驗 Aha 時刻。</p>
+      <div id="crm5fScripts" class="crm5f-scripts"></div>
+    </section>
+
+    <section class="crm5f-screen" aria-labelledby="crm5f-pipeline-title">
+      <h2 id="crm5f-pipeline-title" class="crm5f-screen__title">🛡️ 屏 3 · 信任流水線（管線透明，剎車在你手上）</h2>
+      <p class="crm5f-screen__lead">系統不會背著你發訊息給弟兄姊妹，也不會自動儲存。</p>
+      <div id="crm5fPipeline"></div>
+    </section>
+
+    <section id="crm5fWorkbench" class="crm5f-screen crm5f-workbench" aria-labelledby="crm5f-wb-title">
+      <h2 id="crm5f-wb-title" class="crm5f-screen__title">🎙️ 口述預填台</h2>
+      <p class="crm5f-screen__lead">貼上或說出需求 → 解析 → 開表單預填（不儲存）。</p>
+
+      <div id="dataTrustMount"></div>
+
+      <div class="card">
+        <label for="crmIntentText"><strong>① 說出或輸入需求</strong></label>
+        <textarea id="crmIntentText" placeholder="例：下週主日守門缺一人，請幫忙找代班…"></textarea>
+        <div class="row">
+          <button type="button" class="btn btn-mic hidden" id="btnMic">🎤 語音</button>
+          <div>
+            <button type="button" class="btn btn-primary" id="btnParse">② 解析草稿</button>
+            <div id="trustParseNotice"></div>
+          </div>
         </div>
+        <p id="micStatus" class="hint" style="margin-top:8px;"></p>
       </div>
-      <p id="micStatus" class="hint" style="margin-top:8px;"></p>
-    </section>
 
-    <section class="card">
-      <strong>3) Intent 信封（bible100_crm_intent_v2）</strong>
-      <textarea id="intentJson" class="mono" placeholder="解析後顯示…"></textarea>
-      <div id="intentPicker"></div>
-      <div class="row" style="margin-top:10px;">
-        <div>
-          <button type="button" class="btn btn-success" id="btnPrefill">4) 開啟表單並預填（不儲存）</button>
-          <div id="trustPrefillNotice"></div>
+      <div class="card">
+        <strong>③ 確認並預填</strong>
+        <p class="hint" style="margin:4px 0 8px;">解析後選一項建議，再開啟對應表單（僅預填）。</p>
+        <div id="intentPicker"></div>
+        <div class="row" style="margin-top:10px;">
+          <div>
+            <button type="button" class="btn btn-success" id="btnPrefill">④ 開啟表單並預填（不儲存）</button>
+            <div id="trustPrefillNotice"></div>
+          </div>
         </div>
+        <p id="applyStatus" class="hint" style="margin-top:10px;"></p>
       </div>
-      <p id="applyStatus" class="hint" style="margin-top:10px;"></p>
-    </section>
 
-    <section class="card hint">
-      <strong>一條路捷徑（不解析、只開工具）</strong>
-      <div class="row" id="crmToolQuickLinks" style="margin-top:8px;"></div>
-      <p class="hint" style="margin-top:6px;">A3 財務為<strong>可選</strong>；未使用 CRM 記帳的教會可略過，不影響會友／探訪／排班。</p>
-    </section>
-
-    <section class="card hint">
-      <strong>支援 target_tool</strong>
-      <ul style="margin:6px 0 0;padding-left:18px;">
-        <li><code>volunteer_shift.create</code> → 義工排班 form</li>
-        <li><code>ministry_matching.suggest</code> → 排班 form（CTV 區）</li>
-        <li><code>pastoral_alert.create</code> → 探訪工作桌</li>
-        <li><code>visitation_followup.create</code> → 探訪跟進 form</li>
-        <li><code>finance_reconciliation.create</code> → 財務對帳 form（可選）</li>
-      </ul>
+      <details class="crm5f-advanced card hint">
+        <summary>🔧 進階：技術細節與捷徑（熟手展開）</summary>
+        <p class="hint" style="margin:0 0 8px;"><strong>Intent 信封</strong>（開發／除錯用）</p>
+        <textarea id="intentJson" class="mono" placeholder="解析後顯示…"></textarea>
+        <div class="mode-banner" style="margin-top:10px;" aria-label="目前能力說明">
+          <div class="mode-pill warn">
+            <strong>文字解析</strong>
+            本機規則 demo（關鍵字），請人工核對後再預填。
+          </div>
+          <div class="mode-pill warn" id="pillSpeech">
+            <strong>語音輸入</strong>
+            <span id="pillSpeechDetail">偵測中…</span>
+          </div>
+          <div class="mode-pill ok">
+            <strong>寫入</strong>
+            只預填表單，不自動儲存。
+          </div>
+          <div class="mode-pill off">
+            <strong>通知</strong>
+            尚未串 LINE；邀請請人手複製發送。
+          </div>
+        </div>
+        <p class="hint" style="margin:12px 0 6px;"><strong>一條路捷徑</strong>（不解析、直接開工具）</p>
+        <div class="row" id="crmToolQuickLinks"></div>
+        <p class="hint" style="margin-top:8px;">A3 財務為可選；未使用 CRM 記帳可略過。</p>
+        <p class="hint" style="margin:12px 0 4px;"><strong>支援工具對照</strong></p>
+        <ul style="margin:0;padding-left:18px;font-size:11px;">
+          <li>義工排班 · 探訪跟進 · 探訪工作桌 · 財務對帳（可選）</li>
+        </ul>
+      </details>
     </section>
   </div>
 
   <script>
     (function () {
+      if (window.CrmAutomationTheater) {
+        CrmAutomationTheater.initTheater({
+          onSampleFilled: function () {
+            var parseBtn = document.getElementById('btnParse');
+            if (parseBtn) parseBtn.click();
+          }
+        });
+      }
+
       if (window.DataTrustBadge) {
         DataTrustBadge.renderDataTrustBadge({
           mount: 'dataTrustMount',
           position: 'top',
           source_key: 'bible100_crm_intent_v2',
-          source_label_zh: 'CRM 意圖解析（營運自動化）',
+          source_label_zh: 'CRM 口述預填（5F）',
           count: '—',
           write_behavior: 'prefill_only',
           notify_behavior: 'none',
@@ -165,7 +184,7 @@
         if (isFile) {
           pillSpeech.textContent = 'file:// 無法用麥克風；請改文字，或改用 localhost／HTTPS。';
         } else if (hasSpeech) {
-          pillSpeech.textContent = '瀏覽器 SpeechRecognition（Chrome 等）；按 🎤 後仍需按「解析」。';
+          pillSpeech.textContent = 'Chrome 等瀏覽器可用；按 🎤 後仍需按「解析」。';
         } else {
           pillSpeech.textContent = '此瀏覽器不支援；請用文字輸入。';
         }
@@ -200,10 +219,13 @@
       function renderIntentPicker(doc) {
         var host = document.getElementById('intentPicker');
         var intents = (doc && doc.intents) || [];
-        if (!intents.length) { host.innerHTML = ''; return; }
+        if (!intents.length) { host.innerHTML = '<p class="hint">解析後會顯示建議項目。</p>'; return; }
         host.innerHTML = intents.map(function (it, i) {
+          var label = (window.Bible100CrmIntent && Bible100CrmIntent.TOOL_LABELS && Bible100CrmIntent.TOOL_LABELS[it.target_tool])
+            ? Bible100CrmIntent.TOOL_LABELS[it.target_tool]
+            : (it.target_tool || '建議');
           return '<label class="intent-pick"><input type="radio" name="pickIntent" value="' + i + '"' + (i === 0 ? ' checked' : '') + '> ' +
-            (it.target_tool || '') + ' · 信心 ' + (it.confidence != null ? it.confidence : '—') +
+            label + ' · 信心 ' + (it.confidence != null ? Math.round(it.confidence * 100) + '%' : '—') +
             (it.risk_flags && it.risk_flags.length ? ' · ⚠️ ' + it.risk_flags.join(',') : '') + '</label>';
         }).join('');
         host.querySelectorAll('input[name=pickIntent]').forEach(function (r) {
@@ -228,7 +250,7 @@
         document.getElementById('intentJson').value = JSON.stringify(doc, null, 2);
         selectedIntentIdx = 0;
         renderIntentPicker(doc);
-        document.getElementById('applyStatus').textContent = '已解析 ' + (doc.intents || []).length + ' 個 intent（僅預填，不寫入）';
+        document.getElementById('applyStatus').textContent = '已解析 ' + (doc.intents || []).length + ' 個建議（僅預填，不寫入）';
       };
 
       function navigateParentTo(url) {
@@ -248,7 +270,12 @@
       document.getElementById('btnPrefill').onclick = function () {
         var status = document.getElementById('applyStatus');
         try {
-          var doc = JSON.parse(document.getElementById('intentJson').value);
+          var rawJson = document.getElementById('intentJson').value;
+          if (!rawJson.trim()) {
+            status.textContent = '請先按「② 解析草稿」。';
+            return;
+          }
+          var doc = JSON.parse(rawJson);
           var route = Bible100CrmIntent.routeForPrefill(doc, selectedIntentIdx);
           if (!route.ok) {
             status.textContent = route.error || '路由失敗';
