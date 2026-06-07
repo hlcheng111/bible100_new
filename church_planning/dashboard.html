@@ -264,12 +264,28 @@
     <br><span style="opacity:0.95;"><strong>層級：</strong>本戰情以<strong>教會／團隊聚合</strong>為主，<strong>不</strong>在此頁展示 Smart Ministry 個人層姓名列表；個別人才資料請在智慧事奉模組處理並以手動匯出銜接。</span>
     <br><span style="opacity:0.95;">第二階段：<a href="planning/strategy.html" style="color:#b45309;">策略</a> · <a href="planning/kanban.html" style="color:#b45309;">看板</a>。</span>
   </div>
-  <div class="intro-box" style="background:#eef2ff;border-left-color:#4338ca;">
-    <strong>CTA-OS 戰情室（Phase 3）</strong>：
-    <a href="cta-os-war-room.html" style="color:#3730a3;font-weight:700;">跨工具 CTV 雷達、風險與配對</a>
-    ·
-    <a href="assessment-os-hub.html" style="color:#3730a3;font-weight:700;">教會健康診斷與策略中心</a>
-    <br><span style="opacity:0.9;">讀取本機 <code>cta-os-registry-v1</code>；在各工具頁完成測評後自動累積快照。</span>
+  <div class="intro-box" style="background:#ecfdf5;border-left-color:#059669;">
+    <strong>📊 本頁 vs「健康雷達戰情室」——別搞混！</strong>
+    <table style="width:100%;margin:8px 0 0;border-collapse:collapse;font-size:12px;">
+      <tr style="vertical-align:top;">
+        <td style="padding:6px 8px 6px 0;width:50%;">
+          <strong style="color:#047857;">✅ 您現在在：戰情總覽數據盤</strong><br>
+          唯讀 <strong>KPI 執行層</strong>：Step 0～3 摘要、SWOT、SMART 目標、PDCA 快訊、決議追蹤。<br>
+          <em>適合：</em>行政同工看「今年進度到哪、目標完成幾項」。
+        </td>
+        <td style="padding:6px 0 6px 8px;border-left:1px dashed #86efac;">
+          <strong style="color:#4338ca;">↗ 姊妹頁：健康雷達戰情室</strong><br>
+          六維健康 <strong>P/S/G/C/R/F 合成雷達</strong>、跨工具風險、示範崗位配對。<br>
+          <em>適合：</em>長執開會找「教會最大破口」。
+        </td>
+      </tr>
+    </table>
+    <p style="margin:8px 0 0;">
+      <a href="cta-os-war-room.html" id="link-war-room" style="color:#3730a3;font-weight:700;">→ 前往健康雷達戰情室</a>
+      ·
+      <a href="assessment-os-hub.html" id="link-assessment-hub" style="color:#3730a3;font-weight:700;">健康診斷中心（填表）</a>
+    </p>
+    <div id="dashboard-ctv-bridge" style="margin-top:10px;padding:8px 10px;background:#fff;border-radius:8px;border:1px solid #bbf7d0;font-size:11px;color:#14532d;"></div>
   </div>
   <div class="intro-box" style="background:#fef2f2;border-left-color:#ef4444;">
     <strong>Phase 1 戰情穿透（示範）</strong>：
@@ -282,6 +298,69 @@
   <div class="planning-overview" id="planning-overview"></div>
   <div id="planning-draft-mount"></div>
   <div id="maintenance-mount"></div>
+  <script src="../js/shell_nav.js"></script>
+  <script src="js/planning_nav.js"></script>
+  <script src="js/cta_os_runtime.js"></script>
+  <script>
+(function () {
+  function wirePlanningLinks() {
+    var pairs = [
+      ["link-war-room", "cta-os-war-room.html"],
+      ["link-assessment-hub", "assessment-os-hub.html"]
+    ];
+    pairs.forEach(function (row) {
+      var el = document.getElementById(row[0]);
+      if (!el || typeof planningOpenContent !== "function") return;
+      el.setAttribute("href", "#");
+      el.onclick = function (ev) {
+        return planningOpenContent(ev, row[1]);
+      };
+    });
+  }
+
+  function mountCtvBridge() {
+    var mount = document.getElementById("dashboard-ctv-bridge");
+    if (!mount) return;
+    var RT = window.CTAOSRuntime;
+    var reg = RT && RT.readRegistry ? RT.readRegistry() : null;
+    if (!reg) {
+      try {
+        reg = JSON.parse(localStorage.getItem("cta-os-registry-v1") || "{}");
+      } catch (e) {
+        reg = { tools: {} };
+      }
+    }
+    var tools = (reg && reg.tools) || {};
+    var ids = Object.keys(tools);
+    if (!ids.length) {
+      mount.innerHTML =
+        "<strong>六維橋接：</strong>戰情室尚無掃描資料。請到健康診斷中心填量表 → 戰情室按「🔍 掃描」→ 合成 P/S/G/C/R/F 會出現在姊妹頁；本頁繼續看 SWOT／目標／PDCA。";
+      return;
+    }
+    var vectors = ids
+      .map(function (id) {
+        var rep = tools[id] && tools[id].report;
+        return rep && rep.vector;
+      })
+      .filter(Boolean);
+    var composite = RT && RT.averageVectors ? RT.averageVectors(vectors) : null;
+    var line =
+      composite && RT.formatVectorLine
+        ? RT.formatVectorLine(composite)
+        : "已同步 " + ids.length + " 份工具（詳見戰情室）";
+    var updated = reg.updatedAt ? new Date(reg.updatedAt).toLocaleString() : "—";
+    mount.innerHTML =
+      "<strong>六維橋接（來自戰情室掃描）：</strong>" +
+      line +
+      " · 更新 " +
+      updated +
+      " · 本頁下方仍顯示 Step/SWOT/目標等<strong>執行 KPI</strong>，與六維互補、不重複。";
+  }
+
+  wirePlanningLinks();
+  mountCtvBridge();
+})();
+  </script>
   <script src="../js/church_data_bridge_phase1.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/persistence_provider.js"></script>

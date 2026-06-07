@@ -96,6 +96,26 @@
   }
 
   function collectFromSmart() {
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("smart") : null;
+    if (run && run.feature_vector) {
+      var d = run.derived || {};
+      var p = run.profile || {};
+      var plan = p.plan_name || p.name;
+      return {
+        vector: run.feature_vector,
+        sourceCount: d.answered_count || (run.raw_answers || []).length || 15,
+        sourceNote:
+          "讀取 assessment_run · 對齊 " +
+          (d.alignment_score != null ? d.alignment_score : "—") +
+          " · 負載 " +
+          (d.load_cost_score != null ? d.load_cost_score : "—") +
+          " · 可行 " +
+          (d.feasibility_score != null ? d.feasibility_score : "—"),
+        subjectName: plan ? plan + " · SMART" : "SMART 計畫同工",
+        assessmentRun: run
+      };
+    }
+
     var state = readJson("chp2026-smart-v1");
     var items = [];
     if (state && Array.isArray(state.plans)) {
@@ -214,6 +234,24 @@
   }
 
   function collectFromSpiritual() {
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("spiritual") : null;
+    if (run && run.feature_vector) {
+      var d = run.derived || {};
+      var name = run.profile && (run.profile.name || run.profile.age_range);
+      return {
+        vector: run.feature_vector,
+        sourceCount: d.answered_count || (run.raw_answers || []).length || 13,
+        sourceNote:
+          "讀取 assessment_run · 整體 " +
+          (d.overall_score != null ? d.overall_score : "—") +
+          "（" +
+          (d.overall_level || "—") +
+          "）",
+        subjectName: name ? name + " · 靈命" : "信徒靈命自評",
+        assessmentRun: run
+      };
+    }
+
     var items = [];
     var sourceNote = "";
     var subjectName = "信徒靈命自評";
@@ -254,9 +292,29 @@
   }
 
   function collectFromPastoral() {
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("pastoral") : null;
+    if (run && run.feature_vector && !run.is_demo) {
+      var dRun = run.derived || {};
+      var prof = run.profile || {};
+      var label = prof.label || prof.p_church_size;
+      return {
+        vector: run.feature_vector,
+        sourceCount: dRun.answered_count || (run.raw_answers || []).length || 30,
+        sourceNote:
+          "讀取 assessment_run · 整體 " +
+          (dRun.overall_score != null ? dRun.overall_score : "—") +
+          " · 警訊 " +
+          ((run.risk_flags || []).length || 0) +
+          " 項（不含開放心聲）",
+        subjectName: label ? label + " · 領袖健康" : "教牧／領袖",
+        assessmentRun: run
+      };
+    }
+
     var log = readJson("chp2026-pastoral-health-log-v1");
     var items = [];
     var subjectName = "教牧／領袖";
+    var sourceNote = "";
     if (Array.isArray(log) && log.length) {
       var last = log[log.length - 1];
       var dimStored = last.dimension_scores || last.dimScores;
@@ -266,7 +324,7 @@
         return {
           vector: RT.scoreByProjection(items),
           sourceCount: items.length,
-          sourceNote: "讀取 chp2026-pastoral-health-log-v1 最近一筆",
+          sourceNote: "讀取 chp2026-pastoral-health-log-v1 最近一筆（舊版 log，建議重新更新報告）",
           subjectName: subjectName
         };
       }
@@ -292,6 +350,26 @@
   }
 
   function collectFromAlda() {
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("alda") : null;
+    if (run && run.feature_vector) {
+      var d = run.derived || {};
+      var name = run.profile && run.profile.name;
+      return {
+        vector: run.feature_vector,
+        sourceCount: (run.raw_answers || []).length || 16,
+        sourceNote:
+          "讀取 assessment_run · " +
+          (d.primary || "—") +
+          "／" +
+          (d.secondary || "—") +
+          " · 真實度 " +
+          (d.sincerity != null ? d.sincerity : "—") +
+          "%",
+        subjectName: name ? name + " · ALDA" : "ALDA 領導力同工",
+        assessmentRun: run
+      };
+    }
+
     var data = readJson("alda_test_results");
     if (!data || !data.vectors) {
       return {
@@ -457,12 +535,38 @@
     };
   }
 
+  function collectFromUrgent() {
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("urgent") : null;
+    if (run && run.feature_vector) {
+      var d = run.derived || {};
+      var name = run.profile && run.profile.name;
+      var count = Array.isArray(run.raw_answers) ? run.raw_answers.length : 0;
+      return {
+        vector: run.feature_vector,
+        sourceCount: count || 14,
+        sourceNote:
+          "讀取 assessment_run · Q1 " +
+          (d.q1_pct != null ? d.q1_pct : "?") +
+          "% / Q2 " +
+          (d.q2_pct != null ? d.q2_pct : "?") +
+          "% / Q3 " +
+          (d.q3_pct != null ? d.q3_pct : "?") +
+          "% / Q4 " +
+          (d.q4_pct != null ? d.q4_pct : "?") +
+          "%",
+        subjectName: name ? name + " · 優先序" : "重要 vs 緊急同工",
+        assessmentRun: run
+      };
+    }
+    return collectFromPreset("urgent", "重要 vs 緊急矩陣");
+  }
+
   var TOOL_META = {
     johari: { name: "Johari 團隊盲點量表", collect: function () { return collectFromPreset("johari", "Johari 團隊盲點量表"); } },
     shape: { name: "SHAPE 恩賜整合量表", collect: function () { return collectFromPreset("shape", "SHAPE 恩賜整合量表"); } },
     competency: { name: "事奉能力模型量表", collect: function () { return collectFromPreset("competency", "事奉能力模型量表"); } },
     kpiokr: { name: "KPI/OKR 對齊量表", collect: function () { return collectFromPreset("kpiokr", "KPI/OKR 對齊量表"); } },
-    urgent: { name: "重要 vs 緊急矩陣", collect: function () { return collectFromPreset("urgent", "重要 vs 緊急矩陣"); } },
+    urgent: { name: "重要 vs 緊急矩陣", collect: collectFromUrgent },
     smart: { name: "教會版 SMART", collect: collectFromSmart },
     swot: { name: "教會版 SWOT", collect: collectFromSwot },
     pdca: { name: "教會版 PDCA", collect: collectFromPdca },
@@ -548,6 +652,23 @@
     if (!meta) return null;
     var collected = meta.collect();
     var risks = RT.detectRisks(collected.vector);
+    if (collected.assessmentRun && Array.isArray(collected.assessmentRun.risk_flags)) {
+      var flagPack =
+        toolId === "spiritual"
+          ? global.SpiritualPack
+          : toolId === "urgent"
+            ? global.UrgencyPack
+            : toolId === "pastoral"
+              ? global.PastoralPack
+              : null;
+      collected.assessmentRun.risk_flags.forEach(function (flag) {
+        var msg =
+          flagPack && flagPack.FLAG_DESCRIPTIONS && flagPack.FLAG_DESCRIPTIONS[flag]
+            ? flagPack.FLAG_DESCRIPTIONS[flag]
+            : flag;
+        if (risks.indexOf(msg) < 0) risks.push(msg);
+      });
+    }
     if (collected.sourceCount > 0 && collected.sourceCount < 3) {
       risks = risks.concat(["作答／資料點偏少，建議補充題目或完成完整問卷後再作決策。"]);
     }
