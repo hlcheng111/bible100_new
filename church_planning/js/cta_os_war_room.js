@@ -157,10 +157,18 @@
 
   var PACK_TOOL_ROWS = [
     { id: "pastoral", packKey: "PastoralPack", fallbackName: "領袖健康診斷" },
-    { id: "spiritual", packKey: "SpiritualPack", fallbackName: "信徒靈命自評" }
+    { id: "spiritual", packKey: "SpiritualPack", fallbackName: "信徒靈命自評" },
+    { id: "urgent", packKey: "UrgencyPack", fallbackName: "重要 vs 緊急矩陣" }
   ];
 
-  var CRITICAL_FLAGS = { BURNOUT: 1, POWER: 1, LOW_COMPLETION: 1, SPIRITUAL_STAGNATION: 1 };
+  var CRITICAL_FLAGS = {
+    BURNOUT: 1,
+    POWER: 1,
+    LOW_COMPLETION: 1,
+    SPIRITUAL_STAGNATION: 1,
+    OVERLOAD_Q1: 1,
+    Q2_BELOW_TARGET: 1
+  };
 
   function scoreBand(value, hasData) {
     if (!hasData) return { label: "尚無資料", cls: "wr-score-none" };
@@ -448,19 +456,19 @@
       '<div class="wr-sister-col wr-sister-here">' +
       "<strong>✅ 您現在在：健康雷達戰情室</strong>" +
       "<ul>" +
-      "<li><strong>看什麼：</strong>六維 P/S/G/C/R/F 合成、跨工具風險、崗位腦力激盪</li>" +
-      "<li><strong>資料從哪來：</strong>健康診斷中心各量表 → 掃描 → 合成平均</li>" +
-      "<li><strong>給誰用：</strong>長執開會找破口、排議程</li>" +
+      "<li><strong>比喻：</strong>全身 X 光 —— 找破口、確診病因</li>" +
+      "<li><strong>看什麼：</strong>六維 P/S/G/C/R/F 合成、跨工具風險</li>" +
+      "<li><strong>時間：</strong>每季／半年大會 · 5F 策略層</li>" +
       "</ul></div>" +
       '<div class="wr-sister-col wr-sister-there">' +
       "<strong>↗ " + navLink("戰情總覽數據盤", "content", HUB.dashboard) + "</strong>" +
       "<ul>" +
-      "<li><strong>看什麼：</strong>Step 0～3、SWOT、SMART 目標、PDCA 快訊、決議追蹤（唯讀 KPI）</li>" +
-      "<li><strong>資料從哪來：</strong>流程總覽／策略頁已填的本機資料</li>" +
-      "<li><strong>給誰用：</strong>行政同工看「今年進度、目標完成幾項」</li>" +
+      "<li><strong>比喻：</strong>汽車儀表板 —— 盯進度、看 KPI</li>" +
+      "<li><strong>看什麼：</strong>SWOT、SMART 目標、PDCA 快訊</li>" +
+      "<li><strong>時間：</strong>每月／每週行政會 · 3F 執行層</li>" +
       "</ul></div>" +
       "</div>" +
-      '<p class="wr-card-lead"><strong>怎麼配合？</strong>長執先在<strong>戰情室</strong>看六維破口 → 再到<strong>數據盤</strong>對照 SWOT／目標是否跟進 → 缺資料就回健康診斷中心補填。兩頁讀不同本機鍵，互補不重複；數據盤頂部會顯示從戰情室掃描來的六維橋接摘要。</p>' +
+      '<p class="wr-card-lead"><strong>為什麼不合成一頁？</strong>左腦（戰情室）負責<strong>開藥方</strong>；右腦（數據盤）負責<strong>追藥方有沒有執行</strong>。兩頁互補，不是看兩次重複資料。</p>' +
       '<div class="wr-nav-out">' +
       '<a class="wr-btn" href="#" onclick="return ' +
       navClickAttr("content", HUB.dashboard) +

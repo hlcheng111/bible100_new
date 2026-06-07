@@ -537,7 +537,7 @@
 
   function collectFromUrgent() {
     var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("urgent") : null;
-    if (run && run.feature_vector) {
+    if (run && run.feature_vector && !run.is_demo) {
       var d = run.derived || {};
       var name = run.profile && run.profile.name;
       var count = Array.isArray(run.raw_answers) ? run.raw_answers.length : 0;
@@ -701,25 +701,11 @@
     var synced = [];
     Object.keys(TOOL_META).forEach(function (toolId) {
       try {
-        var collected = TOOL_META[toolId].collect();
-        if (!collected || !collected.sourceCount) return;
-        var report = RT.buildUnifiedReport({
-          toolId: toolId,
-          toolName: TOOL_META[toolId].name,
-          subjectName: collected.subjectName,
-          vector: collected.vector,
-          sourceCount: collected.sourceCount,
-          sourceNote: collected.sourceNote,
-          generatedAt: new Date().toISOString()
-        });
-        RT.persistToolReport(toolId, report);
+        var report = generate(toolId);
+        if (!report || !report.sourceCount) return;
         synced.push(toolId);
       } catch (e) {}
     });
-    var last = RT.readLastReport();
-    if (last && last.toolId && TOOL_META[last.toolId]) {
-      RT.persistToolReport(last.toolId, last);
-    }
     return synced;
   }
 

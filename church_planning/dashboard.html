@@ -264,7 +264,8 @@
     <br><span style="opacity:0.95;"><strong>層級：</strong>本戰情以<strong>教會／團隊聚合</strong>為主，<strong>不</strong>在此頁展示 Smart Ministry 個人層姓名列表；個別人才資料請在智慧事奉模組處理並以手動匯出銜接。</span>
     <br><span style="opacity:0.95;">第二階段：<a href="planning/strategy.html" style="color:#b45309;">策略</a> · <a href="planning/kanban.html" style="color:#b45309;">看板</a>。</span>
   </div>
-  <div class="intro-box" style="background:#ecfdf5;border-left-color:#059669;">
+    <div id="dashboard-strategy-fuse" class="intro-box hidden" style="background:#fff7ed;border-left-color:#ea580c;display:none;"></div>
+    <div class="intro-box" style="background:#ecfdf5;border-left-color:#059669;">
     <strong>📊 本頁 vs「健康雷達戰情室」——別搞混！</strong>
     <table style="width:100%;margin:8px 0 0;border-collapse:collapse;font-size:12px;">
       <tr style="vertical-align:top;">
@@ -300,6 +301,7 @@
   <div id="maintenance-mount"></div>
   <script src="../js/shell_nav.js"></script>
   <script src="js/planning_nav.js"></script>
+  <script src="js/assessment_run_store.js"></script>
   <script src="js/cta_os_runtime.js"></script>
   <script>
 (function () {
@@ -357,8 +359,55 @@
       " · 本頁下方仍顯示 Step/SWOT/目標等<strong>執行 KPI</strong>，與六維互補、不重複。";
   }
 
+  function mountStrategyFuse() {
+    var mount = document.getElementById("dashboard-strategy-fuse");
+    if (!mount || !window.AssessmentRunStore) return;
+    var msgs = [];
+    var pastoral = AssessmentRunStore.loadLatest("pastoral");
+    if (pastoral && !pastoral.is_demo && (pastoral.risk_flags || []).indexOf("BURNOUT") >= 0) {
+      msgs.push(
+        "【領袖健康】核心車頭耗盡警訊（BURNOUT）——本月各部門 KPI 宜停止擴張，優先減負與安息。"
+      );
+    }
+    var urgent = AssessmentRunStore.loadLatest("urgent");
+    if (urgent && !urgent.is_demo) {
+      var flags = urgent.risk_flags || [];
+      if (flags.indexOf("OVERLOAD_Q1") >= 0) {
+        msgs.push(
+          "【重要 vs 緊急】Q1 救火比例偏高——長執排程應暫緩 20% 次要活動，避免馬大式過勞。"
+        );
+      }
+      if (flags.indexOf("Q2_BELOW_TARGET") >= 0) {
+        msgs.push(
+          "【重要 vs 緊急】Q2 深度時段不足——宜先鎖定靈修／門訓／家庭時段，再追 SMART 目標。"
+        );
+      }
+    }
+    if (!msgs.length) {
+      mount.style.display = "none";
+      return;
+    }
+    mount.style.display = "block";
+    mount.innerHTML =
+      "<strong>⚠️ 跨部門策略熔斷提示</strong>（來自 assessment_run，非考核）" +
+      "<ul style=\"margin:8px 0 0;padding-left:1.2rem;\">" +
+      msgs.map(function (m) {
+        return "<li>" + m + "</li>";
+      }).join("") +
+      "</ul>" +
+      '<p style="margin:8px 0 0;font-size:11px;">詳見 <a href="cta-os-war-room.html" id="link-war-room-fuse">健康雷達戰情室</a> · 本頁下方仍看執行 KPI。</p>';
+    var fuseLink = document.getElementById("link-war-room-fuse");
+    if (fuseLink && typeof planningOpenContent === "function") {
+      fuseLink.setAttribute("href", "#");
+      fuseLink.onclick = function (ev) {
+        return planningOpenContent(ev, "cta-os-war-room.html");
+      };
+    }
+  }
+
   wirePlanningLinks();
   mountCtvBridge();
+  mountStrategyFuse();
 })();
   </script>
   <script src="../js/church_data_bridge_phase1.js"></script>

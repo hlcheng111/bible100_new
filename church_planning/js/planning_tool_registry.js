@@ -13,7 +13,7 @@
     { id: "competency", path: "ministry-competency-assessment.html", label: "事奉能力模型", category: "恩賜與事奉", ctv: ["S"], blurb: "崗位能力對照", status: "live" },
     { id: "alda", path: "12 Apostles Leadership Assessment.html", label: "ALDA 領導力", category: "恩賜與事奉", ctv: ["S", "G"], blurb: "十二使徒領導力測評", status: "live" },
     { id: "ministry8020", path: "ministry-8020-planning.html", label: "教會版 80/20", category: "文化與戰略", ctv: ["G", "C"], blurb: "聚焦關鍵少數事工", status: "live" },
-    { id: "urgent", path: "important-urgent-matrix.html", label: "重要 vs 緊急", category: "治理與優先", ctv: ["G"], blurb: "優先序與取捨", status: "live", maturity: { aldaTier: 11, note: "14 題 + assessment_run + 战情室 CTA" } },
+    { id: "urgent", path: "important-urgent-matrix.html", label: "重要 vs 緊急", category: "治理與優先", ctv: ["G", "F"], blurb: "優先序與取捨 · F 軸成形果效", status: "live", maturity: { aldaTier: 11, note: "urgency_pack + assessment_run · 戰情室 F 軸" } },
     { id: "smart", path: "smart-assessment.html", label: "教會版 SMART", category: "目標衡量", ctv: ["G", "C"], blurb: "可守住的事工目標 · 快評", status: "live", maturity: { aldaTier: 10, note: "smart_pack + assessment_run · 多計畫見 smart-planning.html" } },
     { id: "pdca", path: "pdca-planning.html", label: "教會版 PDCA", category: "治理與優先", ctv: ["G"], blurb: "計畫—執行—檢核迴圈", status: "live" },
     { id: "kpiokr", path: "kpi-okr-alignment.html", label: "KPI/OKR 對齊", category: "目標衡量", ctv: ["G"], blurb: "目標與衡量對齊（非人事考核）", status: "live" },
