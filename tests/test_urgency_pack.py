@@ -101,6 +101,7 @@ if (!latest || latest.tool_id !== 'urgent') {
   process.exit(1);
 }
 
+if (typeof Pack.loadUpstreamChain !== 'function') { console.error('FAIL loadUpstreamChain'); process.exit(1); }
 const bad = Pack.buildRun({ u01: 3 }, {});
 if (bad.ok) {
   console.error('FAIL: incomplete answers should fail validation');
@@ -136,15 +137,18 @@ def main() -> int:
         return 1
 
     text = SCHEMA_DOC.read_text(encoding="utf-8")
-    html = (REPO / "church_planning" / "important-urgent-matrix.html").read_text(encoding="utf-8")
+    html = (REPO / "church_planning" / "Church_Governance_urgent_matrix.html").read_text(encoding="utf-8")
+    redir = (REPO / "church_planning" / "important-urgent-matrix.html").read_text(encoding="utf-8")
     if "bible100_assessment_latest_" not in text:
         errors.append("schema doc missing latest key pattern")
     if "urgency_pack" not in text:
         errors.append("schema doc should reference urgency_pack")
-    if "assessment_run_store.js" not in html:
-        errors.append("urgent html must load assessment_run_store.js")
-    if "urgency_pack.js" not in html:
-        errors.append("urgent html must load urgency_pack.js")
+    if "urgency_acs_shell.js" not in html:
+        errors.append("urgent governance html must load urgency_acs_shell.js")
+    if "strategic_acs_unified_boot.js" not in html:
+        errors.append("urgent governance html must load unified boot")
+    if "Church_Governance_urgent_matrix.html" not in redir:
+        errors.append("important-urgent-matrix.html must redirect")
     if "Q1 45%" in html or "45% / Q2 18%" in html:
         errors.append("urgent html still has hardcoded demo percentages")
     if "示範報告" not in html:

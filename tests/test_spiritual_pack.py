@@ -12,7 +12,8 @@ REPO = Path(__file__).resolve().parent.parent
 SCORING = REPO / "church_planning" / "js" / "spiritual_health_scoring.js"
 STORE = REPO / "church_planning" / "js" / "assessment_run_store.js"
 PACK = REPO / "church_planning" / "js" / "tool_packs" / "spiritual_pack.js"
-SPIRITUAL_HTML = REPO / "church_planning" / "信徒靈性生命健康自我審查.html"
+SPIRITUAL_HTML = REPO / "church_planning" / "Church_Governance_spiritual_health.html"
+REDIRECT = REPO / "church_planning" / "信徒靈性生命健康自我審查.html"
 
 TEST_SCRIPT = r"""
 const fs = require('fs');
@@ -48,14 +49,20 @@ console.log(JSON.stringify({ ok: true, overall: run.derived.overall_score, level
 
 def main() -> int:
     errors = []
-    for p in (SCORING, STORE, PACK, SPIRITUAL_HTML):
+    for p in (SCORING, STORE, PACK, SPIRITUAL_HTML, REDIRECT):
         if not p.is_file():
             errors.append(f"missing {p.relative_to(REPO)}")
     html = SPIRITUAL_HTML.read_text(encoding="utf-8") if SPIRITUAL_HTML.is_file() else ""
+    if "spiritual_acs_shell.js" not in html:
+        errors.append("spiritual governance html must load spiritual_acs_shell.js")
+    if "strategic_acs_unified_boot.js" not in html:
+        errors.append("spiritual governance html must load unified boot")
+    if "Church_Governance_spiritual_health.html" not in (REDIRECT.read_text(encoding="utf-8") if REDIRECT.is_file() else ""):
+        errors.append("legacy spiritual page must redirect")
     if "spiritual_pack.js" not in html:
         errors.append("spiritual html must load spiritual_pack.js")
-    if "tab-btn-methodology" not in html or "renderSpiritualMethodology" not in html:
-        errors.append("spiritual html must use 4-tab shell with methodology tab")
+    if "tab-btn-methodology" in html or "renderSpiritualMethodology" in html:
+        errors.append("spiritual html should use strategic acs shell not legacy tabs")
     if "QUESTIONS" not in (PACK.read_text(encoding="utf-8") if PACK.is_file() else ""):
         errors.append("spiritual_pack must export QUESTIONS")
     if errors:

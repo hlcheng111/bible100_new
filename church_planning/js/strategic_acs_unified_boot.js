@@ -79,7 +79,10 @@
       culture: function () { return global.CulturePack && global.CultureAcsShell; },
       kpi: function () { return global.KpiPack && global.KpiAcsShell; },
       "8020": function () { return global.EightytwentyPack && global.EightytwentyAcsShell; },
-      smart: function () { return global.SmartPack && global.SmartAcsShell; }
+      smart: function () { return global.SmartPack && global.SmartAcsShell; },
+      urgent: function () { return global.UrgencyPack && global.UrgencyAcsShell; },
+      spiritual: function () { return global.SpiritualPack && global.SpiritualAcsShell; },
+      pastoral: function () { return global.PastoralPack && global.PastoralAcsShell; }
     };
     var fn = map[toolKey];
     if (fn && !fn()) {

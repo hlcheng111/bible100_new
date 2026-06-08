@@ -12,7 +12,7 @@ REPO = Path(__file__).resolve().parent.parent
 STORE = REPO / "church_planning" / "js" / "assessment_run_store.js"
 QJS = REPO / "church_planning" / "js" / "tool_packs" / "alda_questions.js"
 PACK = REPO / "church_planning" / "js" / "tool_packs" / "alda_pack.js"
-HTML = REPO / "church_planning" / "12 Apostles Leadership Assessment.html"
+HTML = REPO / "church_planning" / "alda-leadership-assessment.html"
 
 TEST_SCRIPT = r"""
 const fs = require('fs');

@@ -348,6 +348,23 @@
     );
   }
 
+  function loadUpstreamChain(store) {
+    store = store || global.AssessmentRunStore;
+    if (!store || typeof store.loadLatest !== "function") {
+      return { ok: false, source: "store_missing", runs: {} };
+    }
+    var spiritual = store.loadLatest("spiritual");
+    return {
+      ok: !!spiritual,
+      source: "assessment_run_store",
+      runs: { spiritual: spiritual },
+      spiritual_overall:
+        spiritual && spiritual.derived && spiritual.derived.overall_score != null
+          ? spiritual.derived.overall_score
+          : null
+    };
+  }
+
   function buildRun(answers, profile, opts) {
     opts = opts || {};
     var check = validate(answers);
@@ -369,7 +386,11 @@
     });
 
     var risk_flags = computeRiskFlags(dimScores, overall, check.answeredCount, map, categoryAvgs);
+    var upstream = opts.skip_upstream ? null : loadUpstreamChain();
     var coaching = buildCoaching(dimScores, overall, risk_flags);
+    if (upstream && upstream.ok && upstream.spiritual_overall != null && upstream.spiritual_overall < 50) {
+      coaching.growth = "靈命整體偏低（" + upstream.spiritual_overall + "）— " + coaching.growth;
+    }
 
     var raw_answers = Object.keys(QUESTION_MAP).map(function (qid) {
       return { q: qid, value: map[qid] != null ? map[qid] : null };
@@ -390,6 +411,8 @@
       profile: safeProfile,
       authenticity_score: round1(check.answeredCount / 30),
       feature_vector: computeFeatureVector(dimScores),
+      upstream_snapshot:
+        upstream && upstream.ok ? { spiritual_overall: upstream.spiritual_overall } : null,
       derived: {
         dim_scores: dimScores,
         dim_levels: dimLevels,
@@ -464,6 +487,7 @@
     computeCrossRiskFlags: computeCrossRiskFlags,
     buildRun: buildRun,
     buildDemoRun: buildDemoRun,
+    loadUpstreamChain: loadUpstreamChain,
     buildAiPrompt: buildAiPrompt,
     levelFromScore: levelFromScore
   };

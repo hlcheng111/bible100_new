@@ -455,6 +455,39 @@
     };
   }
 
+  function loadUpstreamChain(store) {
+    store = store || global.AssessmentRunStore;
+    if (!store || typeof store.loadLatest !== "function") {
+      return { ok: false, source: "store_missing", runs: {} };
+    }
+    var spiritual = store.loadLatest("spiritual");
+    return {
+      ok: !!spiritual,
+      source: "assessment_run_store",
+      runs: { spiritual: spiritual },
+      spiritual_overall:
+        spiritual && spiritual.derived && spiritual.derived.overall_score != null
+          ? spiritual.derived.overall_score
+          : null,
+      spiritual_level:
+        spiritual && spiritual.derived && spiritual.derived.overall_level
+          ? spiritual.derived.overall_level
+          : null
+    };
+  }
+
+  function applyUpstreamHints(derived, upstream) {
+    if (!upstream || !upstream.ok) return [];
+    var hints = [];
+    if (upstream.spiritual_overall != null && upstream.spiritual_overall < 50) {
+      hints.push("靈命整體偏低（" + upstream.spiritual_overall + "）— 優先恢復 Q2 靈修時段，勿再加救火。");
+    }
+    if (derived && derived.q1_pct >= THRESHOLDS.q1_high_pct && upstream.spiritual_overall != null && upstream.spiritual_overall < 55) {
+      hints.push("Q1 偏高且靈命偏弱 — 建議與牧者談界線，暫緩新承諾。");
+    }
+    return hints;
+  }
+
   function buildRun(answers, profile, opts) {
     opts = opts || {};
     var check = validate(answers);
@@ -465,7 +498,12 @@
     var authenticity = computeAuthenticity(map);
     var derived = computeQuadrantPercents(map);
     var risk_flags = computeRiskFlags(derived, authenticity);
+    var upstream = opts.skip_upstream ? null : loadUpstreamChain();
+    var upstream_hints = applyUpstreamHints(derived, upstream);
     var coaching = buildCoaching(derived, risk_flags);
+    if (upstream_hints.length) {
+      coaching.growth = upstream_hints[0] + " " + coaching.growth;
+    }
     var raw_answers = QUESTIONS.map(function (q) {
       return { q: q.id, value: map[q.id] };
     });
@@ -481,6 +519,14 @@
       ),
       authenticity_score: authenticity,
       feature_vector: computeFeatureVector(map),
+      upstream_snapshot:
+        upstream && upstream.ok
+          ? {
+              spiritual_overall: upstream.spiritual_overall,
+              spiritual_level: upstream.spiritual_level
+            }
+          : null,
+      upstream_hints: upstream_hints,
       derived: {
         q1_pct: derived.q1_pct,
         q2_pct: derived.q2_pct,
@@ -535,6 +581,8 @@
     buildAiPrompt: buildAiPrompt,
     interpretDerived: interpretDerived,
     buildRun: buildRun,
-    buildDemoRun: buildDemoRun
+    buildDemoRun: buildDemoRun,
+    loadUpstreamChain: loadUpstreamChain,
+    applyUpstreamHints: applyUpstreamHints
   };
 })(typeof window !== "undefined" ? window : global);

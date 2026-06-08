@@ -13,7 +13,7 @@ SCORING = REPO / "church_planning" / "js" / "spiritual_health_scoring.js"
 PASTORAL_JS = REPO / "church_planning" / "js" / "pastoral_spiritual_health.js"
 STORE = REPO / "church_planning" / "js" / "assessment_run_store.js"
 PACK = REPO / "church_planning" / "js" / "tool_packs" / "pastoral_pack.js"
-PASTORAL_HTML = REPO / "church_planning" / "pastoral-spiritual-survey-pro.html"
+PASTORAL_HTML = REPO / "church_planning" / "Church_Governance_pastoral_health.html"
 
 TEST_SCRIPT = r"""
 const fs = require('fs');
@@ -34,6 +34,7 @@ const Pack = sandbox.PastoralPack;
 const Store = sandbox.AssessmentRunStore;
 if (!Pack || !Store) { console.error('FAIL: missing pack/store'); process.exit(1); }
 if (!Pack.QUESTIONS || Pack.QUESTIONS.length !== 30) { console.error('FAIL QUESTIONS len', Pack.QUESTIONS && Pack.QUESTIONS.length); process.exit(1); }
+if (typeof Pack.loadUpstreamChain !== 'function') { console.error('FAIL loadUpstreamChain'); process.exit(1); }
 const demo = Pack.buildDemoRun();
 if (!demo.ok || !demo.run.is_demo) { console.error('FAIL demo'); process.exit(1); }
 const flags = demo.run.risk_flags || [];
@@ -64,8 +65,8 @@ def main() -> int:
     for token in (
         "pastoral_pack.js",
         "assessment_run_store.js",
-        "savePastoralAssessmentRun",
-        "PastoralPack.HITL_DISCLAIMER",
+        "pastoral_acs_shell.js",
+        "strategic_acs_unified_boot.js",
     ):
         if token not in html:
             errors.append(f"HTML missing: {token}")

@@ -7,14 +7,14 @@
   "use strict";
 
   var TOOLS = [
-    { id: "spiritual", path: "信徒靈性生命健康自我審查.html", label: "信徒靈命健康", category: "靈命與真理", ctv: ["P", "F"], blurb: "全會友自評 · 微型教會必選", status: "live", maturity: { aldaTier: 9, note: "spiritual_pack + assessment_run 已接" } },
-    { id: "pastoral", path: "pastoral-spiritual-survey-pro.html", label: "領袖健康診斷", category: "靈命與真理", ctv: ["P", "F"], blurb: "教牧／核心同工負擔與節奏", status: "live", maturity: { aldaTier: 10, note: "pastoral_pack + assessment_run · 戰情室 CTV" } },
+    { id: "spiritual", path: "Church_Governance_spiritual_health.html", label: "信徒靈命健康", category: "靈命與真理", ctv: ["P", "F"], blurb: "全會友自評 · 五維儀 · 13 題快評", status: "live", maturity: { aldaTier: 10, note: "spiritual_pack · SpiritualAcsShell · 鏈路起點" } },
+    { id: "pastoral", path: "Church_Governance_pastoral_health.html", label: "領袖健康診斷", category: "靈命與真理", ctv: ["P", "F"], blurb: "30 題快評 · 七維儀 · 煙霧探測", status: "live", maturity: { aldaTier: 11, note: "pastoral_pack · loadUpstreamChain · 完整版 pro 頁保留" } },
     { id: "shape", path: "shape-gifts-assessment.html", label: "SHAPE 恩賜", category: "恩賜與事奉", ctv: ["S", "C"], blurb: "事奉主軸 · path_cards 出路導航", status: "live", maturity: { aldaTier: 11, note: "shape_pack + MinistryPathBridge" } },
     { id: "competency", path: "ministry-competency-assessment.html", label: "事奉能力模型", category: "恩賜與事奉", ctv: ["S", "C"], blurb: "KSA 矩陣 · path_cards 能力降級", status: "live", maturity: { aldaTier: 12, note: "competency_pack v2 · KSA 培訓缺口 · MinistryPathBridge" } },
     { id: "alda", path: "alda-leadership-assessment.html", label: "ALDA 領導力", category: "恩賜與事奉", ctv: ["P", "G"], blurb: "長執／帶領基準 · P 軸 · path_cards 帶領修飾", status: "live", maturity: { aldaTier: 11, note: "alda_pack + MinistryPathBridge · 戰情室 P 軸" } },
     { id: "matchmaker", path: "ministry-position-matchmaker.html", label: "事奉媒合中心", category: "恩賜與事奉", ctv: ["S", "C"], blurb: "六戰 JSON 收網 · 職位藍圖 · 雙層雷達適配", status: "live", maturity: { aldaTier: 12, note: "matchmaker_core + MatchmakerViz overlay · HITL" } },
     { id: "ministry8020", path: "Church_Governance_8020_focus.html", label: "教會版 80/20", category: "文化與戰略", ctv: ["G", "C"], blurb: "帕累托聚焦 · 剪枝矩陣 · 活體 NCD/SWOT/KPI", status: "live", maturity: { aldaTier: 11, note: "eightytwenty_pack + AssessmentRunStore · 帕累托 SVG" } },
-    { id: "urgent", path: "important-urgent-matrix.html", label: "重要 vs 緊急", category: "治理與優先", ctv: ["G", "F"], blurb: "優先序與取捨 · F 軸成形果效", status: "live", maturity: { aldaTier: 11, note: "urgency_pack + assessment_run · 戰情室 F 軸" } },
+    { id: "urgent", path: "Church_Governance_urgent_matrix.html", label: "重要 vs 緊急", category: "治理與優先", ctv: ["G", "F"], blurb: "Eisenhower 四象限 · 14 題 · F 軸", status: "live", maturity: { aldaTier: 11, note: "urgency_pack · loadUpstreamChain · UrgencyAcsShell" } },
     { id: "smart", path: "Church_Governance_SMART_goals.html", label: "教會版 SMART", category: "目標衡量", ctv: ["G", "C"], blurb: "可守住的事工目標 · 15 題快評 · 漏斗 + PDCA", status: "live", maturity: { aldaTier: 11, note: "smart_pack v2 · loadUpstreamChain · SmartFunnelViz · 守門決策桌" } },
     { id: "pdca", path: "Church_Governance_PDCA_cycle.html", label: "教會版 PDCA", category: "治理與優先", ctv: ["G"], blurb: "戴明循環 · 12題快評 · Δ_variance 儀表", status: "live", maturity: { aldaTier: 11, note: "pdca_pack v2 · Small Wins · 活體 SWOT 鏈路" } },
     { id: "kpiokr", path: "Church_Governance_KPI_alignment.html", label: "KPI/OKR 對齊", category: "目標衡量", ctv: ["G"], blurb: "目標與衡量對齊 · 12 題快評 · 漏斗儀表", status: "live", maturity: { aldaTier: 11, note: "kpi_pack v2 · loadUpstreamChain · 資源卡關率" } },
