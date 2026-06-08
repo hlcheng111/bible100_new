@@ -244,6 +244,18 @@
         }
         memoEl.textContent = dmemo;
         memoEl.classList.remove("acs-memo--empty");
+      } else if (hasRun && toolId === "matchmaker") {
+        var md = run.derived || {};
+        var mf = md.fit || {};
+        var mmemo =
+          "職位「" +
+          (mf.role_label || md.role_label || "—") +
+          "」· 適配 " +
+          (mf.overall_pct != null ? mf.overall_pct : md.overall_pct != null ? md.overall_pct : "?") +
+          "%";
+        if (run.match_contract || md.match_contract) mmemo += " · 媒合契約已通電";
+        memoEl.textContent = mmemo;
+        memoEl.classList.remove("acs-memo--empty");
       } else if (hasRun && toolId === "alda") {
         var ad = run.derived;
         var lp = ad.lifecycle_position || {};

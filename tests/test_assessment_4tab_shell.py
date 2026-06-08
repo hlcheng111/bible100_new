@@ -13,6 +13,7 @@ COACHING_PAGES = [
     "shape-gifts-assessment.html",
     "ministry-competency-assessment.html",
     "alda-leadership-assessment.html",
+    "ministry-position-matchmaker.html",
     "johari-window-assessment.html",
     "disc-profile-assessment.html",
     "mbti-self-awareness.html",
