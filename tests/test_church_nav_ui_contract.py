@@ -103,24 +103,26 @@ REQUIRED_SIDEBAR_PLAN = [
 PLANNING_SIDEBAR_RENDER = REPO / "church_planning" / "js" / "planning_sidebar_render.js"
 
 # 核心工具 · 與 planning_tool_registry.js / cta_os_war_room TOOL_LINKS 對齊
+# canonical path — 與 planning_tool_registry.js SSOT 對齊（18 live 工具含 matchmaker）
 PLANNING_CORE_TOOLS: dict[str, str] = {
-    "spiritual": "信徒靈性生命健康自我審查.html",
-    "pastoral": "pastoral-spiritual-survey-pro.html",
-    "raci": "planning/raci-reflection.html",
-    "swot": "Church_Governance_SWOT_matrix.html",
-    "ministry8020": "ministry-8020-planning.html",
-    "urgent": "important-urgent-matrix.html",
-    "smart": "smart-planning.html",
-    "pdca": "pdca-planning.html",
-    "kpiokr": "kpi-okr-alignment.html",
-    "alda": "12 Apostles Leadership Assessment.html",
+    "spiritual": "Church_Governance_spiritual_health.html",
+    "pastoral": "Church_Governance_pastoral_health.html",
     "shape": "shape-gifts-assessment.html",
-    "johari": "johari-window-assessment.html",
     "competency": "ministry-competency-assessment.html",
-    "ncd": "Church_Health_NCD_planning.html",
+    "alda": "alda-leadership-assessment.html",
+    "matchmaker": "ministry-position-matchmaker.html",
+    "ministry8020": "Church_Governance_8020_focus.html",
+    "urgent": "Church_Governance_urgent_matrix.html",
+    "smart": "Church_Governance_SMART_goals.html",
+    "pdca": "Church_Governance_PDCA_cycle.html",
+    "kpiokr": "Church_Governance_KPI_alignment.html",
+    "johari": "johari-window-assessment.html",
     "disc": "disc-profile-assessment.html",
     "mbti": "mbti-self-awareness.html",
-    "culture": "culture-alignment-assessment.html",
+    "swot": "Church_Governance_SWOT_matrix.html",
+    "culture": "Church_Governance_Culture_radar.html",
+    "ncd": "Church_Health_NCD_planning.html",
+    "raci": "planning/raci-reflection.html",
 }
 
 PLANNING_V3_ROUTES = [

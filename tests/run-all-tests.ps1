@@ -20,11 +20,11 @@ if ($configSyncResult -ne 0) {
     exit 1
 }
 
-$churchNavResult = 0
-python "$scriptDir\test_church_nav_ui_contract.py"
-$churchNavResult = $LASTEXITCODE
-if ($churchNavResult -ne 0) {
-    Write-Host "church nav UI contract test failed (exit $churchNavResult)." -ForegroundColor Red
+$liveToolsResult = 0
+python "$scriptDir\test_all_live_tools_smoke.py"
+$liveToolsResult = $LASTEXITCODE
+if ($liveToolsResult -ne 0) {
+    Write-Host "18 live tools smoke failed (exit $liveToolsResult). Run: python tests/test_all_live_tools_smoke.py" -ForegroundColor Red
     exit 1
 }
 
@@ -39,5 +39,5 @@ if ($tocResult -ne 0 -or $gtResult -ne 0) {
     Write-Host "Some tests failed (TOC: $tocResult, Global tools: $gtResult)." -ForegroundColor Red
     exit 1
 }
-Write-Host "All automated tests passed (index_v5 + TOC + global tools)." -ForegroundColor Green
+Write-Host "All automated tests passed (index_v5 + 18 live tools smoke + TOC + global tools)." -ForegroundColor Green
 exit 0
