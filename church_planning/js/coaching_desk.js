@@ -244,6 +244,22 @@
         }
         memoEl.textContent = dmemo;
         memoEl.classList.remove("acs-memo--empty");
+      } else if (hasRun && toolId === "alda") {
+        var ad = run.derived;
+        var lp = ad.lifecycle_position || {};
+        var alc = ad.lifecycle || {};
+        var amemo =
+          "階段「" +
+          (lp.profile_label || "—") +
+          "」· 主使徒「" +
+          (ad.primary || "—") +
+          "」· D" +
+          (alc.D != null ? alc.D : "?") +
+          "/L" +
+          (alc.L != null ? alc.L : "?");
+        if (ad.alda_lifecycle_contract) amemo += " · 生命週期契約已通電";
+        memoEl.textContent = amemo;
+        memoEl.classList.remove("acs-memo--empty");
       } else if (hasRun && toolId === "competency") {
         var cd = run.derived;
         var mp = cd.matrix_position || {};

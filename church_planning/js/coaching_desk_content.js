@@ -422,7 +422,10 @@
       if (global.MbtiAxesViz) return MbtiAxesViz.renderAxesBlock(d);
       return mbtiBarsHtml(d);
     }
-    if (toolId === "alda") return aldaBarsHtml(d);
+    if (toolId === "alda") {
+      if (global.AldaLifecycleViz) return AldaLifecycleViz.renderLifecycleBlock(d);
+      return aldaBarsHtml(d);
+    }
     if (toolId === "competency") {
       if (global.KsaMatrixViz) return KsaMatrixViz.renderMatrixBlock(d);
       return competencyBarsHtml(d) + competencyKsaBarsHtml(d);

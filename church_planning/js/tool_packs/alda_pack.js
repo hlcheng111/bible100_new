@@ -19,6 +19,81 @@
     F: "一線執行與財務高壓"
   };
 
+  var LIFECYCLE_LABELS = {
+    A: "願景 Aspiration",
+    L: "學習 Learning",
+    D: "執行 Delivery",
+    Ag: "敏捷 Agility"
+  };
+
+  var LIFECYCLE_THRESHOLD = 3.0;
+
+  function vectorToLifecycle(vectors) {
+    vectors = vectors || { C: 12, O: 12, S: 12, F: 12 };
+    function to5(x) {
+      var n = Math.max(0, Math.min(24, Number(x) || 0));
+      return Math.round(((n / 24) * 4 + 1) * 10) / 10;
+    }
+    return {
+      A: to5(vectors.C),
+      L: to5(vectors.O),
+      D: to5(vectors.F),
+      Ag: to5(vectors.S)
+    };
+  }
+
+  function buildLifecyclePosition(lifecycle) {
+    lifecycle = lifecycle || { A: 3, L: 3, D: 3, Ag: 3 };
+    var A = Number(lifecycle.A) || 0;
+    var L = Number(lifecycle.L) || 0;
+    var D = Number(lifecycle.D) || 0;
+    var Ag = Number(lifecycle.Ag) || 0;
+    var hi = 3.5;
+    var lo = 2.8;
+    var profile;
+    if (A >= hi && L >= hi && D >= hi && Ag >= hi) profile = "agile_leader";
+    else if (D >= hi && L < lo) profile = "delivery_machine";
+    else if (A >= hi && Ag < lo) profile = "vision_stuck";
+    else if (A >= hi && D < lo) profile = "aspiration_burst";
+    else if (L >= hi && D < hi) profile = "learning_explore";
+    else profile = "developing";
+    var labels = {
+      agile_leader: "全面成熟的敏捷領袖期",
+      delivery_machine: "戰功執行期 · 事工機器（高 D 低 L）",
+      vision_stuck: "有願景卻在敏捷變革中受挫（高 A 低 Ag）",
+      aspiration_burst: "願景爆發期（高 A · 宜補執行）",
+      learning_explore: "學習探索期（高 L）",
+      developing: "均衡培育／梯隊試任區"
+    };
+    return {
+      profile_type: profile,
+      profile_label: labels[profile] || labels.developing,
+      dominant_axis:
+        D >= A && D >= L && D >= Ag
+          ? "D"
+          : A >= L && A >= Ag
+            ? "A"
+            : L >= Ag
+              ? "L"
+              : "Ag"
+    };
+  }
+
+  function buildLifecycleContract(derived, store) {
+    var shape = store && store.loadLatest ? store.loadLatest("shape") : null;
+    var comp = store && store.loadLatest ? store.loadLatest("competency") : null;
+    return {
+      schema_version: 1,
+      source_tool: TOOL_ID,
+      lifecycle: derived.lifecycle,
+      lifecycle_position: derived.lifecycle_position,
+      primary_apostle: derived.primary,
+      shape_top_heart: shape && shape.derived ? shape.derived.top_heart : null,
+      ksa_weakest: comp && comp.derived ? comp.derived.weakest_label : null,
+      leadership_note: "ALDA 修飾帶領節奏與 path_cards；任免須 HITL。"
+    };
+  }
+
   var THRESHOLDS = {
     sincerity_low: 70,
     consistency_low: 70,
@@ -232,6 +307,25 @@
       return { q: String(q.id), most: row.most, least: row.least };
     });
 
+    var lifecycle = vectorToLifecycle(scored.vectors);
+    var lifecycle_position = buildLifecyclePosition(lifecycle);
+    var derived = {
+      vectors: scored.vectors,
+      sincerity: scored.sincerity,
+      consistency: scored.consistency,
+      primary: scored.primary,
+      secondary: scored.secondary,
+      apostle_scores: scored.apostle_scores,
+      lifecycle: lifecycle,
+      lifecycle_position: lifecycle_position,
+      lifecycle_threshold: LIFECYCLE_THRESHOLD,
+      lifecycle_note:
+        lifecycle_position.profile_label +
+        " — 最弱維度建議陪跑，不作淘汰。"
+    };
+    var lifecycleContract = buildLifecycleContract(derived, global.AssessmentRunStore);
+    derived.alda_lifecycle_contract = lifecycleContract;
+
     var run = {
       schema_version: 1,
       tool_id: TOOL_ID,
@@ -243,14 +337,8 @@
       ),
       authenticity_score: scored.sincerity / 100,
       feature_vector: computeFeatureVector(scored.vectors),
-      derived: {
-        vectors: scored.vectors,
-        sincerity: scored.sincerity,
-        consistency: scored.consistency,
-        primary: scored.primary,
-        secondary: scored.secondary,
-        apostle_scores: scored.apostle_scores
-      },
+      derived: derived,
+      alda_lifecycle_contract: lifecycleContract,
       raw_answers: raw_answers,
       risk_flags: risk_flags,
       coaching: {
@@ -283,7 +371,19 @@
       years: "11-20年",
       exp: "曾任本堂同工"
     });
-    if (built.ok && built.run) built.run.is_demo = true;
+    if (built.ok && built.run && built.run.derived) {
+      built.run.is_demo = true;
+      built.run.derived.vectors = { C: 14, O: 8, S: 9, F: 22 };
+      built.run.derived.lifecycle = { A: 3.3, L: 2.2, D: 4.7, Ag: 2.5 };
+      built.run.derived.lifecycle_position = buildLifecyclePosition(built.run.derived.lifecycle);
+      built.run.derived.lifecycle_note =
+        "戰功執行期 · 事工機器（高 D 低 L）— 宜安排學習陪跑與節奏調整，防燒盡。";
+      built.run.alda_lifecycle_contract = buildLifecycleContract(
+        built.run.derived,
+        global.AssessmentRunStore
+      );
+      built.run.derived.alda_lifecycle_contract = built.run.alda_lifecycle_contract;
+    }
     return built;
   }
 
@@ -319,6 +419,11 @@
     buildDemoRun: buildDemoRun,
     legacyPayloadFromRun: legacyPayloadFromRun,
     runFromLegacyPayload: runFromLegacyPayload,
-    migrateLegacyToStore: migrateLegacyToStore
+    migrateLegacyToStore: migrateLegacyToStore,
+    LIFECYCLE_LABELS: LIFECYCLE_LABELS,
+    LIFECYCLE_THRESHOLD: LIFECYCLE_THRESHOLD,
+    vectorToLifecycle: vectorToLifecycle,
+    buildLifecyclePosition: buildLifecyclePosition,
+    buildLifecycleContract: buildLifecycleContract
   };
 })(typeof window !== "undefined" ? window : global);
