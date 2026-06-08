@@ -23,7 +23,7 @@
       byCat[c].push(t);
     });
 
-    var order = [
+    var order = reg.categoryOrder || [
       "靈命與真理",
       "恩賜與事奉",
       "治理與優先",

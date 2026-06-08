@@ -162,15 +162,57 @@
     }
   }
 
+  var PEER_RUNS_KEY = "bible100_johari_peer_runs";
+  var MAX_PEER_RUNS = 100;
+
+  function savePeerRun(run) {
+    if (!run || run.tool_id !== "johari_peer") {
+      return { ok: false, errors: ["須為 johari_peer run"] };
+    }
+    var normalized = normalizeRun(run);
+    var check = validateRun(normalized);
+    if (!check.ok) return { ok: false, errors: check.errors };
+    var list = readJson(PEER_RUNS_KEY);
+    if (!Array.isArray(list)) list = [];
+    list.push({
+      timestamp: normalized.timestamp,
+      subject_name: normalized.profile && normalized.profile.subject_name,
+      observer_name: normalized.profile && normalized.profile.observer_name,
+      derived: normalized.derived,
+      run: normalized
+    });
+    if (list.length > MAX_PEER_RUNS) list = list.slice(list.length - MAX_PEER_RUNS);
+    writeJson(PEER_RUNS_KEY, list);
+    return { ok: true, run: normalized };
+  }
+
+  function listPeerRuns(subjectName) {
+    var list = readJson(PEER_RUNS_KEY);
+    if (!Array.isArray(list)) return [];
+    var sn = String(subjectName || "").trim();
+    if (!sn) return list.map(function (row) { return row.run; }).filter(Boolean);
+    return list
+      .filter(function (row) {
+        return row.subject_name && String(row.subject_name).trim() === sn;
+      })
+      .map(function (row) {
+        return row.run;
+      })
+      .filter(Boolean);
+  }
+
   global.AssessmentRunStore = {
     SCHEMA_VERSION: SCHEMA_VERSION,
     RUNS_KEY: RUNS_KEY,
+    PEER_RUNS_KEY: PEER_RUNS_KEY,
     LATEST_PREFIX: LATEST_PREFIX,
     latestKey: latestKey,
     validateRun: validateRun,
     saveRun: saveRun,
+    savePeerRun: savePeerRun,
     loadLatest: loadLatest,
     listRuns: listRuns,
+    listPeerRuns: listPeerRuns,
     clearLatest: clearLatest
   };
 })(typeof window !== "undefined" ? window : global);

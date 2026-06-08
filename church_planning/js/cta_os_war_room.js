@@ -11,6 +11,8 @@
   var TOOL_LINKS = {
     johari: "johari-window-assessment.html",
     shape: "shape-gifts-assessment.html",
+    disc: "disc-profile-assessment.html",
+    mbti: "mbti-self-awareness.html",
     competency: "ministry-competency-assessment.html",
     kpiokr: "kpi-okr-alignment.html",
     urgent: "important-urgent-matrix.html",
@@ -20,7 +22,7 @@
     ministry8020: "ministry-8020-planning.html",
     spiritual: "信徒靈性生命健康自我審查.html",
     pastoral: "pastoral-spiritual-survey-pro.html",
-    alda: "12 Apostles Leadership Assessment.html",
+    alda: "alda-leadership-assessment.html",
     raci: "planning/raci-reflection.html",
     ncd: "Church_Health_NCD_planning.html"
   };
@@ -120,7 +122,7 @@
     P: {
       nick: "車頭健康度",
       meaning: "牧長與核心同工的靈命、負擔與耗盡風險",
-      sources: "主要來自《領袖健康診斷》",
+      sources: "主要來自《領袖健康診斷》《ALDA 十二使徒領導力》",
       low: "分數越低，代表同工過勞或耗竭風險越高"
     },
     S: {
@@ -158,7 +160,14 @@
   var PACK_TOOL_ROWS = [
     { id: "pastoral", packKey: "PastoralPack", fallbackName: "領袖健康診斷" },
     { id: "spiritual", packKey: "SpiritualPack", fallbackName: "信徒靈命自評" },
-    { id: "urgent", packKey: "UrgencyPack", fallbackName: "重要 vs 緊急矩陣" }
+    { id: "urgent", packKey: "UrgencyPack", fallbackName: "重要 vs 緊急矩陣" },
+    { id: "johari", packKey: "JohariPack", fallbackName: "Johari 盲點" },
+    { id: "shape", packKey: "ShapePack", fallbackName: "SHAPE 恩賜" },
+    { id: "disc", packKey: "DiscPack", fallbackName: "DISC 溝通" },
+    { id: "mbti", packKey: "MbtiPack", fallbackName: "MBTI 傾向" },
+    { id: "alda", packKey: "AldaPack", fallbackName: "ALDA 領導力" },
+    { id: "competency", packKey: "CompetencyPack", fallbackName: "事奉能力模型" },
+    { id: "ncd", packKey: "NcdPack", fallbackName: "NCD 教會健康" }
   ];
 
   var CRITICAL_FLAGS = {
@@ -167,7 +176,14 @@
     LOW_COMPLETION: 1,
     SPIRITUAL_STAGNATION: 1,
     OVERLOAD_Q1: 1,
-    Q2_BELOW_TARGET: 1
+    Q2_BELOW_TARGET: 1,
+    HIGH_HIDDEN: 1,
+    HIGH_BLIND: 1,
+    SKILL_GAP: 1,
+    NCD_CRISIS_OVERALL: 1,
+    NCD_WORST_CRITICAL: 1,
+    NCD_WEAK_DIM: 1,
+    NCD_MIN_FACTOR: 1
   };
 
   function scoreBand(value, hasData) {
@@ -376,6 +392,57 @@
     }
     if (!parts.length) return "";
     return '<div class="wr-coverage">' + parts.join(" ") + "</div>";
+  }
+
+  function renderPathBridgeBanner() {
+    var MP = global.MinistryPathBridge;
+    if (!MP || !MP.PATH_TIER_COPY) return "";
+    var copy = MP.PATH_TIER_COPY;
+    var store = global.AssessmentRunStore;
+    var shapeN = 0;
+    var pathHint = "";
+    if (store && typeof store.listRuns === "function") {
+      shapeN = store.listRuns("shape").length;
+      var latestShape = store.loadLatest("shape");
+      if (latestShape && latestShape.path_cards && latestShape.path_cards.length) {
+        pathHint =
+          " 本機 SHAPE 最近出路示例：" +
+          latestShape.path_cards
+            .slice(0, 2)
+            .map(function (c) {
+              return (c.role_label || c.ministry_type) + "（" + c.tier + "）";
+            })
+            .join("；") +
+          "。";
+      }
+    }
+    return (
+      '<div class="wr-path-bridge">' +
+      "<p><strong>🧭 出路導航（MinistryPathBridge）</strong> " +
+      copy.disclaimer +
+      "</p>" +
+      "<ul class=\"wr-fix-list\" style=\"margin-top:8px;font-size:0.78rem;\">" +
+      "<li>" +
+      copy.employ +
+      "</li>" +
+      "<li>" +
+      copy.explore +
+      "</li>" +
+      "<li>" +
+      copy.seed +
+      "</li>" +
+      "</ul>" +
+      (shapeN
+        ? '<p class="wr-note" style="margin-top:8px;">本機 SHAPE 填寫 ' +
+          shapeN +
+          " 次。" +
+          pathHint +
+          " 個人 Tab ③ 均有 path_cards；戰情室為聚合輪廓。</p>"
+        : '<p class="wr-note" style="margin-top:8px;">尚無 SHAPE assessment_run。請同工先填 ' +
+          navLink("SHAPE 恩賜量表", "tool", "shape") +
+          "，再填 Johari/DISC/MBTI 修飾出路。</p>") +
+      "</div>"
+    );
   }
 
   function renderWeakDimFixes(weakDims, composite) {
@@ -695,6 +762,146 @@
     };
   }
 
+  var FIVE_TOOL_ROWS = [
+    { id: "shape", label: "SHAPE 恩賜", packKey: "ShapePack" },
+    { id: "johari", label: "Johari 盲點", packKey: "JohariPack" },
+    { id: "disc", label: "DISC 溝通", packKey: "DiscPack" },
+    { id: "mbti", label: "MBTI 傾向", packKey: "MbtiPack" },
+    { id: "alda", label: "ALDA 領導力", packKey: "AldaPack" }
+  ];
+
+  function fiveToolBriefLine(run, toolId) {
+    if (!run || !run.derived) return "尚無本機報告";
+    var d = run.derived;
+    if (toolId === "shape") return "熱情「" + (d.top_heart || "—") + "」";
+    if (toolId === "johari") {
+      var base =
+        "Open " + (d.open_pct || "?") + "% · Blind " + (d.blind_pct || "?") + "% · " + (d.dominant || "—");
+      if (d.blended && d.blended.note) return base + " · 360 已合流";
+      if (d.peer_overlay) return base + " · 他評 " + d.peer_overlay.peer_count + " 份";
+      return base;
+    }
+    if (toolId === "disc") return "主型 " + (d.primary_label || d.primary || "—");
+    if (toolId === "mbti") return "類型 " + (d.code || "—");
+    if (toolId === "alda") {
+      var base =
+        "主使徒 " +
+        (d.primary || "—") +
+        " · 真實度 " +
+        (d.sincerity != null ? d.sincerity : "?") +
+        "%";
+      if (run.risk_flags && run.risk_flags.length) base += " · ⚠ " + run.risk_flags.join(", ");
+      return base;
+    }
+    return "—";
+  }
+
+  function pathCardHeadline(run) {
+    if (!run || !run.path_cards || !run.path_cards.length) return "—";
+    var c = run.path_cards[0];
+    return (c.role_label || c.ministry_type || "—") + "（" + (c.tier || "—") + "）";
+  }
+
+  function buildMatchmakerTodos() {
+    var items = [];
+    var MP = global.MatchmakerPrefill;
+    var prefill = MP && typeof MP.load === "function" ? MP.load() : null;
+    if (prefill) {
+      items.push({
+        level: "high",
+        text:
+          (prefill.subject_name || "（會友）") +
+          " · Tab ④ 預填包待審核（" +
+          (prefill.mode === "job_seek_talent" ? "工找人" : "人找工") +
+          "）",
+        href: HUB.matchmaker + "&mode=" + encodeURIComponent(prefill.mode || "talent_seek_job") + "&dept=" + encodeURIComponent(prefill.suggested_dept || "")
+      });
+    }
+    if (global.AssessmentRunStore && AssessmentRunStore.loadLatest && AssessmentRunStore.listPeerRuns) {
+      var jRun = AssessmentRunStore.loadLatest("johari");
+      if (jRun && jRun.profile && jRun.profile.name) {
+        var peers = AssessmentRunStore.listPeerRuns(jRun.profile.name);
+        if (peers.length && !(jRun.derived && jRun.derived.peer_overlay)) {
+          items.push({
+            level: "warn",
+            text: jRun.profile.name + " · Johari 他評 " + peers.length + " 份待合流自評",
+            href: "johari-window-assessment.html#survey-self"
+          });
+        }
+      }
+    }
+    try {
+      var reviewed = global.localStorage.getItem("bible100_path_hitl_reviewed");
+      if (prefill && !reviewed) {
+        items.push({
+          level: "warn",
+          text: "媒合預填包已載入，尚未標記「牧者已約談」",
+          href: HUB.matchmaker
+        });
+      }
+    } catch (todoErr) {}
+    return items;
+  }
+
+  function renderFiveToolMatchmakerPanel() {
+    var store = global.AssessmentRunStore;
+    var rows = FIVE_TOOL_ROWS.map(function (row) {
+      var run = store && store.loadLatest ? store.loadLatest(row.id) : null;
+      var ok = !!(run && !run.is_demo);
+      return (
+        "<tr>" +
+        "<td>" +
+        navLink(row.label, "tool", row.id) +
+        "</td>" +
+        '<td class="wr-note">' +
+        (ok ? fiveToolBriefLine(run, row.id) : "—") +
+        "</td>" +
+        '<td class="wr-note">' +
+        (ok ? pathCardHeadline(run) : "—") +
+        "</td>" +
+        "<td>" +
+        (ok ? new Date(run.timestamp).toLocaleDateString() : "—") +
+        "</td></tr>"
+      );
+    }).join("");
+
+    var todos = buildMatchmakerTodos();
+    var todoHtml = todos.length
+      ? todos
+          .map(function (t) {
+            var kind = t.href.indexOf("church_ministry") === 0 ? "root" : "content";
+            return (
+              '<li class="wr-risk wr-risk-' +
+              (t.level === "high" ? "critical" : "warning") +
+              '">' +
+              escAttr(t.text) +
+              " · " +
+              navLink("前往處理", kind, t.href) +
+              "</li>"
+            );
+          })
+          .join("")
+      : '<li class="wr-empty-warm">目前無待辦。當 Tab ④ 匯出預填包或 Johari 他評合流後，會出現在這裡。</li>';
+
+    return (
+      '<section class="wr-card wr-span-all">' +
+      "<h2>五工具族摘要 · 媒合待辦</h2>" +
+      '<p class="wr-card-lead">長執一屏總覽：<strong>SHAPE／Johari／DISC／MBTI／ALDA</strong> 本機最新摘要與出路卡首卡；下方列出待審核的媒合預填與 Johari 360 合流提醒 — 仍須 HITL，不會自動 CRM 派工。</p>' +
+      '<table class="wr-table"><thead><tr><th>工具</th><th>重點摘要</th><th>出路卡首卡</th><th>更新</th></tr></thead><tbody>' +
+      rows +
+      "</tbody></table>" +
+      "<h3 style=\"margin:14px 0 8px;font-size:0.95rem;\">媒合待辦（HITL）</h3>" +
+      '<ul class="wr-risk-list">' +
+      todoHtml +
+      "</ul>" +
+      '<div class="wr-nav-out">' +
+      '<a class="wr-btn wr-btn-primary" href="#" onclick="return ' +
+      navClickAttr("root", HUB.matchmaker) +
+      ';">🟢 事奉媒合中心</a>' +
+      "</div></section>"
+    );
+  }
+
   function buildPlainSummary(state) {
     var lines = [
       "【CTA-OS 戰情室摘要】",
@@ -837,14 +1044,14 @@
 
     var roleEmptyCopy =
       '<tr><td colspan="3" class="wr-empty-warm">' +
-      "<strong>這裡是「恩賜與崗位對對碰」</strong>——數據源頭：" +
-      navLink("SHAPE 恩賜整合量表", "tool", "shape") +
-      "、" +
-      navLink("事奉能力模型量表", "tool", "competency") +
-      "。掃描後系統會把合成六維轉成恩賜輪廓，<em>僅供長執腦力激盪</em>，不是自動派工。" +
-      " 填好後按「掃描本機」，再 " +
+      "<strong>這裡是「恩賜與崗位對對碰＋出路導航」</strong>——" +
+      "<strong>SHAPE 主軸</strong>決定事奉大類；" +
+      navLink("Johari", "tool", "johari") +
+      "／DISC／MBTI 修飾節奏。" +
+      " 即使教會尚無編制，Tab ③ 也會給 <em>試任／拓荒種子</em>，禁止「無合適職位」空狀態。" +
+      " 填好後掃描，再 " +
       navLink("前往事奉媒合中心", "root", HUB.matchmaker) +
-      " 正式點選會友派工。" +
+      " 由輔導員 HITL 正式派任。" +
       "</td></tr>";
 
     var roleHtml = hasData
@@ -926,12 +1133,11 @@
       "</ul>" +
       "</section>" +
       '<section class="wr-card">' +
-      "<h2>角色配對建議</h2>" +
-      '<p class="wr-card-lead"><strong>從何而來？</strong>底層來自 ' +
-      navLink("SHAPE 恩賜整合量表", "tool", "shape") +
-      " 與 " +
-      navLink("事奉能力模型量表", "tool", "competency") +
-      "，再對照示範崗位或 Smart Ministry 目錄。<strong>往哪裡去？</strong>看到推薦後，到下方「事奉媒合中心」正式點選會友、拉入同工名單——須牧者確認，不可當 KPI 或自動派工。</p>" +
+      "<h2>角色配對與出路導航</h2>" +
+      '<p class="wr-card-lead"><strong>從何而來？</strong>SHAPE（主軸）+ competency + 合成 CTV；Johari/DISC/MBTI 修飾 fit_note。<strong>往哪去？</strong>個人報告 Tab ③ path_cards → 本區示範崗位 → ' +
+      navLink("事奉媒合中心", "root", HUB.matchmaker) +
+      " 正式 Deploy（須牧者確認，<em>非</em>自動 CRM 派工）。</p>" +
+      renderPathBridgeBanner() +
       '<table class="wr-table"><thead><tr><th>崗位</th><th>匹配度</th><th>建議程度</th></tr></thead><tbody>' +
       roleHtml +
       "</tbody></table>" +
@@ -943,6 +1149,7 @@
       "</div>" +
       "</section>" +
       "</div>" +
+      renderFiveToolMatchmakerPanel() +
       renderDashboardSisterCard() +
       '<section class="wr-card wr-span-all">' +
       "<h2>各工具分數快照</h2>" +

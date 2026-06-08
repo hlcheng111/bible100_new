@@ -364,7 +364,8 @@
           (d.secondary || "—") +
           " · 真實度 " +
           (d.sincerity != null ? d.sincerity : "—") +
-          "%",
+          "%" +
+          (run.path_cards && run.path_cards.length ? " · 含出路卡（帶領修飾）" : " · P 軸修飾"),
         subjectName: name ? name + " · ALDA" : "ALDA 領導力同工",
         assessmentRun: run
       };
@@ -455,7 +456,36 @@
     rel: { P: 0.4, S: 0.15, G: 0.05, C: 0.05, R: 0.3, F: 0.05 }
   };
 
+  function ncdDimProjection(dimId) {
+    var packMap = global.NcdPack && global.NcdPack.NCD_DIM_TO_CTV;
+    if (packMap && packMap[dimId]) return packMap[dimId];
+    return NCD_DIM_TO_CTV[dimId] || { P: 0.12, S: 0.12, G: 0.2, C: 0.2, R: 0.18, F: 0.18 };
+  }
+
   function collectFromNcd() {
+    if (global.NcdPack && typeof global.NcdPack.ensureAssessmentRun === "function") {
+      global.NcdPack.ensureAssessmentRun();
+    }
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("ncd") : null;
+    if (run && run.feature_vector && !run.is_demo) {
+      var d = run.derived || {};
+      var church = run.profile && run.profile.name;
+      var min = d.minimum_factor || {};
+      return {
+        vector: run.feature_vector,
+        sourceCount: (run.raw_answers || []).length || 8,
+        sourceNote:
+          "讀取 assessment_run · 均分 " +
+          (d.overallScore != null ? d.overallScore : "—") +
+          "（" +
+          (d.healthLabel || "—") +
+          "）" +
+          (min.label ? " · 最小因子「" + min.label + "」" : d.worstCat ? " · 最弱「" + d.worstCat + "」" : ""),
+        subjectName: church ? church + " · NCD" : "教會 NCD 健康診斷",
+        assessmentRun: run
+      };
+    }
+
     var wrap = readJson("chp2026-health-result");
     var result = wrap && wrap.result ? wrap.result : wrap;
     var items = [];
@@ -470,8 +500,7 @@
           likert = 1 + (Number(d.score) / Number(d.max)) * 4;
         }
         if (likert == null || likert < 1 || likert > 5) return;
-        var proj = NCD_DIM_TO_CTV[d.id] || { P: 0.12, S: 0.12, G: 0.2, C: 0.2, R: 0.18, F: 0.18 };
-        items.push({ value: likert, projection: proj });
+        items.push({ value: likert, projection: ncdDimProjection(d.id) });
       });
       if (result.overallNormalized != null && isFinite(Number(result.overallNormalized))) {
         items.push({
@@ -483,7 +512,9 @@
     return {
       vector: RT.scoreByProjection(items),
       sourceCount: items.length,
-      sourceNote: items.length ? "讀取 chp2026-health-result（NCD 八維）" : "尚無 NCD 健康診斷結果",
+      sourceNote: items.length
+        ? "讀取 chp2026-health-result（NCD 八維 · 舊鍵，建議回問卷更新報告以雙寫 assessment_run）"
+        : "尚無 NCD 健康診斷結果",
       subjectName: church ? church + " · NCD" : "教會 NCD 健康診斷"
     };
   }
@@ -561,10 +592,113 @@
     return collectFromPreset("urgent", "重要 vs 緊急矩陣");
   }
 
+  function collectFromJohari() {
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("johari") : null;
+    if (run && run.feature_vector && !run.is_demo) {
+      var d = run.derived || {};
+      var name = run.profile && run.profile.name;
+      return {
+        vector: run.feature_vector,
+        sourceCount: (run.raw_answers || []).length || 12,
+        sourceNote:
+          "讀取 assessment_run · Open " +
+          (d.open_pct != null ? d.open_pct : "?") +
+          "% / 主區 " +
+          (d.dominant || "—") +
+          (run.path_cards && run.path_cards.length ? " · 含出路卡" : ""),
+        subjectName: name ? name + " · Johari" : "Johari 同工",
+        assessmentRun: run
+      };
+    }
+    return collectFromPreset("johari", "Johari 團隊盲點量表");
+  }
+
+  function collectFromShape() {
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("shape") : null;
+    if (run && run.feature_vector && !run.is_demo) {
+      var d = run.derived || {};
+      var name = run.profile && run.profile.name;
+      return {
+        vector: run.feature_vector,
+        sourceCount: (run.raw_answers || []).length || 13,
+        sourceNote:
+          "讀取 assessment_run · 熱情「" +
+          (d.top_heart || "—") +
+          "」· SHAPE 主軸" +
+          (run.path_cards && run.path_cards.length ? " · 含出路卡" : ""),
+        subjectName: name ? name + " · SHAPE" : "SHAPE 恩賜同工",
+        assessmentRun: run
+      };
+    }
+    return collectFromPreset("shape", "SHAPE 恩賜整合量表");
+  }
+
+  function collectFromDisc() {
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("disc") : null;
+    if (run && run.feature_vector && !run.is_demo) {
+      var d = run.derived || {};
+      var name = run.profile && run.profile.name;
+      return {
+        vector: run.feature_vector,
+        sourceCount: (run.raw_answers || []).length || 16,
+        sourceNote:
+          "讀取 assessment_run · DISC 主型 " +
+          (d.primary || "—") +
+          (run.path_cards && run.path_cards.length ? " · 含出路卡" : ""),
+        subjectName: name ? name + " · DISC" : "DISC 同工",
+        assessmentRun: run
+      };
+    }
+    return collectFromPreset("disc", "DISC 溝通風格");
+  }
+
+  function collectFromMbti() {
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("mbti") : null;
+    if (run && run.feature_vector && !run.is_demo) {
+      var d = run.derived || {};
+      var name = run.profile && run.profile.name;
+      return {
+        vector: run.feature_vector,
+        sourceCount: (run.raw_answers || []).length || 16,
+        sourceNote:
+          "讀取 assessment_run · MBTI " +
+          (d.code || "—") +
+          (run.path_cards && run.path_cards.length ? " · 含出路卡" : ""),
+        subjectName: name ? name + " · MBTI" : "MBTI 同工",
+        assessmentRun: run
+      };
+    }
+    return collectFromPreset("mbti", "MBTI 性格傾向");
+  }
+
+  function collectFromCompetency() {
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("competency") : null;
+    if (run && run.feature_vector && !run.is_demo) {
+      var d = run.derived || {};
+      var name = run.profile && run.profile.name;
+      return {
+        vector: run.feature_vector,
+        sourceCount: (run.raw_answers || []).length || 24,
+        sourceNote:
+          "讀取 assessment_run · 強項「" +
+          (d.primary_label || "—") +
+          "」· 待補「" +
+          (d.weakest_label || "—") +
+          "」" +
+          (run.path_cards && run.path_cards.length ? " · 含出路卡（能力陪跑修飾）" : ""),
+        subjectName: name ? name + " · 事奉能力" : "事奉能力同工",
+        assessmentRun: run
+      };
+    }
+    return collectFromPreset("competency", "事奉能力模型量表");
+  }
+
   var TOOL_META = {
-    johari: { name: "Johari 團隊盲點量表", collect: function () { return collectFromPreset("johari", "Johari 團隊盲點量表"); } },
-    shape: { name: "SHAPE 恩賜整合量表", collect: function () { return collectFromPreset("shape", "SHAPE 恩賜整合量表"); } },
-    competency: { name: "事奉能力模型量表", collect: function () { return collectFromPreset("competency", "事奉能力模型量表"); } },
+    johari: { name: "Johari 團隊盲點量表", collect: collectFromJohari },
+    shape: { name: "SHAPE 恩賜整合量表", collect: collectFromShape },
+    disc: { name: "DISC 溝通風格自評", collect: collectFromDisc },
+    mbti: { name: "MBTI 性格傾向（簡化）", collect: collectFromMbti },
+    competency: { name: "事奉能力模型量表", collect: collectFromCompetency },
     kpiokr: { name: "KPI/OKR 對齊量表", collect: function () { return collectFromPreset("kpiokr", "KPI/OKR 對齊量表"); } },
     urgent: { name: "重要 vs 緊急矩陣", collect: collectFromUrgent },
     smart: { name: "教會版 SMART", collect: collectFromSmart },
@@ -660,7 +794,15 @@
             ? global.UrgencyPack
             : toolId === "pastoral"
               ? global.PastoralPack
-              : null;
+              : toolId === "johari"
+                ? global.JohariPack
+                : toolId === "disc"
+                  ? global.DiscPack
+                  : toolId === "mbti"
+                    ? global.MbtiPack
+                    : toolId === "ncd"
+                      ? global.NcdPack
+                : null;
       collected.assessmentRun.risk_flags.forEach(function (flag) {
         var msg =
           flagPack && flagPack.FLAG_DESCRIPTIONS && flagPack.FLAG_DESCRIPTIONS[flag]
