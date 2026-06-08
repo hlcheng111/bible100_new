@@ -23,6 +23,7 @@ REGISTRY = PLAN / "js" / "planning_tool_registry.js"
 
 # 子測試腳本（順序：契約 → pack 煙測 → nav）
 SUBTESTS: tuple[tuple[str, str], ...] = (
+    ("strategic chain integrity (4 links)", "tests/test_strategic_chain_integrity.py"),
     ("governance + coaching 4-Tab", "tests/test_assessment_4tab_shell.py"),
     ("urgency pack", "tests/test_urgency_pack.py"),
     ("spiritual pack", "tests/test_spiritual_pack.py"),

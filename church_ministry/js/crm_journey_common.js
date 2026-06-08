@@ -1265,9 +1265,27 @@
       renderVisionPanel(state.step);
     }
     if (tabKey === "matchmaker") {
-      var dept = options.dept || state.matchDept || getDeptFromStorage() || "worship";
-      filterMatch(dept);
+      var prefill =
+        options.prefill ||
+        (global.MatchmakerPrefill && typeof global.MatchmakerPrefill.load === "function" && global.MatchmakerPrefill.load());
+      var mode = options.prefillMode || options.mode || (prefill && prefill.mode) || "";
+      var dept =
+        options.dept ||
+        (prefill && prefill.suggested_dept) ||
+        state.matchDept ||
+        getDeptFromStorage() ||
+        "worship";
+      if (!MATCHMAKER_DATA[dept]) dept = (prefill && prefill.suggested_dept) || "worship";
+      filterMatch(dept, { prefill: prefill, mode: mode, scrollPrefill: !!prefill });
       highlightDeptNav(dept);
+      if (mode) {
+        try {
+          var uMode = new URL(global.location.href);
+          uMode.searchParams.set("mode", mode);
+          if (dept) uMode.searchParams.set("dept", dept);
+          global.history.replaceState({}, "", uMode.pathname + uMode.search);
+        } catch (modeUrlErr) {}
+      }
     }
   }
 
@@ -1487,6 +1505,23 @@
   function bindMatchmakerPanel() {
     bindLocalNav("#master-sec-matchmaker .crm-tab-local-nav");
     renderMatchmakerTabPanel();
+    mountMatchmakerImportPlaceholder();
+  }
+
+  function mountMatchmakerImportPlaceholder() {
+    var board = global.document.getElementById("matchmaker-board");
+    if (!board || board.querySelector("#crm-matchmaker-import")) return;
+    if (!board.querySelector(".crm-matchmaker__board-placeholder")) return;
+    if (!global.MatchmakerPrefill || typeof global.MatchmakerPrefill.renderImportPanelHtml !== "function") return;
+    board.insertAdjacentHTML("beforeend", global.MatchmakerPrefill.renderImportPanelHtml());
+    global.MatchmakerPrefill.bindImportPanel(board.querySelector("#crm-matchmaker-import"), function (envelope) {
+      switchMasterTab("matchmaker", {
+        dept: envelope.suggested_dept,
+        prefill: envelope,
+        prefillMode: envelope.mode,
+        scrollPrefill: true
+      });
+    });
   }
 
   function renderIntroAiRoles() {
@@ -2032,7 +2067,8 @@
     });
   }
 
-  function filterMatch(deptKey) {
+  function filterMatch(deptKey, options) {
+    options = options || {};
     var data = MATCHMAKER_DATA[deptKey];
     var board = global.document.getElementById("matchmaker-board");
     if (!data || !board) return;
@@ -2094,11 +2130,44 @@
       '<a class="crm-journey-link crm-intro-inline-link" href="modules/support/ai-pastoral-draft.html" target="' + tgt + '" data-gate="staff">✍️ AI 牧養草稿 ➔</a></p></div>';
 
     board.innerHTML = tableHtml + hint + actions + shiftBlock + pastoralBlock + renderPipelineHtml();
+    if (global.MatchmakerPrefill && typeof global.MatchmakerPrefill.renderImportPanelHtml === "function") {
+      board.insertAdjacentHTML("beforeend", global.MatchmakerPrefill.renderImportPanelHtml());
+      global.MatchmakerPrefill.bindImportPanel(board.querySelector("#crm-matchmaker-import"), function (envelope) {
+        filterMatch(envelope.suggested_dept || deptKey, {
+          prefill: envelope,
+          mode: envelope.mode,
+          scrollPrefill: true
+        });
+      });
+    }
+    if (global.PathCardsHitlPanel && typeof global.PathCardsHitlPanel.mount === "function") {
+      global.PathCardsHitlPanel.mount(board, {
+        prefill: options.prefill,
+        mode: options.mode || (options.prefill && options.prefill.mode)
+      });
+    }
     board.classList.add("crm-board--filled");
     setDeptStorage(deptKey);
     bindLinks(board);
     bindGateHints(board);
     bindRoadmapScroll(board);
+
+    if (options.prefill && options.scrollPrefill !== false) {
+      setTimeout(function () {
+        var el =
+          board.querySelector("#crm-matchmaker-prefill") ||
+          board.querySelector("#crm-path-hitl-panel");
+        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+    }
+
+    if (options.prefill) {
+      var toastMsg =
+        options.prefill.mode === "job_seek_talent"
+          ? "🔍 工找人：已載入 Tab ④ 預填包，請對照急缺與出路卡人工確認。"
+          : "📋 人找工：已載入 Tab ④ 預填包，請審核出路卡後再登記試任。";
+      showGateToast(toastMsg);
+    }
 
     var copyInvite = board.querySelector("#btnCopyMatchInviteDraft");
     if (copyInvite) {
@@ -2127,6 +2196,30 @@
 
   function applyEntry() {
     var banner = global.document.getElementById("crmEntryBanner");
+    var govFlags =
+      global.GovernanceCrmBridge && typeof global.GovernanceCrmBridge.mountEntryBanner === "function"
+        ? global.GovernanceCrmBridge.mountEntryBanner()
+        : null;
+    if (global.MatchmakerPrefill && typeof global.MatchmakerPrefill.consumeUrlImport === "function") {
+      var imported = global.MatchmakerPrefill.consumeUrlImport();
+      if (imported && banner) {
+        banner.hidden = false;
+        banner.innerHTML = esc("📥 已從 QR／連結匯入 Tab ④ 預填包 — 請審核後再登記試任。");
+      }
+      if (imported) {
+        try {
+          var impParams = new URLSearchParams(global.location.search || "");
+          if (impParams.get("tab") !== "matchmaker") {
+            switchMasterTab("matchmaker", {
+              dept: imported.suggested_dept,
+              prefill: imported,
+              prefillMode: imported.mode
+            });
+            return;
+          }
+        } catch (impErr) {}
+      }
+    }
     try {
       var params = new URLSearchParams(global.location.search || "");
       var entry = params.get("entry");
@@ -2143,10 +2236,22 @@
         selectRole(e.role, getStepIndex());
         return;
       }
-      if (banner) banner.hidden = true;
+      if (banner && !govFlags) banner.hidden = true;
       if (tab === "matchmaker") {
-        switchMasterTab("matchmaker", { dept: dept || state.matchDept });
+        var prefill =
+          global.MatchmakerPrefill && typeof global.MatchmakerPrefill.load === "function" && global.MatchmakerPrefill.load();
+        var mode = params.get("mode") || (prefill && prefill.mode) || "";
+        var deptKey = dept || (prefill && prefill.suggested_dept) || state.matchDept;
         if (role && JOURNEY_ROLES.indexOf(role) >= 0) syncOnboardUI(role);
+        if (prefill && banner) {
+          banner.hidden = false;
+          banner.innerHTML = esc(
+            mode === "job_seek_talent" || (prefill.mode === "job_seek_talent" && !mode)
+              ? "🔍 工找人：已從 Tab ④ 帶入預填包 — 請對照左側部門急缺，人工確認後再邀請。"
+              : "📋 人找工：已從 Tab ④ 帶入出路卡與邀請草稿 — 請審核後再登記試任。"
+          );
+        }
+        switchMasterTab("matchmaker", { dept: deptKey, prefill: prefill, prefillMode: mode });
         return;
       }
       if (tab === "intro") {

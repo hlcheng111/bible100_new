@@ -31,6 +31,34 @@
     });
   }
 
+  function renderNcdWeaknessLock() {
+    var host = document.getElementById("swot-ncd-lock-banner");
+    if (!host) {
+      var survey = document.getElementById("strategic-tab-survey");
+      if (survey) {
+        survey.insertAdjacentHTML(
+          "afterbegin",
+          '<div id="swot-ncd-lock-banner" class="hidden mx-4 mt-3 p-3 rounded-lg border-2 border-rose-300 bg-rose-50"></div>'
+        );
+        host = document.getElementById("swot-ncd-lock-banner");
+      }
+    }
+    if (!host || !global.SwotPack || typeof SwotPack.loadUpstreamChain !== "function") return;
+    var chain = SwotPack.loadUpstreamChain();
+    var min = chain && chain.ncd_minimum;
+    if (!min || !min.label) {
+      host.classList.add("hidden");
+      return;
+    }
+    host.innerHTML =
+      '<p class="text-sm text-rose-900 m-0"><strong>🔗 NCD 鎖定劣勢 W：</strong>「' +
+      esc(min.label) +
+      "」（" +
+      esc(String(min.score != null ? min.score : "—")) +
+      '/5）— <span class="font-bold">矩陣已剛性匯入</span>；Tab③ W 象限優先對話此破口。</p>';
+    host.classList.remove("hidden");
+  }
+
   function renderQuickSurvey() {
     var host = document.getElementById("swot-quick-survey-wrap");
     if (!host || !global.SwotPack) return;
@@ -76,6 +104,7 @@
       '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">✓ 提交 20 題 → Tab ③ TOWS 矩陣報告</button>' +
       "</form>";
     host.innerHTML = html;
+    renderNcdWeaknessLock();
   }
 
   function answersFromForm(form) {
@@ -181,6 +210,13 @@
     var summary = document.getElementById("swot-report-summary");
     if (summary && run.derived) {
       var m = run.derived.matrix_result;
+      var wQuad = run.derived.quadrants && run.derived.quadrants.W;
+      var wLock =
+        wQuad && wQuad.ncd_locked
+          ? '<div class="mt-2 p-3 bg-rose-50 border-2 border-rose-300 rounded-lg text-sm text-rose-950"><strong>W 劣勢（NCD 鎖定）：</strong>' +
+            esc(wQuad.primary || "—") +
+            "</div>"
+          : "";
       var extra = m && m.pastoral_override
         ? '<div class="mt-2 p-3 bg-rose-50 border border-rose-200 rounded-lg text-sm text-rose-900 font-bold">' +
           esc(m.pastoral_override) +
@@ -190,6 +226,7 @@
         "<p><strong>戰略摘要：</strong>" +
         esc(run.derived.summary_line || "—") +
         "</p>" +
+        wLock +
         extra;
     }
 
@@ -282,6 +319,7 @@
     }
     global.loadDemoReport = loadDemoReport;
     global.SwotAcsShellCommitWorkshop = commitWorkshop;
+    renderNcdWeaknessLock();
     renderQuickSurvey();
     switchSurveyTrack("quick");
     autoPreviewReport();

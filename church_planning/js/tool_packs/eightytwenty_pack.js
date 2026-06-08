@@ -40,7 +40,7 @@
     return Math.max(1, Math.ceil(n * THRESHOLDS.pareto_fraction));
   }
 
-  function analyzeRows(rows) {
+  function analyzeRows(rows, upstream) {
     var list = Array.isArray(rows) ? rows : [];
     var analyzed = list.map(function (row, idx) {
       var sc = ministryRowScores(row);
@@ -69,17 +69,60 @@
     var topImpact = sortedValue.slice(0, topN).reduce(function (a, x) { return a + x.valueScore; }, 0);
     var impactRatioAggregate =
       totalEffort > 0 ? round2(topImpact / (totalEffort * 4)) : 0;
-    return {
-      rows: analyzed,
-      top20_names: top20Names,
-      top20_count: topN,
-      prune_candidates: pruneList,
-      impact_ratio: impactRatioAggregate,
-      effort_top20_pct: totalEffort > 0 ? Math.round((topEffort / totalEffort) * 100) : null,
-      impact_top20_pct: analyzed.length
-        ? Math.round((topN / analyzed.length) * 100)
-        : null
-    };
+    return applyUpstreamRowHints(
+      {
+        rows: analyzed,
+        top20_names: top20Names,
+        top20_count: topN,
+        prune_candidates: pruneList,
+        impact_ratio: impactRatioAggregate,
+        effort_top20_pct: totalEffort > 0 ? Math.round((topEffort / totalEffort) * 100) : null,
+        impact_top20_pct: analyzed.length
+          ? Math.round((topN / analyzed.length) * 100)
+          : null
+      },
+      upstream
+    );
+  }
+
+  /** KPI≥70 強制剪枝 + NCD 最小因子優先檢視 */
+  function applyUpstreamRowHints(analysis, upstream) {
+    upstream = upstream || {};
+    if (!analysis || !analysis.rows) return analysis;
+    var ncdMin = upstream.ncd_minimum;
+    var kpiStuck = upstream.kpi_resource_stuck;
+    var forced = 0;
+    analysis.rows = analysis.rows.map(function (row) {
+      var r = Object.assign({}, row);
+      if (kpiStuck != null && kpiStuck >= 70 && r.effortLoad >= 4 && r.impactRatio <= 0.45) {
+        r.forced_prune = true;
+        r.isPruneCandidate = true;
+        r.prune_reason = "KPI 資源卡關 " + kpiStuck + "%";
+        forced++;
+      }
+      if (ncdMin && ncdMin.id) {
+        if (ncdMin.id === "functional" && r.wasteScore >= 10) {
+          r.ncd_priority = true;
+        }
+        if (ncdMin.id === "passion" && (r.wasteScore >= 8 || r.impactRatio <= 0.4)) {
+          r.ncd_priority = true;
+        }
+      }
+      return r;
+    });
+    analysis.prune_candidates = analysis.rows.filter(function (x) {
+      return x.isPruneCandidate;
+    });
+    analysis.forced_prune_count = forced;
+    if (ncdMin && ncdMin.label) {
+      analysis.ncd_priority_review = {
+        id: ncdMin.id,
+        label: ncdMin.label,
+        score: ncdMin.score,
+        hint: "NCD 最小因子 — 工作坊優先檢視與此破口相關事工"
+      };
+    }
+    return analysis;
   }
 
   function loadUpstreamChain(store) {
@@ -159,8 +202,8 @@
     opts = opts || {};
     var check = validate(rows);
     if (!check.ok) return { ok: false, errors: check.errors };
-    var analysis = analyzeRows(check.rows);
     var upstream = opts.skip_upstream ? null : loadUpstreamChain();
+    var analysis = analyzeRows(check.rows, upstream);
     var flags = computeRiskFlags(analysis, check.count);
     var raw_answers = check.rows.map(function (r, i) {
       return {
@@ -222,6 +265,7 @@
     buildDemoRun: buildDemoRun,
     loadUpstreamChain: loadUpstreamChain,
     analyzeRows: analyzeRows,
+    applyUpstreamRowHints: applyUpstreamRowHints,
     ministryRowScores: ministryRowScores
   };
 })(typeof window !== "undefined" ? window : global);

@@ -50,6 +50,27 @@
     el.classList.remove("hidden");
   }
 
+  function renderNcdPriorityList() {
+    var el = document.getElementById("8020-ncd-priority");
+    if (!el || !global.EightytwentyPack) return;
+    var chain = EightytwentyPack.loadUpstreamChain();
+    if (!chain.ok || !chain.ncd_minimum) {
+      el.innerHTML = "";
+      el.classList.add("hidden");
+      return;
+    }
+    var min = chain.ncd_minimum;
+    el.classList.remove("hidden");
+    el.innerHTML =
+      '<div class="p-3 mb-3 rounded-lg border-2 border-amber-300 bg-amber-50 text-sm text-amber-950">' +
+      "<strong>📌 NCD 優先檢視：</strong>最小因子「" +
+      esc(min.label) +
+      "」（" +
+      esc(String(min.score != null ? min.score : "—")) +
+      "/5）— 列出事工時，請先標記與此破口相關的高耗損項目。" +
+      "</div>";
+  }
+
   function renderWorkshopForm() {
     var host = document.getElementById("8020-workshop-wrap");
     if (!host) return;
@@ -57,12 +78,14 @@
       '<h2 class="font-black text-cyan-900 text-lg mb-2">團隊工作坊 · 列出 10 大事工</h2>' +
       '<p class="text-sm text-slate-600 mb-3">2–6 位核心同工 · 只填事工名稱與 1–5 評分（使命契合／果效／行政耗損）· 勿填個資。</p>' +
       '<label class="text-sm font-bold">教會名稱<input id="8020-church" class="w-full border rounded p-2 mt-1 mb-3"/></label>' +
+      '<div id="8020-ncd-priority" class="hidden"></div>' +
       '<div id="8020-rows" class="space-y-2"></div>' +
       '<button type="button" class="acs-btn mt-2" onclick="EightytwentyAcsShell.addRow()">+ 新增事工列</button>' +
       '<p id="8020-form-error" class="text-red-600 text-xs mt-2 hidden"></p>' +
       '<button type="button" class="acs-btn acs-btn--primary mt-3 w-full py-3" onclick="EightytwentyAcsShell.submitWorkshop()">✓ 完成工作坊 → 帕累托矩陣</button>';
     host.innerHTML = html;
     for (var i = 0; i < 5; i++) EightytwentyAcsShell.addRow();
+    renderNcdPriorityList();
   }
 
   function rowHtml(idx) {
@@ -166,6 +189,7 @@
     if (global.EightytwentyPastoralDesk) EightytwentyPastoralDesk.mountStaticDesk();
     renderUpstreamBanner();
     renderWorkshopForm();
+    renderNcdPriorityList();
     var latest = global.AssessmentRunStore && AssessmentRunStore.loadLatest("ministry8020");
     if (latest && !latest.is_demo) renderReport(latest, {});
   }

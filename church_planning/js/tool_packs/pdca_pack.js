@@ -79,6 +79,15 @@
       (contract && contract.primary_strategy) ||
       null;
     var pastoralOverride = matrix && matrix.pastoral_override ? matrix.pastoral_override : null;
+    if (!pastoralOverride && contract && contract.matrix_result && contract.matrix_result.pastoral_override) {
+      pastoralOverride = contract.matrix_result.pastoral_override;
+    }
+    if (!pastoralOverride && swot && swot.swot_contract && swot.swot_contract.matrix_result) {
+      pastoralOverride = swot.swot_contract.matrix_result.pastoral_override;
+    }
+    if (!pastoralOverride && primary === "WO" && swot && swot.derived && swot.derived.matrix_result) {
+      pastoralOverride = swot.derived.matrix_result.pastoral_override || null;
+    }
     var deltaSwot = matrix && matrix.Delta_Variance != null ? matrix.Delta_Variance : null;
 
     return {

@@ -640,6 +640,29 @@
     return AssessmentRunStore.loadLatest(TOOL_ID);
   }
 
+  /** 活體上游 — NCD 最小因子剛性輸入 SWOT W 軸 */
+  function loadUpstreamChain(store) {
+    store = store || global.AssessmentRunStore;
+    if (!store || typeof store.loadLatest !== "function") {
+      return { ok: false, source: "store_missing", runs: {} };
+    }
+    var ncd = store.loadLatest("ncd");
+    var ncdMin =
+      ncd && ncd.derived && ncd.derived.minimum_factor ? ncd.derived.minimum_factor : ncdMinimumFromStore();
+    var dimScores =
+      ncd && ncd.derived && ncd.derived.dim_scores ? ncd.derived.dim_scores : ncdDimScoresFromStore();
+    return {
+      ok: !!(ncd || ncdMin),
+      source: ncd ? "assessment_run_store" : ncdMin ? "inline_read" : "empty",
+      runs: { ncd: ncd },
+      ncd_minimum: ncdMin,
+      ncd_dim_scores: dimScores,
+      swot_note: ncdMin
+        ? "【NCD 鎖定 W】「" + (ncdMin.label || "健康破口") + "」(" + (ncdMin.score != null ? ncdMin.score : "—") + "/5)"
+        : null
+    };
+  }
+
   global.SwotPack = {
     TOOL_ID: TOOL_ID,
     TOOL_LABEL: TOOL_LABEL,
@@ -659,6 +682,8 @@
     buildRunFromWorkshop: buildRunFromWorkshop,
     saveWorkshopRun: saveWorkshopRun,
     buildAiPrompt: buildAiPrompt,
-    ensureAssessmentRun: ensureAssessmentRun
+    ensureAssessmentRun: ensureAssessmentRun,
+    loadUpstreamChain: loadUpstreamChain,
+    ncdMinimumFromStore: ncdMinimumFromStore
   };
 })(typeof window !== "undefined" ? window : global);

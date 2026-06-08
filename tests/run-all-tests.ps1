@@ -21,6 +21,13 @@ if ($configSyncResult -ne 0) {
 }
 
 $liveToolsResult = 0
+python "$scriptDir\test_strategic_chain_integrity.py"
+$chainResult = $LASTEXITCODE
+if ($chainResult -ne 0) {
+    Write-Host "strategic chain integrity failed (exit $chainResult). Run: python tests/test_strategic_chain_integrity.py" -ForegroundColor Red
+    exit 1
+}
+
 python "$scriptDir\test_all_live_tools_smoke.py"
 $liveToolsResult = $LASTEXITCODE
 if ($liveToolsResult -ne 0) {
@@ -39,5 +46,5 @@ if ($tocResult -ne 0 -or $gtResult -ne 0) {
     Write-Host "Some tests failed (TOC: $tocResult, Global tools: $gtResult)." -ForegroundColor Red
     exit 1
 }
-Write-Host "All automated tests passed (index_v5 + 18 live tools smoke + TOC + global tools)." -ForegroundColor Green
+Write-Host "All automated tests passed (index_v5 + strategic chain + 18 live tools smoke + TOC + global tools)." -ForegroundColor Green
 exit 0
