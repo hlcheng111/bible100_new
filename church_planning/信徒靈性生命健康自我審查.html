@@ -1,929 +1,798 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8" />
-<title>信徒靈性生命健康自我審查（簡要版）</title>
-<style>
-  body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    line-height: 1.5;
-    padding: 14px;
-    max-width: 1000px;
-    margin: 0 auto;
-    background: #f6f7fb;
-    font-size: 12px;
-    color: #334155;
-  }
-  h1, h2, h3 { margin-top: 1.2em; }
-  .cta-os-link {
-    position: fixed;
-    right: 14px;
-    bottom: 14px;
-    z-index: 9999;
-    background: #4338ca;
-    color: #fff;
-    padding: 8px 12px;
-    border-radius: 999px;
-    text-decoration: none;
-    font-size: 12px;
-    font-weight: 700;
-    box-shadow: 0 6px 16px rgba(0,0,0,.2);
-  }
-  h1 { color: #1f2937; }
-  h2 { color: #374151; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
-  .note { font-size: 0.82rem; color: #6b7280; }
-  .section-card {
-    background: #ffffff;
-    padding: 12px 16px;
-    border-radius: 6px;
-    box-shadow: 0 0 0 1px #e5e7eb;
-    margin-top: 12px;
-  }
-  .field-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 16px;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
-  }
-  .field-row label {
-    min-width: 70px;
-    color: #4b5563;
-  }
-  .field-row input[type="text"],
-  .field-row select {
-    padding: 3px 5px;
-    font-size: 0.9rem;
-  }
-
-  .scale-legend-wrap {
-    margin: 0 0 10px;
-    padding: 8px 10px;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    font-size: 0.72rem;
-    color: #475569;
-    line-height: 1.45;
-  }
-  .scale-legend-wrap .scale-legend-title { font-weight: 700; color: #334155; margin-right: 6px; }
-  .scale-legend-wrap .scale-legend-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
-  .scale-legend-wrap .scale-legend-sep { color: #cbd5e1; user-select: none; }
-  .question {
-    margin: 10px 0;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    border-left: 4px solid #1e3a8a;
-    background: #ffffff;
-  }
-  .question.q-row {
-    display: flex;
-    align-items: center;
-    gap: 8px 12px;
-    flex-wrap: wrap;
-  }
-  .question.q-open { display: block; }
-  .q-text {
-    flex: 1 1 200px;
-    font-size: 0.92rem;
-    line-height: 1.4;
-    margin: 0;
-    color: #1e293b;
-    font-weight: 600;
-  }
-  .scale-row {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 6px;
-    margin-top: 0;
-    align-items: stretch;
-  }
-  .scale-row.q-scale { flex: 0 0 auto; }
-  .scale-row label {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    min-width: 34px;
-    min-height: 32px;
-    padding: 4px 8px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    background: #fff;
-    cursor: pointer;
-    user-select: none;
-    font-weight: 700;
-    transition: 0.2s;
-  }
-  .scale-row label:has(input:checked) {
-    background: #1e3a8a;
-    border-color: #1e3a8a;
-    color: #ffffff;
-    font-weight: 700;
-  }
-  .scale-row input {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-    margin: 0;
-  }
-  @media (max-width: 720px) {
-    .question.q-row { flex-direction: column; align-items: stretch; }
-    .scale-row.q-scale { flex-wrap: wrap; }
-  }
-  textarea { width: 100%; min-height: 90px; font-size: 0.9rem; }
-
-  .btn-bar {
-    margin-top: 12px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  button {
-    padding: 6px 10px;
-    font-size: 0.88rem;
-    cursor: pointer;
-    border-radius: 4px;
-    border: 1px solid #d1d5db;
-    background: #ffffff;
-  }
-  button.primary {
-    background: #2563eb;
-    color: #ffffff;
-    border-color: #1d4ed8;
-  }
-  button.success {
-    background: #0f766e;
-    color: #ffffff;
-    border-color: #0d645d;
-  }
-  button.secondary {
-    background: #f3f4f6;
-  }
-
-  /* 問卷 / 報告切換 */
-  .view-toggle { margin-top: 16px; }
-  .view-toggle button.active {
-    background: #111827;
-    color: #ffffff;
-    border-color: #111827;
-  }
-  #view-questions, #view-report { margin-top: 16px; }
-
-  /* 報告區 tabs */
-  #report-tabs {
-    display: flex;
-    gap: 4px;
-    margin-top: 12px;
-    border-bottom: 1px solid #e5e7eb;
-  }
-  #report-tabs button {
-    border-radius: 6px 6px 0 0;
-    border-bottom: none;
-    padding: 5px 10px;
-    font-size: 0.84rem;
-  }
-  #report-tabs button.active {
-    background: #ffffff;
-    border-color: #e5e7eb;
-    border-bottom: 1px solid #ffffff;
-    font-weight: 600;
-  }
-  .report-tab-panel { display: none; padding: 10px 0 0; }
-  .report-tab-panel.active { display: block; }
-
-  #report-print {
-    background: #ffffff;
-    padding: 12px 16px;
-    border-radius: 6px;
-    box-shadow: 0 0 0 1px #e5e7eb;
-    margin-top: 8px;
-  }
-  #report-print h2 {
-    margin-top: 0;
-    font-size: 1.25rem;
-    color: #111827;
-  }
-  .summary-row { font-size: 0.9rem; }
-  .field-label { color: #6b7280; font-size: 0.82rem; }
-  .field-value { font-weight: 600; color: #111827; }
-  .badge {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 600;
-  }
-  .badge-good { background: #ecfdf3; color: #166534; }
-  .badge-ok { background: #eff6ff; color: #1d4ed8; }
-  .badge-warning { background: #fffbeb; color: #92400e; }
-  .badge-bad { background: #fef2f2; color: #b91c1c; }
-  .report-section { margin-bottom: 10px; }
-  .report-section-title {
-    font-weight: 600;
-    color: #111827;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 2px;
-    margin-bottom: 4px;
-    font-size: 0.92rem;
-  }
-  .category-row { font-size: 0.88rem; margin-bottom: 4px; }
-  .category-name { font-weight: 600; }
-
-  .note-small { font-size: 0.78rem; color: #6b7280; }
-  .ai-links {
-    margin: 8px 0 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .btn-ai {
-    display: inline-block;
-    padding: 6px 10px;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    text-decoration: none;
-    color: #0f172a;
-    background: #f8fafc;
-    font-size: 0.82rem;
-    font-weight: 600;
-  }
-  .btn-ai:hover {
-    border-color: #94a3b8;
-    background: #f1f5f9;
-  }
-  tr.dim-row-sparse td { color: #6b7280; }
-
-  @media print {
-    body { background: #ffffff; }
-    .view-toggle, .btn-bar, #report-tabs { display: none; }
-    #view-questions { display: none !important; }
-    #view-report { display: block !important; }
-    #report-print { box-shadow: none; border: none; }
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>信徒靈性生命健康自我審查｜Church OS 5F</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            church: {
+              50: '#fcfbfa', 100: '#f7f4f0', 200: '#eddcc9', 500: '#b88951',
+              600: '#9d6f3a', 700: '#7f5527', 800: '#543614'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', 'Noto Serif TC', sans-serif; }
+    .serif-title { font-family: 'Noto Serif TC', serif; }
+    .tab-active { background: #b88951; color: #fff; }
+    .dim-bar { height: 0.875rem; border-radius: 9999px; transition: width 0.5s ease, background-color 0.3s; }
+    .method-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    .method-table th { background: #f7f4f0; color: #543614; text-align: left; padding: 0.6rem 0.75rem; border-bottom: 2px solid #eddcc9; }
+    .method-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    .method-table tr:hover td { background: #fcfbfa; }
+    @media print { .no-print { display: none !important; } body { background: #fff; } }
+  </style>
 </head>
-<body>
-<h1>🙏 信徒靈性生命健康自我審查（簡要版）</h1>
-<p class="note">所有作答資料僅存你手機/電腦本地，不會上傳雲端。評分請看下方圖例。</p>
+<body class="bg-church-50 text-slate-800 min-h-screen flex flex-col">
 
-<div class="view-toggle">
-  <button type="button" id="btn-show-questions" class="active">📝 填寫問卷</button>
-  <button type="button" id="btn-show-report">📊 查看診斷報告</button>
-</div>
-
-<!-- 問卷視圖 -->
-<div id="view-questions">
-  <!-- 基本背景資料 -->
-  <div class="section-card">
-    <h2>基本背景（供診斷作參考）</h2>
-    <div class="field-row">
-      <label>性別：</label>
-      <label><input type="radio" name="gender" value="男"> 男</label>
-      <label><input type="radio" name="gender" value="女"> 女</label>
-    </div>
-    <div class="field-row">
-      <label>年齡：</label>
-      <select id="ageRange">
-        <option value="">請選擇</option>
-        <option value="18以下">18 歲以下</option>
-        <option value="18-25">18–25</option>
-        <option value="26-35">26–35</option>
-        <option value="36-50">36–50</option>
-        <option value="51-65">51–65</option>
-        <option value="66以上">66 歲或以上</option>
-      </select>
-    </div>
-    <div class="field-row">
-      <label>信主年日：</label>
-      <select id="yearsInFaith">
-        <option value="">請選擇</option>
-        <option value="1年內">1 年以內</option>
-        <option value="1-3年">1–3 年</option>
-        <option value="4-10年">4–10 年</option>
-        <option value="11-20年">11–20 年</option>
-        <option value="20年以上">20 年以上</option>
-      </select>
-    </div>
-    <div class="field-row">
-      <label>第幾代信徒：</label>
-      <select id="faithGeneration">
-        <option value="">請選擇</option>
-        <option value="第一代">第一代（家族中第一代信主）</option>
-        <option value="第二代">第二代</option>
-        <option value="第三代或以上">第三代或以上</option>
-      </select>
-    </div>
-    <p class="note-small">
-      以上只作簡單背景參考，不會用作評分，只幫助你或牧者更好理解情況。
-    </p>
-  </div>
-
-  <!-- 問卷題目 -->
-  <div class="section-card">
-    <div class="scale-legend-wrap" aria-label="評分說明">
-      <div class="scale-legend-row">
-        <span class="scale-legend-title">評分：</span>
-        <span><strong>1</strong> 極少／幾乎沒有</span>
-        <span class="scale-legend-sep">·</span>
-        <span><strong>2–4</strong> 程度漸進</span>
-        <span class="scale-legend-sep">·</span>
-        <span><strong>5</strong> 恆常／成熟</span>
-      </div>
-    </div>
-    <p id="member-answer-progress" class="note-small" aria-live="polite">已答 0／總 13 題</p>
-    <h2>一、讀經與靈修生活</h2>
-
-        <div class="question q-row" data-qid="q1">
-      <div class="q-text">1. 每日固定安靜時光讀經親近神？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q1" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q1" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q1" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q1" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q1" value="5">5</label>
-      </div>
-    </div>
-
-        <div class="question q-row" data-qid="q2">
-      <div class="q-text">2. 讀經能明白真理，願意默想消化？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q2" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q2" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q2" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q2" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q2" value="5">5</label>
-      </div>
-    </div>
-
-        <div class="question q-row" data-qid="q3">
-      <div class="q-text">3. 能將聖經話語實行在日常生活？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q3" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q3" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q3" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q3" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q3" value="5">5</label>
-      </div>
-    </div>
-
-    <h2>二、禱告與親近神關係</h2>
-
-        <div class="question q-row" data-qid="q4">
-      <div class="q-text">4. 每日個人禱告、親近神？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q4" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q4" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q4" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q4" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q4" value="5">5</label>
-      </div>
-    </div>
-
-        <div class="question q-row" data-qid="q5">
-      <div class="q-text">5. 憂慮、軟弱、難處懂得禱告交托？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q5" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q5" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q5" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q5" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q5" value="5">5</label>
-      </div>
-    </div>
-
-        <div class="question q-row" data-qid="q6">
-      <div class="q-text">6. 懂得讚美感恩，不住禱告？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q6" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q6" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q6" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q6" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q6" value="5">5</label>
-      </div>
-    </div>
-
-    <h2>三、教會聚會與肢體事奉</h2>
-
-        <div class="question q-row" data-qid="q7">
-      <div class="q-text">7. 穩定主日聚會，不輕易缺席？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q7" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q7" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q7" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q7" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q7" value="5">5</label>
-      </div>
-    </div>
-
-        <div class="question q-row" data-qid="q8">
-      <div class="q-text">8. 願意參與教會服侍、關顧弟兄姊妹？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q8" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q8" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q8" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q8" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q8" value="5">5</label>
-      </div>
-    </div>
-
-        <div class="question q-row" data-qid="q9">
-      <div class="q-text">9. 對教會有委身，願意一起建造？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q9" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q9" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q9" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q9" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q9" value="5">5</label>
-      </div>
-    </div>
-
-    <h2>四、生命品格與肢體相處</h2>
-
-        <div class="question q-row" data-qid="q10">
-      <div class="q-text">10. 能忍耐、包容、彼此相愛？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q10" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q10" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q10" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q10" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q10" value="5">5</label>
-      </div>
-    </div>
-
-        <div class="question q-row" data-qid="q11">
-      <div class="q-text">11. 願意饒恕人，少發脾氣少爭執？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q11" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q11" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q11" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q11" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q11" value="5">5</label>
-      </div>
-    </div>
-
-    <h2>五、福音負擔與金錢奉獻</h2>
-
-        <div class="question q-row" data-qid="q12">
-      <div class="q-text">12. 有心見證主，關心未信家人朋友？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q12" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q12" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q12" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q12" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q12" value="5">5</label>
-      </div>
-    </div>
-
-        <div class="question q-row" data-qid="q13">
-      <div class="q-text">13. 忠心十一奉獻，看重屬靈財寶？</div>
-      <div class="scale-row q-scale" role="group" aria-label="評分">
-        <label title="1：極少，幾乎沒有"><input type="radio" name="q13" value="1">1</label>
-        <label title="2：偏低"><input type="radio" name="q13" value="2">2</label>
-        <label title="3：中等"><input type="radio" name="q13" value="3">3</label>
-        <label title="4：偏成熟"><input type="radio" name="q13" value="4">4</label>
-        <label title="5：恆常成熟"><input type="radio" name="q13" value="5">5</label>
-      </div>
-    </div>
-
-    <h2>六、內心光景、軟弱與屬靈爭戰</h2>
-
-    <div class="question q-open">
-      <div class="q-text">近期屬靈狀況、心聲、難處、渴望（自由填寫）：</div>
-      <textarea id="openText" placeholder="例如：最近感到被呼召參與短宣，但同時擔心工作與家庭安排……"></textarea>
-    </div>
-  </div>
-
-  <div class="btn-bar">
-    <button type="button" id="btn-generate" class="primary">📊 生成屬靈診斷報告</button>
-    <button type="button" id="btn-save" class="secondary">💾 本地暫存本次評估</button>
-  </div>
-</div>
-
-<!-- 報告視圖 -->
-<div id="view-report" style="display:none;">
-  <div id="report-tabs">
-    <button type="button" data-tab="report-main" class="active">🧾 屬靈診斷報告</button>
-    <button type="button" data-tab="report-standard">📌 各範疇優美標準</button>
-    <button type="button" data-tab="report-ai-help">🤖 AI 跟進提問指南</button>
-  </div>
-
-  <div id="report-print">
-    <!-- 生成後寫入 main tab -->
-  </div>
-
-  <div id="report-standard" class="report-tab-panel">
-    <div class="report-section">
-      <div class="report-section-title">各範疇「健康光景」簡介</div>
-      <ul class="note-small">
-        <li><strong>讀經與靈修：</strong> 有固定與主獨處時間，從神話語得力量，願意按真理調整生活。</li>
-        <li><strong>禱告與親近神：</strong> 習慣把大小事帶到主前，在憂患中經歷平安與引導。</li>
-        <li><strong>聚會與事奉：</strong> 穩定參與崇拜與小組，樂意用恩賜服侍與建立肢體。</li>
-        <li><strong>生命品格：</strong> 在衝突中學習溫柔、饒恕與真誠，逐漸活出基督樣式。</li>
-        <li><strong>福音與奉獻：</strong> 關心未信之人，願意分享福音，也在金錢上信靠與奉獻給主。</li>
-      </ul>
-      <p class="note-small">
-        你可把這一頁列印或截圖，當作自己的禱告與成長目標參考。
-      </p>
-    </div>
-  </div>
-
-  <div id="report-ai-help" class="report-tab-panel">
-    <div class="report-section">
-      <div class="report-section-title">如何用 AI 平台作屬靈跟進？（每一範疇示例）</div>
-      <p class="note-small">
-        你可以把報告重點複製到下列免費可用平台，配合下面每一範疇的提示詞作更深入反思。
-      </p>
-      <div class="ai-links">
-        <a class="btn-ai" href="https://copilot.microsoft.com/" target="_blank" rel="noopener">Microsoft Copilot（免費）</a>
-        <a class="btn-ai" href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini（免費）</a>
-        <a class="btn-ai" href="https://www.kimi.ai/" target="_blank" rel="noopener">Kimi（中文）</a>
-        <a class="btn-ai" href="https://tongyi.aliyun.com/" target="_blank" rel="noopener">通義千問（中文）</a>
+  <header class="bg-white border-b border-church-200 shadow-sm sticky top-0 z-50 no-print">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-[10px] font-semibold text-church-700">
+          <a class="underline" href="assessment-os-hub.html">各項工具量表</a>
+          · 步驟 2 健康診斷
+        </p>
+        <h1 class="text-lg font-bold text-church-800 serif-title">信徒靈性生命健康自我審查</h1>
       </div>
-      <details class="note-small" style="margin-bottom:6px;">
-        <summary><strong>讀經與靈修</strong></summary>
-        提示詞示例：<br>
-        「我在『讀經與靈修』這一項得分大約 ___ 分。<br>
-        請你幫我設計一個為期 4 週的簡單讀經與靈修計劃，適合忙碌信徒。<br>
-        請包括：每天讀多少經文、如何默想、如何用簡短禱告回應。」
-      </details>
-      <details class="note-small" style="margin-bottom:6px;">
-        <summary><strong>禱告與親近神</strong></summary>
-        提示詞示例：<br>
-        「我在禱告生活上覺得自己不太穩定，容易忘記禱告。<br>
-        請你幫我設計一個『每天三次簡短禱告節奏』的建議，每次大約 3–5 分鐘，並給我 2–3 個可用的禱告句子。」
-      </details>
-      <details class="note-small" style="margin-bottom:6px;">
-        <summary><strong>聚會與事奉</strong></summary>
-        提示詞示例：<br>
-        「我在教會聚會與事奉方面的得分大約 ___ 分。<br>
-        請你幫助我分辨：<br>
-        1) 我可以從哪些簡單的服侍開始？<br>
-        2) 如何在工作、家庭和事奉之間保持平衡？<br>
-        3) 與牧者或組長溝通時，可以如何表達自己的負擔與限制？」
-      </details>
-      <details class="note-small" style="margin-bottom:6px;">
-        <summary><strong>生命品格</strong></summary>
-        提示詞示例：<br>
-        「在生命品格與肢體相處方面，我有時容易發脾氣或受傷。<br>
-        請你根據聖經，給我 2–3 個實際的操練建議，幫助我在忍耐、饒恕、和好的方向上成長。」
-      </details>
-      <details class="note-small">
-        <summary><strong>福音與奉獻</strong></summary>
-        提示詞示例：<br>
-        「在福音與奉獻方面，我的得分大約 ___ 分。<br>
-        請你幫助我：<br>
-        1) 訂立未來 3 個月在傳福音上的一個小目標；<br>
-        2) 思考在金錢上的信靠與奉獻，可以有哪一兩個具體調整步驟。」
-      </details>
-    </div>
-  </div>
+      <nav class="flex flex-wrap gap-1">
+        <button type="button" id="tab-btn-intro" class="tab-btn px-3 py-2 text-xs sm:text-sm font-semibold rounded-md tab-active" data-tab="intro">① 理念與說明</button>
+        <button type="button" id="tab-btn-survey" class="tab-btn px-3 py-2 text-xs sm:text-sm font-semibold rounded-md text-church-800 hover:bg-church-100" data-tab="survey">② 開始測評</button>
+        <button type="button" id="tab-btn-report" class="tab-btn px-3 py-2 text-xs sm:text-sm font-semibold rounded-md text-church-800 hover:bg-church-100" data-tab="report">③ 分析報告</button>
+        <button type="button" id="tab-btn-methodology" class="tab-btn px-3 py-2 text-xs sm:text-sm font-semibold rounded-md text-church-800 hover:bg-church-100" data-tab="methodology">④ 輔導員手冊</button>
+      </nav>
+    </div>
+  </header>
 
-  <div class="btn-bar">
-    <button type="button" id="btn-back-questions" class="secondary">⬅ 返回問卷</button>
-    <button type="button" id="btn-pdf" class="success">📄 下載 PDF 報告</button>
-  </div>
-</div>
+  <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-6 md:py-8">
 
-<!-- 圖表與 PDF （只在 localhost / 有網時生效） -->
-<script src="js/survey_ui_common.js"></script>
-<script src="js/spiritual_health_scoring.js"></script>
-<script src="js/member_spiritual_health.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- ========== Tab ① ========== -->
+    <section id="tab-intro" class="space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm border border-church-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-church-100 via-church-50 to-white p-6 md:p-10">
+          <span class="inline-block px-3 py-1 bg-church-200 text-church-800 text-xs font-semibold rounded-full mb-3">靈命健康 · 微型教會套餐必選</span>
+          <h2 class="text-2xl md:text-4xl font-bold serif-title text-church-800 mb-3">為什麼要做靈命自我審查？</h2>
+          <p class="text-sm md:text-base text-slate-600 max-w-3xl leading-relaxed mb-4">
+            健康的事奉必須源於豐盛的內在生命。本量表<strong>不是</strong>考核或排名，而是幫助會友與事工領袖定期「照 X 光」，看清自己在恩典與真理中的真實光景，防止在雜務中枯乾、在忙碌中失焦。
+          </p>
+          <p class="text-sm text-slate-600 max-w-3xl leading-relaxed mb-6">
+            <strong>用途</strong>：約 10 分鐘自評 → 五範疇 1–5 分 → 整體指數與輔導建議 → 可複製 AI 草稿供牧者審核 → 匯入 CTV 戰情室與其他診斷並看。<strong>不會自動派工、不會自動貼標籤。</strong>
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <button type="button" onclick="switchTab('survey')" class="px-5 py-2.5 bg-church-500 hover:bg-church-600 text-white text-sm font-bold rounded-lg shadow-sm">進入測評 →</button>
+            <button type="button" onclick="loadDemoReport()" class="px-5 py-2.5 bg-church-100 hover:bg-church-200 text-church-800 text-sm font-bold rounded-lg">📊 直接查看示範報告</button>
+          </div>
+        </div>
 
-<script>
-  const STORAGE_KEY = 'spiritualSurvey2026-simple';
+        <div class="p-6 md:p-8 grid md:grid-cols-3 gap-6 border-t border-church-100">
+          <div class="p-5 rounded-xl border-l-4 border-church-400 bg-church-50/50">
+            <h3 class="font-bold text-church-800 mb-2">1. 五範疇全面檢視</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">讀經靈修、禱告、聚會事奉、品格、福音與奉獻——13 題 Likert，每範疇 1–5 分平均，<strong>綠 ≥4 · 黃 2.8–4 · 紅 &lt;2.8</strong>。</p>
+          </div>
+          <div class="p-5 rounded-xl border-l-4 border-emerald-400 bg-emerald-50/40">
+            <h3 class="font-bold text-emerald-800 mb-2">2. 屬於你與神的隱密空間</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">這裡像一間安靜的禱告室：你的填答只留在<strong>這台電腦</strong>裡，不會自動傳到雲端，也不會讓別人悄悄看見。你可以誠實面對主，也誠實面對自己。</p>
+          </div>
+          <div class="p-5 rounded-xl border-l-4 border-sky-400 bg-sky-50/40">
+            <h3 class="font-bold text-sky-800 mb-2">3. 分數是陪伴，不是判決</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">Church OS 不會給你貼冷冰的標籤，也不會自動派工。報告與 AI 草稿只是幫牧者、小組長<strong>更懂如何陪伴你</strong>；真正屬靈的溫度，仍在真實的生命同行裡，由人來把關（HITL）。</p>
+          </div>
+        </div>
+      </div>
 
-  function collectData() {
-    const strAnswers = typeof collectMemberAnswers === 'function' ? collectMemberAnswers() : {};
-    const answers = {};
-    let answeredCount = 0;
-    for (let i = 1; i <= 13; i++) {
-      const name = 'q' + i;
-      const s = strAnswers[name] || '';
-      if (s) {
-        answers[name] = Number(s);
-        answeredCount++;
-      } else {
-        answers[name] = null;
-      }
-    }
-    const gender = document.querySelector('input[name="gender"]:checked')?.value || '';
-    const ageRange = document.getElementById('ageRange').value;
-    const yearsInFaith = document.getElementById('yearsInFaith').value;
-    const faithGeneration = document.getElementById('faithGeneration').value;
-    const openText = document.getElementById('openText').value.trim();
+      <!-- 填答者三步走 · 全會友自評 -->
+      <div class="bg-gradient-to-br from-church-100 via-church-50 to-white rounded-2xl p-6 md:p-8 border border-church-200">
+        <h2 class="text-xl md:text-2xl font-bold serif-title text-church-800 mb-2">填答者三步走</h2>
+        <p class="text-sm text-slate-600 mb-4 max-w-3xl leading-relaxed">
+          <strong>全會友自評 · 微型教會套餐必選。</strong>路徑：認識靈命光景 → 與小組／牧者對話 → 再進入 urgent／SMART 規劃。
+        </p>
+        <div class="overflow-x-auto mb-4">
+          <table class="method-table">
+            <thead><tr><th>步驟</th><th>您會得到</th><th>建議行動</th></tr></thead>
+            <tbody>
+              <tr><td class="font-semibold">① 填 13 題</td><td>五範疇 1–5 分 + 整體指數</td><td>誠實自評，勿填「理想基督徒」</td></tr>
+              <tr><td class="font-semibold">② 看 Tab ③ 報告</td><td>燈號 + 三欄輔導 + 風險旗標</td><td>紅燈範疇優先與牧者或小組長談</td></tr>
+              <tr><td class="font-semibold">③ 帶出去</td><td>AI 草稿 + CTV 向量</td><td>→ <a class="text-church-700 underline" href="important-urgent-matrix.html">urgent</a> → <a class="text-church-700 underline" href="Church_Governance_SMART_goals.html">SMART</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-slate-500">培訓師／牧長請先閱讀 <button type="button" onclick="switchTab('methodology')" class="underline text-church-700 font-bold">④ 輔導員手冊</button>。</p>
+      </div>
 
-    return {
-      answers,
-      openText,
-      answeredCount,
-      background: { gender, ageRange, yearsInFaith, faithGeneration }
-    };
-  }
+      <div class="bg-white rounded-2xl border border-church-200 p-6 md:p-8 shadow-sm">
+        <h2 class="text-xl md:text-2xl font-bold serif-title text-church-800 mb-2">從哪裡來 · 往哪裡去？</h2>
+        <p class="text-sm text-slate-600 mb-6 max-w-3xl">本頁在教會規劃故事線中屬<strong>步驟 2 健康診斷</strong>；建議在訂優先序、RACI 之前先建立靈命基線。</p>
+        <div class="grid md:grid-cols-3 gap-4 text-xs">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="font-bold text-slate-800 mb-2">⬅️ 從哪裡來</p>
+            <ul class="list-disc pl-4 space-y-1.5 text-slate-600 leading-relaxed">
+              <li><a class="text-church-700 underline" href="index_plan.html">教會規劃首頁</a></li>
+              <li><a class="text-church-700 underline" href="assessment-os-hub.html">各項工具量表</a></li>
+              <li>微型教會套餐<strong>必選</strong>診斷</li>
+            </ul>
+          </div>
+          <div class="rounded-xl border-2 border-church-400 bg-church-50 p-4">
+            <p class="font-bold text-church-800 mb-2">📍 本頁（約 10 分鐘）</p>
+            <ul class="list-disc pl-4 space-y-1.5 text-slate-700 leading-relaxed">
+              <li>13 題自評 → 五範疇得分</li>
+              <li>整體指數 + 風險旗標</li>
+              <li>三欄輔導 + AI 草稿</li>
+            </ul>
+          </div>
+          <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+            <p class="font-bold text-emerald-900 mb-2">➡️ 往哪裡去</p>
+            <ol class="list-decimal pl-4 space-y-1.5 text-slate-700 leading-relaxed">
+              <li><a class="text-church-700 underline" href="important-urgent-matrix.html">重要 vs 緊急</a></li>
+              <li><a class="text-church-700 underline" href="Church_Governance_SMART_goals.html">教會版 SMART</a></li>
+              <li><a class="text-church-700 underline" href="planning/raci-reflection.html">RACI</a></li>
+              <li><a class="text-church-700 underline" href="cta-os-war-room.html">CTV 戰情室</a></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  function calcSummary(answers, overallScore, answeredCount) {
-    const vals = Object.values(answers).filter(v => v != null);
-    const total = vals.reduce((s, v) => s + v, 0);
-    const avg = vals.length ? total / vals.length : 0;
+    <!-- ========== Tab ② ========== -->
+    <section id="tab-survey" class="hidden space-y-4">
+      <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 no-print">
+        <p class="text-sm text-sky-900"><strong>還沒填完？</strong> 可先查看示範報告了解 Tab ③，再回來填寫。</p>
+        <button type="button" onclick="loadDemoReport()" class="px-4 py-2 bg-white border border-sky-300 text-sky-900 text-sm font-bold rounded-lg hover:bg-sky-100">📊 先看分析報告模板</button>
+      </div>
 
-    let level = '未能評估';
-    let comment = '';
-    let badgeClass = 'badge-ok';
+      <form id="spiritual-form" onsubmit="handleSpiritualSubmit(event)" class="bg-white rounded-2xl border border-church-200 shadow-sm p-5 md:p-8 space-y-5">
+        <div class="border-b border-church-100 pb-4">
+          <h2 class="text-xl font-bold serif-title text-church-800">📝 基本檔案（選填）</h2>
+          <p class="text-xs text-slate-500 mt-1">僅存於本機，用於報告抬頭與 AI 草稿稱呼。</p>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+          <label class="block font-semibold text-slate-700">姓名／代稱
+            <input id="responder_name" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal" placeholder="例如：張弟兄">
+          </label>
+          <label class="block font-semibold text-slate-700">年齡
+            <select id="age_range" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal">
+              <option value="">請選擇</option>
+              <option value="18以下">18 歲以下</option>
+              <option value="18-25">18–25</option>
+              <option value="26-35">26–35</option>
+              <option value="36-50">36–50</option>
+              <option value="51+">51 歲以上</option>
+            </select>
+          </label>
+          <label class="block font-semibold text-slate-700">信主年日
+            <select id="years_in_faith" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal">
+              <option value="">請選擇</option>
+              <option value="1年內">1 年內</option>
+              <option value="1-3年">1–3 年</option>
+              <option value="4-10年">4–10 年</option>
+              <option value="10年以上">10 年以上</option>
+            </select>
+          </label>
+          <label class="block font-semibold text-slate-700">第幾代信徒
+            <select id="faith_generation" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal">
+              <option value="">請選擇</option>
+              <option value="第一代">第一代</option>
+              <option value="第二代">第二代</option>
+              <option value="第三代或以上">第三代或以上</option>
+            </select>
+          </label>
+        </div>
 
-    if (!answeredCount) {
-      comment = '尚未填寫問卷，請先完成部份題目，再生成報告。';
-    } else {
-      const lev = levelFromScore(overallScore);
-      if (lev === 'green') {
-        level = '大致良好';
-        comment = '整體多個範疇落在較健康的光景，請繼續在主裡持守，並考慮陪伴較軟弱的肢體。';
-        badgeClass = 'badge-good';
-      } else if (lev === 'yellow') {
-        level = '需留意';
-        comment = '部份範疇仍有成長空間，建議與牧者或屬靈同伴訂出具體小步驟。';
-        badgeClass = 'badge-warning';
-      } else {
-        level = '需要特別關注';
-        comment = '多個範疇需要關注，建議及早尋求牧者同行與適切支援。';
-        badgeClass = 'badge-bad';
-      }
-    }
+        <div>
+          <div class="flex justify-between text-xs text-slate-600 mb-1">
+            <span id="spiritual-progress-text">進度: 0 / 13</span>
+            <span class="text-slate-400">1＝極少／幾乎沒有 · 5＝恆常／成熟</span>
+          </div>
+          <div class="h-2.5 bg-slate-200 rounded-full overflow-hidden">
+            <div id="spiritual-progress-bar" class="h-full bg-church-500 rounded-full transition-all" style="width:0%"></div>
+          </div>
+        </div>
 
-    return { total, avg: avg.toFixed(2), level, comment, badgeClass };
-  }
+        <div id="spiritual-questions-container" class="space-y-4 text-sm"></div>
 
-  function memberLevelUiForDimScore(score) {
-    if (score == null || !isFinite(score)) return { label: '未能評估', badge: 'badge-ok' };
-    const lev = levelFromScore(score);
-    if (lev === 'green') return { label: '大致良好', badge: 'badge-good' };
-    if (lev === 'yellow') return { label: '需留意', badge: 'badge-warning' };
-    return { label: '需要特別關注', badge: 'badge-bad' };
-  }
+        <div class="rounded-xl border border-church-200 bg-church-50/40 p-4">
+          <label class="block font-semibold text-church-800 mb-2">六、內心光景、軟弱與屬靈爭戰（選填）</label>
+          <textarea id="open_text" rows="3" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="例如：最近感到被呼召參與短宣，但同時擔心工作與家庭安排……"></textarea>
+        </div>
 
-  function buildCategoryAdvice(score, name) {
-    if (score == null) return '';
-    const s = score;
-    if (name === '讀經與靈修') {
-      if (s < 2.5) return '可從每天固定 10–15 分鐘靈修開始，先選一卷福音書，循序慢慢讀。';
-      if (s < 3.5) return '已有基本讀經習慣，可以嘗試加上簡短默想與回應禱告。';
-      return '讀經與靈修較穩定，可考慮陪伴初信者一起讀聖經。';
-    }
-    if (name === '禱告與親近神') {
-      if (s < 2.5) return '可由每天早晚各 3–5 分鐘禱告開始，學習把真實感受帶到主前。';
-      if (s < 3.5) return '已有一定禱告習慣，可刻意加上感恩與讚美。';
-      return '禱告生活較穩定，可考慮參與禱告會，為教會與群體代求。';
-    }
-    if (name === '聚會與事奉') {
-      if (s < 2.5) return '建議先恢復穩定主日崇拜，再尋找合適的小組或團契。';
-      if (s < 3.5) return '聚會大致穩定，可考慮固定參與一個服侍崗位。';
-      return '你在聚會與事奉上已有一定委身，請留意服侍與安息的平衡。';
-    }
-    if (name === '生命品格') {
-      if (s < 2.5) return '遇見衝突時，可先暫停，在禱告裡處理情緒，再作回應。';
-      if (s < 3.5) return '你在忍耐與饒恕上已有操練，可以繼續學習憐憫與真誠對話。';
-      return '在品格與相處上表現成熟，可成為和解與鼓勵者。';
-    }
-    if (name === '福音與奉獻') {
-      if (s < 2.5) return '可先為 1–2 位未信主的家人朋友常常禱告，留意他們需要。';
-      if (s < 3.5) return '對福音與奉獻已有關心，可嘗試一年內邀請幾位朋友參加聚會。';
-      return '你對福音與奉獻有明顯負擔，可考慮參與短宣或宣教代禱小組。';
-    }
-    return '';
-  }
+        <p id="spiritual-form-error" class="hidden text-red-600 text-sm font-semibold"></p>
+        <button type="submit" class="w-full md:w-auto px-8 py-3 bg-church-500 hover:bg-church-600 text-white font-bold rounded-lg shadow-sm">提交並生成屬靈診斷報告</button>
+      </form>
+    </section>
 
-  function buildOpenTextAdvice(openText) {
-    if (!openText) return '';
-    const text = openText.toLowerCase();
-    if (text.includes('短宣')) {
-      return '你提到短宣，建議與牧者或宣教同工傾談，一起分辨時間與地點，並預早禱告與預算預備。';
-    }
-    if (text.includes('憂慮') || text.includes('焦慮')) {
-      return '你分享憂慮，建議把具體的憂慮寫下，逐項交託給主，並尋找可信任的屬靈同伴一起禱告。';
-    }
-    if (text.includes('工作') && text.includes('服侍')) {
-      return '提到工作與服侍的張力，可與牧者／組長一起評估目前節奏，尋求合宜平衡。';
-    }
-    return '你的心聲很寶貴，建議你把這些具體與牧者或屬靈同伴分享，一起禱告與同行。';
-  }
+    <!-- ========== Tab ③ ========== -->
+    <section id="tab-report" class="hidden space-y-6">
 
-  let chartInstance = null;
+      <div id="report-empty" class="bg-white rounded-2xl border border-church-200 p-8 text-center space-y-4 shadow-sm">
+        <p class="text-slate-600">尚無您的測評資料。</p>
+        <p class="text-sm text-slate-500">可先查看示範報告了解版面，或直接開始填寫問卷。</p>
+        <div class="flex flex-wrap justify-center gap-3 no-print">
+          <button type="button" onclick="loadDemoReport()" class="px-5 py-2.5 bg-church-500 text-white font-bold rounded-lg text-sm">📊 查看示範報告</button>
+          <button type="button" onclick="switchTab('survey')" class="px-5 py-2.5 border border-church-300 text-church-800 font-bold rounded-lg text-sm">開始填寫 →</button>
+        </div>
+      </div>
 
-  function renderChart(ctx, scores) {
-    if (!window.Chart) return; // 若 CDN 載唔到，就唔畫，避免報錯
-    const data = {
-      labels: ['讀經與靈修', '禱告與親近神', '聚會與事奉', '生命品格', '福音與奉獻'],
-      datasets: [{
-        label: '平均分（1–5）',
-        data: scores,
-        backgroundColor: 'rgba(37, 99, 235, 0.35)',
-        borderColor: 'rgba(37, 99, 235, 1)',
-        borderWidth: 1
-      }]
-    };
-    const options = {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 5,
-          ticks: { stepSize: 1 }
-        }
-      }
-    };
-    if (chartInstance) chartInstance.destroy();
-    chartInstance = new Chart(ctx, { type: 'bar', data, options });
-  }
+      <div id="report-content" class="hidden space-y-6">
 
-  function renderReport(data) {
-    const { answers, openText, answeredCount, background } = data;
-    const strAnswers = {};
-    for (let i = 1; i <= 13; i++) {
-      const k = 'q' + i;
-      strAnswers[k] = answers[k] != null ? String(answers[k]) : '';
-    }
-    const dimScores = computeDimensionScores(strAnswers, MEMBER_QUESTION_MAP);
-    const overallScore = computeOverallScore(dimScores);
-    const summary = calcSummary(answers, overallScore, answeredCount);
-    const dateStr = new Date().toLocaleString();
+        <p class="text-xs text-indigo-800 bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2 no-print leading-relaxed">
+          牧長／培訓師解讀報告前，請先閱讀 <button type="button" onclick="switchTab('methodology')" class="underline font-bold">④ 輔導員手冊</button>（五範疇 rollup 與旗標理據）。
+        </p>
 
-    const group1 = dimScores.reading_devotion != null ? dimScores.reading_devotion : null;
-    const group2 = dimScores.prayer != null ? dimScores.prayer : null;
-    const group3 = dimScores.church_life != null ? dimScores.church_life : null;
-    const group4 = dimScores.character != null ? dimScores.character : null;
-    const group5 = dimScores.gospel_giving != null ? dimScores.gospel_giving : null;
+        <div class="bg-white rounded-2xl border border-church-200 shadow-sm overflow-hidden">
+          <div class="bg-gradient-to-r from-church-100 to-white px-6 py-5 border-b border-church-100">
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+              <h2 class="text-xl md:text-2xl font-bold serif-title text-church-800">信徒靈命健康 · 分析報告</h2>
+              <span id="report-demo-badge" class="hidden text-xs px-2 py-0.5 bg-amber-200 text-amber-900 rounded-full font-bold">示範資料</span>
+            </div>
+            <p id="report-meta" class="text-xs text-slate-500"></p>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 md:p-6">
+            <div class="rounded-xl bg-church-50 border border-church-100 p-4 text-center">
+              <p class="text-[10px] uppercase tracking-wide text-slate-500 font-bold">填答完整度</p>
+              <p id="metric-completion" class="text-2xl font-black text-church-800 mt-1">—</p>
+            </div>
+            <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-4 text-center">
+              <p class="text-[10px] uppercase tracking-wide text-emerald-700 font-bold">整體指數</p>
+              <p id="metric-overall" class="text-2xl font-black text-emerald-800 mt-1">—</p>
+              <p class="text-[9px] text-emerald-700 mt-1">滿分 5.0</p>
+            </div>
+            <div class="rounded-xl bg-amber-50 border border-amber-100 p-4 text-center">
+              <p class="text-[10px] uppercase tracking-wide text-amber-800 font-bold">整體燈號</p>
+              <p id="metric-level" class="text-2xl font-black text-amber-900 mt-1">—</p>
+            </div>
+            <div class="rounded-xl bg-red-50 border border-red-100 p-4 text-center">
+              <p class="text-[10px] uppercase tracking-wide text-red-700 font-bold">風險旗標</p>
+              <p id="metric-flags" class="text-2xl font-black text-red-800 mt-1">—</p>
+            </div>
+          </div>
+          <div class="px-4 md:px-6 pb-5">
+            <div class="rounded-xl border border-sky-200 bg-sky-50/80 p-4 text-xs text-sky-950 space-y-2">
+              <p class="font-bold text-sky-900 text-sm">📖 分數怎麼讀？有何用？</p>
+              <p class="leading-relaxed">各範疇分數 = 該組題目 1–5 分的<strong>平均</strong>；整體指數 = 五範疇平均。<strong>綠 ≥4.0 · 黃 2.8–4.0 · 紅 &lt;2.8</strong>。橫條越長 = 自評越成熟，<strong>不是與他人比較</strong>。</p>
+              <p class="leading-relaxed"><strong>有何用？</strong> ① 自己禱告與計劃 ② 與牧者／小組長討論 ③ 匯入<a class="underline text-sky-800" href="cta-os-war-room.html">戰情室</a>與其他診斷並看。</p>
+            </div>
+          </div>
+        </div>
 
-    const g1Level = memberLevelUiForDimScore(group1);
-    const g2Level = memberLevelUiForDimScore(group2);
-    const g3Level = memberLevelUiForDimScore(group3);
-    const g4Level = memberLevelUiForDimScore(group4);
-    const g5Level = memberLevelUiForDimScore(group5);
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 bg-white rounded-2xl border border-church-200 p-6 shadow-sm">
+            <h3 class="text-lg font-bold text-church-800 border-b border-church-100 pb-2 mb-4">一句話解讀</h3>
+            <p id="report-summary" class="text-sm text-slate-700 leading-relaxed"></p>
+            <div id="spiritual-flags-zone" class="mt-4 rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-950"></div>
+          </div>
+          <div class="lg:col-span-7 bg-white rounded-2xl border border-church-200 p-6 shadow-sm">
+            <h3 class="text-lg font-bold text-church-800 border-b border-church-100 pb-2 mb-4">五大屬靈範疇（真實得分）</h3>
+            <div class="space-y-4" id="dim-bars">
+              <div>
+                <div class="flex justify-between text-xs font-bold mb-1"><span id="text-dim-reading_devotion" class="text-church-800"></span><span id="val-dim-reading_devotion" class="text-church-700"></span></div>
+                <div class="w-full bg-slate-200 rounded-full"><div id="bar-dim-reading_devotion" class="dim-bar" style="width:0%"></div></div>
+                <p id="hint-dim-reading_devotion" class="text-[10px] text-slate-600 mt-1.5 leading-relaxed"></p>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs font-bold mb-1"><span id="text-dim-prayer" class="text-church-800"></span><span id="val-dim-prayer" class="text-church-700"></span></div>
+                <div class="w-full bg-slate-200 rounded-full"><div id="bar-dim-prayer" class="dim-bar" style="width:0%"></div></div>
+                <p id="hint-dim-prayer" class="text-[10px] text-slate-600 mt-1.5 leading-relaxed"></p>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs font-bold mb-1"><span id="text-dim-church_life" class="text-church-800"></span><span id="val-dim-church_life" class="text-church-700"></span></div>
+                <div class="w-full bg-slate-200 rounded-full"><div id="bar-dim-church_life" class="dim-bar" style="width:0%"></div></div>
+                <p id="hint-dim-church_life" class="text-[10px] text-slate-600 mt-1.5 leading-relaxed"></p>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs font-bold mb-1"><span id="text-dim-character" class="text-church-800"></span><span id="val-dim-character" class="text-church-700"></span></div>
+                <div class="w-full bg-slate-200 rounded-full"><div id="bar-dim-character" class="dim-bar" style="width:0%"></div></div>
+                <p id="hint-dim-character" class="text-[10px] text-slate-600 mt-1.5 leading-relaxed"></p>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs font-bold mb-1"><span id="text-dim-gospel_giving" class="text-church-800"></span><span id="val-dim-gospel_giving" class="text-church-700"></span></div>
+                <div class="w-full bg-slate-200 rounded-full"><div id="bar-dim-gospel_giving" class="dim-bar" style="width:0%"></div></div>
+                <p id="hint-dim-gospel_giving" class="text-[10px] text-slate-600 mt-1.5 leading-relaxed"></p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-    const adv1 = buildCategoryAdvice(group1, '讀經與靈修');
-    const adv2 = buildCategoryAdvice(group2, '禱告與親近神');
-    const adv3 = buildCategoryAdvice(group3, '聚會與事奉');
-    const adv4 = buildCategoryAdvice(group4, '生命品格');
-    const adv5 = buildCategoryAdvice(group5, '福音與奉獻');
-    const openAdvice = buildOpenTextAdvice(openText);
-    const openShort = openText ? (openText.length > 160 ? openText.slice(0, 160) + '…' : openText) : '';
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white rounded-xl p-6 shadow-sm border border-church-200">
+            <div class="w-10 h-10 rounded-lg bg-green-50 text-green-700 flex items-center justify-center text-lg mb-3">💡</div>
+            <h4 class="text-lg font-bold text-church-800 mb-2">1. 個人生命修復節奏</h4>
+            <p id="coaching-personal" class="text-sm text-slate-600 leading-relaxed"></p>
+          </div>
+          <div class="bg-white rounded-xl p-6 shadow-sm border border-church-200">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center text-lg mb-3">🤝</div>
+            <h4 class="text-lg font-bold text-church-800 mb-2">2. 同工協作與界線</h4>
+            <p id="coaching-collaboration" class="text-sm text-slate-600 leading-relaxed"></p>
+          </div>
+          <div class="bg-white rounded-xl p-6 shadow-sm border border-church-200">
+            <div class="w-10 h-10 rounded-lg bg-red-50 text-red-700 flex items-center justify-center text-lg mb-3">⚠️</div>
+            <h4 class="text-lg font-bold text-church-800 mb-2">3. 過勞與倦怠預警</h4>
+            <p id="coaching-burnout" class="text-sm text-slate-600 leading-relaxed"></p>
+          </div>
+        </div>
 
-    const bgPieces = [];
-    if (background.gender) bgPieces.push('性別：' + background.gender);
-    if (background.ageRange) bgPieces.push('年齡：' + background.ageRange);
-    if (background.yearsInFaith) bgPieces.push('信主年日：' + background.yearsInFaith);
-    if (background.faithGeneration) bgPieces.push('第幾代信徒：' + background.faithGeneration);
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-amber-500 border-y border-r border-church-200">
+            <h4 class="text-lg font-bold serif-title text-amber-900 mb-1">👥 同輩討論議題</h4>
+            <ul id="peer-questions" class="text-xs text-slate-700 space-y-2 list-decimal list-inside leading-relaxed"></ul>
+          </div>
+          <div class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-emerald-500 border-y border-r border-church-200">
+            <h4 class="text-lg font-bold serif-title text-emerald-900 mb-1">⛪ 導師／牧者請教</h4>
+            <ul id="mentor-questions" class="text-xs text-slate-700 space-y-2 list-decimal list-inside leading-relaxed"></ul>
+          </div>
+          <div class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-sky-500 border-y border-r border-church-200">
+            <h4 class="text-lg font-bold serif-title text-sky-900 mb-1">🤖 AI 輔導草稿</h4>
+            <p class="text-[10px] text-slate-500 mb-2">複製下方完整 Prompt；<strong>牧者審核後</strong>再使用。</p>
+            <textarea id="ai-prompt-preview" class="w-full h-24 text-[10px] border rounded-lg p-2 bg-slate-50 font-mono leading-relaxed" readonly></textarea>
+            <button type="button" onclick="copyAiPrompt()" class="mt-2 w-full px-3 py-1.5 bg-sky-600 text-white text-xs font-bold rounded-lg">📋 複製 AI Prompt</button>
+          </div>
+        </div>
 
-    let html = '';
-    html += '<div id="report-main" class="report-tab-panel active">';
-    html += '<h2>屬靈診斷報告（簡要版）</h2>';
-    html += '<div id="member-report"></div>';
+        <div class="bg-church-100 rounded-2xl p-6 border border-church-200 space-y-4">
+          <h3 class="text-lg font-bold serif-title text-church-800">🔗 Church OS · CTV 統一報告</h3>
+          <p class="text-xs text-slate-600">六維治理向量摘要，可與戰情室其他工具交叉檢視。</p>
+          <div id="cta-os-report-slot"></div>
+        </div>
 
-    html += '<div class="report-section">';
-    html += '<div class="summary-row"><span class="field-label">評估日期：</span><span class="field-value">' + dateStr + '</span></div>';
-    html += '<div class="summary-row"><span class="field-label">基本背景：</span><span class="field-value">' + (bgPieces.join("；") || '（未填）') + '</span></div>';
-    html += '</div>';
+        <div class="bg-white rounded-xl p-4 border border-church-200 flex flex-wrap gap-2 justify-between items-center no-print">
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="copyAiPrompt()" class="px-4 py-2 bg-church-500 hover:bg-church-600 text-white text-sm font-bold rounded-lg">💬 複製 AI 決策草稿</button>
+            <button type="button" onclick="window.print()" class="px-4 py-2 border border-slate-300 text-sm font-semibold rounded-lg">🖨️ 打印 / PDF</button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <a href="cta-os-war-room.html" class="px-4 py-2 bg-indigo-900 text-white text-sm font-bold rounded-lg">🌐 打開 CTV 戰情室 →</a>
+            <button type="button" onclick="resetSpiritualData()" class="px-4 py-2 border border-red-200 text-red-700 text-sm font-semibold rounded-lg">🔄 清除並重填</button>
+          </div>
+        </div>
+        <textarea id="ai-prompt-box" class="hidden" readonly></textarea>
+      </div>
+    </section>
 
-    html += '<div class="report-section">';
-    html += '<div class="summary-row"><span class="field-label">總分（序分相加）：</span><span class="field-value">' + summary.total + ' / 65</span></div>';
-    html += '<div class="summary-row"><span class="field-label">逐題平均：</span><span class="field-value">' + summary.avg + '</span></div>';
-    html += '<div class="summary-row"><span class="field-label">整體指數（五範疇平均）：</span><span class="field-value">' + (overallScore != null && isFinite(overallScore) ? overallScore.toFixed(1) : '—') + '</span></div>';
-    html += '<div class="summary-row"><span class="field-label">整體評估（2026 門檻）：</span><span class="badge ' + summary.badgeClass + '">' + summary.level + '</span></div>';
-    html += '<div class="note-small">' + summary.comment + '</div>';
-    html += '</div>';
+    <!-- ========== Tab ④ 評分機制解密（輔導者專用） ========== -->
+    <section id="tab-methodology" class="hidden space-y-6">
+      <div class="bg-indigo-950 text-indigo-50 rounded-2xl p-6 md:p-8 border border-indigo-800">
+        <p class="text-[10px] uppercase tracking-widest text-indigo-300 font-bold mb-2">輔導者 · 導師專用</p>
+        <h2 class="text-xl md:text-2xl font-bold serif-title mb-2">📋 輔導員手冊（評分解密）</h2>
+        <p class="text-sm text-indigo-100/90 max-w-3xl leading-relaxed">本頁說明<strong>13 題怎麼 rollup、燈號門檻、旗標為何亮起</strong>，以及<strong>全會友自評怎麼帶</strong>。數字來自 <code class="text-indigo-200">spiritual_pack.js</code>，與 Tab ③ 一致。</p>
+      </div>
+      <div id="methodology-root" class="space-y-6"></div>
+    </section>
+  </main>
 
-    html += '<div class="report-section">';
-    html += '<div class="report-section-title">各範疇得分概覽</div>';
-    html += '<div class="category-row"><span class="category-name">讀經與靈修：</span>' + (group1 == null ? '—' : group1.toFixed(1)) + '　<span class="badge ' + g1Level.badge + '">' + g1Level.label + '</span></div>';
-    html += '<div class="category-row"><span class="category-name">禱告與親近神：</span>' + (group2 == null ? '—' : group2.toFixed(1)) + '　<span class="badge ' + g2Level.badge + '">' + g2Level.label + '</span></div>';
-    html += '<div class="category-row"><span class="category-name">聚會與事奉：</span>' + (group3 == null ? '—' : group3.toFixed(1)) + '　<span class="badge ' + g3Level.badge + '">' + g3Level.label + '</span></div>';
-    html += '<div class="category-row"><span class="category-name">生命品格：</span>' + (group4 == null ? '—' : group4.toFixed(1)) + '　<span class="badge ' + g4Level.badge + '">' + g4Level.label + '</span></div>';
-    html += '<div class="category-row"><span class="category-name">福音與奉獻：</span>' + (group5 == null ? '—' : group5.toFixed(1)) + '　<span class="badge ' + g5Level.badge + '">' + g5Level.label + '</span></div>';
-    html += '<canvas id="scoreChart" style="max-width:100%;height:220px;margin-top:6px;"></canvas>';
-    html += '</div>';
+  <footer class="text-center text-xs text-slate-400 py-6 no-print">信徒靈命健康自評 · Church OS · 本機儲存 · 不取代牧者判斷</footer>
 
-    // 只有至少一個範疇有分數，才顯示優先建議
-    const hasAnyScore = [group1, group2, group3, group4, group5].some(v => v != null);
-    if (hasAnyScore) {
-      html += '<div class="report-section">';
-      html += '<div class="report-section-title">優先成長建議（按目前情況自動生成）</div>';
-      html += '<ul class="note-small">';
-      if (adv1) html += '<li><strong>讀經與靈修：</strong> ' + adv1 + '</li>';
-      if (adv2) html += '<li><strong>禱告與親近神：</strong> ' + adv2 + '</li>';
-      if (adv3) html += '<li><strong>聚會與事奉：</strong> ' + adv3 + '</li>';
-      if (adv4) html += '<li><strong>生命品格：</strong> ' + adv4 + '</li>';
-      if (adv5) html += '<li><strong>福音與奉獻：</strong> ' + adv5 + '</li>';
-      html += '</ul>';
-      html += '<div class="note-small">建議你選其中 1–2 項，作為未來 3–6 個月的實際行動方向。</div>';
-      html += '</div>';
-    }
+  <script src="js/cta_os_runtime.js"></script>
+  <script src="js/spiritual_health_scoring.js"></script>
+  <script src="js/assessment_run_store.js"></script>
+  <script src="js/tool_packs/spiritual_pack.js"></script>
+  <script src="js/cta_os_bridge.js"></script>
+  <script>
+    var LIKERT_LABELS = { 1: "極少", 2: "偏低", 3: "中等", 4: "偏成熟", 5: "恆常" };
+    var LEGACY_STORAGE_KEY = "spiritualSurvey2026-simple";
+    var DIM_KEYS = ["reading_devotion", "prayer", "church_life", "character", "gospel_giving"];
+    var _demoMode = false;
 
-    if (openShort) {
-      html += '<div class="report-section">';
-      html += '<div class="report-section-title">個人心聲摘要</div>';
-      html += '<div class="note-small">' + openShort + '</div>';
-      if (openAdvice) {
-        html += '<div class="note-small" style="margin-top:4px;"><strong>根據心聲的簡短回應：</strong><br>' + openAdvice + '</div>';
-      }
-      html += '</div>';
-    }
+    function switchTab(id) {
+      ["intro", "survey", "report", "methodology"].forEach(function (k) {
+        var sec = document.getElementById("tab-" + k);
+        var btn = document.getElementById("tab-btn-" + k);
+        if (sec) sec.classList.toggle("hidden", k !== id);
+        if (btn) {
+          btn.classList.toggle("tab-active", k === id);
+          btn.classList.toggle("hover:bg-church-100", k !== id);
+          btn.classList.toggle("text-church-800", k !== id);
+        }
+      });
+      if (id === "methodology") renderSpiritualMethodology();
+    }
 
-    html += '</div>'; // end report-main
+    document.querySelectorAll(".tab-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () { switchTab(btn.getAttribute("data-tab")); });
+    });
 
-    document.getElementById('report-print').innerHTML = html;
-    if (typeof renderMemberReport === 'function') {
-      renderMemberReport(dimScores, overallScore, strAnswers);
-    }
+    function dimBorderColor(dim) {
+      var map = {
+        reading_devotion: "border-indigo-400",
+        prayer: "border-sky-400",
+        church_life: "border-emerald-400",
+        character: "border-amber-400",
+        gospel_giving: "border-rose-400"
+      };
+      return map[dim] || "border-church-400";
+    }
 
-    // 柱狀圖（如 Chart.js 有載入）
-    const chartCanvas = document.getElementById('scoreChart');
-    if (chartCanvas && window.Chart) {
-      const ctx = chartCanvas.getContext('2d');
-      renderChart(ctx, [
-        group1 != null ? group1 : 0,
-        group2 != null ? group2 : 0,
-        group3 != null ? group3 : 0,
-        group4 != null ? group4 : 0,
-        group5 != null ? group5 : 0
-      ]);
-    }
-  }
+    function renderSpiritualQuestionnaire(prefill) {
+      var container = document.getElementById("spiritual-questions-container");
+      if (!container || !window.SpiritualPack) return;
+      var html = "";
+      SpiritualPack.QUESTIONS.forEach(function (q, index) {
+        if (q.section) {
+          html += '<h3 class="text-base font-bold text-church-800 pt-2 border-t border-church-100">' + q.section + "</h3>";
+        }
+        html += '<div class="question-card border rounded-xl p-4 border-l-4 ' + dimBorderColor(q.dim) + ' bg-white">';
+        html += '<p class="font-semibold text-slate-800 mb-2"><span class="text-church-700">第 ' + (index + 1) + " 題</span>";
+        html += ' <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-normal">' + (SpiritualPack.DIM_LABELS[q.dim] || "") + "</span>";
+        html += '<br><span class="font-normal text-slate-700 mt-1 inline-block">' + q.label + "</span></p>";
+        html += '<div class="flex flex-wrap gap-2 md:gap-3">';
+        for (var s = 1; s <= 5; s++) {
+          var checked = prefill && prefill[q.id] === s ? " checked" : "";
+          html += '<label class="flex flex-col items-center text-center cursor-pointer min-w-[4.2rem]">';
+          html += '<input type="radio" name="' + q.id + '" value="' + s + '" required class="accent-church-600"' + checked + ">";
+          html += '<span class="text-[10px] mt-1 text-slate-600">' + LIKERT_LABELS[s] + "</span></label>";
+        }
+        html += "</div></div>";
+      });
+      container.innerHTML = html;
+      setupProgressTracker();
+    }
 
-  // 問卷 / 報告切換
-  document.getElementById('btn-show-questions').addEventListener('click', () => {
-    document.getElementById('view-questions').style.display = 'block';
-    document.getElementById('view-report').style.display = 'none';
-    document.getElementById('btn-show-questions').classList.add('active');
-    document.getElementById('btn-show-report').classList.remove('active');
-  });
+    function setupProgressTracker() {
+      var form = document.getElementById("spiritual-form");
+      if (!form) return;
+      function update() {
+        var total = SpiritualPack.QUESTIONS.length;
+        var checked = 0;
+        SpiritualPack.QUESTIONS.forEach(function (q) {
+          if (form.querySelector('input[name="' + q.id + '"]:checked')) checked += 1;
+        });
+        var pct = total ? Math.round((checked / total) * 100) : 0;
+        var bar = document.getElementById("spiritual-progress-bar");
+        var txt = document.getElementById("spiritual-progress-text");
+        if (bar) bar.style.width = pct + "%";
+        if (txt) txt.textContent = "進度: " + checked + " / " + total + " (" + pct + "%)";
+      }
+      form.addEventListener("change", update);
+      update();
+    }
 
-  document.getElementById('btn-show-report').addEventListener('click', () => {
-    document.getElementById('view-questions').style.display = 'none';
-    document.getElementById('view-report').style.display = 'block';
-    document.getElementById('btn-show-report').classList.add('active');
-    document.getElementById('btn-show-questions').classList.remove('active');
-  });
+    function answersFromForm(form) {
+      var map = {};
+      SpiritualPack.QUESTIONS.forEach(function (q) {
+        var el = form.querySelector('input[name="' + q.id + '"]:checked');
+        if (el) map[q.id] = Number(el.value);
+      });
+      return map;
+    }
 
-  document.getElementById('btn-back-questions').addEventListener('click', () => {
-    document.getElementById('btn-show-questions').click();
-  });
+    function prefillFromRun(run) {
+      if (!run || !run.raw_answers) return null;
+      var map = {};
+      run.raw_answers.forEach(function (row) {
+        if (row.q != null && row.value != null) map[row.q] = row.value;
+      });
+      return map;
+    }
 
-  // 報告 Tabs
-  document.getElementById('report-tabs').addEventListener('click', (e) => {
-    if (e.target.tagName !== 'BUTTON') return;
-    const tab = e.target.getAttribute('data-tab');
-    document.querySelectorAll('#report-tabs button').forEach(btn => btn.classList.remove('active'));
-    e.target.classList.add('active');
-    document.querySelectorAll('.report-tab-panel').forEach(panel => panel.classList.remove('active'));
-    if (tab === 'report-main') document.getElementById('report-main').classList.add('active');
-    if (tab === 'report-standard') document.getElementById('report-standard').classList.add('active');
-    if (tab === 'report-ai-help') document.getElementById('report-ai-help').classList.add('active');
-  });
+    function profileFromForm() {
+      return {
+        name: (document.getElementById("responder_name") || {}).value || "",
+        age_range: (document.getElementById("age_range") || {}).value || "",
+        years_in_faith: (document.getElementById("years_in_faith") || {}).value || "",
+        faith_generation: (document.getElementById("faith_generation") || {}).value || "",
+        open_text: (document.getElementById("open_text") || {}).value || ""
+      };
+    }
 
-  document.getElementById('btn-generate').addEventListener('click', () => {
-    const data = collectData();
-    renderReport(data);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        answers: data.answers,
-        openText: data.openText,
-        background: data.background,
-        savedAt: new Date().toISOString()
-      }));
-    } catch (e) {}
-    document.getElementById('view-questions').style.display = 'none';
-    document.getElementById('view-report').style.display = 'block';
-    document.getElementById('btn-show-report').classList.add('active');
-    document.getElementById('btn-show-questions').classList.remove('active');
-    if (window.__CTAOS_refresh) window.__CTAOS_refresh();
-  });
+    function saveLegacyStorage(answers, profile) {
+      try {
+        localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify({
+          answers: answers,
+          openText: profile.open_text || "",
+          background: {
+            ageRange: profile.age_range,
+            yearsInFaith: profile.years_in_faith,
+            faithGeneration: profile.faith_generation
+          },
+          savedAt: new Date().toISOString()
+        }));
+      } catch (e) {}
+    }
 
-  document.getElementById('btn-save').addEventListener('click', () => {
-    const data = collectData();
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        answers: data.answers,
-        openText: data.openText,
-        background: data.background,
-        savedAt: new Date().toISOString()
-      }));
-      alert('已暫存於本機。');
-    } catch (e) {
-      alert('暫存失敗');
-    }
-  });
-</script>
-<script src="js/cta_os_runtime.js"></script>
-<script src="js/cta_os_bridge.js"></script>
-<script>
-  CTAOSBridge.initPage({
-    toolId: 'spiritual',
-    reportAnchor: '#view-report',
-    watchStorage: ['spiritualSurvey2026-simple'],
-    fab: true
-  });
-</script>
+    function levelLabelZh(level) {
+      if (level === "green") return "綠／大致良好";
+      if (level === "yellow") return "黃／需留意";
+      return "紅／需關注";
+    }
+
+    function barColorForScore(score) {
+      if (score == null || !isFinite(score)) return "#94a3b8";
+      if (score >= SpiritualPack.THRESHOLDS.green) return "#10b981";
+      if (score >= SpiritualPack.THRESHOLDS.yellow) return "#f59e0b";
+      return "#ef4444";
+    }
+
+    function buildSummaryText(run) {
+      var d = run.derived || {};
+      var overall = d.overall_score;
+      var level = d.overall_level;
+      if (level === "green") {
+        return "整體靈命指數大致良好。請維持讀經、禱告與聚會節奏，並考慮陪伴一位初信者或較軟弱的肢體。";
+      }
+      if (level === "yellow") {
+        return "整體落在黃色區間：已有基礎，但部分範疇需要調整。建議選 1～2 個最弱範疇，訂下未來 3 個月可守住的小步驟，並與牧者或小組長對齊。";
+      }
+      if (overall != null) {
+        return "整體指數偏低，優先恢復基本屬靈習慣（短讀＋短禱＋主日），再談事奉加擔。請主動尋求牧者陪伴，不要獨自硬扛。";
+      }
+      return "請完成足夠題目後再解讀報告。";
+    }
+
+    function dimHintHtml(dimKey, score, level) {
+      var hint = (SpiritualPack.DIM_HINTS && SpiritualPack.DIM_HINTS[dimKey]) || "";
+      var action = level === "red"
+        ? "→ 建議優先與牧者／小組長約談，訂下可守住的小步驟。"
+        : level === "yellow"
+          ? "→ 可選定一項具體行動，每兩週檢視一次。"
+          : "→ 維持節奏，並考慮陪伴他人。";
+      return hint + " <span class=\"font-bold text-church-800\">" + action + "</span>";
+    }
+
+    function handleSpiritualSubmit(event) {
+      event.preventDefault();
+      _demoMode = false;
+      var errEl = document.getElementById("spiritual-form-error");
+      if (errEl) { errEl.classList.add("hidden"); errEl.textContent = ""; }
+      var form = document.getElementById("spiritual-form");
+      var answers = answersFromForm(form);
+      var profile = profileFromForm();
+      var built = SpiritualPack.buildRun(answers, profile);
+      if (!built.ok) {
+        if (errEl) { errEl.textContent = (built.errors || []).join(" "); errEl.classList.remove("hidden"); }
+        return;
+      }
+      var saved = AssessmentRunStore.saveRun(built.run);
+      if (!saved.ok) {
+        if (errEl) { errEl.textContent = (saved.errors || ["存檔失敗"]).join(" "); errEl.classList.remove("hidden"); }
+        return;
+      }
+      saveLegacyStorage(answers, profile);
+      renderSpiritualReport(saved.run, false);
+      switchTab("report");
+      if (typeof window.__CTAOS_refresh === "function") window.__CTAOS_refresh();
+    }
+
+    function loadDemoReport() {
+      _demoMode = true;
+      var built = SpiritualPack.buildDemoRun();
+      if (!built.ok) return;
+      renderSpiritualReport(built.run, true);
+      switchTab("report");
+    }
+
+    function renderSpiritualReport(run, isDemo) {
+      isDemo = isDemo || (run && run.is_demo);
+      var empty = document.getElementById("report-empty");
+      var content = document.getElementById("report-content");
+      if (!run) {
+        if (empty) empty.classList.remove("hidden");
+        if (content) content.classList.add("hidden");
+        return;
+      }
+      if (empty) empty.classList.add("hidden");
+      if (content) content.classList.remove("hidden");
+
+      var badge = document.getElementById("report-demo-badge");
+      if (badge) badge.classList.toggle("hidden", !isDemo);
+
+      var d = run.derived || {};
+      var dimScores = d.dim_scores || {};
+      var dimLevels = d.dim_levels || {};
+
+      DIM_KEYS.forEach(function (key) {
+        var score = dimScores[key];
+        var pct = score != null && isFinite(score) ? (score / 5) * 100 : 0;
+        var barEl = document.getElementById("bar-dim-" + key);
+        var textEl = document.getElementById("text-dim-" + key);
+        var valEl = document.getElementById("val-dim-" + key);
+        var hintEl = document.getElementById("hint-dim-" + key);
+        if (barEl) {
+          barEl.style.width = pct + "%";
+          barEl.style.backgroundColor = barColorForScore(score);
+        }
+        if (textEl) textEl.textContent = SpiritualPack.DIM_LABELS[key] || key;
+        if (valEl) valEl.textContent = score != null && isFinite(score) ? score.toFixed(1) + " / 5.0 · " + levelLabelZh(dimLevels[key]) : "—";
+        if (hintEl) hintEl.innerHTML = score != null ? dimHintHtml(key, score, dimLevels[key]) : "";
+      });
+
+      var completionPct = Math.round((run.authenticity_score || 0) * 100);
+      var setM = function (id, t) { var el = document.getElementById(id); if (el) el.textContent = t; };
+      setM("metric-completion", completionPct + "%");
+      setM("metric-overall", d.overall_score != null ? d.overall_score.toFixed(1) : "—");
+      setM("metric-level", levelLabelZh(d.overall_level));
+      setM("metric-flags", (run.risk_flags && run.risk_flags.length) ? run.risk_flags.length + " 項" : "0");
+
+      var meta = document.getElementById("report-meta");
+      if (meta) {
+        var p = run.profile || {};
+        meta.textContent = (p.name || (isDemo ? "示範會友" : "匿名會友")) +
+          (p.age_range ? " · " + p.age_range : "") +
+          (isDemo ? " · 示範報告（未寫入您的本機紀錄）" : " · " + new Date(run.timestamp).toLocaleString());
+      }
+
+      var sumEl = document.getElementById("report-summary");
+      if (sumEl) sumEl.textContent = buildSummaryText(run);
+
+      var flagZone = document.getElementById("spiritual-flags-zone");
+      if (flagZone) {
+        var flags = run.risk_flags || [];
+        if (!flags.length) {
+          flagZone.innerHTML = "<strong>風險旗標</strong>：目前無明顯結構性預警；仍建議每季重測，並與牧者保持對話。";
+        } else {
+          flagZone.innerHTML = "<strong>風險旗標</strong><ul class=\"list-disc pl-4 mt-1 space-y-0.5\">" +
+            flags.map(function (f) {
+              return "<li>" + ((SpiritualPack.FLAG_DESCRIPTIONS && SpiritualPack.FLAG_DESCRIPTIONS[f]) || f) + "</li>";
+            }).join("") + "</ul>";
+        }
+      }
+
+      var coach = run.coaching || {};
+      ["coaching-personal", "coaching-collaboration", "coaching-burnout"].forEach(function (id, i) {
+        var keys = ["growth", "collaboration", "redflag"];
+        var el = document.getElementById(id);
+        if (el) el.textContent = coach[keys[i]] || "";
+      });
+
+      function fillList(id, items) {
+        var ul = document.getElementById(id);
+        if (!ul) return;
+        ul.innerHTML = "";
+        (items || []).forEach(function (t) {
+          var li = document.createElement("li");
+          li.textContent = t;
+          ul.appendChild(li);
+        });
+      }
+      fillList("peer-questions", coach.peer_questions);
+      fillList("mentor-questions", coach.mentor_questions);
+
+      var prompt = run.ai_prompt || SpiritualPack.buildAiPrompt(run);
+      var aiBox = document.getElementById("ai-prompt-box");
+      var aiPrev = document.getElementById("ai-prompt-preview");
+      if (aiBox) aiBox.value = prompt;
+      if (aiPrev) aiPrev.value = prompt;
+
+      if (!isDemo && typeof window.__CTAOS_refresh === "function") {
+        setTimeout(function () { window.__CTAOS_refresh(); }, 100);
+      }
+    }
+
+    function copyAiPrompt() {
+      var box = document.getElementById("ai-prompt-box") || document.getElementById("ai-prompt-preview");
+      if (!box || !navigator.clipboard) return;
+      navigator.clipboard.writeText(box.value || "").then(function () {
+        alert("AI 決策草稿已複製！請貼至 Kimi 或 ChatGPT，由牧者審核後使用。");
+      });
+    }
+
+    function resetSpiritualData() {
+      if (!confirm("清除本機 spiritual 測評紀錄？")) return;
+      _demoMode = false;
+      AssessmentRunStore.clearLatest("spiritual");
+      try { localStorage.removeItem(LEGACY_STORAGE_KEY); } catch (e) {}
+      document.getElementById("spiritual-form").reset();
+      renderSpiritualQuestionnaire();
+      document.getElementById("report-content").classList.add("hidden");
+      document.getElementById("report-empty").classList.remove("hidden");
+      switchTab("survey");
+    }
+
+    function renderSpiritualMethodology() {
+      var host = document.getElementById("methodology-root");
+      if (!host || !window.SpiritualPack) return;
+      var P = SpiritualPack;
+      var dimOrder = ["reading_devotion", "prayer", "church_life", "character", "gospel_giving"];
+      var dimRows = "";
+      dimOrder.forEach(function (dim) {
+        var qs = P.QUESTIONS.filter(function (q) { return q.dim === dim; });
+        var qLabels = qs.map(function (q) {
+          var n = P.QUESTIONS.indexOf(q) + 1;
+          return "Q" + n;
+        }).join("、");
+        dimRows += "<tr><td class=\"font-semibold text-church-800\">" + (P.DIM_LABELS[dim] || dim) +
+          "</td><td>" + qLabels + "</td><td>各題 1–5 分<strong>算術平均</strong>（滿分 5.0）</td><td class=\"text-slate-600\">" +
+          ((P.DIM_HINTS && P.DIM_HINTS[dim]) || "") + "</td></tr>";
+      });
+      var flagRows = "";
+      var flagLogic = {
+        LOW_COMPLETION: "已作答題數 &lt; " + P.THRESHOLDS.min_answered + " 題（完整度不足，報告僅供參考）",
+        DIM_CRITICAL: "任一範疇平均分 &lt; " + P.THRESHOLDS.yellow + "（紅燈）",
+        OVERALL_YELLOW: "整體指數落在黃燈區間（" + P.THRESHOLDS.yellow + "～" + P.THRESHOLDS.green + "）",
+        INNER_LIFE_LOW: "整體指數 &lt; " + P.THRESHOLDS.yellow + "（紅燈）"
+      };
+      Object.keys(P.FLAG_DESCRIPTIONS || {}).forEach(function (key) {
+        flagRows += "<tr><td class=\"font-mono text-xs text-church-700\">" + key +
+          "</td><td class=\"text-slate-600\">" + (flagLogic[key] || "—") +
+          "</td><td>" + P.FLAG_DESCRIPTIONS[key] + "</td></tr>";
+      });
+      var fvRows = "";
+      if (P.DIM_PROJECTION) {
+        dimOrder.forEach(function (dim) {
+          var proj = P.DIM_PROJECTION[dim] || {};
+          fvRows += "<tr><td>" + (P.DIM_LABELS[dim] || dim) + "</td><td class=\"text-xs font-mono\">P " + (proj.P || 0) +
+            " · S " + (proj.S || 0) + " · G " + (proj.G || 0) + " · C " + (proj.C || 0) +
+            " · R " + (proj.R || 0) + " · F " + (proj.F || 0) +
+            "</td><td class=\"text-slate-600 text-xs\">各範疇 1–5 分換算為 0–100 後，依權重加總成 CTV 六維向量，供戰情室並列檢視。</td></tr>";
+        });
+      }
+      host.innerHTML =
+        '<div class="bg-white rounded-2xl border border-church-200 p-6 shadow-sm">' +
+        '<h3 class="text-lg font-bold text-church-800 mb-3">1. 五範疇題目映射</h3>' +
+        '<p class="text-xs text-slate-600 mb-4">每範疇分數 = 該組 Likert 題（1＝極少／5＝恆常）的平均值；<strong>整體指數</strong> = 五範疇平均。</p>' +
+        '<div class="overflow-x-auto"><table class="method-table"><thead><tr><th>範疇</th><th>題號</th><th>計算方式</th><th>牧養意涵</th></tr></thead><tbody>' +
+        dimRows + "</tbody></table></div></div>" +
+        '<div class="bg-white rounded-2xl border border-church-200 p-6 shadow-sm">' +
+        '<h3 class="text-lg font-bold text-church-800 mb-3">2. 燈號門檻（為什麼是綠／黃／紅？）</h3>' +
+        '<div class="overflow-x-auto"><table class="method-table"><thead><tr><th>燈號</th><th>分數門檻</th><th>向填答者怎麼說</th></tr></thead><tbody>' +
+        '<tr><td>🟢 綠燈</td><td>≥ ' + P.THRESHOLDS.green + '</td><td>這一塊大致穩定，可持守並考慮陪伴他人。</td></tr>' +
+        '<tr><td>🟡 黃燈</td><td>' + P.THRESHOLDS.yellow + '～' + P.THRESHOLDS.green + '</td><td>不是定罪，而是提醒：某方面可能需要調整節奏或尋求同伴。</td></tr>' +
+        '<tr><td>🔴 紅燈</td><td>&lt; ' + P.THRESHOLDS.yellow + '</td><td>優先恢復基本屬靈習慣，並與牧者／小組長談談，不要獨自硬扛。</td></tr>' +
+        "</tbody></table></div></div>" +
+        '<div class="bg-white rounded-2xl border border-church-200 p-6 shadow-sm">' +
+        '<h3 class="text-lg font-bold text-church-800 mb-3">3. 風險旗標（Tab ③ 預警從哪來？）</h3>' +
+        '<div class="overflow-x-auto"><table class="method-table"><thead><tr><th>旗標代碼</th><th>觸發條件</th><th>輔導話語</th></tr></thead><tbody>' +
+        flagRows + "</tbody></table></div>" +
+        '<p class="text-xs text-slate-500 mt-3">本量表<strong>沒有</strong>反向防偽題；Tab ③「填答完整度」= 已答題數 ÷ 13，與 urgent 矩陣的「誠實度」算法不同。</p></div>' +
+        (fvRows ? ('<div class="bg-white rounded-2xl border border-church-200 p-6 shadow-sm">' +
+        '<h3 class="text-lg font-bold text-church-800 mb-3">4. CTV 特徵向量投影（戰情室用）</h3>' +
+        '<div class="overflow-x-auto"><table class="method-table"><thead><tr><th>範疇</th><th>P/S/G/C/R/F 權重</th><th>用途</th></tr></thead><tbody>' +
+        fvRows + "</tbody></table></div></div>") : "") +
+        '<div class="bg-white rounded-2xl border border-church-200 p-6 shadow-sm">' +
+        '<h3 class="text-lg font-bold text-church-800 mb-3">5. 輔導員怎麼帶？（約 20 分鐘）</h3>' +
+        '<ul class="text-sm text-slate-600 space-y-2 list-disc list-inside leading-relaxed">' +
+        '<li>強調：<strong>不是考核</strong>，是與主、與同伴的誠實對話。</li>' +
+        '<li>紅燈範疇只選 1–2 個具體行動（例如固定晨更 15 分鐘）。</li>' +
+        '<li>已答 &lt; ' + P.THRESHOLDS.min_answered + ' 題 → 勿解讀 rollup，請補填。</li>' +
+        '<li>勿公開排名或寫進人事檔案。</li></ul></div>' +
+        '<div class="bg-white rounded-2xl border border-church-200 p-6 shadow-sm">' +
+        '<h3 class="text-lg font-bold text-church-800 mb-3">6. 與 urgent / SMART / 戰情室配搭</h3>' +
+        '<ul class="text-sm text-slate-600 space-y-2 list-disc list-inside leading-relaxed">' +
+        '<li><strong>→ urgent</strong>：靈命紅燈時，先談 Q2 是否被挤掉。</li>' +
+        '<li><strong>→ SMART</strong>：把要守住的靈修／聚會節奏寫成試行目標。</li>' +
+        '<li><strong>→ 戰情室</strong>：與 ALDA、urgent 並看；仍是提醒，不會自動派工。</li></ul></div>' +
+        '<div class="bg-white rounded-2xl border border-church-200 p-6 shadow-sm">' +
+        '<h3 class="text-lg font-bold text-church-800 mb-3">7. 使用邊界與隱私</h3>' +
+        '<ul class="text-sm text-slate-600 space-y-2 list-disc list-inside leading-relaxed">' +
+        '<li>填答只存本機；不取代牧者／小組長判斷。</li>' +
+        '<li>AI 草稿須 HITL 審核。</li>' +
+        '<li>微型教會套餐：建議全會友每季自評一次，牧者只看匯總趨勢，不看個人 raw 除非本人分享。</li></ul></div>';
+    }
+
+    function initSpiritualPage() {
+      var latest = AssessmentRunStore.loadLatest("spiritual");
+      var prefill = latest && !latest.is_demo ? prefillFromRun(latest) : null;
+      renderSpiritualQuestionnaire(prefill);
+      if (latest && latest.profile && !latest.is_demo) {
+        var n = document.getElementById("responder_name");
+        var a = document.getElementById("age_range");
+        var y = document.getElementById("years_in_faith");
+        var f = document.getElementById("faith_generation");
+        var o = document.getElementById("open_text");
+        if (n && latest.profile.name) n.value = latest.profile.name;
+        if (a && latest.profile.age_range) a.value = latest.profile.age_range;
+        if (y && latest.profile.years_in_faith) y.value = latest.profile.years_in_faith;
+        if (f && latest.profile.faith_generation) f.value = latest.profile.faith_generation;
+        if (o && latest.profile.open_text) o.value = latest.profile.open_text;
+      }
+      if (latest && !latest.is_demo) renderSpiritualReport(latest, false);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      renderSpiritualMethodology();
+      initSpiritualPage();
+      CTAOSBridge.initPage({
+        toolId: "spiritual",
+        reportAnchor: "#cta-os-report-slot",
+        fab: false,
+        autoRefresh: false,
+        watchStorage: [AssessmentRunStore.latestKey("spiritual"), LEGACY_STORAGE_KEY]
+      });
+    });
+  </script>
 </body>
 </html>

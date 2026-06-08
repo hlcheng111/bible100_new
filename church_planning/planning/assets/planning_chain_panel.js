@@ -65,7 +65,7 @@
       l2h +
       "<p class=\"chain-pdca\"><strong>P4／PDCA：</strong> " +
       esc(r.pdcaNote) +
-      " <a href=\"../pdca-planning.html\" target=\"_blank\" rel=\"noopener\">pdca-planning.html</a></p>" +
+      " <a href=\"../Church_Governance_PDCA_cycle.html\" target=\"_blank\" rel=\"noopener\">神國管家 PDCA 檢核儀</a></p>" +
       "<div class=\"chain-next\"><strong>P6 · Next：</strong> " +
       "<a href=\"swot.html\" target=\"phase1-frame\">SWOT</a> · " +
       "<a href=\"goals.html\" target=\"phase1-frame\">SMART</a> · " +

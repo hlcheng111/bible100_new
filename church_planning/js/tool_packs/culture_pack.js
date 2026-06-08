@@ -1,13 +1,13 @@
 /**
- * 堂會 DNA 共鳴診斷（culture）· 異象與價值共鳴 · CTV-C
- * 24 題 Likert · 四 DNA 向度 · 非篩選人事
+ * 文化契合度（culture）· 異象與價值共鳴 · CTV-C
+ * 24 題 Likert · 四向度 rollup · 非篩選人事
  */
 (function (global) {
   "use strict";
 
   var TOOL_ID = "culture";
-  var TOOL_LABEL = "異象與價值共鳴";
-  var PACK_VERSION = 1;
+  var TOOL_LABEL = "文化契合度";
+  var PACK_VERSION = 2;
 
   var DIMENSIONS = ["P", "S", "G", "C", "R", "F"];
 
@@ -60,10 +60,25 @@
 
   var THRESHOLDS = { green: 4.0, yellow: 2.8, min_answered: 24, trust_breach: 3.0 };
 
+  /** Cameron & Quinn CVAM 四象限（教會語境映射） */
+  var CVAM_KEYS = ["clan", "adhocracy", "market", "hierarchy"];
+  var CVAM_LABELS = {
+    clan: "Clan｜家庭牧養",
+    adhocracy: "Adhocracy｜先知外展",
+    market: "Market｜使徒推動力",
+    hierarchy: "Hierarchy｜長執治理"
+  };
+  var CVAM_DIM_BLEND = {
+    clan: { servant_life: 0.55, team_trust: 0.45 },
+    adhocracy: { vision_commit: 0.5, truth_practice: 0.5 },
+    market: { vision_commit: 0.75, servant_life: 0.25 },
+    hierarchy: { truth_practice: 0.55, team_trust: 0.45 }
+  };
+
   var FLAG_DESCRIPTIONS = {
-    LOW_COMPLETION: "作答少於 24 題，DNA 報告僅供初步對話。",
+    LOW_COMPLETION: "作答少於 24 題，文化契合度報告僅供初步對話。",
     TRUST_BREACH:
-      "團隊信任均分低於 3.0：核心 DNA 發生信任破口。此時強推大型五年擴建計劃將面臨內部張力，建議優先滾動 NCD「相親相愛的關係」。",
+      "團隊信任均分低於 3.0：團隊信任發生破口。此時強推大型五年擴建計劃將面臨內部張力，建議優先滾動 NCD「相親相愛的關係」。",
     VISION_WEAK: "異象認同偏弱：五年計劃前宜先回到異象對齊退修。",
     SERVANT_DRIFT: "僕人生命向度偏弱：帶領文化可能偏控制或過勞驅動。",
     TRUTH_GAP: "真理實踐偏弱：教導與生活可能脫節，宜加強查經與陪談。"
@@ -127,11 +142,72 @@
     return flags;
   }
 
+  function dimToPercent(avg) {
+    if (avg == null || !isFinite(avg)) return null;
+    return Math.round((avg / 5) * 100);
+  }
+
+  function computeCvamScores(dimScores) {
+    var out = {};
+    CVAM_KEYS.forEach(function (k) {
+      var blend = CVAM_DIM_BLEND[k] || {};
+      var sum = 0;
+      var w = 0;
+      Object.keys(blend).forEach(function (dk) {
+        var v = dimScores[dk];
+        if (v != null && isFinite(v)) {
+          sum += v * blend[dk];
+          w += blend[dk];
+        }
+      });
+      out[k] = w > 0 ? dimToPercent(sum / w) : null;
+    });
+    return out;
+  }
+
+  /** 文化偏離係數 Cv：四象限與均衡基線 50% 的平均絕對偏差 */
+  function computeCultureDeviation(cvam) {
+    var vals = CVAM_KEYS.map(function (k) { return cvam[k]; }).filter(function (x) { return x != null; });
+    if (!vals.length) return null;
+    var baseline = 50;
+    var dev = vals.reduce(function (a, v) { return a + Math.abs(v - baseline); }, 0) / vals.length;
+    return Math.round(dev);
+  }
+
+  /** 屬靈信任破口值：team_trust < 3.0 時線性映射 0–100 */
+  function computeTrustBreachScore(teamTrust) {
+    if (teamTrust == null || !isFinite(teamTrust)) return 0;
+    if (teamTrust >= THRESHOLDS.trust_breach) return 0;
+    return Math.min(100, Math.round(((THRESHOLDS.trust_breach - teamTrust) / THRESHOLDS.trust_breach) * 100));
+  }
+
+  function loadUpstreamChain(store) {
+    store = store || global.AssessmentRunStore;
+    if (!store || typeof store.loadLatest !== "function") {
+      return { ok: false, source: "store_missing", runs: {} };
+    }
+    var ncd = store.loadLatest("ncd");
+    var swot = store.loadLatest("swot");
+    var ncdMin = ncd && ncd.derived && ncd.derived.minimum_factor ? ncd.derived.minimum_factor : null;
+    var relationHint = null;
+    if (ncdMin && (ncdMin.key === "loving_relationships" || String(ncdMin.label || "").indexOf("相親相愛") >= 0)) {
+      relationHint = "NCD 最小因子指向「相親相愛的關係」— 文化測評請優先關注團隊信任向度。";
+    }
+    return {
+      ok: !!(ncd || swot),
+      source: "assessment_run_store",
+      runs: { ncd: ncd, swot: swot },
+      ncd_minimum: ncdMin,
+      ncd_relation_focus: relationHint,
+      swot_primary: swot && swot.derived && swot.derived.focus_strategy ? swot.derived.focus_strategy : null
+    };
+  }
+
   function buildCoaching(dimScores, flags) {
     return {
       growth:
         dimScores.vision_commit != null && dimScores.vision_commit >= 4
-          ? "異象 DNA 尚穩：可把五年計劃寫成「異象延伸故事」，讓會眾聽得懂。"
+          ? "異象認同尚穩：可把五年計劃寫成「異象延伸故事」，讓會眾聽得懂。"
           : "異象需再對齊：建議長執退修，用兩句話重述「我們是誰、往哪去」。",
       collaboration:
         flags.indexOf("TRUST_BREACH") >= 0
@@ -169,6 +245,9 @@
     var flags = computeRiskFlags(dimScores, check.answeredCount);
     var parts = DIM_KEYS.map(function (k) { return dimScores[k]; }).filter(function (x) { return x != null; });
     var dnaAvg = parts.length ? parts.reduce(function (a, b) { return a + b; }, 0) / parts.length : null;
+    var cvam = computeCvamScores(dimScores);
+    var cultureResonance = dnaAvg != null ? Math.round((dnaAvg / 5) * 100) : null;
+    var upstream = opts.skip_upstream ? null : loadUpstreamChain();
     var run = {
       schema_version: PACK_VERSION,
       tool_id: TOOL_ID,
@@ -176,9 +255,14 @@
       profile: Object.assign({ church_label: "" }, profile || {}),
       authenticity_score: round1(check.answeredCount / QUESTIONS.length),
       feature_vector: computeFeatureVector(check.answers),
+      upstream_snapshot: upstream && upstream.ok ? { ncd_minimum: upstream.ncd_minimum, swot_primary: upstream.swot_primary } : null,
       derived: {
         dim_scores: dimScores,
-        dna_resonance_score: dnaAvg != null ? Math.round((dnaAvg / 5) * 100) : null,
+        cvam_scores: cvam,
+        culture_deviation_cv: computeCultureDeviation(cvam),
+        trust_breach_score: computeTrustBreachScore(dimScores.team_trust),
+        culture_resonance_score: cultureResonance,
+        dna_resonance_score: cultureResonance,
         answered_count: check.answeredCount,
         question_total: QUESTIONS.length
       },
@@ -207,12 +291,21 @@
 
   global.CulturePack = {
     TOOL_ID: TOOL_ID,
+    TOOL_LABEL: TOOL_LABEL,
+    PACK_VERSION: PACK_VERSION,
     QUESTIONS: QUESTIONS,
     DIM_KEYS: DIM_KEYS,
     DIM_LABELS: DIM_LABELS,
+    CVAM_KEYS: CVAM_KEYS,
+    CVAM_LABELS: CVAM_LABELS,
+    THRESHOLDS: THRESHOLDS,
     FLAG_DESCRIPTIONS: FLAG_DESCRIPTIONS,
     validate: validate,
     buildRun: buildRun,
-    buildDemoRun: buildDemoRun
+    buildDemoRun: buildDemoRun,
+    loadUpstreamChain: loadUpstreamChain,
+    computeCvamScores: computeCvamScores,
+    computeCultureDeviation: computeCultureDeviation,
+    computeTrustBreachScore: computeTrustBreachScore
   };
 })(typeof window !== "undefined" ? window : global);

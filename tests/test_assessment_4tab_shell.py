@@ -20,7 +20,7 @@ COACHING_PAGES = [
 ]
 
 STRATEGIC_PAGES = [
-    "swot-planning.html",
+    "Church_Governance_SWOT_matrix.html",
     "pdca-planning.html",
     "ministry-8020-planning.html",
 ]

@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>教會治理 SWOT 交叉矩陣｜Church_Governance_SWOT_matrix · ACS 2026</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="js/church_toolkit.js"></script>
+  <script src="js/scaling_adapter.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap');
+    body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(165deg, #fffbeb 0%, #fff 50%); }
+    .tab-btn { padding: 0.7rem 1rem; font-weight: 800; font-size: 0.85rem; border-bottom: 4px solid transparent; cursor: pointer; white-space: nowrap; }
+    .tab-active { border-bottom-color: #d97706; color: #92400e; background: #fff; border-radius: 10px 10px 0 0; }
+    .en { font-size: 0.68rem; color: #64748b; font-weight: 500; display: block; margin-top: 0.15rem; }
+    .q-block { border: 1px solid #fde68a; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; background: #fffdf7; }
+    .likert { display: flex; gap: 0.35rem; flex-wrap: wrap; align-items: center; }
+    .likert button { width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-weight: 800; font-size: 0.75rem; }
+    .likert button.on { background: #d97706; color: #fff; border-color: #b45309; }
+    .diag-line { border-left: 4px solid #ea580c; padding-left: 0.75rem; margin-bottom: 0.75rem; font-size: 0.9rem; }
+    @media print { .no-print { display: none !important; } }
+    .b100-scripture-ctx-banner { margin: 0 1rem 1rem; padding: 12px 14px; border-radius: 12px; background: linear-gradient(90deg,#eff6ff,#ecfdf5); border: 2px solid #93c5fd; font-size: 0.85rem; }
+    .b100-scripture-ctx-banner__kicker { margin: 0 0 4px; font-size: 0.7rem; font-weight: 800; color: #1e40af; }
+    .b100-scripture-ctx-banner__snippet { margin: 6px 0; color: #334155; line-height: 1.5; }
+    .b100-scripture-ctx-banner__hint { margin: 0; font-size: 0.72rem; color: #64748b; }
+    .strategic-acs-header { position: sticky; top: 0; z-index: 60; background: #fff; border-bottom: 2px solid #fcd34d; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .strategic-tab-btn { padding: 0.5rem 0.75rem; font-size: 0.75rem; font-weight: 800; border-radius: 0.5rem; border: 1px solid #fde68a; background: #fff; cursor: pointer; }
+    .strategic-tab-btn.strategic-tab-active { background: #d97706; color: #fff; border-color: #b45309; }
+    .strategic-tab-panel.hidden { display: none !important; }
+  </style>
+  <script src="../js/scripture_context_bridge.js"></script>
+  <script src="../js/page_capability_badge.js"></script>
+  <link rel="stylesheet" href="css/assessment_coaching_shell.css">
+</head>
+<body class="text-slate-800" data-strategic-default="intro">
+<div id="scriptureContextBanner" class="no-print" hidden></div>
+
+<header class="strategic-acs-header no-print">
+  <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+    <div>
+      <p class="text-[10px] font-bold text-amber-800"><a href="assessment-os-hub.html" class="underline">健康診斷中心</a> · 神國戰略地理學</p>
+      <h1 class="text-sm font-black text-amber-950">Church_Governance_SWOT_matrix · ACS 四 Tab</h1>
+    </div>
+    <nav class="flex flex-wrap gap-1 items-center">
+      <button type="button" class="strategic-tab-btn" data-strategic-tab="intro">① 理念</button>
+      <button type="button" class="strategic-tab-btn" data-strategic-tab="survey">② 測評</button>
+      <button type="button" class="strategic-tab-btn" data-strategic-tab="report">③ 報告</button>
+      <button type="button" class="strategic-tab-btn" data-strategic-tab="methodology">④ 長執桌</button>
+      <button type="button" class="acs-btn acs-btn--demo text-xs ml-1" onclick="loadDemoReport()">🔍 先看示範報告</button>
+    </nav>
+  </div>
+</header>
+
+<section id="strategic-tab-intro" class="strategic-tab-panel hidden max-w-4xl mx-auto p-4 md:p-6 space-y-4">
+  <div id="swot-tab-intro-content" data-acs-hardcoded="true">
+    <div class="acs-quickstart">
+      <h3>⏱️ 3 分鐘異象對齊（給長執／牧者）</h3>
+      <ol>
+        <li>先完成 <a href="Church_Health_NCD_planning.html">NCD 堂會健康</a> — 八維得分寫入 AssessmentRunStore，<strong>W_i 由最小因子剛性鎖定</strong></li>
+        <li>Tab ② <strong>A 軌 20 題快評</strong>（約 5 分鐘）或 <strong>B 軌深度工作坊</strong>質性補充 → 提交後<strong>唯一報告出口為 Tab ③</strong></li>
+        <li>Tab ③ 檢視 Weihrich TOWS 矩陣：P_SO／P_WO、Delta_Variance、牧養覆寫 WO 高亮 — 進頁即 NCD 鏈路預覽</li>
+        <li>Tab ④ 雙軌戰略平衡溝通模型 → <a href="Church_Governance_SMART_goals.html">SMART</a>（SMART-compliant 目標）→ <a href="Church_Governance_PDCA_cycle.html">PDCA</a></li>
+      </ol>
+    </div>
+
+    <div class="acs-report-block acs-whitepaper">
+      <h2 class="serif-title text-xl font-black text-amber-900">① 國際專業理論背景 · Weihrich TOWS 交叉矩陣演算法白皮書</h2>
+      <p class="acs-matrix-lead"><strong>文獻出處：</strong>H. Weihrich (1982) TOWS Matrix — 在 SWOT 四象限基礎上，將<strong>內部因子（S/W）與外部因子（O/T）交叉耦合</strong>，產出 SO（增長）、ST（多元）、WO（轉變）、WT（防禦）四類可執行戰略，而非停在盤點。</p>
+
+      <h3 class="font-black text-indigo-900 text-sm mt-4">A. 輸入權重（由 NCD 八維剛性轉換）</h3>
+      <table class="acs-table text-xs">
+        <thead><tr><th>符號</th><th>定義</th><th>本系統取值</th><th>教會神學詮釋</th></tr></thead>
+        <tbody>
+          <tr><td><strong>S_w</strong></td><td>內部優勢權重</td><td>functional（NCD 結構維度）；empower 高於 S_w 時取均值</td><td>神所量給的恩賜邊界與治理基建（量帶）</td></tr>
+          <tr><td><strong>W_i</strong></td><td>內部劣勢強度</td><td>NCD 最小因子得分（如 passion=2.0）</td><td>罪性破口／組織僵化造成的靈性虧缺</td></tr>
+          <tr><td><strong>W_intensity</strong></td><td>破口嚴重度</td><td>(5 − W_i) ÷ 4</td><td>破口越深，WO/WT 優先級越高</td></tr>
+          <tr><td><strong>O_j</strong></td><td>外部機會權重</td><td>工作坊 oClarity 均值或預設 3.8</td><td>聖靈在社區已開展的福音浪潮</td></tr>
+          <tr><td><strong>T_k</strong></td><td>外部威脅權重</td><td>工作坊 tClarity 均值或預設 3.6</td><td>世俗化、忙碌文化對教會的吞噬</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="font-black text-indigo-900 text-sm mt-4">B. 交叉耦合公式（calculateMatrix · Weihrich_TOWS_v1）</h3>
+      <pre class="text-xs bg-slate-900 text-green-300 p-3 rounded-lg overflow-x-auto">P_SO = (S_w/5) × (O_j/5) × 100    // 增長：用優勢抓機會
+P_ST = (S_w/5) × ((5−T_k)/5) × 100  // 多元：用優勢抵威脅
+P_WO = (W_intensity) × (O_j/5) × 100 // 轉變：用機會修補破口
+P_WT = (W_intensity) × (T_k/5) × 100 // 防禦：雙重壓力下排毒重組
+
+Delta_Variance = S_w − W_i          // 結構−靈性落差（事工機器堂會指標）
+conflict_SO_WO = |P_SO − P_WO| / 100 // 長執路線衝突係數
+so_wo_tension = P_SO − P_WO         // 正值＝擴張派佔優；負值＝修補派應主導
+
+牧養覆寫規則：若 Delta_Variance ≥ 2.0 且 W_i ≤ 2.5 → 強制主軸 = WO（靈性重燃優於 SO 擴張）</pre>
+
+      <h3 class="font-black text-indigo-900 text-sm mt-4">C. Fallback 降級路徑（斷網／無 NCD 存檔）</h3>
+      <ul class="acs-pastoral-list text-sm">
+        <li><strong>L1</strong>：讀取 AssessmentRunStore 最新 NCD run → 真實八維輸入</li>
+        <li><strong>L2</strong>：讀取 chp2026-ncd-pdca-prefill 本地鍵 → 預填 W 欄文字</li>
+        <li><strong>L3</strong>：示範硬編碼 functional=4.8、passion=2.0 — Tab ①④ 靜態白皮書仍可當治理教科書</li>
+      </ul>
+    </div>
+
+    <div class="acs-hero">
+      <span class="acs-role-badge">神國資源配置邏輯 · 聖經神學戰略推演</span>
+      <h2 class="serif-title text-lg font-black text-amber-900">D. 神國眼光的四象限（非商業競爭語言）</h2>
+      <div class="acs-pastoral-box">
+        <ul class="acs-pastoral-list text-sm">
+          <li><strong>S 優勢</strong>：不是「我們比別堂有錢」，而是<strong>神量給本堂獨特恩賜與托付的邊界</strong>（哪些事奉線是神驗證過的？）</li>
+          <li><strong>W 劣勢</strong>：不是「規模小」，而是<strong>生命與架構上虧缺了神榮耀的破口</strong> — 由 NCD 最小因子數學鎖定，禁止開會拍腦袋改 W</li>
+          <li><strong>O 機會</strong>：不是「市場藍海」，而是<strong>聖靈已在社區開展、呼召教會加入的服事時機</strong></li>
+          <li><strong>T 威脅</strong>：不是「競爭對手」，而是<strong>盜賊來偷竊、殺害、毀壞的屬靈爭戰</strong>（約 10:10 的牧養框架）</li>
+        </ul>
+        <p class="text-sm mt-2"><strong>資源配置原則：</strong>當 Delta_Variance 極大（結構強、靈性弱），神國邏輯要求<strong>先修補祭壇（WO/WT），再談擴張版圖（SO）</strong>。這不是保守，是依據最小因子法則的忠心。</p>
+      </div>
+      <p class="text-xs text-rose-900 bg-rose-50 border border-rose-200 rounded-lg p-3 mt-3"><strong>示範鏈路（可驗證）：</strong>NCD functional=4.8、passion=2.0 → Delta_Variance=2.8 → 牧養覆寫 WO →「以社區外展為祭壇的靈性重燃計畫」。點 <strong>🔍 先看示範報告</strong> 查看真實 calculateMatrix() 輸出。</p>
+    </div>
+
+    <div class="acs-btn-row no-print mt-4">
+      <button type="button" class="acs-btn acs-btn--primary" onclick="StrategicHybridShell.switchTab('survey')">進入 Tab ② 測評 →</button>
+      <button type="button" class="acs-btn" onclick="loadDemoReport()">🔍 先看示範報告（執行 calculateMatrix）</button>
+    </div>
+  </div>
+</section>
+
+<section id="strategic-tab-survey" class="strategic-tab-panel hidden max-w-4xl mx-auto">
+  <div class="no-print px-4 pt-4 flex flex-wrap gap-2" id="swot-survey-track-toggle">
+    <button type="button" class="strategic-tab-btn strategic-tab-active" data-swot-track="quick" onclick="SwotAcsShell.switchSurveyTrack('quick')">⚡ A 軌 · 20題快評</button>
+    <button type="button" class="strategic-tab-btn" data-swot-track="workshop" onclick="SwotAcsShell.switchSurveyTrack('workshop')">📋 B 軌 · 深度工作坊</button>
+  </div>
+  <div id="swot-track-quick" class="px-4 pb-4">
+    <div id="swot-quick-survey-wrap" class="acs-card"></div>
+  </div>
+  <div id="swot-track-workshop" class="hidden">
+  <div id="ncd-prefill-banner" class="no-print max-w-4xl mx-auto px-4 pt-4 text-xs font-bold text-indigo-900 bg-indigo-50 border border-indigo-200 rounded-xl p-3 mb-2" hidden></div>
+  <div class="no-print max-w-4xl mx-auto px-4 pb-2">
+    <p class="text-xs text-amber-950 bg-amber-50 border border-amber-200 rounded-lg p-3"><strong>B 軌深度工作坊</strong>：八維 S/W/O/T 質性補充。完成步驟 8 後<strong>唯一報告出口為 Tab ③ TOWS 矩陣</strong>（不再使用舊柱狀圖）。</p>
+  </div>
+<div id="app" class="min-h-screen pb-16">
+  <nav class="bg-amber-900 text-white p-4 sticky top-0 z-50 shadow no-print">
+    <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <h1 class="font-black text-sm md:text-base">教會版 SWOT <span class="text-amber-300">2026</span></h1>
+      <div class="flex flex-wrap gap-2 text-xs font-bold">
+        <a href="index_plan.html" class="bg-slate-700 px-3 py-1.5 rounded-full no-underline text-white">主索引</a>
+        <a href="cta-os-tool-report.html?tool=swot" class="bg-indigo-700 px-3 py-1.5 rounded-full no-underline text-white">CTA-OS 統一報告</a>
+        <span v-if="planStep < 9" class="bg-amber-700 px-3 py-1.5 rounded-full">步驟 {{ planStep + 1 }} / 9</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-4xl mx-auto p-4 md:py-6">
+    <p class="no-print text-sm font-bold text-amber-950 mb-3 border-l-4 border-amber-500 pl-3 bg-amber-50/80 rounded-r-lg py-2 pr-2">
+      <strong>首屏一句話：</strong>本頁<strong>只</strong>幫教會做<strong>八維 SWOT</strong>情境盤點。<strong>不做</strong>個人績效考核；長說明在下方步驟內。
+    </p>
+    <!-- 0 說明 -->
+    <div v-if="planStep === 0" class="bg-white border border-amber-200 rounded-3xl p-6 md:p-8 shadow-xl">
+      <div class="border border-amber-300 bg-amber-50 rounded-xl p-4 text-sm text-amber-950 mb-4">
+        <strong>牧養聲明：</strong>盤點內外局勢，非績效考核；圖表供對話與禱告辨認。資料本機 <code class="text-amber-800">chp2026-swot-v1</code>。可先空白按步驟到報告。
+      </div>
+      <p class="text-sm text-slate-700 mb-4">確認教會資料與本輪聚焦；下方可帶入健康診斷摘要（若本機有存檔）。</p>
+      <div v-if="healthResult" class="border border-indigo-200 bg-indigo-50/80 rounded-xl p-4 mb-4 text-sm">
+        <p class="font-black text-indigo-900 mb-2">已讀取健康診斷（本機 chp2026-health-result）</p>
+        <p class="text-slate-700 mb-2">均分 {{ healthResult.overallScore }} · {{ healthResult.healthLabel }} · 最弱：{{ healthResult.worstCat }}（{{ healthResult.worstScore }}/{{ healthScoreMax }}）</p>
+        <p v-if="healthResult.overallNormalized != null && !isNaN(Number(healthResult.overallNormalized))" class="text-xs text-indigo-800 font-bold mb-2">內部健康標度（全站 1–5）均分：{{ Number(healthResult.overallNormalized).toFixed(2) }} / 5.0 — SWOT 強弱規則已與此對齊</p>
+        <p class="text-xs text-slate-600"><strong>前三弱項：</strong>{{ topWeakNames }}</p>
+        <p class="text-xs text-slate-600 mt-1"><strong>前三強項：</strong>{{ topStrongNames }}</p>
+        <p class="text-xs text-amber-900 font-bold mt-3 border-t border-amber-200 pt-2">牧養提醒：不必一次處理所有弱點；請禱告後只選 1～2 個與本季節期最吻合的焦點，其餘記錄在 SWOT 裡「看見」即可。</p>
+      </div>
+      <div v-else class="border border-dashed border-slate-300 rounded-xl p-4 mb-4 text-sm text-slate-600">
+        尚未於本機找到健康診斷結果。可先完成<a href="church-health-diagnosis.html" class="text-amber-800 underline font-semibold">教會健康診斷（主入口）</a>，資料寫入 <code class="text-xs bg-slate-100 px-1 rounded">chp2026-health-result</code> 後再回來填 SWOT；後續 SMART、PDCA 亦讀同一套本機鍵，形成 Health → SWOT → SMART → PDCA 同一條鏈。
+      </div>
+      <h2 class="text-xl font-black text-amber-800 border-b pb-3 mb-3">為何是「八維」SWOT？<span class="en">Eight dimensions — same root as Health, different job</span></h2>
+      <p class="text-sm text-slate-700 mb-4 leading-relaxed">健康診斷量的是<strong>整體體質</strong>；SWOT 量的是<strong>在每一事工範疇裡，內外局勢如何配對</strong>。八個範疇與健康問卷同源，但題型改為四象限文字＋「具體度」自評，避免把 SWOT 變成四格複製貼上。</p>
+      <ul class="text-sm list-disc ml-5 space-y-2 text-slate-700 mb-6">
+        <li><strong>和：</strong>同一套語言談事工，便於對照健康報告。</li>
+        <li><strong>不同：</strong>強迫你寫清「可承接的機會」與「真實威脅」，並連到治理／替補／節奏（非營收）。</li>
+      </ul>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div><label class="font-bold">教會名稱</label><span class="en">Church name</span><input v-model="meta.churchName" class="w-full border rounded-xl p-2 mt-1" /></div>
+        <div><label class="font-bold">填寫身份</label><span class="en">Role</span>
+          <select v-model="meta.role" class="w-full border rounded-xl p-2 mt-1">
+            <option value="board">長執／董事會</option>
+            <option value="staff">同工／策劃</option>
+            <option value="team">事工部門負責人</option>
+          </select>
+        </div>
+        <div><label class="font-bold">堂會規模感</label><span class="en">Size feel</span>
+          <select v-model="meta.size" class="w-full border rounded-xl p-2 mt-1">
+            <option value="micro">微型 &lt;30</option>
+            <option value="small">小型 30–120</option>
+            <option value="medium">中型 120–400</option>
+            <option value="large">大型 400+</option>
+          </select>
+        </div>
+        <div class="md:col-span-2"><label class="font-bold">本輪聚焦一句</label><span class="en">Season focus one-liner</span><input v-model="meta.focus" class="w-full border rounded-xl p-2 mt-1" placeholder="例：本季要決定青少年線是否併入崇拜節奏" /></div>
+      </div>
+      <button type="button" @click="goNext" class="w-full py-4 bg-amber-600 text-white rounded-xl font-black text-lg shadow-lg hover:bg-amber-700">下一步：範疇 1／8<span class="en block text-xs font-normal mt-1">Next: dimension 1 of 8</span></button>
+    </div>
+
+    <!-- 1..8 八維 -->
+    <div v-else-if="planStep >= 1 && planStep <= 8" class="bg-white border border-amber-100 rounded-3xl p-6 md:p-8 shadow-xl">
+      <div v-if="healthScoreForDim != null" class="text-xs font-bold text-indigo-800 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2 mb-3">
+        健康診斷參考 · 本範疇得分：<strong>{{ healthScoreForDim }}/{{ healthScoreMax }}</strong>（僅供對照，與 SWOT 具體度不同指標）
+      </div>
+      <h2 class="text-xl font-black text-amber-900 mb-1">{{ dimTitle }}</h2>
+      <p class="text-sm text-slate-600 mb-4">{{ dimHint }}</p>
+      <div class="q-block">
+        <label class="font-bold text-amber-900">S 優勢 — 神已賜下的恩賜、關係資產、可倚靠的同工與文化</label><span class="en">Strengths — grace given to this church</span>
+        <textarea v-model="currentDim.s" rows="3" class="w-full border rounded-xl p-2 mt-2 text-sm" placeholder="例：家長願意開放家庭、長執在慈惠上長期同行；避免只寫「我們很愛主」類口號。"></textarea>
+        <p class="text-xs text-slate-500 mt-2">具體度自評（這段文字寫得多「可指認」）</p>
+        <div class="likert mt-1">
+          <span class="text-xs font-bold text-slate-600 w-full">1 極模糊 → 5 極具體</span>
+          <button v-for="n in 5" :key="'s'+n" type="button" :class="currentDim.sClarity === n ? 'on' : 'bg-white'" @click="currentDim.sClarity = n">{{ n }}</button>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-1 leading-snug">1＝只有標語或形容詞；3＝有場景但仍缺「誰／何時／如何檢核」；5＝寫得出具體人物角色、事件、時間或場景（仍勿公開姓名電話）。</p>
+      </div>
+      <div class="q-block">
+        <label class="font-bold text-rose-900">W 劣勢 — 內在破口：哪裡常出事、誰長期過載、制度哪裡斷裂（不點名定罪）</label><span class="en">Weaknesses — recurring gaps</span>
+        <textarea v-model="currentDim.w" rows="3" class="w-full border rounded-xl p-2 mt-2 text-sm" placeholder="例：接待窗口只有一人、衝突後沒有跟進步驟、決策前後會眾不知情。"></textarea>
+        <div class="likert mt-1">
+          <span class="text-xs font-bold text-slate-600 w-full">具體度</span>
+          <button v-for="n in 5" :key="'w'+n" type="button" :class="currentDim.wClarity === n ? 'on' : 'bg-white'" @click="currentDim.wClarity = n">{{ n }}</button>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-1 leading-snug">1＝只覺得「有問題」；3＝能描述情境但不知主責；5＝能指認流程缺口與可檢核現象。</p>
+      </div>
+      <div class="q-block">
+        <label class="font-bold text-emerald-900">O 機會 — 城市／社區／政策／人口／節期／夥伴：神可能打開的門（為何「我們」適合承接）</label><span class="en">Opportunities — open doors</span>
+        <textarea v-model="currentDim.o" rows="3" class="w-full border rounded-xl p-2 mt-2 text-sm" placeholder="例：社區新移入家庭增多、鄰近學校願意借場地、城市活動可自然接觸未信者。"></textarea>
+        <div class="likert mt-1">
+          <span class="text-xs font-bold text-slate-600 w-full">具體度</span>
+          <button v-for="n in 5" :key="'o'+n" type="button" :class="currentDim.oClarity === n ? 'on' : 'bg-white'" @click="currentDim.oClarity = n">{{ n }}</button>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-1 leading-snug">1＝泛泛「社區有需要」；3＝有對象輪廓但缺下一步；5＝寫得出可約的接觸點或合作線索。</p>
+      </div>
+      <div class="q-block">
+        <label class="font-bold text-slate-900">T 威脅 — 政策／經濟／輿論／會眾流失／衝突：可能撕裂信任或耗盡資源的力量</label><span class="en">Threats — pressures on trust &amp; rhythm</span>
+        <textarea v-model="currentDim.t" rows="3" class="w-full border rounded-xl p-2 mt-2 text-sm" placeholder="例：核心家庭遷出、公共空間租借緊縮、網路輿論影響青年參與。"></textarea>
+        <div class="likert mt-1">
+          <span class="text-xs font-bold text-slate-600 w-full">具體度</span>
+          <button v-for="n in 5" :key="'t'+n" type="button" :class="currentDim.tClarity === n ? 'on' : 'bg-white'" @click="currentDim.tClarity = n">{{ n }}</button>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-1 leading-snug">1＝只感到「壓力大」；3＝能舉情境但缺應對責任；5＝寫得出若不理會，關係或事工會如何受損。</p>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button type="button" @click="goPrev" class="flex-1 py-3 rounded-xl border-2 border-slate-200 font-bold text-slate-700">上一步</button>
+        <button type="button" @click="goNext" class="flex-1 py-3 rounded-xl bg-amber-600 text-white font-black">{{ planStep === 8 ? '完成 → Tab ③ TOWS 矩陣' : '下一範疇' }}</button>
+      </div>
+    </div>
+
+    <!-- 9 已廢止：唯一報告出口為 ACS Tab ③ -->
+    <div v-else-if="planStep === 9" class="bg-white border border-amber-200 rounded-3xl p-6 md:p-8 shadow-xl text-center">
+      <h2 class="text-xl font-black text-amber-900 mb-3">報告已遷移至 Tab ③</h2>
+      <p class="text-sm text-slate-600 mb-4">Weihrich TOWS 交叉矩陣、牧養覆寫與 SVG 演算軌跡僅在 <strong>Tab ③ 報告</strong> 呈現。本頁不再顯示柱狀圖舊版報告。</p>
+      <button type="button" class="px-6 py-3 rounded-xl bg-amber-600 text-white font-black" onclick="StrategicHybridShell.switchTab('report')">→ 開啟 Tab ③ TOWS 矩陣</button>
+    </div>
+  </div>
+</div>
+  </div>
+</section>
+
+<section id="strategic-tab-report" class="strategic-tab-panel hidden max-w-4xl mx-auto p-4 md:p-6 space-y-4">
+  <div id="swot-report-empty" class="hidden"></div>
+  <div id="swot-report-ncd-banner" class="acs-card hidden"></div>
+  <div id="swot-report-content" class="space-y-4">
+    <span id="swot-report-demo-badge" class="acs-demo-badge hidden">示範資料 · NCD 結構 4.8 / 靈性 2.0</span>
+    <div id="swot-report-summary" class="acs-card text-sm"></div>
+    <div id="swot-report-matrix"></div>
+    <div class="acs-btn-row no-print">
+      <a href="Church_Governance_SMART_goals.html" class="acs-btn no-underline">→ SMART 標竿</a>
+      <a href="Church_Governance_PDCA_cycle.html" class="acs-btn no-underline">→ PDCA 迴圈</a>
+      <a href="cta-os-war-room.html" class="acs-btn no-underline">→ 戰情室</a>
+    </div>
+  </div>
+</section>
+
+<section id="strategic-tab-methodology" class="strategic-tab-panel hidden max-w-4xl mx-auto p-4 md:p-6 space-y-4">
+  <div id="swot-tab-methodology-content" data-acs-hardcoded="true">
+    <div class="acs-card">
+      <h2 class="font-black text-amber-900 mb-2">④ 長執桌 · 雙軌戰略平衡演算法溝通模型（Conflict Resolution）</h2>
+      <p id="swot-coaching-ncd-lock" class="text-sm text-indigo-900 bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3">完成 Tab ③ calculateMatrix() 後，此處顯示 NCD 鎖定、Delta_Variance 與 swot_contract 狀態。</p>
+      <div id="swot-coaching-balance-model" class="text-sm bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">雙軌平衡演算將在示範報告或工作坊提交後顯示 P_SO vs P_WO 與 conflict_SO_WO。</div>
+
+      <h3 class="font-black text-rose-900 text-sm">【模型 A：SO 激進擴張 × WO 內部排毒 — 雙軌平衡五步】</h3>
+      <p class="text-xs text-slate-600 mb-2">當 conflict_SO_WO &gt; 0.15 或 Delta_Variance ≥ 2.0 時啟動此模型（長老要買堂／辦大活動 vs 牧者要停辦事工／深化門訓）。</p>
+      <ol class="text-sm text-slate-700 list-decimal pl-5 space-y-2 my-2">
+        <li><strong>數算代價（Cost Ledger）</strong>：在白板寫明 SO 路線的資源消耗（同工時數、預算、靈性透支風險）與 WO 路線的機會成本（延後擴張的落差）。禁止只喊異象不寫數字。</li>
+        <li><strong>宣讀矩陣結果</strong>：由書記朗讀 Tab ③ 的 P_SO、P_WO、Delta_Variance — 讓數據成為第三見證，而非個人立場辯論。</li>
+        <li><strong>牧養覆寫裁決</strong>：若 W_i ≤ 2.5 且 Delta_Variance ≥ 2.0，長執會正式決議「本季主軸 = WO」，SO 項目進入觀察名單而非立即執行。</li>
+        <li><strong>90 天試驗期</strong>：WO 執行 6–8 週後檢核靈修指標（小組禱告出席、讀經完成率）— SMART-compliant 門檻由牧者與長執共同設定。</li>
+        <li><strong>再評 SO</strong>：僅當 W_i 回升至 3.0 以上，才重新啟動 SO 擴張議程 — 這是「數算代價」後的合一，不是誰說服誰。</li>
+      </ol>
+
+      <h3 class="font-black text-indigo-900 text-sm mt-4">【五大降溫減震步驟 · 路加福音 14:31 數算代價】</h3>
+      <ol class="text-sm text-slate-700 list-decimal pl-5 space-y-2 my-2">
+        <li><strong>步驟一：數算兵力與代價</strong> — 在白板打印 P_SO 與 P_WO 及 Delta_Variance（Δ），讓數據成第三見證。</li>
+        <li><strong>步驟二：結構為靈性築壇</strong> — 引導長老將 S（制度、設備）資源傾注於修補 W（禱告、門訓），而非盲目 SO 擴張。</li>
+        <li><strong>步驟三：休兵減速協議（WT 排毒）</strong> — 當 P_WT 排名前二，啟動 3 個月事工禁食期，停辦非核心聚會。</li>
+        <li><strong>步驟四：90 天 SMART-compliant 試驗</strong> — WO 主軸只推一個可檢核小改變。</li>
+        <li><strong>步驟五：再評 SO</strong> — W_avg 回升至 3.0 以上才恢復擴張議程。</li>
+      </ol>
+      <h3 class="font-black text-violet-900 text-sm mt-4">【模型 B：WT 屬靈排毒計畫 — 雙重壓力協議】</h3>
+      <p class="text-xs text-slate-600 mb-2">當 P_WT 排名前二且 T_k ≥ 3.5 時：W 破口與 T 威脅交會，系統建議啟動排毒協議而非加碼活動。</p>
+      <ul class="text-sm text-slate-700 list-disc pl-5 space-y-2 my-2">
+        <li><strong>第 1–2 週</strong>：長執帶頭公佈「事工暫停清單」（非核心新案凍結）+ 全教會禱告鏈啟動</li>
+        <li><strong>第 3–6 週</strong>：小組長培訓「衝突與和好」；禁止在疲憊中做重大人事決策</li>
+        <li><strong>第 7–8 週</strong>：重新執行 calculateMatrix()，比較 Delta_Variance 是否收斂 — 再決定是否恢復 SO</li>
+      </ul>
+    </div>
+    <div class="acs-card">
+      <h3 class="font-black text-amber-900">通用決談 5 題（長執退修會）</h3>
+      <ol class="text-sm text-slate-700 list-decimal pl-5 space-y-2">
+        <li>我們是否同意 NCD 鎖定的最小因子就是本年度 W 的核心？</li>
+        <li>SO 擴張願景與 WO 修補需要，本季只能優先哪一個？</li>
+        <li>社區外展機會中，哪一項能同時餵養靈性（而非只消耗同工）？</li>
+        <li>威脅 T 清單中，哪一項需要全教會禱告而非常務委員會決議？</li>
+        <li>90 天後我們用什麼指標檢核 WO 是否生效？</li>
+      </ol>
+    </div>
+    <div class="acs-card">
+      <h3 class="font-black text-amber-900">異象對齊開會邀請信樣板</h3>
+      <pre class="text-xs bg-slate-50 border rounded-lg p-3 whitespace-pre-wrap font-sans">【長執會戰略對齊 · SWOT 交叉矩陣】
+
+親愛的長執同工：
+
+我們將於 ____ 月 ____ 日舉行戰略對齊退修會。會前請閱讀 NCD 健康報告與 SWOT 交叉矩陣（Tab ③）。
+
+本次聚焦：在「結構優勢」與「靈性破口」之間，確認本季主軸是否為 WO「以社區外展為祭壇的靈性重燃計畫」。
+
+請預備：① 一個你觀察到的社區機會 ② 一個你擔心的內部破口 ③ 一個禱告請求。
+
+主內，
+________（主任牧師／教會書記）</pre>
+    </div>
+    <div class="acs-card">
+      <h3 class="font-black text-indigo-900">AI 戰略平衡指令槽位</h3>
+      <pre id="swot-ai-prompt-text" class="text-xs bg-indigo-50 border border-indigo-200 rounded-lg p-3 whitespace-pre-wrap max-h-48 overflow-auto">請先點 Tab ③「先看示範報告」或完成測評，系統將自動填入 SWOT 交叉分析指令。</pre>
+      <button type="button" class="acs-btn text-xs mt-2" onclick="SwotAcsShell.copyAiPrompt(this)">複製 AI 指令</button>
+    </div>
+    <details class="acs-card text-xs">
+      <summary class="font-bold cursor-pointer">swot_contract JSON（契約除錯）</summary>
+      <pre id="swot-coaching-contract-json" class="mt-2 bg-slate-900 text-green-300 p-2 rounded overflow-auto max-h-40">{}</pre>
+    </details>
+  </div>
+</section>
+
+<script>
+const { createApp } = Vue;
+const SWOT_KEY = "chp2026-swot-v1";
+
+const DIM_SPECS = [
+  { id: "ev", name: "佈道", en: "Evangelism", hint: "社區里鄰、新來宾、福音外展；商業類比是「獲客」，教會要問：是否同時建立關係與跟進。" },
+  { id: "dis", name: "門徒訓練", en: "Discipleship", hint: "靈命階梯、教材、導師；重點是「跟隨基督」而非「課程完成率」。" },
+  { id: "fel", name: "團契", en: "Fellowship", hint: "小組、相交、衝突修復；教會看「彼此相愛」的可見度。" },
+  { id: "mis", name: "宣教／服事", en: "Mission / Ministry", hint: "本地／跨文化、慈惠；避免只有活動沒有門訓連線。" },
+  { id: "wor", name: "崇拜", en: "Worship", hint: "主日／祈禱會／節期；問「會眾是否被神的道對齊」而非表演品質。" },
+  { id: "led", name: "領導力", en: "Leadership", hint: "治理、透明、繼任；教會領袖要背十架，不是只背 KPI。" },
+  { id: "ste", name: "管家職分", en: "Stewardship", hint: "財務、設施、資訊；透明與感恩優於精算壓榨。" },
+  { id: "rel", name: "人際關係", en: "Relationships", hint: "衝突、饒恕、界線；教會衝突常是靈性议题，不是 HR 調解而已。" }
+];
+
+/** NCD 維度 → 全站內部標度 1–5（優先 normalizedScore，否則 ScalingAdapter） */
+function healthDimensionInternal(d) {
+  if (!d) return null;
+  var ns = Number(d.normalizedScore);
+  if (isFinite(ns)) return Math.min(5, Math.max(1, ns));
+  var SA = typeof window !== "undefined" ? window.ScalingAdapter : null;
+  var sc = Number(d.score);
+  var mx = Number(d.max) || 65;
+  if (SA && typeof SA.toInternalScale === "function" && mx >= 60 && isFinite(sc)) {
+    var v = SA.toInternalScale(sc, SA.TOOL.NCD_DIM_65);
+    return v != null && isFinite(v) ? Math.min(5, Math.max(1, v)) : null;
+  }
+  if (isFinite(sc) && mx > 0) return Math.min(5, Math.max(1, (sc / mx) * 5));
+  return null;
+}
+
+function emptyDim(spec) {
+  return {
+    id: spec.id,
+    name: spec.name,
+    en: spec.en,
+    s: "",
+    w: "",
+    o: "",
+    t: "",
+    sClarity: 0,
+    wClarity: 0,
+    oClarity: 0,
+    tClarity: 0
+  };
+}
+
+function defaultState() {
+  return {
+    meta: { churchName: "", role: "board", size: "small", focus: "" },
+    dimensions: DIM_SPECS.map(function (s) {
+      return emptyDim(s);
+    }),
+    planStep: 0,
+    reportTab: "report",
+    generatedAt: ""
+  };
+}
+
+function applyNcdPdcaPrefillToDimensions(dimensions) {
+  try {
+    var p =
+      window.NcdPack && typeof NcdPack.readPdcaPrefill === "function"
+        ? NcdPack.readPdcaPrefill()
+        : JSON.parse(localStorage.getItem("chp2026-ncd-pdca-prefill") || "null");
+    if (!p || !p.minimum_factor || !p.swot_note) return dimensions;
+    var legacyId =
+      window.NcdPack && NcdPack.legacyIdFromMinFactor
+        ? NcdPack.legacyIdFromMinFactor(p.minimum_factor)
+        : p.minimum_factor.legacy;
+    if (!legacyId) return dimensions;
+    return dimensions.map(function (d) {
+      if (d.id !== legacyId) return d;
+      var w = String(d.w || "").trim();
+      if (w.indexOf("NCD 最小因子") >= 0) return d;
+      return Object.assign({}, d, {
+        w: p.swot_note + (w ? "\n\n" + w : ""),
+        wClarity: Math.max(Number(d.wClarity) || 0, 3)
+      });
+    });
+  } catch (e) {
+    return dimensions;
+  }
+}
+
+function loadState() {
+  try {
+    var raw = localStorage.getItem(SWOT_KEY);
+    if (!raw) {
+      var empty = defaultState();
+      empty.dimensions = applyNcdPdcaPrefillToDimensions(empty.dimensions);
+      if (empty.dimensions.some(function (d) { return String(d.w || "").indexOf("NCD 最小因子") >= 0; })) {
+        empty.meta.focus = "NCD 最小因子匯入";
+      }
+      return empty;
+    }
+    var o = JSON.parse(raw);
+    if (!o || o.version !== 1) return defaultState();
+    var st = defaultState();
+    if (o.meta) st.meta = Object.assign(st.meta, o.meta);
+    if (Array.isArray(o.dimensions) && o.dimensions.length === 8) {
+      st.dimensions = o.dimensions.map(function (d, i) {
+        return Object.assign(emptyDim(DIM_SPECS[i]), d || {});
+      });
+    }
+    st.planStep = typeof o.planStep === "number" ? o.planStep : 0;
+    st.dimensions = applyNcdPdcaPrefillToDimensions(st.dimensions);
+    return st;
+  } catch (e) {
+    return defaultState();
+  }
+}
+
+function saveState(data) {
+  localStorage.setItem(
+    SWOT_KEY,
+    JSON.stringify({
+      version: 1,
+      meta: data.meta,
+      dimensions: data.dimensions,
+      planStep: data.planStep
+    })
+  );
+}
+
+createApp({
+  data: function () {
+    var s = loadState();
+    s.reportTab = "report";
+    s.generatedAt = "";
+    return s;
+  },
+  mounted: function () {
+    if (this.planStep === 9) {
+      this.planStep = 0;
+      saveState(this);
+      if (window.SwotAcsShell && SwotAcsShell.autoPreviewReport) SwotAcsShell.autoPreviewReport();
+      if (window.StrategicHybridShell) StrategicHybridShell.switchTab("report");
+    }
+  },
+  computed: {
+    dimIndex: function () {
+      return this.planStep - 1;
+    },
+    currentDim: function () {
+      return this.dimensions[this.dimIndex] || this.dimensions[0];
+    },
+    dimTitle: function () {
+      var spec = DIM_SPECS[this.dimIndex];
+      return spec ? "範疇 " + this.planStep + "/8：" + spec.name : "";
+    },
+    dimHint: function () {
+      var spec = DIM_SPECS[this.dimIndex];
+      return spec ? spec.hint : "";
+    },
+    fourDiag: function () {
+      return ChurchToolkit.fourSentenceSwot({ dimensions: this.dimensions });
+    },
+    healthResult: function () {
+      return ChurchToolkit.loadHealthResult();
+    },
+    healthScoreMax: function () {
+      var h = this.healthResult;
+      if (!h || !h.dimensions || !h.dimensions.length) return 65;
+      var m = h.dimensions[0].max;
+      return m && Number(m) > 0 ? Number(m) : 65;
+    },
+    topWeakNames: function () {
+      var h = this.healthResult;
+      if (!h || !h.dimensions) return "—";
+      return h.dimensions
+        .slice()
+        .sort(function (a, b) {
+          return a.score - b.score;
+        })
+        .slice(0, 3)
+        .map(function (d) {
+          var n = healthDimensionInternal(d);
+          var tail = n != null ? " · 內部 " + n.toFixed(2) + "/5" : "";
+          return d.name + "（" + d.score + "/65" + tail + "）";
+        })
+        .join("、");
+    },
+    topStrongNames: function () {
+      var h = this.healthResult;
+      if (!h || !h.dimensions) return "—";
+      return h.dimensions
+        .slice()
+        .sort(function (a, b) {
+          return b.score - a.score;
+        })
+        .slice(0, 3)
+        .map(function (d) {
+          var n = healthDimensionInternal(d);
+          var tail = n != null ? " · 內部 " + n.toFixed(2) + "/5" : "";
+          return d.name + "（" + d.score + "/65" + tail + "）";
+        })
+        .join("、");
+    },
+    healthScoreForDim: function () {
+      var h = this.healthResult;
+      if (!h || !h.dimensions) return null;
+      var id = DIM_SPECS[this.dimIndex].id;
+      for (var i = 0; i < h.dimensions.length; i++) {
+        if (h.dimensions[i].id === id) return h.dimensions[i].score;
+      }
+      return null;
+    },
+    priorityDefense: function () {
+      var h = this.healthResult;
+      var out = [];
+      if (!h || !h.dimensions) return out;
+      var weak = h.dimensions
+        .slice()
+        .map(function (d) {
+          return { d: d, n: healthDimensionInternal(d) };
+        })
+        .filter(function (x) {
+          return x.n != null && isFinite(x.n);
+        })
+        .sort(function (a, b) {
+          return a.n - b.n;
+        })
+        .slice(0, 3)
+        .map(function (x) {
+          return x.d;
+        });
+      var self = this;
+      weak.forEach(function (w) {
+        var n = healthDimensionInternal(w);
+        var d = self.dimensions.find(function (x) {
+          return x.id === w.id;
+        });
+        if (!d || n == null) return;
+        if (n < 3.0 && ((d.tClarity || 0) <= 2 || (d.wClarity || 0) <= 2)) {
+          out.push(
+            "「" +
+              w.name +
+              "」內部健康標度偏低（" +
+              n.toFixed(2) +
+              "/5）且 W/T 描述仍偏模糊：先寫明威脅會傷害哪些關係／節奏，並指定責任職分與檢核日。"
+          );
+        }
+      });
+      return out.slice(0, 3);
+    },
+    priorityBreak: function () {
+      var h = this.healthResult;
+      var out = [];
+      if (!h || !h.dimensions) return out;
+      var strong = h.dimensions
+        .slice()
+        .map(function (d) {
+          return { d: d, n: healthDimensionInternal(d) };
+        })
+        .filter(function (x) {
+          return x.n != null && isFinite(x.n);
+        })
+        .sort(function (a, b) {
+          return b.n - a.n;
+        })
+        .slice(0, 3)
+        .map(function (x) {
+          return x.d;
+        });
+      var self = this;
+      strong.forEach(function (s) {
+        var n = healthDimensionInternal(s);
+        var d = self.dimensions.find(function (x) {
+          return x.id === s.id;
+        });
+        if (!d || n == null) return;
+        if (n > 4.0 && ((d.oClarity || 0) >= 3 || (d.sClarity || 0) >= 3)) {
+          out.push(
+            "「" +
+              s.name +
+              "」內部標度相對健康（" +
+              n.toFixed(2) +
+              "/5）：可把資源押在已具體的機會（O）上，與強項呼應，避免另開新線。"
+          );
+        }
+      });
+      if (!out.length) {
+        out.push(
+          "請在強項維度把 S／O 寫到「可驗證」，健康診斷的強項才轉得成突破行動。"
+        );
+      }
+      return out.slice(0, 3);
+    },
+    suiteTeach: function () {
+      return ChurchToolkit.TOOL_SUITE_TEACHING;
+    },
+    healthOpenContextSnippet: function () {
+      var h = this.healthResult;
+      if (!h || !h.openAnswers) return "";
+      return ChurchToolkit.formatHealthOpenContext(
+        h.openAnswers,
+        DIM_SPECS.map(function (s) {
+          return s.name;
+        }),
+        200,
+        1200
+      );
+    },
+    towsList: function () {
+      var dims = this.dimensions;
+      var bestS = 0,
+        bi = 0;
+      var worstW = 5,
+        wi = 0;
+      for (var i = 0; i < dims.length; i++) {
+        var d = dims[i];
+        if ((d.sClarity || 0) >= (dims[bestS].sClarity || 0)) {
+          bestS = i;
+        }
+        var wc = d.wClarity || 0;
+        if (wc > 0 && wc <= worstW) {
+          worstW = wc;
+          wi = i;
+        }
+      }
+      var oMax = 0,
+        oi = 0;
+      var tMin = 5,
+        ti = 0;
+      for (var j = 0; j < dims.length; j++) {
+        var dj = dims[j];
+        if ((dj.oClarity || 0) >= (dims[oi].oClarity || 0)) oi = j;
+        var tc = dj.tClarity || 0;
+        if (tc > 0 && tc <= tMin) {
+          tMin = tc;
+          ti = j;
+        }
+      }
+      var lines = [];
+      lines.push(
+        "〔來源：" +
+          dims[bestS].name +
+          "·S ＋ " +
+          dims[oi].name +
+          "·O〕SO（優勢×機會）：善用「" +
+          dims[bestS].name +
+          "」的內在資產，承接「" +
+          dims[oi].name +
+          "」可見的時機；先安排一次跨部門對齊會議。"
+      );
+      lines.push(
+        "〔來源：" +
+          dims[wi].name +
+          "·W ＋ " +
+          dims[oi].name +
+          "·O〕WO（弱勢×機會）：「" +
+          dims[wi].name +
+          "」弱項若不去，會吃掉新機會；建議以「替補＋節奏」先行，再談擴張。"
+      );
+      lines.push(
+        "〔來源：" +
+          dims[bestS].name +
+          "·S ＋ " +
+          dims[ti].name +
+          "·T〕ST（優勢×威脅）：以「" +
+          dims[bestS].name +
+          "」的強項降低「" +
+          dims[ti].name +
+          "」的風險暴露，必要時寫明暫停清單。"
+      );
+      lines.push(
+        "〔來源：" +
+          dims[wi].name +
+          "·W ＋ " +
+          dims[ti].name +
+          "·T〕WT（弱勢×威脅）：「" +
+          dims[wi].name +
+          "」與「" +
+          dims[ti].name +
+          "」交會處，優先止血：減會議、減新活動、補責任人。"
+      );
+      return lines;
+    },
+    churchAdvice: function () {
+      var adv = [];
+      adv.push(
+        "以「會眾可被牧養」為成功判準，不以活動數量或曝光為唯一成功。"
+      );
+      adv.push(
+        "威脅若涉及人際衝突，先走「私下勸戒／聽雙方」的聖經路徑，再談策略。"
+      );
+      adv.push(
+        "機會若需要長期投入，先問：誰禱告、誰替補、何時喊停，再啟動。"
+      );
+      if (this.meta.size === "micro") {
+        adv.push("微型堂會：寧可「少而深」— 每季最多錨定兩個外展接觸點。");
+      }
+      return adv;
+    },
+    aiFullPrompt: function () {
+      var self = this;
+      var r = function (s) {
+        return ChurchToolkit.nonEmpty(s, "（未填）");
+      };
+      var lines = [];
+      lines.push("你是熟諳華人教會處境的策略顧問（非企業增長顧問）。");
+      lines.push("請根據以下八維 SWOT，產出：①本季三件事 ②兩個風險緩解 ③兩個「不要做」清單（避免過載）。");
+      lines.push("教會：" + r(this.meta.churchName) + "；聚焦：" + r(this.meta.focus));
+      lines.push("—— 八維資料 ——");
+      this.dimensions.forEach(function (d, i) {
+        lines.push(
+          i +
+            1 +
+            ". " +
+            d.name +
+            " S具體度" +
+            (d.sClarity || 0) +
+            " W" +
+            (d.wClarity || 0) +
+            " O" +
+            (d.oClarity || 0) +
+            " T" +
+            (d.tClarity || 0)
+        );
+        lines.push("S: " + r(d.s));
+        lines.push("W: " + r(d.w));
+        lines.push("O: " + r(d.o));
+        lines.push("T: " + r(d.t));
+      });
+      lines.push("—— 系統診斷句 ——");
+      lines.push(this.fourDiag.current);
+      var oa = this.healthOpenContextSnippet;
+      if (oa) {
+        lines.push(
+          "—— 健康診斷・填寫者觀察（摘錄；自由描述，不參與分數計算）——"
+        );
+        lines.push(oa);
+      }
+      return lines.join("\n");
+    }
+  },
+  methods: {
+    show: function (s) {
+      var t = ChurchToolkit.trim(s);
+      return t ? t : "（未填寫）";
+    },
+    goNext: function () {
+      saveState(this);
+      if (this.planStep < 8) this.planStep++;
+      else if (this.planStep === 8) {
+        saveState(this);
+        if (window.SwotAcsShell && SwotAcsShell.commitWorkshop) {
+          SwotAcsShell.commitWorkshop({
+            dimensions: this.dimensions,
+            meta: this.meta
+          });
+        }
+        this.planStep = 0;
+      }
+    },
+    goPrev: function () {
+      if (this.planStep > 0) this.planStep--;
+      saveState(this);
+    },
+    renderChart: function () {
+      var dims = this.dimensions;
+      var labels = dims.map(function (d) {
+        return d.name;
+      });
+      var ds = function (key) {
+        return dims.map(function (d) {
+          return Number(d[key] || 0) || 0;
+        });
+      };
+      ChurchToolkit.renderBarChart("swotBarChart", {
+        data: {
+          labels: labels,
+          datasets: [
+            { label: "S", data: ds("sClarity"), backgroundColor: "#16a34a" },
+            { label: "W", data: ds("wClarity"), backgroundColor: "#dc2626" },
+            { label: "O", data: ds("oClarity"), backgroundColor: "#2563eb" },
+            { label: "T", data: ds("tClarity"), backgroundColor: "#475569" }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, max: 5, ticks: { stepSize: 1 } },
+            x: { stacked: false }
+          },
+          plugins: { legend: { position: "bottom" } }
+        },
+        yMax: 5
+      });
+    },
+    saveResolutionSnapshot: function () {
+      var h = this.healthResult;
+      var on = h && h.overallNormalized != null ? Number(h.overallNormalized) : null;
+      if (ChurchToolkit.appendResolutionLog) {
+        ChurchToolkit.appendResolutionLog({
+          source: "swot",
+          churchName: this.meta.churchName || "",
+          swotFocus: this.meta.focus || "",
+          overallNormalized: on,
+          priorityDefense: (this.priorityDefense || []).slice(),
+          priorityBreak: (this.priorityBreak || []).slice(),
+          towsList: (this.towsList || []).slice(0, 8)
+        });
+      }
+      window.alert("已將目前 SWOT 摘要與優先防守／突破寫入本機 chp2026-resolution-log（可於 PDCA「導出至治理報告」一併運用）。");
+    },
+    downloadPdf: function () {
+      this.reportTab = "report";
+      var self = this;
+      this.$nextTick(function () {
+        ChurchToolkit.downloadPdf(
+          "swot-report-print",
+          (self.meta.churchName || "church") + "_SWOT_2026.pdf"
+        );
+      });
+    },
+    shareWa: function () {
+      var fd = this.fourDiag;
+      ChurchToolkit.shareWhatsApp("【教會 SWOT 摘要】", [
+        "聚焦：" + ChurchToolkit.nonEmpty(this.meta.focus, "—"),
+        "現況：" + fd.current.slice(0, 220),
+        "下一步：" + fd.next.slice(0, 220)
+      ]);
+    }
+  },
+  watch: {
+    planStep: function () {
+      saveState(this);
+    },
+    meta: {
+      handler: function () {
+        saveState(this);
+      },
+      deep: true
+    },
+    dimensions: {
+      handler: function () {
+        saveState(this);
+      },
+      deep: true
+    }
+  }
+}).mount("#app");
+</script>
+<script src="js/assessment_run_store.js"></script>
+<script src="js/tool_packs/ncd_pack.js"></script>
+<script src="js/tool_packs/swot_pack.js"></script>
+<script src="js/swot_matrix_viz.js"></script>
+<script src="js/swot_acs_shell.js"></script>
+<script src="js/strategic_tool_bridge.js"></script>
+<script src="js/strategic_hybrid_shell.js"></script>
+<script src="js/cta_os_runtime.js"></script>
+<script src="js/cta_os_bridge.js"></script>
+<script>
+  CTAOSBridge.initPage({
+    toolId: 'swot',
+    reportAnchor: '#app .max-w-4xl',
+    watchStorage: ['chp2026-swot-v1'],
+    pollMs: 5000,
+    fab: true
+  });
+  if (window.ScriptureContextBridge) {
+    ScriptureContextBridge.renderContextBanner('scriptureContextBanner');
+  }
+</script>
+</body>
+</html>

@@ -55,7 +55,7 @@ window.SITE_MAP = {
       pages: [
         "church_planning/index_plan.html",
         "church_planning/vision.html",
-        "church_planning/swot-planning.html",
+        "church_planning/Church_Governance_SWOT_matrix.html",
         "church_planning/cta-os-war-room.html"
       ]
     },

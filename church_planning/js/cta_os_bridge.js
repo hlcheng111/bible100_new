@@ -164,6 +164,29 @@
   }
 
   function collectFromPdca() {
+    var run = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("pdca") : null;
+    if (run && run.feature_vector && !run.is_demo) {
+      var contract = run.pdca_contract || (run.derived && run.derived.pdca_contract) || {};
+      var plan = contract.plan_metrics || {};
+      var doing = contract.do_progress || {};
+      var chk = contract.check_variance || {};
+      var prof = run.profile || {};
+      var label = prof.ministry_context || prof.season_focus || "本季事工";
+      return {
+        vector: run.feature_vector,
+        sourceCount: (run.raw_answers || []).length || 12,
+        sourceNote:
+          "讀取 assessment_run · 計畫 " +
+          (plan.P_target != null ? plan.P_target : "—") +
+          " · 執行 " +
+          (doing.D_actual != null ? doing.D_actual : "—") +
+          " · Δ " +
+          (chk.Delta_variance != null ? chk.Delta_variance : "—") +
+          (chk.deming_alert ? " · 警戒" : ""),
+        subjectName: label + " · 季度迴圈",
+        assessmentRun: run
+      };
+    }
     var state = readJson("chp2026-pdca-log") || readJson("chp2026-pdca-v1");
     var values = [];
     if (state && state.version === 1 && state.cycle) {
@@ -176,18 +199,12 @@
       else if (c.doTrafficLight === "yellow") values.push(3);
       else if (c.doTrafficLight === "red") values.push(2);
     }
-    var health = readJson("chp2026-health-result");
-    if (health && health.overallNormalized != null) {
-      values.push(Number(health.overallNormalized));
-    }
-    var sel = document.querySelector("#app select");
-    if (sel && sel.value !== "") values.push(Number(sel.value));
     var items = likertItemsFromValues(values, { P: 0.1, S: 0.1, G: 0.3, C: 0.35, R: 0.1, F: 0.05 });
     if (!items.length) items = collectDomLikertItems();
     return {
       vector: RT.scoreByProjection(items),
       sourceCount: items.length,
-      sourceNote: "讀取 PDCA 迴圈節奏與健康基線",
+      sourceNote: items.length ? "讀取舊版 PDCA 日誌（建議改用本頁快評）" : "尚無 PDCA 存檔，請先完成快評",
       subjectName: "PDCA 執行同工"
     };
   }

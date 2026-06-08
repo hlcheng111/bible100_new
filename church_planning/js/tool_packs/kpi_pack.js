@@ -1,13 +1,13 @@
 /**
- * 神國標竿導航儀 · 目標與衡量對齊（kpiokr）
+ * KPI/OKR 對齊（kpiokr）
  * 12 題 Likert · 四向度 rollup · 非人事考核
  */
 (function (global) {
   "use strict";
 
   var TOOL_ID = "kpiokr";
-  var TOOL_LABEL = "目標與衡量對齊";
-  var PACK_VERSION = 1;
+  var TOOL_LABEL = "KPI/OKR 對齊";
+  var PACK_VERSION = 2;
 
   var DIMENSIONS = ["P", "S", "G", "C", "R", "F"];
 
@@ -228,6 +228,51 @@
     return flags;
   }
 
+  /** 資源卡關率：健康度與回顧節奏雙弱時升高；≥70 觸發長執資源調配模板 */
+  function computeResourceStuckRate(agg, flags) {
+    var health = agg.pillar_health_score;
+    var review = agg.review_rhythm_score;
+    var pastoral = agg.pastoral_balance_score;
+    if (flags.indexOf("RESOURCE_STUCK") >= 0) {
+      return Math.max(70, 100 - (health != null ? health : 30));
+    }
+    if (health == null && review == null) return 0;
+    var stuck = 100 - (health || 0) * 0.45 - (review || 0) * 0.35 - (pastoral || 0) * 0.2;
+    return Math.max(0, Math.min(100, Math.round(stuck)));
+  }
+
+  function loadUpstreamChain(store) {
+    store = store || global.AssessmentRunStore;
+    if (!store || typeof store.loadLatest !== "function") {
+      return { ok: false, source: "store_missing", runs: {} };
+    }
+    var ncd = store.loadLatest("ncd");
+    var swot = store.loadLatest("swot");
+    var culture = store.loadLatest("culture");
+    var ministry8020 = store.loadLatest("ministry8020");
+    var matrix = swot && swot.derived && swot.derived.matrix_result;
+    var primary =
+      (swot && swot.derived && swot.derived.focus_strategy) ||
+      (matrix && matrix.primary_strategy) ||
+      null;
+    return {
+      ok: !!(ncd || swot || culture),
+      source: "assessment_run_store",
+      runs: { ncd: ncd, swot: swot, culture: culture, ministry8020: ministry8020 },
+      swot_primary: primary,
+      ncd_minimum: ncd && ncd.derived && ncd.derived.minimum_factor ? ncd.derived.minimum_factor : null,
+      culture_trust_breach:
+        culture && culture.derived && culture.derived.trust_breach_score != null
+          ? culture.derived.trust_breach_score
+          : null,
+      culture_resonance:
+        culture && culture.derived && culture.derived.culture_resonance_score != null
+          ? culture.derived.culture_resonance_score
+          : null,
+      has_8020_run: !!ministry8020
+    };
+  }
+
   function buildCoaching(dimScores, agg, flags) {
     var growth =
       agg.vision_tether_score != null && agg.vision_tether_score >= 55
@@ -239,7 +284,7 @@
         : "邀請事工負責人彼此分享 KR 定義，避免各部門用不同字典談「達標」。";
     var redflag =
       flags.indexOf("RESOURCE_STUCK") >= 0
-        ? "⚠️ 聖工健康度與回顧節奏雙弱：該事工多半不是同工不努力，而是資源與後勤卡關。建議長執會一鍵開啟 <a href=\"ministry-8020-planning.html\">80/20 精實減重</a>，暫緩次要事工，集中攻堅。"
+        ? "⚠️ 聖工健康度與回顧節奏雙弱：該事工多半不是同工不努力，而是資源與後勤卡關。建議長執會開啟 <a href=\"Church_Governance_8020_focus.html\">80/20 資源聚焦儀</a>，暫緩次要事工，集中攻堅。"
         : flags.indexOf("PASTORAL_BLIND") >= 0
           ? "生命向度亮紅：請牧者把關，避免指標製造罪咎感；數字是為彼此扶持，不是淘汰。"
           : "若長期卡關且團隊士氣下滑，請主任牧師 facilitation；導航儀不能取代關係。";
@@ -301,7 +346,7 @@
     var s = d.dim_scores || {};
     return (
       "你是教會事工規劃顧問（非權威，僅供牧者審核）。\n" +
-      "工具：神國標竿導航儀（目標與衡量對齊，非人事考核）\n" +
+      "工具：KPI/OKR 對齊（目標與衡量，非人事考核）\n" +
       "焦點：" +
       ((run.profile && run.profile.focus_label) || "—") +
       "\n" +
@@ -344,6 +389,11 @@
     var dimScores = computeDimScores(answerMap);
     var agg = aggregateFromDimScores(dimScores);
     var risk_flags = computeRiskFlags(dimScores, agg, check.answeredCount);
+    var resource_stuck_rate = computeResourceStuckRate(agg, risk_flags);
+    if (resource_stuck_rate >= 70 && risk_flags.indexOf("RESOURCE_STUCK") < 0) {
+      risk_flags.push("RESOURCE_STUCK");
+    }
+    var upstream = opts.skip_upstream ? null : loadUpstreamChain();
     var coaching = buildCoaching(dimScores, agg, risk_flags);
     var raw_answers = QUESTIONS.map(function (q) {
       return { q: q.id, dim: q.dim, value: answerMap[q.id] != null ? answerMap[q.id] : null };
@@ -357,11 +407,21 @@
       profile: Object.assign({ focus_label: "", season_label: "", team_name: "" }, profile || {}),
       authenticity_score: round1(check.answeredCount / QUESTIONS.length),
       feature_vector: computeFeatureVector(answerMap),
+      upstream_snapshot: upstream && upstream.ok
+        ? {
+            swot_primary: upstream.swot_primary,
+            ncd_minimum: upstream.ncd_minimum,
+            culture_trust_breach: upstream.culture_trust_breach,
+            has_8020_run: upstream.has_8020_run
+          }
+        : null,
       derived: Object.assign(
         {
           dim_scores: dimScores,
           answered_count: check.answeredCount,
           question_total: QUESTIONS.length,
+          resource_stuck_rate: resource_stuck_rate,
+          alignment_percent: agg.vision_tether_score,
           metric_bridge: buildMetricBridge(dimScores, agg),
           executive_desk: buildExecutiveDesk(dimScores, agg, risk_flags)
         },
@@ -378,10 +438,10 @@
 
   function buildDemoRun() {
     var answers = {
-      kpi_kr1: 3, kpi_kr2: 2, kpi_kr3: 3,
-      kpi_v1: 4, kpi_v2: 3, kpi_v3: 2,
-      kpi_r1: 2, kpi_r2: 3, kpi_r3: 2,
-      kpi_p1: 4, kpi_p2: 3, kpi_p3: 4
+      kpi_kr1: 2, kpi_kr2: 2, kpi_kr3: 2,
+      kpi_v1: 3, kpi_v2: 2, kpi_v3: 2,
+      kpi_r1: 2, kpi_r2: 2, kpi_r3: 2,
+      kpi_p1: 3, kpi_p2: 2, kpi_p3: 3
     };
     var built = buildRun(answers, {
       focus_label: "示範：青年門訓季度標竿",
@@ -406,6 +466,8 @@
     buildDemoRun: buildDemoRun,
     buildAiPrompt: buildAiPrompt,
     computeDimScores: computeDimScores,
-    aggregateFromDimScores: aggregateFromDimScores
+    aggregateFromDimScores: aggregateFromDimScores,
+    loadUpstreamChain: loadUpstreamChain,
+    computeResourceStuckRate: computeResourceStuckRate
   };
 })(typeof window !== "undefined" ? window : global);

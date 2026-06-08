@@ -890,7 +890,7 @@
       '<button type="button" class="acs-btn acs-btn--primary" data-acs-ncd-smart>➔ 產生 SMART 目標草稿</button>' +
       '<p class="acs-step-hint mt-3"><strong>C/A (Check/Act)</strong> — 釘選戰情室追蹤。</p>' +
       '<a class="acs-btn acs-btn--action" href="#" onclick="return planningOpenContent(event,\'cta-os-war-room.html\');">📡 健康雷達戰情室</a>' +
-      '<a class="acs-btn" href="#" onclick="return planningOpenContent(event,\'pdca-planning.html\');">🔄 PDCA 循環日誌</a>' +
+      '<a class="acs-btn" href="#" onclick="return planningOpenContent(event,\'Church_Governance_PDCA_cycle.html\');">🔄 PDCA 循環日誌</a>' +
       "</div></div>"
     );
   }

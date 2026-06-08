@@ -319,6 +319,52 @@
     return flags;
   }
 
+  function loadUpstreamChain(store) {
+    store = store || global.AssessmentRunStore;
+    if (!store || typeof store.loadLatest !== "function") {
+      return { ok: false, source: "store_missing", runs: {} };
+    }
+    var ncd = store.loadLatest("ncd");
+    var swot = store.loadLatest("swot");
+    var kpi = store.loadLatest("kpiokr");
+    var culture = store.loadLatest("culture");
+    var urgent = store.loadLatest("urgent");
+    var matrix = swot && swot.derived && swot.derived.matrix_result;
+    return {
+      ok: !!(ncd || swot || kpi || culture),
+      source: "assessment_run_store",
+      runs: { ncd: ncd, swot: swot, kpiokr: kpi, culture: culture, urgent: urgent },
+      swot_primary:
+        (swot && swot.derived && swot.derived.focus_strategy) ||
+        (matrix && matrix.primary_strategy) ||
+        null,
+      ncd_minimum: ncd && ncd.derived && ncd.derived.minimum_factor ? ncd.derived.minimum_factor : null,
+      kpi_health:
+        kpi && kpi.derived && kpi.derived.pillar_health_score != null ? kpi.derived.pillar_health_score : null,
+      culture_trust_breach:
+        culture && culture.derived && culture.derived.trust_breach_score != null
+          ? culture.derived.trust_breach_score
+          : null,
+      smart_prefill_hint: null
+    };
+  }
+
+  function applyUpstreamHints(dimScores, upstream) {
+    if (!upstream || !upstream.ok) return [];
+    var hints = [];
+    if (upstream.ncd_minimum) {
+      hints.push("NCD 破口「" + upstream.ncd_minimum.label + "」— R 向度請呼應此主線。");
+    }
+    if (upstream.swot_primary) hints.push("SWOT 主軸 " + upstream.swot_primary + " — 勿另起 SMART 計畫。");
+    if (upstream.kpi_health != null && upstream.kpi_health < 50) {
+      hints.push("KPI 健康度偏低（" + upstream.kpi_health + "）— 先縮小試行再擴張。");
+    }
+    if (upstream.culture_trust_breach >= 50) {
+      hints.push("文化信任破口 — Care 向度請優先檢視。");
+    }
+    return hints;
+  }
+
   function buildCoaching(dimScores, agg, flags) {
     var growth =
       agg.alignment_score != null && agg.alignment_score >= 55
@@ -648,7 +694,12 @@
     });
     var agg = aggregateFromDimScores(dimScores);
     var risk_flags = computeRiskFlags(dimScores, agg, check.answeredCount);
+    var upstream = opts.skip_upstream ? null : loadUpstreamChain();
+    var upstream_hints = applyUpstreamHints(dimScores, upstream);
     var coaching = buildCoaching(dimScores, agg, risk_flags);
+    if (upstream_hints.length) {
+      coaching.growth = upstream_hints[0] + " " + coaching.growth;
+    }
     var raw_answers = QUESTIONS.map(function (q) {
       return { q: q.id, dim: q.dim, value: answerMap[q.id] != null ? answerMap[q.id] : null };
     });
@@ -661,6 +712,15 @@
       profile: Object.assign({ plan_name: "", season_label: "", plan_summary: "" }, profile || {}),
       authenticity_score: round1(check.answeredCount / QUESTIONS.length),
       feature_vector: computeFeatureVector(answerMap),
+      upstream_snapshot: upstream && upstream.ok
+        ? {
+            swot_primary: upstream.swot_primary,
+            ncd_minimum: upstream.ncd_minimum,
+            kpi_health: upstream.kpi_health,
+            culture_trust_breach: upstream.culture_trust_breach
+          }
+        : null,
+      upstream_hints: upstream_hints,
       derived: Object.assign(
         {
           dim_scores: dimScores,
@@ -684,10 +744,10 @@
 
   function buildDemoRun() {
     var answers = {
-      smart_s1: 3, smart_s2: 3, smart_s3: 2,
-      smart_m1: 3, smart_m2: 2, smart_m3: 3,
-      smart_at1: 2, smart_at2: 3, smart_at3: 2,
-      smart_r1: 4, smart_r2: 3, smart_r3: 3,
+      smart_s1: 2, smart_s2: 2, smart_s3: 2,
+      smart_m1: 2, smart_m2: 2, smart_m3: 2,
+      smart_at1: 2, smart_at2: 2, smart_at3: 2,
+      smart_r1: 3, smart_r2: 2, smart_r3: 2,
       smart_c1: 2, smart_c2: 2, smart_c3: 2
     };
     var built = buildRun(answers, {
@@ -734,6 +794,8 @@
     aggregateFromDimScores: aggregateFromDimScores,
     aggregateFromScores: aggregateFromScores,
     buildPdcaGuide: buildPdcaGuide,
-    levelFromScore: levelFromScore
+    levelFromScore: levelFromScore,
+    loadUpstreamChain: loadUpstreamChain,
+    applyUpstreamHints: applyUpstreamHints
   };
 })(typeof window !== "undefined" ? window : global);

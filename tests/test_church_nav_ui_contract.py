@@ -86,23 +86,28 @@ REQUIRED_PLANNING_LANDING = [
 
 REQUIRED_SIDEBAR_PLAN = [
     "五年計劃戰略路徑",
-    "sidebar_crm_journey.html",
+    "guide_crm_journey_hub.html",
     "planningOpenContent",
     "planningOpenByToolId",
-    "十四項量表",
-    "健康雷達戰情室",
+    "planning_sidebar_render.js",
+    "planning-sidebar-tools-top",
+    "各項工具量表",
+    "健康雷達戰情",
     "guide_step2_raci.html",
-    "客戶關係管理",
+    "CRM 關係管理",
+    "第五步：教會事工執行",
     'href="index_plan.html"',
     'href="planning/raci-reflection.html"',
 ]
+
+PLANNING_SIDEBAR_RENDER = REPO / "church_planning" / "js" / "planning_sidebar_render.js"
 
 # 核心工具 · 與 planning_tool_registry.js / cta_os_war_room TOOL_LINKS 對齊
 PLANNING_CORE_TOOLS: dict[str, str] = {
     "spiritual": "信徒靈性生命健康自我審查.html",
     "pastoral": "pastoral-spiritual-survey-pro.html",
     "raci": "planning/raci-reflection.html",
-    "swot": "swot-planning.html",
+    "swot": "Church_Governance_SWOT_matrix.html",
     "ministry8020": "ministry-8020-planning.html",
     "urgent": "important-urgent-matrix.html",
     "smart": "smart-planning.html",
@@ -119,12 +124,12 @@ PLANNING_CORE_TOOLS: dict[str, str] = {
 }
 
 PLANNING_V3_ROUTES = [
-    ("啟航前言", "index_plan.html"),
-    ("權責理清", "guides/guide_step2_raci.html"),
+    ("啟航", "index_plan.html"),
     ("健康診斷中心", "assessment-os-hub.html"),
-    ("健康雷達戰情室", "guides/guide_step4_ctv.html"),
-    ("五年計劃策略實踐", "guides/guide_step5_strategy.html"),
-    ("降落執行層", "guides/guide_step6_crm.html"),
+    ("權責理清", "guides/guide_step2_raci.html"),
+    ("健康雷達戰情", "guides/guide_step4_ctv.html"),
+    ("計劃策略實踐", "guides/guide_step5_strategy.html"),
+    ("教會事工執行", "guides/guide_step6_crm.html"),
 ]
 
 PLANNING_REGISTRY = REPO / "church_planning" / "js" / "planning_tool_registry.js"
@@ -215,9 +220,17 @@ def main() -> int:
     else:
         errors.append("missing church_planning/index_plan.html")
 
+    reg_text = ""
+    if PLANNING_REGISTRY.is_file():
+        reg_text = PLANNING_REGISTRY.read_text(encoding="utf-8")
+
     sb_plan = ""
     if SIDEBAR_PLAN.is_file():
         sb_plan = SIDEBAR_PLAN.read_text(encoding="utf-8")
+        uses_dynamic_tools = (
+            "planning-sidebar-tools-top" in sb_plan
+            and PLANNING_SIDEBAR_RENDER.is_file()
+        )
         for req in REQUIRED_SIDEBAR_PLAN:
             if req not in sb_plan:
                 errors.append(f"sidebar_plan.html missing {req!r}")
@@ -231,9 +244,14 @@ def main() -> int:
             if rel not in sb_plan:
                 errors.append(f"sidebar_plan missing route path: {rel!r}")
         for tool_id in PLANNING_CORE_TOOLS:
-            if tool_id in ("raci", "disc", "mbti", "culture"):
+            if tool_id in ("raci",):
                 continue
-            if f"planningOpenByToolId(event,'{tool_id}')" not in sb_plan:
+            in_sb = f"planningOpenByToolId(event,'{tool_id}')" in sb_plan
+            in_reg = f'id: "{tool_id}"' in reg_text or f"id: '{tool_id}'" in reg_text
+            if uses_dynamic_tools:
+                if not in_reg:
+                    errors.append(f"registry missing tool for sidebar render: {tool_id!r}")
+            elif not in_sb:
                 errors.append(f"sidebar_plan missing tool submenu: {tool_id!r}")
     else:
         errors.append("missing church_planning/sidebar_plan.html")
@@ -242,6 +260,8 @@ def main() -> int:
         errors.append("missing church_planning/js/planning_tool_registry.js")
     if not PLANNING_NAV.is_file():
         errors.append("missing church_planning/js/planning_nav.js")
+    if not PLANNING_SIDEBAR_RENDER.is_file():
+        errors.append("missing church_planning/js/planning_sidebar_render.js")
 
     plan_root = REPO / "church_planning"
     for tool_id, rel in PLANNING_CORE_TOOLS.items():

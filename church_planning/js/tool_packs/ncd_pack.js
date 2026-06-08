@@ -264,6 +264,29 @@
     return errors.length ? { ok: false, errors: errors } : { ok: true, answers: map };
   }
 
+  function buildEightDimensions(dimScores) {
+    return INTL_DIMS.map(function (d) {
+      return {
+        id: d.id,
+        label: d.label,
+        en: d.en,
+        score: dimScores[d.id] != null ? dimScores[d.id] : null
+      };
+    });
+  }
+
+  function buildNcdContract(derived) {
+    return {
+      schema_version: 1,
+      source_tool: TOOL_ID,
+      eight_dimensions: buildEightDimensions(derived.dim_scores || {}),
+      minimum_factor: derived.minimum_factor || null,
+      overall_normalized: derived.overallNormalized,
+      health_label: derived.healthLabel,
+      governance_note: "最小因子驅動年度 PDCA 唯一攻堅主軸；不作人事考核依據。"
+    };
+  }
+
   function buildRunFromAnswers(answers, profile, opts) {
     opts = opts || {};
     var check = validateAnswers(answers);
@@ -284,6 +307,9 @@
       survey_mode: "quick_24"
     };
     var strategy_card = buildStrategyCard(minFactor);
+    derived.eight_dimensions = buildEightDimensions(dimScores);
+    var ncdContract = buildNcdContract(derived);
+    derived.ncd_contract = ncdContract;
     var run = {
       schema_version: 1,
       tool_id: TOOL_ID,
@@ -293,6 +319,7 @@
       authenticity_score: 1,
       feature_vector: computeFeatureVectorFromDimScores(dimScores, overallNorm),
       derived: derived,
+      ncd_contract: ncdContract,
       raw_answers: QUESTIONS.map(function (q) {
         return { q: q.id, value: map[q.id], dim: q.dim };
       }),
@@ -444,10 +471,55 @@
   function buildDemoRun() {
     var answers = {};
     QUESTIONS.forEach(function (q) {
-      answers[q.id] = q.dim === "functional" ? 2 : q.dim === "evangelism" ? 3 : 4;
+      if (q.dim === "passion") answers[q.id] = 2;
+      else if (q.dim === "functional") answers[q.id] = 5;
+      else if (q.dim === "gift") answers[q.id] = 3;
+      else answers[q.id] = 4;
     });
-    var built = buildRunFromAnswers(answers, { name: "示範教會", church_size: "100", city: "台北" });
-    if (built.ok && built.run) built.run.is_demo = true;
+    var built = buildRunFromAnswers(answers, {
+      name: "示範教會（結構強・靈性弱）",
+      church_size: "500",
+      city: "台北"
+    });
+    if (built.ok && built.run && built.run.derived) {
+      built.run.is_demo = true;
+      built.run.derived.dim_scores = {
+        gift: 3.0,
+        empower: 3.7,
+        passion: 2.0,
+        functional: 4.8,
+        worship: 3.3,
+        wholistic: 3.5,
+        evangelism: 3.0,
+        loving: 3.2
+      };
+      built.run.derived.minimum_factor = computeMinimumFactor(built.run.derived.dim_scores);
+      built.run.derived.overallNormalized = round1(
+        Object.keys(built.run.derived.dim_scores)
+          .map(function (k) {
+            return built.run.derived.dim_scores[k];
+          })
+          .reduce(function (a, b) {
+            return a + b;
+          }, 0) / 8
+      );
+      built.run.derived.healthLabel =
+        built.run.derived.overallNormalized >= 4
+          ? "健康區"
+          : built.run.derived.overallNormalized >= 3
+            ? "邊際區"
+            : "危機區";
+      built.run.derived.ncd_note =
+        "華人堂會經典痛點：結構極高（" +
+        built.run.derived.dim_scores.functional +
+        "）、活力靈性極低（" +
+        built.run.derived.dim_scores.passion +
+        "）— 宜重燃禱告祭壇，勿再加活動。";
+      built.run.derived.eight_dimensions = buildEightDimensions(built.run.derived.dim_scores);
+      built.run.ncd_contract = buildNcdContract(built.run.derived);
+      built.run.derived.ncd_contract = built.run.ncd_contract;
+      built.run.strategy_cards = [buildStrategyCard(built.run.derived.minimum_factor)];
+    }
     return built;
   }
 
@@ -557,6 +629,8 @@
     readPdcaPrefill: readPdcaPrefill,
     legacyIdFromMinFactor: legacyIdFromMinFactor,
     ELDER_SESSION_QUESTIONS: ELDER_SESSION_QUESTIONS,
-    buildAlgorithmSummary: buildAlgorithmSummary
+    buildAlgorithmSummary: buildAlgorithmSummary,
+    buildEightDimensions: buildEightDimensions,
+    buildNcdContract: buildNcdContract
   };
 })(typeof window !== "undefined" ? window : global);
