@@ -1,0 +1,192 @@
+---
+description: 教會規劃新工具上線 Checklist（registry·pack·跨頁契約·smoke/chain 必跑）；站建前／單頁中／鏈路收口三階段提醒
+globs: church_planning/**/*,tests/test_*pack*.py,tests/test_all_live_tools_smoke.py,tests/test_strategic_chain_integrity.py,tests/test_ministry_path_bridge.py,tests/test_church_nav_ui_contract.py,church_ministry/guide_crm_journey_hub.html,church_ministry/js/crm_journey_common.js
+alwaysApply: false
+---
+
+# 教會規劃 · 新工具上線 Checklist（含必跑測試）
+
+> **全站 P0 治理（三模式·MIC·分波收拾）：** `bible100-site-governance.mdc` · `docs/governance/SITE_GOVERNANCE.md`  
+> 與 **4-Tab 憲章**（`bible100-church-planning-assessment-4tab-charter.mdc`）互補：憲章定「頁面長什麼樣」；本規則定「何時做、做什麼、怎麼驗收、怎麼接鏈路」。
+
+## 核心原則（為何不能「做每頁時一次做完」）
+
+1. **跨頁契約是邊，不是節點** — NCD→SWOT→PDCA→8020→CRM 的欄位名稱，要等上下游都存在後才能鎖定；單頁階段只做本頁 SSOT + Store 寫入，**不要**提早寫死 CRM 鎖定邏輯。
+2. **工具清單先收斂** — `planning_tool_registry.js` 的 `status:"live"` 是 smoke 的 SSOT（目前 18 工具）；未入 registry 的頁面不稱「live 上線」。
+3. **混合殼先跑通，再 unified boot** — Vue 工作坊 + ACS 四 Tab（SWOT、NCD）先讓 A/B 軌與 Tab ③ 報告可用；**禁止**在第一版就強套 `B100AcsBoot.initPage` 若 Tab DOM 與標準四 Tab 不一致（NCD 僅 `verifyDeps('ncd')` 即可）。
+4. **同步進 pack = 內容債務清償** — HTML/註解裡的題幹可以先行；**live 前** `tool_packs/*_pack.js` 的 `QUESTIONS` 禁止 placeholder（如「題幹見問卷頁」）。
+5. **回歸有網** — 改 pack / bridge / CRM 後必跑 smoke +（若動戰略鏈）chain；CI：`.github/workflows/church-planning-smoke.yml`。
+6. **新頁有模板** — 複製同類成熟工具（見 §6），不要從零發明 Tab 殼。
+
+---
+
+## 三階段：什麼時候提醒工程師？
+
+### 階段 0 · 站建／模組開工前（前提就緒）
+
+**觸發**：新增 `church_planning` 測評類工具、registry 要加 `live`、或戰略鏈要接 CRM。
+
+**必須已存在（視為「工程開始前已自動設好」的 SSOT）**：
+
+| 項目 | 路徑 | 用途 |
+|------|------|------|
+| 工具清單 | `church_planning/js/planning_tool_registry.js` | `id` / `path` / `status` / `ctv` |
+| Run 存檔 | `church_planning/js/assessment_run_store.js` | 唯一正式 `saveRun` |
+| 4-Tab boot | `church_planning/js/strategic_acs_unified_boot.js` | 純 ACS 頁 Tab／示範按鈕 |
+| 戰略鏈 smoke | `tests/test_all_live_tools_smoke.py` | 一條命令 18 live + 子測 |
+| 跨頁對帳 | `tests/test_strategic_chain_integrity.py` | NCD→…→CRM |
+| CRM 排水口 | `church_planning/js/governance_crm_bridge.js` | 治理旗標 → 橫幅 + 媒合 UI 政策 |
+| 測試索引 | `tests/_list.txt` | 子測清單與拆跑命令 |
+
+**站建前 Checklist**：
+
+- [ ] 新工具 `tool_id` 與 registry 草案一致（全小寫、與 `run.tool_id` 相同）
+- [ ] 確認類別：測評 4-Tab / 恩賜 path_cards / 戰略鏈 / 工作桌（RACI 等 `charterExempt`）
+- [ ] 若會影響招募：預留 **唯讀** 旗標欄位，延後 UI 鎖定至鏈路收口
+- [ ] 若為 `planned`：registry 可占位，**不得**計入 18 live smoke
+
+### 階段 1 · 單頁開發中（本頁能跑）
+
+**觸發**：編輯 `*_pack.js`、`*_acs_shell.js`、`Church_Governance_*.html`、coaching 頁。
+
+**工程師必做**：
+
+- [ ] **`tool_packs/{tool}_pack.js`**：`buildRun` / `buildDemoRun` / `QUESTIONS` / 門檻 / `risk_flags`；Tab ④ 與 pack 同源
+- [ ] **`{tool}_acs_shell.js`**（若為 ACS）：Tab ② 快評、Tab ③ 唯一報告出口、示範 badge 不污染 store
+- [ ] **主 HTML**：`data-strategic-default="intro"`、四 Tab panel id、`assessment_coaching_shell.css`
+- [ ] **提交**：`AssessmentRunStore.saveRun(run)`；`run.tool_id` = registry `id`
+- [ ] **題庫**：真實題幹寫入 pack（從 HTML 或 `pastoral_spiritual_health.js` 註解同步 = 債務清償）
+- [ ] **混合殼**：Vue 工作坊與 ACS 快評**分軌**；B 軌完成後寫 Store，報告仍走 Tab ③
+- [ ] **導航**：`sidebar_plan.html` / `planning_hub_render.js` / `test_church_nav_ui_contract.py` 可解析的路徑
+
+**本階段必跑（改完即跑）**：
+
+```powershell
+python tests/test_{tool}_pack.py          # 或對應 pack 煙測
+python tests/test_assessment_4tab_shell.py  # 若動 Church_Governance_* 主檔
+```
+
+**本階段禁止**：
+
+- 在 HTML 內嵌第二套計分（與 pack 分叉）
+- 用 placeholder 題幹標記 `status: live`
+- 未驗本頁就接 CRM 禁食／剪枝 UI（可先 `scanGovernanceFlags` 唯讀）
+
+### 階段 2 · 鏈路收口（總攻／Phase 4 類）
+
+**觸發**：工具接入 NCD/SWOT/PDCA/8020/KPI 上游、CRM 媒合行為、或新增 chain 對帳項。
+
+**工程師必做**：
+
+- [ ] **`loadUpstreamChain()`**（若為戰略/診斷工具）：讀 Store 最新 run，文檔化輸出欄位
+- [ ] **擴 `test_strategic_chain_integrity.py`**：新增 `Cx-y` 列（upstream → downstream → field）
+- [ ] **CRM 行為**：擴 `GovernanceCrmBridge` + `crm_journey_common.js` `filterMatch()`；**禁止** CRM 直接解析多個 localStorage 鍵
+- [ ] **Unified boot**：純 ACS 頁 `B100AcsBoot.initPage('{tool}')`；混合殼僅 `verifyDeps`
+- [ ] **registry live 計數**：若新增 live，更新 `EXPECTED_LIVE_TOOL_COUNT` 與 smoke 子測
+- [ ] **path_cards 類**：確保 `ministry_path_bridge.js` 煙測仍綠
+
+**本階段必跑（合併前必全綠）**：
+
+```powershell
+python tests/test_strategic_chain_integrity.py
+python tests/test_all_live_tools_smoke.py
+```
+
+可選全量：`powershell -ExecutionPolicy Bypass -File tests\run-all-tests.ps1`
+
+---
+
+## 新工具上線 · 完整 Checklist（live 定義）
+
+### A. Registry 與導航
+
+- [ ] `planning_tool_registry.js` 新增 `{ id, path, status: "live", ctv, blurb }`
+- [ ] 主檔存在於 `church_planning/`（路徑與 registry 一致）
+- [ ] `test_church_nav_ui_contract.py` 通過（側欄／導遊盒／戰情室連結）
+
+### B. Pack + Store + Shell
+
+- [ ] `tool_packs/{id}_pack.js` + 對應 `tests/test_{id}_pack.py`（或併入 gift/smoke）
+- [ ] `{id}_acs_shell.js`（ACS 類）或等同殼層
+- [ ] 4-Tab 齊全（或 `charterExempt` 已標）
+- [ ] 示範 run：`is_demo: true` 不當正式決策依據
+
+### C. 跨頁（僅戰略／診斷／CRM 相關）
+
+- [ ] 上游讀取僅經 pack `loadUpstreamChain` 或 Store
+- [ ] 若影響 CRM：`GovernanceCrmBridge` API 擴展 + chain 測試項
+- [ ] 若輸出 `path_cards`：`MinistryPathBridge` 可 consume
+
+### D. 測試與 CI
+
+- [ ] 新增或更新 pack 煙測
+- [ ] smoke 子測列表已含（`test_all_live_tools_smoke.py` `SUBTESTS`）
+- [ ] `tests/_list.txt` 已更新說明
+- [ ] 本地 smoke + chain 全綠後才 push
+
+---
+
+## 必跑測試速查
+
+| 命令 | 何時跑 |
+|------|--------|
+| `python tests/test_all_live_tools_smoke.py` | 任何 live 工具 / registry / nav / pack 變更 |
+| `python tests/test_strategic_chain_integrity.py` | 動 NCD/SWOT/PDCA/8020/KPI/CRM bridge |
+| `python tests/test_ministry_path_bridge.py` | 動 shape/johari/disc/mbti/alda/competency/bridge |
+| `python tests/test_church_nav_ui_contract.py` | 動 sidebar / registry / 導遊盒 |
+| `python tests/test_assessment_4tab_shell.py` | 動 `Church_Governance_*` 主檔結構 |
+
+---
+
+## 新頁模板（複製起點）
+
+**純 ACS 四 Tab（SMART / KPI / 8020 級）**：
+
+```
+church_planning/Church_Governance_{NAME}.html    # data-strategic-default="intro"
+church_planning/js/tool_packs/{id}_pack.js
+church_planning/js/{id}_acs_shell.js             # 可選 *_viz.js / *_pastoral_desk_content.js
+church_planning/js/strategic_acs_unified_boot.js # 頁尾 initPage('{id}')
+tests/test_{id}_pack.py
+```
+
+**恩賜／path_cards（SHAPE 級）**：
+
+```
+church_planning/{id}-*-assessment.html
+church_planning/js/tool_packs/{id}_pack.js       # path_cards / fit_note
+tests/test_gift_packs_smoke.py 或 test_{id}_pack.py
+# 確認 ministry_path_bridge 仍綠
+```
+
+**混合殼（SWOT 級）**：
+
+```
+church_planning/Church_Governance_{NAME}_matrix.html
+  · 頭部 strategic-tab-* + swot_acs_shell（A 軌）
+  · B 軌 Vue #app 保留
+  · 頁尾：unified_boot + initPage('swot')；Vue mount 不刪
+```
+
+**CRM 排水（治理链末端）**：
+
+```
+church_planning/js/governance_crm_bridge.js      # 旗標 SSOT
+church_ministry/guide_crm_journey_hub.html       # #crmEntryBanner
+church_ministry/js/crm_journey_common.js         # filterMatch 行為鎖
+```
+
+---
+
+## Cursor / AI 助手行為（自動提醒）
+
+當使用者要求 **新增 live 工具、改 registry、接 CRM、或做 Phase/總攻** 時，助手**必須**：
+
+1. 先讀 `planning_tool_registry.js` 與本 checklist，判斷處於階段 0 / 1 / 2。
+2. 若缺 pack 煙測或 smoke 子測，**主動補測**而非只改 HTML。
+3. 若改戰略链欄位，**同步** `test_strategic_chain_integrity.py` 對帳表。
+4. 混合殼預設 **不** 強套 `initPage`；先問或檢查 Tab DOM 是否為 `strategic-tab-*`。
+5. 完成後 **實際執行** smoke（至少相關子測），在回覆中貼命令與 OK/FAIL。
+6. 勿將 `languages/`、無關 landing、未請求腳本混入工具上線 PR。
+
+**一句話驗收**：registry 有、pack 真題、store 寫入、本頁煙測綠、若接链则 chain 綠、smoke 一條命令全綠。

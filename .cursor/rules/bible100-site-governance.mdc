@@ -1,0 +1,55 @@
+---
+description: 全站治理 P0（三运行模式·MIC·manifest·冻结核心）；边做边改期定边界不大搬家
+globs: index_v5.html,config/modes.json,config/modules.json,config/module_manifest.json,docs/governance/**,help/tools-overview.html,help/docs-hub.html,**/sidebar*.html
+alwaysApply: false
+---
+
+# 全站治理 · P0（SITE_GOVERNANCE）
+
+> **人类完整版：** `docs/governance/SITE_GOVERNANCE.md`  
+> **Planning 子域：** `bible100-church-planning-new-tool-checklist.mdc`  
+> **nav/help 连结：** `bible100-nav-link-check-after-changes.mdc`
+
+## 三运行模式
+
+| 模式 | 含义 |
+|------|------|
+| `standalone` | 模块自有 index/sidebar/landing |
+| `shell` | 仅经 `index_v5` + `modes.json` |
+| `hybrid` | 双入口皆官方（planning、church_ministry） |
+
+SSOT：`config/module_manifest.json` + `config/modes.json` + `config/modules.json`
+
+## P0 纪律（边做边改）
+
+1. **新档只进对模块夹**；不确定的进 `_archive/`，勿硬删  
+2. **新页** 建议 `data-b100-module` + `data-b100-pattern`（见 `UI_PATTERN_CATALOG.md`）  
+3. **不改 frozenCore** 除非同步跑 §必跑测试  
+4. **不大搬家、不全站 rename** — P1 按 `cleanupWaves` 逐模块收  
+5. **sidebar 重整** 一次只改一支（CRM / layout / plan 勿同批）
+
+## 冻结核心
+
+见 `module_manifest.json` → `frozenCore`（index_v5、三教会 sidebar、registry、Store、CRM bridge）
+
+## MIC 速查
+
+M1 moduleId · M2 landing · M3 sidebar · M4 modes 路由 · M5 href 存在 · M7 域测 — 详见 `MODULE_INTEGRITY_CHECKLIST.md`
+
+## 必跑（改壳/config/sidebar/manifest 后）
+
+```powershell
+python tests/test_module_manifest_p0.py
+python tests/test_index_v5_shell.py
+python tests/test_config_embedded_sync.py
+python tests/test_church_nav_ui_contract.py
+```
+
+改 planning/registry：`python tests/test_all_live_tools_smoke.py`  
+改 modes.json 后：`node scripts/generate_config_embedded.js`
+
+## Cursor 行为
+
+- 用户要求「收拾模块根夹」→ 先读 manifest `cleanupWaves`，**只动当前 wave**  
+- 新功能 → 只走 P0 归属规则；旧档可乱、新档不准再加乱  
+- 完成 P0 相关改动 → 实际执行 manifest P0 测试并在回复贴 OK/FAIL

@@ -1,0 +1,148 @@
+{
+  "$schema_note": "P0 草案 · 模組邊界 SSOT；不取代 modes.json 路由細節。P1 分波收拾時逐項 verified:true",
+  "version": "p0-2026-06",
+  "runtimeProfiles": {
+    "standalone": "自有 index/sidebar/landing，可單開 HTTP",
+    "shell": "仅经 index_v5 + modes.json 第二列",
+    "hybrid": "standalone 与 shell 双入口皆支持"
+  },
+  "frozenCore": [
+    "index_v5.html",
+    "config/modes.json",
+    "config/modules.json",
+    "js/config-embedded.js",
+    "church_ministry/sidebar_crm_journey.html",
+    "church_ministry/sidebar_church_layout_v1.html",
+    "church_planning/sidebar_plan.html",
+    "church_planning/js/planning_tool_registry.js",
+    "church_planning/js/assessment_run_store.js",
+    "church_planning/js/governance_crm_bridge.js"
+  ],
+  "cleanupWaves": [
+    { "wave": 0, "label": "P0 治理文档与 manifest", "status": "active" },
+    { "wave": 1, "label": "壳与 config", "moduleIds": ["shell"], "status": "pending" },
+    { "wave": 2, "label": "church_planning", "moduleIds": ["church_planning"], "status": "pending" },
+    { "wave": 3, "label": "church_ministry", "moduleIds": ["church_ministry"], "status": "pending" },
+    { "wave": 4, "label": "bible_study / ai_tools / school_management", "moduleIds": ["bible_study", "ai_tools", "school_management"], "status": "pending" },
+    { "wave": 5, "label": "help / nav_hub / tools", "moduleIds": ["nav_hub"], "status": "pending" }
+  ],
+  "modules": [
+    {
+      "id": "shell",
+      "name": "总站壳",
+      "runtimeProfile": "shell",
+      "landing": "languages/landing_new_cn.html",
+      "sidebar": null,
+      "pattern": "P-SHELL",
+      "modesId": null,
+      "tests": ["tests/test_index_v5_shell.py", "tests/test_config_embedded_sync.py"]
+    },
+    {
+      "id": "church_planning",
+      "name": "教会规划 OS",
+      "runtimeProfile": "hybrid",
+      "landing": "church_planning/index_plan.html",
+      "sidebar": "church_planning/sidebar_plan.html",
+      "altLanding": "church_planning/index.html",
+      "pattern": "P-LANDING",
+      "modesId": "church",
+      "modesNavLabel": "🧭 教会规划 OS",
+      "registry": "church_planning/js/planning_tool_registry.js",
+      "liveToolCount": 18,
+      "tests": ["tests/test_all_live_tools_smoke.py", "tests/test_strategic_chain_integrity.py"]
+    },
+    {
+      "id": "church_ministry",
+      "name": "教会事工",
+      "runtimeProfile": "hybrid",
+      "landing": "church_ministry/guide_crm_journey_hub.html",
+      "sidebar": "church_ministry/sidebar_crm_journey.html",
+      "altSidebar": "church_ministry/sidebar_church_layout_v1.html",
+      "pattern": "P-CRM-HUB",
+      "modesId": "church",
+      "tests": ["tests/test_church_nav_ui_contract.py"]
+    },
+    {
+      "id": "bible_study",
+      "name": "圣经研读",
+      "runtimeProfile": "shell",
+      "landing": "bible_study/dashboard.html",
+      "sidebar": "bible_study/sidebar.html",
+      "pattern": "P-MOD-STANDALONE",
+      "modesId": "study",
+      "tests": ["tests/test_module_manifest_p0.py"]
+    },
+    {
+      "id": "ai_tools",
+      "name": "AI 辅助中心",
+      "runtimeProfile": "hybrid",
+      "landing": "ai_tools/ai_lab_landing.html",
+      "sidebar": "ai_tools/sidebar_lab.html",
+      "altSidebar": "ai_tools/sidebar.html",
+      "pattern": "P-MOD-STANDALONE",
+      "modesId": "ai",
+      "tests": ["tests/test_module_manifest_p0.py"]
+    },
+    {
+      "id": "school_management",
+      "name": "学校管理",
+      "runtimeProfile": "shell",
+      "landing": "school_management/index.html",
+      "sidebar": "school_management/sidebar.html",
+      "pattern": "P-MOD-STANDALONE",
+      "modesId": "school",
+      "layout": "module-shell-embed",
+      "tests": ["tests/test_module_manifest_p0.py"]
+    },
+    {
+      "id": "languages",
+      "name": "语言教材",
+      "runtimeProfile": "shell",
+      "landing": "languages/landing_new_cn.html",
+      "sidebar": "languages/index_cn.html",
+      "pattern": "P-MOD-STANDALONE",
+      "modesId": "material",
+      "tests": []
+    },
+    {
+      "id": "nav_hub",
+      "name": "目录搜索 / 全站 meta",
+      "runtimeProfile": "standalone",
+      "landing": "nav_hub/index.html",
+      "sidebar": "nav_hub/sidebar.html",
+      "pattern": "P-MOD-STANDALONE",
+      "tests": ["scripts/check_phase_tool_and_nav_links.py"]
+    }
+  ],
+  "crossLinks": [
+    {
+      "id": "crm-to-planning",
+      "from": "church_ministry/sidebar_crm_journey.html",
+      "expect": "sidebar_plan.html",
+      "note": "回教会规划"
+    },
+    {
+      "id": "layout-to-crm",
+      "from": "church_ministry/sidebar_church_layout_v1.html",
+      "expect": "guide_crm_journey_hub.html",
+      "note": "回 CRM 旅程"
+    },
+    {
+      "id": "layout-to-planning",
+      "from": "church_ministry/sidebar_church_layout_v1.html",
+      "expect": "church_planning/index",
+      "note": "长期计划"
+    },
+    {
+      "id": "planning-to-crm",
+      "from": "church_planning/index_plan.html",
+      "expect": "guide_crm_journey_hub",
+      "note": "回执行层"
+    }
+  ],
+  "governanceDocs": [
+    "docs/governance/SITE_GOVERNANCE.md",
+    "docs/governance/UI_PATTERN_CATALOG.md",
+    "docs/governance/MODULE_INTEGRITY_CHECKLIST.md"
+  ]
+}

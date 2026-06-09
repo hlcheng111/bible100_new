@@ -20,6 +20,14 @@ if ($configSyncResult -ne 0) {
     exit 1
 }
 
+$manifestResult = 0
+python "$scriptDir\test_module_manifest_p0.py"
+$manifestResult = $LASTEXITCODE
+if ($manifestResult -ne 0) {
+    Write-Host "module manifest P0 failed (exit $manifestResult)." -ForegroundColor Red
+    exit 1
+}
+
 $liveToolsResult = 0
 python "$scriptDir\test_strategic_chain_integrity.py"
 $chainResult = $LASTEXITCODE
