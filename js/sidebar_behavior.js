@@ -1,4 +1,4 @@
-// Unified sidebar behavior for iframe-based modules.
+// Unified sidebar behavior for iframe-based modules (Bible100 NAV contract).
 (function () {
   const isExternalLink = (href) => {
     if (!href) return true;
@@ -11,6 +11,20 @@
       lower.startsWith("javascript:") ||
       lower.startsWith("#")
     );
+  };
+
+  const isInShell = () => {
+    try {
+      if (!window.parent || window.parent === window) return false;
+      try {
+        if (window.parent.document && window.parent.document.getElementById("contentFrame")) {
+          return true;
+        }
+      } catch (eDoc) {}
+      return true;
+    } catch (err) {
+      return false;
+    }
   };
 
   const getParentContentFrame = () => {
@@ -35,6 +49,179 @@
   const normalizePath = (urlObj) => {
     if (!urlObj) return "";
     return urlObj.pathname.replace(/\/+/g, "/");
+  };
+
+  const hrefToSiteRootRelative = (href) => {
+    const resolved = resolveUrl(href, window.location.href);
+    if (!resolved) return null;
+    const path = normalizePath(resolved);
+    const idx = path.indexOf("/bible100_new/");
+    if (idx >= 0) {
+      return path.slice(idx + "/bible100_new/".length) + resolved.search + resolved.hash;
+    }
+    const cmIdx = path.indexOf("/church_ministry/");
+    if (cmIdx >= 0) {
+      return path.slice(cmIdx + 1) + resolved.search + resolved.hash;
+    }
+    return null;
+  };
+
+  const toShellContentUrl = (href) => {
+    const fromRoot = hrefToSiteRootRelative(href);
+    if (fromRoot) return fromRoot;
+    const resolved = resolveUrl(href, window.location.href);
+    if (!resolved) return null;
+    const path = normalizePath(resolved);
+    const idx = path.indexOf("/church_ministry/");
+    if (idx >= 0) {
+      return path.slice(idx + 1) + resolved.search + resolved.hash;
+    }
+    const basePath = normalizePath(resolveUrl(window.location.href));
+    const baseIdx = basePath.indexOf("/church_ministry/");
+    if (baseIdx >= 0 && href && !/^(https?:|mailto:|tel:|javascript:|#|\/)/i.test(href)) {
+      const rel = resolved.pathname.replace(/\/+/g, "/");
+      const tail = rel.slice(rel.indexOf("/church_ministry/") + "/church_ministry/".length);
+      if (tail) return "church_ministry/" + tail + resolved.search + resolved.hash;
+    }
+    return null;
+  };
+
+  const bustUrl = (url) => {
+    const hashIdx = url.indexOf("#");
+    if (hashIdx >= 0) {
+      const base = url.slice(0, hashIdx);
+      const hash = url.slice(hashIdx);
+      return base + (base.indexOf("?") >= 0 ? "&" : "?") + "v=" + Date.now() + hash;
+    }
+    return url + (url.indexOf("?") >= 0 ? "&" : "?") + "v=" + Date.now();
+  };
+
+  const parentIsSiteHub = () => {
+    try {
+      const path = window.parent.location.pathname.replace(/\\/g, "/");
+      return /\/index_v5\.html$/i.test(path) || /\/bible100_new\/index\.html$/i.test(path);
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const parentIsModuleShell = () => {
+    try {
+      const path = window.parent.location.pathname.replace(/\\/g, "/");
+      return /\/[^/]+\/index\.html$/i.test(path) && path.indexOf("/bible100_new/") >= 0;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  /** NAV-CONTENT：只換右欄；成功才 true（失敗時讓 href 降級） */
+  const navigateContentViaShell = (href) => {
+    if (!href || isExternalLink(href)) return false;
+    try {
+      if (window.parent && window.parent !== window) {
+        try {
+          const cf = window.parent.document.getElementById("contentFrame");
+          if (cf) {
+            let targetSrc = "";
+            if (parentIsSiteHub()) {
+              const shellUrl = toShellContentUrl(href);
+              if (!shellUrl) return false;
+              targetSrc = shellUrl;
+            } else if (parentIsModuleShell()) {
+              targetSrc = new URL(href, window.location.href).href;
+            } else {
+              const shellUrl = toShellContentUrl(href);
+              targetSrc = shellUrl || new URL(href, window.location.href).href;
+            }
+            cf.src = bustUrl(targetSrc);
+            try {
+              window.parent.postMessage({ type: "ai-tools-content-loading" }, "*");
+            } catch (eLoad) {}
+            return true;
+          }
+        } catch (eDirect) {}
+        const shellUrl = toShellContentUrl(href);
+        if (shellUrl) {
+          window.parent.postMessage({ type: "navigate", url: shellUrl }, "*");
+          try {
+            window.parent.postMessage({ type: "ai-tools-content-loading" }, "*");
+          } catch (e2) {}
+          return true;
+        }
+        try {
+          window.parent.postMessage(
+            { type: "navigate", url: new URL(href, window.location.href).href },
+            "*"
+          );
+          return true;
+        } catch (eNav) {}
+      }
+    } catch (err) {}
+    if (typeof window.bible100OpenContent === "function") {
+      const shellUrl = toShellContentUrl(href);
+      if (shellUrl && window.bible100OpenContent(null, shellUrl)) return true;
+    }
+    return false;
+  };
+
+  /** NAV-MODULE：左+右雙欄 */
+  const navigateModuleViaShell = (link) => {
+    if (!link) return false;
+    let sidebarUrl = link.getAttribute("data-b100-sidebar") || "";
+    let contentUrl = link.getAttribute("data-b100-content") || "";
+    const href = link.getAttribute("href");
+    if (!contentUrl && href && !isExternalLink(href)) {
+      contentUrl = hrefToSiteRootRelative(href) || "";
+    }
+    if (!sidebarUrl && !contentUrl) return false;
+    if (typeof window.bible100ShellNav === "function") {
+      if (window.bible100ShellNav(null, { sidebarUrl: sidebarUrl, contentUrl: contentUrl })) {
+        return true;
+      }
+    }
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          { type: "bible100-shell", sidebarUrl: sidebarUrl, contentUrl: contentUrl },
+          "*"
+        );
+        return true;
+      }
+    } catch (ePm) {}
+    return false;
+  };
+
+  const getNavMode = (link) => {
+    const mode = link.getAttribute("data-b100-nav");
+    if (mode) return mode;
+    if (link.getAttribute("data-b100-shell-nav") === "content") return "content";
+    if (link.getAttribute("data-b100-path")) return "content";
+    return "";
+  };
+
+  const handleUnifiedNavClick = (link) => {
+    const mode = getNavMode(link);
+    if (mode === "module") return navigateModuleViaShell(link);
+    if (mode === "content" || mode === "exit") {
+      const href = link.getAttribute("data-b100-path") || link.getAttribute("href");
+      if (mode === "exit" && link.getAttribute("target") === "_blank") return false;
+      return navigateContentViaShell(href);
+    }
+    return false;
+  };
+
+  const fallbackContentViaBase = (link) => {
+    const href = link.getAttribute("data-b100-path") || link.getAttribute("href");
+    if (!href || isExternalLink(href)) return false;
+    if (!isInShell()) return false;
+    const cf = getParentContentFrame();
+    if (cf) {
+      try {
+        cf.src = bustUrl(new URL(href, window.location.href).href);
+        return true;
+      } catch (eFb) {}
+    }
+    return false;
   };
 
   const markActiveLink = (contentSrc) => {
@@ -76,15 +263,15 @@
     const links = Array.from(document.querySelectorAll("a[href]"));
     links.forEach((link) => {
       if (link.getAttribute("data-b100-path")) return;
+      if (link.getAttribute("data-b100-nav")) return;
+      if (link.getAttribute("data-b100-shell-nav")) return;
       const href = link.getAttribute("href");
       if (isExternalLink(href)) return;
-      if (!link.getAttribute("target")) {
-        link.setAttribute("target", "contentFrame");
-      }
+      if (link.getAttribute("onclick")) return;
+      link.setAttribute("target", "contentFrame");
     });
   };
 
-  // --- Sidebar <details> state memory (localStorage) ---
   const STORAGE_KEY_PREFIX = "sidebar_detail_";
 
   const restoreDetailsState = () => {
@@ -109,6 +296,73 @@
     listenDetailsToggle();
 
     const contentFrame = getParentContentFrame();
+
+    document.addEventListener(
+      "click",
+      (e) => {
+        const link = e.target.closest("a[href]");
+        if (!link) return;
+        const href = link.getAttribute("href");
+        const pathAttr = link.getAttribute("data-b100-path");
+        const navMode = getNavMode(link);
+
+        if (navMode) {
+          let ok = handleUnifiedNavClick(link);
+          if (!ok) ok = fallbackContentViaBase(link);
+          if (ok) {
+            e.preventDefault();
+            e.stopPropagation();
+            const markHref = pathAttr || href;
+            try {
+              markActiveLink(new URL(markHref, window.location.href).href);
+            } catch (err) {
+              markActiveLink(markHref);
+            }
+            return;
+          }
+          return;
+        }
+
+        if (isExternalLink(href) && !pathAttr) return;
+        if (link.getAttribute("onclick")) return;
+
+        if (window.parent && window.parent !== window) {
+          const navHref = pathAttr || href;
+          if (navigateContentViaShell(navHref)) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (pathAttr) {
+              try {
+                markActiveLink(new URL(pathAttr, window.location.href).href);
+              } catch (err) {
+                markActiveLink(pathAttr);
+              }
+            } else {
+              markActiveLink(href);
+            }
+            return;
+          }
+        }
+
+        if (!contentFrame) return;
+        if (pathAttr) {
+          try {
+            markActiveLink(new URL(pathAttr, window.location.href).href);
+          } catch (err) {
+            markActiveLink(pathAttr);
+          }
+        } else {
+          markActiveLink(href);
+        }
+        try {
+          if (window.parent && (link.getAttribute("target") === "contentFrame" || pathAttr)) {
+            window.parent.postMessage({ type: "ai-tools-content-loading" }, "*");
+          }
+        } catch (err) {}
+      },
+      true
+    );
+
     if (!contentFrame) return;
 
     const updateActive = () => {
@@ -116,33 +370,8 @@
       markActiveLink(src);
     };
 
-    // Initial highlight
     updateActive();
 
-    // Update on click + notify parent to show loading (for contentFrame)
-    document.addEventListener("click", (e) => {
-      const link = e.target.closest("a[href]");
-      if (!link) return;
-      const href = link.getAttribute("href");
-      const pathAttr = link.getAttribute("data-b100-path");
-      if (isExternalLink(href) && !pathAttr) return;
-      if (pathAttr) {
-        try {
-          markActiveLink(new URL(pathAttr, window.location.href).href);
-        } catch (err) {
-          markActiveLink(pathAttr);
-        }
-      } else {
-        markActiveLink(href);
-      }
-      try {
-        if (window.parent && (link.getAttribute("target") === "contentFrame" || pathAttr)) {
-          window.parent.postMessage({ type: "ai-tools-content-loading" }, "*");
-        }
-      } catch (err) {}
-    });
-
-    // Poll for iframe changes
     let lastSrc = contentFrame.getAttribute("src") || "";
     setInterval(() => {
       const current = contentFrame.getAttribute("src") || "";
@@ -151,6 +380,13 @@
         markActiveLink(current);
       }
     }, 1000);
+  };
+
+  window.B100SidebarNav = {
+    navigateContent: navigateContentViaShell,
+    navigateModule: navigateModuleViaShell,
+    hrefToSiteRootRelative: hrefToSiteRootRelative,
+    isInShell: isInShell
   };
 
   if (document.readyState === "loading") {

@@ -1,74 +1,54 @@
 /**
- * 側欄頁單獨以 file:// 或新分頁開啟時，沒有父層 contentFrame，將 target 改為 _top。
- * 在模組殼（index.html / index_v5）內嵌時：延遲多次檢查父層，避免誤判導致連結整頁跳走。
- *
- * 重要：側欄在 **iframe 內**（window !== window.top）時，**絕對不可**把 contentFrame 改成 _top，
- * 否則會整頁導向內容頁、右欄殼失效（誤判常見於 file:// 或父層 document 讀取時機）。
+ * 侧栏在 shell 外单独打开时：移除 base target=contentFrame，
+ * 内容链改为 target=_top，避免在侧栏 iframe 内「开向自己」。
  */
-(function () {
-  /** 本頁是否嵌在任一 iframe 內（模組殼的 sidebarFrame 等） */
-  function isEmbeddedInFrame() {
-    try {
-      return window.self !== window.top;
-    } catch (e) {
-      return true;
-    }
-  }
+(function (w, doc) {
+  "use strict";
 
-  function parentHasContentFrame() {
+  function inShell() {
     try {
-      var p = window.parent;
-      if (!p || p === window) return false;
-      // 先試 frames API，避免部分環境下 document 存取失敗而誤判
-      if (p.frames && p.frames['contentFrame']) return true;
-      var d = p.document;
-      if (d && d.getElementById('contentFrame')) return true;
-    } catch (e) { /* cross-origin */ }
+      if (w.parent && w.parent !== w) {
+        try {
+          if (w.parent.document && w.parent.document.getElementById("contentFrame")) {
+            return true;
+          }
+        } catch (eDoc) {}
+        /* file:// 下常無法讀 parent.document，但仍為 index_v5 子 iframe */
+        return true;
+      }
+    } catch (eShell) {}
     return false;
   }
 
-  function applyStandaloneTargets() {
-    var bases = document.getElementsByTagName('base');
-    for (var i = 0; i < bases.length; i++) {
-      var t = (bases[i].getAttribute('target') || '').toLowerCase();
-      if (t === 'contentframe') bases[i].setAttribute('target', '_top');
+  if (inShell()) return;
+
+  var base = doc.querySelector('base[target="contentFrame"]');
+  if (base && base.parentNode) base.parentNode.removeChild(base);
+
+  function isInternalContentLink(href) {
+    if (!href || href === "#") return false;
+    var lower = href.toLowerCase();
+    if (lower.indexOf("javascript:") === 0 || lower.indexOf("mailto:") === 0 || lower.indexOf("tel:") === 0) {
+      return false;
     }
-    document.querySelectorAll('a[href][target="contentFrame"]').forEach(function (a) {
-      var href = a.getAttribute('href');
-      if (!href || href === '#' || href.indexOf('javascript:') === 0) return;
-      a.setAttribute('target', '_top');
+    if (lower.indexOf("http://") === 0 || lower.indexOf("https://") === 0) return false;
+    return true;
+  }
+
+  function applyStandaloneTargets() {
+    doc.querySelectorAll("a[href]").forEach(function (a) {
+      if (a.getAttribute("onclick")) return;
+      if (a.getAttribute("data-b100-nav")) return;
+      if (a.getAttribute("data-b100-shell-nav")) return;
+      var href = a.getAttribute("href");
+      if (!isInternalContentLink(href)) return;
+      a.setAttribute("target", "_top");
     });
   }
 
-  function tryStandalone() {
-    if (isEmbeddedInFrame()) return;
-    if (parentHasContentFrame()) return;
+  if (doc.readyState === "loading") {
+    doc.addEventListener("DOMContentLoaded", applyStandaloneTargets);
+  } else {
     applyStandaloneTargets();
   }
-
-  function scheduleDeferredChecks() {
-    if (isEmbeddedInFrame()) return;
-    if (parentHasContentFrame()) return;
-    requestAnimationFrame(function () {
-      if (isEmbeddedInFrame()) return;
-      if (parentHasContentFrame()) return;
-      requestAnimationFrame(function () {
-        if (isEmbeddedInFrame()) return;
-        if (parentHasContentFrame()) return;
-        tryStandalone();
-      });
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    if (isEmbeddedInFrame()) return;
-    if (parentHasContentFrame()) return;
-    scheduleDeferredChecks();
-  });
-
-  window.addEventListener('load', function () {
-    if (isEmbeddedInFrame()) return;
-    if (parentHasContentFrame()) return;
-    tryStandalone();
-  });
-})();
+})(typeof window !== "undefined" ? window : this, document);

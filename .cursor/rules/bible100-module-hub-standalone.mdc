@@ -1,0 +1,68 @@
+---
+description: 模組 Standalone 與 index_v5 Hub 兩級站殼協議（禁止 redirect-only index、禁止殼中殼）
+alwaysApply: true
+---
+
+# Hub 與 Standalone 兩級站殼協議
+
+## 戰略意圖
+
+- **Standalone**：各模組 `…/index.html` 為獨立主權入口（可單獨上雲、雙擊運行），含頂欄 + `sidebarFrame` + `contentFrame`。
+- **Hub**：`index_v5.html` 為聯邦總殼，只負責頂層導覽與**一層**左右 iframe；不深入模組內部 Tab。
+
+## 導覽層級（L0–L5）
+
+| 層 | 職責 | 範例 |
+|----|------|------|
+| L0 | 模組 `index.html` 雙欄殼 | `church_ministry/index.html`、`school_management/index.html` |
+| L1 | 總站頂層大模組 | `index_v5` 第一列 mode |
+| L2 | 子分類 / 區域 Hub | CRM 角色、A–E、`?focus=c` |
+| L3 | Hub 或 L0 的 sidebar + content | `sidebarFrame` + `contentFrame` |
+| L4 | 內容區多 Tab 主殼 | `education-integrated.html`（5 Tab + 子 iframe） |
+| L5 | 單一功能子頁 | `edu_roster.html`、`guide_story.html` |
+
+## 禁止行為
+
+1. **禁止**模組 `index.html` 僅做 `redirect` 到單一功能頁（如 CRM Hub）；CRM 應為頂欄或側欄入口，非模組唯一入口。
+2. **禁止**把帶**第二套** `sidebarFrame`+`contentFrame` 的模組 `index.html` 塞進 `index_v5` 右欄（殼中殼）。Hub 載入**內容頁**，不載入模組殼。
+3. **禁止**內層 iframe 使用與外殼同名的 `contentFrame`（教會規劃已改 `sidebar_plan` + `index_plan`）。
+4. **禁止**側欄放 ①②③④ 與 L4 工作桌 Tab 重複；側欄只切大模組，Tab 在內容區切任務。
+
+## church_ministry 約定
+
+| 檔案 | 角色 |
+|------|------|
+| `church_ministry/index.html` | **L0** Standalone 殼；預設 `sidebar_church_layout_v1` + `dashboard_church_layout_v1`；`?focus=c` → C 側欄 + `education-integrated` |
+| `sidebar_c_education_journey.html` | **L3** C 區側欄（Hub 或 L0 內） |
+| `modules/education/education-integrated.html` | **L4** C 區 5 Tab 工作桌（Hub 右欄**應載入此頁**，非 `church_ministry/index.html`） |
+| `guide_crm_journey_hub.html` | CRM 功能頁，非模組 index |
+
+路徑解析：`church_ministry/js/cm_shell_paths.js`（Standalone 剝除 `church_ministry/` 前綴；跨模組加 `../`）。  
+訊息轉發：`cm_index_shell.js` / `school_management/index.html` 同模式 `postMessage` relay。
+
+## Hub 進入 C 區（index_v5 / CRM）
+
+```
+index_v5
+├── sidebarFrame → church_ministry/sidebar_c_education_journey.html
+└── contentFrame → church_ministry/modules/education/education-integrated.html#tab-*
+```
+
+## 新模組檢查清單
+
+- [ ] `index.html` 通過 `B100ShellContract`（topbar + sidebarFrame + contentFrame）
+- [ ] 含 `postMessage` relay（`bible100-shell` / `navigate`）
+- [ ] Hub 註冊表寫明 `hub_sidebar` + `hub_content`（根相對）
+- [ ] Landing 多 Tab 用 L4 主殼 + L5 子頁，不用單檔巨石
+- [ ] 跨模組用 `bible100ShellNav` 或 `postMessage` 至總殼，不硬改他模組內 Tab
+
+## 相關檔案
+
+- `docs/governance/UNIFIED_NAVIGATION.md` — **統一導航法則**（`data-b100-nav` 範本與禁止清單）
+- `.cursor/rules/bible100-unified-navigation.mdc` — Cursor 守門規則
+- `js/sidebar_behavior.js` — `data-b100-nav` 單一 handler（`B100SidebarNav`）
+- `js/shell_nav.js` — Hub 雙欄切換
+- `js/shell_contract.js` — 模組殼驗證
+- `.cursor/rules/bible100-index-shell-sidebar.mdc` — 總站 iframe 命名
+- `tests/test_unified_navigation.py` — 側欄導航靜態檢查
+- `church_ministry/tests/test_church_ministry_index_shell.py` — 教會事工 L0 靜態檢查

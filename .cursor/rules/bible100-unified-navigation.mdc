@@ -1,0 +1,50 @@
+---
+description: Bible100 統一導航契約（data-b100-nav、禁止 #/void(0)/殼中殼）
+alwaysApply: true
+---
+
+# 統一導航（UNIFIED_NAVIGATION）
+
+完整說明：`docs/governance/UNIFIED_NAVIGATION.md`  
+範本側欄：`church_ministry/sidebar_c_education_journey.html`  
+實作：`js/sidebar_behavior.js`（`B100SidebarNav`）+ `js/shell_nav.js`
+
+## 側欄連結只允許四種模式
+
+| `data-b100-nav` | 行為 |
+|-----------------|------|
+| `content` | 只換右欄 `contentFrame` |
+| `module` | 左+右雙欄（需 `data-b100-sidebar` + `data-b100-content`，Hub 根相對） |
+| （L4 Tab，不在側欄） | 工作桌內 Tab 切換 |
+| `target="_blank"` | 外部新分頁 |
+
+## 側欄 HTML 鐵律
+
+1. **`href` 用相對路徑**（相對於側欄檔），禁止 `file:///...` 絕對路徑
+2. **禁止** `href="#"`、`javascript:void(0)` 作為主導航
+3. **禁止** inline `onclick` + `bible100ShellNav` 與 `data-b100-nav` 混用（一律委派給 `sidebar_behavior.js`）
+4. **禁止** 新增 `data-edu-cross` 等第四套導航腳本
+5. 跨模組必須 `data-b100-nav="module"`，不能仅靠 `<base target="contentFrame">`
+
+## 側欄 `<head>` 必載
+
+`sidebar_shell_target_fallback.js` · `shell_nav.js` · `sidebar_behavior.js`  
+教會事工 Standalone 另載 `cm_shell_paths.js`
+
+## Hub / 殼
+
+- `index_v5` 右欄**不載**模組 `index.html`（殼中殼）
+- iframe 固定名：`sidebarFrame`、`contentFrame`（外層）
+- 訊息：`bible100-shell`（雙欄）、`navigate`（右欄）
+
+## 改側欄後必跑
+
+```powershell
+python tests/test_unified_navigation.py
+```
+
+修改 `church_ministry/sidebar_c_education_journey.html` 時另跑：
+
+```powershell
+python church_ministry/tests/test_education_data_hub.py
+```
