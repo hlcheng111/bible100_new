@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>讀經 Prompt · 離線補給</title>
+  <link rel="stylesheet" href="../../css/page.css" />
+  <style>
+    textarea { width: 100%; min-height: 160px; font-size: 13px; padding: 10px; border-radius: 8px; border: 2px solid #c4b5fd; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-weight: 800; margin-bottom: 4px; font-size: 12px; }
+    .field input, .field select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .hint { font-size: 11px; color: #64748b; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>✍️ 離線讀經 Prompt</h1>
+    <p class="hint">無需 API · 產生文字後複製到 ChatGPT / Kimi / Claude · 回答須牧者審核</p>
+    <div class="field">
+      <label>經文參照</label>
+      <input type="text" id="ref" placeholder="例：約 3:16" />
+    </div>
+    <div class="field">
+      <label>問題或情境</label>
+      <input type="text" id="question" placeholder="例：向慕道朋友解釋這節" />
+    </div>
+    <div class="field">
+      <label>模式</label>
+      <select id="mode">
+        <option value="study">查經導讀</option>
+        <option value="qna">信仰問答</option>
+        <option value="pray">代禱伴侶</option>
+      </select>
+    </div>
+    <button type="button" class="btn-big btn-teal" id="btnGen">產生 Prompt</button>
+    <button type="button" class="btn-big btn-purple" id="btnCopy" style="margin-top:8px">複製到剪貼簿</button>
+    <div class="field" style="margin-top:14px">
+      <label>Prompt 草稿</label>
+      <textarea id="out" readonly></textarea>
+    </div>
+    <p class="hint">請務必：引用真實經文、不編造、不宣稱屬靈權威、不確定時請查證。</p>
+  </div>
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var refIn = document.getElementById('ref');
+      var modeSel = document.getElementById('mode');
+      refIn.value = q.get('ref') || q.get('passage') || '';
+      if (q.get('mode')) modeSel.value = q.get('mode');
+
+      function build() {
+        var ref = refIn.value.trim() || '（請填經文）';
+        var question = document.getElementById('question').value.trim() || '請幫助理解這段經文';
+        var mode = modeSel.value;
+        var head = {
+          study: '你是一位謙卑的聖經查經助手（非牧者取代）。',
+          qna: '你是一位信仰問答草稿助手（回答須由牧者/老師審核）。',
+          pray: '你是一位代禱文字草稿助手（不宣稱屬靈權威）。',
+        }[mode];
+        return head + '\n\n經文：' + ref + '\n情境/問題：' + question + '\n\n要求：\n' +
+          '1. 只引用真實存在的經文，不編造章節\n' +
+          '2. 標明不確定處需查證\n' +
+          '3. 用繁體中文回答，保留經文原文\n' +
+          '4. 結尾提醒：此為草稿，請牧者/老師審核\n';
+      }
+
+      document.getElementById('btnGen').addEventListener('click', function () {
+        document.getElementById('out').value = build();
+      });
+      document.getElementById('btnCopy').addEventListener('click', function () {
+        var t = document.getElementById('out');
+        if (!t.value) t.value = build();
+        t.select();
+        document.execCommand('copy');
+        alert('已複製！請貼到您使用的 AI 工具。');
+      });
+      if (refIn.value) document.getElementById('btnGen').click();
+    })();
+  </script>
+</body>
+</html>

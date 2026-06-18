@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>讀完啦！</title>
+  <link rel="stylesheet" href="../css/page.css?v=20260618f" />
+  <link rel="stylesheet" href="../css/track-creative.css?v=20260618f" />
+  <script src="../js/read_progress.js?v=20260618f"></script>
+  <script src="../js/bridge.js?v=20260618f"></script>
+</head>
+<body>
+  <div class="track-page">
+    <div class="track-hero celebrate-box" style="max-width:100%;border-width:4px">
+      <p class="celebrate-box big" id="celeEmoji">🎉</p>
+      <h1 id="celeTitle">讀完啦！</h1>
+      <p id="celeRef" style="font-weight:800;color:#7c3aed"></p>
+      <p id="celeStars" style="font-size:14px"></p>
+    </div>
+    <h2 id="workTitle" style="font-size:1rem;margin:20px 0 10px">🎨 讀後創意工作站</h2>
+    <p id="workLead" style="font-size:13px;color:#64748b">把今天讀的經文帶去 AI 工具 · 畫圖、朗讀、問問題</p>
+    <div class="card-grid" id="aiLinks"></div>
+    <div class="b66-actions" style="margin-top:20px">
+      <a class="btn-big btn-teal" id="backRead" href="bible66.html">📖 繼續讀經</a>
+      <a class="btn-big btn-purple" id="backTrack" href="home.html">🏠 回賽道</a>
+    </div>
+    <p style="font-size:11px;color:#94a3b8;margin-top:12px" id="shareLine"></p>
+  </div>
+  <script>
+    (function () {
+      var UI = {
+        'zh-Hant': {
+          title: '讀完啦！',
+          newStar: '＋1 金星！',
+          repeat: '這關打過卡了 ',
+          stars: '目前共 ⭐ ',
+          starsUnit: ' 顆',
+          workTitle: '🎨 讀後創意工作站',
+          workLead: '把今天讀的經文帶去 AI 工具 · 畫圖、朗讀、問問題',
+          backRead: '📖 繼續讀經',
+          backTrack: '🏠 回賽道',
+          share: '報喜：複製這句給同跑隊 → ',
+          shareMsg: '我讀完「{ref}」啦！⭐ 已有 {stars} 顆金星',
+          verseSuffix: ' 第{verse}節',
+        },
+        en: {
+          title: 'Done reading!',
+          newStar: '+1 star! ',
+          repeat: 'Already checked in ',
+          stars: 'Total ⭐ ',
+          starsUnit: ' stars',
+          workTitle: '🎨 After-reading studio',
+          workLead: 'Take today\'s passage to AI tools · art, audio, Q&A',
+          backRead: '📖 Keep reading',
+          backTrack: '🏠 Back to track',
+          share: 'Share with your squad → ',
+          shareMsg: 'I finished "{ref}"! ⭐ {stars} stars',
+          verseSuffix: ' v.{verse}',
+        },
+        vi: {
+          title: 'Đọc xong!',
+          newStar: '+1 sao! ',
+          repeat: 'Đã check-in ',
+          stars: 'Tổng ⭐ ',
+          starsUnit: ' sao',
+          workTitle: '🎨 Trạm sáng tạo sau đọc',
+          workLead: 'Mang đoạn Kinh hôm nay tới công cụ AI',
+          backRead: '📖 Đọc tiếp',
+          backTrack: '🏠 Về đường đua',
+          share: 'Chia sẻ với đội → ',
+          shareMsg: 'Tôi đọc xong "{ref}"! ⭐ {stars} sao',
+          verseSuffix: ' c.{verse}',
+        },
+        id: {
+          title: 'Selesai baca!',
+          newStar: '+1 bintang! ',
+          repeat: 'Sudah check-in ',
+          stars: 'Total ⭐ ',
+          starsUnit: ' bintang',
+          workTitle: '🎨 Studio setelah baca',
+          workLead: 'Bawa ayat hari ini ke alat AI',
+          backRead: '📖 Lanjut baca',
+          backTrack: '🏠 Kembali ke lintasan',
+          share: 'Bagikan ke tim → ',
+          shareMsg: 'Saya selesai baca "{ref}"! ⭐ {stars} bintang',
+          verseSuffix: ' ay.{verse}',
+        },
+      };
+
+      var q = new URLSearchParams(location.search);
+      var track = q.get('track') || 'bible66';
+      var book = q.get('book') || '1';
+      var chapter = q.get('chapter') || '1';
+      var verse = q.get('verse') || '';
+      var ref = q.get('ref') || ('書卷 ' + book + ' 第 ' + chapter + ' 章');
+      var locale = q.get('locale') || 'zh-Hant';
+      var pack = UI[locale] || UI['zh-Hant'];
+      function t(key) { return pack[key] || UI['zh-Hant'][key] || key; }
+
+      document.documentElement.lang = locale === 'zh-Hant' ? 'zh-Hant' : locale;
+      document.getElementById('celeTitle').textContent = t('title');
+      document.getElementById('workTitle').textContent = t('workTitle');
+      document.getElementById('workLead').textContent = t('workLead');
+      document.getElementById('backRead').textContent = t('backRead');
+      document.getElementById('backTrack').textContent = t('backTrack');
+
+      var day = q.get('day');
+      var gv = q.get('gv');
+      var theme = q.get('theme');
+      var unit = q.get('unit');
+
+      var progressId = 'b66:' + book + ':' + chapter;
+      if (track === '30day' && day) progressId = '30d:' + day;
+      if (track === 'golden' && gv) progressId = 'gv:' + gv;
+      if (track === 'theme' && theme) progressId = 'theme:' + theme + ':' + (unit || '0');
+
+      var result = B100Progress.markDone(progressId, { track: track, ref: ref, book: book, chapter: chapter });
+      document.getElementById('celeRef').textContent = ref;
+      document.getElementById('celeStars').textContent =
+        (result.newStar ? t('newStar') : t('repeat')) + t('stars') + result.stars + t('starsUnit');
+
+      var passage = ref + (verse ? t('verseSuffix').replace('{verse}', verse) : '');
+      var tools = (window.B100Bridge && window.B100Bridge.loadReadDoneTools)
+        ? null
+        : ((window.B100Bridge && window.B100Bridge.getReadDoneTools)
+          ? window.B100Bridge.getReadDoneTools(passage, ref)
+          : []);
+      var root = document.getElementById('aiLinks');
+
+      function renderTools(list) {
+        root.innerHTML = '';
+        list.forEach(function (tool) {
+          var a = document.createElement('a');
+          a.className = 'card';
+          a.href = tool.url;
+          a.target = '_blank';
+          a.innerHTML = '<span class="emoji">' + tool.emoji + '</span><span class="label">' + tool.label + '</span>' +
+            '<div style="font-size:10px;margin-top:4px;color:#818cf8">' + tool.sub + '</div>';
+          root.appendChild(a);
+        });
+      }
+
+      if (window.B100Bridge && window.B100Bridge.loadReadDoneTools) {
+        window.B100Bridge.loadReadDoneTools(passage, ref, renderTools);
+      } else {
+        renderTools(tools || []);
+      }
+
+      var back = 'bible66.html?book=' + book + '&chapter=' + chapter + '&locale=' + encodeURIComponent(locale);
+      document.getElementById('backRead').href = back;
+      var trackPages = { bible66: 'bible66.html', '30day': 'track-30day.html', golden: 'track-golden.html', theme: 'track-theme.html' };
+      document.getElementById('backTrack').href = (trackPages[track] || 'track-30day.html') + '?locale=' + encodeURIComponent(locale);
+
+      var msg = t('shareMsg').replace('{ref}', ref).replace('{stars}', String(result.stars));
+      document.getElementById('shareLine').textContent = t('share') + msg;
+    })();
+  </script>
+</body>
+</html>

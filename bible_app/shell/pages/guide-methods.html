@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Methods</title>
+  <link rel="stylesheet" href="../css/page.css" />
+  <script src="../js/page_locale.js"></script>
+  <style>
+    .method-list { list-style: none; padding: 0; margin: 0; }
+    .method-list li { margin-bottom: 8px; }
+    .method-list a {
+      display: block; padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 8px; text-decoration: none; color: #1e3a5f; font-size: 13px; font-weight: 700;
+    }
+    .method-list a:hover { background: #eef2ff; }
+    .method-list small { display: block; font-weight: 400; color: #64748b; margin-top: 4px; }
+    h2 { font-size: 13px; margin: 16px 0 8px; color: #475569; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1 data-L="guide_methods_title">讀經法目錄</h1>
+    <p data-L="guide_methods_lead">一點即到經文（C 區四語並排）</p>
+    <ul class="method-list">
+      <li><a href="bible66.html" data-L="link_bible66">📖 66 卷書目（分舊約/新約）</a></li>
+    </ul>
+    <h2 data-L="h_30day">30 日讀經</h2>
+    <ul class="method-list" id="list30"></ul>
+    <h2 data-L="h_golden">100 經文金句</h2>
+    <ul class="method-list" id="listGolden"></ul>
+  </div>
+  <script>
+    ['zh-Hant','en','vi','id'].forEach(function(loc) {
+      var p = PageLocale.PAGE_STRINGS[loc];
+      p.guide_methods_title = { 'zh-Hant':'讀經法目錄','en':'Reading methods','vi':'Phương pháp','id':'Metode' }[loc];
+      p.guide_methods_lead = { 'zh-Hant':'一點即到經文（C 區四語並排）','en':'Tap to open in Zone C','vi':'Mở tại khu C','id':'Buka di area C' }[loc];
+      p.link_bible66 = { 'zh-Hant':'📖 66 卷書目','en':'📖 66 Books','vi':'📖 66 Sách','id':'📖 66 Kitab' }[loc];
+      p.h_30day = { 'zh-Hant':'30 日讀經','en':'30-Day plan','vi':'30 ngày','id':'30 hari' }[loc];
+      p.h_golden = { 'zh-Hant':'100 金句','en':'100 Verses','vi':'100 câu','id':'100 ayat' }[loc];
+    });
+    PageLocale.applyPageLocale();
+
+    function link(b, c, label) {
+      var loc = PageLocale.getLocale();
+      return 'bible66.html?locale=' + encodeURIComponent(loc) + '&book=' + b + '&chapter=' + c;
+    }
+
+    Promise.all([
+      fetch('../data/thirty_day_plan.json').then(function(r){ return r.json(); }),
+      fetch('../data/golden_verses_100.json').then(function(r){ return r.json(); }),
+    ]).then(function(res) {
+      var d30 = document.getElementById('list30');
+      res[0].days.forEach(function(d) {
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = link(d.bookId, d.chapter, d.titleZh);
+        a.innerHTML = 'D' + d.day + ' · ' + d.titleZh + '<small>' + d.hintZh + '</small>';
+        li.appendChild(a);
+        d30.appendChild(li);
+      });
+      var g = document.getElementById('listGolden');
+      res[1].verses.forEach(function(v) {
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = link(v.bookId, v.chapter, v.refZh);
+        a.innerHTML = v.refZh + ' · ' + v.tagZh;
+        li.appendChild(a);
+        g.appendChild(li);
+      });
+      var focus = new URLSearchParams(location.search).get('focus');
+      if (focus === '30day') d30.scrollIntoView();
+      if (focus === 'golden') g.scrollIntoView();
+    });
+  </script>
+</body>
+</html>
