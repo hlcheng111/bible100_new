@@ -13,7 +13,6 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # (relative path from ROOT, old, new) — only mainline / hymn entry, not hymn_00/*
 HREF_REPLACEMENTS: list[tuple[str, str, str]] = [
-    ("church_ministry/admin_dashboard_demo.html", "ai/ai-tools-hub.html", "../ai_tools/dashboard.html"),
     ("help/church-tool-four-pillars.html", "../PROJECT_MILESTONE_2026-04-29.md", "../docs/PROJECT_MILESTONE_2026-04-29.md"),
     ("help/project-status-hub.html", "../PROJECT_MILESTONE_2026-04-29.md", "../docs/PROJECT_MILESTONE_2026-04-29.md"),
     ("help/site-sidebar-nav-map.html", "SITE_側欄三層選單_去向.html", "../archive/20260507_root_wave2/SITE_側欄三層選單_去向.html"),
