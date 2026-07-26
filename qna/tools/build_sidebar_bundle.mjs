@@ -387,7 +387,7 @@ function flattenData(navId, doc, groupPrefix) {
     const fullGroupName = prefix + gName;
     let list = (items || [])
       .map((it) => ({
-        title: navId === "ccbiblestudy" ? `${cleanTitle(it.title)}（章節目錄）` : cleanTitle(it.title),
+        title: cleanTitle(it.title),
         url: normalizeUrl(navId, it.url || "", fullGroupName),
       }))
       .map((it) => {
@@ -397,6 +397,10 @@ function flattenData(navId, doc, groupPrefix) {
         return it;
       })
       .filter((it) => it.url && it.title && shouldKeep(navId, it));
+    // 查經網：若仍只有單條 index，標成章節目錄；若已展開多章則原樣
+    if (navId === "ccbiblestudy" && list.length === 1 && !/第\d+章|章節目錄|全書目錄/.test(list[0].title)) {
+      list[0] = { ...list[0], title: `${list[0].title}（章節目錄）` };
+    }
     list = dedupe(list);
     if (!list.length) {
       list = (items || [])

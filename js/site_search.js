@@ -19,7 +19,7 @@
     { title: '聖經研讀中心', path: 'bible_study/dashboard.html', keywords: '聖經,研讀,釋經,讀經,bible,study', layer: 'foundation' },
     { title: '聖經全文搜尋', path: 'bible_study/search_reader.html', keywords: '經文,搜尋,全文,scripture,search', layer: 'foundation' },
     { title: '綜合解讀', path: 'bible_study/comprehensive_exegesis_reader.html', keywords: '釋經,解讀,commentary,exegesis', layer: 'foundation' },
-    { title: '聖經難題 Q&A', path: 'qna/qna_index_4layer_V2.htm', keywords: '難題,Q&A,問答,查經,qna', layer: 'foundation' },
+    { title: '聖經難題 Q&A', path: 'qna/index.html', keywords: '難題,Q&A,問答,查經,qna', layer: 'foundation' },
     { title: '百步四寶總論手冊', path: 'help/bible100_curriculum_manual.html', keywords: '課程,總論,手冊,curriculum,manual', layer: 'foundation' },
     { title: '中文版側欄', path: 'languages/index_cn.html', keywords: '中文,語言,chinese,cn', layer: 'foundation' },
     { title: '英文版教材', path: 'languages/landP_en.html', keywords: '英文,english,en', layer: 'foundation' },
