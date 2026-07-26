@@ -108,6 +108,9 @@
         </div>
     </div>
 
+    <script src="js/bible_version_registry.js"></script>
+    <script src="js/BibleEngine.js"></script>
+    <script src="js/bs_registry_reader.js"></script>
     <script>
         let dictionaryData = null;
 
@@ -118,17 +121,14 @@
             return d.innerHTML;
         }
 
-        // 載入詞典資料（相對於本頁，支援 file:// 與 iframe / index_v5）
+        // 載入詞典（registry SSOT → BibleEngine）
         async function loadDictionary() {
             try {
-                const path = new URL('../data/cd/圣经语汇词典.json', window.location.href).href;
-                const response = await fetch(path);
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                dictionaryData = await response.json();
-                console.log('✅ 詞典資料載入成功', dictionaryData);
+                dictionaryData = await BS_loadRegistryResource('dictionaries', 'bible_dict');
+                console.log('✅ 詞典資料載入成功（registry）', dictionaryData);
             } catch (error) {
                 console.error('❌ 詞典資料載入失敗:', error);
-                showError('詞典資料載入失敗。若用 file:// 開啟，請改以本機 HTTP 伺服器開啟專案根目錄，或確認 ../data/cd/圣经语汇词典.json 存在。');
+                showError('詞典資料載入失敗。請以本機 HTTP 開啟專案根目錄，並確認 registry 路徑 data/cd/圣经语汇词典.json 存在。');
             }
         }
 
@@ -161,7 +161,11 @@
             if (Array.isArray(data)) {
                 data.forEach(item => {
                     const term = item.Word || item.term || item.title || item.name;
-                    const def = item.Description || item.definition || item.content || item.value;
+                    let def = item.Description || item.definition || item.content || item.value;
+                    // l001w 前綴為既有加密格式；其他加密釋義暫以原樣顯示（見 BS_H4_REPORT 已知限制）
+                    if (window.BibleEngine && typeof window.BibleEngine.safeDecryptContent === 'function') {
+                        def = window.BibleEngine.safeDecryptContent(def);
+                    }
                     if ((term && String(term).toLowerCase().includes(q)) || 
                         (def && String(def).toLowerCase().includes(q))) {
                         results.push({

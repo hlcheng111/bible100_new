@@ -98,9 +98,30 @@
             return response.arrayBuffer();
         },
 
+        /**
+         * 修復「結構性換行被寫成 \n 字面序列」的匯出 JSON（data/cd、串珠類）。
+         * 只在字串外把 \n \r \t 轉為空白；字串內的合法轉義保持原樣。
+         */
         _unescapeJsonText(text) {
             if (!text || text.indexOf('\\n') < 0 || text.indexOf('\n') >= 0) return text;
-            return text.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
+            var out = [];
+            var inString = false;
+            for (var i = 0; i < text.length; i++) {
+                var ch = text[i];
+                if (inString) {
+                    out.push(ch);
+                    if (ch === '\\') { i++; if (i < text.length) out.push(text[i]); }
+                    else if (ch === '"') inString = false;
+                    continue;
+                }
+                if (ch === '"') { inString = true; out.push(ch); continue; }
+                if (ch === '\\') {
+                    var next = text[i + 1];
+                    if (next === 'n' || next === 'r' || next === 't') { out.push(' '); i++; continue; }
+                }
+                out.push(ch);
+            }
+            return out.join('');
         },
 
         initJson(text) {

@@ -49,8 +49,8 @@
 
 | ID | 頁面 | 狀態 | 備註 |
 |----|------|------|------|
-| BS-10 | `dictionary_reader.html` | 🔄 | 詞典 UI；資料 SSOT 待 W1 |
-| BS-11 | `crossref_reader.html` | 🔄 | 串珠 |
+| BS-10 | `dictionary_reader.html` | ✅ | H4：registry SSOT（`bible_dict`）；釋義加密待解（見 BS_H4_REPORT） |
+| BS-11 | `crossref_reader.html` | ✅ | H4：registry keys `faith_crossref`/`cuv_crossref`；創1:1 實測 59 引用 |
 | BS-12 | `original_text_real_integrated.html` | 🔄 | 原文 / Strong |
 | BS-13 | `timeline_viewer.html` | 🔄 | 時間軸 |
 | BS-14 | `commentaries/_landing.html` | 🔄 | 註釋導覽 |
