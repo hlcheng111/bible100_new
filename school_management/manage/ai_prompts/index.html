@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt 生成器 W8</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f6f7fb; padding: 16px; font-size: 12px; color: #333; }
+        h1 { color: #5b21b6; font-size: 18px; margin-bottom: 6px; }
+        .sub { color: #666; margin-bottom: 12px; line-height: 1.6; }
+        .tip { background: #f5f3ff; border-left: 3px solid #7c3aed; padding: 10px 12px; margin-bottom: 12px; font-size: 11px; line-height: 1.6; }
+        .card { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .card-title { font-weight: 600; color: #5b21b6; margin-bottom: 10px; }
+        .inp { padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; }
+        .lbl { font-size: 10px; color: #64748b; }
+        .btn { padding: 8px 14px; background: #7c3aed; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; margin: 2px 4px 2px 0; }
+        .btn-secondary { background: #64748b; }
+        textarea { width: 100%; min-height: 220px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; line-height: 1.6; margin-top: 8px; font-family: Consolas, "Microsoft YaHei", monospace; }
+        .field-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 10px; }
+        .type-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+        .type-tabs button { padding: 6px 12px; border: 1px solid #c4b5fd; background: #fff; border-radius: 6px; cursor: pointer; font-size: 11px; color: #5b21b6; }
+        .type-tabs button.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+    </style>
+</head>
+<body>
+    <h1>✨ AI Prompt 生成器（W8）</h1>
+    <p class="sub">填表 → 生成 Prompt → 複製 → 貼到 Kimi／ChatGPT／Claude／Gemini → <strong>人工審核</strong> · 不需 API key</p>
+
+    <div class="tip">
+        <strong>紅線：</strong> 不編造經文、不宣稱屬靈權威、學生 PII 不進 NotebookLM／公開 API。產出一律是草稿。
+    </div>
+
+    <div class="card">
+        <div class="card-title">選擇任務</div>
+        <div class="type-tabs" id="typeTabs"></div>
+        <div id="dynamicFields"></div>
+        <button class="btn" id="btnGenerate">生成 Prompt</button>
+        <button class="btn btn-secondary" id="btnCopy">📋 複製 Prompt</button>
+        <textarea id="promptOut" placeholder="按「生成 Prompt」…"></textarea>
+        <p id="msg" style="font-size:11px;color:#166534;margin-top:8px;"></p>
+    </div>
+
+    <div class="card">
+        <div class="card-title">快速連結</div>
+        <a href="../../enrollment_brochure.html" target="contentFrame" class="btn btn-secondary">📋 招生簡章</a>
+        <a href="../grades/exams.html" target="contentFrame" class="btn btn-secondary">📝 小測</a>
+        <a href="../communication/notices.html" target="contentFrame" class="btn btn-secondary">📢 公告</a>
+        <a href="../communication/parent.html" target="contentFrame" class="btn btn-secondary">👪 家長通知 W7</a>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="btn btn-secondary">返回儀表板</a>
+
+    <script src="../../../bible_app/shell/js/prompt_guardrails.js"></script>
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+            let currentType = 'enrollment_promo';
+            try {
+                const p = new URLSearchParams(location.search || '');
+                if (p.get('type')) currentType = p.get('type');
+            } catch (e0) {}
+            const types = db.listSchoolAiPromptTypes();
+
+            function renderTabs() {
+                document.getElementById('typeTabs').innerHTML = types.map(t =>
+                    '<button type="button" data-type="' + t.id + '"' + (t.id === currentType ? ' class="active"' : '') + '>' + t.label + '</button>'
+                ).join('');
+            }
+
+            function courseOptions() {
+                return (db.data.courses || []).filter(c => c.status !== 'inactive').map(c =>
+                    '<option value="' + c.id + '">' + (c.name || c.id) + '</option>'
+                ).join('');
+            }
+
+            function studentOptions() {
+                return (db.data.students || []).filter(s => s.status !== 'pending').map(s =>
+                    '<option value="' + s.id + '">' + (s.name || s.id) + '</option>'
+                ).join('');
+            }
+
+            function renderFields() {
+                let html = '';
+                if (currentType === 'enrollment_promo') {
+                    html = '<div class="field-row">' +
+                        '<div><span class="lbl">重點課程（選填）</span><br><select id="fCourse" class="inp"><option value="">全部開放課程</option>' + courseOptions() + '</select></div>' +
+                        '<div><span class="lbl">對象</span><br><input id="fAudience" class="inp" value="主日學／聖經培訓意向家庭" style="width:180px;"></div>' +
+                        '<div><span class="lbl">語氣</span><br><input id="fTone" class="inp" value="溫暖、清楚" style="width:120px;"></div>' +
+                        '<div><span class="lbl">補充</span><br><input id="fExtra" class="inp" placeholder="活動、截止日" style="width:140px;"></div></div>';
+                } else if (currentType === 'grade_comment') {
+                    html = '<div class="field-row">' +
+                        '<div><span class="lbl">學生</span><br><select id="fStudent" class="inp">' + studentOptions() + '</select></div>' +
+                        '<div><span class="lbl">課程（選填）</span><br><select id="fCourse" class="inp"><option value="">全部成績</option>' + courseOptions() + '</select></div>' +
+                        '<div><span class="lbl">優點</span><br><input id="fStrengths" class="inp" placeholder="可選" style="width:140px;"></div>' +
+                        '<div><span class="lbl">待改進</span><br><input id="fImprove" class="inp" placeholder="可選" style="width:140px;"></div></div>';
+                } else if (currentType === 'exam_questions') {
+                    html = '<div class="field-row">' +
+                        '<div><span class="lbl">課程</span><br><select id="fCourse" class="inp" required>' + courseOptions() + '</select></div>' +
+                        '<div><span class="lbl">教材範圍</span><br><input id="fScope" class="inp" placeholder="例：創世記 1-3 章" style="width:160px;"></div>' +
+                        '<div><span class="lbl">經文</span><br><input id="fScripture" class="inp" placeholder="可選" style="width:100px;"></div>' +
+                        '<div><span class="lbl">題數</span><br><input id="fCount" type="number" class="inp" value="10" style="width:50px;"></div>' +
+                        '<div><span class="lbl">題型</span><br><input id="fQTypes" class="inp" value="選擇題、填充題、簡答" style="width:160px;"></div></div>';
+                } else if (currentType === 'notice_translate') {
+                    html = '<div><span class="lbl">中文源文</span><textarea id="fSource" style="min-height:80px;margin-top:4px;" placeholder="貼上公告全文…"></textarea></div>' +
+                        '<div class="field-row" style="margin-top:8px;"><label><input type="checkbox" class="lang-cb" value="en" checked> English</label>' +
+                        '<label><input type="checkbox" class="lang-cb" value="vi" checked> Tiếng Việt</label>' +
+                        '<label><input type="checkbox" class="lang-cb" value="id" checked> Indonesia</label></div>';
+                }
+                document.getElementById('dynamicFields').innerHTML = html;
+                applyUrlParams();
+            }
+
+            function applyUrlParams() {
+                try {
+                    const p = new URLSearchParams(location.search);
+                    if (p.get('type')) currentType = p.get('type');
+                    renderTabs();
+                    renderFields();
+                    const cid = p.get('courseId');
+                    const sid = p.get('studentId');
+                    const fc = document.getElementById('fCourse');
+                    const fs = document.getElementById('fStudent');
+                    if (fc && cid) fc.value = cid;
+                    if (fs && sid) fs.value = sid;
+                } catch (e) {}
+            }
+
+            function collectOpts() {
+                const opts = {};
+                const fc = document.getElementById('fCourse');
+                if (fc && fc.value) opts.courseId = parseInt(fc.value, 10);
+                if (currentType === 'enrollment_promo') {
+                    opts.audience = (document.getElementById('fAudience') || {}).value || '';
+                    opts.tone = (document.getElementById('fTone') || {}).value || '';
+                    opts.extra = (document.getElementById('fExtra') || {}).value || '';
+                } else if (currentType === 'grade_comment') {
+                    opts.studentId = parseInt((document.getElementById('fStudent') || {}).value, 10);
+                    opts.strengths = (document.getElementById('fStrengths') || {}).value || '';
+                    opts.improvements = (document.getElementById('fImprove') || {}).value || '';
+                } else if (currentType === 'exam_questions') {
+                    opts.scope = (document.getElementById('fScope') || {}).value || '';
+                    opts.scripture = (document.getElementById('fScripture') || {}).value || '';
+                    opts.count = parseInt((document.getElementById('fCount') || {}).value, 10) || 10;
+                    opts.questionTypes = (document.getElementById('fQTypes') || {}).value || '';
+                } else if (currentType === 'notice_translate') {
+                    opts.sourceText = (document.getElementById('fSource') || {}).value || '';
+                    opts.targetLangs = [].map.call(document.querySelectorAll('.lang-cb:checked'), function (cb) { return cb.value; });
+                }
+                return opts;
+            }
+
+            document.getElementById('typeTabs').addEventListener('click', function(e) {
+                if (e.target.tagName !== 'BUTTON') return;
+                currentType = e.target.dataset.type;
+                renderTabs();
+                renderFields();
+            });
+
+            document.getElementById('btnGenerate').onclick = function() {
+                try {
+                    const r = db.buildSchoolAiPrompt(currentType, collectOpts());
+                    document.getElementById('promptOut').value = r.text || '';
+                    document.getElementById('msg').textContent = '✅ 已生成（' + r.disclaimer.slice(0, 24) + '…）';
+                } catch (err) {
+                    document.getElementById('msg').textContent = '❌ ' + (err.message || err);
+                }
+            };
+
+            document.getElementById('btnCopy').onclick = function() {
+                const t = document.getElementById('promptOut').value;
+                if (!t.trim()) return alert('請先生成 Prompt');
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(t).then(function() {
+                        document.getElementById('msg').textContent = '✅ 已複製，請貼到外部 AI 並人工審核';
+                    });
+                } else {
+                    document.getElementById('promptOut').select();
+                    document.execCommand('copy');
+                }
+            };
+
+            renderTabs();
+            renderFields();
+        })();
+    </script>
+</body>
+</html>

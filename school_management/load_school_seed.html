@@ -24,7 +24,7 @@
     </div>
     <div class="card">
         <h1>📚 載入示範資料</h1>
-        <p><b>簡介：</b>首次開啟時會自動載入。若需補齊或重置，可點下方按鈕。</p>
+        <p><b>簡介：</b>示範資料<b>不會自動載入</b>；只有按下方「載入示範資料」才會寫入本機。示範數字僅供試用，不可當正式營運報告。</p>
         <p>示範資料含：200 學生、25 教師、30 課程、20 班級、選課、成績、繳費、公告、排程、12 活動、8 社團、6 競賽，各模組互聯可用。</p>
         <p><b>注意：</b>若已有資料，「載入」會補齊缺少項目，不會覆蓋既有學生。</p>
         <div style="background:#f0f9ff;border-left:4px solid #0b5fa5;padding:12px 16px;margin:16px 0;border-radius:0 8px 8px 0;font-size:12px;">
@@ -46,7 +46,7 @@
         </div>
         <div class="stats" id="stats">載入本頁後將顯示目前資料筆數。</div>
         <button class="btn" onclick="loadSeed()">載入示範資料</button>
-        <button class="btn btn-danger" onclick="clearAndReload()" style="margin-left:12px;">清空並重新載入</button>
+        <button class="btn btn-danger" onclick="clearAndReload()" style="margin-left:12px;">清空全部資料</button>
         <p style="margin-top:20px;"><a href="dashboard.html" target="contentFrame" style="color:#0b5fa5;">→ 返回儀表板</a></p>
     </div>
     <script src="../js/cloud_config.js"></script>
@@ -80,7 +80,7 @@
             if (!window.schoolDB) return alert('資料庫未載入');
             if (!testLocalStorage()) return alert('⚠️ 此環境不支援 localStorage（雲端主機可能阻擋）。\n\n請改用本機開啟：file:///.../bible100_new/ 或更換主機。');
             try {
-                window.schoolDB.ensureSeedFull();
+                window.schoolDB.ensureSeedFull(true);
                 if (window.DataTrustBadge && DataTrustBadge.markSchoolDemoLoaded) DataTrustBadge.markSchoolDemoLoaded();
                 updateStats();
                 alert('示範資料已載入或補齊。請至儀表板查看。');
@@ -93,13 +93,13 @@
             document.getElementById('stats').innerHTML = '⚠️ localStorage 無法儲存（雲端主機可能阻擋）。錯誤：' + (e.message || e);
         };
         function clearAndReload() {
-            if (!confirm('確定要清空所有學校管理資料並重新載入示範資料嗎？此操作無法復原。')) return;
+            if (!confirm('確定要清空所有學校管理資料（含真實填寫資料）嗎？此操作無法復原。\n\n建議先到「系統 → 資料備份」匯出全庫 JSON。')) return;
             localStorage.removeItem('schoolMasterDatabase');
-            alert('已清空。即將重新載入頁面並自動載入示範資料。');
+            alert('已清空。頁面重新載入後為空資料庫；如需示範資料請再點「載入示範資料」。');
             location.reload();
         }
         document.addEventListener('DOMContentLoaded', function() {
-            if (window.schoolDB) window.schoolDB.ensureSeedFull();
+            // W0：本頁只顯示現況，不自動載入示範資料。
             updateStats();
         });
     </script>

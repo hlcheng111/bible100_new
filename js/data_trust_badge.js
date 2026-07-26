@@ -670,30 +670,41 @@
     }
   }
 
+  function isSchoolSeedRow(row) {
+    if (!row || typeof row !== 'object') return false;
+    if (row.source === 'school_demo_seed') return true;
+    // 真實資料由 insert() 產生 13 位時間戳 ID；種子列 ID 皆 < 10 億。
+    return typeof row.id === 'number' && row.id > 0 && row.id < 1000000000;
+  }
+
   function getSchoolDataStats() {
     var students = 0;
     var teachers = 0;
     var courses = 0;
+    var seedRows = 0;
+    var realRows = 0;
     var isDemoSeed = false;
     var lastUpdated = '';
     try {
+      var d = null;
       if (global.schoolDB && global.schoolDB.data) {
-        var d = global.schoolDB.data;
+        d = global.schoolDB.data;
+      } else {
+        var raw = global.localStorage && global.localStorage.getItem(SCHOOL_STORAGE_KEY);
+        if (raw) d = JSON.parse(raw);
+      }
+      if (d) {
         students = (d.students || []).length;
         teachers = (d.teachers || []).length;
         courses = (d.courses || []).length;
+        [d.students, d.teachers, d.courses].forEach(function (arr) {
+          (arr || []).forEach(function (row) {
+            if (isSchoolSeedRow(row)) seedRows += 1;
+            else realRows += 1;
+          });
+        });
         if (d.meta && d.meta.isDemoSeed) isDemoSeed = true;
         if (d.meta && d.meta.seedLoadedAt) lastUpdated = d.meta.seedLoadedAt;
-      } else {
-        var raw = global.localStorage && global.localStorage.getItem(SCHOOL_STORAGE_KEY);
-        if (raw) {
-          var parsed = JSON.parse(raw);
-          students = (parsed.students || []).length;
-          teachers = (parsed.teachers || []).length;
-          courses = (parsed.courses || []).length;
-          if (parsed.meta && parsed.meta.isDemoSeed) isDemoSeed = true;
-          if (parsed.meta && parsed.meta.seedLoadedAt) lastUpdated = parsed.meta.seedLoadedAt;
-        }
       }
       if (!lastUpdated) {
         var fr = getDataFreshness(SCHOOL_STORAGE_KEY);
@@ -708,7 +719,9 @@
       teachers: teachers,
       courses: courses,
       total: total,
-      isDemoSeed: isDemoSeed || isSchoolDemoMarked(),
+      seedRows: seedRows,
+      realRows: realRows,
+      isDemoSeed: isDemoSeed || isSchoolDemoMarked() || seedRows > 0,
       last_updated: lastUpdated
     };
   }
@@ -716,15 +729,18 @@
   function buildSchoolTrustOptions(extra) {
     var stats = getSchoolDataStats();
     var hasStore = !!(global.schoolDB || (global.localStorage && global.localStorage.getItem(SCHOOL_STORAGE_KEY)));
-    var state = classifyDataState({
-      key: hasStore ? SCHOOL_STORAGE_KEY : false,
-      count: stats.total,
-      demoFlag: stats.isDemoSeed,
-      disconnected: !hasStore
-    });
-    if (state === 'demo') {
-      state = stats.total > 0 ? 'demo' : 'empty';
-    }
+    // W0：以列級種子特徵（ID／source）判定，示範與真實混合時顯示 mixed。
+    var state;
+    if (!hasStore) state = 'disconnected';
+    else if (stats.total === 0) state = 'empty';
+    else if (stats.seedRows > 0 && stats.realRows > 0) state = 'mixed';
+    else if (stats.seedRows > 0 || stats.isDemoSeed) state = 'demo';
+    else state = 'real';
+    var stateLabels = {
+      demo: '示範／種子資料',
+      mixed: '示範種子 + 真實填寫資料（可到「系統 → 資料備份」清除種子）',
+      real: '真實填寫資料'
+    };
     var o = {
       source_key: SCHOOL_STORAGE_KEY,
       source_label_zh: '學校管理（學生／教師／課程等）',
@@ -732,7 +748,7 @@
       last_updated: stats.last_updated,
       demoFlag: stats.isDemoSeed,
       data_state: state,
-      data_state_label: state === 'demo' ? '示範／種子資料' : (state === 'real' ? '真實填寫資料' : undefined),
+      data_state_label: stateLabels[state],
       write_behavior: 'manual_save',
       notify_behavior: 'none',
       privacy_level: 'sensitive',

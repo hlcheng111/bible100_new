@@ -24,6 +24,17 @@
             <div class="module-form-row"><label>性別</label><select name="gender" class="module-input"><option>男</option><option>女</option></select></div>
             <div class="module-form-row"><label>班級ID</label><input name="class_id" class="module-input" value="1" size="4"></div>
             <div class="module-form-row"><label>聯絡</label><input name="contact" class="module-input" placeholder="電話或 Email"></div>
+            <div class="module-form-row">
+                <label>教會會友</label>
+                <input id="memberFilter" class="module-input" placeholder="輸入姓名篩選" style="width:110px;">
+                <select id="memberSelect" class="module-input" style="max-width:220px;">
+                    <option value="">— 不連結（校外／訪客生）—</option>
+                </select>
+            </div>
+            <p style="font-size:11px;color:#6b7280;margin:4px 0 10px;">
+                是會友家庭請選對應會友（名單來自中央會友庫 <code>memberSystemData</code>），
+                牧養端即可追蹤這位孩子的學籍；校外生留空即可。
+            </p>
             <button type="submit" class="module-btn">儲存</button>
         </form>
         <p id="msg" style="margin-top:12px;color:#27ae60;"></p>
@@ -33,12 +44,45 @@
 
     <script src="../../js/school-master-database.js"></script>
     <script>
+        var allMembers = [];
+
+        function renderMemberOptions(filter) {
+            var sel = document.getElementById('memberSelect');
+            var keep = sel.value;
+            var kw = (filter || '').trim().toLowerCase();
+            var list = kw ? allMembers.filter(function (m) {
+                return (m.name || '').toLowerCase().includes(kw) || m.id.toLowerCase().includes(kw);
+            }) : allMembers;
+            var opts = '<option value="">— 不連結（校外／訪客生）—</option>';
+            list.slice(0, 300).forEach(function (m) {
+                opts += '<option value="' + m.id + '">' + m.name + '（' + m.id + '）</option>';
+            });
+            sel.innerHTML = opts;
+            if (keep && list.some(function (m) { return m.id === keep; })) sel.value = keep;
+        }
+
+        function loadMembers() {
+            if (!window.schoolDB || !window.schoolDB.getCentralMembers) return;
+            allMembers = window.schoolDB.getCentralMembers();
+            if (!allMembers.length) {
+                document.getElementById('memberSelect').innerHTML =
+                    '<option value="">（中央會友庫無資料，可留空）</option>';
+                return;
+            }
+            renderMemberOptions('');
+        }
+
+        document.getElementById('memberFilter').oninput = function () {
+            renderMemberOptions(this.value);
+        };
+
         document.getElementById('f').onsubmit = function(e) {
             e.preventDefault();
             const fm = new FormData(this);
             const name = fm.get('name').trim();
             if (!name) return alert('請填寫姓名');
             if (!window.schoolDB) return alert('資料庫未載入');
+            const memberId = document.getElementById('memberSelect').value;
             const rec = window.schoolDB.insert('students', {
                 name: name,
                 gender: fm.get('gender'),
@@ -46,10 +90,18 @@
                 contact: fm.get('contact') || '',
                 status: 'active'
             });
-            document.getElementById('msg').textContent = '已儲存：ID ' + rec.id + '（' + rec.name + '）';
+            var msg = '已儲存：ID ' + rec.id + '（' + rec.name + '）';
+            if (memberId) {
+                window.schoolDB.linkStudentToMember(rec.id, memberId);
+                var m = allMembers.find(function (x) { return x.id === memberId; });
+                msg += '，已連結會友 ' + (m ? m.name : memberId);
+            }
+            document.getElementById('msg').textContent = msg;
             this.reset();
+            renderMemberOptions('');
         };
-        if (window.schoolDB && window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+
+        loadMembers();
     </script>
 </body>
 </html>

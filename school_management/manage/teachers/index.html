@@ -24,7 +24,23 @@
         <div class="stat-pill"><div class="stat-num" id="statTotal">0</div><div class="stat-label">教師總數</div></div>
         <div class="stat-pill"><div class="stat-num" id="statActive">0</div><div class="stat-label">在職</div></div>
         <div class="stat-pill"><div class="stat-num" id="statTeaching">0</div><div class="stat-label">有授課</div></div>
+        <div class="stat-pill"><div class="stat-num" id="statLinked">0</div><div class="stat-label">已連結會友義工</div></div>
     </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">🔗 連結教師與會友義工</div>
+        <p style="font-size:11px;color:#6b7280;margin:0 0 8px;">教師是本會會友請連結（volunteerId＝會友 member_id，與智慧事奉人才庫同一慣例）；外請講師不必連結。</p>
+        <div class="module-form-row">
+            <label>教師</label>
+            <select id="linkTeacher" class="module-input" style="max-width:200px;"></select>
+            <label style="margin-left:8px;">會友</label>
+            <input id="linkMemberFilter" class="module-input" placeholder="姓名篩選" style="width:90px;">
+            <select id="linkMember" class="module-input" style="max-width:200px;"></select>
+            <button class="module-btn" id="doLink">連結</button>
+        </div>
+        <p id="linkMsg" style="font-size:11px;color:#27ae60;margin:4px 0 0;"></p>
+        <p style="font-size:11px;margin:8px 0 0;"><a href="../church_link_tabs.html" target="contentFrame">🔗 W6：更新人才庫技能</a>（須已連結 volunteerId）</p>
     </div>
 
     <div class="module-card">
@@ -41,29 +57,61 @@
                 document.getElementById('teacherList').innerHTML = '<div class="empty-state">請先載入 SchoolMasterDatabase</div>';
                 return;
             }
-            if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
 
             const db = window.schoolDB.data;
             const teachers = db.teachers || [];
             const courses = db.courses || [];
+            const hasVol = t => t.volunteerId != null && String(t.volunteerId).trim() !== '';
 
             document.getElementById('statTotal').textContent = teachers.length;
             document.getElementById('statActive').textContent = teachers.filter(t => t.status === 'active').length;
             document.getElementById('statTeaching').textContent = teachers.filter(t => courses.some(c => c.teacherId === t.id)).length;
+            document.getElementById('statLinked').textContent = teachers.filter(hasVol).length;
 
             let html = '';
             if (teachers.length === 0) {
-                html = '<div class="empty-state">尚無教師，請先至儀表板載入示範資料。</div>';
+                html = '<div class="empty-state">尚無教師。正式使用請直接新增；試用可至「系統 → 載入示範」。</div>';
             } else {
-                html = '<table><thead><tr><th>工號</th><th>姓名</th><th>科目</th><th>電話</th><th>授課數</th><th>狀態</th></tr></thead><tbody>';
+                html = '<table><thead><tr><th>工號</th><th>姓名</th><th>科目</th><th>電話</th><th>授課數</th><th>狀態</th><th>會友義工</th></tr></thead><tbody>';
                 teachers.forEach(t => {
                     const teachCount = courses.filter(c => c.teacherId === t.id).length;
-                    html += '<tr><td>' + (t.teacherNumber || '—') + '</td><td>' + (t.name || '—') + '</td><td>' + (t.subject || '—') + '</td><td>' + (t.phone || '—') + '</td><td>' + teachCount + '</td><td>' + (t.status === 'active' ? '在職' : '離職') + '</td></tr>';
+                    const volCell = hasVol(t) ? '✅ ' + t.volunteerId : '—';
+                    html += '<tr><td>' + (t.teacherNumber || '—') + '</td><td>' + (t.name || '—') + '</td><td>' + (t.subject || '—') + '</td><td>' + (t.phone || '—') + '</td><td>' + teachCount + '</td><td>' + (t.status === 'active' ? '在職' : '離職') + '</td><td>' + volCell + '</td></tr>';
                 });
                 html += '</tbody></table>';
             }
             document.getElementById('teacherList').innerHTML = html;
+            fillLinkSelectors('');
         }
+
+        // W1：教師 ↔ 會友義工連結
+        let allMembers = [];
+        function fillLinkSelectors(filter) {
+            const teaSel = document.getElementById('linkTeacher');
+            const memSel = document.getElementById('linkMember');
+            if (!teaSel || !memSel || !window.schoolDB) return;
+            const teachers = window.schoolDB.data.teachers || [];
+            teaSel.innerHTML = '<option value="">— 選擇教師 —</option>' + teachers.map(t => {
+                const tag = (t.volunteerId != null && String(t.volunteerId).trim() !== '') ? '［已連結］' : '';
+                return '<option value="' + t.id + '">' + (t.name || '') + tag + '（' + (t.teacherNumber || t.id) + '）</option>';
+            }).join('');
+            const kw = (filter || '').trim().toLowerCase();
+            const list = kw ? allMembers.filter(m => (m.name || '').toLowerCase().includes(kw) || m.id.toLowerCase().includes(kw)) : allMembers;
+            memSel.innerHTML = (allMembers.length ? '<option value="">— 選擇會友 —</option>' : '<option value="">（中央會友庫無資料）</option>') +
+                list.slice(0, 300).map(m => '<option value="' + m.id + '">' + m.name + '（' + m.id + '）</option>').join('');
+        }
+
+        document.getElementById('linkMemberFilter').oninput = function() { fillLinkSelectors(this.value); };
+        document.getElementById('doLink').onclick = function(e) {
+            e.preventDefault();
+            const tid = parseInt(document.getElementById('linkTeacher').value, 10);
+            const mid = document.getElementById('linkMember').value;
+            if (!tid || !mid) return alert('請同時選擇教師與會友');
+            window.schoolDB.linkTeacherToVolunteer(tid, mid);
+            const m = allMembers.find(x => x.id === mid);
+            document.getElementById('linkMsg').textContent = '✅ 已連結：教師 ' + tid + ' ↔ 會友 ' + (m ? m.name : mid);
+            loadTeachers();
+        };
 
         function exportData() {
             if (!window.schoolDB) return alert('無資料可匯出');
@@ -74,7 +122,10 @@
             a.click();
         }
 
-        document.addEventListener('DOMContentLoaded', loadTeachers);
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.schoolDB && window.schoolDB.getCentralMembers) allMembers = window.schoolDB.getCentralMembers();
+            loadTeachers();
+        });
     </script>
 </body>
 </html>

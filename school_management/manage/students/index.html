@@ -31,6 +31,20 @@
     </div>
 
     <div class="module-card">
+        <div class="module-card-title">🔗 連結學生與教會會友</div>
+        <p style="font-size:11px;color:#6b7280;margin:0 0 8px;">把既有學生對上中央會友庫（<code>memberSystemData</code>），牧養端可追蹤；校外生不必連結。</p>
+        <div class="module-form-row">
+            <label>學生</label>
+            <select id="linkStudent" class="module-input" style="max-width:200px;"></select>
+            <label style="margin-left:8px;">會友</label>
+            <input id="linkMemberFilter" class="module-input" placeholder="姓名篩選" style="width:90px;">
+            <select id="linkMember" class="module-input" style="max-width:200px;"></select>
+            <button class="module-btn" id="doLink">連結</button>
+        </div>
+        <p id="linkMsg" style="font-size:11px;color:#27ae60;margin:4px 0 0;"></p>
+    </div>
+
+    <div class="module-card">
         <div class="module-card-title">➕ 新增學生</div>
         <form id="addForm">
             <div class="module-form-row"><label>姓名</label><input name="name" class="module-input" required></div>
@@ -63,7 +77,6 @@
 
             function getStudents() {
                 if (!window.schoolDB || !window.schoolDB.data) return [];
-                if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
                 return window.schoolDB.data.students || [];
             }
 
@@ -79,10 +92,61 @@
                 const items = filtered.slice(start, start + pageSize);
 
                 document.getElementById('sum').textContent = '共 ' + total + ' 筆，第 ' + page + '/' + pages + ' 頁';
-                const rows = items.map(s => '<tr><td>' + s.id + '</td><td>' + (s.name || '') + '</td><td>' + (s.gender || '') + '</td><td>' + (s.class_id || '') + '</td><td>' + (s.contact || '') + '</td></tr>').join('');
+                const isLinked = s => window.schoolDB && window.schoolDB.isCentralMemberLink && window.schoolDB.isCentralMemberLink(s.memberId);
+                const rows = items.map(s => {
+                    const statusCell = s.status === 'pending'
+                        ? '<span style="color:#b45309;">待取錄</span> <button class="module-btn btn-admit" data-sid="' + s.id + '" style="padding:2px 8px;font-size:10px;">取錄</button>'
+                        : (s.status === 'active' ? '在學' : (s.status || ''));
+                    const memberCell = isLinked(s) ? '✅ ' + s.memberId : '—';
+                    return '<tr><td>' + s.id + '</td><td>' + (s.name || '') + '</td><td>' + (s.gender || '') + '</td><td>' + (s.class_id || '') + '</td><td>' + (s.contact || '') + '</td><td>' + statusCell + '</td><td>' + memberCell + '</td></tr>';
+                }).join('');
                 const pager = '<div style="margin-top:10px;">' + Array.from({ length: pages }, (_, i) => i + 1).map(i => '<a href="#" onclick="page=' + i + ';render();return false;" class="module-btn" style="padding:4px 8px;margin:0 2px;">' + i + '</a>').join('') + '</div>';
-                document.getElementById('list').innerHTML = '<table class="module-table"><thead><tr><th>ID</th><th>姓名</th><th>性別</th><th>班級</th><th>聯絡</th></tr></thead><tbody>' + (rows || '<tr><td colspan="5" class="empty-state">無資料</td></tr>') + '</tbody></table>' + pager;
+                document.getElementById('list').innerHTML = '<table class="module-table"><thead><tr><th>ID</th><th>姓名</th><th>性別</th><th>班級</th><th>聯絡</th><th>狀態</th><th>會友</th></tr></thead><tbody>' + (rows || '<tr><td colspan="7" class="empty-state">無資料</td></tr>') + '</tbody></table>' + pager;
             }
+
+            // W1：既有學生 ↔ 中央會友連結
+            let allMembers = [];
+            function fillLinkSelectors(filter) {
+                const stuSel = document.getElementById('linkStudent');
+                const memSel = document.getElementById('linkMember');
+                if (!stuSel || !memSel || !window.schoolDB) return;
+                const students = (window.schoolDB.data.students || []).slice()
+                    .sort((a, b) => (a.status === 'pending' ? -1 : 0) - (b.status === 'pending' ? -1 : 0));
+                stuSel.innerHTML = '<option value="">— 選擇學生 —</option>' + students.slice(0, 500).map(s => {
+                    const linked = window.schoolDB.isCentralMemberLink && window.schoolDB.isCentralMemberLink(s.memberId);
+                    const tag = s.status === 'pending' ? '［待取錄］' : (linked ? '［已連結］' : '');
+                    return '<option value="' + s.id + '">' + (s.name || '') + tag + '（' + s.id + '）</option>';
+                }).join('');
+                const kw = (filter || '').trim().toLowerCase();
+                const list = kw ? allMembers.filter(m => (m.name || '').toLowerCase().includes(kw) || m.id.toLowerCase().includes(kw)) : allMembers;
+                memSel.innerHTML = (allMembers.length ? '<option value="">— 選擇會友 —</option>' : '<option value="">（中央會友庫無資料）</option>') +
+                    list.slice(0, 300).map(m => '<option value="' + m.id + '">' + m.name + '（' + m.id + '）</option>').join('');
+            }
+            if (window.schoolDB && window.schoolDB.getCentralMembers) allMembers = window.schoolDB.getCentralMembers();
+            document.getElementById('linkMemberFilter').oninput = function() { fillLinkSelectors(this.value); };
+            document.getElementById('doLink').onclick = function(e) {
+                e.preventDefault();
+                const sid = parseInt(document.getElementById('linkStudent').value, 10);
+                const mid = document.getElementById('linkMember').value;
+                if (!sid || !mid) return alert('請同時選擇學生與會友');
+                window.schoolDB.linkStudentToMember(sid, mid);
+                const m = allMembers.find(x => x.id === mid);
+                document.getElementById('linkMsg').textContent = '✅ 已連結：學生 ' + sid + ' ↔ 會友 ' + (m ? m.name : mid);
+                fillLinkSelectors('');
+                render();
+            };
+
+            // W1：取錄待審核學生（學員入口註冊者）
+            document.getElementById('list').addEventListener('click', function(e) {
+                if (!e.target.classList.contains('btn-admit')) return;
+                e.preventDefault();
+                const sid = parseInt(e.target.dataset.sid, 10);
+                if (!window.schoolDB) return;
+                if (!confirm('確定取錄此學生（狀態改為在學）？')) return;
+                window.schoolDB.update('students', sid, { status: 'active' });
+                fillLinkSelectors('');
+                render();
+            });
 
             document.getElementById('addForm').onsubmit = function(e) {
                 e.preventDefault();
@@ -141,7 +205,7 @@
                 a.click();
             };
 
-            if (window.schoolDB && window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
+            fillLinkSelectors('');
             render();
         })();
     </script>

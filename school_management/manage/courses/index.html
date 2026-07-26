@@ -28,12 +28,19 @@
     </div>
 
     <div class="module-card">
+        <div class="module-card-title">🔗 備課互通（C 區主日學）</div>
+        <p style="font-size:11px;color:#555;margin:0 0 8px;">教材備課在教會事工 C 區；此處只指路，不搬家。</p>
+        <a href="#" class="module-btn" id="btnEduTeaching" style="text-decoration:none;display:inline-block;">📖 開啟 C 區備課工具（edu_teaching）</a>
+    </div>
+
+    <div class="module-card">
         <div class="module-card-title">📅 課程排程</div>
+        <p style="font-size:11px;color:#555;margin:0 0 8px;">完整週課表、衝堂檢查請至 <a href="schedule.html" target="contentFrame">週課表頁</a>。</p>
         <form id="scheduleForm" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
             <div><label class="stat-label">課程</label><br><select name="courseId" required class="module-input" style="min-width:160px;"></select></div>
             <div><label class="stat-label">星期</label><br><select name="day" class="module-input"><option value="一">一</option><option value="二">二</option><option value="三">三</option><option value="四">四</option><option value="五">五</option><option value="六">六</option><option value="日">日</option></select></div>
             <div><label class="stat-label">時間</label><br><input name="time" class="module-input" placeholder="10:00-12:00" style="width:110px;"></div>
-            <div><label class="stat-label">教室</label><br><input name="room" class="module-input" value="A101" style="width:70px;"></div>
+            <div><label class="stat-label">教室</label><br><select name="room" id="scheduleRoomSelect" class="module-input"></select></div>
             <div><br><button type="submit" class="module-btn">儲存</button></div>
         </form>
         <div id="scheduleList"></div>
@@ -46,11 +53,11 @@
 
     <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
 
+    <script src="../../../js/shell_nav.js"></script>
     <script src="../../js/school-master-database.js"></script>
     <script>
         function load() {
             if (!window.schoolDB) { document.getElementById('courseList').innerHTML = '<div class="empty-state">請先載入 SchoolMasterDatabase</div>'; return; }
-            if (window.schoolDB.ensureSeedFull) window.schoolDB.ensureSeedFull();
             const db = window.schoolDB.data;
             let courses = db.courses || [];
             const teachers = db.teachers || [];
@@ -62,6 +69,11 @@
 
             const sel = document.querySelector('select[name="courseId"]');
             sel.innerHTML = '<option value="">-- 選擇課程 --</option>' + courses.map(c => '<option value="' + c.id + '">' + (c.name || c.code || c.id) + '</option>').join('');
+
+            const roomSel = document.getElementById('scheduleRoomSelect');
+            if (roomSel && window.schoolDB.getRooms) {
+                roomSel.innerHTML = window.schoolDB.getRooms().map(r => '<option value="' + r.name + '">' + r.name + '</option>').join('');
+            }
 
             let html = courses.length ? '<table class="module-table"><thead><tr><th>代碼</th><th>課程名稱</th><th>科目</th><th>教師</th><th>狀態</th></tr></thead><tbody>' + courses.map(c => {
                 const t = teachers.find(x => x.id === c.teacherId);
@@ -82,12 +94,29 @@
             const f = new FormData(this);
             const courseId = parseInt(f.get('courseId'), 10);
             if (!courseId || !window.schoolDB) return;
-            window.schoolDB.insert('course.schedules', { courseId: courseId, day: f.get('day') || '一', time: f.get('time') || '10:00-12:00', room: f.get('room') || 'A101' });
+            if (window.schoolDB.addCourseSchedule) {
+                window.schoolDB.addCourseSchedule({ courseId: courseId, day: f.get('day'), time: f.get('time'), room: f.get('room') });
+            } else {
+                window.schoolDB.insert('course.schedules', { courseId: courseId, day: f.get('day') || '一', time: f.get('time') || '10:00-12:00', room: f.get('room') || 'A101' });
+            }
             this.reset();
             load();
         };
 
-        document.addEventListener('DOMContentLoaded', load);
+        document.addEventListener('DOMContentLoaded', function() {
+            load();
+            var btn = document.getElementById('btnEduTeaching');
+            if (btn) btn.onclick = function(e) {
+                if (window.bible100ShellNav) {
+                    return window.bible100ShellNav(e, {
+                        sidebarUrl: 'church_ministry/sidebar_c_education_journey.html',
+                        contentUrl: 'church_ministry/modules/education/edu_teaching.html'
+                    });
+                }
+                window.open('../../../church_ministry/modules/education/edu_teaching.html', '_blank');
+                return false;
+            };
+        });
     </script>
 </body>
 </html>
