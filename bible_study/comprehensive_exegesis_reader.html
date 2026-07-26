@@ -212,6 +212,29 @@
         .status-message.error {
             color: #e74c3c;
         }
+
+        .bs-cmc-banner {
+            background: #fff8e1;
+            border-left: 4px solid #f59e0b;
+            padding: 10px 14px;
+            font-size: 12px;
+            line-height: 1.55;
+            color: #78350f;
+            margin: 0;
+        }
+        .bs-debug-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            font-size: 10px;
+            color: #94a3b8;
+            background: rgba(248,250,252,0.95);
+            border-top: 1px solid #e2e8f0;
+            padding: 3px 10px;
+            z-index: 999;
+            text-align: right;
+        }
         
         /* 底部狀態列 */
         .status-bar {
@@ -255,7 +278,9 @@
     <div class="top-toolbar">
         <div class="brand" style="font-size:13px;">📖 釋經參讀</div>
         <div class="nav-buttons" style="font-size:12px;">
-            <a href="../data/bibles/bible_reader_final.html" target="contentFrame" class="nav-btn">📖 回聖經</a>
+            <span id="bsPromptSlot"></span>
+            <a href="#" id="bsQnaChapterLink" class="nav-btn">❓ 同章難題</a>
+            <a href="reader.html" target="contentFrame" class="nav-btn">📖 回聖經</a>
             <a href="dictionary_reader.html" target="contentFrame" class="nav-btn">📚 查詞典</a>
             <a href="crossref_reader.html" target="contentFrame" class="nav-btn">🔗 看串珠</a>
             <a href="search_reader.html" target="contentFrame" class="nav-btn">🔍 搜全書</a>
@@ -302,6 +327,7 @@
         
         <!-- 第三行：釋經參讀資源對接 + iframe -->
         <div class="content-area">
+            <div id="bsCmcBannerHost"></div>
             <div class="content-header" style="padding:6px 12px;display:none;">
                 <h1 class="chapter-title" id="chapterTitle">釋經參讀</h1>
                 <p class="chapter-subtitle" id="chapterSubtitle">請選擇書卷和章節來查看詳細的釋經內容</p>
@@ -411,7 +437,7 @@
             initializeEventListeners();
             updateNavigationButtons();
             
-            // 先載入 CMC（綜合解讀用），不等待 JSON 數據
+            // 優先本地綜合解讀，失敗再 CMC fallback
             const params = new URLSearchParams(window.location.search);
             const urlBook = params.get('book') || '創世記';
             let urlChapter = parseInt(params.get('chapter'), 10);
@@ -421,9 +447,10 @@
             const ch = (urlChapter <= maxCh && urlChapter >= 1) ? urlChapter : 1;
             selectBook(book);
             chapterSelect.value = ch;
-            loadChapter(book, ch);
+            await loadChapter(book, ch);
+            initBsChrome();
             
-            // 背景初始化數據載入器（供其他功能用）
+            // 背景初始化數據載入器（供 Prompt / 本地釋經用）
             try {
                 if (typeof initUniversalDataLoader !== 'undefined') {
                     await initUniversalDataLoader();
@@ -507,30 +534,85 @@
             }
         }
         
-        // 載入章節內容
-        function loadChapter(book, chapter) {
+        // 載入章節內容（BS-W2：本地綜合解讀優先 → CMC fallback）
+        async function loadChapter(book, chapter) {
             currentBook = book;
             currentChapter = chapter;
             
-            // 更新選擇器
             chapterSelect.value = chapter;
-            
-            // 更新標題
             chapterTitle.textContent = `${book} 第${chapter}章`;
             chapterSubtitle.textContent = `深入解讀 · 釋經注釋 · 靈性默想`;
-            
-            // 更新導航按鈕
             updateNavigationButtons();
-            
-            // 綜合解讀：一律對接 CMC iframe（66 卷皆可用，不依賴本地 JSON）
+            if (window.BSStudyChrome) {
+                BSStudyChrome.hideCmcBanner(document.getElementById('bsCmcBannerHost'));
+            }
+            showLoadingMessage();
+            updateStatus(`載入 ${book} 第${chapter}章 · 本地綜合解讀…`);
+
+            try {
+                if (window.BibleEngine && window.BS_DATA_REGISTRY) {
+                    var bookId = getBookId(book);
+                    var compEntry = (BS_DATA_REGISTRY.commentaries || []).find(function (c) { return c.key === 'comprehensive'; });
+                    if (compEntry) {
+                        var meta = (BibleEngine.db.commentaries || {}).comprehensive;
+                        if (!meta || !meta.loaded) {
+                            await BibleEngine.loadEntry('commentaries', compEntry);
+                        }
+                        var local = await BibleEngine.queryCommentary('comprehensive', bookId, chapter);
+                        var hasBody = local && local.length && local.some(function (c) {
+                            return c.content && String(c.content).trim().length > 20;
+                        });
+                        if (hasBody) {
+                            displayCommentaryContent(local);
+                            updateStatus(`${book} 第${chapter}章 · 本地綜合解讀`);
+                            if (window.BSStudyChrome) {
+                                BSStudyChrome.hideCmcBanner(document.getElementById('bsCmcBannerHost'));
+                                BSStudyChrome.notifyCommentarySource('local');
+                            }
+                            refreshBsChrome();
+                            return;
+                        }
+                    }
+                }
+            } catch (localErr) {
+                console.warn('本地綜合解讀載入失敗，改 CMC fallback', localErr);
+            }
+
             var cmcUrl;
             if (window.BibleBridge && window.BibleBridge.getCMCDirectLink) {
                 cmcUrl = window.BibleBridge.getCMCDirectLink(book, chapter);
             } else {
                 cmcUrl = "https://cmcbiblereading.com/?s=" + encodeURIComponent(book + " 第" + chapter + "章 逐节注解");
             }
-            contentScroll.innerHTML = '<div class="bb-patch" style="padding:0;"><iframe id="bb-cmc-iframe" src="' + cmcUrl + '" style="width:100%;height:calc(100vh - 150px);min-height:400px;border:none;border-radius:4px;"></iframe></div>';
-            updateStatus(book + " 第" + chapter + "章 · CMC 釋經參讀");
+            if (window.BSStudyChrome) {
+                BSStudyChrome.showCmcBanner(document.getElementById('bsCmcBannerHost'));
+            }
+            contentScroll.innerHTML = '<div class="bb-patch" style="padding:0;"><iframe id="bb-cmc-iframe" src="' + cmcUrl + '" style="width:100%;height:calc(100vh - 180px);min-height:400px;border:none;border-radius:4px;"></iframe></div>';
+            updateStatus(book + " 第" + chapter + "章 · CMC 釋經參讀（fallback）");
+            refreshBsChrome();
+        }
+
+        function getBsContext() {
+            return {
+                bookId: getBookId(currentBook),
+                chapter: currentChapter,
+                bookName: currentBook,
+                versionKey: 'faith'
+            };
+        }
+
+        var refreshBsChrome = function () {};
+
+        function initBsChrome() {
+            if (!window.BSStudyChrome) return;
+            var qnaRefresh;
+            BSStudyChrome.initPage({
+                promptContainer: document.getElementById('bsPromptSlot'),
+                qnaLink: document.getElementById('bsQnaChapterLink'),
+                getContext: getBsContext,
+                onContextChange: function (fn) { qnaRefresh = fn; refreshBsChrome = fn; }
+            });
+            refreshBsChrome = qnaRefresh || refreshBsChrome;
         }
         
         // 更新狀態資訊
@@ -974,6 +1056,12 @@ ${book}是聖經中重要的書卷，每一章都包含豐富的神學真理和�
     <!-- 數據載入器 + CMC 雲端補丁（BibleEngine + registry SSOT） -->
     <script src="./js/bible_version_registry.js"></script>
     <script src="./js/BibleEngine.js"></script>
+    <script src="./js/bible_lazy_chapter.js"></script>
+    <script src="./js/bs_qna_bridge.js"></script>
+    <script src="./js/bs_prompt_builder.js"></script>
+    <script src="./js/bs_study_chrome.js"></script>
+    <script src="./js/bs_page_registry.js"></script>
+    <script src="./js/universal-data-loader.js"></script>
     <script>
         // 確保數據載入器正確初始化
         document.addEventListener('DOMContentLoaded', async function() {
@@ -1002,35 +1090,6 @@ ${book}是聖經中重要的書卷，每一章都包含豐富的神學真理和�
                 console.error('❌ 通用數據載入器未找到');
             }
         });
-    </script>
-    <!-- 有 book 參數時：立即注入 CMC iframe，不依賴 BibleBridge -->
-    <script>
-        (function() {
-            var urlParams = new URLSearchParams(window.location.search);
-            var book = urlParams.get('book') || "創世記";
-            var chapter = urlParams.get('chapter') || "1";
-            var hasBook = !!urlParams.get('book') || urlParams.get('force') === '1';
-            if (!hasBook) return;
-
-            function injectCMC() {
-                var c = document.getElementById('contentScroll') || document.getElementById('commentary_content');
-                if (!c) return;
-                var url;
-                if (window.BibleBridge && window.BibleBridge.getCMCDirectLink) {
-                    url = window.BibleBridge.getCMCDirectLink(book, chapter);
-                } else {
-                    url = "https://cmcbiblereading.com/?s=" + encodeURIComponent(book + " 第" + chapter + "章 逐节注解");
-                }
-                c.innerHTML = '<div style="padding:0;"><iframe id="bb-cmc-iframe" src="' + url + '" style="width:100%;height:calc(100vh - 150px);min-height:400px;border:none;"></iframe></div>';
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() { setTimeout(injectCMC, 50); });
-            } else {
-                setTimeout(injectCMC, 50);
-            }
-            setTimeout(injectCMC, 600);
-        })();
     </script>
 </body>
 </html>

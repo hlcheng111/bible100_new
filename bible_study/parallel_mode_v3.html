@@ -173,9 +173,11 @@
         <div>
             <span class="badge">📑 對照模式 v3（離線版，不需伺服器）</span>
         </div>
-        <div class="status">
+        <div class="status" id="parallel-status">
             聖經版本：信望愛(和合本)、NIV ；註釋：每日研經叢書
         </div>
+        <span id="bsParallelPromptSlot" style="margin-left:8px;"></span>
+        <a href="#" id="bsParallelQnaLink" class="nav-btn" style="margin-left:6px;font-size:11px;color:#ecf0f1;text-decoration:none;padding:2px 8px;background:rgba(255,255,255,0.15);border-radius:3px;">❓ 同章難題</a>
     </div>
 
     <div class="nav-bar">
@@ -217,6 +219,13 @@
     <script src="../data/bibles/bible_data_niv.js" charset="UTF-8"></script>
     <script src="../data/cj/commentary_data_meiriyan.js" charset="UTF-8"></script>
     <script src="js/dev_http_hint.js"></script>
+    <script src="js/bible_version_registry.js"></script>
+    <script src="js/BibleEngine.js"></script>
+    <script src="js/bible_lazy_chapter.js"></script>
+    <script src="js/bs_qna_bridge.js"></script>
+    <script src="js/bs_prompt_builder.js"></script>
+    <script src="js/bs_study_chrome.js"></script>
+    <script src="js/bs_page_registry.js"></script>
 
     <script>
         // 書卷定義（與 v2 相同）
@@ -296,13 +305,15 @@
             rightSource: "bible:niv"
         };
 
-        const BIBLE_SOURCES = {
-            faith:  { name: "信望愛(和合本)", data: window.BIBLE_DATA_faith || [] },
-            niv:    { name: "NIV",           data: window.BIBLE_DATA_niv   || [] }
+        var _builtSources = typeof BS_buildParallelSources === "function"
+            ? BS_buildParallelSources()
+            : null;
+        var BIBLE_SOURCES = _builtSources ? _builtSources.bibles : {
+            faith: { name: "信望愛(和合本)", data: null },
+            niv: { name: "NIV", data: null }
         };
-
-        const COMMENTARY_SOURCES = {
-            meiriyan: { name: "每日研經叢書", data: window.COMMENTARY_DATA_meiriyan || [] }
+        var COMMENTARY_SOURCES = _builtSources ? _builtSources.commentaries : {
+            meiriyan: { name: "每日研經叢書", data: null }
         };
 
         function siteRootPrefix() {
@@ -381,9 +392,39 @@
         }
 
         function syncParallelSourceArrays() {
-            BIBLE_SOURCES.faith.data = window.BIBLE_DATA_faith || [];
-            BIBLE_SOURCES.niv.data = window.BIBLE_DATA_niv || [];
-            COMMENTARY_SOURCES.meiriyan.data = window.COMMENTARY_DATA_meiriyan || [];
+            if (window.BIBLE_DATA_faith && window.BIBLE_DATA_faith.length) {
+                if (!BIBLE_SOURCES.faith) BIBLE_SOURCES.faith = { name: "信望愛(和合本)", data: null };
+                BIBLE_SOURCES.faith.data = window.BIBLE_DATA_faith;
+            }
+            if (window.BIBLE_DATA_niv && window.BIBLE_DATA_niv.length) {
+                if (!BIBLE_SOURCES.niv) BIBLE_SOURCES.niv = { name: "NIV", data: null };
+                BIBLE_SOURCES.niv.data = window.BIBLE_DATA_niv;
+            }
+            if (window.COMMENTARY_DATA_meiriyan && window.COMMENTARY_DATA_meiriyan.length) {
+                if (!COMMENTARY_SOURCES.meiriyan) COMMENTARY_SOURCES.meiriyan = { name: "每日研經叢書", data: null };
+                COMMENTARY_SOURCES.meiriyan.data = window.COMMENTARY_DATA_meiriyan;
+            }
+        }
+
+        function parallelStatusLabel() {
+            var bibleNames = Object.keys(BIBLE_SOURCES).map(function (k) { return BIBLE_SOURCES[k].name; }).join("、");
+            var commNames = Object.keys(COMMENTARY_SOURCES).map(function (k) { return COMMENTARY_SOURCES[k].name; }).join("、");
+            return "registry 對照 · 聖經：" + (bibleNames || "—") + " ；註釋：" + (commNames || "—");
+        }
+
+        async function parallelCanRun() {
+            syncParallelSourceArrays();
+            if (parallelHasCoreData()) return true;
+            if (location.protocol !== "http:" && location.protocol !== "https:") return false;
+            if (!window.BibleEngine || !window.BS_DATA_REGISTRY) return false;
+            var cores = BibleEngine.getRegistryParallelBibles ? BibleEngine.getRegistryParallelBibles() : [];
+            for (var i = 0; i < cores.length; i++) {
+                var paths = cores[i].paths && cores[i].paths.json;
+                if (!paths || !paths.length) continue;
+                var p = await BibleEngine.probePath(paths[0]);
+                if (p.ok) return true;
+            }
+            return false;
         }
 
         function showParallelMissingPanel() {
@@ -596,22 +637,35 @@
             return html;
         }
 
-        function renderPanel(which) {
+        async function renderPanel(which) {
             const container = document.getElementById(which === "left" ? "left-content" : "right-content");
             const sourceKey = which === "left" ? state.leftSource : state.rightSource;
             if (!sourceKey) {
                 container.innerHTML = `<div class="empty-hint">尚未選擇來源。</div>`;
                 return;
             }
-            const [kind, key] = sourceKey.split(":");
-            if (kind === "bible") {
-                const verses = getVerses(key, state.book, state.chapter);
-                container.innerHTML = renderVersesHTML(key, state.book, state.chapter, verses);
-            } else if (kind === "comm") {
-                const items = getCommentaries(key, state.book, state.chapter);
-                container.innerHTML = renderCommentaryHTML(key, state.book, state.chapter, items);
-            } else {
-                container.innerHTML = `<div class="empty-hint">未知來源類型：${kind}</div>`;
+            container.innerHTML = `<div class="empty-hint">載入中…</div>`;
+            const parts = sourceKey.split(":");
+            const kind = parts[0];
+            const key = parts[1];
+            try {
+                if (kind === "bible") {
+                    var verses = getVerses(key, state.book, state.chapter);
+                    if (!verses.length && window.BibleEngine && BibleEngine.getBibleChapterRows) {
+                        verses = await BibleEngine.getBibleChapterRows(key, state.book, state.chapter);
+                    }
+                    container.innerHTML = renderVersesHTML(key, state.book, state.chapter, verses);
+                } else if (kind === "comm") {
+                    var items = getCommentaries(key, state.book, state.chapter);
+                    if (!items.length && window.BibleEngine && BibleEngine.getCommentaryChapterRows) {
+                        items = await BibleEngine.getCommentaryChapterRows(key, state.book, state.chapter);
+                    }
+                    container.innerHTML = renderCommentaryHTML(key, state.book, state.chapter, items);
+                } else {
+                    container.innerHTML = `<div class="empty-hint">未知來源類型：${kind}</div>`;
+                }
+            } catch (err) {
+                container.innerHTML = `<div class="empty-hint">載入失敗：${err.message || err}</div>`;
             }
         }
 
@@ -627,24 +681,50 @@
             }
             syncParallelSourceArrays();
             var onHttp = location.protocol === "http:" || location.protocol === "https:";
+            var st = document.querySelector(".status") || document.getElementById("parallel-status");
             if (!parallelHasCoreData() && onHttp) {
-                var st = document.querySelector(".status");
-                if (st) st.textContent = "網址模式：嘗試載入 data/bibles/*.json …";
+                if (st) st.textContent = "網址模式：registry 章節懶載入（或嘗試整包 JSON）…";
                 try {
                     await tryHttpHydrateParallel();
                 } catch (e) {}
                 syncParallelSourceArrays();
-                if (st && parallelHasCoreData()) {
-                    st.textContent =
-                        "聖經版本：信望愛(和合本)、NIV ；註釋：每日研經叢書（JSON 線上載入）";
-                }
             }
-            if (!parallelHasCoreData()) {
+            var canRun = await parallelCanRun();
+            if (!canRun) {
                 showParallelMissingPanel();
                 return;
             }
+            if (st) st.textContent = parallelStatusLabel();
             initUI();
             renderBoth();
+            initParallelBsChrome();
+            if (window.BSStudyChrome) BSStudyChrome.maybeMountDebugFooter();
+        }
+
+        function getParallelBsContext() {
+            return {
+                bookId: state.book,
+                chapter: state.chapter,
+                bookName: getBookName(state.book),
+                versionKey: (state.leftSource || '').indexOf('niv') >= 0 ? 'niv' : 'faith',
+                versionKeyB: (state.rightSource || '').indexOf('niv') >= 0 ? 'niv' : 'faith'
+            };
+        }
+
+        function initParallelBsChrome() {
+            if (!window.BSStudyChrome) return;
+            BSStudyChrome.initPage({
+                promptContainer: document.getElementById('bsParallelPromptSlot'),
+                qnaLink: document.getElementById('bsParallelQnaLink'),
+                getContext: getParallelBsContext,
+                onContextChange: function (refresh) {
+                    var origRenderBoth = renderBoth;
+                    renderBoth = function () {
+                        origRenderBoth();
+                        refresh();
+                    };
+                }
+            });
         }
         bootstrapParallel().catch(function () {
             showParallelMissingPanel();

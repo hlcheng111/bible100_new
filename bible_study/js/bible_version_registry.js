@@ -6,8 +6,18 @@
     'use strict';
 
     global.BS_DATA_REGISTRY = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         updated: '2026-07-26',
+
+        /** 六語教材 Hub ↔ 站內譯本 key（BS-W5 SSOT） */
+        languagesHub: [
+            { code: 'cn', name: '中文教材', hub: 'languages/index_cn.html', bibleKeys: ['faith', 'cuv', 'cuvr', 'luzhen'] },
+            { code: 'en', name: 'English Curriculum', hub: 'languages/index_en.html', bibleKeys: ['kjv', 'niv'] },
+            { code: 'vi', name: 'Tiếng Việt', hub: 'languages/index_vi.html', bibleKeys: ['vi1934'] },
+            { code: 'id', name: 'Bahasa Indonesia', hub: 'languages/index_id.html', bibleKeys: ['id_ayt'] },
+            { code: 'ch', name: '兒童／青少年', hub: 'languages/index_ch.html', bibleKeys: [] },
+            { code: 'ad', name: '進深／成人', hub: 'languages/index_ad.html', bibleKeys: [] }
+        ],
 
         bibles: [
             {
@@ -185,13 +195,21 @@
         dictionaries: [
             {
                 key: 'bible_dict',
-                name: '圣经词典',
+                name: '圣经语汇词典',
                 langs: ['cn', 'en'],
                 paths: {
-                    json: ['data/dictionaries/圣经词典.json']
+                    json: [
+                        'data/cd/圣经语汇词典.json',
+                        'data/dictionaries/圣经词典.json'
+                    ]
                 }
             }
         ]
+    };
+
+    /** @param {string} category bibles|commentaries|crossrefs|dictionaries */
+    global.BS_getRegistryEntry = function (category, key) {
+        return (global.BS_DATA_REGISTRY[category] || []).find(function (e) { return e.key === key; }) || null;
     };
 
     /** @param {string} category bibles|commentaries|crossrefs|dictionaries */
@@ -202,6 +220,16 @@
 
     global.BS_getBibleEntry = function (key) {
         return (global.BS_DATA_REGISTRY.bibles || []).find(function (b) { return b.key === key; }) || null;
+    };
+
+    global.BS_getLanguagesHub = function (code) {
+        return (global.BS_DATA_REGISTRY.languagesHub || []).find(function (h) { return h.code === code; }) || null;
+    };
+
+    global.BS_getHubForBibleKey = function (bibleKey) {
+        return (global.BS_DATA_REGISTRY.languagesHub || []).find(function (h) {
+            return (h.bibleKeys || []).indexOf(bibleKey) >= 0;
+        }) || null;
     };
 
 })(typeof window !== 'undefined' ? window : this);

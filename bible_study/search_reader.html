@@ -296,6 +296,10 @@
         </div>
     </div>
 
+    <script src="js/bible_version_registry.js"></script>
+    <script src="js/BibleEngine.js"></script>
+    <script src="js/bible_lazy_chapter.js"></script>
+    <script src="js/bible_fts.js"></script>
     <script>
         let searchTimeout;
         let currentVersion = 'all';
@@ -325,8 +329,22 @@
             '2 Corinthians','Galatians','Ephesians','Philippians','Colossians','1 Thessalonians','2 Thessalonians',
             '1 Timothy','2 Timothy','Titus','Philemon','Hebrews','James','1 Peter','2 Peter','1 John','2 John','3 John','Jude','Revelation'];
 
+        function buildSearchOptionsFromRegistry() {
+            var container = document.querySelector('.search-options');
+            if (!container || !window.BS_DATA_REGISTRY) return;
+            container.innerHTML = '<span class="search-option active" data-version="all">全部版本</span>';
+            (BS_DATA_REGISTRY.bibles || []).filter(function (b) { return b.search; }).forEach(function (b) {
+                var span = document.createElement('span');
+                span.className = 'search-option';
+                span.dataset.version = b.key;
+                span.textContent = b.name;
+                container.appendChild(span);
+            });
+        }
+
         function init() {
             console.log('聖經搜索閱讀器初始化...');
+            buildSearchOptionsFromRegistry();
             setupEventListeners();
             var params = new URLSearchParams(window.location.search);
             var q = params.get('q');
@@ -361,7 +379,14 @@
             showLoading();
             try {
                 let results = [];
-                const versions = currentVersion === 'all' ? ['faith','cuv','kjv','niv'] : [currentVersion];
+                var searchKeys = [];
+                if (window.BibleEngine && BibleEngine.getRegistrySearchBibles) {
+                    searchKeys = BibleEngine.getRegistrySearchBibles().map(function (b) { return b.key; });
+                }
+                if (!searchKeys.length) {
+                    searchKeys = ['faith', 'cuv', 'kjv', 'niv'];
+                }
+                const versions = currentVersion === 'all' ? searchKeys : [currentVersion];
                 for (const v of versions) {
                     const r = await searchInVersion(v, query);
                     results = results.concat(r);
@@ -378,6 +403,21 @@
         const biblesCache = {};
 
         async function searchInVersion(version, query) {
+            if (window.BibleEngine && BibleEngine.searchBibleFts) {
+                try {
+                    return await BibleEngine.searchBibleFts(version, query, 20, BOOK_NAMES);
+                } catch (e) {
+                    console.warn('[搜尋] FTS', version, e);
+                }
+            }
+            if (window.BibleEngine && BibleEngine.searchBible) {
+                try {
+                    return await BibleEngine.searchBible(version, query, 20, BOOK_NAMES);
+                } catch (e) {
+                    console.warn('[搜尋] registry lazy', version, e);
+                }
+            }
+
             const path = VERSION_FILES[version];
             if (!path) return [];
             
@@ -522,6 +562,10 @@
 
         // 獲取版本名稱
         function getVersionName(version) {
+            if (window.BS_DATA_REGISTRY) {
+                var hit = (BS_DATA_REGISTRY.bibles || []).find(function (b) { return b.key === version; });
+                if (hit) return hit.name;
+            }
             const names = {
                 'faith': '信望愛(和合本)',
                 'cuv': '和合本',
@@ -567,7 +611,7 @@
         function goToVerse(book, chapter, verse) {
             const bookNames = BOOK_NAMES;
             const name = bookNames[book] || ('Book'+book);
-            const url = `../data/bibles/bible_reader_final.html?book=${encodeURIComponent(name)}&chapter=${chapter}`;
+            const url = `reader.html?book=${book}&chapter=${chapter}`;
             if (window.parent && window.parent !== window && window.parent.document.getElementById('contentFrame')) {
                 window.parent.document.getElementById('contentFrame').src = url;
             } else {
@@ -576,7 +620,7 @@
         }
 
         function goToReader() {
-            const url = '../data/bibles/bible_reader_final.html';
+            const url = 'reader.html';
             if (window.parent && window.parent !== window && window.parent.document.getElementById('contentFrame')) {
                 window.parent.document.getElementById('contentFrame').src = url;
             } else {

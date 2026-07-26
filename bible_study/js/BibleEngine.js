@@ -98,6 +98,11 @@
             return response.arrayBuffer();
         },
 
+        _unescapeJsonText(text) {
+            if (!text || text.indexOf('\\n') < 0 || text.indexOf('\n') >= 0) return text;
+            return text.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
+        },
+
         initJson(text) {
             var clean = text.trim().replace(/^\uFEFF/, '').replace(/\0/g, '');
             if (clean.includes('=') && !clean.startsWith('{') && !clean.startsWith('[')) {
@@ -108,7 +113,13 @@
             var end = clean.lastIndexOf('}') + 1;
             if (start >= 0 && end > start) clean = clean.substring(start, end);
             if (clean.startsWith('<')) throw new Error('伺服器回傳 HTML 而非 JSON');
-            return JSON.parse(clean);
+            try {
+                return JSON.parse(clean);
+            } catch (e1) {
+                var unescaped = this._unescapeJsonText(clean);
+                if (unescaped !== clean) return JSON.parse(unescaped);
+                throw e1;
+            }
         },
 
         decodeBuffer(buffer) {

@@ -15,6 +15,7 @@
     
     <!-- 引入 Dashboard 標準樣式 -->
     <link rel="stylesheet" href="../css/landing_dashboard_standard.css">
+    <script src="../js/bible_version_registry.js"></script>
 </head>
 <body>
     <!-- 
@@ -63,6 +64,13 @@
     <div class="info-bar success">
         <strong>💡 使用提示：</strong>
         點擊版本名稱直接開始閱讀，或點擊「了解更多」查看版本特色和適用場景。
+    </div>
+
+    <!-- 六語教材 Hub（BS-W5 · registry languagesHub SSOT） -->
+    <div class="info-bar" id="bsLanguagesHubBar" style="background:#eef7ff;border-left:4px solid #3498db;">
+        <strong>🌐 六語教材：</strong>
+        <span id="bsLanguagesHubLinks">載入中…</span>
+        <span style="color:#666;font-size:11px;margin-left:8px;">（站內譯本 ↔ languages/ 對齊）</span>
     </div>
 
     <!-- 主要內容：聖經版本分類 -->
@@ -153,6 +161,12 @@
             </a>
             <a href="../external_bible_reader.html?source=wordproject-myanmar&book=創世記&chapter=1" target="contentFrame" class="btn btn-primary">
                 🇲🇲 緬甸聖經
+            </a>
+            <a href="../parallel_mode_v3.html?version=vi1934" target="contentFrame" class="btn btn-outline btn-small">
+                🇻🇳 站內越南1934（對照）
+            </a>
+            <a href="../parallel_mode_v3.html?version=id_ayt" target="contentFrame" class="btn btn-outline btn-small">
+                🇮🇩 站內印尼 AYT（對照）
             </a>
         </div>
 
@@ -469,9 +483,26 @@
             document.getElementById('versionModal').classList.remove('active');
         }
 
+        function renderLanguagesHub() {
+            var host = document.getElementById('bsLanguagesHubLinks');
+            if (!host || !window.BS_DATA_REGISTRY) return;
+            var hubs = BS_DATA_REGISTRY.languagesHub || [];
+            host.innerHTML = hubs.map(function (h) {
+                var hubHref = '../../' + h.hub;
+                var biblePart = (h.bibleKeys || []).map(function (k) {
+                    var b = (BS_DATA_REGISTRY.bibles || []).find(function (x) { return x.key === k; });
+                    var label = b ? b.name : k;
+                    return '<a href="../reader.html?version=' + k + '" target="contentFrame">' + label + '</a>';
+                }).join(' · ');
+                return '<span style="margin-right:12px;"><a href="' + hubHref + '" target="contentFrame"><strong>' + h.code.toUpperCase() + '</strong> ' + h.name + '</a>' +
+                    (biblePart ? ' <span style="color:#666;font-size:11px;">→ ' + biblePart + '</span>' : '') + '</span>';
+            }).join('');
+        }
+
         // 頁面初始化
         document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ 版本中心 v4.0 載入完成（Dashboard 標準）');
+            renderLanguagesHub();
             updateNavButtons();
             
             document.addEventListener('keydown', function(e) {

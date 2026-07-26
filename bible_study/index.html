@@ -73,6 +73,64 @@
             transform: translateY(-1px);
         }
 
+        .nav-btn.bs-lesson-pack-btn {
+            background: rgba(255,255,255,0.35);
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+
+        .bs-data-chip {
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.15);
+            color: #fff;
+            flex-shrink: 0;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .bs-chip-green { box-shadow: inset 0 0 0 2px #22c55e; }
+        .bs-chip-yellow { box-shadow: inset 0 0 0 2px #eab308; }
+        .bs-chip-red { box-shadow: inset 0 0 0 2px #ef4444; }
+
+        .bs-tools-wrap { position: relative; display: inline-block; }
+        .bs-tools-drop {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            min-width: 180px;
+            background: #fff;
+            color: #333;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            z-index: 1100;
+            padding: 6px 0;
+            font-size: 11px;
+        }
+        .bs-tools-drop.open { display: block; }
+        .bs-tools-drop a, .bs-tools-drop label {
+            display: block;
+            padding: 8px 12px;
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .bs-tools-drop a:hover { background: #f1f5f9; }
+        .bs-tools-drop .bs-mode-row {
+            border-top: 1px solid #e2e8f0;
+            margin-top: 4px;
+            padding: 6px 12px;
+            font-size: 10px;
+            color: #64748b;
+        }
+
         /* 主布局 */
         .main-container {
             display: flex;
@@ -207,7 +265,10 @@
     <!-- Topbar -->
     <div class="topbar">
         <div class="topbar-inner" style="width:100%;display:flex;align-items:center;gap:10px;">
-            <div class="brand" style="flex-shrink:0;">📖 聖經研讀中心 <small>Bible Study Center</small></div>
+            <div class="brand" style="flex-shrink:0;display:flex;align-items:center;gap:8px;">
+                <span>📖 聖經研讀中心 <small>Bible Study Center</small></span>
+                <button type="button" id="bsDataChip" class="bs-data-chip bs-chip-yellow" title="資料狀態">🟡</button>
+            </div>
             <div class="universal-search">
                 <div class="search-wrap">
                     <input type="text" id="universalSearchInput" placeholder="搜尋經文或詞彙，例如：愛、創1:1..." 
@@ -215,12 +276,25 @@
                 </div>
             </div>
             <span id="currentPosition" style="font-size:11px;opacity:0.9;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="當前閱讀位置">📖 創世記 第1章</span>
-            <div class="nav-buttons" style="flex-shrink:0;display:flex;gap:6px;">
-                <button type="button" class="nav-btn" onclick="StudyState.change({mode:'read'});setContentFrame('reader.html');" title="單純閱讀">📖 閱讀</button>
-                <button type="button" class="nav-btn" onclick="var s=window.StudyState?StudyState.get():{};if(window.StudyState)StudyState.change({mode:'study'});var u='comprehensive_exegesis_reader.html';if(s.bookName){u+='?book='+encodeURIComponent(s.bookName);if(s.chapter)u+='&chapter='+s.chapter;}setContentFrame(u);" title="釋經參讀 Bible Commentary">🔍 釋經參讀</button>
-                <button type="button" class="nav-btn" onclick="StudyState.change({mode:'compare'});setContentFrame('parallel_mode_v3.html');" title="譯本對照">📑 對照</button>
-                <button type="button" class="nav-btn" onclick="setContentFrame('data_sources.html');" title="資料來源綠燈">📡 資料</button>
-                <button type="button" class="nav-btn" onclick="setContentFrame('_landing/tools.html');" title="研讀工具導覽">🧭 功能地圖</button>
+            <div class="nav-buttons" style="flex-shrink:0;display:flex;gap:6px;align-items:center;">
+                <button type="button" class="nav-btn" id="bsNavRead" title="單章閱讀 · 左經右註">📖 讀經文</button>
+                <button type="button" class="nav-btn" id="bsNavStudy" title="綜合解讀 · 備課用">📚 看註釋</button>
+                <button type="button" class="nav-btn" id="bsNavCompare" title="中英／多語對照">📑 比譯本</button>
+                <button type="button" class="nav-btn" id="bsNavQna" title="換模組 · 新分頁 · 聖經難題 Q&A">❓ 同章難題</button>
+                <div class="bs-tools-wrap">
+                    <button type="button" class="nav-btn" id="bsToolsMenuBtn" title="詞典、串珠、資料綠燈…">🧭 全部工具 ▾</button>
+                    <div class="bs-tools-drop" id="bsToolsDrop">
+                        <a href="#" data-bs-frame="_landing/tools.html">🧭 工具總覽</a>
+                        <a href="#" data-bs-frame="data_sources.html">📡 檢查資料（綠燈）</a>
+                        <a href="#" data-bs-frame="search_reader.html">🔍 全文搜尋</a>
+                        <a href="#" data-bs-frame="_landing/versions.html">🌍 版本中心</a>
+                        <div class="bs-mode-row">
+                            <label><input type="checkbox" id="bsTogglePastor"> 牧長模式（展開資料說明）</label><br>
+                            <label><input type="checkbox" id="bsToggleEngineer"> 工程模式（子頁 debug footer）</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="nav-btn bs-lesson-pack-btn" id="bsLessonPackBtn" title="經文+註釋+難題+備課三問 · 複製到剪貼板">📋 備課包</button>
                 <a href="../index_v5.html" class="nav-btn" title="返回總站">🏠 總站</a>
             </div>
         </div>
@@ -239,6 +313,13 @@
 
     <script src="../js/book-resolver.js"></script>
     <script src="js/State.js"></script>
+    <script src="js/bible_version_registry.js"></script>
+    <script src="js/BibleEngine.js"></script>
+    <script src="js/bible_lazy_chapter.js"></script>
+    <script src="js/bs_qna_bridge.js"></script>
+    <script src="js/bs_prompt_builder.js"></script>
+    <script src="js/bs_data_status.js"></script>
+    <script src="js/bs_shell_w4.js"></script>
     <script>
         // F5 還原：切換內容時儲存（sessionStorage + URL），載入時還原
         function setContentFrame(url) {
@@ -278,7 +359,20 @@
         });
 
         // Deep Linking：頁面載入時解析 URL 參數
-        if (window.StudyState) StudyState.parseFromUrl();
+        if (window.StudyState) {
+            StudyState.parseFromUrl();
+            StudyState.subscribe(function (payload) {
+                var s = payload.state || {};
+                var el = document.getElementById('currentPosition');
+                if (el && s.bookName) {
+                    el.textContent = '📖 ' + s.bookName + ' 第' + (s.chapter || 1) + '章';
+                    el.title = el.textContent;
+                }
+                var inp = document.getElementById('universalSearchInput');
+                if (inp && s.searchQuery && !inp.value) inp.value = s.searchQuery;
+                StudyState.pushUrl();
+            });
+        }
 
         // contentFrame 載入後：同步 State + 儲存 URL（供 F5 還原）
         document.getElementById('contentFrame').addEventListener('load', function() {
