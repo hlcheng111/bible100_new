@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # 合規範本與關鍵側欄（逐步擴充）
 SIDEBAR_WATCH = [
     "church_ministry/sidebar_c_education_journey.html",
+    "bible_study/sidebar.html",
 ]
 
 FORBIDDEN_IN_SIDEBARS = [
@@ -39,6 +40,9 @@ def test_sidebar_behavior_contract():
         "navigateModuleViaShell",
         "navigateContentViaShell",
         "hrefToSiteRootRelative",
+        "isSiteRootRelativePath",
+        "SITE_ROOT_PREFIXES",
+        "church_planning/",
         "fallbackContentViaBase",
         "isInShell",
     ):
@@ -62,6 +66,19 @@ def test_c_education_sidebar_is_reference():
     assert "bible_study/sidebar.html" in html
     for _label, needle in FORBIDDEN_IN_SIDEBARS:
         assert needle not in html, f"C sidebar must not contain {needle}"
+    assert not INLINE_SHELL_ONCLICK.search(html), "no inline bible100ShellNav onclick"
+
+
+def test_bible_study_sidebar_is_reference():
+    html = read("bible_study/sidebar.html")
+    assert 'data-b100-nav="content"' in html
+    assert "sidebar_behavior.js" in html
+    assert "shell_nav.js" in html
+    assert "sidebar_shell_target_fallback.js" in html
+    assert "comprehensive_exegesis_reader.html" in html
+    assert 'href="index.html" target="_top"' in html
+    for _label, needle in FORBIDDEN_IN_SIDEBARS:
+        assert needle not in html, f"bible_study sidebar must not contain {needle}"
     assert not INLINE_SHELL_ONCLICK.search(html), "no inline bible100ShellNav onclick"
 
 

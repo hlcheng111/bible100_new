@@ -49,7 +49,6 @@ toc/
 └── generated/             # 生成的文件目錄
     ├── site-map.html      # 主站點目錄
     ├── modules/           # 各模組目錄
-    │   ├── bible_reading-toc.html
     │   ├── bible_study-toc.html
     │   └── ...
     └── languages/         # 各語言目錄
@@ -82,8 +81,8 @@ http://your-domain/toc/index.html
 {
   "modules": [
     {
-      "name": "bible_reading",
-      "title": "聖經閱讀",
+      "name": "bible_study",
+      "title": "聖經研讀",
       "icon": "📖",
       "priority": 1,
       "enabled": true

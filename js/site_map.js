@@ -38,9 +38,9 @@ window.SITE_MAP = {
     {
       id: "bible",
       title: "聖經研讀",
-      index: "bible_study/dashboard.html",
+      index: "bible_study/index.html",
       pages: [
-        "bible_study/dashboard.html",
+        "bible_study/index.html",
         "bible_study/search_reader.html",
         "bible_study/comprehensive_exegesis_reader.html",
         "bible_study/sidebar.html",

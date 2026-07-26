@@ -1,93 +1,23 @@
 /**
- * 聖經研讀中心：終極數據引擎
- * 雙規並行：優先載入純淨 JSON，失敗則嘗試 SQLite
- * 標準格式：{version, data:[{b,c,v,t}]} / {source, items:[{book,chapter,title,content}]}
+ * 聖經研讀中心 · 統一資料引擎（BS-W1）
+ * SSOT 路徑：bible_version_registry.js
+ * 相容：window.universalDataLoader / initUniversalDataLoader / queryBible / queryCommentary
  */
 (function (global) {
     'use strict';
 
+    var REG = function () { return global.BS_DATA_REGISTRY || { bibles: [], commentaries: [], crossrefs: [], dictionaries: [] }; };
+
     const BibleEngine = {
-        db: {},
+        db: { bibles: {}, commentaries: {}, crossrefs: {}, dictionaries: {} },
+        sourceStatus: [],
         SQL: null,
-
-        // 純淨 JSON 路徑（scripts/export_clean_json.py 輸出，相對於伺服器根目錄）
-        // 檔名大小寫須與磁碟一致：Linux／雲端主機區分大小寫（kjv.json ≠ KJV.json）
-        BIBLE_PATHS: [
-            'data/bibles/clean/KJV.json',
-            'data/bibles/clean/NIV.json',
-            'data/bibles/clean/信望爱(和合本).json',
-            'data/bibles/clean/吕振中.json'
-        ],
-        BIBLE_KEYS: { 'KJV.json': 'kjv', 'NIV.json': 'niv', '信望爱(和合本).json': 'faith', '吕振中.json': 'luzhen' },
-        BIBLE_NAMES: { kjv: 'KJV', niv: 'NIV', faith: '信望爱(和合本)', luzhen: '吕振中' },
-        COMM_PATHS: [
-            { path: 'data/cj/clean/Comprehensive.json', key: 'comprehensive', name: '综合解读' }
-        ],
-
-        async load(name, path) {
-            try {
-                const base = this._base();
-                const url = (path.startsWith('http') || path.startsWith('/')) ? path : base + path;
-                const response = await fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now());
-                if (!response.ok) {
-                    console.warn('❌ ' + name + ' HTTP ' + response.status + ': ' + path);
-                    return null;
-                }
-                const arrayBuffer = await response.arrayBuffer();
-                const header = new TextDecoder().decode(arrayBuffer.slice(0, 15));
-
-                if (header.includes('SQLite format')) {
-                    return await this.initSqlite(name, arrayBuffer);
-                }
-                const text = new TextDecoder('utf-8').decode(arrayBuffer);
-                return this.initJson(name, text);
-            } catch (e) {
-                console.error('❌ ' + name + ' 啟動失敗:', e);
-                return null;
-            }
-        },
-
-        initJson(name, text) {
-            try {
-                let clean = text.trim();
-                const start = clean.indexOf('{');
-                const end = clean.lastIndexOf('}') + 1;
-                if (start >= 0 && end > start) clean = clean.substring(start, end);
-                const obj = JSON.parse(clean);
-                this.db[name] = obj;
-                console.log('✅ ' + name + ' (JSON) 已就緒');
-                return { type: 'json', data: obj };
-            } catch (e) {
-                throw new Error('JSON 格式毀損，請執行 scripts/export_clean_json.py 重新生成');
-            }
-        },
-
-        async initSqlite(name, buffer) {
-            if (typeof initSqlJs === 'undefined') {
-                await this._loadSqlJs();
-            }
-            if (typeof initSqlJs === 'undefined') throw new Error('缺少 SQL.js 引擎');
-            this.SQL = this.SQL || await initSqlJs({ locateFile: f => 'https://sql.js.org/dist/' + f });
-            this.db[name] = new this.SQL.Database(new Uint8Array(buffer));
-            console.log('✅ ' + name + ' (SQLite) 已就緒');
-            return { type: 'sqlite', data: this.db[name] };
-        },
-
-        _loadSqlJs() {
-            return new Promise((resolve) => {
-                if (typeof initSqlJs !== 'undefined') { resolve(); return; }
-                const s = document.createElement('script');
-                s.src = 'https://sql.js.org/dist/sql-wasm.js';
-                s.onload = () => resolve();
-                s.onerror = () => resolve();
-                document.head.appendChild(s);
-            });
-        },
+        loadingStatus: { total: 0, loaded: 0, failed: 0, mode: 'json' },
+        fallbackMode: false,
 
         _base() {
             const loc = typeof window !== 'undefined' && window.location;
             if (!loc) return '';
-            // file:// 且頁面在 bible_study/ 底下時，fetch 的相對路徑須相對於 bible100_new 根（非 bible_study/）
             if (loc.protocol === 'file:') {
                 try {
                     const path = decodeURIComponent(loc.pathname || '').replace(/\\/g, '/');
@@ -100,90 +30,440 @@
             return (loc.origin || '').replace(/\/?$/, '/');
         },
 
-        // === 相容 universal-data-loader 的 API ===
+        _url(path) {
+            const base = this._base();
+            if (!path) return path;
+            if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/')) return path;
+            return base + path.replace(/^\.\.\//, '');
+        },
+
+        async _loadSqlJs() {
+            if (typeof initSqlJs !== 'undefined') return initSqlJs;
+            return new Promise(function (resolve) {
+                if (typeof initSqlJs !== 'undefined') { resolve(initSqlJs); return; }
+                var s = document.createElement('script');
+                s.src = 'https://sql.js.org/dist/sql-wasm.js';
+                s.onload = function () { resolve(typeof initSqlJs !== 'undefined' ? initSqlJs : null); };
+                s.onerror = function () { resolve(null); };
+                document.head.appendChild(s);
+            });
+        },
+
+        async checkSQLAvailability() {
+            try {
+                var initFn = typeof initSqlJs !== 'undefined' ? initSqlJs : await this._loadSqlJs();
+                if (!initFn) return false;
+                this.SQL = await initFn({ locateFile: function (f) { return 'https://sql.js.org/dist/' + f; } });
+                return !!this.SQL;
+            } catch (e) {
+                return false;
+            }
+        },
+
+        _nameVariations(fileName) {
+            var names = [fileName];
+            if (fileName.indexOf('愛') >= 0) names.push(fileName.replace(/愛/g, '爱'));
+            if (fileName.indexOf('爱') >= 0) names.push(fileName.replace(/爱/g, '愛'));
+            if (fileName.indexOf('綜合') >= 0) names.push(fileName.replace(/綜合/g, '综合'));
+            if (fileName.indexOf('解讀') >= 0) names.push(fileName.replace(/解讀/g, '解读'));
+            return names;
+        },
+
+        async probePath(path) {
+            var url = this._url(path);
+            try {
+                var res = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+                if (res.ok) return { ok: true, path: path, url: url };
+            } catch (e) {}
+            try {
+                var res2 = await fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
+                if (res2.ok) return { ok: true, path: path, url: url };
+            } catch (e2) {}
+            return { ok: false, path: path, url: url };
+        },
+
+        async resolveFirstPath(pathList) {
+            if (!pathList || !pathList.length) return null;
+            for (var i = 0; i < pathList.length; i++) {
+                var p = await this.probePath(pathList[i]);
+                if (p.ok) return p.path;
+            }
+            return null;
+        },
+
+        async loadRaw(path) {
+            var url = this._url(path) + (path.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
+            var response = await fetch(url, { cache: 'no-store' });
+            if (!response.ok) throw new Error('HTTP ' + response.status + ': ' + path);
+            return response.arrayBuffer();
+        },
+
+        initJson(text) {
+            var clean = text.trim().replace(/^\uFEFF/, '').replace(/\0/g, '');
+            if (clean.includes('=') && !clean.startsWith('{') && !clean.startsWith('[')) {
+                var eq = clean.indexOf('=');
+                clean = clean.substring(eq + 1).replace(/;\s*$/, '').trim();
+            }
+            var start = clean.indexOf('{');
+            var end = clean.lastIndexOf('}') + 1;
+            if (start >= 0 && end > start) clean = clean.substring(start, end);
+            if (clean.startsWith('<')) throw new Error('伺服器回傳 HTML 而非 JSON');
+            return JSON.parse(clean);
+        },
+
+        decodeBuffer(buffer) {
+            var view = new Uint8Array(buffer);
+            if (buffer.byteLength < 16) throw new Error('回應過短');
+            var header = new TextDecoder().decode(view.slice(0, 15));
+            if (header.indexOf('SQLite format') >= 0) return { type: 'sqlite', buffer: buffer };
+            var text;
+            if (buffer.byteLength >= 2 && view[0] === 0xFF && view[1] === 0xFE) {
+                text = new TextDecoder('utf-16le').decode(buffer.slice(2));
+            } else if (buffer.byteLength >= 2 && view[0] === 0xFE && view[1] === 0xFF) {
+                text = new TextDecoder('utf-16be').decode(buffer.slice(2));
+            } else if (buffer.byteLength >= 4 && view[0] === 0x7B && view[1] === 0x00) {
+                text = new TextDecoder('utf-16le').decode(buffer);
+            } else {
+                text = new TextDecoder('utf-8').decode(buffer);
+            }
+            return { type: 'json', data: this.initJson(text) };
+        },
+
+        async initSqlite(buffer) {
+            if (!this.SQL) {
+                var ok = await this.checkSQLAvailability();
+                if (!ok) throw new Error('缺少 SQL.js');
+            }
+            return new this.SQL.Database(new Uint8Array(buffer));
+        },
+
+        getDatabaseTables(db) {
+            try {
+                var stmt = db.prepare("SELECT name FROM sqlite_master WHERE type='table'");
+                var tables = [];
+                while (stmt.step()) tables.push(stmt.getAsObject().name);
+                stmt.free();
+                return tables;
+            } catch (e) {
+                return [];
+            }
+        },
+
+        async loadEntry(category, entry) {
+            var paths = entry.paths || {};
+            var jsonPaths = paths.json || [];
+            var dbPaths = paths.db || [];
+            var resolved = null;
+            var format = null;
+            var data = null;
+
+            if (!this.fallbackMode && dbPaths.length && this.SQL) {
+                resolved = await this.resolveFirstPath(dbPaths);
+                if (resolved) {
+                    try {
+                        var buf = await this.loadRaw(resolved);
+                        data = await this.initSqlite(buf);
+                        if (this.getDatabaseTables(data).length) format = 'sqlite';
+                        else { data = null; format = null; }
+                    } catch (e) { data = null; }
+                }
+            }
+
+            if (!data && jsonPaths.length) {
+                resolved = await this.resolveFirstPath(jsonPaths);
+                if (resolved) {
+                    try {
+                        var buf2 = await this.loadRaw(resolved);
+                        var parsed = this.decodeBuffer(buf2);
+                        if (parsed.type === 'sqlite') {
+                            if (this.SQL) {
+                                data = await this.initSqlite(parsed.buffer);
+                                format = 'sqlite';
+                            }
+                        } else {
+                            data = parsed.data;
+                            format = 'json';
+                        }
+                    } catch (e) { data = null; }
+                }
+            }
+
+            var loaded = !!data;
+            var bucket = this.db[category] || {};
+            bucket[entry.key] = {
+                data: data,
+                name: entry.name,
+                format: format || (loaded ? 'json' : 'fallback'),
+                loaded: loaded,
+                resolvedPath: resolved,
+                langs: entry.langs || [],
+                tier: entry.tier || 'standard',
+                fallback: !loaded
+            };
+            this.db[category] = bucket;
+
+            return {
+                category: category,
+                key: entry.key,
+                name: entry.name,
+                status: loaded ? 'ok' : 'missing',
+                format: format,
+                path: resolved,
+                langs: entry.langs || []
+            };
+        },
+
         async initialize() {
-            console.log('🚀 聖經研讀引擎啟動...');
-            const bibles = {};
-            const commentaries = {};
+            console.log('🚀 BibleEngine 啟動（registry SSOT）…');
+            this.sourceStatus = [];
+            this.loadingStatus = { total: 0, loaded: 0, failed: 0, mode: 'json' };
 
-            for (const p of this.BIBLE_PATHS) {
-                const fname = p.split('/').pop();
-                const key = this.BIBLE_KEYS[fname] || fname.replace('.json', '');
-                const name = this.BIBLE_NAMES[key] || key;
-                const r = await this.load('bible:' + key, p);
-                if (r && r.type === 'json' && r.data) {
-                    bibles[key] = { data: r.data, name, format: 'json', loaded: true };
-                }
+            var sqlOk = await this.checkSQLAvailability();
+            this.loadingStatus.mode = sqlOk ? 'hybrid' : 'json';
+            this.fallbackMode = !sqlOk;
+
+            var reg = REG();
+            var jobs = [];
+            ['bibles', 'commentaries', 'crossrefs', 'dictionaries'].forEach(function (cat) {
+                (reg[cat] || []).forEach(function (entry) { jobs.push({ category: cat, entry: entry }); });
+            });
+            this.loadingStatus.total = jobs.length;
+
+            for (var i = 0; i < jobs.length; i++) {
+                var st = await this.loadEntry(jobs[i].category, jobs[i].entry);
+                this.sourceStatus.push(st);
+                if (st.status === 'ok') this.loadingStatus.loaded++;
+                else this.loadingStatus.failed++;
             }
 
-            for (const c of this.COMM_PATHS) {
-                const r = await this.load('comm:' + c.key, c.path);
-                if (r && r.type === 'json' && r.data) {
-                    commentaries[c.key] = { data: r.data, name: c.name, format: 'json', loaded: true };
-                }
-            }
-
-            this.db.bibles = bibles;
-            this.db.commentaries = commentaries;
-            const total = Object.keys(bibles).length + Object.keys(commentaries).length;
-            console.log('🎉 數據引擎就緒，已載入 ' + total + ' 個資源');
+            console.log('🎉 BibleEngine 就緒：' + this.loadingStatus.loaded + '/' + this.loadingStatus.total);
             return true;
         },
 
+        async probeAllSources() {
+            var reg = REG();
+            var out = [];
+            var cats = ['bibles', 'commentaries', 'crossrefs', 'dictionaries'];
+            for (var c = 0; c < cats.length; c++) {
+                var cat = cats[c];
+                var list = reg[cat] || [];
+                for (var i = 0; i < list.length; i++) {
+                    var entry = list[i];
+                    var paths = (entry.paths && entry.paths.json) || [];
+                    var dbPaths = (entry.paths && entry.paths.db) || [];
+                    var all = dbPaths.concat(paths);
+                    var hit = null;
+                    for (var p = 0; p < all.length; p++) {
+                        var probe = await this.probePath(all[p]);
+                        if (probe.ok) { hit = all[p]; break; }
+                    }
+                    var loaded = this.db[cat] && this.db[cat][entry.key] && this.db[cat][entry.key].loaded;
+                    out.push({
+                        category: cat,
+                        key: entry.key,
+                        name: entry.name,
+                        langs: entry.langs || [],
+                        tier: entry.tier || '',
+                        status: loaded ? 'ok' : (hit ? 'file_ok' : 'missing'),
+                        path: hit || (paths[0] || ''),
+                        loaded: !!loaded
+                    });
+                }
+            }
+            this.sourceStatus = out;
+            return out;
+        },
+
+        getSourceStatus() { return this.sourceStatus.slice(); },
+
         getAvailableBibles() {
-            return Object.keys(this.db.bibles || {}).filter(k => this.db.bibles[k] && this.db.bibles[k].loaded);
+            return Object.keys(this.db.bibles || {}).filter(function (k) {
+                return BibleEngine.db.bibles[k] && BibleEngine.db.bibles[k].loaded;
+            });
         },
 
         getAvailableCommentaries() {
-            return Object.keys(this.db.commentaries || {}).filter(k => this.db.commentaries[k] && this.db.commentaries[k].loaded);
+            return Object.keys(this.db.commentaries || {}).filter(function (k) {
+                return BibleEngine.db.commentaries[k] && BibleEngine.db.commentaries[k].loaded;
+            });
+        },
+
+        isDataSourceAvailable(category, key) {
+            return !!(this.db[category] && this.db[category][key] && this.db[category][key].loaded);
+        },
+
+        safeDecryptContent(text) {
+            if (!text || typeof text !== 'string') return text || '';
+            if (!text.startsWith('l001w')) return text;
+            try {
+                var prefix = 'l001wNia4i7hTEMxRHJg3';
+                var decoded = atob(text.substring(prefix.length));
+                var key = 'Bible100CommentaryKey2024';
+                var out = '';
+                for (var i = 0; i < decoded.length; i++) {
+                    out += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                }
+                return out;
+            } catch (e) { return text; }
+        },
+
+        formatVerses(rawVerses) {
+            return rawVerses.map(function (verse, index) {
+                return {
+                    verse: verse.verse || verse.Verse || index + 1,
+                    text: verse.text || verse.scripture || verse.content || verse.Text || verse.Scripture || verse.t || ''
+                };
+            });
+        },
+
+        async queryJSONBible(data, book, chapter) {
+            var verses = [];
+            var b = Number(book);
+            var ch = Number(chapter);
+            if (Array.isArray(data)) {
+                verses = data.filter(function (v) {
+                    return (Number(v.b || v.book || v.Book) === b) && (Number(v.c || v.chapter || v.Chapter) === ch);
+                });
+            } else if (data.data && Array.isArray(data.data)) {
+                verses = data.data.filter(function (v) { return v.b === b && v.c === ch; });
+            } else if (data.Bible && Array.isArray(data.Bible.data)) {
+                verses = data.Bible.data.filter(function (v) { return v.Book === b && v.Chapter === ch; });
+            } else if (data.verses) {
+                verses = data.verses.filter(function (v) {
+                    return (Number(v.book || v.Book) === b) && (Number(v.chapter || v.Chapter) === ch);
+                });
+            }
+            if (!verses.length) throw new Error('未找到經文');
+            return this.formatVerses(verses);
+        },
+
+        async querySQLiteBible(db, book, chapter) {
+            var queries = [
+                'SELECT verse, text FROM verses WHERE book=? AND chapter=? ORDER BY verse',
+                'SELECT Verse as verse, Scripture as text FROM Bible WHERE Book=? AND Chapter=? ORDER BY Verse'
+            ];
+            for (var i = 0; i < queries.length; i++) {
+                try {
+                    var stmt = db.prepare(queries[i]);
+                    stmt.bind([book, chapter]);
+                    var results = [];
+                    while (stmt.step()) results.push(stmt.getAsObject());
+                    stmt.free();
+                    if (results.length) return this.formatVerses(results);
+                } catch (e) { continue; }
+            }
+            throw new Error('SQLite 查無經文');
         },
 
         async queryBible(version, book, chapter) {
-            const meta = (this.db.bibles || {})[version];
+            var meta = (this.db.bibles || {})[version];
             if (!meta || !meta.loaded) throw new Error('版本未載入: ' + version);
-            const d = meta.data;
-            if (!d || !d.data) throw new Error('無經文資料');
-            const verses = d.data.filter(v => v.b === book && v.c === chapter).sort((a, b) => a.v - b.v);
-            return verses.map(v => ({ verse: v.v, text: v.t || '' }));
+            if (meta.format === 'sqlite') return this.querySQLiteBible(meta.data, book, chapter);
+            return this.queryJSONBible(meta.data, book, chapter);
+        },
+
+        formatCommentary(rawCommentaries) {
+            var self = this;
+            return rawCommentaries.map(function (commentary, index) {
+                var content = commentary.content || commentary.Data || commentary.text || '';
+                content = self.safeDecryptContent(content);
+                return {
+                    id: commentary.id || index + 1,
+                    content: content,
+                    fromVerse: commentary.from_verse || commentary.FromVerse || commentary.fromVerse || 1,
+                    toVerse: commentary.to_verse || commentary.ToVerse || commentary.toVerse || 1,
+                    images: commentary.images || []
+                };
+            });
+        },
+
+        async queryJSONCommentary(data, book, chapter) {
+            var b = Number(book);
+            var ch = Number(chapter);
+            var commentaries = [];
+            if (Array.isArray(data)) {
+                commentaries = data.filter(function (c) {
+                    return (Number(c.book || c.Book) === b) && (Number(c.chapter || c.Chapter) === ch);
+                });
+            } else if (data.items) {
+                commentaries = data.items.filter(function (c) { return c.book === book && c.chapter === chapter; });
+            } else if (data.commentary && data.commentary.data) {
+                commentaries = data.commentary.data.filter(function (c) {
+                    return (Number(c.Book) === b || c.Book == book) && (Number(c.Chapter) === ch || c.Chapter == chapter);
+                });
+            } else if (data.commentaries) {
+                commentaries = data.commentaries.filter(function (c) {
+                    return (Number(c.book) === b || c.book == book) && (Number(c.chapter) === ch || c.chapter == chapter);
+                });
+            }
+            return this.formatCommentary(commentaries);
+        },
+
+        async querySQLiteCommentary(db, book, chapter) {
+            var queries = [
+                'SELECT * FROM commentary WHERE Book=? AND Chapter=?',
+                'SELECT * FROM commentaries WHERE book=? AND chapter=?'
+            ];
+            for (var i = 0; i < queries.length; i++) {
+                try {
+                    var stmt = db.prepare(queries[i]);
+                    stmt.bind([book, chapter]);
+                    var results = [];
+                    while (stmt.step()) results.push(stmt.getAsObject());
+                    stmt.free();
+                    if (results.length) return this.formatCommentary(results);
+                } catch (e) { continue; }
+            }
+            return [];
         },
 
         async queryCommentary(key, book, chapter) {
-            const meta = (this.db.commentaries || {})[key];
+            var meta = (this.db.commentaries || {})[key];
             if (!meta || !meta.loaded) throw new Error('註釋未載入: ' + key);
-            const d = meta.data;
-            const items = (d.items || d.commentaries || []).filter(i => i.book === book && i.chapter === chapter);
-            return items.map(i => ({
-                fromVerse: i.fromVerse || 0,
-                toVerse: i.toVerse || 0,
-                content: i.content || ''
-            }));
+            if (meta.format === 'sqlite') return this.querySQLiteCommentary(meta.data, book, chapter);
+            return this.queryJSONCommentary(meta.data, book, chapter);
+        },
+
+        getRegistryBibles() { return (REG().bibles || []).slice(); },
+
+        getSearchVersionPaths() {
+            var out = {};
+            (REG().bibles || []).forEach(function (b) {
+                if (!b.search) return;
+                var p = (b.paths && b.paths.json && b.paths.json[0]) || '';
+                out[b.key] = '../' + p;
+            });
+            return out;
+        },
+
+        printLoadingStats() {
+            console.log('📊 載入統計', this.loadingStatus);
         }
     };
 
-    // 掛載到 window，相容舊 API
     global.BibleEngine = BibleEngine;
-    global.universalDataLoader = {
-        databases: { bibles: {}, commentaries: {} },
-        getAvailableBibles: () => BibleEngine.getAvailableBibles(),
-        getAvailableCommentaries: () => BibleEngine.getAvailableCommentaries(),
-        initialize: () => BibleEngine.initialize(),
-        queryBible: (v, b, c) => BibleEngine.queryBible(v, b, c),
-        queryCommentary: (k, b, c) => BibleEngine.queryCommentary(k, b, c)
+
+    var loaderFacade = {
+        databases: BibleEngine.db,
+        loadingStatus: BibleEngine.loadingStatus,
+        initialize: function () { return BibleEngine.initialize(); },
+        probeAllSources: function () { return BibleEngine.probeAllSources(); },
+        getSourceStatus: function () { return BibleEngine.getSourceStatus(); },
+        getAvailableBibles: function () { return BibleEngine.getAvailableBibles(); },
+        getAvailableCommentaries: function () { return BibleEngine.getAvailableCommentaries(); },
+        isDataSourceAvailable: function (c, k) { return BibleEngine.isDataSourceAvailable(c, k); },
+        queryBible: function (v, b, c, verse) { return BibleEngine.queryBible(v, b, c); },
+        queryCommentary: function (k, b, c) { return BibleEngine.queryCommentary(k, b, c); },
+        printLoadingStats: function () { return BibleEngine.printLoadingStats(); }
     };
 
+    global.universalDataLoader = loaderFacade;
     global.initUniversalDataLoader = async function () {
         await BibleEngine.initialize();
-        global.universalDataLoader.databases.bibles = BibleEngine.db.bibles || {};
-        global.universalDataLoader.databases.commentaries = BibleEngine.db.commentaries || {};
+        loaderFacade.databases = BibleEngine.db;
         return true;
     };
-
-    global.queryBible = function (version, book, chapter) {
-        return BibleEngine.queryBible(version, book, chapter);
-    };
-
-    global.queryCommentary = function (key, book, chapter) {
-        return BibleEngine.queryCommentary(key, book, chapter);
-    };
+    global.queryBible = function (v, b, c) { return BibleEngine.queryBible(v, b, c); };
+    global.queryCommentary = function (k, b, c) { return BibleEngine.queryCommentary(k, b, c); };
 
 })(typeof window !== 'undefined' ? window : this);

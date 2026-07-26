@@ -16,7 +16,7 @@
   var SITE_SEARCH_INDEX = [
     /* 根基層 */
     { title: '教材與培訓（中文）', path: 'languages/landP_cn.html', keywords: '教材,培訓,中文,百步四寶,material,cn', layer: 'foundation' },
-    { title: '聖經研讀中心', path: 'bible_study/dashboard.html', keywords: '聖經,研讀,釋經,讀經,bible,study', layer: 'foundation' },
+    { title: '聖經研讀中心', path: 'bible_study/index.html', keywords: '聖經,研讀,釋經,讀經,bible,study', layer: 'foundation' },
     { title: '聖經全文搜尋', path: 'bible_study/search_reader.html', keywords: '經文,搜尋,全文,scripture,search', layer: 'foundation' },
     { title: '綜合解讀', path: 'bible_study/comprehensive_exegesis_reader.html', keywords: '釋經,解讀,commentary,exegesis', layer: 'foundation' },
     { title: '聖經難題 Q&A', path: 'qna/index.html', keywords: '難題,Q&A,問答,查經,qna', layer: 'foundation' },
