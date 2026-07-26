@@ -59,6 +59,17 @@
 
   function renderAll() {
     TARGETS.forEach(renderSidebarTools);
+    // 若 registry 未載入，保留 HTML 靜態 fallback，勿清空
+    TARGETS.forEach(function (id) {
+      var host = document.getElementById(id);
+      var reg = global.PlanningToolRegistry;
+      if (host && (!reg || !reg.tools) && !host.innerHTML.trim()) {
+        host.innerHTML =
+          '<p class="group-note">工具清單載入失敗。請直接開：' +
+          '<a href="Church_Governance_pastoral_health.html">領袖健康診斷</a> · ' +
+          '<a href="assessment-os-hub.html">健康診斷中心</a></p>';
+      }
+    });
   }
 
   global.PlanningSidebarRender = {

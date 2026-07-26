@@ -1,5 +1,32 @@
 // Unified sidebar behavior for iframe-based modules (Bible100 NAV contract).
 (function () {
+  const SITE_ROOT_PREFIXES = [
+    "church_planning/",
+    "church_ministry/",
+    "bible_study/",
+    "school_management/",
+    "ai_tools/",
+    "hymn_management/",
+    "help/",
+    "knowledge/",
+    "nav_hub/",
+    "languages/",
+    "smart_ministry/",
+    "qna/",
+    "disciple_dynamics/",
+    "config/",
+    "js/",
+    "css/",
+  ];
+
+  const stripDotSlash = (href) => String(href || "").replace(/^\.?\//, "");
+
+  /** 已是相對總站根的路徑（如 church_planning/foo.html），不可再對側欄 URL 做 new URL 解析 */
+  const isSiteRootRelativePath = (href) => {
+    const h = stripDotSlash(href).split(/[?#]/)[0];
+    return SITE_ROOT_PREFIXES.some((p) => h.indexOf(p) === 0);
+  };
+
   const isExternalLink = (href) => {
     if (!href) return true;
     const lower = href.toLowerCase();
@@ -52,6 +79,11 @@
   };
 
   const hrefToSiteRootRelative = (href) => {
+    if (!href || isExternalLink(href)) return null;
+    const cleaned = stripDotSlash(href);
+    if (isSiteRootRelativePath(cleaned)) {
+      return cleaned;
+    }
     const resolved = resolveUrl(href, window.location.href);
     if (!resolved) return null;
     const path = normalizePath(resolved);
@@ -62,6 +94,10 @@
     const cmIdx = path.indexOf("/church_ministry/");
     if (cmIdx >= 0) {
       return path.slice(cmIdx + 1) + resolved.search + resolved.hash;
+    }
+    const cpIdx = path.indexOf("/church_planning/");
+    if (cpIdx >= 0) {
+      return path.slice(cpIdx + 1) + resolved.search + resolved.hash;
     }
     return null;
   };
@@ -76,12 +112,24 @@
     if (idx >= 0) {
       return path.slice(idx + 1) + resolved.search + resolved.hash;
     }
+    const cpIdx = path.indexOf("/church_planning/");
+    if (cpIdx >= 0) {
+      return path.slice(cpIdx + 1) + resolved.search + resolved.hash;
+    }
     const basePath = normalizePath(resolveUrl(window.location.href));
     const baseIdx = basePath.indexOf("/church_ministry/");
     if (baseIdx >= 0 && href && !/^(https?:|mailto:|tel:|javascript:|#|\/)/i.test(href)) {
       const rel = resolved.pathname.replace(/\/+/g, "/");
       const tail = rel.slice(rel.indexOf("/church_ministry/") + "/church_ministry/".length);
       if (tail) return "church_ministry/" + tail + resolved.search + resolved.hash;
+    }
+    const baseCp = basePath.indexOf("/church_planning/");
+    if (baseCp >= 0 && href && !/^(https?:|mailto:|tel:|javascript:|#|\/)/i.test(href) && !isSiteRootRelativePath(href)) {
+      // 側欄內相對檔名（如 Church_Governance_pastoral_health.html）→ 補上模組前綴
+      const file = stripDotSlash(href).replace(/^\.\.\//, "");
+      if (file && file.indexOf("/") === -1) {
+        return "church_planning/" + file;
+      }
     }
     return null;
   };
@@ -108,7 +156,12 @@
   const parentIsModuleShell = () => {
     try {
       const path = window.parent.location.pathname.replace(/\\/g, "/");
-      return /\/[^/]+\/index\.html$/i.test(path) && path.indexOf("/bible100_new/") >= 0;
+      // 總站根殼不是模組殼
+      if (/\/index_v5\.html$/i.test(path) || /\/bible100_new\/index\.html$/i.test(path)) {
+        return false;
+      }
+      // 例：/church_ministry/index.html（本機 HTTP 根＝bible100_new 時路徑不含 bible100_new）
+      return /\/[^/]+\/index\.html$/i.test(path);
     } catch (err) {
       return false;
     }
@@ -124,14 +177,14 @@
           if (cf) {
             let targetSrc = "";
             if (parentIsSiteHub()) {
+              // 總站右欄：用根相對 church_ministry/...（由 shell_nav 再解析）
               const shellUrl = toShellContentUrl(href);
               if (!shellUrl) return false;
               targetSrc = shellUrl;
-            } else if (parentIsModuleShell()) {
-              targetSrc = new URL(href, window.location.href).href;
             } else {
-              const shellUrl = toShellContentUrl(href);
-              targetSrc = shellUrl || new URL(href, window.location.href).href;
+              // 模組 Standalone（含本機 HTTP 根＝repo）：一律用絕對 URL，
+              // 避免 church_ministry/... 相對到 index.html 變成雙重路徑 404
+              targetSrc = new URL(href, window.location.href).href;
             }
             cf.src = bustUrl(targetSrc);
             try {
@@ -217,6 +270,17 @@
     const cf = getParentContentFrame();
     if (cf) {
       try {
+        if (parentIsSiteHub() && isSiteRootRelativePath(href)) {
+          cf.src = bustUrl(stripDotSlash(href));
+          return true;
+        }
+        if (parentIsSiteHub()) {
+          const shellUrl = toShellContentUrl(href);
+          if (shellUrl) {
+            cf.src = bustUrl(shellUrl);
+            return true;
+          }
+        }
         cf.src = bustUrl(new URL(href, window.location.href).href);
         return true;
       } catch (eFb) {}
