@@ -102,6 +102,10 @@
 
 
 
+  function likertLbl(s) {
+    return global.AcsSurveyStandard ? AcsSurveyStandard.likertLabel(s, "agree") : String(s);
+  }
+
   function renderSurvey() {
 
     var host = document.getElementById("urgency-survey-wrap");
@@ -110,11 +114,15 @@
 
     var lastQ = "";
 
+    var legend = global.AcsSurveyStandard ? AcsSurveyStandard.likertLegendHtml("agree") : "";
+
     var html =
 
       '<h2 class="font-black text-amber-900 text-lg mb-1">14 題 Eisenhower 快評</h2>' +
 
-      '<p class="text-sm text-slate-600 mb-3">約 15 分鐘 · 非效率競賽 · 完成後前往 Tab ③ 四象限報告。</p>' +
+      '<p class="text-sm text-slate-600 mb-2">約 15 分鐘 · 非效率競賽。</p>' +
+
+      legend +
 
       '<form id="urgency-form" onsubmit="return UrgencyAcsShell.submitQuick(event)">' +
 
@@ -154,11 +162,11 @@
 
         esc(q.label) +
 
-        '</p><div class="acs-likert-row">';
+        '</p><div class="acs-likert-row acs-likert-row--anchored">';
 
       for (var s = 1; s <= 5; s++) {
 
-        html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + s + "</label>";
+        html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + likertLbl(s) + "</label>";
 
       }
 
@@ -170,7 +178,13 @@
 
       '<p id="urgency-form-error" class="text-red-600 text-xs hidden"></p>' +
 
-      '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">✓ 提交 → 分析報告</button></form>';
+      (global.AcsSurveyStandard
+
+        ? AcsSurveyStandard.submitButtonHtml("→ Tab ③ 四象限報告")
+
+        : '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">提交並生成報告</button>') +
+
+      "</form>";
 
     host.innerHTML = html;
 

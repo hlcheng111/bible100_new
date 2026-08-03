@@ -61,6 +61,10 @@
     el.classList.remove("hidden");
   }
 
+  function likertLbl(s) {
+    return global.AcsSurveyStandard ? AcsSurveyStandard.likertLabel(s, "agree") : String(s);
+  }
+
   function renderQuickSurvey() {
     var host = document.getElementById("pdca-quick-survey-wrap");
     if (!host || !global.PdcaPack) return;
@@ -75,9 +79,11 @@
         "</strong> — 計畫題請對齊此主軸。</p>";
     }
     var lastPhase = "";
+    var legend = global.AcsSurveyStandard ? AcsSurveyStandard.likertLegendHtml("agree") : "";
     var html =
       '<h2 class="font-black text-violet-900 text-lg mb-1">A 軌 · 12 題誠實快評</h2>' +
-      '<p class="text-sm text-slate-600 mb-3">約 8 分鐘 · <strong>1＝非常不同意 · 5＝非常同意</strong>。完成後將帶您到【3. 恩跡年表儀表盤】。</p>' +
+      '<p class="text-sm text-slate-600 mb-2">約 8 分鐘 · 完成後將帶您到【3. 恩跡年表儀表盤】。</p>' +
+      legend +
       anchorHtml +
       '<form id="pdca-quick-form" onsubmit="return PdcaAcsShell.submitQuick(event)">';
     PdcaPack.QUESTIONS.forEach(function (q, i) {
@@ -93,9 +99,9 @@
         (i + 1) +
         '/12 題</legend><p class="text-sm mb-2">' +
         esc(q.label) +
-        '</p><div class="acs-likert-row">';
+        '</p><div class="acs-likert-row acs-likert-row--anchored">';
       for (var s = 1; s <= 5; s++) {
-        html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + s + "</label>";
+        html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + likertLbl(s) + "</label>";
       }
       html += "</div></fieldset>";
     });
@@ -105,7 +111,9 @@
       '<label class="text-sm font-bold">本季聚焦<input name="season_focus" class="w-full mt-1 border rounded p-2 bg-white" /></label>' +
       "</div>" +
       '<p id="pdca-quick-error" class="text-red-600 text-xs mt-2 hidden"></p>' +
-      '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">✓ 提交 → 前往恩跡年表儀表盤</button>' +
+      (global.AcsSurveyStandard
+        ? AcsSurveyStandard.submitButtonHtml("→ Tab ③ 恩跡年表儀表盤")
+        : '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">提交並生成報告</button>') +
       "</form>";
     host.innerHTML = html;
   }

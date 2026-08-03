@@ -10,17 +10,17 @@
 |------|-----|
 | 工具数 | 18 live（registry SSOT） |
 | 工程成熟度 | **Silver（Portfolio）** |
-| Gold 件数 | 0（P1 集群未达 80%） |
+| Gold 件数 | 0（全站 UX 实测待上云；工程 P1 第三梯队已齐） |
 | 外站 AI §8「P0 全过」 | 不可信，须以本表为准 |
 
 ## P1 集群进度（全站）
 
 | P1 项 | 状态 | 说明 |
 |-------|------|------|
-| Tab ③ report-heart | 🔄 进行中 | `acs_report_gold.js` 扩展 + 战略壳挂载 |
-| 提交按钮字典 | ⏳ 待批 | 多数为「✓ 提交 → xxx 仪表」 |
-| Likert 文字锚点 | ⏳ 待批 | 部分仅有 1–5 数字 |
-| POST_COMPLETE_CTA | 🔄 进行中 | urgent/culture/8020 等补专属 |
+| Tab ③ report-heart | ✅ 全 18 件 | swot/spiritual/8020 viz + johari/mbti/matchmaker/raci；T1 其余已有 |
+| 提交按钮字典 | ✅ 全 18 件 | `acs_survey_standard.js` + 战略壳 + matchmaker/raci |
+| Likert 文字锚点 | ✅ 全 18 件 | 战略快评 + johari/mbti + ncd/pdca/pastoral |
+| POST_COMPLETE_CTA | ✅ | urgent/culture/8020/disc/mbti/johari 等 |
 | RunStore id 一致 | ⚠️ 文档化 | kpi 页 boot `kpi` / store `kpiokr` |
 | 算法 SSOT | ✅ | `ALGORITHM_SSOT_V1.md` |
 | 持久化 audit | ✅ | 本目录 `{tool_id}.md` |
@@ -32,24 +32,24 @@
 
 | tool_id | 类型 | HTML | RunStore | 工程成熟度 | P0 | P1 完成估 | 备注 |
 |---------|------|------|----------|------------|-----|-----------|------|
-| spiritual | T1 | Church_Governance_spiritual_health.html | spiritual | Silver | ✅ | ~70% | report-heart 已有 |
-| pastoral | T1 | Church_Governance_pastoral_health.html | pastoral | Silver | ✅ | ~65% | pro 版 extended |
-| ncd | T2 | Church_Health_NCD_planning.html | ncd | Silver | ⚠️ | ~55% | Vue+CDN；顶栏无示范钮 |
-| shape | T1 | shape-gifts-assessment.html | shape | Silver | ✅ | ~70% | CoachingDesk |
-| competency | T1 | ministry-competency-assessment.html | competency | Silver 偏高 | ✅ | ~75% | Tab③④ 金标参考 |
-| alda | T1 | alda-leadership-assessment.html | alda | Silver 偏高 | ✅ | ~75% | Tab① 金标参考 |
-| johari | T1 | johari-window-assessment.html | johari | Silver | ✅ | ~65% | peer 24+24 |
+| spiritual | T1 | Church_Governance_spiritual_health.html | spiritual | Silver 偏高 | ✅ | ~78% | viz 内 report-heart |
+| pastoral | T1 | Church_Governance_pastoral_health.html | pastoral | Silver 偏高 | ✅ | ~78% | viz 内 report-heart + 字典提交 |
+| ncd | T2 | Church_Health_NCD_planning.html | ncd | Silver 偏高 | ⚠️ | ~78% | 顶栏示范钮 + 24题字典；Vue 深度轨保留 |
+| shape | T1 | shape-gifts-assessment.html | shape | Silver 偏高 | ✅ | ~75% | CoachingDesk |
+| competency | T1 | ministry-competency-assessment.html | competency | Silver 偏高 | ✅ | ~80% | Tab③④ 金标参考 |
+| alda | T1 | alda-leadership-assessment.html | alda | Silver 偏高 | ✅ | ~80% | Tab① 金标参考 |
+| johari | T1 | johari-window-assessment.html | johari | Silver 偏高 | ✅ | ~78% | report-heart + 字典提交 |
 | disc | T1 | disc-profile-assessment.html | disc | Silver | ✅ | ~65% | |
-| mbti | T1 | mbti-self-awareness.html | mbti | Silver 偏高 | ✅ | ~70% | |
-| matchmaker | T3 | ministry-position-matchmaker.html | — | Silver | ✅ | ~60% | HITL 汇总的 |
-| raci | T4 | planning/raci-reflection.html | chp2026-raci-* | Silver | ✅* | ~60% | *charterExempt 五步法 |
-| urgent | T2 | Church_Governance_urgent_matrix.html | urgent | Silver | ✅ | ~65% | 非 Eisenhower 2D |
-| swot | T2 | Church_Governance_SWOT_matrix.html | swot | Silver 偏高 | ✅ | ~70% | ST 公式见 SSOT |
-| smart | T2 | Church_Governance_SMART_goals.html | smart | Silver 偏高 | ✅ | ~72% | SMART+Care 六维 |
-| kpiokr | T2 | Church_Governance_KPI_alignment.html | **kpiokr** | Silver | ✅ | ~68% | 页 boot `kpi` |
-| pdca | T2 | Church_Governance_PDCA_cycle.html | pdca | Silver | ✅ | ~65% | Vue B 轨 |
-| ministry8020 | T2 | Church_Governance_8020_focus.html | ministry8020 | Silver | ✅ | ~68% | 工作坊非 Likert |
-| culture | T2 | Church_Governance_Culture_radar.html | culture | Silver | ✅ | ~68% | trust 3.0 |
+| mbti | T1 | mbti-self-awareness.html | mbti | Silver 偏高 | ✅ | ~78% | report-heart + Likert |
+| matchmaker | T3 | ministry-position-matchmaker.html | — | Silver 偏高 | ✅ | ~75% | 顶栏示范 + 字典提交 + heart |
+| raci | T4 | planning/raci-reflection.html | chp2026-raci-* | Silver | ✅* | ~72% | *charterExempt；heart 已有 |
+| urgent | T2 | Church_Governance_urgent_matrix.html | urgent | Silver 偏高 | ✅ | ~78% | 字典提交 + 锚点 |
+| swot | T2 | Church_Governance_SWOT_matrix.html | swot | Silver 偏高 | ✅ | ~82% | ST 公式已对齐 pack |
+| smart | T2 | Church_Governance_SMART_goals.html | smart | Silver 偏高 | ✅ | ~82% | SMART+Care 六维 |
+| kpiokr | T2 | Church_Governance_KPI_alignment.html | **kpiokr** | Silver 偏高 | ✅ | ~78% | 页 boot `kpi` |
+| pdca | T2 | Church_Governance_PDCA_cycle.html | pdca | Silver 偏高 | ✅ | ~80% | A轨字典 + B轨 Vue 工作坊 |
+| ministry8020 | T2 | Church_Governance_8020_focus.html | ministry8020 | Silver 偏高 | ✅ | ~78% | 工作坊字典提交 |
+| culture | T2 | Church_Governance_Culture_radar.html | culture | Silver 偏高 | ✅ | ~78% | trust 3.0 |
 
 ---
 

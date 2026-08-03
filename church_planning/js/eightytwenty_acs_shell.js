@@ -82,7 +82,9 @@
       '<div id="8020-rows" class="space-y-2"></div>' +
       '<button type="button" class="acs-btn mt-2" onclick="EightytwentyAcsShell.addRow()">+ 新增事工列</button>' +
       '<p id="8020-form-error" class="text-red-600 text-xs mt-2 hidden"></p>' +
-      '<button type="button" class="acs-btn acs-btn--primary mt-3 w-full py-3" onclick="EightytwentyAcsShell.submitWorkshop()">✓ 完成工作坊 → 帕累托矩陣</button>';
+      (global.AcsSurveyStandard
+        ? AcsSurveyStandard.workshopSubmitButtonHtml("EightytwentyAcsShell.submitWorkshop()", "→ Tab ③ 帕累托矩陣")
+        : '<button type="button" class="acs-btn acs-btn--primary mt-3 w-full py-3" onclick="EightytwentyAcsShell.submitWorkshop()">提交並生成報告</button>');
     host.innerHTML = html;
     for (var i = 0; i < 5; i++) EightytwentyAcsShell.addRow();
     renderNcdPriorityList();
@@ -134,7 +136,7 @@
     }
     var viz = document.getElementById("8020-report-viz");
     if (viz && global.EightyTwentyMatrixViz) {
-      viz.innerHTML = EightyTwentyMatrixViz.renderMatrixBlock(run.derived || {}, { animate: !!opts.animate });
+      viz.innerHTML = EightyTwentyMatrixViz.renderMatrixBlock(run, { animate: !!opts.animate });
       if (opts.animate) setTimeout(function () { EightyTwentyMatrixViz.animateMatrix(viz); }, opts.animateDelay || 200);
     }
     if (global.EightytwentyPastoralDesk) EightytwentyPastoralDesk.applyDeskState(run);
