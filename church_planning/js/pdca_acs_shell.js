@@ -163,6 +163,9 @@
         esc(line) +
         "</p>";
     }
+    if (summary && global.AcsReportGold && AcsReportGold.mountAfterSummary) {
+      AcsReportGold.mountAfterSummary(summary, run, "pdca");
+    }
 
     var matrixHost = document.getElementById("pdca-report-matrix");
     if (matrixHost && global.PdcaCycleViz) {

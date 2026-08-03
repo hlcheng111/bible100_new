@@ -116,6 +116,9 @@
           '<p class="text-rose-800 font-bold mt-2">⚠️ 卡關率 ≥70%：請開啟 <a href="Church_Governance_8020_focus.html" class="underline">80/20 資源聚焦儀</a></p>';
       }
     }
+    if (summary && global.AcsReportGold && AcsReportGold.mountAfterSummary) {
+      AcsReportGold.mountAfterSummary(summary, run, "kpiokr");
+    }
     var viz = document.getElementById("kpi-report-viz");
     if (viz && global.KpiFunnelViz) {
       viz.innerHTML = KpiFunnelViz.renderFunnelBlock(run.derived || {}, { animate: !!opts.animate });

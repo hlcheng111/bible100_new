@@ -115,6 +115,9 @@
         summary.innerHTML += '<p class="text-rose-800 font-bold mt-2">⚠️ 團隊信任 &lt;3.0：建議優先 NCD「相親相愛的關係」，再推五年擴建。</p>';
       }
     }
+    if (summary && global.AcsReportGold && AcsReportGold.mountAfterSummary) {
+      AcsReportGold.mountAfterSummary(summary, run, "culture");
+    }
     var viz = document.getElementById("culture-report-viz");
     if (viz && global.CultureRadarViz) {
       viz.innerHTML = CultureRadarViz.renderRadarBlock(run.derived || {}, { animate: !!opts.animate });

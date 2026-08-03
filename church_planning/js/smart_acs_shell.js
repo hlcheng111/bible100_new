@@ -143,6 +143,9 @@
           '<p class="text-rose-800 font-bold mt-2">⚠️ 負載偏高：請開啟【4. SMART 守門決策桌】宣讀「加一砍一」模板</p>';
       }
     }
+    if (summary && global.AcsReportGold && AcsReportGold.mountAfterSummary) {
+      AcsReportGold.mountAfterSummary(summary, run, "smart");
+    }
     var viz = document.getElementById("smart-report-viz");
     if (viz && global.SmartFunnelViz) {
       viz.innerHTML = SmartFunnelViz.renderDashboardBlock(run, { animate: !!opts.animate });

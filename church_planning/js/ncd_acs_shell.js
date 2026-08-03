@@ -288,6 +288,9 @@
         esc(String(min.score != null ? min.score : "—")) +
         " 分</p>";
     }
+    if (summary && global.AcsReportGold && AcsReportGold.mountAfterSummary) {
+      AcsReportGold.mountAfterSummary(summary, run, "ncd");
+    }
     var barrelHost = document.getElementById("ncd-report-barrel");
     if (barrelHost) barrelHost.innerHTML = buildBarrelHtml(run);
     var radarHost = document.getElementById("ncd-report-radar");
