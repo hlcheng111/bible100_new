@@ -45,18 +45,21 @@
     </div>
 
     <div class="module-card">
-        <div class="module-card-title">➕ 新增學生</div>
+        <div class="module-card-title">➕ 新增學生（须从中央会友库）</div>
+        <p style="font-size:11px;color:#b45309;margin:0 0 8px;">在学学籍必须对齐 <code>CentralMemberDB</code>。会友库无此人请先到教会事工建档。</p>
         <form id="addForm">
-            <div class="module-form-row"><label>姓名</label><input name="name" class="module-input" required></div>
+            <div class="module-form-row"><label>会友</label><select name="memberId" id="addMember" class="module-input" required style="min-width:200px;"></select></div>
+            <div class="module-form-row"><label>姓名</label><input name="name" id="addName" class="module-input" placeholder="可自动带入"></div>
             <div class="module-form-row"><label>性別</label><select name="gender" class="module-input"><option>男</option><option>女</option></select></div>
             <div class="module-form-row"><label>班級ID</label><input name="class_id" class="module-input" value="1" size="4"></div>
             <div class="module-form-row"><label>聯絡</label><input name="contact" class="module-input"></div>
-            <button type="submit" class="module-btn">新增</button>
+            <button type="submit" class="module-btn">从会友建立学籍</button>
         </form>
     </div>
 
     <div class="module-card">
-        <div class="module-card-title">📥 批量匯入（CSV：name,gender,class_id,contact）</div>
+        <div class="module-card-title">📥 批量匯入（CSV：member_id,name,gender,class_id,contact）</div>
+        <p style="font-size:11px;color:#64748b;margin:0 0 8px;">在学学籍须填 <code>member_id</code>（中央会友库）；缺 member_id 则导入为 <strong>待取录 pending</strong>。</p>
         <p><a href="templates/students_template.csv" download class="module-btn">⬇️ 下載 CSV 範本</a></p>
         <input type="file" id="fileCsv" accept=".csv" style="margin:10px 0;">
         <button class="module-btn" id="importBtn">匯入</button>
@@ -69,6 +72,9 @@
     </div>
 
     <script src="../../js/school-master-database.js"></script>
+    <script src="../../../js/central_member_db.js"></script>
+    <script src="../../../js/sch_member_guard.js"></script>
+    <script src="../../../js/sch_validation.js"></script>
     <script>
         (function() {
             let page = 1;
@@ -136,25 +142,69 @@
                 render();
             };
 
-            // W1：取錄待審核學生（學員入口註冊者）
+            // 取錄：须连结中央会友
             document.getElementById('list').addEventListener('click', function(e) {
                 if (!e.target.classList.contains('btn-admit')) return;
                 e.preventDefault();
                 const sid = parseInt(e.target.dataset.sid, 10);
                 if (!window.schoolDB) return;
-                if (!confirm('確定取錄此學生（狀態改為在學）？')) return;
-                window.schoolDB.update('students', sid, { status: 'active' });
-                fillLinkSelectors('');
-                render();
+                const mid = prompt('取录须连结中央会友 member_id（可先在下方面板连结）：');
+                if (mid === null) return;
+                try {
+                    if (window.SchMemberGuard && window.SchMemberGuard.admitStudent) {
+                        window.SchMemberGuard.admitStudent(sid, mid ? mid.trim() : null);
+                    } else {
+                        window.schoolDB.update('students', sid, { status: 'active' });
+                    }
+                    alert('✅ 已取录');
+                    fillLinkSelectors('');
+                    render();
+                } catch (err) {
+                    alert(err.message || String(err));
+                }
             });
+
+            function fillAddMemberSelect() {
+                var sel = document.getElementById('addMember');
+                if (!sel) return;
+                var list = (window.SchMemberGuard && window.SchMemberGuard.getCentralMembers)
+                    ? window.SchMemberGuard.getCentralMembers()
+                    : (window.schoolDB.getCentralMembers ? window.schoolDB.getCentralMembers() : []);
+                sel.innerHTML = '<option value="">— 选择会友 —</option>' +
+                    list.slice(0, 400).map(function(m) {
+                        return '<option value="' + m.id + '" data-name="' + (m.name || '').replace(/"/g, '') + '">' + m.name + '（' + m.id + '）</option>';
+                    }).join('');
+            }
+            document.getElementById('addMember').onchange = function() {
+                var opt = this.options[this.selectedIndex];
+                if (opt && opt.dataset.name) document.getElementById('addName').value = opt.dataset.name;
+            };
 
             document.getElementById('addForm').onsubmit = function(e) {
                 e.preventDefault();
                 const f = new FormData(this);
                 if (!window.schoolDB) return alert('資料庫未載入');
-                window.schoolDB.insert('students', { name: f.get('name'), gender: f.get('gender'), class_id: +(f.get('class_id') || 1), contact: f.get('contact'), status: 'active' });
-                this.reset();
-                render();
+                var mid = f.get('memberId');
+                if (!mid) return alert('请从中央会友库选择');
+                try {
+                    if (window.SchMemberGuard && window.SchMemberGuard.createStudentFromMember) {
+                        window.SchMemberGuard.createStudentFromMember(mid, {
+                            name: f.get('name'),
+                            gender: f.get('gender'),
+                            class_id: +(f.get('class_id') || 1),
+                            contact: f.get('contact'),
+                            status: 'active'
+                        });
+                    } else {
+                        window.schoolDB.insert('students', { name: f.get('name'), gender: f.get('gender'), class_id: +(f.get('class_id') || 1), contact: f.get('contact'), status: 'active', memberId: mid });
+                    }
+                    this.reset();
+                    render();
+                    fillLinkSelectors('');
+                    alert('✅ 已建立学籍');
+                } catch (err) {
+                    alert(err.message || String(err));
+                }
             };
 
             document.getElementById('doSearch').onclick = function(e) { e.preventDefault(); keyword = document.getElementById('kw').value.trim(); page = 1; render(); };
@@ -174,8 +224,23 @@
                         if (!line.trim()) return;
                         const c = line.split(',').map(x => x.replace(/^"|"$/g, ''));
                         if (!window.schoolDB) return;
-                        window.schoolDB.insert('students', { name: c[idx('name')] || '', gender: c[idx('gender')] || '男', class_id: +(c[idx('class_id')] || 1), contact: c[idx('contact')] || '', status: 'active' });
-                        ok++;
+                        const mid = c[idx('member_id')] || c[idx('memberId')] || '';
+                        const name = c[idx('name')] || '';
+                        const gender = c[idx('gender')] || '男';
+                        const class_id = +(c[idx('class_id')] || 1);
+                        const contact = c[idx('contact')] || '';
+                        try {
+                            if (mid && window.SchMemberGuard && window.SchMemberGuard.createStudentFromMember) {
+                                window.SchMemberGuard.createStudentFromMember(mid, { name, gender, class_id, contact, status: 'active' });
+                            } else if (mid) {
+                                window.schoolDB.insert('students', { name, gender, class_id, contact, status: 'active', memberId: mid });
+                            } else {
+                                window.schoolDB.insert('students', { name, gender, class_id, contact, status: 'pending' });
+                            }
+                            ok++;
+                        } catch (err) {
+                            console.warn('CSV row skip:', err);
+                        }
                     });
                     alert('已匯入：' + ok + ' 筆');
                     render();
@@ -206,6 +271,7 @@
             };
 
             fillLinkSelectors('');
+            fillAddMemberSelect();
             render();
         })();
     </script>

@@ -43,7 +43,7 @@
     <div class="header">
         <h1>📚 學員入口</h1>
         <p>課程、繳費、成績 · 選科報名 · 即點即用</p>
-        <p style="font-size:11px;opacity:0.9;margin-top:6px;">一般應用：選學員身份查看。若查看他人資料需管理員權限。</p>
+        <p style="font-size:11px;opacity:0.9;margin-top:6px;">教务预览：选学员身份查看自己的课表／缴费／成绩。</p>
     </div>
 
     <section class="picker">
@@ -53,7 +53,7 @@
         </select>
         <p class="hint">無帳號時以學員選擇模擬登入。新生請先至「新生註冊」。</p>
         <div class="permission-notice" id="permissionNotice" style="display:none; margin-top:10px; padding:10px; background:#fff3cd; border-left:4px solid #f59e0b; border-radius:0 6px 6px 0; font-size:11px;">
-            <b>⚠️ 權限說明：</b>選擇學員身份查看該學員的選課、繳費與成績，需具備管理員或該學員本人權限。本系統為示範，目前以選擇模擬登入。
+            <b>⚠️ 说明：</b>此为<strong>教务预览模式</strong>（非正式帐号登录）。选课会检查时间冲突并自动建立待缴学费。
         </div>
     </section>
 
@@ -85,6 +85,8 @@
     </section>
 
     <script src="../js/school-master-database.js"></script>
+    <script src="../../js/sch_validation.js"></script>
+    <script src="../../js/sch_member_guard.js"></script>
     <script>
         (function() {
             const studentSelect = document.getElementById('studentSelect');
@@ -183,11 +185,17 @@
                     var sid = sessionStorage.getItem('schoolPortalStudentId');
                     if (!sid || !window.schoolDB) return alert('請先選擇學員');
                     sid = parseInt(sid, 10);
-                    var db = window.schoolDB.data;
-                    var enrollments = (db.student && db.student.enrollments) || [];
-                    if (enrollments.some(x => x.studentId === sid && x.courseId === cid)) return alert('已選過此課程');
-                    window.schoolDB.insert('student.enrollments', { studentId: sid, courseId: cid, semester: (window.schoolDB.getDefaultSemester ? window.schoolDB.getDefaultSemester() : '2024-2'), status: 'active' });
-                    renderPanels(sid);
+                    try {
+                        if (window.SchValidation && window.SchValidation.enrollStudent) {
+                            window.SchValidation.enrollStudent(sid, cid);
+                        } else {
+                            window.schoolDB.insert('student.enrollments', { studentId: sid, courseId: cid, semester: (window.schoolDB.getDefaultSemester ? window.schoolDB.getDefaultSemester() : '2024-2'), status: 'active' });
+                        }
+                        alert('✅ 已选课（已校验冲突；待缴学费已写入财务）');
+                        renderPanels(sid);
+                    } catch (err) {
+                        alert(err.message || String(err));
+                    }
                 }
             });
 

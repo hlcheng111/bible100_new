@@ -56,7 +56,8 @@
         <input type="file" id="importFile" accept=".json,application/json">
         <br>
         <button class="btn orange" onclick="importAll()">匯入並覆蓋</button>
-        <div class="note">⚠️ 匯入會整庫覆蓋，無法復原。兩台電腦請勿同時輸入資料後互相匯入（單機模式下同一時間只有一台是主檔）。</div>
+        <button class="btn" onclick="importMerge()">合併匯入（防覆寫）</button>
+        <div class="note">⚠️ 「覆蓋」整庫替換。「合併」保留本機較新 updatedAt，適合同工交接备份档。</div>
         <div class="result" id="importResult"></div>
     </div>
 
@@ -72,6 +73,7 @@
     <script src="../../../js/cloud_config.js"></script>
     <script src="../../../js/data_trust_badge.js"></script>
     <script src="../../js/school-master-database.js"></script>
+    <script src="../../../js/sch_sync_bridge.js"></script>
     <script>
         function fmt(n) { return typeof n === 'number' ? n : 0; }
 
@@ -141,6 +143,25 @@
             } catch (e) {
                 show('exportResult', '❌ 匯出失敗：' + (e.message || e));
             }
+        }
+
+        function importMerge() {
+            var input = document.getElementById('importFile');
+            if (!input.files || !input.files[0]) return show('importResult', '請先選擇備份 JSON 檔');
+            if (!window.SchSyncBridge) return show('importResult', '❌ SchSyncBridge 未載入');
+            if (!confirm('合併匯入：相同 id 保留 updatedAt 較新者。確定繼續？')) return;
+            var reader = new FileReader();
+            reader.onload = function () {
+                try {
+                    var r = window.SchSyncBridge.importBundle(String(reader.result), 'merge');
+                    var c = r.conflicts || {};
+                    show('importResult', '✅ 合併完成（mode=' + r.mode + '）。重疊：學生 ' + (c.students || 0) + '、教師 ' + (c.teachers || 0) + '、繳費 ' + (c.payments || 0));
+                    refreshStats();
+                } catch (e) {
+                    show('importResult', '❌ 合併失敗：' + (e.message || e));
+                }
+            };
+            reader.readAsText(input.files[0]);
         }
 
         function importAll() {
