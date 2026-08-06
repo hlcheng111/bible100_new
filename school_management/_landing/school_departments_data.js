@@ -19,7 +19,7 @@ window.SCHOOL_DEPARTMENTS = {
     { id: "W5", zh: "物業／場地", en: "Property", page: "school_management/manage/property/index.html", status: "ready" },
     { id: "W6", zh: "教會連結", en: "Church link", page: "school_management/manage/church_link/index.html", status: "ready" },
     { id: "W7", zh: "家長通知草稿", en: "Parent notify", page: "school_management/manage/communication/parent.html", status: "ready" },
-    { id: "W8", zh: "AI Prompt", en: "AI drafts", page: "school_management/manage/ai_prompts/index.html", status: "ready" }
+    { id: "W8", zh: "AI 草稿助手", en: "AI drafts", page: "school_management/manage/ai_prompts_tabs.html", status: "ready" },
   ],
   groups: [
     {
