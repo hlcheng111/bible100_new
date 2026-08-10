@@ -3,7 +3,7 @@
  */
 (function (global) {
   "use strict";
-  global.BIBLE100_BUILD_VERSION = "20260605";
+  global.BIBLE100_BUILD_VERSION = "20260812clean";
   global.bible100CacheBust = function (url) {
     if (!url || url.indexOf("javascript:") === 0 || url.indexOf("#") === 0) return url;
     var v = global.BIBLE100_BUILD_VERSION || String(Date.now());

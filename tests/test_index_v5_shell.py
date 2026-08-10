@@ -15,10 +15,16 @@ INDEX_ROOT = REPO / "index.html"
 
 REQUIRED_V5 = [
     'class="row2 top-nav-secondary"',
-    '<title>聖經百步四寶 · index_v5 · 總站殼</title>',
-    "var DEFAULT_SIDEBAR = 'languages/index_cn.html'",
-    "var DEFAULT_CONTENT = 'languages/landing_new_cn.html'",
-    "selectedMode = 'material'",
+    '<title>聖經百步四寶 · index_v5 · 20260812clean</title>',
+    'index_v5_hub_clean.js',
+    "var SITE_HOME_CONTENT = 'help/site_home.html'",
+    "function loadSiteHome()",
+    "function loadSiteHome()",
+    "function navigateShell(opts)",
+    "window.loadSiteHome = loadSiteHome",
+    "window.navigateShell = navigateShell",
+    "G_PLAN_SIDEBAR = 'church_planning/sidebar_plan_v5_preview.html'",
+    "function openChurchGZone",
     "el.className = 'row2 top-nav-secondary material-bar'",
     "function renderLanguageGroupsBar(el, item)",
     "grid.className = 'lang-btn-grid'",
@@ -29,12 +35,15 @@ REQUIRED_V5 = [
     "function openBibleExplorer()",
     "openBibleAILabLearnShell",
     "btnToolsOverviewTop",
-    "document.body.classList.toggle('mode-qna', mode === 'qna')",
+    "function isQnaWorkbenchUrl(url)",
+    "function syncQnaShellLayout(contentUrl)",
     "function renderChurchContextBar(sub, navItems)",
     "CHURCH_NAV_GROUPS",
     "sub-nav-group",
     "nav-group-brain",
     "setContextOpen(!hideSecondary)",
+    "hub-lang-pills",
+    "getUiLocale",
 ]
 
 FORBIDDEN_V5 = [

@@ -23,7 +23,9 @@
 
   function detectStatus() {
     if (explicit && LABELS[explicit]) return explicit;
-    if (path.indexOf('/_landing/') >= 0 || path.indexOf('outreach-strategy') >= 0) return 'demo';
+    if (path.indexOf('/_landing/') >= 0) return 'demo';
+    if (path.indexOf('outreach-strategy') >= 0) return 'trial';
+    if (path.indexOf('community-assessment') >= 0 || path.indexOf('mission-opportunities') >= 0 || path.indexOf('church-planting') >= 0) return 'demo';
     if (path.indexOf('crm_automation') >= 0) return 'ai-sim';
     if (path.indexOf('copilot') >= 0 || path.indexOf('group-report-copilot') >= 0) return 'ai';
     if (
@@ -80,6 +82,15 @@
   }
 
   function run() {
+    if (global.B100HubEmbed && global.B100HubEmbed.inHubContentFrame && global.B100HubEmbed.inHubContentFrame()) {
+      return;
+    }
+    try {
+      if (global.parent && global.parent !== global && global.parent.document.getElementById("contentFrame")) {
+        var cf = global.parent.document.getElementById("contentFrame");
+        if (cf && cf.contentWindow === global) return;
+      }
+    } catch (eHub) {}
     var status = detectStatus();
     injectBadge(status);
     injectWarmBanner(detectWarmBanner(status));
