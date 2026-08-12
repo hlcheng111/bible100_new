@@ -33,8 +33,16 @@ for (const file of walk(srcDir)) {
 const required = [
   'src/app/router.ts',
   'src/app/views/ReaderView.ts',
+  'src/app/contract/readingUnit.ts',
+  'src/app/contract/routeState.ts',
+  'src/app/coach/coachService.ts',
+  'src/app/ui/CoachDrawer.ts',
+  'src/assets/coach/coach_reflections.json',
   'scripts/export_bible.js',
   'scripts/books_catalog.json',
+  'src/assets/tracks/thirty_day_plan.json',
+  'src/assets/tracks/golden_verses.json',
+  'src/assets/tracks/thematic_readings.json',
 ];
 for (const rel of required) {
   if (!fs.existsSync(path.join(root, rel))) {

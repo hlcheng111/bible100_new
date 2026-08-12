@@ -558,6 +558,20 @@
       .replace(/"/g, "&quot;");
   }
 
+  function pastoralSanitizeText(s) {
+    return String(s || "")
+      .replace(/\bSHAPE\b/g, "恩賜問卷")
+      .replace(/\bJohari\b/g, "肢體回饋")
+      .replace(/\bALDA\b/g, "帶領風格")
+      .replace(/\bpath_cards\b/g, "成長地圖")
+      .replace(/\bHITL\b/g, "您親自確認")
+      .replace(/\bCRM\b/g, "")
+      .replace(/P 軸/g, "帶領節奏")
+      .replace(/\bshadow\b/gi, "陪同見習")
+      .replace(/事奉媒合中心/g, "服事登記頁")
+      .replace(/輔導員/g, "牧者");
+  }
+
   function renderOpenRoleBlock(c, cardIndex) {
     if (!c || !c.open_role) return "";
     var o = c.open_role;
@@ -577,7 +591,8 @@
       escHtml(o.name_zh) +
       '" data-card-index="' +
       cardIndex +
-      '">📋 帶此急缺前往媒合中心（HITL）</button></div>'
+      '">📋 第三步：雙方同意後，前往服事登記</button>' +
+      '<p class="acs-step-hint mpb-hitl-hint">請先完成約談、達成共識，再按此鈕。全程本機私密，不會自動派工。</p></div>'
     );
   }
 
@@ -586,34 +601,51 @@
     if (!cards || !cards.length) {
       return (
         '<p class="text-sm text-slate-600">' +
-        PATH_TIER_COPY.affirmation +
-        " 請先完成 SHAPE 恩賜量表，再與輔導員一同看見事奉方向。</p>"
+        (options.pastoralMode
+          ? "請先完成恩賜問卷，再與牧者一同看見事奉方向。"
+          : PATH_TIER_COPY.affirmation + " 請先完成 SHAPE 恩賜量表，再與輔導員一同看見事奉方向。") +
+        "</p>"
       );
     }
-    var tierTitle = { employ: PATH_TIER_COPY.employ, explore: PATH_TIER_COPY.explore, seed: PATH_TIER_COPY.seed };
+    var pastoral = !!options.pastoralMode;
+    var tierTitle = options.plainLanguage || pastoral
+      ? {
+          employ: "🎯 可能適合現有崗位（仍須您面談確認）",
+          explore: "🔍 建議先 6–12 週試任陪跑",
+          seed: "🚀 拓荒預備（教會尚未有對位編制）"
+        }
+      : { employ: PATH_TIER_COPY.employ, explore: PATH_TIER_COPY.explore, seed: PATH_TIER_COPY.seed };
     return cards
       .map(function (c, i) {
+        var fitNote = pastoral ? pastoralSanitizeText(c.fit_note) : c.fit_note || "";
+        var nextStep = pastoral ? pastoralSanitizeText(c.next_step) : c.next_step || "";
+        var scoreHtml = pastoral
+          ? c.fit_score != null
+            ? '<span class="text-xs text-amber-800">（參考吻合度 ' + c.fit_score + "）</span>"
+            : ""
+          : ' <span class="text-xs font-mono text-slate-500">(' +
+            (c.fit_score != null ? c.fit_score : "—") +
+            ")</span>";
         return (
-          '<div class="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4 mb-3 mpb-path-card" data-card-index="' +
+          '<div class="rounded-xl border border-orange-200 bg-orange-50/40 p-4 mb-3 mpb-path-card" data-card-index="' +
           i +
           '">' +
-          '<p class="text-xs font-bold text-indigo-800 mb-1">' +
+          '<p class="text-xs font-bold text-orange-900 mb-1">' +
           (tierTitle[c.tier] || c.tier) +
           "</p>" +
           "<p class=\"font-black text-slate-800\">" +
           (c.role_label || c.ministry_type) +
-          ' <span class="text-xs font-mono text-slate-500">(' +
-          (c.fit_score != null ? c.fit_score : "—") +
-          ")</span></p>" +
+          scoreHtml +
+          "</p>" +
           '<p class="text-xs text-slate-600 mt-2 leading-relaxed">' +
-          (c.fit_note || "") +
+          fitNote +
           "</p>" +
           renderOpenRoleBlock(c, i) +
           '<p class="text-xs text-emerald-800 mt-2">' +
-          (c.affirmation || PATH_TIER_COPY.affirmation) +
+          (pastoral ? pastoralSanitizeText(c.affirmation || PATH_TIER_COPY.affirmation) : c.affirmation || PATH_TIER_COPY.affirmation) +
           "</p>" +
           '<p class="text-xs text-slate-500 mt-1"><strong>下一步：</strong>' +
-          (c.next_step || "") +
+          nextStep +
           "</p></div>"
         );
       })

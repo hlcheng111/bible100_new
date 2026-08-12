@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>聖經地理歷史 - Bible Geography & History</title>
     <link rel="stylesheet" href="../css/landing_dashboard_standard.css">
+    <link rel="stylesheet" href="../../css/b100_landing_shell.css?v=20260807b">
+    <script src="../../js/shell_nav.js"></script>
+    <script src="../../js/b100_hub_embed.js?v=20260805f"></script>
+    <script src="../../js/b100_site_path.js?v=20260807a"></script>
+    <script src="../../js/b100_module_nav_ssot.js?v=20260807a"></script>
+    <script src="../../js/b100_module_landing_registry.js?v=20260807a"></script>
+    <script src="../../js/b100_landing_shell.js?v=20260807b"></script>
+  <script src="../../js/b100_site_path.js?v=20260807a"></script>
+  <script src="../../js/b100_nav_ssot.js?v=20260807a"></script>
     <style>
         .category-card {
             background: white;
@@ -72,7 +81,8 @@
         }
     </style>
 </head>
-<body>
+<body data-b100-module-mode="study" data-b100-landing-zone="geo">
+    <div id="b100-landing-shell-top"></div>
     <div class="top-nav">
         <a href="../index.html" class="nav-item">🏠 主頁</a>
         <span class="separator">|</span>
@@ -82,12 +92,12 @@
     </div>
 
     <div class="page-header">
-        <h1>🗺️ 聖經地理歷史</h1>
-        <p class="description">時間軸、地名、地圖、BibleProject、考古學 — 外站資源連結</p>
+        <h1>🗺️ Geo &amp; History</h1>
+        <p class="description">Timeline · Place · Map — iframe 可用外站（已剔除 YouTube／空頁／超時站）</p>
     </div>
 
     <div class="info-bar success">
-        <strong>💡 使用方式：</strong> 點擊類別展開，再點連結。外站連結於新分頁開啟；本站時間軸於本框架內開啟。
+        <strong>💡 使用方式：</strong> 点类别展开 → 点链接；可嵌入站点在右栏打开，YouTube 等 ↗ 新分页。
     </div>
 
     <div id="categories-root"></div>
@@ -104,16 +114,26 @@
                 document.getElementById('categories-root').innerHTML = '<p style="color:#c00;">無法載入配置，請確認 geography_history_data.js 存在。</p>';
                 return;
             }
+            function linkLabel(link) {
+                return link.label || link.name || 'Link';
+            }
+            var linkAttrs = window.GEOGRAPHY_HISTORY_linkAttrs || function () { return { href: '#', nav: '', rel: '', suffix: '' }; };
             var html = '';
             data.categories.forEach(function(cat) {
+                if (cat.sidebar === false) return;
+                var links = (cat.links || []).filter(function (link) { return link.sidebar !== false; });
+                if (!links.length) return;
                 html += '<div class="category-card"><details>';
-                html += '<summary>' + cat.name + '</summary>';
+                var catTitle = (cat.icon ? cat.icon + ' ' : '') + (cat.nameZh || cat.name || cat.id || '');
+                if (cat.nameEn) {
+                    catTitle += ' <small style="color:#666;font-size:11px;">' + cat.nameEn + '</small>';
+                }
+                html += '<summary>' + catTitle + '</summary>';
                 html += '<div class="link-list">';
-                (cat.links || []).forEach(function(link) {
-                    var target = link.local ? '_self' : '_blank';
-                    var rel = link.local ? '' : ' rel="noopener"';
+                links.forEach(function(link) {
+                    var a = linkAttrs(link, { pathPrefix: '../' });
                     var cls = link.local ? ' class="local"' : '';
-                    html += '<a href="' + link.url + '" target="' + target + '"' + rel + cls + '>' + link.name + '</a>';
+                    html += '<a href="' + a.href + '"' + a.nav + a.rel + cls + '>' + linkLabel(link) + a.suffix + '</a>';
                 });
                 html += '</div></details></div>';
             });

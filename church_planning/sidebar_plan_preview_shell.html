@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>G 規劃 · PREVIEW 殼</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft YaHei", sans-serif;
+      background: #eef2ff;
+      color: #1e293b;
+      font-size: 12px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .preview-top {
+      flex: 0 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: #312e81;
+      color: #fff;
+    }
+    .preview-top h1 { margin: 0; font-size: 12px; font-weight: 800; }
+    .preview-top a, .preview-top button {
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 9px;
+      font-weight: 700;
+      text-decoration: none;
+      color: #312e81;
+      background: #fff;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .preview-top a:hover, .preview-top button:hover { background: #e0e7ff; }
+    .preview-main {
+      flex: 1 1 auto;
+      display: flex;
+      min-height: 0;
+    }
+    #sidebarFrame {
+      width: 280px;
+      min-width: 240px;
+      max-width: 36vw;
+      border: none;
+      border-right: 2px solid #c7d2fe;
+      background: #f5f8ff;
+    }
+    #contentFrame {
+      flex: 1 1 auto;
+      width: 100%;
+      border: none;
+      background: #f8fafc;
+    }
+    @media (max-width: 768px) {
+      .preview-main { flex-direction: column; }
+      #sidebarFrame {
+        width: 100%;
+        max-width: none;
+        height: 42vh;
+        border-right: none;
+        border-bottom: 2px solid #c7d2fe;
+      }
+    }
+  </style>
+  <script src="../js/shell_nav.js"></script>
+</head>
+<body data-b100-pattern="P-PLAN-SIDEBAR-PREVIEW" data-preview-shell-build="20260804d">
+  <header class="preview-top">
+    <h1>G 規劃 PREVIEW · build 20260804d</h1>
+    <button type="button" id="btn-reload-sb">↻ 重載左欄</button>
+    <a href="../index_v5.html" target="_top">回總站</a>
+  </header>
+  <div class="preview-main">
+    <iframe id="sidebarFrame" name="sidebarFrame" title="G 戰略+行政側欄"></iframe>
+    <iframe id="contentFrame" name="contentFrame" title="規劃內容預覽"></iframe>
+  </div>
+  <script>
+    (function () {
+      var SIDEBAR_PAGE = "sidebar_plan_v5_preview.html";
+
+      function bust(url) {
+        url = String(url || "");
+        var hash = "";
+        var hi = url.indexOf("#");
+        if (hi >= 0) {
+          hash = url.slice(hi);
+          url = url.slice(0, hi);
+        }
+        var sep = url.indexOf("?") >= 0 ? "&" : "?";
+        return url + sep + "v=" + Date.now() + hash;
+      }
+
+      function content(url) {
+        var cf = document.getElementById("contentFrame");
+        if (cf) cf.src = bust(url);
+      }
+
+      function reloadSidebar() {
+        var sf = document.getElementById("sidebarFrame");
+        if (sf) sf.src = bust(SIDEBAR_PAGE);
+      }
+
+      function resolveNavigateUrl(raw) {
+        var u = String(raw || "").replace(/^\/+/, "");
+        if (u.indexOf("church_planning/") === 0) return u.slice("church_planning/".length);
+        if (u.indexOf("church_ministry/") === 0) return "../" + u;
+        return u;
+      }
+
+      reloadSidebar();
+      content("landing_g_admin.html?crm_from=planning_g_admin");
+
+      document.getElementById("btn-reload-sb").addEventListener("click", reloadSidebar);
+
+      window.addEventListener("message", function (ev) {
+        var d = ev.data;
+        if (!d || typeof d !== "object") return;
+        if (d.type === "navigate" && d.url) {
+          content(resolveNavigateUrl(d.url));
+        }
+        if (d.type === "bible100-shell" && d.contentUrl) {
+          content(resolveNavigateUrl(d.contentUrl));
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

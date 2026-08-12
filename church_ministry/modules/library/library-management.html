@@ -29,6 +29,11 @@ table th { background: #f8f9fa; }
 .form-input, .form-select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }</style></head>
 <body>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+<div id="w5dReportBar" style="padding:8px 16px;background:#ecfdf5;border-bottom:1px solid #a7f3d0;font-size:12px;"><strong>F-07 報告</strong>
+    <button type="button" class="btn btn-sm" style="background:#059669;margin-left:8px;" onclick="exportBooksCsv()" data-w5-report="library-books-csv">⬇ 圖書 CSV</button>
+    <button type="button" class="btn btn-sm" style="background:#059669;margin-left:4px;" onclick="exportBorrowsCsv()" data-w5-report="library-borrows-csv">⬇ 借閱 CSV</button>
+    <button type="button" class="btn btn-sm" style="background:#4b5563;margin-left:4px;" onclick="printLibrary()" data-w5-report="library-print">🖨 列印</button>
+</div>
 <div class="header">
     <h1>📚 图书管理系统</h1>
     <div class="tabs">
@@ -56,7 +61,7 @@ table th { background: #f8f9fa; }
         <div class="card">
             <h3 style="margin-bottom:15px;">📚 图书管理</h3>
             <button class="btn" onclick="showAddBookModal()">➕ 新增图书</button>
-            <button class="btn" style="background:#27ae60;" onclick="exportBooks()">📤 导出</button>
+            <button class="btn" style="background:#27ae60;" onclick="exportBooksCsv()" data-w5-report="library-books-csv">📤 导出</button>
             <input type="text" id="searchBook" placeholder="🔍 搜索..." class="form-input" style="max-width:300px;margin:10px 0;" onkeyup="renderBooks()">
             <table id="booksTable"><thead><tr><th>书名</th><th>作者</th><th>分类</th><th>ISBN</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table>
         </div>
@@ -153,14 +158,38 @@ function returnBook(id) {
         alert('✅ 已归还！');
     }
 }
-function exportBooks() {
-    const csv = '书名,作者,分类,ISBN,状态\n' + data.books.map(b=>`${b.title},${b.author},${b.category},${b.isbn},${b.status}`).join('\n');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
-    a.download = '图书清单.csv';
-    a.click();
-    alert('✅ 已导出！');
-        }
+function csvLine(fields) {
+    var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+    return (fields || []).map(esc).join(',');
+}
+function exportBooksCsv() {
+    var lines = [csvLine(['书名', '作者', '分类', 'ISBN', '状态'])];
+    data.books.forEach(function (b) {
+        lines.push(csvLine([b.title, b.author, b.category, b.isbn, b.status]));
+    });
+    if (window.CmReportUtils) CmReportUtils.downloadCsv('library_books.csv', lines);
+}
+function exportBorrowsCsv() {
+    var lines = [csvLine(['书名', '借阅人', '借出日期', '应还日期', '状态'])];
+    data.borrows.forEach(function (b) {
+        lines.push(csvLine([b.book, b.borrower, b.borrowDate, b.dueDate, b.status]));
+    });
+    if (window.CmReportUtils) CmReportUtils.downloadCsv('library_borrows.csv', lines);
+}
+function printLibrary() {
+    var headers = ['书名', '作者', '分类', 'ISBN', '状态'];
+    var rows = data.books.map(function (b) {
+        return [b.title, b.author, b.category, b.isbn, b.status];
+    });
+    if (window.CmReportUtils) CmReportUtils.printTable('图书清单', headers, rows);
+}
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

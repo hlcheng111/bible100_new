@@ -100,5 +100,17 @@
     loadReadDoneTools: loadReadDoneTools,
     probeHubAi: probeHubAi,
     isRepoRootServe: isRepoRootServe,
+    studyReaderUrl: function () {
+      var path = 'bible_study/comprehensive_exegesis_reader.html?book=創世記&chapter=1';
+      if (location.protocol === 'file:') return '../../' + path;
+      if (isRepoRootServe()) return location.origin + '/' + path;
+      return '../../' + path;
+    },
+    parallelReaderUrl: function () {
+      var path = 'bible_study/parallel_mode_v3.html';
+      if (location.protocol === 'file:') return '../../' + path;
+      if (isRepoRootServe()) return location.origin + '/' + path;
+      return '../../' + path;
+    },
   };
 })(typeof window !== 'undefined' ? window : global);

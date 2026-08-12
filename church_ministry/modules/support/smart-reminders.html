@@ -14,6 +14,11 @@
             <a href="../../dashboard.html" class="text-gray-600 hover:text-gray-900 text-sm">⛪ 教會事工中心</a>
         </div>
         <h1 class="text-3xl font-bold text-gray-900 mb-6">智能提醒系統</h1>
+        <div id="w5dReportBar" style="padding:8px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;margin-bottom:16px;font-size:12px;">
+            <strong>F-18 報告</strong>
+            <button type="button" onclick="exportRemindersCsv()" data-w5-report="smart-reminders-csv" class="bg-green-700 text-white px-3 py-1 rounded ml-2">⬇ 提醒 CSV</button>
+            <button type="button" onclick="printReminders()" data-w5-report="smart-reminders-print" class="bg-gray-600 text-white px-3 py-1 rounded ml-1">🖨 列印</button>
+        </div>
         <details class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <summary class="cursor-pointer font-semibold text-blue-900">功能與使用說明</summary>
             <div class="mt-3 text-sm text-gray-700 space-y-2">
@@ -551,7 +556,29 @@
                 notification.remove();
             }, 5000);
         }
+
+        function exportRemindersCsv() {
+            var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+            var lines = [[ '標題', '類型', '內容', '時間', '優先級', '狀態' ].map(esc).join(',')];
+            reminders.forEach(function (r) {
+                lines.push([r.title, r.type, r.content, r.time, r.priority, r.status].map(esc).join(','));
+            });
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('smart_reminders.csv', lines);
+        }
+        function printReminders() {
+            var rows = reminders.map(function (r) {
+                return [r.title, getTypeText(r.type), (r.content || '').slice(0, 80), formatTime(r.time), getPriorityText(r.priority), r.status];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('智能提醒清單', ['標題', '類型', '內容', '時間', '優先級', '狀態'], rows);
+        }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 <script src="../../../js/coming-soon.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

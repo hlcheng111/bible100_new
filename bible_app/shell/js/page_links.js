@@ -18,6 +18,13 @@
     return q.get('view') === 'single' ? 'single' : 'dual';
   }
 
+  function shellPageHref(rel) {
+    if (global.B100LiveDb && global.B100LiveDb.resolvePageHref) {
+      return global.B100LiveDb.resolvePageHref(rel);
+    }
+    return rel;
+  }
+
   function bibleReadUrl(opts) {
     opts = opts || {};
     var q = new URLSearchParams();
@@ -31,8 +38,8 @@
     if (opts.verse != null) q.set('verse', String(opts.verse));
     q.set('locale', opts.locale || locale());
     q.set('view', opts.view || viewMode());
-    return 'bible66.html?' + q.toString();
+    return shellPageHref('bible66.html?' + q.toString());
   }
 
-  global.B100PageLinks = { bibleReadUrl: bibleReadUrl, viewMode: viewMode };
+  global.B100PageLinks = { bibleReadUrl: bibleReadUrl, viewMode: viewMode, shellPageHref: shellPageHref };
 })(window);

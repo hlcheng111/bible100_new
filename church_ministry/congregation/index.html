@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>會眾入口 - Church Center</title>
   <base target="_parent">
+  <script src="../js/cm_congregation_role.js"></script>
   <script>
     (function(){
       try {
@@ -25,22 +26,60 @@
     body {
       font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
       margin: 0;
-      padding: 20px;
+      padding: 16px;
       background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
       color: #333;
       font-size: 14px;
     }
+    body[data-cm-desk-kit="off"] { padding-top: 16px; }
     .header {
       text-align: center;
-      padding: 24px 16px;
-      margin-bottom: 24px;
+      padding: 28px 16px;
+      margin-bottom: 20px;
       background: linear-gradient(135deg, var(--church-primary, #00cec9) 0%, var(--church-accent, #00b4b0) 100%);
       color: #fff;
-      border-radius: 12px;
+      border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0,206,201,0.3);
     }
-    .header h1 { margin: 0 0 8px 0; font-size: 1.5rem; }
-    .header p { margin: 0; opacity: 0.95; font-size: 0.9rem; }
+    .header h1 { margin: 0 0 8px 0; font-size: 1.6rem; }
+    .header p { margin: 0; opacity: 0.95; font-size: 0.95rem; }
+    .cc-role-badge {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(255,255,255,0.2);
+    }
+    .cc-member-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .cc-member-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-height: 120px;
+      padding: 24px 20px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      border: 2px solid transparent;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .cc-member-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      border-color: var(--church-primary, #00cec9);
+    }
+    .cc-member-btn .icon { font-size: 2rem; margin-bottom: 8px; }
+    .cc-member-btn h3 { margin: 0 0 6px 0; font-size: 1.15rem; color: var(--church-accent, #00b4b0); }
+    .cc-member-btn p { margin: 0; font-size: 0.88rem; color: #555; line-height: 1.45; }
     .card-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -65,21 +104,119 @@
     }
     .card h3 { margin: 0 0 10px 0; color: var(--church-accent, #00b4b0); font-size: 1rem; }
     .card p { margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; }
-    .card a.card-link { display: inline-block; margin-top: 10px; color: var(--church-primary, #00cec9); font-size: 0.85rem; }
+    #w5ReportBar {
+      padding: 8px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      background: #ecfdf5;
+      border-bottom: 1px solid #a7f3d0;
+      max-width: 1200px;
+      margin: 0 auto 12px;
+      border-radius: 8px;
+    }
+    .cc-leader-only { display: none; }
+    body.cc-role-leader .cc-leader-only { display: block; }
+    body.cc-role-leader #cc-member-view { display: none; }
+    body.cc-role-member .cc-leader-only { display: none !important; }
     @media (max-width: 600px) {
-      .card-grid { grid-template-columns: 1fr; }
+      .cc-member-grid, .card-grid { grid-template-columns: 1fr; }
+      .cc-member-btn { min-height: 100px; padding: 20px 16px; }
     }
   </style>
 </head>
-<body>
+<body data-cm-desk-kit="off" data-b100-module="congregation" data-b100-pattern="P-CONGREGATION">
   <div class="header">
     <h1>會眾入口 Church Center</h1>
-    <p>奉獻、活動、小組、研讀、我的參與</p>
-    <div id="peopleStats" style="margin-top:12px;font-size:0.85rem;opacity:0.95;"></div>
+    <p id="cc-tagline">奉獻、活動、小組、研讀、我的參與</p>
+    <span class="cc-role-badge" id="cc-role-badge">會眾模式</span>
+    <div id="peopleStats" class="cc-leader-only" style="margin-top:12px;font-size:0.85rem;opacity:0.95;"></div>
   </div>
+
+  <!-- 會眾模式：大按鈕極簡 -->
+  <div id="cc-member-view" class="cc-member-grid" aria-label="會眾自助入口">
+    <a href="sermon-notes.html" target="contentFrame" class="cc-member-btn">
+      <span class="icon">📝</span>
+      <h3>講道筆記</h3>
+      <p>邊聽邊記，填空式大綱</p>
+    </a>
+    <a href="checkin-pre.html" target="contentFrame" class="cc-member-btn">
+      <span class="icon">📋</span>
+      <h3>兒童預報到</h3>
+      <p>事先選擇要報到的兒童，到場出示預報碼</p>
+    </a>
+    <a href="../../bible_study/dashboard.html" target="contentFrame" class="cc-member-btn">
+      <span class="icon">📖</span>
+      <h3>聖經研讀</h3>
+      <p>精讀、對照、收藏經文</p>
+    </a>
+    <a href="../../bible_study/favorites_reader.html" target="contentFrame" class="cc-member-btn">
+      <span class="icon">⭐</span>
+      <h3>我的收藏</h3>
+      <p>收藏的經文與研讀位置</p>
+    </a>
+    <a href="sermon-notes.html" target="contentFrame" class="cc-member-btn">
+      <span class="icon">👤</span>
+      <h3>我的參與</h3>
+      <p>個人靈修與課程（規劃中：奉獻、活動報名）</p>
+    </a>
+    <a href="../../nav_hub/index.html" target="contentFrame" class="cc-member-btn" style="opacity:0.92;">
+      <span class="icon">🗂</span>
+      <h3>全站導覽</h3>
+      <p>找課程、找工具、找聯絡方式</p>
+    </a>
+  </div>
+
+  <!-- 同工模式：完整工作入口 -->
+  <div id="w5ReportBar" class="cc-leader-only">
+    <strong>E-03 報告</strong>
+    <button type="button" onclick="exportCongregationSummaryCsv()" data-w5-report="congregation-index-csv">⬇ CSV</button>
+    <button type="button" onclick="printCongregationSummary()" data-w5-report="congregation-index-print">🖨 列印</button>
+    <a href="index.html?role=member" target="contentFrame" style="margin-left:auto;font-size:11px;">↗ 預覽會眾版</a>
+  </div>
+  <div class="card-grid cc-leader-only">
+    <a href="../people/people_list.html" target="contentFrame" class="card" style="border-left-color:#0b5fa5;">
+      <h3>👥 人員總覽（會員 500 人）</h3>
+      <p>查看完整會員名單、搜尋、個人詳情與 OT100/NT100/T4 進度。</p>
+      <span id="peopleCardCount" style="font-size:0.8rem;color:#0b5fa5;"></span>
+    </a>
+    <a href="../dashboard.html" target="contentFrame" class="card" style="border-left-color:#9b59b6;">
+      <h3>⛪ 教會事工儀表板</h3>
+      <p>SPAC 概覽、男女比例、活躍人數、本週焦點與快速入口。</p>
+      <span id="dashboardHint" style="font-size:0.8rem;color:#9b59b6;"></span>
+    </a>
+    <a href="../../bible_study/dashboard.html" target="contentFrame" class="card">
+      <h3>📖 聖經研讀</h3>
+      <p>精讀、對照、研讀模式，綜合解讀與工具。</p>
+    </a>
+    <a href="../modules/worship/worship-management.html" target="contentFrame" class="card">
+      <h3>🎵 敬拜與服事</h3>
+      <p>崇拜安排、服事排程（同工）。</p>
+    </a>
+    <a href="../modules/fellowship/pastoral-integrated.html?crm_from=congregation_leader&amp;role=leader#tab-groups" target="contentFrame" class="card">
+      <h3>👥 小組與牧養</h3>
+      <p>牧養工作桌 · 4 Tab（同工後台）。</p>
+    </a>
+    <a href="../modules/support/visitation_index.html?crm_from=congregation_leader" target="contentFrame" class="card">
+      <h3>🤝 探訪關懷</h3>
+      <p>探訪工作桌 0-02。</p>
+    </a>
+  </div>
+
   <script src="../../js/people_loader.js"></script>
+  <script src="../js/cm_report_utils.js"></script>
   <script>
     (function(){
+      var ctx = window.CmCongregationRole ? CmCongregationRole.parse() : { isLeader: false, isMember: true };
+      CmCongregationRole.applyBodyClass(ctx);
+      var badge = document.getElementById('cc-role-badge');
+      var tagline = document.getElementById('cc-tagline');
+      if (badge) badge.textContent = ctx.isLeader ? '同工／管理預覽' : '會眾模式 · 極簡入口';
+      if (tagline && ctx.isMember) tagline.textContent = '歡迎！選一項開始 — 無需登入，資料存本機';
+
+      if (!ctx.isLeader) return;
+
       function toDisplayList(raw) {
         if (!raw || !raw.length) return [];
         return raw.map(function(p) {
@@ -87,7 +224,29 @@
           return { name: p.name, gender: p.gender, attendance_count: p.attendance_count || 0, status: status };
         });
       }
+      window._congregationPeopleList = [];
+      function exportCongregationSummaryCsv() {
+        var U = window.CmReportUtils; if (!U) return;
+        var esc = U.csvEsc;
+        var list = window._congregationPeopleList || [];
+        var lines = [['姓名', '性別', '出席次數', '狀態'].map(esc).join(',')];
+        list.forEach(function (p) {
+          lines.push([p.name, p.gender || '', p.attendance_count || 0, p.status || ''].map(esc).join(','));
+        });
+        U.downloadCsv('congregation_summary_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+      }
+      function printCongregationSummary() {
+        var U = window.CmReportUtils; if (!U) return;
+        var list = window._congregationPeopleList || [];
+        var rows = list.slice(0, 200).map(function (p) {
+          return [p.name, p.gender || '', String(p.attendance_count || 0), p.status || ''];
+        });
+        U.printTable('會眾入口 · 人員摘要', ['姓名', '性別', '出席', '狀態'], rows);
+      }
+      window.exportCongregationSummaryCsv = exportCongregationSummaryCsv;
+      window.printCongregationSummary = printCongregationSummary;
       function updateUI(list) {
+        window._congregationPeopleList = list || [];
         if (!list || list.length === 0) return;
         var active = list.filter(function(p){ return (p.attendance_count||0) > 0 || p.status === 'active'; }).length;
         var male = list.filter(function(p){ return p.gender === '男'; }).length;
@@ -107,29 +266,16 @@
           return (d.members || []).map(function(m){ return { name: m.name, gender: m.gender, attendance_count: 0, status: m.status }; });
         } catch(e) { return []; }
       }
-      function tryChurchMasterDatabaseFallback() {
-        try {
-          var raw = localStorage.getItem('churchMasterDatabase');
-          if (!raw) return [];
-          var d = JSON.parse(raw);
-          var members = d.members || [];
-          return members.map(function(m){ return { name: m.name || m.memberName, gender: m.gender, attendance_count: 0, status: m.status || 'active' }; });
-        } catch(e) { return []; }
-      }
       function showEmptyHint() {
         var el = document.getElementById('peopleStats');
         if (el) el.innerHTML = '尚無人員資料 · <a href="../load_central_member_seed.html" target="_parent" style="color:#fff;text-decoration:underline;">請先匯入 500 人</a>';
         var cardEl = document.getElementById('peopleCardCount');
         if (cardEl) cardEl.textContent = '尚無資料，請先匯入';
-        var dashEl = document.getElementById('dashboardHint');
-        if (dashEl) dashEl.textContent = '請先匯入會友資料';
       }
       function loadAndShow() {
         var done = function(list) {
           if (list && list.length > 0) { updateUI(list); return; }
           var fallback = tryMemberSystemDataFallback();
-          if (fallback.length > 0) { updateUI(fallback); return; }
-          fallback = tryChurchMasterDatabaseFallback();
           if (fallback.length > 0) { updateUI(fallback); return; }
           showEmptyHint();
         };
@@ -141,83 +287,6 @@
         }
       }
       loadAndShow();
-    })();
-  </script>
-  <div class="card-grid">
-    <a href="../people/people_list.html" target="contentFrame" class="card" style="border-left-color:#0b5fa5;">
-      <h3>👥 人員總覽（會員 500 人）</h3>
-      <p>查看完整會員名單、搜尋、個人詳情與 OT100/NT100/T4 進度。</p>
-      <span id="peopleCardCount" style="font-size:0.8rem;color:#0b5fa5;"></span>
-    </a>
-    <a href="../dashboard.html" target="contentFrame" class="card" style="border-left-color:#9b59b6;">
-      <h3>⛪ 教會事工儀表板</h3>
-      <p>SPAC 概覽、男女比例、活躍人數、本週焦點與快速入口。</p>
-      <span id="dashboardHint" style="font-size:0.8rem;color:#9b59b6;"></span>
-    </a>
-    <a href="../../bible_study/dashboard.html" target="contentFrame" class="card">
-      <h3>📖 聖經研讀</h3>
-      <p>精讀、對照、研讀模式，綜合解讀與工具。</p>
-    </a>
-    <a href="../../bible_study/favorites_reader.html" target="contentFrame" class="card">
-      <h3>⭐ 我的收藏</h3>
-      <p>收藏的經文與研讀位置。</p>
-    </a>
-    <a href="../modules/worship/worship-management.html" target="contentFrame" class="card">
-      <h3>🎵 敬拜與服事</h3>
-      <p>崇拜安排、服事排程。</p>
-    </a>
-    <a href="../modules/fellowship/index.html" target="contentFrame" class="card">
-      <h3>👥 小組與團契</h3>
-      <p>小組資訊、活動、團契。</p>
-    </a>
-    <a href="sermon-notes.html" target="contentFrame" class="card">
-      <h3>📝 講道筆記</h3>
-      <p>填空式講道大綱，邊聽邊記。</p>
-    </a>
-    <a href="checkin-pre.html" target="contentFrame" class="card">
-      <h3>📋 兒童預報到</h3>
-      <p>事先選擇要報到的兒童，到場出示預報碼即可快速報到。</p>
-    </a>
-    <a href="../people/people_list.html" target="contentFrame" class="card" style="border-left-color:#e67e22;">
-      <h3>👤 我的參與</h3>
-      <p>個人資料、OT100/NT100/T4 讀經進度。規劃中：奉獻、課程報名、活動報名（對標 School Mgmt、AI 智慧事奉）。</p>
-    </a>
-    <a href="../../nav_hub/index.html" target="contentFrame" class="card">
-      <h3>🗂 目錄搜索</h3>
-      <p>全站導覽與搜尋。</p>
-    </a>
-  </div>
-  <script>
-    (function(){
-      function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-      try {
-        var raw = localStorage.getItem('churchCenterCustomBlocks');
-        var blocks = raw ? JSON.parse(raw) : [];
-        if (blocks.length === 0) return;
-        var container = document.createElement('div');
-        container.className = 'custom-blocks';
-        container.style.cssText = 'max-width:1200px;margin:0 auto 24px auto;';
-        blocks.forEach(function(b){
-          var el = document.createElement('div');
-          el.className = 'custom-block';
-          el.style.cssText = 'background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);border-left:4px solid var(--church-primary,#00cec9);';
-          if (b.type === 'text') {
-            if (b.title) el.innerHTML += '<h3 style="margin:0 0 10px 0;color:var(--church-accent,#00b4b0); font-size:1rem;">' + escapeHtml(b.title) + '</h3>';
-            el.innerHTML += '<div style="font-size:0.9rem;color:#555;line-height:1.6;">' + escapeHtml(b.content || '').replace(/\n/g,'<br>') + '</div>';
-          } else if (b.type === 'image' && b.url) {
-            el.innerHTML = '<img src="' + escapeHtml(b.url) + '" alt="' + escapeHtml(b.alt || '') + '" style="max-width:100%;height:auto;border-radius:8px;">';
-          } else if (b.type === 'link' && b.url) {
-            el.innerHTML = '<a href="' + escapeHtml(b.url) + '" target="contentFrame" style="color:var(--church-primary,#00cec9);font-size:1rem;">' + escapeHtml(b.text || '連結') + '</a>';
-          } else if (b.type === 'activityList' && b.items && b.items.length) {
-            el.innerHTML = '<h3 style="margin:0 0 12px 0;color:var(--church-accent,#00b4b0);font-size:1rem;">活動</h3><ul style="margin:0;padding-left:20px;">' + b.items.map(function(it){
-              return '<li><a href="' + (it.url ? escapeHtml(it.url) : '#') + '" target="contentFrame" style="color:var(--church-primary,#00cec9);">' + escapeHtml(it.name || '活動') + '</a></li>';
-            }).join('') + '</ul>';
-          } else return;
-          container.appendChild(el);
-        });
-        var cardGrid = document.querySelector('.card-grid');
-        if (cardGrid) document.body.insertBefore(container, cardGrid);
-      } catch(e){}
     })();
   </script>
 </body>

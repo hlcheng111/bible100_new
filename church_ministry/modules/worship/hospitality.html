@@ -61,13 +61,14 @@
         .load-btn { display: block; margin: 20px auto; padding: 12px 24px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
-<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a">
+<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a">
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container">
         <div class="header">
             <h1><span>🤝</span>招待事奉管理 - 周历视图</h1>
             <div class="header-actions">
-                <button onclick="exportData()">📤 导出</button>
-                <button onclick="printSchedule()">🖨️ 打印</button>
+                <button type="button" onclick="exportData()" data-w5-report="hospitality-schedule-csv">⬇ 排班 CSV</button>
+                <button type="button" onclick="exportMembersCsv()" data-w5-report="hospitality-members-csv">⬇ 同工 CSV</button>
+                <button type="button" onclick="printHospitalityRoster()" data-w5-report="hospitality-print">🖨 列印班表</button>
                 <button onclick="location.href='../../index.html'">🏠 返回</button>
             </div>
         </div>
@@ -212,24 +213,46 @@
             document.getElementById('loadBtn').style.display = 'none';
         }
         
-        function exportData() {
-            const csv = '岗位,周次,日期,同工1,同工2\n' + 
-                positions.flatMap(pos => 
-                    schedule.map((week, i) => 
-                        `${pos.name},第${i+1}周,${week.date},${week[pos.key][0]},${week[pos.key][1]}`
-                    )
-                ).join('\n');
-            const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = '招待排班表.csv';
-            a.click();
+        function csvEsc(v) {
+            if (window.CmReportUtils) return CmReportUtils.csvEsc(v);
+            var s = v == null ? '' : String(v);
+            if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+            return s;
         }
-        
-        function printSchedule() { window.print(); }
+        function downloadCsv(filename, lines) {
+            if (window.CmReportUtils) return CmReportUtils.downloadCsv(filename, lines);
+            var blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
+        function exportData() {
+            var lines = ['date,door,parking,seating,children'];
+            (schedule || []).forEach(function (w) {
+                lines.push([w.date, (w.door||[]).join('；'), (w.parking||[]).join('；'), (w.seating||[]).join('；'), (w.children||[]).join('；')].map(csvEsc).join(','));
+            });
+            downloadCsv('hospitality_schedule_' + new Date().toISOString().slice(0,10) + '.csv', lines);
+        }
+        function exportMembersCsv() {
+            var lines = ['name,position,phone,count'];
+            (members || []).forEach(function (m) {
+                lines.push([m.name, m.position, m.phone || '', m.count || 0].map(csvEsc).join(','));
+            });
+            downloadCsv('hospitality_members_' + new Date().toISOString().slice(0,10) + '.csv', lines);
+        }
+        function printHospitalityRoster() {
+            var headers = ['日期', '門口', '停車', '帶位', '兒童'];
+            var rows = (schedule || []).map(function (w) {
+                return [w.date, (w.door||[]).join('、'), (w.parking||[]).join('、'), (w.seating||[]).join('、'), (w.children||[]).join('、')];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('招待事奉班表', headers, rows);
+            else window.print();
+        }
+        function printSchedule() { printHospitalityRoster(); }
     </script>
 
 
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 <!-- b100-ae-worship-w1-shell -->
 <link rel="stylesheet" href="../../css/ae_worship_six_section.css" />
 <script src="../../js/church-master-database.js"></script>
@@ -256,5 +279,10 @@
 <script src="../../js/crm_context_bar.js"></script>
 <script src="../../js/ae_primary_nav.js"></script>
 <script src="../../js/ae_subpage_shell.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

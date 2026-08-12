@@ -1,6 +1,6 @@
 # 全站治理 · P0 最小包（SITE_GOVERNANCE）
 
-**版本：** P0 · 2026-06  
+**版本：** P0 · 2026-06 · **產品宗**：見 [`PRODUCT_CONSTITUTION_V1.md`](./PRODUCT_CONSTITUTION_V1.md)  
 **狀態：** 邊做邊改期 — **定邊界、不大搬家**  
 **人類入口：** [help/tools-overview.html](../../help/tools-overview.html) · [help/docs-hub.html](../../help/docs-hub.html)
 
@@ -34,6 +34,9 @@ python tests/test_config_embedded_sync.py
 | **P0（現在）** | 治理文檔、manifest 草案、凍結核心、新檔歸屬規則 | 全站 rename、大搬夾 |
 | **P1** | **按模組分波** 歸位 + 單支 sidebar 重整 + archive | 同時改 CRM/plan/layout 三支 sidebar |
 | **P2** | 檔名前綴、`data-b100-module` 批量、全站連結 fail-on-broken | 未驗測前刪歷史檔 |
+| **W_UI** | IA／Chrome 收斂（**先 W_UI-0 盤點，再 P0–P3 改碼**） | 未決策前大改 dashboard landing |
+
+**W_UI 紀錄在案：** [`W_UI_IA_AUDIT_V1.md`](./W_UI_IA_AUDIT_V1.md)
 
 **P1 建議波次：** 殼/config → church_planning → church_ministry → bible_study / ai / school → help/nav_hub
 
@@ -70,15 +73,16 @@ python tests/test_config_embedded_sync.py
 
 ---
 
-## 5. 教會大樓（互聯記憶）
+## 5. 教會大樓（互聯記憶 · 2026-07 更新）
 
 ```
-5F 規劃大腦  sidebar_plan.html  +  index_plan.html
-4F CRM 旅程  sidebar_crm_journey.html  +  guide_crm_journey_hub.html
-4F 事工執行  sidebar_church_layout_v1.html  （A–E 六類）
+5F 規劃大腦  sidebar_plan.html  +  index_plan.html     ← 總站「教會事工」預設
+4F 事工執行  sidebar_church_layout_v1.html  （A–F）
+     行政首屏  dashboard.html 或 layout_v1（待 W_UI §5.1 決策）
+~~4F CRM 旅程~~  sidebar_crm_journey / guide_crm_journey_hub  ← 已廢主入口，書籤相容
 ```
 
-三角導航（P1 驗收）：CRM ↔ planning ↔ layout_v1 互回；詳見 manifest `crossLinks`。
+三角導航（P1 驗收）：planning ↔ layout_v1 互回；CRM 僅 redirect／相容。詳見 [`W_UI_IA_AUDIT_V1.md`](./W_UI_IA_AUDIT_V1.md) 與 manifest `crossLinks`。
 
 ---
 
@@ -124,4 +128,5 @@ python scripts/check_phase_tool_and_nav_links.py
 - [x] `help/tools-overview.html` 運作原則區  
 - [x] `.cursor/rules/bible100-site-governance.mdc`  
 - [x] `tests/test_module_manifest_p0.py` 綠  
-- [ ] P1：第一收拾波次 `church_planning/`（待排）
+- [ ] P1：第一收拾波次 `church_planning/`（待排）  
+- [x] **material 樣板波次**：`docs/governance/MATERIAL_MODULE_CLEANUP_WAVE_V1.md`（languages 夾名凍結 + DD 掛入頂欄）

@@ -69,16 +69,45 @@
             return names;
         },
 
+        _responseLooksLikeAsset(res, path) {
+            if (!res || !res.ok) return false;
+            var ct = (res.headers.get('content-type') || '').toLowerCase();
+            if (ct.indexOf('text/html') >= 0) return false;
+            var cl = parseInt(res.headers.get('content-length') || '0', 10);
+            var p = String(path || '').toLowerCase();
+            if (p.indexOf('.json') >= 0 && cl > 0 && cl < 5000) return false;
+            if ((p.indexOf('.wasm') >= 0 || p.indexOf('.db') >= 0 || p.indexOf('.part') >= 0) && cl > 0 && cl < 50000) return false;
+            return true;
+        },
+
+        _bufferLooksLikeAsset(buf, path) {
+            if (!buf || buf.byteLength < 16) return false;
+            var view = new Uint8Array(buf);
+            if (view[0] === 0x3C) return false;
+            var p = String(path || '').toLowerCase();
+            if (p.indexOf('.json') >= 0) return view[0] === 0x7B || view[0] === 0x5B;
+            if (p.indexOf('.wasm') >= 0) return view[0] === 0x00 && view[1] === 0x61 && view[2] === 0x73 && view[3] === 0x6D;
+            if (p.indexOf('.db') >= 0 || p.indexOf('.part') >= 0) {
+                var head = new TextDecoder().decode(view.slice(0, 15));
+                return head.indexOf('SQLite format') >= 0 || buf.byteLength >= 100000;
+            }
+            return true;
+        },
+
         async probePath(path) {
             var url = this._url(path);
             try {
                 var res = await fetch(url, { method: 'HEAD', cache: 'no-store' });
-                if (res.ok) return { ok: true, path: path, url: url };
+                if (this._responseLooksLikeAsset(res, path)) return { ok: true, path: path, url: url };
             } catch (e) {}
             try {
                 var res2 = await fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
-                if (res2.ok) return { ok: true, path: path, url: url };
+                if (this._responseLooksLikeAsset(res2, path)) return { ok: true, path: path, url: url };
             } catch (e2) {}
+            try {
+                var buf = await this._loadRawXhr(url);
+                if (this._bufferLooksLikeAsset(buf, path)) return { ok: true, path: path, url: url };
+            } catch (e3) {}
             return { ok: false, path: path, url: url };
         },
 
@@ -91,11 +120,38 @@
             return null;
         },
 
+        async _loadRawXhr(url) {
+            return new Promise(function (resolve, reject) {
+                try {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', url, true);
+                    xhr.responseType = 'arraybuffer';
+                    xhr.onload = function () {
+                        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0) {
+                            if (xhr.response && xhr.response.byteLength) resolve(xhr.response);
+                            else reject(new Error('XHR empty: ' + url));
+                        } else {
+                            reject(new Error('XHR ' + xhr.status + ': ' + url));
+                        }
+                    };
+                    xhr.onerror = function () { reject(new Error('XHR failed: ' + url)); };
+                    xhr.send();
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        },
+
         async loadRaw(path) {
             var url = this._url(path) + (path.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
-            var response = await fetch(url, { cache: 'no-store' });
-            if (!response.ok) throw new Error('HTTP ' + response.status + ': ' + path);
-            return response.arrayBuffer();
+            try {
+                var response = await fetch(url, { cache: 'no-store' });
+                if (response.ok) return response.arrayBuffer();
+            } catch (eFetch) { /* file:// 常失敗，改 XHR */ }
+            try {
+                return await this._loadRawXhr(url);
+            } catch (eXhr) {}
+            throw new Error('HTTP ' + path);
         },
 
         /**
@@ -189,15 +245,18 @@
             var format = null;
             var data = null;
 
-            if (!this.fallbackMode && dbPaths.length && this.SQL) {
-                resolved = await this.resolveFirstPath(dbPaths);
-                if (resolved) {
-                    try {
-                        var buf = await this.loadRaw(resolved);
-                        data = await this.initSqlite(buf);
-                        if (this.getDatabaseTables(data).length) format = 'sqlite';
-                        else { data = null; format = null; }
-                    } catch (e) { data = null; }
+            if (dbPaths.length) {
+                if (!this.SQL) await this.checkSQLAvailability();
+                if (this.SQL) {
+                    resolved = await this.resolveFirstPath(dbPaths);
+                    if (resolved) {
+                        try {
+                            var buf = await this.loadRaw(resolved);
+                            data = await this.initSqlite(buf);
+                            if (this.getDatabaseTables(data).length) format = 'sqlite';
+                            else { data = null; format = null; }
+                        } catch (e) { data = null; }
+                    }
                 }
             }
 
@@ -454,6 +513,127 @@
             if (!meta || !meta.loaded) throw new Error('註釋未載入: ' + key);
             if (meta.format === 'sqlite') return this.querySQLiteCommentary(meta.data, book, chapter);
             return this.queryJSONCommentary(meta.data, book, chapter);
+        },
+
+        _extractCrossRefRows(data) {
+            if (!data) return [];
+            if (Array.isArray(data)) return data;
+            if (data.tables && data.tables.CrossReferences && Array.isArray(data.tables.CrossReferences.data)) {
+                return data.tables.CrossReferences.data;
+            }
+            if (data.CrossReferences && Array.isArray(data.CrossReferences.data)) return data.CrossReferences.data;
+            if (data.data && Array.isArray(data.data)) return data.data;
+            return [];
+        },
+
+        _parseCrossRefString(cr) {
+            if (!cr) return [];
+            if (Array.isArray(cr)) return cr.map(String);
+            return String(cr).split(/[;；]/).map(function (r) { return r.trim(); }).filter(Boolean);
+        },
+
+        async queryCrossRef(key, bookId, chapter, verse) {
+            var meta = (this.db.crossrefs || {})[key];
+            if (!meta || !meta.loaded) throw new Error('串珠未載入: ' + key);
+            var b = Number(bookId);
+            var ch = Number(chapter);
+            var v = Number(verse);
+            var out = [];
+
+            if (meta.format === 'sqlite') {
+                var db = meta.data;
+                var queries = [
+                    'SELECT cr FROM CrossReferences WHERE b=? AND c=? AND bv<=? AND (ev>=? OR ev=0 OR ev IS NULL)',
+                    'SELECT cr FROM crossreferences WHERE book=? AND chapter=? AND fromVerse<=? AND (toVerse>=? OR toVerse=0)'
+                ];
+                for (var qi = 0; qi < queries.length; qi++) {
+                    try {
+                        var stmt = db.prepare(queries[qi]);
+                        stmt.bind([b, ch, v, v]);
+                        while (stmt.step()) {
+                            var row = stmt.getAsObject();
+                            out = out.concat(this._parseCrossRefString(row.cr || row.references || row.ref));
+                        }
+                        stmt.free();
+                        if (out.length) return out;
+                    } catch (eSql) { continue; }
+                }
+                return out;
+            }
+
+            var rows = this._extractCrossRefRows(meta.data);
+            rows.forEach(function (item) {
+                var bb = item.b != null ? item.b : (item.Book != null ? item.Book : item.book);
+                var cc = item.c != null ? item.c : (item.Chapter != null ? item.Chapter : item.chapter);
+                var bv = item.bv != null ? item.bv : (item.fromVerse != null ? item.fromVerse : 0);
+                var ev = item.ev != null ? item.ev : (item.toVerse != null ? item.toVerse : 999);
+                var verseMatch = (bv === 0 && ev === 0) || (v >= bv && v <= ev);
+                if (Number(bb) === b && Number(cc) === ch && verseMatch) {
+                    out = out.concat(BibleEngine._parseCrossRefString(item.cr || item.crossrefs || item.references));
+                }
+            });
+            return out;
+        },
+
+        _extractDictionaryRows(data) {
+            if (!data) return [];
+            if (Array.isArray(data)) return data;
+            if (data.Dictionary && Array.isArray(data.Dictionary.data)) return data.Dictionary.data;
+            if (data.data && Array.isArray(data.data)) return data.data;
+            return [];
+        },
+
+        async searchDictionary(key, keyword, limit) {
+            limit = limit || 40;
+            var meta = (this.db.dictionaries || {})[key];
+            if (!meta || !meta.loaded) return [];
+            var q = String(keyword || '').trim().toLowerCase();
+            if (!q) return [];
+            var self = this;
+            var results = [];
+
+            if (meta.format === 'sqlite') {
+                var db = meta.data;
+                var like = '%' + q + '%';
+                var sqls = [
+                    'SELECT Word, Description, ComeFrom FROM Dictionary WHERE lower(Word) LIKE ? OR lower(Description) LIKE ? LIMIT ?',
+                    'SELECT word AS Word, description AS Description FROM dictionary WHERE lower(word) LIKE ? LIMIT ?'
+                ];
+                for (var si = 0; si < sqls.length; si++) {
+                    try {
+                        var stmt = db.prepare(sqls[si]);
+                        if (sqls[si].indexOf('ComeFrom') >= 0) stmt.bind([like, like, limit]);
+                        else stmt.bind([like, limit]);
+                        while (stmt.step()) {
+                            var row = stmt.getAsObject();
+                            var def = self.safeDecryptContent(row.Description || row.description || '');
+                            results.push({
+                                term: row.Word || row.word || '',
+                                definition: def + (row.ComeFrom ? '\n\n來源：' + row.ComeFrom : '')
+                            });
+                        }
+                        stmt.free();
+                        if (results.length) return results;
+                    } catch (eD) { continue; }
+                }
+                return results;
+            }
+
+            var rows = this._extractDictionaryRows(meta.data);
+            rows.forEach(function (item) {
+                if (results.length >= limit) return;
+                var term = item.Word || item.term || item.title || item.name || '';
+                var def = item.Description || item.definition || item.content || item.value || '';
+                def = self.safeDecryptContent(def);
+                if ((term && String(term).toLowerCase().indexOf(q) >= 0) ||
+                    (def && String(def).toLowerCase().indexOf(q) >= 0)) {
+                    results.push({
+                        term: term || '未知',
+                        definition: (def || '') + (item.ComeFrom ? '\n\n來源：' + item.ComeFrom : '')
+                    });
+                }
+            });
+            return results;
         },
 
         getRegistryBibles() { return (REG().bibles || []).slice(); },

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖經研讀 · 尋寶遊樂場</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@400;600;700;800;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        theme: {
+                            amber: {
+                                bg: '#FFF9F2',
+                                path: '#FB923C',
+                                active: '#EA580C',
+                                light: '#FFEDD5'
+                            },
+                            purple: {
+                                bg: '#F5F0FF',
+                                path: '#A78BFA',
+                                active: '#7C3AED',
+                                light: '#DDD6FE'
+                            },
+                            emerald: {
+                                bg: '#F0FDF4',
+                                path: '#34D399',
+                                active: '#059669',
+                                light: '#A7F3D0'
+                            }
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                        serif: ['"Noto Serif TC"', 'serif'],
+                        fun: ['"Fredoka"', '"Noto Sans TC"', 'sans-serif']
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                        'bounce-gentle': 'bounceGentle 2.5s infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' }
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 15px rgba(245, 158, 11, 0.4)' },
+                            '50%': { boxShadow: '0 0 25px rgba(245, 158, 11, 0.8)' }
+                        },
+                        bounceGentle: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            transition: background-color 0.5s ease;
+            user-select: none;
+        }
+        
+        .map-bg-pattern {
+            background-image: radial-gradient(rgba(180, 100, 30, 0.08) 1.5px, transparent 1.5px);
+            background-size: 28px 28px;
+        }
+
+        .animated-path {
+            stroke-dasharray: 12, 12;
+            animation: strokeDash 25s linear infinite;
+        }
+        @keyframes strokeDash {
+            to { stroke-dashoffset: -240; }
+        }
+
+        .node-btn {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 8px 0 rgba(0,0,0,0.12), 0 15px 20px rgba(0,0,0,0.08);
+        }
+        .node-btn:hover {
+            transform: translateY(-6px) scale(1.08);
+            box-shadow: 0 14px 0 rgba(0,0,0,0.1), 0 20px 25px rgba(0,0,0,0.12);
+        }
+        .node-btn:active {
+            transform: translateY(2px) scale(0.98);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+        }
+
+        /* 滾動條美化 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #F3F4F6;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body id="themeBody" class="bg-amber-bg text-gray-800 min-h-screen flex flex-col map-bg-pattern transition-colors duration-500 pb-28">
+
+    <!-- 頂部導航與路線切換器 -->
+    <header class="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-amber-200/60 shadow-sm px-4 py-3">
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            
+            <div class="flex items-center gap-2.5 group cursor-pointer" onclick="resetMapView()">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-md group-hover:rotate-12 transition-transform">
+                    <i data-lucide="map-pin" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold font-serif text-amber-950 flex items-center gap-1.5 tracking-tight">
+                        聖經研讀 · 尋寶遊樂場
+                        <span class="text-[10px] font-sans font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full uppercase">Playground</span>
+                    </h1>
+                    <p class="text-xs text-amber-800/70 font-medium">✨ 沿著蜿蜒小徑點擊設施，展開驚喜讀經之旅！</p>
+                </div>
+            </div>
+
+            <!-- 主題路線切換標籤 (Tab Switcher) -->
+            <div class="flex items-center bg-amber-100/90 p-1 rounded-2xl shadow-inner text-xs font-bold w-full sm:w-auto justify-between sm:justify-start gap-1">
+                <button onclick="switchRoute('amber')" id="tab-amber" class="route-tab px-3 py-1.5 rounded-xl bg-white text-amber-900 shadow-sm transition-all flex items-center gap-1">
+                    <span>📜</span> 天國福音之路
+                </button>
+                <button onclick="switchRoute('purple')" id="tab-purple" class="route-tab px-3 py-1.5 rounded-xl text-purple-800 hover:bg-white/50 transition-all flex items-center gap-1">
+                    <span>👑</span> 立約歷史之路
+                </button>
+                <button onclick="switchRoute('emerald')" id="tab-emerald" class="route-tab px-3 py-1.5 rounded-xl text-emerald-800 hover:bg-white/50 transition-all flex items-center gap-1">
+                    <span>🌿</span> 智慧重建之路
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- 導遊嚮導區塊 (Interactive Tour Guide Banner) -->
+    <section class="max-w-3xl mx-auto w-full px-4 pt-6">
+        <div class="bg-white/95 backdrop-blur-md rounded-3xl p-4 sm:p-5 border-2 border-amber-200 shadow-lg flex items-start gap-4 relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-amber-100 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="relative shrink-0">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl shadow-md animate-bounce-gentle border-2 border-white">
+                    🦁
+                </div>
+                <span class="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white" title="嚮導線上中"></span>
+            </div>
+
+            <div class="flex-grow space-y-1 z-10">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-600"></i>
+                        讀經遊樂場嚮導小獅子
+                    </span>
+                    <button onclick="triggerRandomTreasure()" class="text-xs font-bold text-amber-800 hover:text-amber-600 underline flex items-center gap-1 cursor-pointer">
+                        🎲 幫我選個景點
+                    </button>
+                </div>
+                <h2 id="guideTitle" class="text-base sm:text-lg font-bold font-serif text-gray-900">
+                    歡迎來到聖經尋寶遊樂場！今天你想去哪裡探索？
+                </h2>
+                <p id="guideDesc" class="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                    這裡有聖經跑道、多譯本對照、66卷釋經參讀與地理歷史地圖。點擊下方圓形熱點站牌，隨時開關進入！
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 遊戲蜿蜒地圖主區域 (S-Curve Interactive Map) -->
+    <main class="max-w-2xl mx-auto w-full px-4 py-6 flex-grow relative flex justify-center">
+        
+        <div class="relative w-full max-w-md min-h-[820px] flex justify-center items-center my-2">
+            
+            <!-- SVG S型連線軌道 -->
+            <svg class="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 400 840" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 200,60 C 340,130 340,250 200,310 C 60,370 60,510 200,570 C 320,620 320,730 200,780" 
+                      stroke="#FFE3C2" stroke-width="26" stroke-linecap="round" class="transition-colors duration-500" />
+                
+                <path id="svgPathMain" d="M 200,60 C 340,130 340,250 200,310 C 60,370 60,510 200,570 C 320,620 320,730 200,780" 
+                      stroke="#FB923C" stroke-width="8" stroke-linecap="round" class="animated-path transition-colors duration-500" />
+            </svg>
+
+            <!-- 裝飾背景元件 -->
+            <div class="absolute top-[3%] left-[6%] text-3xl opacity-80 animate-float">🌳</div>
+            <div class="absolute top-[18%] right-[4%] text-2xl opacity-70">🌸</div>
+            <div class="absolute top-[38%] left-[2%] text-3xl opacity-80 animate-float" style="animation-delay: 1s;">🌲</div>
+            <div class="absolute top-[58%] right-[5%] text-2xl opacity-80">🌷</div>
+            <div class="absolute top-[78%] left-[4%] text-3xl opacity-80 animate-float" style="animation-delay: 1.5s;">🌾</div>
+
+            <!-- ================= 熱點站牌 (HOTSPOTS) ================= -->
+
+            <!-- 站點 1: 🦁 聖經跑道 -->
+            <div class="absolute top-[35px] left-[155px] z-10 flex flex-col items-center">
+                <div class="mb-1.5 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full text-xs font-black shadow-md flex items-center gap-1 border border-white animate-bounce-gentle">
+                    <span>★ 推薦首站</span>
+                </div>
+                <button onclick="openNodeModal(1)" class="node-btn w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white border-4 border-white flex flex-col items-center justify-center group cursor-pointer relative">
+                    <span class="text-2xl group-hover:scale-125 transition-transform">🦁</span>
+                    <span class="text-[11px] font-black mt-0.5">聖經跑道</span>
+                    <span class="absolute -top-1 -right-1 w-5 h-5 bg-green-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">✓</span>
+                </button>
+                <span class="mt-1 text-xs font-bold text-amber-950 bg-white/90 px-2.5 py-0.5 rounded-full shadow-sm border border-amber-200">四語 Track · 4 langs</span>
+            </div>
+
+            <!-- 驚喜關卡 1: 突擊小測驗 -->
+            <div class="absolute top-[170px] right-[35px] z-10">
+                <button onclick="openQuizModal()" class="px-3 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-2xl shadow-md border-2 border-white hover:scale-105 transition-transform flex items-center gap-1.5 cursor-pointer">
+                    <span>⭐</span> 突擊隨機小測驗
+                </button>
+            </div>
+
+            <!-- 站點 2: 📖 聖經版本 & 📑 譯本對照 -->
+            <div class="absolute top-[270px] left-[155px] z-10 flex flex-col items-center">
+                <button onclick="openNodeModal(2)" class="node-btn w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-4 border-white flex flex-col items-center justify-center group cursor-pointer">
+                    <span class="text-2xl group-hover:scale-125 transition-transform">📖</span>
+                    <span class="text-[11px] font-black mt-0.5">聖經版本</span>
+                </button>
+                <span class="mt-1 text-xs font-bold text-slate-800 bg-white/90 px-2.5 py-0.5 rounded-full shadow-sm border border-slate-200">Parallel · 主入口</span>
+            </div>
+
+            <!-- 驚喜寶箱 2: 每日金句 -->
+            <div class="absolute top-[400px] left-[25px] z-10">
+                <button onclick="openVerseModal()" class="px-3 py-1.5 bg-amber-500 text-white text-xs font-bold rounded-2xl shadow-md border-2 border-white hover:scale-105 transition-transform flex items-center gap-1.5 cursor-pointer animate-pulse">
+                    <span>🎁</span> 領取今日金句寶箱
+                </button>
+            </div>
+
+            <!-- 站點 3: 📖 聖經書卷 · 釋經參讀 -->
+            <div class="absolute top-[530px] left-[155px] z-10 flex flex-col items-center">
+                <button onclick="openNodeModal(3)" class="node-btn w-22 h-22 rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 text-white border-4 border-white flex flex-col items-center justify-center group cursor-pointer shadow-lg">
+                    <span class="text-3xl group-hover:scale-125 transition-transform">📚</span>
+                    <span class="text-xs font-black mt-0.5">釋經參讀</span>
+                </button>
+                <span class="mt-1 text-xs font-bold text-emerald-950 bg-white/90 px-2.5 py-0.5 rounded-full shadow-sm border border-emerald-200">Bible Commentary · 66卷</span>
+            </div>
+
+            <!-- 站點 4: 🗺️ 聖經地理歷史 -->
+            <div class="absolute top-[670px] right-[40px] z-10 flex flex-col items-center">
+                <button onclick="openNodeModal(4)" class="node-btn w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 text-white border-4 border-white flex flex-col items-center justify-center group cursor-pointer">
+                    <span class="text-2xl group-hover:scale-125 transition-transform">🗺️</span>
+                    <span class="text-[11px] font-black mt-0.5">地理歷史</span>
+                </button>
+                <span class="mt-1 text-xs font-bold text-purple-950 bg-white/90 px-2.5 py-0.5 rounded-full shadow-sm border border-purple-200">時間軸・地名・地圖・考古</span>
+            </div>
+
+            <!-- 驚喜關卡 1: 突擊小測驗 -->
+            <div class="absolute top-[170px] right-[35px] z-10">
+                <button onclick="openQuizModal()" class="px-3 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-2xl shadow-md border-2 border-white hover:scale-105 transition-transform flex items-center gap-1.5 cursor-pointer">
+                    <span>⭐</span> 突擊隨機小測驗
+                </button>
+            </div>
+
+            <!-- 站點 2: 📖 聖經版本 & 譯本對照 -->
+            <div class="absolute top-[270px] left-[155px] z-10 flex flex-col items-center">
+                <button onclick="openNodeModal(2)" class="node-btn w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-4 border-white flex flex-col items-center justify-center group cursor-pointer">
+                    <span class="text-2xl group-hover:scale-125 transition-transform">📖</span>
+                    <span class="text-[11px] font-black mt-0.5">譯本對照</span>
+                </button>
+                <span class="mt-1 text-xs font-bold text-slate-800 bg-white/90 px-2.5 py-0.5 rounded-full shadow-sm border border-slate-200">Parallel · 中/英/多語</span>
+            </div>
+
+            <!-- 驚喜寶箱 2: 每日金句 -->
+            <div class="absolute top-[400px] left-[25px] z-10">
+                <button onclick="openVerseModal()" class="px-3 py-1.5 bg-amber-500 text-white text-xs font-bold rounded-2xl shadow-md border-2 border-white hover:scale-105 transition-transform flex items-center gap-1.5 cursor-pointer animate-pulse">
+                    <span>🎁</span> 領取今日金句寶箱
+                </button>
+            </div>
+
+            <!-- 站點 3: 📖 聖經 66 卷 · 釋經參讀 -->
+            <div class="absolute top-[530px] left-[155px] z-10 flex flex-col items-center">
+                <button onclick="openNodeModal(3)" class="node-btn w-22 h-22 rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 text-white border-4 border-white flex flex-col items-center justify-center group cursor-pointer shadow-lg">
+                    <span class="text-3xl group-hover:scale-125 transition-transform">📚</span>
+                    <span class="text-xs font-black mt-0.5">66卷釋經參讀</span>
+                </button>
+                <span class="mt-1 text-xs font-bold text-emerald-950 bg-white/90 px-2.5 py-0.5 rounded-full shadow-sm border border-emerald-200">Bible Commentary · CMC</span>
+            </div>
+
+            <!-- 站點 4: 🗺️ 聖經地理歷史 -->
+            <div class="absolute top-[670px] right-[40px] z-10 flex flex-col items-center">
+                <button onclick="openNodeModal(4)" class="node-btn w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 text-white border-4 border-white flex flex-col items-center justify-center group cursor-pointer">
+                    <span class="text-2xl group-hover:scale-125 transition-transform">🗺️</span>
+                    <span class="text-[11px] font-black mt-0.5">地理歷史</span>
+                </button>
+                <span class="mt-1 text-xs font-bold text-purple-950 bg-white/90 px-2.5 py-0.5 rounded-full shadow-sm border border-purple-200">時間軸・地名・地圖</span>
+            </div>
+
+            <!-- 站點 5: 🧰 核心工具寶庫 -->
+            <div class="absolute top-[740px] left-[155px] z-10 flex flex-col items-center">
+                <button onclick="openNodeModal(5)" class="node-btn w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 text-white border-4 border-white flex flex-col items-center justify-center group cursor-pointer shadow-md">
+                    <span class="text-xl group-hover:scale-125 transition-transform">🧰</span>
+                    <span class="text-[10px] font-black mt-0.5">核心捷徑</span>
+                </button>
+                <span class="mt-1 text-xs font-bold text-rose-950 bg-white/90 px-2.5 py-0.5 rounded-full shadow-sm border border-rose-200">搜尋與主題工具</span>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- 熱點詳情與功能樞紐彈窗 (Interactive Node Hub Modal) -->
+    <div id="hotspotModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden transition-opacity duration-300">
+        <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col p-5 sm:p-6 border-4 border-amber-300 shadow-2xl relative transform transition-all scale-95 opacity-0 overflow-hidden" id="modalCard">
+            
+            <!-- 關閉按鈕 -->
+            <button onclick="closeModal()" class="absolute top-4 right-4 w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-bold text-lg transition-colors cursor-pointer z-20">
+                ✕
+            </button>
+
+            <!-- 景點頂部 Header -->
+            <div class="flex items-center gap-3 border-b border-gray-100 pb-3.5 shrink-0">
+                <div id="modalIconBg" class="w-13 h-13 rounded-2xl flex items-center justify-center text-3xl text-white shadow-md">
+                    <span id="modalIcon">🦁</span>
+                </div>
+                <div>
+                    <span id="modalBadge" class="text-[11px] font-extrabold bg-amber-100 text-amber-900 px-2.5 py-0.5 rounded-full">景點 01</span>
+                    <h3 id="modalTitle" class="text-lg sm:text-xl font-black font-serif text-gray-900 mt-0.5">設施名稱</h3>
+                </div>
+            </div>
+
+            <!-- 動態內容區 (可滾動) -->
+            <div class="flex-grow overflow-y-auto custom-scrollbar my-4 pr-1 space-y-4 text-gray-700 text-sm" id="modalContentBody">
+                <p id="modalDesc" class="text-xs sm:text-sm text-gray-600 leading-relaxed">景點詳細介紹...</p>
+
+                <!-- 動態注入的子選單或 66 卷選擇器 -->
+                <div id="modalSubSection" class="space-y-3"></div>
+            </div>
+
+            <!-- 底部動作鈕 -->
+            <div class="pt-3 border-t border-gray-100 flex items-center gap-3 shrink-0">
+                <button onclick="closeModal()" class="w-1/3 py-2.5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors">
+                    返回地圖
+                </button>
+                <a id="modalMainBtn" href="#" target="_blank" class="w-2/3 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs text-center shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-1.5">
+                    出發體驗此景點 →
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 突擊測驗 / 今日金句 小彈窗 -->
+    <div id="miniModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative">
+            <div id="miniModalEmoji" class="text-5xl animate-bounce">🎁</div>
+            <h3 id="miniModalTitle" class="text-lg font-bold font-serif text-gray-900">提示</h3>
+            <p id="miniModalText" class="text-sm text-gray-600 leading-relaxed"></p>
+            <button onclick="closeMiniModal()" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md transition-colors">
+                收到！繼續尋寶
+            </button>
+        </div>
+    </div>
+
+    <!-- 底部遊戲化 Navigation Dock -->
+    <div class="fixed bottom-4 inset-x-0 z-40 px-4 flex justify-center pointer-events-none">
+        <nav class="pointer-events-auto bg-white/95 backdrop-blur-xl border border-amber-200/80 shadow-2xl rounded-full px-5 py-2.5 flex items-center gap-6 sm:gap-8">
+            <button onclick="resetMapView()" class="flex flex-col items-center gap-0.5 text-amber-900 hover:text-amber-600 group cursor-pointer">
+                <div class="w-8 h-8 rounded-full bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center text-amber-800 transition-colors">
+                    <i data-lucide="compass" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[10px] font-bold">遊樂場地圖</span>
+            </button>
+
+            <button onclick="triggerRandomTreasure()" class="flex flex-col items-center gap-0.5 text-amber-900 hover:text-amber-600 group cursor-pointer">
+                <div class="w-10 h-10 -mt-3 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform border-2 border-white">
+                    <i data-lucide="dices" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[10px] font-extrabold text-amber-900">隨機尋寶</span>
+            </button>
+
+            <button onclick="talkToGuide()" class="flex flex-col items-center gap-0.5 text-amber-900 hover:text-amber-600 group cursor-pointer">
+                <div class="w-8 h-8 rounded-full bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center text-amber-800 transition-colors">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[10px] font-bold">嚮導諮詢</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        // 舊約 39 卷數據庫（含導論 Landing 連結）
+        const otCategories = [
+            {
+                name: "律法書 (5卷) Law",
+                landing: "📕 律法書導論與書卷 Landing",
+                books: [
+                    { id: "01", name: "01 創世記 Genesis" },
+                    { id: "02", name: "02 出埃及記 Exodus" },
+                    { id: "03", name: "03 利未記 Leviticus" },
+                    { id: "04", name: "04 民數記 Numbers" },
+                    { id: "05", name: "05 申命記 Deuteronomy" }
+                ]
+            },
+            {
+                name: "歷史書 (12卷) History",
+                landing: "📕 歷史書導論與書卷 Landing",
+                books: [
+                    { id: "06", name: "06 約書亞記 Joshua" },
+                    { id: "07", name: "07 士師記 Judges" },
+                    { id: "08", name: "08 路得記 Ruth" },
+                    { id: "09", name: "09 撒母耳記上 1 Samuel" },
+                    { id: "10", name: "10 撒母耳記下 2 Samuel" },
+                    { id: "11", name: "11 列王紀上 1 Kings" },
+                    { id: "12", name: "12 列王紀下 2 Kings" },
+                    { id: "13", name: "13 歷代志上 1 Chronicles" },
+                    { id: "14", name: "14 歷代志下 2 Chronicles" },
+                    { id: "15", name: "15 以斯拉記 Ezra" },
+                    { id: "16", name: "16 尼希米記 Nehemiah" },
+                    { id: "17", name: "17 以斯帖記 Esther" }
+                ]
+            },
+            {
+                name: "詩歌智慧書 (5卷) Poetry & Wisdom",
+                landing: "📕 詩歌智慧書導論與書卷 Landing",
+                books: [
+                    { id: "18", name: "18 約伯記 Job" },
+                    { id: "19", name: "19 詩篇 Psalms" },
+                    { id: "20", name: "20 箴言 Proverbs" },
+                    { id: "21", name: "21 傳道書 Ecclesiastes" },
+                    { id: "22", name: "22 雅歌 Song of Songs" }
+                ]
+            },
+            {
+                name: "大先知書 (5卷) Major Prophets",
+                landing: "📕 大先知書導論與書卷 Landing",
+                books: [
+                    { id: "23", name: "23 以賽亞書 Isaiah" },
+                    { id: "24", name: "24 耶利米書 Jeremiah" },
+                    { id: "25", name: "25 耶利米哀歌 Lamentations" },
+                    { id: "26", name: "26 以西結書 Ezekiel" },
+                    { id: "27", name: "27 但以理書 Daniel" }
+                ]
+            },
+            {
+                name: "小先知書 (12卷) Minor Prophets",
+                landing: "📕 小先知書導論與書卷 Landing",
+                books: [
+                    { id: "28", name: "28 何西阿書 Hosea" },
+                    { id: "29", name: "29 約珥書 Joel" },
+                    { id: "30", name: "30 阿摩司書 Amos" },
+                    { id: "31", name: "31 俄巴底亞書 Obadiah" },
+                    { id: "32", name: "32 約拿書 Jonah" },
+                    { id: "33", name: "33 彌迦書 Micah" },
+                    { id: "34", name: "34 那鴻書 Nahum" },
+                    { id: "35", name: "35 哈巴谷書 Habakkuk" },
+                    { id: "36", name: "36 西番雅書 Zephaniah" },
+                    { id: "37", name: "37 哈該書 Haggai" },
+                    { id: "38", name: "38 撒迦利亞書 Zechariah" },
+                    { id: "39", name: "39 瑪拉基書 Malachi" }
+                ]
+            }
+        ];
+
+        // 新約 27 卷數據庫（含導論 Landing 連結）
+        const ntCategories = [
+            {
+                name: "福音書 (4卷) Gospels",
+                landing: "📗 福音書導論與書卷 Landing",
+                books: [
+                    { id: "40", name: "40 馬太福音 Matthew" },
+                    { id: "41", name: "41 馬可福音 Mark" },
+                    { id: "42", name: "42 路加福音 Luke" },
+                    { id: "43", name: "43 約翰福音 John" }
+                ]
+            },
+            {
+                name: "歷史書 (1卷) History",
+                landing: "📗 歷史書導論與書卷 Landing",
+                books: [
+                    { id: "44", name: "44 使徒行傳 Acts" }
+                ]
+            },
+            {
+                name: "保羅書信 (13卷) Paul's Letters",
+                landing: "📗 保羅書信導論與書卷 Landing",
+                books: [
+                    { id: "45", name: "45 羅馬書 Romans" },
+                    { id: "46", name: "46 哥林多前書 1 Corinthians" },
+                    { id: "47", name: "47 哥林多後書 2 Corinthians" },
+                    { id: "48", name: "48 加拉太書 Galatians" },
+                    { id: "49", name: "49 以弗所書 Ephesians" },
+                    { id: "50", name: "50 腓立比書 Philippians" },
+                    { id: "51", name: "51 歌羅西書 Colossians" },
+                    { id: "52", name: "52 帖撒羅尼迦前書 1 Thessalonians" },
+                    { id: "53", name: "53 帖撒羅尼迦後書 2 Thessalonians" },
+                    { id: "54", name: "54 提摩太前書 1 Timothy" },
+                    { id: "55", name: "55 提摩太後書 2 Timothy" },
+                    { id: "56", name: "56 提多書 Titus" },
+                    { id: "57", name: "57 腓利門書 Philemon" }
+                ]
+            },
+            {
+                name: "一般書信 (8卷) General Epistles",
+                landing: "📗 一般書信導論與書卷 Landing",
+                books: [
+                    { id: "58", name: "58 希伯來書 Hebrews" },
+                    { id: "59", name: "59 雅各書 James" },
+                    { id: "60", name: "60 彼得前書 1 Peter" },
+                    { id: "61", name: "61 彼得後書 2 Peter" },
+                    { id: "62", name: "62 約翰一書 1 John" },
+                    { id: "63", name: "63 約翰二書 2 John" },
+                    { id: "64", name: "64 約翰三書 3 John" },
+                    { id: "65", name: "65 猶大書 Jude" }
+                ]
+            },
+            {
+                name: "啟示錄 (1卷) Revelation",
+                landing: "📗 啟示錄導論與書卷 Landing",
+                books: [
+                    { id: "66", name: "66 啟示錄 Revelation" }
+                ]
+            }
+        ];
+
+        const nodeData = {
+            1: {
+                title: "🦁 聖經跑道 · 四語 Track · 4 langs",
+                badge: "四語 Track · 4 langs",
+                icon: "🦁",
+                bgGradient: "from-amber-400 to-orange-500",
+                desc: "每天幾分鐘的輕靈修跑道！支援繁體中文、英文、越南語、印尼語等多語並排閱讀。斷更了也沒關係，回來繼續前行！",
+                url: "http://127.0.0.1:3000/bible_app/shell/index.html",
+                customHTML: `
+                    <div class="bg-amber-50 rounded-2xl p-3 border border-amber-200 space-y-2">
+                        <span class="text-xs font-bold text-amber-900 block">🌍 多語跑道支援模式：</span>
+                        <div class="flex flex-wrap gap-1.5 text-[11px]">
+                            <span class="bg-white px-2.5 py-1 rounded-lg border border-amber-300 font-medium">🇨🇳 繁體中文</span>
+                            <span class="bg-white px-2.5 py-1 rounded-lg border border-amber-300 font-medium">🇺🇸 English</span>
+                            <span class="bg-white px-2.5 py-1 rounded-lg border border-amber-300 font-medium">🇻🇳 Tiếng Việt</span>
+                            <span class="bg-white px-2.5 py-1 rounded-lg border border-amber-300 font-medium">🇮🇩 Bahasa Indonesia</span>
+                        </div>
+                    </div>
+                `
+            },
+            2: {
+                title: "📖 聖經版本 Bible Versions · 📑 譯本對照 Parallel",
+                badge: "Parallel · 主入口",
+                icon: "📖",
+                bgGradient: "from-blue-500 to-indigo-600",
+                desc: "外站譯本：iBible.hk 禁止嵌入，側欄 ↗ 直開新分頁；寮/越/緬 可在右欄選書後預覽或新分頁。",
+                url: "http://127.0.0.1:3000/bible_study/parallel_mode_v3.html",
+                customHTML: `
+                    <div class="space-y-2.5 text-xs">
+                        <!-- 中文版本 -->
+                        <div class="p-3 bg-blue-50 rounded-xl border border-blue-200">
+                            <span class="font-bold text-blue-950 block mb-1.5">🇨🇳 中文版本 Chinese · ↗ 外站</span>
+                            <div class="flex flex-col gap-1 text-[11px]">
+                                <a href="http://127.0.0.1:3000/bible_study/parallel_mode_v3.html" target="_blank" class="text-blue-700 hover:underline flex items-center gap-1 font-medium">
+                                    ▶ 和合本 Strong Number ↗ iBible.hk
+                                </a>
+                                <a href="http://127.0.0.1:3000/bible_study/parallel_mode_v3.html" target="_blank" class="text-blue-700 hover:underline flex items-center gap-1 font-medium">
+                                    ▶ 呂振中譯本 ↗ Lu Zhenzhong
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- 英文版本 -->
+                        <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
+                            <span class="font-bold text-indigo-950 block mb-1.5">🇺🇸 英文版本 English Versions</span>
+                            <div class="flex flex-col gap-1 text-[11px] text-indigo-800">
+                                <span>▶ King James Version KJV · BibleGateway</span>
+                                <span>▶ New International Version NIV · BibleGateway</span>
+                            </div>
+                        </div>
+
+                        <!-- 多語言 -->
+                        <div class="p-3 bg-purple-50 rounded-xl border border-purple-200">
+                            <span class="font-bold text-purple-950 block mb-1.5">🌍 多語言 Lao · VI · ID · MM</span>
+                            <div class="grid grid-cols-2 gap-1 text-[11px] text-purple-900">
+                                <span>▶ 🇱🇦 寮國聖經 laobible.net</span>
+                                <span>▶ 🇻🇳 越南聖經 Kinh Thánh BTT</span>
+                                <span>▶ 🇮🇩 印尼聖經 ↗ iBible · Indonesia Baru</span>
+                                <span>▶ 🇲🇲 緬甸聖經 WordProject</span>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            3: {
+                title: "📖 聖經書卷 · 釋經參讀 Bible Commentary",
+                badge: "Bible Commentary",
+                icon: "📚",
+                bgGradient: "from-emerald-500 to-teal-700",
+                desc: "目前資源：整合註釋與 CMC（中文為主）；日後可擴充其他語言／版本入口，網址與本區書卷連結不變。",
+                url: "http://127.0.0.1:3000/bible_study/comprehensive_exegesis_reader.html?book=%E5%89%B5%E4%B8%96%E8%A8%98&chapter=1",
+                isBible66: true
+            },
+            4: {
+                title: "🗺️ 聖經地理歷史 Geo & History",
+                badge: "時間軸・地名・地圖・考古",
+                icon: "🗺️",
+                bgGradient: "from-violet-500 to-purple-700",
+                desc: "結合時間軸、地名索引、考古年表與聖經地圖，重回歷史現場！",
+                url: "http://127.0.0.1:3000/bible_study/_landing/geography_history.html",
+                customHTML: `
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="p-2.5 bg-violet-50 rounded-xl border border-violet-200">
+                            <span class="font-bold text-violet-900 block mb-1">⏳ 時間軸 Timeline</span>
+                            <ul class="text-violet-700 space-y-1 text-[11px]">
+                                <li>▶ Bible Timeline (共享)</li>
+                                <li>▶ Bible Timeline (cnbible)</li>
+                            </ul>
+                        </div>
+                        <div class="p-2.5 bg-purple-50 rounded-xl border border-purple-200">
+                            <span class="font-bold text-purple-900 block mb-1">📍 地名 Place</span>
+                            <ul class="text-purple-700 space-y-1 text-[11px]">
+                                <li>▶ Place Index (Holy Light)</li>
+                                <li>▶ Place Search (Holy Light)</li>
+                                <li>▶ Geo Intro (Holy Light)</li>
+                            </ul>
+                        </div>
+                        <div class="p-2.5 bg-indigo-50 rounded-xl border border-indigo-200">
+                            <span class="font-bold text-indigo-900 block mb-1">🗺️ 地圖 Map</span>
+                            <ul class="text-indigo-700 space-y-1 text-[11px]">
+                                <li>▶ Bible Maps (LDS)</li>
+                                <li>▶ Bible Atlas (cnbible)</li>
+                                <li>▶ Bible Atlas (OpenBible)</li>
+                            </ul>
+                        </div>
+                        <div class="p-2.5 bg-fuchsia-50 rounded-xl border border-fuchsia-200">
+                            <span class="font-bold text-fuchsia-900 block mb-1">🏛️ 本站 Local</span>
+                            <ul class="text-fuchsia-700 space-y-1 text-[11px]">
+                                <li>▶ Site Timeline 考古年表</li>
+                            </ul>
+                        </div>
+                    </div>
+                `
+            },
+            5: {
+                title: "🧰 核心工具寶庫",
+                badge: "Tools & Shortcuts",
+                icon: "🧰",
+                bgGradient: "from-rose-500 to-pink-600",
+                desc: "搜尋工具與主題捷徑百寶箱，快速查詢字義與主題資料。",
+                url: "http://127.0.0.1:3000/bible_study/_landing/tools.html"
+            }
+        };
+
+        function render66BooksExplorer() {
+            let html = `
+                <div class="bg-gray-100 p-1 rounded-xl flex items-center justify-center gap-1 text-xs font-bold mb-3">
+                    <button onclick="toggleTestament('ot')" id="tabOT" class="flex-1 py-1.5 rounded-lg bg-white shadow-sm text-amber-900 transition-all">📕 舊約 (39卷) Old Testament</button>
+                    <button onclick="toggleTestament('nt')" id="tabNT" class="flex-1 py-1.5 rounded-lg text-gray-600 hover:bg-white/50 transition-all">📗 新約 (27卷) New Testament</button>
+                </div>
+
+                <div id="otSection" class="space-y-3">
+                    <div class="bg-amber-100/70 p-2 rounded-xl text-center">
+                        <a href="http://127.0.0.1:3000/bible_study/comprehensive_exegesis_reader.html" target="_blank" class="text-xs font-bold text-amber-950 hover:underline">
+                            📕 舊約釋經總覽 OT Landing ↗
+                        </a>
+                    </div>
+            `;
+
+            otCategories.forEach(cat => {
+                html += `
+                    <div class="border border-amber-200/80 rounded-2xl p-2.5 bg-amber-50/50 space-y-2">
+                        <div class="flex items-center justify-between border-b border-amber-200/60 pb-1">
+                            <span class="text-xs font-extrabold text-amber-900">${cat.name}</span>
+                            <a href="#" class="text-[10px] text-amber-700 hover:underline font-bold">${cat.landing} ↗</a>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                `;
+                cat.books.forEach(b => {
+                    const cleanName = b.name.replace(/^\d+\s*/, '').split(' ')[0];
+                    const url = `http://127.0.0.1:3000/bible_study/comprehensive_exegesis_reader.html?book=${encodeURIComponent(cleanName)}&chapter=1`;
+                    html += `
+                        <a href="${url}" target="_blank" class="px-2 py-1 bg-white hover:bg-amber-100 border border-amber-200 rounded-lg text-[11px] font-medium text-gray-800 truncate transition-colors flex items-center gap-1" title="${b.name}">
+                            <span class="text-[9px] font-mono text-amber-600 font-bold">${b.id}</span>
+                            <span class="truncate">${b.name}</span>
+                        </a>
+                    `;
+                });
+                html += `</div></div>`;
+            });
+            html += `</div>`;
+
+            html += `
+                <div id="ntSection" class="space-y-3 hidden">
+                    <div class="bg-emerald-100/70 p-2 rounded-xl text-center">
+                        <a href="http://127.0.0.1:3000/bible_study/comprehensive_exegesis_reader.html" target="_blank" class="text-xs font-bold text-emerald-950 hover:underline">
+                            📗 新約釋經總覽 NT Landing ↗
+                        </a>
+                    </div>
+            `;
+            
+            ntCategories.forEach(cat => {
+                html += `
+                    <div class="border border-emerald-200/80 rounded-2xl p-2.5 bg-emerald-50/50 space-y-2">
+                        <div class="flex items-center justify-between border-b border-emerald-200/60 pb-1">
+                            <span class="text-xs font-extrabold text-emerald-900">${cat.name}</span>
+                            <a href="#" class="text-[10px] text-emerald-700 hover:underline font-bold">${cat.landing} ↗</a>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                `;
+                cat.books.forEach(b => {
+                    const cleanName = b.name.replace(/^\d+\s*/, '').split(' ')[0];
+                    const url = `http://127.0.0.1:3000/bible_study/comprehensive_exegesis_reader.html?book=${encodeURIComponent(cleanName)}&chapter=1`;
+                    html += `
+                        <a href="${url}" target="_blank" class="px-2 py-1 bg-white hover:bg-emerald-100 border border-emerald-200 rounded-lg text-[11px] font-medium text-gray-800 truncate transition-colors flex items-center gap-1" title="${b.name}">
+                            <span class="text-[9px] font-mono text-emerald-600 font-bold">${b.id}</span>
+                            <span class="truncate">${b.name}</span>
+                        </a>
+                    `;
+                });
+                html += `</div></div>`;
+            });
+            html += `</div>`;
+
+            return html;
+        }
+
+        function toggleTestament(type) {
+            const otSec = document.getElementById('otSection');
+            const ntSec = document.getElementById('ntSection');
+            const tabOT = document.getElementById('tabOT');
+            const tabNT = document.getElementById('tabNT');
+
+            if (type === 'ot') {
+                otSec.classList.remove('hidden');
+                ntSec.classList.add('hidden');
+                tabOT.className = "flex-1 py-1.5 rounded-lg bg-white shadow-sm text-amber-900 font-bold transition-all";
+                tabNT.className = "flex-1 py-1.5 rounded-lg text-gray-600 hover:bg-white/50 transition-all";
+            } else {
+                otSec.classList.add('hidden');
+                ntSec.classList.remove('hidden');
+                tabNT.className = "flex-1 py-1.5 rounded-lg bg-white shadow-sm text-emerald-900 font-bold transition-all";
+                tabOT.className = "flex-1 py-1.5 rounded-lg text-gray-600 hover:bg-white/50 transition-all";
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('hotspotModal');
+            const card = document.getElementById('modalCard');
+            card.classList.remove('scale-100', 'opacity-100');
+            card.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        function updateGuide(title, desc) {
+            document.getElementById('guideTitle').innerText = title;
+            document.getElementById('guideDesc').innerText = desc;
+        }
+
+        function triggerRandomTreasure() {
+            const randomId = Math.floor(Math.random() * 5) + 1;
+            openNodeModal(randomId);
+        }
+
+        function talkToGuide() {
+            const tips = [
+                "💡 嚮導提示：每天花 5 分鐘，點擊第一站「🦁 聖經跑道」體驗多語靈修！",
+                "💡 嚮導提示：想深入研究經文原意？「📚 66卷釋經參讀」提供豐富的 CMC 綜合註釋！",
+                "💡 嚮導提示：對比多個翻譯版本？「📖 譯本對照」能幫你平行對比和合本與英文 KJV/NIV！",
+                "💡 嚮導提示：想了解聖經故事的發生地點？點開「🗺️ 地理歷史」查看地圖與時間軸！"
+            ];
+            const randomTip = tips[Math.floor(Math.random() * tips.length)];
+            updateGuide("嚮導靈感分享：", randomTip);
+        }
+
+        function resetMapView() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            updateGuide("歡迎回到遊樂場地圖中央！", "點擊地圖上的圓形熱點，隨時打開景點與 66 卷經文！");
+        }
+
+        function openQuizModal() {
+            document.getElementById('miniModalEmoji').innerText = "⭐";
+            document.getElementById('miniModalTitle').innerText = "突擊小測驗";
+            document.getElementById('miniModalText').innerText = "「神就照著自己的形象造人，乃是照著祂的形象造男造女。」這句經文出自哪裡？（解答：創世記 1:27）";
+            document.getElementById('miniModal').classList.remove('hidden');
+        }
+
+        function openVerseModal() {
+            document.getElementById('miniModalEmoji').innerText = "🎁";
+            document.getElementById('miniModalTitle').innerText = "今日恩典寶箱";
+            document.getElementById('miniModalText').innerText = "「祢的話是我腳前的燈，是我路上的光。」（詩篇 119:105）—— 願神的話語陪伴你今天的每一步！";
+            document.getElementById('miniModal').classList.remove('hidden');
+        }
+
+        function closeMiniModal() {
+            document.getElementById('miniModal').classList.add('hidden');
+        }
+
+        // 初始化 Lucide 圖標
+        lucide.createIcons();
+    </script>
+</body>
+</html>

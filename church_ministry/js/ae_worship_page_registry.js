@@ -153,26 +153,14 @@
       scores: "流程单、曲目与经文对照。"
     }),
     "worship-reports": p({
-      mode: "tool",
+      mode: "skip",
       title: "崇拜统计报表",
-      emoji: "📊",
-      meaning: "出席、服事次数、曲目与团队参与汇总。",
-      org: "敬拜统筹／行政提交报表。",
-      training: "数据录入规范培训。",
-      performance: "主日周报、月报、节期报告。",
-      activities: "年度敬拜回顾。",
-      scores: "导出 CSV／打印报表。"
+      emoji: "📊"
     }),
     "attendance-management": p({
-      mode: "tool",
+      mode: "skip",
       title: "崇拜出席",
       emoji: "✅",
-      meaning: "会众与服事人员出席记录；缺勤触发探访。",
-      org: "招待／小组长录入；与 CRM 探访互联。",
-      training: "出席录入与隐私培训。",
-      performance: "主日各场出席表。",
-      activities: "特别聚会出席追踪。",
-      scores: "—",
       nextLinks: [
         { href: "worship-integrated.html", label: "🎵 敬拜主桌" },
         { href: "modules/support/visitation_index.html", label: "💬 缺席探访" },

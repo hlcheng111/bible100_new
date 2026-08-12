@@ -29,6 +29,7 @@
                 search: true,
                 paths: {
                     json: [
+                        'data/bibles/clean/faith_cuv.json',
                         'data/bibles/clean/信望爱(和合本).json',
                         'data/bibles/信望爱(和合本).json',
                         'data/bibles/信望愛(和合本).json'
@@ -43,7 +44,7 @@
                 parallel: false,
                 search: true,
                 paths: {
-                    json: ['data/bibles/clean/和合本修訂版.json', 'data/bibles/和合本.json', 'data/bibles/和合本修訂版.json']
+                    json: ['data/bibles/clean/cuv.json', 'data/bibles/clean/cuv_rev.json', 'data/bibles/clean/和合本修訂版.json', 'data/bibles/和合本.json', 'data/bibles/和合本修訂版.json']
                 }
             },
             {
@@ -54,7 +55,7 @@
                 parallel: false,
                 search: true,
                 paths: {
-                    json: ['data/bibles/clean/和合本修訂版.json', 'data/bibles/和合本修訂版.json']
+                    json: ['data/bibles/clean/cuv_rev.json', 'data/bibles/clean/和合本修訂版.json', 'data/bibles/和合本修訂版.json']
                 }
             },
             {
@@ -65,7 +66,7 @@
                 parallel: false,
                 search: false,
                 paths: {
-                    json: ['data/bibles/clean/吕振中.json', 'data/bibles/吕振中.json']
+                    json: ['data/bibles/clean/luzhen.json', 'data/bibles/clean/吕振中.json', 'data/bibles/吕振中.json']
                 }
             },
             {
@@ -76,7 +77,7 @@
                 parallel: true,
                 search: true,
                 paths: {
-                    json: ['data/bibles/clean/KJV.json', 'data/bibles/kjv.json', 'data/bibles/KJV.json']
+                    json: ['data/bibles/clean/KJV.json', 'data/bibles/clean/kjv.json', 'data/bibles/KJV.json', 'data/bibles/kjv.json']
                 }
             },
             {
@@ -87,7 +88,7 @@
                 parallel: true,
                 search: true,
                 paths: {
-                    json: ['data/bibles/clean/NIV.json', 'data/bibles/niv.json', 'data/bibles/NIV.json', 'data/bibles/niv_complete_data.json']
+                    json: ['data/bibles/clean/NIV.json', 'data/bibles/clean/niv.json', 'data/bibles/NIV.json', 'data/bibles/niv.json', 'data/bibles/niv_complete_data.json']
                 }
             },
             {
@@ -98,7 +99,7 @@
                 parallel: true,
                 search: false,
                 paths: {
-                    json: ['data/bibles/clean/越南聖經1934.json']
+                    json: ['data/bibles/clean/vi1934.json', 'data/bibles/clean/越南聖經1934.json']
                 }
             },
             {
@@ -109,7 +110,7 @@
                 parallel: true,
                 search: false,
                 paths: {
-                    json: ['data/bibles/clean/印尼AYT.json']
+                    json: ['data/bibles/clean/id_ayt.json', 'data/bibles/clean/印尼AYT.json']
                 }
             }
         ],
@@ -198,6 +199,7 @@
                 name: '圣经语汇词典',
                 langs: ['cn', 'en'],
                 paths: {
+                    db: ['data/cd/圣经语汇词典.db'],
                     json: [
                         'data/cd/圣经语汇词典.json',
                         'data/dictionaries/圣经词典.json'

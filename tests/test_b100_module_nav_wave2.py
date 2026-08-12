@@ -64,7 +64,7 @@ def main() -> int:
         print("FAIL: missing", SSOT, file=sys.stderr)
         return 1
     ssot = SSOT.read_text(encoding="utf-8", errors="replace")
-    if "20260811w2" not in ssot and "20260812clean" not in ssot:
+    if "20260812data" not in ssot and "20260812clean" not in ssot:
         print("FAIL: b100_module_nav_ssot.js NAV_BUILD not bumped", file=sys.stderr)
         return 1
     if "secondaryNavForMode" not in ssot:
@@ -109,20 +109,23 @@ def main() -> int:
     if "index_v5_hub_clean.js" not in index:
         print("FAIL: index_v5.html must load index_v5_hub_clean.js for file:// cache bust", file=sys.stderr)
         return 1
-    if "20260812clean" not in index:
-        print("FAIL: index_v5.html build stamp 20260812clean missing", file=sys.stderr)
+    if "20260812data" not in index:
+        print("FAIL: index_v5.html build stamp 20260812data missing", file=sys.stderr)
         return 1
 
     if BUILD_VER.is_file():
         bv = BUILD_VER.read_text(encoding="utf-8", errors="replace")
-        if "20260812clean" not in bv:
-            print("FAIL: build_version.js not bumped to 20260812clean", file=sys.stderr)
+        if "20260812data" not in bv:
+            print("FAIL: build_version.js not bumped to 20260812data", file=sys.stderr)
             return 1
 
     if HUB_CLEAN.is_file():
         hc = HUB_CLEAN.read_text(encoding="utf-8", errors="replace")
         if "stripEnLabels" not in hc:
-            print("FAIL: index_v5_hub_clean.js missing stripEnLabels", file=sys.stderr)
+            print("FAIL: index_v5_hub_clean.js missing stripEnLabels export", file=sys.stderr)
+            return 1
+        if "20260812data" not in hc:
+            print("FAIL: hub_clean build not bumped", file=sys.stderr)
             return 1
     else:
         print("FAIL: missing", HUB_CLEAN, file=sys.stderr)

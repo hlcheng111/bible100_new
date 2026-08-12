@@ -4,16 +4,19 @@
 (function (global, doc) {
   "use strict";
 
-  var FOCUS_BUILD = "20260812clean";
+  var FOCUS_BUILD = "20260812data";
 
   var FOCUS_LABELS = {
     study: {
+      home: "路線圖",
+      track: "聖經跑道",
       tools: "核心捷徑",
       versions: "聖經版本",
       commentary: "釋經參讀",
       geo: "地理歷史",
     },
     school: {
+      home: "路線圖",
       workbench: "教務工作台",
       enrollment: "A 招生入學",
       academic: "B 學籍教務",

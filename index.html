@@ -3,28 +3,2224 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bible100 · 前往總站殼</title>
-  <meta name="description" content="總站入口已統一為 index_v5.html（雙 iframe 殼）。舊版整頁入口備份為 index_legacy.html。">
-  <meta http-equiv="refresh" content="0; url=index_v5.html">
-  <link rel="canonical" href="index_v5.html">
-  <link rel="manifest" href="manifest.json">
+  <!-- file:// 下部分瀏覽器仍會快取本頁；開發時請用無痕視窗、DevTools「停用快取」，或改用本機 HTTP -->
+  <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <title>聖經百步四寶 · Bible100 · 20260813http</title>
+  <link rel="canonical" href="index.html">
+  <script>document.documentElement.setAttribute('data-index-build','20260813http');</script>
+  <script src="js/b100_site_http_boot.js?v=20260813http"></script>
+  <script>
+  (function () {
+    if (location.protocol !== 'file:') return;
+    var boot = window.B100SiteHttpBoot;
+    if (boot && boot.redirectIfLive) boot.redirectIfLive('index.html');
+  })();
+  </script>
+  <link rel="stylesheet" href="css/b100_label.css?v=20260812data">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+  <!--
+    =============================================================================
+    index_v5 · 全站施工順序與舊檔處理（維護者請讀）
+    =============================================================================
+    施工順序（先做好殼與導航，再逐頁檢討實作）：
+      1. 併 — 合併頁面與功能，統一入口與重複邏輯。
+      2. 修 — 修頁能力（結構、離線、Tab、路由、相容性等）。
+      3. 新 — 新頁與新功能。
+      標「留」之頁面：暫不處理，待上述階段穩定後再議。
+
+    併／修過程中的「舊文件」如何處理？
+      · 建議先保留，以便有問題可回退（回車／rollback）。
+      · 首選：使用 Git — 合併或改寫前先 commit；必要時用分支、tag、revert 還原。
+      · 若未用 Git：將被取代的檔案移到同模組 _archive/ 或專案 _archive_bible100/，
+        檔名加日期或版本後綴，並在去向表／README 註明「舊檔 ↔ 新入口」對照。
+      · 新流程驗證無誤後，再決定刪除或長期封存；不要在第一時間硬刪唯一副本。
+
+    啟動行為（本頁保證）：
+      · 根目錄 index.html 已轉址至本殼；每次開啟本頁預設載入：languages/_landing/home.html（教材與培訓 · 百步四寶）。
+      · 預設「教材與培訓」並展開頂欄第二層（語言軌四組）；切換模式時第二列依模式更新；Q&A 模式不展開外殼第二列（iframe 內已有大類／來源列）。
+    · 正式入口與維護以本檔為準。分頁標題含「總站殼」、第二列 class 必含 row2＋top-nav-secondary（renderContextBar 勿覆寫掉）。
+    實施進度表（波次與待辦）：SITE_併修新_實施進度.md
+    =============================================================================
+  -->
+  <style type="text/css">
+    :root {
+      --h: #0b5fa5;
+      --h2: #f0f7ff;
+      --top-offset: 56px;
+    }
+    body { margin: 0; padding: 0; font-family: "Microsoft YaHei", "Segoe UI", sans-serif; background: #f6f7fb; font-size: 12px; }
+    /* 殼頁 h1 僅供語意，不可佔版面（否則頂欄下多出整段空白） */
+    .page-main-title {
+      position: absolute !important;
+      width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
+    .top-wrap { position: fixed; top: 0; left: 0; right: 0; z-index: 999; background: var(--h); color: #fff; border-bottom: 3px solid #2aa5ff; }
+    .row1 { min-height: 48px; display: flex; align-items: center; padding: 4px 8px; gap: 6px; flex-wrap: wrap; }
+    .brand { font-weight: bold; font-size: 13px; line-height: 1.15; margin-right: 4px; max-width: 200px; }
+    .cid-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border: 1px solid rgba(255,255,255,0.45);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .mode-btn {
+      display: inline-flex; flex-direction: column; align-items: flex-start; padding: 4px 8px 3px;
+      border: none; border-radius: 6px; cursor: pointer; background: rgba(255,255,255,0.22); color: #fff; text-align: left;
+      line-height: 1.1; min-width: 108px; text-decoration: none; box-sizing: border-box;
+    }
+    .mode-btn:hover { background: rgba(255,255,255,0.38); }
+    .mode-btn.active { background: #fff; color: var(--h); }
+    .mode-btn .t-zh { font-size: 10px; font-weight: bold; }
+    .mode-btn .t-en { font-size: 7px; opacity: 0.92; font-weight: normal; }
+    .mode-btn.active .t-en { color: #1565c0; opacity: 1; }
+    .hub-top-search {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      margin: 0 4px 0 2px;
+      vertical-align: middle;
+    }
+    .hub-top-search-input {
+      width: 108px;
+      max-width: 28vw;
+      padding: 5px 8px 5px 26px;
+      border: 1px solid rgba(255,255,255,0.55);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 11px;
+      font-family: inherit;
+      transition: width 0.15s, background 0.15s;
+    }
+    .hub-top-search-input::placeholder { color: rgba(255,255,255,0.75); }
+    .hub-top-search-input:focus {
+      outline: none;
+      width: 148px;
+      background: rgba(255,255,255,0.95);
+      color: #1e293b;
+    }
+    .hub-top-search-input:focus::placeholder { color: #94a3b8; }
+    .hub-top-search-icon {
+      position: absolute;
+      left: 8px;
+      pointer-events: none;
+      font-size: 11px;
+      opacity: 0.9;
+    }
+    .hub-top-search-results {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      min-width: 320px;
+      width: min(420px, 92vw);
+      max-height: min(70vh, 520px);
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.18);
+      z-index: 10001;
+      border: 1px solid #cbd5e1;
+      padding: 6px;
+    }
+    .hub-top-search-results.is-open { display: block; }
+    .top-home-btn {
+      display: inline-flex; align-items: center; padding: 5px 10px; margin-left: 4px;
+      border: none; border-radius: 8px; cursor: pointer; background: #059669; color: #fff;
+      font-size: 11px; font-weight: 700; font-family: inherit; line-height: 1.2;
+      text-decoration: none; box-sizing: border-box;
+    }
+    .top-home-btn:hover { background: #047857; }
+    .top-multilang-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; padding: 0; margin-left: 2px;
+      border: 2px solid rgba(255,255,255,0.55); border-radius: 8px; cursor: pointer;
+      background: rgba(255,255,255,0.22); color: #fff;
+      font-size: 17px; line-height: 1; font-family: inherit;
+      box-sizing: border-box; flex-shrink: 0;
+    }
+    .top-multilang-btn:hover { background: rgba(255,255,255,0.42); border-color: #fff; }
+    .hub-lang-pills {
+      display: inline-flex; align-items: center; gap: 3px;
+      margin-left: 4px; padding: 2px 4px;
+      border-left: 1px solid rgba(255,255,255,0.35);
+    }
+    .hub-lang-pills .lang-lbl {
+      font-size: 8px; opacity: 0.9; margin-right: 2px; white-space: nowrap;
+    }
+    .hub-lang-pills .b100-lang-btn {
+      min-width: 26px; padding: 3px 6px; font-size: 10px; font-weight: 700;
+      border-radius: 5px; cursor: pointer; font-family: inherit;
+      color: #fff; background: rgba(255,255,255,0.16);
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+    .hub-lang-pills .b100-lang-btn.on {
+      background: #fff; color: #1565c0; border-color: #fff;
+    }
+    .hub-lang-pills .b100-lang-btn:hover { background: rgba(255,255,255,0.32); }
+    body.ui-locale-en .mode-btn .t-en,
+    body.ui-locale-en .sub-btn .t-en,
+    body.ui-locale-en .lbl-stack .lbl-en { display: none; }
+    /* 頂欄第一列：工具總覽（全模式可用，等同舊站工具入口） */
+    .top-tools-btn {
+      display: inline-flex; flex-direction: column; align-items: flex-start; padding: 4px 8px 3px;
+      border: none; border-radius: 6px; cursor: pointer; background: rgba(255,255,255,0.35); color: #fff;
+      text-align: left; line-height: 1.1; min-width: 72px; margin-left: 2px;
+    }
+    .top-tools-btn:hover { background: rgba(255,255,255,0.52); }
+    .top-tools-btn .t-zh { font-size: 10px; font-weight: bold; }
+    .top-tools-btn .t-en { font-size: 7px; opacity: 0.92; font-weight: normal; }
+    .sync-observer-btn {
+      margin-left: auto;
+      border: 1px solid rgba(255,255,255,0.45);
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      /* 工程師用：雲端同步佇列；小白頂欄預設隱藏（?show_sync=1 或 localStorage b100_show_sync=1 可顯示） */
+      display: none;
+    }
+    body.b100-show-sync .sync-observer-btn { display: inline-flex; align-items: center; }
+    .sync-observer-btn:hover { background: rgba(255,255,255,0.30); }
+    .sync-observer-btn.has-unread::after {
+      content: "";
+      display: inline-block;
+      width: 8px; height: 8px;
+      margin-left: 6px;
+      border-radius: 999px;
+      background: #ef4444;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
+      vertical-align: middle;
+    }
+    .sync-observer-mini-toast {
+      position: fixed;
+      top: calc(var(--top-offset) + 8px);
+      right: 14px;
+      z-index: 1003;
+      background: #eff6ff;
+      border: 1px solid #60a5fa;
+      color: #1e3a8a;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 11px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+    .sync-observer-drawer {
+      position: fixed; top: var(--top-offset); right: 0;
+      width: 420px; max-width: 92vw; height: calc(100vh - var(--top-offset));
+      background: #fff; border-left: 1px solid #cbd5e1; z-index: 1002;
+      transform: translateX(100%); transition: transform .2s ease;
+      display: flex; flex-direction: column;
+    }
+    .sync-observer-drawer.open { transform: translateX(0); }
+    .sync-observer-head { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid #e2e8f0; background:#f8fafc; }
+    .sync-observer-head .ttl { font-weight:700; color:#1e293b; font-size:13px; }
+    .sync-observer-head .grow { flex: 1; }
+    .sync-observer-head .btn { border:1px solid #cbd5e1; background:#fff; border-radius:6px; padding:4px 8px; cursor:pointer; font-size:11px; }
+    .sync-observer-body { overflow:auto; padding:10px 12px; display:grid; gap:12px; }
+    .sync-observer-section h4 { margin:0 0 8px; color:#0f172a; font-size:12px; }
+    .sync-observer-list { display:grid; gap:8px; }
+    .sync-observer-item { border:1px solid #e2e8f0; border-radius:8px; padding:8px; background:#fff; }
+    .sync-observer-item.success { border-left:3px solid #10b981; }
+    .sync-observer-item.warning { border-left:3px solid #f59e0b; }
+    .sync-observer-item.error { border-left:3px solid #ef4444; }
+    .sync-observer-item.info { border-left:3px solid #3b82f6; }
+    .sync-observer-time { font-size:10px; color:#64748b; margin-bottom:4px; }
+    .sync-observer-msg { font-size:12px; color:#0f172a; font-weight:600; margin-bottom:4px; }
+    .sync-observer-detail { font-size:10px; color:#334155; white-space:pre-wrap; word-break:break-all; }
+    .sync-observer-actions { margin-top:6px; display:flex; gap:6px; }
+    .sync-btn { border:1px solid #93c5fd; background:#eff6ff; color:#1e3a8a; border-radius:6px; font-size:10px; padding:3px 6px; cursor:pointer; }
+    .sync-btn.warn { border-color:#fdba74; background:#fff7ed; color:#9a3412; }
+    .sync-observer-empty { font-size:11px; color:#64748b; padding:8px; border:1px dashed #cbd5e1; border-radius:8px; background:#f8fafc; }
+    .sync-health-strip { font-size:11px; color:#334155; border:1px solid #cbd5e1; border-radius:8px; padding:10px; background:#f0fdf4; border-left:3px solid #10b981; }
+    .sync-health-row { margin-bottom:4px; }
+    .sync-health-k { font-weight:700; color:#0f172a; }
+    .sync-health-tools { display:grid; gap:6px; margin-top:8px; }
+    .sync-health-tool { background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:6px 8px; }
+    .sync-health-opt { font-size:10px; color:#64748b; font-weight:400; }
+    .sync-health-note { font-size:10px; color:#64748b; margin-top:2px; }
+    .sync-health-msg { margin:8px 0 0; font-size:10px; color:#64748b; line-height:1.45; }
+    /* 頂欄為 .top-wrap { color:#fff }，第二列須明確覆寫，否則部分瀏覽器／快取下子元素仍呈白字 */
+    .top-wrap > .row2 {
+      display: none;
+      background: var(--h2);
+      color: #0d2137;
+      padding: 3px 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      border-top: 1px solid #cfe3fb;
+      line-height: 1.25;
+      min-height: 0;
+    }
+    .top-wrap.context-open .row2 { display: flex; }
+    #contextBar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+    /* 頂欄2 模組標題：字級對齊頂欄1 按鈕（.t-zh 10px / .t-en 7px），勿大於第一列 */
+    .row2 .lbl.lbl-stack,
+    .row2 .lbl.lbl-material {
+      display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center;
+      line-height: 1.1; flex-shrink: 0;
+    }
+    #contextBar.top-nav-secondary .lbl.lbl-stack .lbl-zh,
+    #contextBar.top-nav-secondary .lbl.lbl-material .lbl-zh {
+      font-size: 10px; font-weight: bold; color: #0d2137 !important;
+    }
+    #contextBar.top-nav-secondary .lbl.lbl-stack .lbl-en,
+    #contextBar.top-nav-secondary .lbl.lbl-material .lbl-en {
+      font-size: 7px; font-weight: normal; color: #475569 !important; margin-top: 1px;
+    }
+    .row2 .lbl.lbl-stack--link,
+    .row2 .lbl.lbl-material.lbl-stack--link {
+      text-decoration: none; color: inherit; cursor: pointer;
+    }
+    .row2 .lbl.lbl-stack--link:hover .lbl-zh,
+    .row2 .lbl.lbl-material.lbl-stack--link:hover .lbl-zh {
+      text-decoration: underline;
+    }
+    /* 僅「教材」第二列之語言切換列：以 EN/VN 視覺為基準之一套字級，不影響 iframe 內文 */
+    .row2 .lang-switch.lang-inline {
+      font-size: 10px;
+      line-height: 1.35;
+      flex: 1;
+      min-width: 0;
+    }
+    .row2 .lang-switch.lang-inline a {
+      color: #0d47a1;
+      text-decoration: none;
+      padding: 1px 4px;
+      white-space: nowrap;
+      font-size: 10px;
+      font-weight: normal;
+    }
+    .row2 .lang-switch.lang-inline a:hover { text-decoration: underline; color: #0b5fa5; }
+    .row2 .lang-switch.lang-inline a.active { font-weight: bold; color: #b71c1c; }
+    .row2 .lang-switch.lang-inline .sep { color: #78909c; margin: 0 1px; user-select: none; }
+    #contextBar.material-bar { align-items: flex-start; flex-wrap: wrap; }
+    .lang-btn-grid { display: flex; flex-direction: row; flex-wrap: wrap; align-items: stretch; gap: 4px 6px; flex: 1; min-width: 0; }
+    .lang-btn-row { display: contents; }
+    .lang-btn.lang-btn-minor {
+      background: #c8e6c9 !important;
+      border-color: #81c784 !important;
+    }
+    .lang-btn {
+      display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center;
+      padding: 3px 8px 2px; border-radius: 6px; border: 1px solid #90caf9;
+      background: #fff; color: #0d47a1; cursor: pointer; text-decoration: none;
+      min-width: 76px; line-height: 1.1; font-family: inherit;
+    }
+    .lang-btn .t-zh { font-size: 10px; font-weight: bold; }
+    .lang-btn .t-en { font-size: 7px; font-weight: normal; margin-top: 1px; opacity: 0.95; }
+    .lang-btn:hover { background: #e3f2fd; }
+    .lang-btn.active { background: #fff9c4; color: #b71c1c; border-color: #f9a825; }
+    .sub-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; flex: 1; min-width: 0; }
+    .sub-btn {
+      display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center;
+      padding: 3px 8px 2px; border-radius: 4px; border: 1px solid #90caf9;
+      background: #fff; color: #0d47a1; cursor: pointer; font: inherit; line-height: 1.1;
+      min-width: 76px; white-space: normal; text-decoration: none; box-sizing: border-box;
+    }
+    .sub-btn .t-zh { font-size: 10px; font-weight: bold; display: block; }
+    .sub-btn .t-en { font-size: 7px; font-weight: normal; display: block; margin-top: 1px; opacity: 0.95; }
+    .sub-btn:hover { background: #bbdefb; }
+    .sub-btn-home {
+      background: #2e7d32 !important; color: #fff !important; border-color: #1b5e20 !important;
+    }
+    .sub-btn-home .t-zh, .sub-btn-home .t-en { color: #fff !important; opacity: 1; }
+    .sub-btn-home:hover { background: #388e3c !important; color: #fff !important; }
+    .sub-btn.linkish { text-decoration: none; display: inline-block; }
+    .main { margin-top: var(--top-offset); }
+    table.layout { width: 100%; height: calc(100vh - var(--top-offset)); height: calc(100dvh - var(--top-offset)); border-collapse: collapse; table-layout: fixed; }
+    td.left { width: 230px; min-width: 120px; max-width: 42%; background: #eef6ff; border-right: 2px solid #2aa5ff; vertical-align: top; }
+    td.right { vertical-align: top; }
+    /* Q&A 模式：V2 已自含大類／來源列、左題目樹、右 mainFrame，外層左欄徒增一欄 */
+    body.mode-qna table.layout td.left { display: none; }
+    body.mode-qna table.layout td.right { width: 100%; }
+    /* 詩歌：舊版 hymn_main_index 仍可用 mode-hymn-embed；Playlist／儀表板改外層雙欄 */
+    body.mode-hymn-embed table.layout td.left { display: none; }
+    body.mode-hymn-embed table.layout td.right { width: 100%; }
+    /* 模組殼（smart/church/school/planning）：外層左欄關閉，避免內層 sidebar 變窄縮成三劃 */
+    body.mode-module-shell-embed table.layout td.left { display: none; }
+    body.mode-module-shell-embed table.layout td.right { width: 100%; }
+    iframe { border: 0; width: 100%; height: 100%; }
+    #fileProtocolBanner { display: none !important; }
+    #surveyUiBanner {
+      display: none;
+      background: #eef2ff; color: #312e81; padding: 5px 10px; text-align: center; font-size: 10px;
+      border-bottom: 1px solid #c7d2fe; line-height: 1.45;
+    }
+    body.show-survey-banner #surveyUiBanner { display: block; }
+    #surveyUiBanner a { color: #4338ca; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+    #surveyUiBanner a:hover { color: #1e1b4b; }
+    .loading-overlay { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); display: none; align-items: center; justify-content: center; z-index: 1000; flex-direction: column; }
+    .loading-overlay.active { display: flex; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--h); border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin-bottom: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-message { position: fixed; top: var(--top-offset); left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.98); display: none; align-items: center; justify-content: center; z-index: 1001; flex-direction: column; padding: 12px; text-align: center; }
+    .error-message.active { display: flex; }
+    .error-button { padding: 8px 16px; background: var(--h); color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+    /* 手機／窄平板：側欄改為抽屜，預設收合，避免擠壓內容區 */
+    .sidebar-toggle-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 36px;
+      margin: 0 4px 0 0;
+      padding: 0;
+      border: 1px solid rgba(255,255,255,0.45);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      flex-shrink: 0;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .sidebar-toggle-btn:hover { background: rgba(255,255,255,0.35); }
+    .sidebar-toggle-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: var(--top-offset);
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.4);
+      z-index: 1999;
+      touch-action: manipulation;
+    }
+    body.sidebar-mobile-open .sidebar-backdrop { display: block; }
+    /*
+     * 側欄抽屜：僅在「真正窄螢幕」啟用（≤767px）。
+     * 勿用 900px：否則一般 PC 視窗並排／未最大化時會被誤判為手機，側欄滑出畫面、內容空白。
+     * ≥768px：維持傳統左欄 + 右內容（含多數平板直向／橫向與小筆電）。
+     */
+    @media (max-width: 767px) {
+      .row1 { padding: 4px 6px; gap: 4px; }
+      .mode-btn { min-width: 92px; padding: 3px 6px 2px; }
+      body:not(.mode-qna):not(.mode-hymn-embed):not(.mode-module-shell-embed) .sidebar-toggle-btn { display: inline-flex; }
+      body:not(.mode-qna):not(.mode-hymn-embed):not(.mode-module-shell-embed) table.layout {
+        display: block;
+        width: 100%;
+        height: calc(100vh - var(--top-offset));
+        height: calc(100dvh - var(--top-offset));
+        min-height: calc(100vh - var(--top-offset));
+        min-height: calc(100dvh - var(--top-offset));
+      }
+      body:not(.mode-qna):not(.mode-hymn-embed):not(.mode-module-shell-embed) table.layout tr { display: block; position: relative; }
+      body:not(.mode-qna):not(.mode-hymn-embed):not(.mode-module-shell-embed) td.left {
+        display: block;
+        position: fixed;
+        left: 0;
+        top: var(--top-offset);
+        width: min(88vw, 300px);
+        max-width: none;
+        height: calc(100vh - var(--top-offset) - env(safe-area-inset-bottom, 0px));
+        height: calc(100dvh - var(--top-offset) - env(safe-area-inset-bottom, 0px));
+        z-index: 2100;
+        transform: translateX(-105%);
+        transition: transform 0.22s ease;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+        background: #eef6ff;
+      }
+      body:not(.mode-qna):not(.mode-hymn-embed):not(.mode-module-shell-embed).sidebar-mobile-open td.left {
+        transform: translateX(0);
+      }
+      body:not(.mode-qna):not(.mode-hymn-embed):not(.mode-module-shell-embed) td.right {
+        display: block;
+        width: 100% !important;
+        height: calc(100vh - var(--top-offset));
+        height: calc(100dvh - var(--top-offset));
+        min-height: calc(100vh - var(--top-offset));
+        min-height: calc(100dvh - var(--top-offset));
+      }
+      body.mode-qna table.layout,
+      body.mode-hymn-embed table.layout,
+      body.mode-module-shell-embed table.layout {
+        display: block;
+        width: 100%;
+        height: calc(100vh - var(--top-offset));
+        min-height: calc(100vh - var(--top-offset));
+      }
+      body.mode-qna td.right,
+      body.mode-hymn-embed td.right,
+      body.mode-module-shell-embed td.right {
+        display: block;
+        width: 100% !important;
+        height: calc(100vh - var(--top-offset));
+        min-height: calc(100vh - var(--top-offset));
+      }
+      body.sidebar-mobile-open {
+        overflow: hidden;
+      }
+    }
+    /* 桌面／寬螢幕：明確還原表格佈局（避免舊快取或外掛干擾） */
+    @media (min-width: 768px) {
+      body:not(.mode-qna):not(.mode-hymn-embed):not(.mode-module-shell-embed) .sidebar-toggle-btn { display: none !important; }
+      body:not(.mode-qna):not(.mode-hymn-embed):not(.mode-module-shell-embed) table.layout {
+        display: table !important;
+        height: calc(100vh - var(--top-offset)) !important;
+      }
+      body:not(.mode-qna):not(.mode-hymn-embed):not(.mode-module-shell-embed) table.layout tr { display: table-row !important; }
+      body:not(.mode-qna):not(.mode-hymn-embed):not(.mode-module-shell-embed) td.left {
+        display: table-cell !important;
+        position: static !important;
+        transform: none !important;
+        width: 230px !important;
+        height: auto !important;
+        z-index: auto !important;
+        box-shadow: none !important;
+      }
+      body:not(.mode-qna):not(.mode-hymn-embed):not(.mode-module-shell-embed) td.right {
+        display: table-cell !important;
+        width: auto !important;
+      }
+    }
+  </style>
+  <!-- 頂欄第 2 行：獨立 class .top-nav-secondary（覆寫於主 <style> 之後，一定生效） -->
+  <style type="text/css">
+    /* CN 頂欄第 2 行樣式調整（藍底白字） */
+    .top-nav-secondary {
+      background-color: #005b96 !important;
+      color: #ffffff !important;
+      border-top-color: #004070 !important;
+    }
+    .top-nav-secondary,
+    .top-nav-secondary a {
+      color: #ffffff !important;
+    }
+    .top-nav-secondary a {
+      background-color: transparent !important;
+    }
+    .top-nav-secondary a:hover,
+    .top-nav-secondary a:focus {
+      background-color: #004070 !important;
+      color: #ffffff !important;
+      text-decoration: none;
+    }
+    /* 「語言教材」小標與其它第二列標題改白字 */
+    .top-nav-secondary .lbl-material .lbl-zh,
+    .top-nav-secondary .lbl-material .lbl-en,
+    .top-nav-secondary .lbl-stack .lbl-zh,
+    .top-nav-secondary .lbl-stack .lbl-en {
+      color: #ffffff !important;
+    }
+    .top-nav-secondary .lang-btn {
+      background: rgba(255, 255, 255, 0.95) !important;
+      color: #005b96 !important;
+      border-color: rgba(255, 255, 255, 0.55) !important;
+    }
+    .top-nav-secondary .lang-btn .t-zh,
+    .top-nav-secondary .lang-btn .t-en {
+      color: #005b96 !important;
+    }
+    .top-nav-secondary .lang-btn:hover {
+      background: #e3f2fd !important;
+    }
+    .top-nav-secondary .lang-btn.active {
+      background: #fff9c4 !important;
+      border-color: #ffe082 !important;
+    }
+    .top-nav-secondary .lang-btn.active .t-zh,
+    .top-nav-secondary .lang-btn.active .t-en {
+      color: #b71c1c !important;
+    }
+    .top-nav-secondary .lang-btn.lang-btn-minor {
+      background: rgba(200, 230, 201, 0.92) !important;
+      border-color: rgba(129, 199, 132, 0.9) !important;
+    }
+    .top-nav-secondary .lang-btn.lang-btn-minor .t-zh,
+    .top-nav-secondary .lang-btn.lang-btn-minor .t-en {
+      color: #1b5e20 !important;
+    }
+    .top-nav-secondary .sub-btn {
+      background: rgba(255, 255, 255, 0.95) !important;
+      color: #005b96 !important;
+      border-color: rgba(255, 255, 255, 0.5) !important;
+    }
+    .top-nav-secondary .sub-btn .t-zh,
+    .top-nav-secondary .sub-btn .t-en {
+      color: #005b96 !important;
+    }
+    .top-nav-secondary .sub-btn:hover {
+      background: #e3f2fd !important;
+      color: #004070 !important;
+    }
+    .top-nav-secondary .sub-btn-home {
+      background: #43a047 !important;
+      border-color: #2e7d32 !important;
+    }
+    .top-nav-secondary .sub-btn-home .t-zh,
+    .top-nav-secondary .sub-btn-home .t-en {
+      color: #ffffff !important;
+    }
+    .top-nav-secondary .sub-btn-home:hover {
+      background: #66bb6a !important;
+    }
+    .sub-nav-divider {
+      display: inline-block;
+      width: 1px;
+      height: 28px;
+      margin: 0 6px 0 4px;
+      background: rgba(255, 255, 255, 0.45);
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+    .sub-actions.sub-actions--grouped {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 6px 8px;
+    }
+    .sub-nav-group {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 4px 8px 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: rgba(0, 0, 0, 0.14);
+    }
+    .sub-nav-group.nav-group-story {
+      border-color: rgba(110, 231, 183, 0.75);
+      background: rgba(6, 95, 70, 0.35);
+    }
+    .sub-nav-group.nav-group-daily {
+      border-color: rgba(147, 197, 253, 0.85);
+      background: rgba(30, 64, 175, 0.32);
+    }
+    .sub-nav-group.nav-group-admin {
+      border-color: rgba(203, 213, 225, 0.75);
+      background: rgba(51, 65, 85, 0.35);
+    }
+    .sub-nav-group.nav-group-brain {
+      border-color: #fcd34d;
+      background: rgba(180, 83, 9, 0.42);
+      box-shadow: inset 0 0 0 1px rgba(254, 243, 199, 0.25);
+    }
+    .sub-nav-group.nav-group-mission {
+      border-color: rgba(253, 186, 116, 0.85);
+      background: rgba(154, 52, 18, 0.38);
+    }
+    .sub-nav-group.nav-group-meta {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(0, 0, 0, 0.08);
+    }
+    .sub-nav-group__label {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: rgba(255, 255, 255, 0.92);
+      margin: 0 0 4px 2px;
+      line-height: 1.2;
+      text-transform: none;
+    }
+    .sub-nav-group__btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 5px;
+      align-items: center;
+    }
+    .sub-btn.sub-btn--compact {
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      white-space: nowrap;
+      padding: 5px 10px;
+      line-height: 1.2;
+    }
+    .sub-btn.sub-btn--compact .t-zh {
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .sub-btn.sub-btn--compact .t-en { display: none !important; }
+    body.ui-locale-vi .sub-btn.sub-btn--compact .t-en,
+    body.ui-locale-id .sub-btn.sub-btn--compact .t-en {
+      display: block !important;
+      font-size: 7px;
+      opacity: 0.9;
+      font-weight: 400;
+      line-height: 1.15;
+    }
+    @media (max-width: 767px) {
+      .lang-btn { min-width: 64px; padding: 2px 6px 2px; }
+      .lang-btn-grid { flex-direction: column; width: 100%; }
+      .lang-btn-row { display: flex; flex-wrap: wrap; gap: 3px 4px; }
+      .sub-btn { min-width: 64px; }
+      #contextBar.material-bar { flex-direction: column; align-items: stretch; }
+    }
+    /* 口述預填：僅教會事工頂欄2／行政 5F，不在全站頂欄 */
+    #btnCrmAutomationTop { display: none !important; }
+  </style>
+  <link rel="stylesheet" href="css/site_search.css">
+</head>
+<body>
+<h1 class="page-main-title">index v5</h1>
+
+  <div class="top-wrap" id="topWrap">
+    <div class="row1">
+      <div class="brand" data-i18n="hub.brand" id="brandHomeBtn" role="button" tabindex="0" title="回全站首頁">聖經百步四寶</div>
+      <button type="button" class="sidebar-toggle-btn" id="btnSidebarToggle" aria-label="開啟側欄選單" aria-expanded="false" aria-controls="sidebarFrame" title="側欄">☰</button>
+      <div id="modeButtonsHost" class="mode-buttons-host" role="group" aria-label="模式導航"></div>
+      <button type="button" class="top-tools-btn" id="btnCrmAutomationTop" title="教會行政 · 口述預填：文字解析後只預填表單，不自動儲存">
+        <span class="t-zh" data-i18n="hub.crm_auto">口述預填</span>
+        <span class="t-en">Prefill</span>
+      </button>
+      <button type="button" class="top-tools-btn" id="btnToolsOverviewTop" title="工具總覽：全站模块功能页地图（两层）">
+        <span class="t-zh" data-i18n="hub.tools">工具總覽</span>
+        <span class="t-en">Tools</span>
+      </button>
+      <div class="hub-top-search" id="hubTopSearchWrap" role="search">
+        <span class="hub-top-search-icon" aria-hidden="true">🔍</span>
+        <input type="search" class="hub-top-search-input" id="hubTopSearchInput"
+          placeholder="搜入口／課名…" data-i18n-placeholder="hub.search_ph" autocomplete="off"
+          title="目錄級：入口＋課名（下拉內顯示）。Enter 留在下拉；無命中則開經文全文。">
+        <div class="hub-top-search-results b100-search-results" id="hubTopSearchResults"></div>
+      </div>
+      <div class="hub-lang-pills" role="group" aria-label="UI language">
+        <span class="lang-lbl" data-i18n="hub.lang">介面</span>
+        <button type="button" class="b100-lang-btn" data-locale="zh-Hant" title="繁體中文">中</button>
+        <button type="button" class="b100-lang-btn" data-locale="en" title="English">EN</button>
+        <button type="button" class="b100-lang-btn" data-locale="vi" title="Tiếng Việt">VI</button>
+        <button type="button" class="b100-lang-btn" data-locale="id" title="Indonesia">ID</button>
+      </div>
+      <button type="button" class="top-multilang-btn" id="btnMultilangReaderTop" title="多语查经 · Multilingual Bible" aria-label="多语查经">🌐</button>
+      <a class="top-home-btn" id="btnSiteHomeTop" href="languages/_landing/home.html" title="languages/_landing/home.html" data-i18n="hub.sec.home">首頁</a>
+      <button type="button" class="sync-observer-btn" id="btnSyncObserver" title="進階：雲端／本機資料同步與待送佇列（需後端設定；一般瀏覽可忽略）">
+        <span data-i18n="hub.sync">⚡ 同步紀錄</span>
+      </button>
+    </div>
+    <!-- inline 背景：防 file:// 快取舊版時仍能看到第二列為深藍底（與 .top-nav-secondary 一致） -->
+    <div class="row2 top-nav-secondary" id="contextBar" role="navigation" aria-label="頂欄第二列 · 語言與模式捷徑" aria-live="polite"></div>
+  </div>
+
+  <div id="surveyUiBanner">
+    <strong>問卷版面：</strong>教會規劃與智慧事奉已統一緊湊量表（頂部評分圖例、選項 1–5）。
+    <a href="smart_ministry/spiritual_gifts.html" target="contentFrame">屬靈恩賜示例</a>
+    ·
+    <a href="church_planning/index_plan.html" target="contentFrame">教會規劃索引</a>
+  </div>
+  <!-- 開發者本機預覽：可在 bible100_new 用慣用方式啟靜態伺服器後以 http 開本頁；勿將指令寫入使用者橫幅 -->
+
+  <div class="loading-overlay" id="loadingOverlay" style="top: var(--top-offset);">
+    <div class="spinner"></div>
+    <div id="loadingText" style="color:var(--h);font-size:13px;">載入中…</div>
+  </div>
+  <div class="error-message" id="errorMessage">
+    <div style="font-size:36px;margin-bottom:6px;">⚠️</div>
+    <div style="font-weight:bold;margin-bottom:4px;">載入失敗</div>
+    <div id="errorText" style="color:#666;margin-bottom:10px;">請檢查路徑。</div>
+    <button type="button" class="error-button" onclick="hideError();location.reload();">重新載入</button>
+  </div>
+
+  <div class="main" id="mainArea">
+    <table class="layout">
+      <tr>
+        <td class="left"><iframe id="sidebarFrame" name="sidebarFrame" title="側欄 · 目錄與模組捷徑" src="about:blank"></iframe></td>
+        <td class="right"><iframe id="contentFrame" name="contentFrame" title="內容區 · 教材與工具主畫面" src="about:blank"></iframe></td>
+      </tr>
+    </table>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+  </div>
+  <aside class="sync-observer-drawer" id="syncObserverDrawer" aria-label="數據同步紀錄抽屜">
+    <div class="sync-observer-head">
+      <div class="ttl">⚡ 數據同步紀錄</div>
+      <div class="grow"></div>
+      <button type="button" class="btn" id="btnSyncObserverRefresh">刷新</button>
+      <button type="button" class="btn" id="btnSyncObserverClose">關閉</button>
+    </div>
+    <div class="sync-observer-body">
+      <section class="sync-observer-section" aria-label="同步健康摘要">
+        <h4>健康摘要（本機 · A1/A2 · A3 可選）</h4>
+        <div id="syncObserverHealth"></div>
+      </section>
+      <section class="sync-observer-section">
+        <h4>近期事件（20）</h4>
+        <div class="sync-observer-list" id="syncObserverEvents"></div>
+      </section>
+      <section class="sync-observer-section">
+        <h4>待同步佇列（20）</h4>
+        <div class="sync-observer-list" id="syncObserverQueue"></div>
+      </section>
+    </div>
+  </aside>
+
+  <script src="config/build_version.js?v=20260812data"></script>
+  <script src="js/config-embedded.js?v=20260812data"></script>
+  <script src="js/config-loader.js?v=20260807a"></script>
+  <script src="js/cm_zone_nav_ssot.js?v=20260807a"></script>
+  <script src="js/b100_site_path.js?v=20260807a"></script>
+  <script src="js/b100_module_nav_ssot.js?v=20260812data"></script>
+  <script src="js/shell_nav.js?v=20260807a"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/cloud_config.js"></script>
+  <script src="js/cloud_api.js"></script>
+  <script src="js/church_auth.js"></script>
+  <script src="js/church_data_bridge_phase1.js"></script>
+  <script src="js/persistence_provider.js"></script>
+  <script src="js/bible100_backend_init.js"></script>
+  <script src="js/search_indexes_embedded.js"></script>
+  <script src="js/site_search.js"></script>
+  <script src="js/hub_top_search.js"></script>
+  <script src="js/sync_observer_drawer.js"></script>
+  <script src="js/ssot_shell_bridge.js"></script>
+  <script src="js/shell_contract.js"></script>
+  <script src="js/b100_chrome_i18n.js?v=20260812data"></script>
+  <script src="js/hub_chrome_i18n_pack.js?v=20260812data"></script>
+  <script src="js/index_v5_shell.js?v=20260807a"></script>
+  <script src="js/b100_nav_ssot.js?v=20260807a"></script>
+  <script src="js/crm_trial_welcome.js"></script>
   <script>
 (function () {
-  var q = (window.location.search || '').replace(/^\?/, '');
-  if (q.indexOf('legacy=1') >= 0) {
-    window.location.replace('index_legacy.html' + (q ? '?' + q : ''));
-        return;
+  var QNA_USE_CLOUD_VERSION = (typeof window !== 'undefined' && window.location && /lovestoblog\.com/i.test(window.location.hostname || ''));
+
+  /** 全站 L0 首頁 SSOT（config/landing_registry.json · siteHome） */
+  var SITE_HOME_SIDEBAR = 'help/sidebar_site_map.html';
+  var SITE_HOME_CONTENT = 'help/site_home.html';
+
+  /** 教材模組 fallback（旧百步侧栏 + 路线图 landing） */
+  var DEFAULT_SIDEBAR = 'languages/index_cn.html';
+  var DEFAULT_CONTENT = 'languages/_landing/home.html';
+
+  var selectedMode = null;
+
+  /** Q&A 工作台（qna/index.html）才全寬隱左欄；landing + sidebar_landing 保留左欄 */
+  function isQnaWorkbenchUrl(url) {
+    return /qna\/index\.html/i.test(String(url || ''));
+  }
+
+  function syncQnaShellLayout(contentUrl) {
+    document.body.classList.toggle('mode-qna', isQnaWorkbenchUrl(contentUrl));
+  }
+
+  /** 教材頂欄2：各語言獨立兩行按鈕（上中文、下英文細字） */
+  var langButtonLabels = {
+    cn: { zh: '中文', en: '(CN)' },
+    en: { zh: '英文', en: 'English (EN)' },
+    ch: { zh: '兒童版', en: "Children's (CH)" },
+    ad: { zh: '進深版', en: 'Advanced (AD)' },
+    vi: { zh: '越南', en: 'Tiếng Việt (VN)' },
+    id: { zh: '印尼', en: 'Bahasa (ID)' },
+    my: { zh: '緬甸', en: 'မြန်မာ (MY)' },
+    kh: { zh: '柬埔寨', en: 'ខ្មែរ (KH)' },
+    lo: { zh: '寮國', en: 'ລາວ (LO)' }
+  };
+
+  function getUiLocale() {
+    if (window.B100ChromeI18n && window.B100ChromeI18n.getLocale) {
+      return window.B100ChromeI18n.getLocale();
+    }
+    try {
+      return localStorage.getItem('b100_ui_locale') || 'zh-Hant';
+    } catch (e) {
+      return 'zh-Hant';
+    }
+  }
+
+  function hubT(key, loc) {
+    loc = loc || getUiLocale();
+    var pack = window.HubChromeI18nPack;
+    if (!pack || !window.B100ChromeI18n) return '';
+    return window.B100ChromeI18n.t(pack, key, loc) || '';
+  }
+
+  function hubPick(row, loc) {
+    loc = loc || getUiLocale();
+    if (!row) return '';
+    if (typeof row === 'string') return row;
+    if (row[loc]) return row[loc];
+    if ((loc === 'vi' || loc === 'id') && row.en) return row.en;
+    return row['zh-Hant'] || row.zh || row.en || '';
+  }
+
+  function applyHubChromeI18n() {
+    var loc = getUiLocale();
+    var pack = window.HubChromeI18nPack;
+    var I = window.B100ChromeI18n;
+    document.body.classList.remove('ui-locale-zh-Hant', 'ui-locale-en', 'ui-locale-vi', 'ui-locale-id');
+    document.body.classList.add('ui-locale-' + loc);
+    if (I && pack) {
+      I.apply(pack, document.getElementById('topWrap') || document.body);
+      I.bindLangButtons(pack, document.getElementById('topWrap') || document);
+    }
+    var loadEl = document.getElementById('loadingText');
+    if (loadEl && pack) {
+      var lt = hubT('hub.loading', loc);
+      if (lt) loadEl.textContent = lt;
+    }
+    // 工具鈕細字：EN 介面時隱藏；VI/ID 保留英文細字
+    document.querySelectorAll('#btnToolsOverviewTop .t-en, #btnCrmAutomationTop .t-en').forEach(function (el) {
+      el.hidden = loc === 'en';
+    });
+  }
+
+  function refreshHubI18nUi() {
+    applyHubChromeI18n();
+    renderModeButtonsFromConfig();
+    renderContextBar();
+    requestAnimationFrame(syncTopOffset);
+  }
+
+  window.B100ChromeI18nOnChange = function () {
+    refreshHubI18nUi();
+  };
+
+  function measureStackHeight() {
+    var tw = document.getElementById('topWrap');
+    return (tw && tw.offsetHeight) ? tw.offsetHeight : 56;
+  }
+
+  function syncTopOffset() {
+    document.documentElement.style.setProperty('--top-offset', measureStackHeight() + 'px');
+  }
+
+  function setContextOpen(open) {
+    document.getElementById('topWrap').classList.toggle('context-open', !!open);
+    syncTopOffset();
+  }
+
+  /** 工具總覽／系統中樞等「非模式」入口：關閉第二列，避免仍顯示教材語言列 */
+  function setShellUtilityView() {
+    selectedMode = null;
+    setModeButtonActive(null);
+    setContextOpen(false);
+    document.body.classList.remove('mode-qna', 'mode-hymn-embed', 'mode-module-shell-embed');
+    var el = document.getElementById('contextBar');
+    if (el) {
+      el.innerHTML = '';
+      el.className = 'row2 top-nav-secondary';
+    }
+    requestAnimationFrame(syncTopOffset);
+  }
+
+  function setModeButtonActive(mode) {
+    document.querySelectorAll('.mode-btn[data-mode]').forEach(function (b) {
+      b.classList.toggle('active', mode != null && b.getAttribute('data-mode') === mode);
+    });
+  }
+
+  function setActiveLangLink(lang) {
+    document.querySelectorAll('#contextBar .lang-btn[data-lang]').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+    });
+  }
+
+  function getModeContextSubtitle(modeConfig) {
+    if (!modeConfig) return { zh: '', en: '' };
+    var loc = getUiLocale();
+    var modeId = modeConfig.id || '';
+    var fromPack = hubT('hub.mode.' + modeId, loc);
+    var enPack = hubT('hub.mode.' + modeId, 'en');
+    if (modeConfig.contextSubtitle) {
+      return {
+        zh: fromPack || modeConfig.contextSubtitle.zh || modeConfig.name || '',
+        en: (loc === 'zh-Hant' || loc === 'en') ? (modeConfig.contextSubtitle.en || enPack || '') : (enPack || modeConfig.contextSubtitle.en || '')
+      };
+    }
+    return { zh: fromPack || modeConfig.name || '', en: enPack || modeConfig.description || '' };
+  }
+
+  function appendStackLabel(parent, subtitle, href) {
+    var lbl = document.createElement(href ? 'a' : 'span');
+    lbl.className = 'lbl lbl-stack' + (href ? ' lbl-stack--link' : '');
+    if (href) {
+      lbl.href = href;
+      lbl.title = href;
+    }
+    lbl.innerHTML = '<span class="lbl-zh">' + (subtitle.zh || '') + '</span>' +
+      (subtitle.en ? '<span class="lbl-en">' + subtitle.en + '</span>' : '');
+    parent.appendChild(lbl);
+  }
+
+  function parseNavItemLabels(item) {
+    if (!item) return { zh: '', en: '' };
+    if (item.labelZh || item.labelEn) {
+      return { zh: item.labelZh || '', en: item.labelEn || '' };
+    }
+    var parts = String(item.label || '').split(/\s+/);
+    if (parts.length <= 1) return { zh: item.label || '', en: '' };
+    var enIdx = -1;
+    for (var i = 1; i < parts.length; i++) {
+      if (/^[A-Za-z]/.test(parts[i])) { enIdx = i; break; }
+    }
+    if (enIdx < 0) return { zh: item.label, en: '' };
+    return { zh: parts.slice(0, enIdx).join(' '), en: parts.slice(enIdx).join(' ') };
+  }
+
+  function clearHymnEmbedLayout() {
+    document.body.classList.remove('mode-hymn-embed');
+    document.body.classList.remove('mode-module-shell-embed');
+  }
+
+  function enableModuleShellEmbedLayout() {
+    document.body.classList.remove('mode-hymn-embed');
+    document.body.classList.add('mode-module-shell-embed');
+  }
+
+  function switchLanguage(lang) {
+    setActiveLangLink(lang);
+    clearHymnEmbedLayout();
+    selectedMode = 'material';
+    setModeButtonActive('material');
+    setContextOpen(true);
+    renderContextBar();
+    if (window.Bible100Shell && typeof window.Bible100Shell.loadLanguage === 'function') {
+      window.Bible100Shell.loadLanguage(lang);
+      return;
+    }
+    var info = window.Bible100Shell && typeof window.Bible100Shell.getLanguageByCode === 'function'
+      ? window.Bible100Shell.getLanguageByCode(lang)
+      : null;
+    if (!info) return;
+    navigateShell({
+      mode: 'material',
+      sidebarUrl: info.sidebar,
+      contentUrl: info.landing,
+      loading: '切換語言…'
+    });
+  }
+
+  function openToolsOverview() {
+    setShellUtilityView();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入全站模块地图…');
+    document.getElementById('sidebarFrame').src = 'nav_hub/sidebar_modules_map.html?v=' + Date.now();
+    document.getElementById('contentFrame').src = 'nav_hub/site_modules_sitemap.html?v=' + Date.now();
+  }
+
+  function appendChurchId(path) {
+    var base = String(path || '');
+    var urlParams = new URLSearchParams(window.location.search || '');
+    var cid = urlParams.get('church_id') || (window.CURRENT_CHURCH_ID || '');
+    if (!cid) return base;
+    var sep = base.indexOf('?') >= 0 ? '&' : '?';
+    return base + sep + 'church_id=' + encodeURIComponent(String(cid));
+  }
+
+  function getCurrentChurchId() {
+    var urlParams = new URLSearchParams(window.location.search || '');
+    return urlParams.get('church_id') || (window.CURRENT_CHURCH_ID || 'default');
+  }
+
+  /** 全站目錄／關鍵字搜尋 Hub（中央探照燈 · 與經文全文搜尋不同） */
+  function openNavHub() {
+    setShellUtilityView();
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    var bust = Date.now();
+    fm.showLoading('載入目錄搜尋 Hub…');
+    document.getElementById('sidebarFrame').src = 'nav_hub/sidebar.html?v=' + bust;
+    document.getElementById('contentFrame').src = 'nav_hub/index.html?v=' + bust;
+  }
+
+  /** @deprecated 別名 — 與 openNavHub 相同，避免雙入口行為不一致 */
+  function openSystemHub() {
+    openNavHub();
+  }
+
+  /** 全站搜尋模組（search/dashboard，非 bible_study/search_reader） */
+  function openGlobalSiteSearch() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    var bust = Date.now();
+    fm.showLoading('載入全站搜尋…');
+    document.getElementById('sidebarFrame').src = 'nav_hub/search/sidebar.html?v=' + bust;
+    document.getElementById('contentFrame').src = 'nav_hub/search/dashboard.html?v=' + bust;
+  }
+
+  function openMultilangReader() {
+    clearHymnEmbedLayout();
+    document.body.classList.remove('mode-module-shell-embed', 'mode-qna', 'mode-hymn-embed');
+    selectedMode = 'study';
+    document.body.className = document.body.className.replace(/\bmode-\S+/g, '').trim();
+    document.body.classList.add('mode-study');
+    setModeButtonActive('study');
+    setContextOpen(true);
+    renderContextBar();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入多语查经…');
+    var bust = Date.now();
+    document.getElementById('sidebarFrame').src = 'bible_study/sidebar.html?focus=versions&v=' + bust;
+    document.getElementById('contentFrame').src = 'bible_app/shell/pages/reader-multilang.html?v=' + bust;
+    syncQnaShellLayout('bible_app/shell/pages/reader-multilang.html');
+    requestAnimationFrame(syncTopOffset);
+  }
+
+  function openHelpDocsHub() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入說明匯總…');
+    document.getElementById('contentFrame').src = 'help/docs-hub.html?v=' + Date.now();
+  }
+
+  function openChurchMinistryManual() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入教會事工說明…');
+    document.getElementById('contentFrame').src = 'help/church_ministry_manual.html?v=' + Date.now();
+  }
+
+  function openDiscipleDynamics() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入門訓動力站…');
+    document.getElementById('sidebarFrame').src = 'disciple_dynamics/sidebar.html?v=' + Date.now();
+    document.getElementById('contentFrame').src = 'disciple_dynamics/dashboard.html?v=' + Date.now();
+  }
+
+  function openAISmartMinistry() {
+    /* Wave b：外層雙欄，勿嵌 smart_ministry/index.html（殼中殼） */
+    clearHymnEmbedLayout();
+    document.body.classList.remove('mode-module-shell-embed');
+    selectedMode = 'ai';
+    document.body.className = document.body.className.replace(/\bmode-\S+/g, '').trim();
+    document.body.classList.add('mode-ai');
+    setModeButtonActive('ai');
+    setContextOpen(true);
+    renderContextBar();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入智慧事奉…');
+    var bust = Date.now();
+    document.getElementById('sidebarFrame').src = 'smart_ministry/sidebar.html?v=' + bust;
+    document.getElementById('contentFrame').src = 'smart_ministry/landing.html?v=' + bust;
+  }
+
+  function openSchoolManagement() {
+    /* Wave 3 C-03：外層雙欄，勿嵌 L0 index 殼（殼中殼） */
+    clearHymnEmbedLayout();
+    document.body.classList.remove('mode-module-shell-embed');
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入學校管理…');
+    var bust = Date.now();
+    document.getElementById('sidebarFrame').src = 'school_management/sidebar.html?v=' + bust;
+    document.getElementById('contentFrame').src = 'school_management/_landing/home.html?v=' + bust;
+  }
+
+  var G_PLAN_SIDEBAR = 'church_planning/sidebar_plan_v5_preview.html';
+
+  function isChurchGNavItem(item) {
+    if (!item) return false;
+    if (item.labelShort === 'G') return true;
+    var path = String(item.path || '');
+    var zh = String(item.labelZh || '');
+    return path.indexOf('church_planning/') === 0 || zh.indexOf('G 規劃') >= 0;
+  }
+
+  /** G 規劃行政 · 外層雙欄 SSOT（戰略 + 行政 v3 側欄） */
+  function openChurchGZone(contentRel) {
+    clearHymnEmbedLayout();
+    selectedMode = 'church';
+    document.body.className = document.body.className.replace(/\bmode-\S+/g, '').trim();
+    document.body.classList.add('mode-church');
+    setModeButtonActive('church');
+    setContextOpen(true);
+    renderContextBar();
+    var cf = contentRel || appendChurchId('church_planning/index_plan.html');
+    var bust = 'v=' + Date.now();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入 G 規劃行政…');
+    document.getElementById('sidebarFrame').src = G_PLAN_SIDEBAR + '?' + bust;
+    document.getElementById('contentFrame').src = cf + (cf.indexOf('?') >= 0 ? '&' : '?') + bust;
+    syncQnaShellLayout(cf);
+    requestAnimationFrame(syncTopOffset);
+  }
+
+  function openChurchMinistry() {
+    openChurchGZone(appendChurchId('church_planning/index_plan.html'));
+  }
+
+  /**
+   * 教會規劃主索引：外層雙欄 + G v3 側欄 + index_plan。
+   * 勿將 church_planning/index.html 再嵌入總站 contentFrame（巢狀殼會與 name="contentFrame" 衝突、側欄連結誤導到外層）。
+   * 規範見 bible100_new/.cursor/rules/bible100-index-shell-sidebar.mdc
+   */
+  function openChurchPlanningHub() {
+    openChurchGZone(appendChurchId('church_planning/index_plan.html'));
+  }
+
+  /** Landing 內部：教會使命與規劃（理念／進程） */
+  function openChurchPlanningMission() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入教會使命與規劃…');
+    document.getElementById('sidebarFrame').src = 'church_planning/sidebar_plan_v5_preview.html?v=' + Date.now();
+    document.getElementById('contentFrame').src = 'church_planning/vision.html?v=' + Date.now();
+  }
+
+  /** Landing 內部：調查與規劃進程 */
+  function openChurchPlanningProcess() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入調查與規劃進程…');
+    document.getElementById('sidebarFrame').src = 'church_planning/sidebar_plan_v5_preview.html?v=' + Date.now();
+    document.getElementById('contentFrame').src = 'church_planning/process.html?v=' + Date.now();
+  }
+
+  function openChurchPlanningHealth() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入教會健康調查…');
+    document.getElementById('sidebarFrame').src = 'church_planning/sidebar_plan_v5_preview.html?v=' + Date.now();
+    document.getElementById('contentFrame').src = 'church_planning/Church_Health_NCD_planning.html?v=' + Date.now();
+  }
+
+  function openChurchPlanningSwot() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入教會版 SWOT…');
+    document.getElementById('sidebarFrame').src = 'church_planning/sidebar_plan_v5_preview.html?v=' + Date.now();
+    document.getElementById('contentFrame').src = 'church_planning/Church_Governance_SWOT_matrix.html?v=' + Date.now();
+  }
+
+  function openChurchPlanningSmart() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入教會版 SMART…');
+    document.getElementById('sidebarFrame').src = 'church_planning/sidebar_plan_v5_preview.html?v=' + Date.now();
+    document.getElementById('contentFrame').src = 'church_planning/smart-planning.html?v=' + Date.now();
+  }
+
+  function openChurchPlanningPdca() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入教會版 PDCA…');
+    document.getElementById('sidebarFrame').src = 'church_planning/sidebar_plan_v5_preview.html?v=' + Date.now();
+    document.getElementById('contentFrame').src = 'church_planning/Church_Governance_PDCA_cycle.html?v=' + Date.now();
+  }
+
+  /** RACI 角色清晰化（規劃鏈 Check）：側欄 + planning 內頁 */
+  function openChurchPlanningRaci() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    var target = appendChurchId('church_planning/planning/raci-reflection.html');
+    fm.showLoading('載入 RACI 角色反思…');
+    document.getElementById('sidebarFrame').src = 'church_planning/sidebar_plan_v5_preview.html?v=' + Date.now();
+    document.getElementById('contentFrame').src = target + (target.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now();
+  }
+
+  /** CTA-OS 戰情室：外層雙欄 + 跨工具 CTV 合成與 Smart Ministry 配對 */
+  function openChurchPlanningCtaWarRoom() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入 CTA-OS 戰情室…');
+    document.getElementById('sidebarFrame').src = 'church_planning/sidebar_plan_v5_preview.html?v=' + Date.now();
+    document.getElementById('contentFrame').src = 'church_planning/cta-os-war-room.html?v=' + Date.now();
+  }
+
+  /**
+   * 僅供側欄「重置」postMessage 或手動除錯：嘗試 sidebar_lab，失敗則回退舊版 sidebar+dashboard。
+   * 頂欄已不提供「經典雙欄」入口，避免與「聖經 AI 學習 Lab」重複。
+   */
+  function openAITools() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入 AI 工具…');
+    var sf = document.getElementById('sidebarFrame');
+    var cf = document.getElementById('contentFrame');
+    var bust = Date.now();
+    var finished = false;
+    var failTimer = null;
+
+    function hideIfNeeded() {
+      try {
+        fm.hideLoading();
+      } catch (e) {}
+    }
+
+    function applyClassicAiToolsSidebar() {
+      if (finished) return;
+      finished = true;
+      if (failTimer) {
+        clearTimeout(failTimer);
+        failTimer = null;
       }
-  window.location.replace('index_v5.html' + (window.location.search || '') + (window.location.hash || ''));
+      try {
+        sf.src = 'ai_tools/sidebar.html?v=' + Date.now();
+        cf.src = 'ai_tools/dashboard.html?v=' + Date.now();
+      } catch (e) {}
+      hideIfNeeded();
+    }
+
+    function tryConfirmNewSidebar() {
+      if (finished) return;
+      function check() {
+        try {
+          var doc = sf.contentDocument;
+          if (doc && doc.getElementById('sb-zone-guide')) {
+            finished = true;
+            if (failTimer) {
+              clearTimeout(failTimer);
+              failTimer = null;
+            }
+            hideIfNeeded();
+            return true;
+          }
+        } catch (e) {}
+        return false;
+      }
+      if (check()) return;
+      try {
+        requestAnimationFrame(function () {
+          if (finished) return;
+          if (check()) return;
+          applyClassicAiToolsSidebar();
+        });
+      } catch (eRaf) {
+        applyClassicAiToolsSidebar();
+      }
+    }
+
+    function onSidebarAttemptLoad() {
+      if (finished) return;
+      tryConfirmNewSidebar();
+    }
+
+    failTimer = setTimeout(function () {
+      if (!finished) applyClassicAiToolsSidebar();
+    }, 4500);
+
+    sf.addEventListener('load', onSidebarAttemptLoad, { once: true });
+
+    cf.src = 'ai_tools/dashboard.html?v=' + bust;
+    sf.src = 'ai_tools/sidebar_lab.html?v=' + bust;
+  }
+
+  /**
+   * 聖經 AI 學習環境（新版）：與 ai_tools/ai_lab.html 相同側欄＋總覽內容，
+   * 但留在 index_v5 殼內，避免 contentFrame 再嵌一層 ai_lab（雙殼 iframe）。
+   */
+  function openBibleAILabLearnShell() {
+    clearHymnEmbedLayout();
+    document.body.classList.remove('mode-module-shell-embed');
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入聖經 AI 學習環境…');
+    var bust = Date.now();
+    document.getElementById('sidebarFrame').src = 'ai_tools/sidebar_lab.html?v=' + bust;
+    document.getElementById('contentFrame').src = 'ai_tools/ai_lab_landing.html?v=' + bust;
+  }
+
+  /** Wave c：口述預填＝教會行政減壓閥（左欄行政地圖，右欄控制台） */
+  function openCrmAutomationConsole() {
+    clearHymnEmbedLayout();
+    document.body.classList.remove('mode-module-shell-embed');
+    selectedMode = 'church';
+    document.body.className = document.body.className.replace(/\bmode-\S+/g, '').trim();
+    document.body.classList.add('mode-church');
+    setModeButtonActive('church');
+    setContextOpen(true);
+    renderContextBar();
+    var shell = window.Bible100Shell;
+    var navItem = null;
+    if (shell && typeof shell.getModeConfig === 'function') {
+      var cfg = shell.getModeConfig('church');
+      var items = cfg && Array.isArray(cfg.secondaryNav) ? cfg.secondaryNav : [];
+      navItem = items.filter(function (i) {
+        return i && i.path && String(i.path).indexOf('crm_automation_console') >= 0;
+      })[0] || null;
+    }
+    if (shell && navItem && typeof shell.loadSecondaryNavItem === 'function') {
+      shell.loadSecondaryNavItem(navItem);
+      return;
+    }
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入口述預填（行政減壓閥）…');
+    var bust = Date.now();
+    document.getElementById('sidebarFrame').src = 'church_ministry/sidebar_church_layout_v1.html?focus=f&v=' + bust;
+    document.getElementById('contentFrame').src = 'ai_tools/pages/crm_automation_console.html?v=' + bust;
+  }
+
+  /**
+   * 聖經難題 Q&A：與頂欄「聖經難題 Q&A」模式相同（左欄 qna 專用說明 + 右欄四層 V2）。
+   * 不再使用 bible_study/sidebar，避免與「版本／釋經」樹狀選單混淆。
+   */
+  function openQnA() {
+    applyMode('qna');
+  }
+
+  function explorerLoadBibleStudyContent(contentUrl) {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入…');
+    document.getElementById('sidebarFrame').src = 'bible_study/sidebar.html?v=' + Date.now();
+    var bust = 'v=' + Date.now();
+    document.getElementById('contentFrame').src = contentUrl + (contentUrl.indexOf('?') >= 0 ? '&' : '?') + bust;
+  }
+
+  function openHymnInShell() {
+    openHymnLegacyMainIndex();
+  }
+
+  /** 舊版全庫主控台（5 本詩集 + default.htm 資料頁） */
+  function openHymnLegacyMainIndex() {
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入詩歌主控台…');
+    document.body.classList.add('mode-hymn-embed');
+    document.body.classList.remove('mode-module-shell-embed', 'mode-qna');
+    document.getElementById('sidebarFrame').src = 'about:blank';
+    document.getElementById('contentFrame').src = 'hymn_management/hymn/hymn_main_index.html?v=' + Date.now();
+  }
+
+  /** Hub 詩歌管理：外層雙欄（sidebar + dashboard），勿嵌 L0 index 殼中殼 */
+  function openHymnPlaylistShell() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入詩歌管理…');
+    document.body.classList.remove('mode-hymn-embed', 'mode-module-shell-embed', 'mode-qna');
+    document.getElementById('sidebarFrame').src = 'hymn_management/sidebar.html?v=' + Date.now();
+    document.getElementById('contentFrame').src = 'hymn_management/dashboard.html?v=' + Date.now();
+  }
+
+  var langMinorCodes = { vi: 1, id: 1, my: 1, kh: 1, lo: 1 };
+
+  function createLangButton(code) {
+    var meta = langButtonLabels[code] || { zh: code.toUpperCase(), en: '' };
+    var info = window.Bible100Shell && typeof window.Bible100Shell.getLanguageByCode === 'function'
+      ? window.Bible100Shell.getLanguageByCode(code)
+      : null;
+    var href = (info && info.landing) ? info.landing : '#';
+    var btn = document.createElement('a');
+    btn.href = href;
+    btn.className = 'lang-btn' + (langMinorCodes[code] ? ' lang-btn-minor' : '');
+    btn.setAttribute('data-lang', code);
+    btn.title = href;
+    var zh = document.createElement('span');
+    zh.className = 't-zh';
+    zh.textContent = meta.zh;
+    btn.appendChild(zh);
+    if (meta.en) {
+      var en = document.createElement('span');
+      en.className = 't-en';
+      en.textContent = meta.en;
+      btn.appendChild(en);
+    }
+    btn.addEventListener('click', function (ev) {
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;
+      ev.preventDefault();
+      switchLanguage(code);
+    });
+    return btn;
+  }
+
+  function renderLanguageGroupsBar(el, item) {
+    el.className = 'row2 top-nav-secondary material-bar';
+    var loc = getUiLocale();
+    var labelZh = hubT('hub.lang.material', loc) || (item.label && item.label.zh) || '語言教材';
+    var labelEn = hubT('hub.lang.material', 'en') || (item.label && item.label.en) || 'Language · 語言版本';
+    var lbl = document.createElement('a');
+    lbl.className = 'lbl lbl-material lbl-stack--link';
+    lbl.href = DEFAULT_CONTENT;
+    lbl.title = DEFAULT_CONTENT;
+    lbl.innerHTML = '<span class="lbl-zh">' + labelZh + '</span>' +
+      (loc !== 'en' ? '<span class="lbl-en">' + labelEn + '</span>' : '');
+    var grid = document.createElement('div');
+    grid.className = 'lang-btn-grid';
+    var rows = item.rows || [['cn', 'en', 'ch', 'ad'], ['vi', 'id', 'my', 'kh', 'lo']];
+    rows.forEach(function (codes) {
+      var row = document.createElement('div');
+      row.className = 'lang-btn-row';
+      (codes || []).forEach(function (code) {
+        row.appendChild(createLangButton(code));
+      });
+      grid.appendChild(row);
+    });
+    el.appendChild(lbl);
+    el.appendChild(grid);
+    setActiveLangLink('cn');
+  }
+
+  function hubNavItemHref(item) {
+    if (!item) return '';
+    if (item.action === 'home') return DEFAULT_CONTENT;
+    var path = item.path || '';
+    if (!path) return '';
+    if (window.Bible100Shell && typeof window.Bible100Shell.resolveNavPath === 'function') {
+      path = window.Bible100Shell.resolveNavPath(item);
+    } else if (item.appendChurchId && typeof appendChurchId === 'function') {
+      path = appendChurchId(path);
+    }
+    return path;
+  }
+
+  function hubModeDefaultHref(mode) {
+    if (!mode) return '';
+    var entry = mode.defaultEntry || {};
+    return entry.path || '';
+  }
+
+  function renderModeButtonsFromConfig() {
+    var host = document.getElementById('modeButtonsHost');
+    if (!host || !window.Bible100Shell || !Array.isArray(window.Bible100Shell.modes)) return;
+    host.innerHTML = '';
+    var loc = getUiLocale();
+    window.Bible100Shell.modes.forEach(function (mode) {
+      if (!mode || !mode.id) return;
+      var tb = mode.topbar || {};
+      var href = hubModeDefaultHref(mode) || '#';
+      var btn = document.createElement('a');
+      btn.href = href;
+      btn.className = 'mode-btn';
+      btn.setAttribute('data-mode', mode.id);
+      if (tb.title) btn.title = tb.title + ' · ' + href;
+      else btn.title = href;
+      var primary = hubT('hub.mode.' + mode.id, loc) || tb.zh || mode.name || mode.id;
+      var enText = hubT('hub.mode.' + mode.id, 'en') || tb.en || mode.description || mode.id;
+      var zh = document.createElement('span');
+      zh.className = 't-zh';
+      zh.textContent = primary;
+      btn.appendChild(zh);
+      /* 繁中／英文等：模式鈕主标 + 英文细字（全站一致） */
+      var showModeEn = enText && enText !== primary && loc !== 'en';
+      if (showModeEn) {
+        var en = document.createElement('span');
+        en.className = 't-en';
+        en.textContent = enText;
+        btn.appendChild(en);
+      }
+      btn.addEventListener('click', function (ev) {
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;
+        ev.preventDefault();
+        applyMode(mode.id);
+      });
+      host.appendChild(btn);
+    });
+    setModeButtonActive(selectedMode);
+  }
+
+  function appendSubNavDivider(parent) {
+    var d = document.createElement('span');
+    d.className = 'sub-nav-divider';
+    d.setAttribute('aria-hidden', 'true');
+    d.title = '分組';
+    parent.appendChild(d);
+  }
+
+  /** 教會事工頂欄：規劃｜行政｜A–E｜全站 */
+  function churchNavDividerAfter(item) {
+    if (!item || item.action === 'home') return false;
+    var path = String(item.path || '');
+    var zh = String(item.labelZh || '');
+    if (path.indexOf('church_ministry/dashboard') >= 0 || zh.indexOf('行政') >= 0 && zh.indexOf('規劃') < 0) return true;
+    if (path.indexOf('outreach-strategy') >= 0 || zh.indexOf('D. 外展') >= 0) return true;
+    if (path.indexOf('church_planning/index_plan') >= 0 || zh.indexOf('規劃') >= 0) return true;
+    return false;
+  }
+
+  /** 教會頂欄：僅 A–G 事工桌 */
+  var CHURCH_NAV_GROUPS = [
+    { id: 'desks', labelKey: 'hub.church.group.desks', label: '事工 A–G', className: 'nav-group-desks' }
+  ];
+
+  function renderChurchContextBar(sub, navItems) {
+    var loc = getUiLocale();
+    CHURCH_NAV_GROUPS.forEach(function (group) {
+      var items = navItems.filter(function (item) {
+        return item && !item.type && item.navGroup === group.id;
+      });
+      if (!items.length) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'sub-nav-group ' + group.className;
+      /* 分組標籤與鈕短標重複（🧭規劃／🟩行政）；僅多鈕大組顯示標籤 */
+      var groupLabel = hubT(group.labelKey, loc) || group.label;
+      if (groupLabel && items.length > 1 && group.id === 'desks') {
+        var gl = document.createElement('span');
+        gl.className = 'sub-nav-group__label';
+        gl.textContent = groupLabel;
+        wrap.appendChild(gl);
+      }
+      var inner = document.createElement('div');
+      inner.className = 'sub-nav-group__btns';
+      items.forEach(function (item) {
+        // VI/ID：顯示主語 + 英文細字；中文介面維持精簡短標
+        var showEnBridge = loc === 'vi' || loc === 'id';
+        inner.appendChild(mkSubNavBtn(item, function () {
+          if (isChurchGNavItem(item)) {
+            openChurchGZone(item.path ? appendChurchId(item.path) : undefined);
+            return;
+          }
+          if (window.Bible100Shell && typeof window.Bible100Shell.loadSecondaryNavItem === 'function') {
+            window.Bible100Shell.loadSecondaryNavItem(item, selectedMode);
+          }
+        }, { zhOnly: !showEnBridge, compact: false, useShort: false }));
+      });
+      wrap.appendChild(inner);
+      sub.appendChild(wrap);
+    });
+  }
+
+  function renderContextBar() {
+    var el = document.getElementById('contextBar');
+    if (!el) return;
+    el.innerHTML = '';
+    if (!selectedMode) return;
+
+    var modeConfig = window.Bible100Shell && typeof window.Bible100Shell.getModeConfig === 'function'
+      ? window.Bible100Shell.getModeConfig(selectedMode)
+      : null;
+    if (!modeConfig) return;
+
+    var navItems = Array.isArray(modeConfig.secondaryNav) ? modeConfig.secondaryNav : [];
+    var compactModes = { study: 1, school: 1, ai: 1 };
+    var compactSec = !!compactModes[selectedMode];
+    if (
+      compactSec &&
+      window.B100ModuleNavSsot &&
+      typeof window.B100ModuleNavSsot.secondaryNavForMode === 'function'
+    ) {
+      navItems = window.B100ModuleNavSsot.secondaryNavForMode(selectedMode, {
+        includeSiteHome: selectedMode === 'study' || selectedMode === 'school'
+      });
+    }
+    var langGroupItem = navItems.filter(function (i) { return i && i.type === 'language-groups'; })[0];
+    if (langGroupItem) {
+      renderLanguageGroupsBar(el, langGroupItem);
+      return;
+    }
+
+    if (!navItems.length || modeConfig.hideSecondaryBar) {
+      el.className = 'row2 top-nav-secondary';
+      return;
+    }
+
+    el.className = 'row2 top-nav-secondary';
+    var sub = document.createElement('div');
+    sub.className = 'sub-actions' + (selectedMode === 'church' ? ' sub-actions--grouped' : '');
+    if (!compactSec) {
+      appendStackLabel(el, getModeContextSubtitle(modeConfig), hubModeDefaultHref(modeConfig));
+    }
+    el.appendChild(sub);
+
+    if (selectedMode === 'church') {
+      renderChurchContextBar(sub, navItems);
+      return;
+    }
+
+    navItems.forEach(function (item) {
+      if (!item || item.type) return;
+      if (!item.label && !item.labelZh && item.action !== 'home') return;
+      var btnOpts = compactSec
+        ? { useShort: false, compact: true, skipPathKey: true }
+        : {};
+      sub.appendChild(mkSubNavBtn(item, function () {
+        if (window.Bible100Shell && typeof window.Bible100Shell.loadSecondaryNavItem === 'function') {
+          window.Bible100Shell.loadSecondaryNavItem(item, selectedMode);
+        }
+      }, btnOpts));
+      if (selectedMode === 'church' && churchNavDividerAfter(item)) {
+        appendSubNavDivider(sub);
+      }
+    });
+  }
+
+  function mkSubNavBtn(item, fn, opts) {
+    opts = opts || {};
+    var loc = getUiLocale();
+    var labels = parseNavItemLabels(item);
+    var map = window.HubChromeI18nMap;
+    var packKey = '';
+    if (item.action === 'home') packKey = 'hub.sec.home';
+    else     if (map && item.path && !opts.skipPathKey) {
+      var preferConfig = opts.useShort === false && item.labelZh;
+      if (!preferConfig) packKey = map.pathKey(item.path) || '';
+    } else if (item.moduleId === 'school_management') packKey = 'hub.sec.school';
+
+    var zhText = (opts.useShort && item.labelShort && !item.labelZh) ? item.labelShort : labels.zh;
+    var enText = labels.en || '';
+    if (packKey && !opts.skipPathKey) {
+      var pLoc = hubT(packKey, loc);
+      var pEn = hubT(packKey, 'en');
+      if (pLoc) zhText = pLoc;
+      if (pEn) enText = pEn;
+    }
+
+    var href = hubNavItemHref(item);
+    var b = document.createElement('a');
+    b.href = href || '#';
+    b.className = 'sub-btn' + (item.action === 'home' ? ' sub-btn-home' : '') + (opts.compact ? ' sub-btn--compact' : '');
+    if (href) b.title = href;
+    var zh = document.createElement('span');
+    zh.className = 't-zh';
+    zh.textContent = zhText;
+    b.appendChild(zh);
+    var showEn = false;
+    if (opts.compact) {
+      showEn = enText && enText !== zhText && loc !== 'en';
+    } else {
+      showEn = enText && enText !== zhText && !opts.zhOnly && loc !== 'en';
+    }
+    if (showEn) {
+      var en = document.createElement('span');
+      en.className = 't-en';
+      en.textContent = enText;
+      b.appendChild(en);
+    }
+    b.addEventListener('click', function (ev) {
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;
+      ev.preventDefault();
+      fn();
+    });
+    return b;
+  }
+
+  /** Q&A 預設：全寬工作台 qna/index.html（無 sidebar_landing 過關） */
+  function loadQnaV2ContentFrame() {
+    clearHymnEmbedLayout();
+    selectedMode = 'qna';
+    document.body.classList.add('mode-qna');
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入聖經難題 Q&A…');
+    var bust = 'v=' + Date.now();
+    document.getElementById('sidebarFrame').src = 'about:blank';
+    document.getElementById('contentFrame').src = 'qna/index.html?' + bust;
+  }
+
+  /**
+   * Q&A 變體：全寬右欄、左欄空白（外殼隱左欄）。路徑須與 docs/TOOLS_AND_ENTRY_REFERENCE.md §八 登記一致。
+   */
+  function applyQnaVariant(contentPath, loadingMsg) {
+    clearHymnEmbedLayout();
+    selectedMode = 'qna';
+    setModeButtonActive('qna');
+    setContextOpen(false);
+    document.body.classList.add('mode-qna');
+    document.body.classList.remove('mode-hymn-embed');
+    document.body.classList.remove('mode-module-shell-embed');
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading(loadingMsg || '載入…');
+    document.getElementById('sidebarFrame').src = 'about:blank';
+    var bust = 'v=' + Date.now();
+    var sep = contentPath.indexOf('?') >= 0 ? '&' : '?';
+    document.getElementById('contentFrame').src = contentPath + sep + bust;
+    renderContextBar();
+    requestAnimationFrame(syncTopOffset);
+  }
+
+  /** 模組殼入口（與 §八 對照）；內容僅經 iframe 載入，不內嵌模組 HTML */
+  function openBibleExplorer() { applyMode('study'); }
+  function openBibleQna() { applyMode('qna'); }
+  function openEtspedia() { applyQnaVariant('qna/index.html?cat=A&src=equiptoserve_etspedia', '載入以斯拉百科…'); }
+  function openDefending() { applyQnaVariant('qna/index.html?cat=A&src=defendinginerrancy', '載入 Defending Inerrancy…'); }
+  function openGotQ() { applyQnaVariant('qna/index.html?cat=A&src=gotquestions', '載入 GotQuestions…'); }
+  function openCaTeens() { applyQnaVariant('qna/index.html?cat=A&src=christiananswers', '載入 Christian Answers…'); }
+  function openCaFamily() { applyQnaVariant('qna/index.html?cat=C&src=wellsofgrace_chen_life', '載入信徒生活難題…'); }
+  function openCaZh() { applyQnaVariant('qna/index.html?cat=A&src=christiananswers_zh_trad', '載入 CA 繁中…'); }
+  function openCaId() { applyQnaVariant('qna/index.html?cat=A&src=christiananswers_id', '載入 CA 印尼…'); }
+  function openCaVi() { applyQnaVariant('qna/index.html?cat=A&src=christiananswers', '載入 Christian Answers…'); }
+  function openReformed() { applyQnaVariant('qna/index.html?cat=B&src=reformedanswers', '載入 Reformed Answers…'); }
+  function openBillyGraham() { applyQnaVariant('qna/index.html?cat=C&src=billygraham', '載入 Billy Graham Answers…'); }
+  function openHymnShell() { openHymnInShell(); }
+  function openChurchAdmin() { applyMode('church'); }
+  function openSchool() { applyMode('school'); }
+
+  /** ?b100_mode=study&b100_track=1 → 打开研读顶栏②跑道（HTTP 总站用） */
+  function applyBootQueryParams() {
+    var params;
+    try {
+      params = new URLSearchParams(window.location.search || '');
+    } catch (eP) {
+      return;
+    }
+    var mode = params.get('b100_mode');
+    if (!mode) return;
+    applyMode(mode);
+    if (params.get('b100_track') !== '1') return;
+    if (mode !== 'study') return;
+    var shell = window.Bible100Shell;
+    var ssot = window.B100ModuleNavSsot;
+    if (!shell || !ssot || typeof ssot.secondaryNavForMode !== 'function') return;
+    var items = ssot.secondaryNavForMode('study', { includeSiteHome: true }) || [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].focusZone === 'track' || items[i].labelShort === '跑道') {
+        shell.loadSecondaryNavItem(items[i], 'study');
+        break;
+      }
+    }
+  }
+
+  function applyMode(mode) {
+    document.body.classList.remove('sidebar-mobile-open');
+    var _sbt = document.getElementById('btnSidebarToggle');
+    var _sbd = document.getElementById('sidebarBackdrop');
+    if (_sbt) _sbt.setAttribute('aria-expanded', 'false');
+    if (_sbd) _sbd.setAttribute('aria-hidden', 'true');
+
+    selectedMode = mode;
+    setModeButtonActive(mode);
+
+    var modeConfig = window.Bible100Shell && typeof window.Bible100Shell.getModeConfig === 'function'
+      ? window.Bible100Shell.getModeConfig(mode)
+      : null;
+    var hideSecondary = modeConfig && modeConfig.hideSecondaryBar != null
+      ? modeConfig.hideSecondaryBar
+      : false;
+    setContextOpen(!hideSecondary);
+    clearHymnEmbedLayout();
+
+    if (window.Bible100Shell && typeof window.Bible100Shell.loadMode === 'function') {
+      window.Bible100Shell.loadMode(mode);
+      var entry = modeConfig && modeConfig.defaultEntry;
+      syncQnaShellLayout(entry && entry.path ? entry.path : '');
+    } else if (mode === 'material') {
+      loadDefaultChineseMaterials();
+    } else if (mode === 'qna') {
+      loadQnaV2ContentFrame();
+      syncQnaShellLayout('qna/index.html');
+    } else {
+      syncQnaShellLayout('');
+    }
+
+    renderContextBar();
+    requestAnimationFrame(syncTopOffset);
+  }
+
+  /** 全站 L0：左欄全站地圖 + 右欄代码路线图首頁 */
+  function loadSiteHome() {
+    clearHymnEmbedLayout();
+    selectedMode = null;
+    setModeButtonActive(null);
+    setContextOpen(false);
+    document.body.classList.remove('mode-qna', 'mode-hymn-embed', 'mode-module-shell-embed');
+    var el = document.getElementById('contextBar');
+    if (el) {
+      el.innerHTML = '';
+      el.className = 'row2 top-nav-secondary';
+    }
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入全站首頁…');
+    document.getElementById('sidebarFrame').src = SITE_HOME_SIDEBAR;
+    document.getElementById('contentFrame').src = SITE_HOME_CONTENT + '?v=' + Date.now();
+    requestAnimationFrame(syncTopOffset);
+  }
+
+  /** 進入教材模組 L1（頂欄「教材與培訓」） */
+  function loadDefaultChineseMaterials() {
+    clearHymnEmbedLayout();
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading('載入教材…');
+    var materialModule = window.Bible100Shell && typeof window.Bible100Shell.getModuleById === 'function'
+      ? window.Bible100Shell.getModuleById('languages')
+      : null;
+    if (materialModule) {
+      document.getElementById('sidebarFrame').src = materialModule.sidebar || 'about:blank';
+      document.getElementById('contentFrame').src = materialModule.path || 'about:blank';
+      return;
+    }
+    document.getElementById('sidebarFrame').src = DEFAULT_SIDEBAR;
+    document.getElementById('contentFrame').src = DEFAULT_CONTENT;
+  }
+
+  window.switchLanguage = switchLanguage;
+  window.applyMode = applyMode;
+  window.loadSiteHome = loadSiteHome;
+  window.appendChurchId = appendChurchId;
+
+  /**
+   * 统一壳导航：左栏 + 右栏 +（可选）顶栏 mode 高亮。
+   * 侧栏／landing 路线图应优先呼叫此函数，避免只换右栏不换左栏。
+   */
+  function navigateShell(opts) {
+    opts = opts || {};
+    if (opts.action === 'siteHome') {
+      loadSiteHome();
+      return;
+    }
+    if (opts.contentUrl && String(opts.contentUrl).indexOf('church_planning/') >= 0) {
+      opts.sidebarUrl = opts.sidebarUrl || G_PLAN_SIDEBAR;
+    }
+    if (window.B100_resolveNav) {
+      opts = window.B100_resolveNav(opts);
+    }
+    document.body.classList.remove('sidebar-mobile-open');
+    var _sbt = document.getElementById('btnSidebarToggle');
+    var _sbd = document.getElementById('sidebarBackdrop');
+    if (_sbt) _sbt.setAttribute('aria-expanded', 'false');
+    if (_sbd) _sbd.setAttribute('aria-hidden', 'true');
+    clearHymnEmbedLayout();
+
+    if (opts.mode) {
+      selectedMode = opts.mode;
+      setModeButtonActive(opts.mode);
+      var modeConfig = window.Bible100Shell && typeof window.Bible100Shell.getModeConfig === 'function'
+        ? window.Bible100Shell.getModeConfig(opts.mode)
+        : null;
+      var hideSecondary = modeConfig && modeConfig.hideSecondaryBar != null
+        ? modeConfig.hideSecondaryBar
+        : false;
+      setContextOpen(!hideSecondary);
+      renderContextBar();
+      if (modeConfig && modeConfig.defaultEntry) {
+        if (!opts.sidebarUrl) opts.sidebarUrl = modeConfig.defaultEntry.sidebar;
+        if (!opts.contentUrl) opts.contentUrl = modeConfig.defaultEntry.path;
+      }
+    }
+
+    var sb = opts.sidebarUrl || '';
+    var cf = opts.contentUrl || '';
+    if (cf && window.CmZoneNavSsot && window.CmZoneNavSsot.sanitizeContentUrl) {
+      cf = window.CmZoneNavSsot.sanitizeContentUrl(cf, 'church_ministry/_landing/gateway.html');
+    }
+    if (cf && window.B100ModuleNavSsot && window.B100ModuleNavSsot.sanitizeContentUrl) {
+      cf = window.B100ModuleNavSsot.sanitizeContentUrl(cf, cf || 'help/site_home.html');
+    }
+    if (!sb && !cf) return;
+
+    var fm = window.frameManager || new MainFrameManager();
+    fm.showLoading(opts.loading || '載入…');
+    var bust = 'v=' + Date.now();
+    if (sb) {
+      document.getElementById('sidebarFrame').src = sb + (sb.indexOf('?') >= 0 ? '&' : '?') + bust;
+    }
+    if (cf) {
+      document.getElementById('contentFrame').src = cf + (cf.indexOf('?') >= 0 ? '&' : '?') + bust;
+    }
+    syncQnaShellLayout(cf);
+    requestAnimationFrame(syncTopOffset);
+  }
+  window.navigateShell = navigateShell;
+
+  window.setMode = function (m) { applyMode(m); };
+  window.loadQnaV2ContentFrame = loadQnaV2ContentFrame;
+  window.openQnA = openQnA;
+  window.openNavHub = openNavHub;
+  window.openGlobalSiteSearch = openGlobalSiteSearch;
+  window.openMultilangReader = openMultilangReader;
+  window.openHelpDocsHub = openHelpDocsHub;
+  window.openChurchMinistryManual = openChurchMinistryManual;
+  window.openChurchGZone = openChurchGZone;
+  window.openChurchPlanning = openChurchPlanningHub;
+  window.openChurchPlanningHub = openChurchPlanningHub;
+  window.openChurchPlanningRaci = openChurchPlanningRaci;
+  window.openChurchPlanningCtaWarRoom = openChurchPlanningCtaWarRoom;
+  window.openSystemHub = openSystemHub;
+  window.openChurchHealthPro2026 = openChurchPlanningSwot;
+  window.applyQnaVariant = applyQnaVariant;
+  window.openBibleExplorer = openBibleExplorer;
+  window.openBibleQna = openBibleQna;
+  window.openEtspedia = openEtspedia;
+  window.openDefending = openDefending;
+  window.openGotQ = openGotQ;
+  window.openCaTeens = openCaTeens;
+  window.openCaFamily = openCaFamily;
+  window.openCaZh = openCaZh;
+  window.openCaId = openCaId;
+  window.openCaVi = openCaVi;
+  window.openReformed = openReformed;
+  window.openBillyGraham = openBillyGraham;
+  window.openHymnShell = openHymnShell;
+  window.openHymnLegacyMainIndex = openHymnLegacyMainIndex;
+  window.openHymnPlaylistShell = openHymnPlaylistShell;
+  window.openChurchAdmin = openChurchAdmin;
+  window.openSchool = openSchool;
+  window.openAITools = openAITools;
+  window.openBibleAILabLearnShell = openBibleAILabLearnShell;
+  window.openCrmAutomationConsole = openCrmAutomationConsole;
+  window.hideError = function () {
+    var e = document.getElementById('errorMessage');
+    if (e) e.classList.remove('active');
+  };
+
+  class MainFrameManager {
+    constructor() { this.init(); }
+    init() {
+      this.setupMessageListener();
+      this.setupFrameLoadHandlers();
+    }
+    setupMessageListener() {
+      var self = this;
+      window.addEventListener('message', function (event) {
+        if (event.data && event.data.type === 'bible100-sidebar-content-nav' && event.data.url) {
+          var cfx = document.getElementById('contentFrame');
+          var navUrl = event.data.url;
+          if (typeof window.bible100ResolveHubContentUrl === 'function') {
+            navUrl = window.bible100ResolveHubContentUrl(navUrl);
+          }
+          if (cfx) cfx.src = navUrl;
+          return;
+        }
+        if (event.data && event.data.type === 'bible100-ai-tools-reset') {
+          if (typeof openAITools === 'function') openAITools();
+          return;
+        }
+        if (event.data && event.data.type === 'navigate') {
+          self.navigateContentFrame(event.data.url);
+          return;
+        }
+        if (event.data && event.data.type === 'bible100-shell') {
+          var sb = event.data.sidebarUrl || '';
+          var cf = event.data.contentUrl || '';
+          if (typeof window.bible100ResolveHubContentUrl === 'function' && cf) {
+            cf = window.bible100ResolveHubContentUrl(cf);
+          }
+          var bust = 'v=' + Date.now();
+          self.showLoading('切換模組…');
+          var hymnInSidebar = sb.indexOf('hymn_management/') !== -1;
+          var hymnInContent = cf.indexOf('hymn_management/') !== -1;
+          function hymnSelfShellUrl(url) {
+            return /hymn_management\/index\.html/i.test(url) ||
+              /hymn_management\/hymn\/hymn_main_index\.html/i.test(url);
+          }
+          if (hymnInSidebar || hymnInContent) {
+            var embedUrl = cf || sb;
+            if (hymnSelfShellUrl(embedUrl)) {
+              document.body.classList.add('mode-hymn-embed');
+              document.body.classList.remove('mode-module-shell-embed', 'mode-qna');
+              document.getElementById('sidebarFrame').src = 'about:blank';
+              document.getElementById('contentFrame').src = embedUrl + (embedUrl.indexOf('?') >= 0 ? '&' : '?') + bust;
+              syncQnaShellLayout('');
+              return;
+            }
+            document.body.classList.remove('mode-hymn-embed');
+            document.body.classList.remove('mode-module-shell-embed');
+            if (sb) {
+              document.getElementById('sidebarFrame').src = sb + (sb.indexOf('?') >= 0 ? '&' : '?') + bust;
+            }
+            if (cf) {
+              document.getElementById('contentFrame').src = cf + (cf.indexOf('?') >= 0 ? '&' : '?') + bust;
+            }
+            syncQnaShellLayout(cf);
+            if (!sb && !cf) self.hideLoading();
+            return;
+          }
+          document.body.classList.remove('mode-hymn-embed');
+          document.body.classList.remove('mode-module-shell-embed');
+          if (sb) {
+            var su = sb + (sb.indexOf('?') >= 0 ? '&' : '?') + bust;
+            document.getElementById('sidebarFrame').src = su;
+          }
+          if (cf) {
+            var cu = cf + (cf.indexOf('?') >= 0 ? '&' : '?') + bust;
+            document.getElementById('contentFrame').src = cu;
+          }
+          syncQnaShellLayout(cf);
+          if (!sb && !cf) self.hideLoading();
+        }
+      });
+    }
+    setupFrameLoadHandlers() {
+      var self = this;
+      var sidebarFrame = document.getElementById('sidebarFrame');
+      var contentFrame = document.getElementById('contentFrame');
+      function onFrameLoad() {
+        if (self._loadTimeout) { clearTimeout(self._loadTimeout); self._loadTimeout = null; }
+        self.hideLoading();
+      }
+      sidebarFrame.onload = function () { onFrameLoad(); };
+      sidebarFrame.onerror = function () { self.showError('側邊欄載入失敗。'); };
+      contentFrame.onload = function () { onFrameLoad(); };
+      contentFrame.onerror = function () { self.showError('內容頁載入失敗。'); };
+      this._loadTimeout = setTimeout(function () {
+        var overlay = document.getElementById('loadingOverlay');
+        if (overlay && overlay.classList.contains('active')) self.hideLoading();
+      }, 2500);
+    }
+    navigateContentFrame(url) {
+      this.showLoading('載入頁面…');
+      var u = String(url || '').replace(/\\/g, '/');
+      if (typeof window.bible100ResolveHubContentUrl === 'function') {
+        u = window.bible100ResolveHubContentUrl(u);
+      } else if (window.CmZoneNavSsot && window.CmZoneNavSsot.sanitizeContentUrl) {
+        u = window.CmZoneNavSsot.sanitizeContentUrl(u, 'church_ministry/_landing/gateway.html');
+      }
+      if (window.B100ModuleNavSsot && window.B100ModuleNavSsot.sanitizeContentUrl) {
+        u = window.B100ModuleNavSsot.sanitizeContentUrl(u, u || 'help/site_home.html');
+      }
+      /* 修復 _landing/church_ministry/… 幽靈路徑（相對 href 從 landing 頁解析錯位） */
+      u = u.replace(/\/_landing\/church_ministry\//gi, '/church_ministry/');
+      if (/^https?:\/\//i.test(u) || /^file:/i.test(u)) {
+        var rootMatch = u.match(/\/bible100_new\/([^?#]+)/i);
+        if (rootMatch) {
+          u = rootMatch[1];
+        } else {
+          var cmMatch = u.match(/\/(church_ministry\/[^?#]+)/i);
+          if (cmMatch && u.indexOf('/_landing/church_ministry/') >= 0) {
+            u = cmMatch[1];
+          }
+        }
+      }
+      if (typeof window.bible100ResolveIframeSrc === 'function') {
+        try {
+          u = window.bible100ResolveIframeSrc(u, window);
+        } catch (eRes) {}
+      }
+      var bust = 'v=' + Date.now();
+      document.getElementById('contentFrame').src = u + (u.indexOf('?') >= 0 ? '&' : '?') + bust;
+    }
+    showLoading(text) {
+      var overlay = document.getElementById('loadingOverlay');
+      var textEl = document.getElementById('loadingText');
+      if (overlay) {
+        if (text && textEl) textEl.textContent = text;
+        overlay.classList.add('active');
+      }
+    }
+    hideLoading() {
+      var overlay = document.getElementById('loadingOverlay');
+      if (overlay) overlay.classList.remove('active');
+    }
+    showError(message) {
+      var errorEl = document.getElementById('errorMessage');
+      var textEl = document.getElementById('errorText');
+      if (errorEl) {
+        if (message && textEl) textEl.textContent = message;
+        errorEl.classList.add('active');
+        this.hideLoading();
+      }
+    }
+  }
+
+  function initPage() {
+    if (window.B100ShellContract && typeof window.B100ShellContract.validate === 'function') {
+      window.B100ShellContract.validate('index_v5.html');
+    }
+    if (window.location.protocol === 'file:') {
+      var syncBtn = document.getElementById('btnSyncObserver');
+      if (syncBtn) syncBtn.style.display = 'none';
+    }
+    if (window.location.search.indexOf('survey_banner=1') >= 0) {
+      document.body.classList.add('show-survey-banner');
+    }
+    syncTopOffset();
+    applyHubChromeI18n();
+    if (document.body && window.BIBLE100_BUILD_VERSION) {
+      document.body.setAttribute('data-b100-build', window.BIBLE100_BUILD_VERSION);
+    }
+    window.frameManager = new MainFrameManager();
+    /* 開站＝教材與培訓（百步四寶 landing）；全站 L0 日後另做 */
+    applyMode('material');
+
+    if (window.Bible100Shell && typeof window.Bible100Shell.loadConfig === 'function') {
+      window.Bible100Shell.loadConfig().then(function () {
+        renderModeButtonsFromConfig();
+        applyHubChromeI18n();
+        if (selectedMode) renderContextBar();
+        applyBootQueryParams();
+      }).catch(function () {
+        applyMode('material');
+        applyBootQueryParams();
+      });
+    } else {
+      applyBootQueryParams();
+    }
+    var brandBtn = document.getElementById('brandHomeBtn');
+    if (brandBtn) {
+      brandBtn.style.cursor = 'pointer';
+      brandBtn.setAttribute('title', DEFAULT_CONTENT);
+      brandBtn.addEventListener('click', function () { applyMode('material'); });
+      brandBtn.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          applyMode('material');
+        }
+      });
+    }
+    var btnToolsTop = document.getElementById('btnToolsOverviewTop');
+    if (btnToolsTop) {
+      btnToolsTop.addEventListener('click', function () { openToolsOverview(); });
+    }
+    var btnSiteHomeTop = document.getElementById('btnSiteHomeTop');
+    if (btnSiteHomeTop) {
+      btnSiteHomeTop.addEventListener('click', function (ev) {
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;
+        ev.preventDefault();
+        applyMode('material');
+      });
+    }
+    var btnMultilangTop = document.getElementById('btnMultilangReaderTop');
+    if (btnMultilangTop) {
+      btnMultilangTop.addEventListener('click', function (ev) {
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;
+        ev.preventDefault();
+        openMultilangReader();
+      });
+    }
+    var btnCrmAuto = document.getElementById('btnCrmAutomationTop');
+    if (btnCrmAuto) {
+      btnCrmAuto.addEventListener('click', function () { openCrmAutomationConsole(); });
+    }
+    window.addEventListener('resize', syncTopOffset);
+    if (window.ResizeObserver && document.getElementById('topWrap')) {
+      try {
+        var ro = new ResizeObserver(function () { syncTopOffset(); });
+        ro.observe(document.getElementById('topWrap'));
+      } catch (eRo) {}
+    }
+    requestAnimationFrame(syncTopOffset);
+    if (window.B100SSOTBridge && typeof window.B100SSOTBridge.wireIndexV5Shell === 'function') {
+      window.B100SSOTBridge.wireIndexV5Shell();
+    }
+    if (window.SyncObserverDrawer && typeof window.SyncObserverDrawer.init === 'function') {
+      window.SyncObserverDrawer.init();
+    }
+    try {
+      var syncParams = new URLSearchParams(window.location.search || '');
+      if (syncParams.get('show_sync') === '1' || localStorage.getItem('b100_show_sync') === '1') {
+        document.body.classList.add('b100-show-sync');
+      }
+    } catch (eSyncShow) {}
+
+    (function initMobileSidebar() {
+      var btn = document.getElementById('btnSidebarToggle');
+      var bd = document.getElementById('sidebarBackdrop');
+      var mq = window.matchMedia('(max-width: 767px)');
+      function closeSidebarMobile() {
+        document.body.classList.remove('sidebar-mobile-open');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+        if (bd) bd.setAttribute('aria-hidden', 'true');
+      }
+      function openSidebarMobile() {
+        document.body.classList.add('sidebar-mobile-open');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+        if (bd) bd.setAttribute('aria-hidden', 'false');
+      }
+      function toggleSidebarMobile() {
+        if (document.body.classList.contains('sidebar-mobile-open')) {
+          closeSidebarMobile();
+        } else {
+          openSidebarMobile();
+        }
+      }
+      if (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          toggleSidebarMobile();
+        });
+      }
+      if (bd) {
+        bd.addEventListener('click', function () {
+          closeSidebarMobile();
+        });
+      }
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeSidebarMobile();
+      });
+      window.addEventListener('resize', function () {
+        if (!mq.matches) closeSidebarMobile();
+      });
     })();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPage);
+  } else {
+    initPage();
+  }
+})();
   </script>
-  <noscript>
-    <meta http-equiv="refresh" content="0; url=index_v5.html">
-  </noscript>
-</head>
-<body style="font-family:Segoe UI,Microsoft YaHei,sans-serif;padding:1.5rem;background:#f6f7fb;color:#0d47a1;">
-  <p>正在前往總站殼 <strong>index_v5.html</strong>…</p>
-  <p>若未自動跳轉，請點：<a href="index_v5.html">index_v5.html</a></p>
-  <p style="font-size:12px;color:#666;">舊版單頁總入口（備份）：<a href="index_legacy.html">index_legacy.html</a> · 網址加 <code>?legacy=1</code> 可強制開舊版</p>
+  <script src="js/index_v5_hub_clean.js?v=20260812data"></script>
 </body>
 </html>

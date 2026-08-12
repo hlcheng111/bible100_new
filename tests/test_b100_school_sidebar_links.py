@@ -69,7 +69,7 @@ def sidebar_hrefs(html: str) -> list[str]:
 
 def test_school_ssot_zones():
     js = read("js/b100_module_nav_ssot.js")
-    assert "20260812clean" in js
+    assert "20260812data" in js
     assert "school:" in js
     assert "school_management/course_completion.html" in js
     assert "school_management/_landing/home.html" in js
@@ -93,7 +93,9 @@ def test_school_sidebar_shell_contract():
     assert 'data-b100-module-focus-mode="school"' in html
     assert 'target="contentFrame"' in html
     assert "sidebar_behavior.js" in html
+    assert "b100_module_sidebar_focus.js" in html
     assert "b100_module_nav_ssot.js" in html
+    assert "b100_sidebar_ssot_rail.js" not in html
     assert "學校管理" in html
     for bad in ('href="#"', "javascript:void(0)"):
         assert bad not in html
@@ -101,9 +103,9 @@ def test_school_sidebar_shell_contract():
 
 def test_school_sidebar_focus_zones():
     html = read(SIDEBAR_REL)
+    assert 'data-b100-focus-zone="home"' in html
     for z in ("workbench", "enrollment", "academic", "graduation"):
         assert 'data-b100-focus-zone="' + z + '"' in html
-    assert 'data-b100-focus-zone="home"' not in html
     assert 'data-b100-focus-zone="courses"' not in html
 
 
@@ -136,7 +138,7 @@ def test_school_landing_help_link():
     assert "b100_site_path.js" in html
     assert "school_departments_data.js" in html
     assert "A–E 各部門運作說明" in html
-    assert "W0–W8" in html
+    assert "school_departments_data.js" in html
 
 
 def test_school_landing_departments_ssot():

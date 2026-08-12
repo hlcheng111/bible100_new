@@ -160,7 +160,11 @@ def test_volunteer_shift_tool_pages_exist():
 def test_ai_lab_sidebar_crm_automation_link():
     text = (ROOT / "ai_tools" / "sidebar_lab.html").read_text(encoding="utf-8")
     assert "crm_automation_console.html" in text
-    assert "營運自動化" in text
+    # Wave a：改稱口述預填／行政捷徑，不再當 Lab 主分區「營運與教會 CRM」
+    assert "口述預填" in text or "營運自動化" in text
+    assert "導讀" in text and "備課" in text and "創作" in text
+    assert "sb-zone-guide" in text
+    assert "E · 營運與教會 CRM" not in text
 
 
 def test_index_v5_crm_automation_topbar():

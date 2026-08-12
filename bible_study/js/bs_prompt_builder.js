@@ -26,19 +26,22 @@
         return t.length <= max ? t : t.slice(0, max) + '…';
     }
 
-    async function scriptureBlock(versionKey, bookId, chapter) {
-        if (!global.BibleEngine || !global.BibleEngine.getBibleChapterRows) {
-            return '（經文尚未載入，請在 HTTP 模式下開啟並確認 data/bibles 存在）';
+    async function scriptureBlock(versionKey, bookId, chapter, bookName) {
+        if (global.BibleEngine && global.BibleEngine.getBibleChapterRows) {
+            try {
+                var rows = await global.BibleEngine.getBibleChapterRows(versionKey, bookId, chapter);
+                if (rows && rows.length) {
+                    return rows.map(function (v) {
+                        return (v.Verse || v.verse) + ' ' + (v.Text || v.text || '');
+                    }).join('\n');
+                }
+            } catch (e) { /* fall through */ }
         }
-        try {
-            var rows = await global.BibleEngine.getBibleChapterRows(versionKey, bookId, chapter);
-            if (!rows || !rows.length) return '（此章經文暫無本地資料）';
-            return rows.map(function (v) {
-                return (v.Verse || v.verse) + ' ' + (v.Text || v.text || '');
-            }).join('\n');
-        } catch (e) {
-            return '（經文載入失敗：' + (e.message || e) + '）';
-        }
+        var ref = (bookName || ('書卷' + bookId)) + ' 第' + chapter + '章';
+        return (
+            '（本地未載入經文 JSON；請先閱讀右欄 CMC 釋經「' + ref +
+            '」，或自行貼上本段經文後再送 AI）'
+        );
     }
 
     async function commentaryExcerpt(bookId, chapter) {
@@ -78,11 +81,15 @@
         }
         var versionKey = ctx.versionKey || 'faith';
         var versionB = ctx.versionKeyB || 'niv';
-        var scripture = await scriptureBlock(versionKey, bookId, chapter);
+        var cmcMode = ctx.commentarySource === 'cmc';
+        var scripture = await scriptureBlock(versionKey, bookId, chapter, bookName);
         var scriptureB = ctx.templateId === 'PT-02'
-            ? await scriptureBlock(versionB, bookId, chapter)
+            ? await scriptureBlock(versionB, bookId, chapter, bookName)
             : '';
-        var comm = await commentaryExcerpt(bookId, chapter);
+        var comm = cmcMode ? '' : await commentaryExcerpt(bookId, chapter);
+        if (cmcMode && !comm) {
+            comm = '（釋經見右欄 CMC 原站；可複製關鍵段落貼入 AI 對話）';
+        }
         var qnaUrl = global.BS_QnaBridge
             ? global.BS_QnaBridge.buildQnaUrl(bookId, chapter, { bookName: bookName })
             : '';
@@ -194,9 +201,9 @@
             ''
         ];
         if (c.commentary_excerpt) {
-            lines.push('--- 綜合解讀摘錄 ---', c.commentary_excerpt, '');
+            lines.push('--- 釋經 / 註釋 ---', c.commentary_excerpt, '');
         } else {
-            lines.push('--- 綜合解讀摘錄 ---', '（本地無資料；釋經頁可能改走 CMC 雲端，請自行查證）', '');
+            lines.push('--- 釋經 / 註釋 ---', '（請從右欄 CMC 複製摘錄，或見同章難題連結）', '');
         }
         lines.push('--- 同章難題（請先閱讀）---', c.qna_links, '');
         lines.push('--- 請 AI 依上文產出：觀察 3 問、解釋 3 問、應用 3 問 ---', '');

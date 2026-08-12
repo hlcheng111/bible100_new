@@ -111,6 +111,12 @@
             <h1>🤝 社群與捐款人互動（C 模組）</h1>
             <a href="dashboard.html" class="back">⛪ 返回教會事工中心</a>
         </div>
+        <div id="w5dReportBar" style="padding:8px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;margin-bottom:16px;font-size:12px;">
+            <strong>F-08 報告</strong>
+            <button type="button" class="btn btn-secondary" onclick="exportDonorsCsv()" data-w5-report="community-donors-csv">⬇ 捐款人 CSV</button>
+            <button type="button" class="btn btn-secondary" onclick="exportHighRiskCsv()" data-w5-report="community-highrisk-csv">⬇ 高風險 CSV</button>
+            <button type="button" class="btn btn-secondary" onclick="printCommunityOverview()" data-w5-report="community-print">🖨 列印</button>
+        </div>
         <details class="intro" style="border-left:4px solid #4338ca;">
             <summary style="cursor:pointer;font-weight:600;color:#1e293b;">📋 功能與使用說明</summary>
             <div style="margin-top:8px;">
@@ -359,6 +365,45 @@
             renderDonorStats();
             renderHighRisk();
         });
+
+        function csvLine(fields) {
+            var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+            return (fields || []).map(esc).join(',');
+        }
+        function exportDonorsCsv() {
+            var donors = getDonors();
+            var lines = [csvLine(['姓名', 'Email', '最近奉獻', '總額', '今年筆數', '上次感謝'])];
+            donors.forEach(function (d) {
+                lines.push(csvLine([d.name, d.email, d.lastDonationDate, d.totalAmount, d.giftsThisYear, d.lastThankSent || '']));
+            });
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('community_donors.csv', lines);
+        }
+        function exportHighRiskCsv() {
+            var list = getHighRisk();
+            var lines = [csvLine(['姓名', '原因', '建議行動', '已關懷'])];
+            list.forEach(function (r) {
+                lines.push(csvLine([r.name, r.reason, r.suggestedAction, r.contacted ? '是' : '否']));
+            });
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('community_high_risk.csv', lines);
+        }
+        function printCommunityOverview() {
+            var donors = getDonors();
+            var list = getHighRisk();
+            var headers = ['類別', '姓名', '摘要', '狀態'];
+            var rows = donors.map(function (d) {
+                return ['捐款人', d.name, '總額 ' + (d.totalAmount || 0), d.giftsThisYear + ' 筆/年'];
+            }).concat(list.map(function (r) {
+                return ['高風險', r.name, r.reason, r.contacted ? '已關懷' : '待關懷'];
+            }));
+            if (window.CmReportUtils) CmReportUtils.printTable('社群與捐款人互動', headers, rows);
+        }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="css/cm_desk.css" />
+<script src="js/cm_desk_registry.js"></script>
+<script src="js/cm_desk_kit.js"></script>
 </body>
 </html>

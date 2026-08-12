@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全站模块地图 · 侧栏</title>
+  <base target="contentFrame">
+  <link rel="stylesheet" href="../css/site_search.css">
+  <style>
+    body { margin: 0; font-family: "Microsoft YaHei", sans-serif; background: #eef6ff; font-size: 12px; }
+    .wrap { padding: 12px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
+    .head { background: #0b5fa5; color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; }
+    .head h2 { margin: 0 0 4px; font-size: 1rem; }
+    .head p { margin: 0; font-size: 10px; opacity: 0.9; }
+    .search-box { width: 100%; padding: 8px 10px; border: 2px solid #90caf9; border-radius: 8px; margin-bottom: 8px; box-sizing: border-box; }
+    .search-results { max-height: 160px; overflow-y: auto; background: #fff; border-radius: 8px; display: none; margin-bottom: 10px; border: 1px solid #e2e8f0; }
+    .search-results.active { display: block; }
+    details.mod { margin-bottom: 8px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; }
+    details.mod summary { cursor: pointer; padding: 8px 10px; font-weight: 700; color: #0b5fa5; list-style: none; }
+    details.mod summary::-webkit-details-marker { display: none; }
+    details.mod a { display: block; padding: 6px 12px 6px 16px; color: #334155; text-decoration: none; font-size: 11px; border-top: 1px solid #f1f5f9; }
+    details.mod a:hover { background: #e3f2fd; color: #0b5fa5; }
+  </style>
+  <script src="../js/sidebar_shell_target_fallback.js"></script>
+  <script src="../js/shell_nav.js"></script>
+  <script src="../js/sidebar_behavior.js"></script>
+  <script src="../js/search_indexes_embedded.js"></script>
+  <script src="../js/site_search.js"></script>
+  <script src="../js/b100_site_modules_map.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h2>🎊 全站模块</h2>
+      <p>功能页 · 两层</p>
+    </div>
+    <input type="search" class="search-box" id="searchInput" placeholder="🔍 搜索…" autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
+    <div id="modList"></div>
+    <a href="site_modules_sitemap.html" data-b100-nav="content" style="display:block;margin-top:10px;font-size:11px;color:#0b5fa5;">↻ 展开总表</a>
+  </div>
+  <script>
+    (function () {
+      var data = window.B100_SITE_MODULES_MAP || { modules: [] };
+      var list = document.getElementById("modList");
+      (data.modules || []).forEach(function (mod, idx) {
+        var det = document.createElement("details");
+        det.className = "mod";
+        if (idx < 2) det.open = true;
+        var sum = document.createElement("summary");
+        sum.textContent = (mod.icon || "") + " " + (mod.title || mod.id);
+        det.appendChild(sum);
+        (mod.tries || []).forEach(function (t) {
+          var a = document.createElement("a");
+          a.href = "../" + t.path.replace(/^\.\.\//, "");
+          a.setAttribute("data-b100-nav", "content");
+          a.textContent = t.label;
+          det.appendChild(a);
+        });
+        list.appendChild(det);
+      });
+      if (window.Bible100SiteSearch) {
+        Bible100SiteSearch.mount({ input: "#searchInput", results: "#searchResults", basePrefix: "../" });
+        var input = document.getElementById("searchInput");
+        var results = document.getElementById("searchResults");
+        if (input && results) {
+          input.addEventListener("input", function () {
+            results.classList.toggle("active", !!input.value.trim());
+          });
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

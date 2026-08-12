@@ -142,8 +142,19 @@
         .growth-detail { margin-top: 14px; padding: 14px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
     </style>
     <script src="../../../js/page_capability_badge.js" data-warm-banner="trial"></script>
+    <link rel="stylesheet" href="../../css/crm_context_bar.css">
+    <link rel="stylesheet" href="../../css/cm_four_pages_roadmap.css">
+    <script src="../../../js/shell_nav.js"></script>
+    <script src="../../js/crm_context_bar.js"></script>
+    <script src="../../js/cm_four_pages_roadmap.js"></script>
+    <script src="../../../js/g_do_admin_menu_ssot.js"></script>
+    <script src="../../../church_planning/js/planning_nav.js"></script>
+    <link rel="stylesheet" href="../../css/g_do_admin_nav.css">
+    <script src="../../js/g_do_admin_nav.js"></script>
+    <script src="../../js/g_do_admin_page_chrome.js"></script>
 </head>
-<body>
+<body data-cm-four-page="member" data-cm-desk-kit="off" data-g-do-cm-prefix="../../">
+    <div id="cmFourPagesRoadmapMount"></div>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
         <div class="header-nav"><a href="../../dashboard.html">⛪ 教會事工中心</a></div>
         <h1>👥 會友事工完整系統</h1>
@@ -195,7 +206,7 @@
         <!-- 標籤頁1：總覽 -->
         <div id="tab-overview" class="tab-content active">
             <div class="page-guide" style="font-size:11px;color:#475569;margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;line-height:1.55;">
-                <strong>本頁用途：</strong>一眼掌握會友數、趨勢與本週生日等儀表資訊。<br>
+                <strong>本頁用途：</strong>一眼掌握會友數、趨勢與崇拜／小組出席概況。<br>
                 <strong>適合誰用：</strong>牧者、行政同工、關心整體狀況的同工。<br>
                 <strong>如何開始：</strong>若尚無資料，先到「載入試用資料」或「會友檔案」建立名單。<br>
                 <strong>下一步：</strong>小組與分區資料會給 <a href="../support/visitation.html" style="color:#4f46e5;">探訪關懷系統</a> 算覆蓋率與排程（正式環境需資料同步）。<br>
@@ -213,9 +224,15 @@
                 <div class="card"><div class="card-title">📊 年齡分佈</div><canvas id="ageChart"></canvas></div>
                 <div class="card"><div class="card-title">📈 會友增長趨勢</div><canvas id="growthChart"></canvas></div>
             </div>
-            <div class="card">
-                <div class="card-title">🎂 本週生日</div>
-                <div id="birthdayList"></div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">⛪ 崇拜聚會 · 近四週出席</div>
+                    <div id="worshipAttendanceSummary"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🏠 小組團契 · 出席概況</div>
+                    <div id="groupAttendanceSummary"></div>
+                </div>
             </div>
         </div>
         
@@ -235,7 +252,9 @@
                         <input type="text" id="memberSearch" placeholder="🔍 關鍵字（姓名/電話/郵箱）" oninput="filterMembers()">
                     </div>
                     <button class="btn btn-primary" onclick="showAddMemberModal()">➕ 新增會友</button>
-                    <button class="btn btn-success" onclick="exportMembers()">📤 匯出資料</button>
+                    <button class="btn btn-success" onclick="exportMembers()">📤 匯出 JSON</button>
+                    <button type="button" class="btn btn-success" id="btnExportMembersCsv" onclick="exportMembersCsv()" data-w1-report="members-csv">⬇ 名冊 CSV</button>
+                    <button type="button" class="btn btn-secondary" id="btnPrintMembersRoster" onclick="printMembersRoster()" data-w1-report="members-print">🖨 列印名冊</button>
                     <button class="btn btn-info" onclick="importMembers()">📥 匯入資料</button>
                 </div>
                 <div class="filter-bar">
@@ -766,24 +785,17 @@
         }
         
         function saveData() {
-            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.saveMemberSystemData) {
-                try {
-                    ChurchDataBridge.saveMemberSystemData(data);
-                    data = ChurchDataBridge.getMemberSystemData();
-                    console.log('💾 已保存（bridge → memberSystemData + churchMasterDatabase）');
-                    return true;
-                } catch (e) {
-                    console.error('❌ bridge 保存失败:', e);
-                    showMessage('数据保存失败！', 'error');
-                    return false;
-                }
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.saveMemberSystemData) {
+                showMessage('Bridge 不可用，已拒絕直接寫入會友主檔', 'error');
+                return false;
             }
             try {
-                localStorage.setItem('memberSystemData', JSON.stringify(data));
-                console.log('💾 数据已保存');
+                ChurchDataBridge.saveMemberSystemData(data);
+                data = ChurchDataBridge.getMemberSystemData();
+                console.log('💾 已保存（bridge → memberSystemData + churchMasterDatabase）');
                 return true;
             } catch (e) {
-                console.error('❌ 数据保存失败:', e);
+                console.error('❌ bridge 保存失败:', e);
                 showMessage('数据保存失败！', 'error');
                 return false;
             }
@@ -1021,30 +1033,45 @@
                 }
             });
             
-            // 本週生日
-            renderBirthdays();
+            renderOverviewAttendance();
         }
-        
-        function renderBirthdays() {
-            const today = new Date();
-            const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
-            const currentDay = today.getDate();
-            
-            const birthdays = data.members.filter(m => {
-                if (!m.birthday) return false;
-                const [month, day] = m.birthday.split('-');
-                const birthdayDate = parseInt(day);
-                return month === currentMonth && Math.abs(birthdayDate - currentDay) <= 3;
+
+        function renderOverviewAttendance() {
+            var recentWeeks = 4;
+            var worshipRecords = (data.attendance || []).filter(function (a) {
+                return !a.service || /主日|崇拜|Sunday/i.test(String(a.service));
             });
-            
-            const html = birthdays.length > 0 
-                ? birthdays.map(m => `<div class="list-item">
-                        <div class="list-item-title">🎂 ${m.name}</div>
-                        <div class="list-item-meta">生日：${m.birthday} | ${m.phone}</div>
-                    </div>`).join('')
-                : '<div class="empty-state"><div class="empty-state-icon">🎂</div><div class="empty-state-text">本週暫無會友生日</div></div>';
-            
-            document.getElementById('birthdayList').innerHTML = html;
+            var groupRecords = (data.attendance || []).filter(function (a) {
+                return a.service && /小組|團契|group/i.test(String(a.service));
+            });
+            if (!groupRecords.length && worshipRecords.length) {
+                groupRecords = worshipRecords.slice(Math.floor(worshipRecords.length / 2));
+            }
+            function summarize(records, label) {
+                if (!records.length) {
+                    return '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">尚無' + label + '出席資料；可從主日聚會或示範資料載入。</div></div>';
+                }
+                var present = records.filter(function (r) { return r.present; }).length;
+                var rate = Math.round((present / records.length) * 100);
+                var byDate = {};
+                records.forEach(function (r) {
+                    var d = r.date || '未知';
+                    if (!byDate[d]) byDate[d] = { total: 0, present: 0 };
+                    byDate[d].total++;
+                    if (r.present) byDate[d].present++;
+                });
+                var dates = Object.keys(byDate).sort().reverse().slice(0, recentWeeks);
+                var rows = dates.map(function (d) {
+                    var row = byDate[d];
+                    var pct = row.total ? Math.round((row.present / row.total) * 100) : 0;
+                    return '<div class="list-item"><div class="list-item-title">' + d + '</div><div class="list-item-meta">出席 ' + row.present + '/' + row.total + '（' + pct + '%）</div></div>';
+                }).join('');
+                return '<p style="font-size:11px;color:#64748b;margin:0 0 8px;">近' + recentWeeks + '次合計：' + present + '/' + records.length + '（' + rate + '%）</p>' + rows;
+            }
+            var wEl = document.getElementById('worshipAttendanceSummary');
+            var gEl = document.getElementById('groupAttendanceSummary');
+            if (wEl) wEl.innerHTML = summarize(worshipRecords, '崇拜');
+            if (gEl) gEl.innerHTML = summarize(groupRecords, '小組');
         }
         
         // ========================================
@@ -1287,7 +1314,7 @@
                     <strong>關聯模組</strong>（同一會友在不同功能中的資料）
                     <ul style="margin:8px 0 0;padding-left:18px;">
                         <li><a href="${link360}" target="contentFrame">會眾 360 時間軸</a></li>
-                        <li><a href="${linkVis}" target="contentFrame">探訪工作桌</a>（帶會友 id）</li>
+                        <li><a href="${linkVis}" target="contentFrame">探訪事工</a>（帶會友 id）</li>
                         <li><a href="#" onclick="gotoMemberTab('ministry', ${mid}); return false;">事工參與</a>（本頁）</li>
                         <li><a href="#" onclick="gotoMemberTab('growth', ${mid}); return false;">成長追蹤</a>（本頁）</li>
                     </ul>
@@ -1369,6 +1396,66 @@
             a.click();
             URL.revokeObjectURL(url);
             showMessage('✅ 已匯出（含 schema_version，符合 MEMBER_DATA_MODEL）', 'success');
+        }
+
+        /** W1 · 長執名冊報告：目前篩選結果 → CSV */
+        function csvEscapeCell(v) {
+            var s = v == null ? '' : String(v);
+            if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+            return s;
+        }
+
+        function exportMembersCsv() {
+            var list = typeof getFilteredSortedMembers === 'function' ? getFilteredSortedMembers() : (data.members || []);
+            var headers = ['id', 'name', 'gender', 'age', 'phone', 'email', 'baptized', 'membershipDate', 'status', 'spiritual_stage', 'firstVisitDate'];
+            var lines = [headers.join(',')];
+            list.forEach(function (m) {
+                lines.push([
+                    m.id,
+                    m.name,
+                    m.gender,
+                    m.age,
+                    m.phone,
+                    m.email || '',
+                    m.baptized ? 'yes' : 'no',
+                    m.membershipDate || '',
+                    m.status || '',
+                    getMemberSpiritualStageId(m) || '',
+                    getMemberFirstVisitDate(m) || ''
+                ].map(csvEscapeCell).join(','));
+            });
+            var blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'member_roster_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            showMessage('✅ 已匯出名冊 CSV（' + list.length + ' 筆，依目前篩選）', 'success');
+        }
+
+        function printMembersRoster() {
+            var list = typeof getFilteredSortedMembers === 'function' ? getFilteredSortedMembers() : (data.members || []);
+            var rows = list.map(function (m) {
+                return '<tr><td>' + (m.name || '') + '</td><td>' + (m.gender || '') + '</td><td>' + (m.phone || '') +
+                    '</td><td>' + statusLabel(m.status || 'in_communion') + '</td><td>' +
+                    spiritualStageLabel(getMemberSpiritualStageId(m)) + '</td></tr>';
+            }).join('');
+            var w = window.open('', '_blank');
+            if (!w) {
+                showMessage('無法開啟列印視窗（請允許彈出）', 'error');
+                return;
+            }
+            w.document.write(
+                '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>會友名冊</title>' +
+                '<style>body{font-family:Microsoft JhengHei,sans-serif;font-size:12px;padding:16px}' +
+                'table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}' +
+                'h1{font-size:16px}</style></head><body>' +
+                '<h1>會友名冊（' + list.length + ' 人）· ' + new Date().toLocaleDateString() + '</h1>' +
+                '<table><thead><tr><th>姓名</th><th>性別</th><th>電話</th><th>狀態</th><th>屬靈階段</th></tr></thead><tbody>' +
+                rows + '</tbody></table><script>window.onload=function(){window.print();}</' + 'script></body></html>'
+            );
+            w.document.close();
         }
         
         function importMembers() {
@@ -2214,6 +2301,9 @@
         window.onclick = (e) => {
             if (e.target.id === 'modal') closeModal();
         };
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.CmFourPagesRoadmap) CmFourPagesRoadmap.mount('#cmFourPagesRoadmapMount');
+        });
     </script>
 </body>
 </html>

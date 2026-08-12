@@ -42,7 +42,7 @@
     }
   ];
 
-  /** A–E 各區 primary（波 2 先 A，其餘區保留一個主工作桌） */
+  /** A–F 各區 primary（E=社會服務 · F=行政支援） */
   var AE_ZONES = [
     {
       id: "a",
@@ -110,22 +110,40 @@
         blurb: "區域評估與起點"
       },
       primary: {
-        path: "modules/expansion/outreach-strategy.html",
-        label: "外展策略工作桌",
+        path: "modules/expansion/outreach-integrated.html",
+        label: "外展工作桌",
         role: "staff",
         step: 2
       }
     },
     {
       id: "e",
+      emoji: "🤝",
+      label: "E · 社會服務",
+      focus: "e",
+      forWhom: "志工協調、會眾／社區學苑入口",
+      landing: {
+        path: "congregation/index.html",
+        label: "會眾入口 · 導覽",
+        blurb: "社區學苑與會眾頁"
+      },
+      primary: {
+        path: "tools/volunteer_shift/index.html",
+        label: "義工排班",
+        role: "staff",
+        step: 3
+      }
+    },
+    {
+      id: "f",
       emoji: "⚙️",
-      label: "E · 行政支援",
-      focus: "admin",
-      forWhom: "會友、財務、志工與行政",
+      label: "F · 行政支援",
+      focus: "f",
+      forWhom: "戰情、會友、財務與行政支援",
       landing: {
         path: "ministry_core.html",
         label: "事工總覽 · 導覽",
-        blurb: "E 區模組索引"
+        blurb: "F 區模組索引"
       },
       primary: {
         path: "dashboard.html",
@@ -253,7 +271,8 @@
     { zone: "c", group: "教育培訓", path: "modules/education/education-integrated.html", label: "主日學工作桌", blurb: "主入口", primary: true, role: "teacher", step: 0 },
     { zone: "c", group: "教育培訓", path: "modules/development/development-plan.html", label: "教育發展計劃", blurb: "文件" },
 
-    { zone: "d", group: "社區與宣教", path: "modules/expansion/outreach-strategy.html", label: "外展策略地圖", blurb: "主入口", primary: true, role: "staff", step: 2 },
+    { zone: "d", group: "社區與宣教", path: "modules/expansion/outreach-integrated.html", label: "外展工作桌 · 3 Tab", blurb: "M6 主路徑", primary: true, role: "staff", step: 2 },
+    { zone: "d", group: "社區與宣教", path: "modules/expansion/outreach-strategy.html", label: "外展需求真鏈", blurb: "單頁真鏈", role: "staff", step: 2 },
     { zone: "d", group: "社區與宣教", path: "modules/expansion/community-assessment.html", label: "社區需求調研", blurb: "區域評估" },
     { zone: "d", group: "社區與宣教", path: "modules/expansion/mission-opportunities.html", label: "宣教機會", blurb: "機會探索" },
     { zone: "d", group: "社區與宣教", path: "modules/expansion/new-ministry-planning.html", label: "新事工規劃", blurb: "啟動計劃" },
@@ -265,36 +284,39 @@
     { zone: "d", group: "創新與新媒體", path: "modules/innovation/innovation-projects.html", label: "創新項目", blurb: "試驗專案" },
     { zone: "d", group: "創新與新媒體", path: "modules/innovation/technology-integration.html", label: "科技應用", blurb: "工具整合" },
 
-    { zone: "e", group: "戰情與志工", path: "dashboard.html", label: "事工戰情儀表板", blurb: "主入口", primary: true, role: "leader", step: 1 },
-    { zone: "e", group: "戰情與志工", path: "modules/volunteer/volunteer-integrated.html", label: "志工事工", blurb: "志工管理" },
-    { zone: "e", group: "戰情與志工", path: "congregation/index.html", label: "會眾入口", blurb: "社區學苑" },
-    { zone: "e", group: "會員與財政", path: "people/people_list.html", label: "人員總覽", blurb: "名冊索引" },
-    { zone: "e", group: "會員與財政", path: "modules/members/member-integrated.html", label: "會友事工", blurb: "會友主檔" },
-    { zone: "e", group: "會員與財政", path: "modules/finance/finance-integrated.html", label: "財務事工", blurb: "奉獻帳目" },
-    { zone: "e", group: "資產與社群", path: "modules/administration/financial-management.html", label: "財務管理", blurb: "行政財務" },
-    { zone: "e", group: "資產與社群", path: "modules/equipment/equipment-management.html", label: "設備管理", blurb: "資產清冊" },
-    { zone: "e", group: "資產與社群", path: "modules/library/library-management.html", label: "圖書管理", blurb: "館藏" },
-    { zone: "e", group: "資產與社群", path: "community-overview.html", label: "社群與捐款人", blurb: "關係總覽" },
-    { zone: "e", group: "研究與統計", path: "modules/research/index.html", label: "研究統計索引", blurb: "KPI 橋接" },
-    { zone: "e", group: "研究與統計", path: "modules/research/member-statistics.html", label: "會眾統計", blurb: "人口分析" },
-    { zone: "e", group: "研究與統計", path: "modules/research/ministry-performance.html", label: "事工成效", blurb: "績效" },
-    { zone: "e", group: "研究與統計", path: "modules/research/growth-trends.html", label: "增長趨勢", blurb: "趨勢圖" },
-    { zone: "e", group: "研究與統計", path: "modules/research/engagement-analysis.html", label: "參與度分析", blurb: "參與熱圖" },
-    { zone: "e", group: "媒體與科技", path: "modules/media/video-production.html", label: "影片製作", blurb: "影音產出" },
-    { zone: "e", group: "媒體與科技", path: "modules/tech/ai-assistant.html", label: "AI 助手", blurb: "教會內 AI" },
-    { zone: "e", group: "媒體與科技", path: "modules/tech/smart-recommendation.html", label: "數位事工", blurb: "推薦引擎" },
-    { zone: "e", group: "媒體與科技", path: "modules/innovation/digital-transformation.html", label: "數位化轉型", blurb: "轉型路線" },
-    { zone: "e", group: "工具與支援", path: "modules/support/smart-reminders.html", label: "智能提醒", blurb: "待辦提醒" },
-    { zone: "e", group: "工具與支援", path: "modules/support/workflow.html", label: "Workflow 跟進", blurb: "流程" },
-    { zone: "e", group: "工具與支援", path: "theme-settings.html", label: "Church Center 主題", blurb: "外觀" },
-    { zone: "e", group: "工具與支援", path: "custom-page-editor.html", label: "自訂頁面", blurb: "會眾頁" },
-    { zone: "e", group: "行政管理", path: "vision_and_plan.html", label: "願景與藍圖", blurb: "方向" },
-    { zone: "e", group: "行政管理", path: "roadmap-overview.html", label: "路線圖總覽", blurb: "全模組" },
-    { zone: "e", group: "行政管理", path: "ministry_core.html", label: "事工總覽", blurb: "核心" },
-    { zone: "e", group: "行政管理", path: "ai-and-compliance.html", label: "AI 決策與合規", blurb: "規劃中" }
+    { zone: "e", group: "社會服務", path: "tools/volunteer_shift/index.html", label: "義工排班", blurb: "主路徑", primary: true, role: "staff", step: 3 },
+    { zone: "e", group: "社會服務", path: "modules/volunteer/volunteer-integrated.html", label: "志工體系／崗位", blurb: "進階" },
+    { zone: "e", group: "社會服務", path: "congregation/index.html", label: "會眾入口", blurb: "社區學苑" },
+
+    { zone: "f", group: "戰情儀表", path: "dashboard.html", label: "事工戰情儀表板", blurb: "主入口", primary: true, role: "leader", step: 1 },
+    { zone: "f", group: "會員與財政", path: "people/people_list.html", label: "人員總覽", blurb: "名冊索引" },
+    { zone: "f", group: "會員與財政", path: "modules/members/member-integrated.html", label: "會友事工", blurb: "會友主檔" },
+    { zone: "f", group: "會員與財政", path: "modules/finance/finance-integrated.html", label: "財務事工", blurb: "奉獻帳目" },
+    { zone: "f", group: "資產與社群", path: "modules/administration/financial-management.html", label: "財務管理", blurb: "行政財務" },
+    { zone: "f", group: "資產與社群", path: "modules/equipment/equipment-management.html", label: "設備管理", blurb: "資產清冊" },
+    { zone: "f", group: "資產與社群", path: "modules/library/library-management.html", label: "圖書管理", blurb: "館藏" },
+    { zone: "f", group: "資產與社群", path: "community-overview.html", label: "社群與捐款人", blurb: "關係總覽" },
+    { zone: "f", group: "研究與統計", path: "modules/research/research-integrated.html", label: "研究統計 · 整合 Tab", blurb: "F-09 主殼", primary: true, role: "leader", step: 1 },
+    { zone: "f", group: "研究與統計", path: "modules/research/index.html", label: "研究統計索引", blurb: "KPI 橋接" },
+    { zone: "f", group: "研究與統計", path: "modules/research/member-statistics.html", label: "會眾統計", blurb: "人口分析" },
+    { zone: "f", group: "研究與統計", path: "modules/research/ministry-performance.html", label: "事工成效", blurb: "績效" },
+    { zone: "f", group: "研究與統計", path: "modules/research/growth-trends.html", label: "增長趨勢", blurb: "趨勢圖" },
+    { zone: "f", group: "研究與統計", path: "modules/research/engagement-analysis.html", label: "參與度分析", blurb: "參與熱圖" },
+    { zone: "f", group: "媒體與科技", path: "modules/media/video-production.html", label: "影片製作", blurb: "影音產出" },
+    { zone: "f", group: "媒體與科技", path: "modules/tech/ai-assistant.html", label: "AI 助手", blurb: "教會內 AI" },
+    { zone: "f", group: "媒體與科技", path: "modules/tech/smart-recommendation.html", label: "數位事工", blurb: "推薦引擎" },
+    { zone: "f", group: "媒體與科技", path: "modules/innovation/digital-transformation.html", label: "數位化轉型", blurb: "轉型路線" },
+    { zone: "f", group: "工具與支援", path: "modules/support/smart-reminders.html", label: "智能提醒", blurb: "待辦提醒" },
+    { zone: "f", group: "工具與支援", path: "modules/support/workflow.html", label: "Workflow 跟進", blurb: "流程" },
+    { zone: "f", group: "工具與支援", path: "theme-settings.html", label: "Church Center 主題", blurb: "外觀" },
+    { zone: "f", group: "工具與支援", path: "custom-page-editor.html", label: "自訂頁面", blurb: "會眾頁" },
+    { zone: "f", group: "行政管理", path: "vision_and_plan.html", label: "願景與藍圖", blurb: "方向" },
+    { zone: "f", group: "行政管理", path: "roadmap-overview.html", label: "路線圖總覽", blurb: "全模組" },
+    { zone: "f", group: "行政管理", path: "ministry_core.html", label: "事工總覽", blurb: "核心" },
+    { zone: "f", group: "行政管理", path: "ai-and-compliance.html", label: "AI 決策與合規", blurb: "規劃中" }
   ];
 
-  var subpagesByZone = { a: [], b: [], c: [], d: [], e: [] };
+  var subpagesByZone = { a: [], b: [], c: [], d: [], e: [], f: [] };
   AE_SUBPAGES.forEach(function (p) {
     if (subpagesByZone[p.zone]) subpagesByZone[p.zone].push(p);
   });
@@ -317,6 +339,35 @@
     return PATH_LOOKUP[normPathKey(path)] || null;
   }
 
+  /** C 區 · Hub／CRM 渲染用雙欄殼連結（layout v1 focus=c，勿用 journey 側欄） */
+  var C_ZONE_SHELL_LINKS = [
+    {
+      label: "📚 主日學工作桌",
+      blurb: "C 區 · 5 Tab",
+      sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=c",
+      contentUrl:
+        "church_ministry/modules/education/education-integrated.html?crm_from=crm&role=teacher#tab-guide"
+    },
+    {
+      label: "📖 聖經教材 · 多語研讀",
+      blurb: "換側欄",
+      sidebarUrl: "bible_study/sidebar.html",
+      contentUrl: "bible_study/comprehensive_exegesis_reader.html?book=創世記&chapter=1&lang=CN"
+    },
+    {
+      label: "🏫 全校學籍 · 學校管理",
+      blurb: "換側欄",
+      sidebarUrl: "school_management/sidebar.html",
+      contentUrl: "school_management/dashboard.html"
+    },
+    {
+      label: "🤖 AI 輔助 · Prompt",
+      blurb: "換側欄",
+      sidebarUrl: "ai_tools/sidebar_lab.html",
+      contentUrl: "ai_tools/tools/bible_prompt_generator.html"
+    }
+  ];
+
   global.CrmJourneyRegistry = {
     hubJourney: HUB_JOURNEY,
     roles: ROLES,
@@ -325,6 +376,7 @@
     planningShortcuts: PLANNING_SHORTCUTS,
     aeSubpages: AE_SUBPAGES,
     subpagesByZone: subpagesByZone,
+    cZoneShellLinks: C_ZONE_SHELL_LINKS,
     utils: UTILS,
     byRole: BY_ROLE,
     toolHref: toolHref,

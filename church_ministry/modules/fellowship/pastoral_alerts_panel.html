@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>缺席預警 · B 牧養 | Church Ministry</title>
+  <link rel="stylesheet" href="../../css/pastoral_workspace.css" />
+  <link rel="stylesheet" href="../../css/cm_responsive_tokens.css" />
+  <script src="../../../js/church_data_bridge.js"></script>
+</head>
+<body class="pa-wrap pastoral-panel-embed" data-b100-pattern="P-AE-PANEL">
+  <main class="sg-main" style="max-width:900px;margin:0 auto;padding:12px">
+    <div id="pa-alerts-care" class="cm-ai-care-card" hidden></div>
+    <div class="sg-card alert">
+      <h3>⚠️ 連續缺席預警</h3>
+      <p class="muted">連續 3 週缺席將列入關懷；請人審後一鍵推送探訪佇列（不自動派工）。</p>
+      <ul id="pa-alert-list" class="alert-list"></ul>
+      <p id="pa-alert-empty" class="muted ok" hidden>目前無觸發預警的組員。</p>
+    </div>
+    <div class="sg-toolbar">
+      <button type="button" class="pa-btn cm-touch-target" id="pa-btn-push-all">一鍵推送全部至探訪佇列</button>
+      <button type="button" class="pa-btn outline cm-touch-target" id="pa-btn-refresh">重新整理</button>
+    </div>
+  </main>
+  <script src="../../js/pastoral_data_hub.js"></script>
+  <script src="../../js/cm_ai_care_helper.js"></script>
+  <script>
+  (function () {
+    function hub() { return window.PastoralDataHub; }
+    function render() {
+      var H = hub();
+      var list = document.getElementById("pa-alert-list");
+      var empty = document.getElementById("pa-alert-empty");
+      if (!H || !list) return;
+      H.evaluateLifecycleRules();
+      var store = H.getOrgStore();
+      var tasks = (store.handoverTasks || []).filter(function (t) {
+        return t.status === "pending" && t.type === "absence_followup";
+      });
+      list.innerHTML = "";
+      if (!tasks.length) {
+        empty.hidden = false;
+        return;
+      }
+      empty.hidden = true;
+      tasks.forEach(function (t) {
+        var li = document.createElement("li");
+        li.className = "hot";
+        li.innerHTML =
+          "<strong>" + (t.memberName || t.memberId || "—") + "</strong> · " +
+          (t.reason || "缺席預警") +
+          ' <button type="button" class="pa-btn sm cm-touch-target" data-mid="' +
+          String(t.memberId || "") + '" data-name="' + String(t.memberName || "") + '">推送探訪</button>';
+        list.appendChild(li);
+      });
+      if (tasks[0] && window.CmAiCareHelper) {
+        CmAiCareHelper.renderCareCard("pa-alerts-care", {
+          name: tasks[0].memberName,
+          streak: 3,
+          context: "小組聚會"
+        });
+      }
+      list.querySelectorAll("button[data-mid]").forEach(function (btn) {
+        btn.onclick = function () {
+          pushOne(btn.getAttribute("data-mid"), btn.getAttribute("data-name"));
+        };
+      });
+    }
+    function goVisitationTab() {
+      try {
+        if (window.parent && window.parent !== window && window.parent.PastoralIntegratedShell) {
+          window.parent.PastoralIntegratedShell.switchTab("visitation");
+          return;
+        }
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: "pastoral-integrated", action: "switchTab", tab: "visitation" }, "*");
+        }
+      } catch (eG) {}
+    }
+    function pushOne(memberId, memberName) {
+      var H = hub();
+      if (!H || !memberId) return;
+      H.addHandoverTask({
+        type: "absence_followup",
+        memberId: memberId,
+        memberName: memberName,
+        reason: "【B 牧養】小組連續缺席 · 待探訪",
+        source: "pastoral_alerts_panel",
+        link: "../support/visitation_index.html?crm_from=b_alerts&memberId=" + encodeURIComponent(memberId)
+      });
+      alert("已推送至探訪佇列：" + (memberName || memberId));
+      render();
+      goVisitationTab();
+    }
+    document.getElementById("pa-btn-push-all").onclick = function () {
+      var H = hub();
+      if (!H) return;
+      var created = H.evaluateLifecycleRules ? H.evaluateLifecycleRules() : [];
+      alert(
+        created && created.length
+          ? "生命週期規則已評估，新增/更新 " + created.length + " 筆交接（已切換至探訪佇列 Tab）"
+          : "已重新評估；若無新預警，表示目前無符合自動規則者"
+      );
+      render();
+      goVisitationTab();
+    };
+    document.getElementById("pa-btn-refresh").onclick = render;
+    render();
+  })();
+  </script>
+</body>
+</html>

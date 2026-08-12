@@ -4,7 +4,7 @@
 (function (global) {
   "use strict";
 
-  var NAV_BUILD = "20260812clean";
+  var NAV_BUILD = "20260812data";
 
   var SIDEBAR_FORBIDDEN = [
     /(^|[/?#])bible_study\/sidebar\.html/i,

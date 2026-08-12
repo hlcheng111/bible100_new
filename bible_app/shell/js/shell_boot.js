@@ -1,67 +1,9 @@
 /**
- * 啟動防呆：file:// 時嘗試接上已開的本機服務，否則顯示精簡離線提示
+ * 啟動防呆：file:// 時接上本機 HTTP（8080/3000）；cloud/local-http 為完整模式
  */
-(function () {
-  function endpoints() {
-    var host = 'http://127.0.0.1:3000';
-    var p = (location.pathname || '').replace(/\\/g, '/');
-    if (p.indexOf('/bible_app/shell') >= 0) {
-      return {
-        live: host + '/bible_app/shell/index.html',
-        probe: host + '/bible_app/shell/js/probe.js',
-      };
-    }
-    return {
-      live: host + '/shell/index.html',
-      probe: host + '/shell/js/probe.js',
-    };
-  }
-
-  var EP = endpoints();
-  var LIVE_URL = EP.live;
-  var PROBE_JS = EP.probe;
-  var BAT_HINT = '請關閉此頁，在 bible_app 資料夾雙擊「打開聖經跑道.bat」（或「聖經跑道一鍵開啟.vbs」）。';
-
-  function probeLive(cb) {
-    var done = false;
-    var timer = setTimeout(function () {
-      if (done) return;
-      done = true;
-      cb(false);
-    }, 4000);
-    var prev = window.__B100_SERVER_LIVE__;
-    window.__B100_SERVER_LIVE__ = false;
-    var s = document.createElement('script');
-    s.src = PROBE_JS + '?' + Date.now();
-    s.onload = function () {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      s.remove();
-      cb(!!window.__B100_SERVER_LIVE__);
-      window.__B100_SERVER_LIVE__ = prev;
-    };
-    s.onerror = function () {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      s.remove();
-      cb(false);
-    };
-    document.head.appendChild(s);
-  }
-
-  function probeLiveRetry(cb, left) {
-    probeLive(function (ok) {
-      if (ok) return cb(true);
-      if (left <= 1) return cb(false);
-      setTimeout(function () { probeLiveRetry(cb, left - 1); }, 1500);
-    });
-  }
-
-  function goLive() {
-    window.location.replace(LIVE_URL + (window.location.search || ''));
-  }
+(function (global) {
+  var LAUNCH_HINT =
+    '请双击 Bible100 根目录「Bible100一键开启」（或「打开Bible100.bat」），再从 index 进入。';
 
   function showOfflineBanner() {
     var bar = document.getElementById('offlineBar');
@@ -74,7 +16,7 @@
     bar.className = 'offline-bar';
     bar.innerHTML =
       '<button type="button" class="offline-bar__btn" id="offlineBarBtn">' +
-      '⚠️ 精簡離線模式 · 點此一鍵說明（如何開完整版）' +
+      '⚠️ 预览模式 · 仅示范章节 · 点此查看如何打开完整四语经文' +
       '</button>';
     document.body.insertBefore(bar, document.body.firstChild);
     document.getElementById('offlineBarBtn').addEventListener('click', showModal);
@@ -82,56 +24,108 @@
 
   function showModal() {
     var old = document.getElementById('offlineModal');
-    if (old) { old.hidden = false; return; }
+    if (old) {
+      old.hidden = false;
+      return;
+    }
     var m = document.createElement('div');
     m.id = 'offlineModal';
     m.className = 'offline-modal';
     m.innerHTML =
       '<div class="offline-modal__card">' +
-      '<h2>🦁 解鎖完整 66 卷與 AI 補給站</h2>' +
-      '<p>目前為<strong>預覽模式</strong>（僅示範經文）。</p>' +
-      '<p><strong>只需一步：</strong>關閉此頁，在 <code>bible_app</code> 資料夾雙擊：</p>' +
-      '<p style="font-size:15px;font-weight:900;color:#4338ca">📂 聖經跑道一鍵開啟.vbs</p>' +
-      '<p style="font-size:12px;color:#64748b">（或「打開聖經跑道.bat」— 會自動開瀏覽器，約需 10～30 秒）</p>' +
+      '<h2>🦁 打开完整四语圣经跑道</h2>' +
+      '<p>目前为<strong>预览模式</strong>（仅少量示范经节）。</p>' +
+      '<p><strong>本机一步：</strong>关闭此页，在 Bible100 文件夹双击：</p>' +
+      '<p style="font-size:15px;font-weight:900;color:#4338ca">📂 Bible100一键开启</p>' +
+      '<p style="font-size:12px;color:#64748b">（或「打开Bible100.bat」→ 自动打开总站 index）</p>' +
       '<p class="offline-modal__try" id="retryStatus">' +
-      '<button type="button" id="retryLive">我已雙擊啟動 · 再試連線完整版</button></p>' +
-      '<button type="button" class="btn-big btn-teal" id="closeModal">先用預覽模式</button>' +
+      '<button type="button" id="retryLive">已启动 · 再试连接完整版</button></p>' +
+      '<button type="button" class="btn-big btn-teal" id="closeModal">继续预览</button>' +
       '</div>';
     document.body.appendChild(m);
-    document.getElementById('closeModal').addEventListener('click', function () { m.hidden = true; });
+    document.getElementById('closeModal').addEventListener('click', function () {
+      m.hidden = true;
+    });
     document.getElementById('retryLive').addEventListener('click', tryLiveRedirect);
   }
 
   function tryLiveRedirect() {
     var status = document.getElementById('retryStatus');
-    if (status) status.textContent = '正在連線本機服務…（首次啟動可能需 30 秒）';
-    probeLiveRetry(function (ok) {
-      if (ok) {
-        goLive();
+    var L = global.B100LiveDb;
+    if (status) status.textContent = '正在连接本机服务…';
+    var p = L && L.probe ? L.probe(4) : Promise.resolve(false);
+    p.then(function (ok) {
+      if (ok && L) {
+        var url = L.getShellUrl() + (global.location.search || '');
+        global.location.replace(url);
         return;
       }
       if (status) {
         status.innerHTML =
-          '❌ 尚未偵測到本機服務。<br>' + BAT_HINT +
-          ' <button type="button" id="retryLive2">再試一次</button>';
+          '❌ 尚未检测到本机 HTTP。<br>' +
+          LAUNCH_HINT +
+          ' <button type="button" id="retryLive2">再试</button>';
         var b2 = document.getElementById('retryLive2');
         if (b2) b2.addEventListener('click', tryLiveRedirect);
       } else {
-        alert('本機完整版尚未啟動。\n' + BAT_HINT);
+        alert('本机完整版尚未启动。\n' + LAUNCH_HINT);
       }
-    }, 8);
+    });
+  }
+
+  function bootFilePreview() {
+    var inIframe = false;
+    try {
+      inIframe = global.self !== global.top;
+    } catch (eIf) {
+      inIframe = true;
+    }
+    var L = global.B100LiveDb;
+    var p = L && L.probe ? L.probe(3) : Promise.resolve(false);
+    p.then(function (ok) {
+      if (ok && L) {
+        L.notifyChildFrames();
+        var shellUrl = L.getShellUrl() + (global.location.search || '');
+        var hubUrl = (L.getHubUrl ? L.getHubUrl() : shellUrl) + '?b100_mode=study&b100_track=1';
+        if (!inIframe) {
+          global.location.replace(shellUrl);
+          return;
+        }
+        var pill = document.createElement('div');
+        pill.className = 'live-ok-pill';
+        pill.innerHTML =
+          '✓ 本机 HTTP 已连接 · 四语经库可用 · ' +
+          '<a href="' +
+          hubUrl +
+          '" target="_blank" rel="noopener" style="color:#fff">从总站打开 ↗</a>';
+        document.body.appendChild(pill);
+        try {
+          var cf = document.getElementById('contentFrame');
+          if (cf) {
+            cf.addEventListener('load', function () {
+              L.notifyChildFrames();
+            });
+          }
+        } catch (eCf) {}
+        return;
+      }
+      showOfflineBanner();
+    });
   }
 
   if (location.protocol === 'file:') {
-    probeLiveRetry(function (ok) {
-      if (ok) goLive();
-      else showOfflineBanner();
-    }, 3);
-  } else if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
+    bootFilePreview();
+  } else if (
+    global.B100RuntimeMode &&
+    global.B100RuntimeMode.isLocalHttp &&
+    global.B100RuntimeMode.isLocalHttp()
+  ) {
     var ok = document.createElement('div');
     ok.id = 'liveOkPill';
     ok.className = 'live-ok-pill';
-    ok.textContent = '✓ 完整模式';
+    ok.textContent = '✓ 完整模式（本机 HTTP）';
     document.body.appendChild(ok);
+  } else if (global.B100RuntimeMode && global.B100RuntimeMode.isCloud && global.B100RuntimeMode.isCloud()) {
+    /* 云站：无额外横幅 */
   }
-})();
+})(typeof window !== 'undefined' ? window : globalThis);

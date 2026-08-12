@@ -18,7 +18,12 @@ table th { background: #f8f9fa; }
 .form-input, .form-textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
 .form-textarea { min-height: 80px; }</style></head>
 <body>
-    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header"><h1>🔧 技术支援中心</h1></div>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+<div id="w5dReportBar" style="padding:8px 16px;background:#ecfdf5;border-bottom:1px solid #a7f3d0;font-size:12px;"><strong>F-25 報告</strong>
+    <button type="button" class="btn" style="background:#059669;margin-left:8px;" onclick="exportTicketsCsv()" data-w5-report="support-tickets-csv">⬇ 工單 CSV</button>
+    <button type="button" class="btn" style="background:#4b5563;margin-left:4px;" onclick="printTickets()" data-w5-report="support-print">🖨 列印</button>
+</div>
+<div class="header"><h1>🔧 技术支援中心</h1></div>
 <div class="container">
     <div class="card"><h3 style="margin-bottom:15px;">🎫 支援工单</h3>
         <button class="btn" onclick="showAddModal()">➕ 新增工单</button>
@@ -59,6 +64,27 @@ function del(id) {
         render();
     }
 }
+function csvLine(fields) {
+    var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+    return (fields || []).map(esc).join(',');
+}
+function exportTicketsCsv() {
+    var lines = [csvLine(['问题描述', '提交人', '日期', '状态'])];
+    tickets.forEach(function (t) { lines.push(csvLine([t.issue, t.submitter, t.date, t.status])); });
+    if (window.CmReportUtils) CmReportUtils.downloadCsv('support_tickets.csv', lines);
+}
+function printTickets() {
+    var headers = ['问题描述', '提交人', '日期', '状态'];
+    var rows = tickets.map(function (t) { return [t.issue, t.submitter, t.date, t.status]; });
+    if (window.CmReportUtils) CmReportUtils.printTable('技术支援工单', headers, rows);
+}
 </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

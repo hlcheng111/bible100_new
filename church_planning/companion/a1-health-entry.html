@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A1 信徒健康診斷（小白友善）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/persistence_provider.js"></script>
+  <script src="../js/central_member_db.js"></script>
+  <script src="="../js/scaling_adapter.js"></script>
+  <style>
+    body { background: linear-gradient(165deg, #ecfeff 0%, #f0fdf4 48%, #fff 100%); }
+    .score-btn { min-width: 2rem; height: 2.2rem; border-radius: 0.55rem; border: 1px solid #cbd5e1; font-weight: 800; }
+    .score-btn.on { background: #0e7490; color: #fff; border-color: #0f766e; }
+  </style>
+</head>
+<body class="text-slate-800">
+  <div id="app" class="max-w-3xl mx-auto p-4 md:p-6">
+    <div class="rounded-2xl border border-cyan-200 bg-white/90 shadow-xl p-5 md:p-6 space-y-4">
+      <h1 class="text-xl font-black text-cyan-900">A1 信徒健康診斷 <span class="text-sm text-cyan-700 font-semibold">A1 Spiritual Vitality Check</span></h1>
+      <p class="text-sm text-slate-600">
+        這份問卷共 6 題，幫助教會了解整體靈命健康輪廓。1 分代表較低，6 分代表較高。完成後會寫入本機（<code class="text-cyan-800">chp2026-a1-health-results</code>），供 B1 策略與 AI Payload 使用。
+      </p>
+      <div v-for="q in questions" :key="q.key" class="border border-slate-100 rounded-xl p-3 bg-slate-50/70" :data-dimension-id="q.dimension_id">
+        <p class="text-sm font-bold text-slate-800">{{ q.promptZh }}</p>
+        <p class="text-xs text-slate-500 mt-1">{{ q.promptEn }}</p>
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          <button type="button" v-for="n in 6" :key="q.key+n" class="score-btn text-xs"
+            :class="{ on: answers[q.key] === n }" @click="answers[q.key] = n">{{ n }}</button>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-cyan-100 bg-cyan-50/60 p-3">
+        <p class="text-sm font-bold text-cyan-900">即時摘要</p>
+        <p class="text-xs text-slate-700 mt-1">A1 HealthScore（1.0–5.0，六題平均）：<strong>{{ normalizedHealthScore.toFixed(2) }}</strong></p>
+        <p class="text-xs text-slate-600 mt-1">服事滿意度（內部標度）：<strong>{{ serviceSatisfactionInternal.toFixed(2) }}</strong>（供 B1「恩賜匹配」標籤）</p>
+        <p class="text-xs text-slate-600 mt-1">資料來源：A1 問卷（本機儲存）</p>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button type="button" @click="saveResults" class="px-4 py-2 rounded-lg bg-cyan-700 text-white font-black text-sm">儲存 A1 結果</button>
+        <button type="button" @click="clearResults" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-bold text-sm">清除本機結果</button>
+        <a href="ministry-8020-planning.html" class="px-4 py-2 rounded-lg border border-cyan-300 text-cyan-900 font-bold text-sm no-underline">返回 B1 策略頁</a>
+      </div>
+      <p v-if="tip" class="text-sm font-bold text-emerald-700">{{ tip }}</p>
+
+      <details class="border border-slate-200 rounded-lg p-3 bg-white/70">
+        <summary class="text-xs font-bold text-slate-600 cursor-pointer">Debug: A1 JSON 預覽</summary>
+        <pre class="text-[11px] mt-2 text-slate-700 whitespace-pre-wrap break-all">{{ payloadPretty }}</pre>
+      </details>
+    </div>
+  </div>
+
+  <script>
+  const { createApp } = Vue;
+  const A1_KEY = 'chp2026-a1-health-results';
+
+  function getChurchId() {
+    try {
+      var params = new URLSearchParams(window.location.search || '');
+      return params.get('church_id') || window.CURRENT_CHURCH_ID || 'default';
+    } catch (e) {
+      return 'default';
+    }
+  }
+
+  function getMemberId() {
+    try {
+      var params = new URLSearchParams(window.location.search || '');
+      var id = Number(params.get('id'));
+      return Number.isFinite(id) ? id : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function storageGet(key) {
+    try {
+      if (window.PersistenceProvider && typeof window.PersistenceProvider.getInstance === 'function') {
+        return window.PersistenceProvider.getInstance().getItem(key);
+      }
+    } catch (e) {
+      console.warn('PersistenceProvider getItem failed, fallback localStorage', e);
+    }
+    return localStorage.getItem(key);
+  }
+
+  function storageSet(key, value) {
+    try {
+      if (window.PersistenceProvider && typeof window.PersistenceProvider.getInstance === 'function') {
+        window.PersistenceProvider.getInstance().setItem(key, value);
+        return;
+      }
+    } catch (e) {
+      console.warn('PersistenceProvider setItem failed, fallback localStorage', e);
+    }
+    localStorage.setItem(key, value);
+  }
+
+  function storageRemove(key) {
+    try {
+      if (window.PersistenceProvider && typeof window.PersistenceProvider.getInstance === 'function') {
+        window.PersistenceProvider.getInstance().removeItem(key);
+        return;
+      }
+    } catch (e) {
+      console.warn('PersistenceProvider removeItem failed, fallback localStorage', e);
+    }
+    localStorage.removeItem(key);
+  }
+
+  function normalize6to5(v) {
+    if (window.ScalingAdapter && typeof window.ScalingAdapter.toInternalScale === 'function') {
+      var x = window.ScalingAdapter.toInternalScale(v, window.ScalingAdapter.TOOL.A1_LIKERT6);
+      return x != null ? x : 1;
+    }
+    var n = Number(v);
+    if (!Number.isFinite(n)) return 1;
+    return 1 + ((Math.max(1, Math.min(6, n)) - 1) * 4 / 5);
+  }
+
+  createApp({
+    data: function () {
+      return {
+        questions: [
+          { key: 'worship', dimension_id: 'prayer_worship', promptZh: '在過去一個月，你在敬拜中感受到與神同在的連結程度？（崇拜）', promptEn: 'In the past month, how connected did you feel to God during worship? (Worship)' },
+          { key: 'truth', dimension_id: 'truth_practice', promptZh: '在過去一個月，你是否能把真理應用到日常抉擇中？（真理）', promptEn: 'In the past month, could you apply biblical truth to daily decisions? (Truth Practice)' },
+          { key: 'service', dimension_id: 'mission_service', promptZh: '在過去一個月，你是否覺得自己的服事有意義且合乎恩賜？（事奉意義）', promptEn: 'In the past month, did your ministry engagement feel meaningful and gift-aligned? (Ministry Engagement)' },
+          { key: 'service_satisfaction', dimension_id: 'service_satisfaction', promptZh: '整體而言，你對自己在教會的服事／參與程度有多滿意？（服事滿意度）', promptEn: 'Overall, how satisfied are you with your service and participation in church? (Service Satisfaction)' },
+          { key: 'community', dimension_id: 'fellowship_care', promptZh: '在過去一個月，你是否在教會中找到能分享軟弱的同伴？（社群）', promptEn: 'In the past month, did you have trusted fellowship where you could share weakness safely? (Community/Fellowship)' },
+          { key: 'witness', dimension_id: 'leadership_stewardship', promptZh: '在過去一個月，你是否有意識地活出福音見證？（見證／生活見證）', promptEn: 'In the past month, did you intentionally live out gospel witness in daily life? (Witness)' }
+        ],
+        answers: {
+          worship: 3,
+          truth: 3,
+          service: 3,
+          service_satisfaction: 3,
+          community: 3,
+          witness: 3
+        },
+        tip: ''
+      };
+    },
+    computed: {
+      normalizedByDimension: function () {
+        var o = {};
+        for (var i = 0; i < this.questions.length; i++) {
+          var q = this.questions[i];
+          o[q.key] = normalize6to5(this.answers[q.key]);
+        }
+        return o;
+      },
+      serviceSatisfactionInternal: function () {
+        return Number(normalize6to5(this.answers.service_satisfaction).toFixed(2));
+      },
+      normalizedHealthScore: function () {
+        var d = this.normalizedByDimension;
+        var arr = this.questions.map(function (q) { return d[q.key]; });
+        var avg = arr.reduce(function (s, x) { return s + x; }, 0) / arr.length;
+        return Number(avg.toFixed(2));
+      },
+      payload: function () {
+        var nd = this.normalizedByDimension;
+        return {
+          version: 2,
+          savedAt: new Date().toISOString(),
+          source: 'a1-health-entry',
+          church_id: getChurchId(),
+          timestamp: new Date().toISOString(),
+          answers1to6: Object.assign({}, this.answers),
+          dimensionIds: this.questions.reduce(function (acc, q) {
+            acc[q.key] = q.dimension_id;
+            return acc;
+          }, {}),
+          normalizedByDimension: nd,
+          normalizedHealthScore: this.normalizedHealthScore,
+          memberSignals: {
+            serviceSatisfaction: this.serviceSatisfactionInternal
+          },
+          normalizedByImpact: {
+            prayer_worship: nd.worship,
+            truth_practice: nd.truth,
+            leadership_stewardship: nd.service,
+            fellowship_care: nd.community,
+            mission_service: nd.witness
+          }
+        };
+      },
+      payloadPretty: function () {
+        return JSON.stringify(this.payload, null, 2);
+      }
+    },
+    mounted: function () {
+      try {
+        var raw = storageGet(A1_KEY);
+        if (!raw) return;
+        var saved = JSON.parse(raw);
+        if (saved && saved.answers1to6) {
+          this.answers = Object.assign({}, this.answers, saved.answers1to6);
+        }
+      } catch (e) {}
+    },
+    methods: {
+      saveResults: function () {
+        try {
+          storageSet(A1_KEY, JSON.stringify(this.payload));
+          var memberId = getMemberId();
+          if (memberId != null && window.CentralMemberDB && typeof window.CentralMemberDB.updateMemberHealth === 'function') {
+            window.CentralMemberDB.updateMemberHealth(memberId, {
+              a1: this.payload,
+              normalizedHealthScore: this.payload.normalizedHealthScore,
+              serviceSatisfaction: this.payload.memberSignals.serviceSatisfaction,
+              timestamp: this.payload.timestamp,
+              church_id: this.payload.church_id
+            });
+          }
+          this.tip = '已儲存 A1 結果並對齊 SSOT，B1 策略頁可讀取真實分數與服事滿意度。';
+        } catch (e) {
+          this.tip = '儲存失敗，請稍後重試。';
+        }
+      },
+      clearResults: function () {
+        try {
+          storageRemove(A1_KEY);
+          this.tip = '已清除 A1 本機結果。';
+        } catch (e) {
+          this.tip = '清除失敗。';
+        }
+      }
+    }
+  }).mount('#app');
+  </script>
+</body>
+</html>

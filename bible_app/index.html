@@ -1,38 +1,39 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>聖經跑道</title>
-  <script>
-    (function () {
-      var q = location.search || '';
-      var h = location.hash || '';
-      var target = 'shell/index.html' + q + h;
-      if (location.protocol === 'file:') {
-        var done = false;
-        var s = document.createElement('script');
-        s.src = 'http://127.0.0.1:3000/bible_app/shell/js/probe.js?' + Date.now();
-        s.onload = function () {
-          if (!done && window.__B100_SERVER_LIVE__) {
-            done = true;
-            location.replace('http://127.0.0.1:3000/bible_app/' + target);
-          }
-        };
-        s.onerror = function () {
-          if (!done) location.replace(target);
-        };
-        document.head.appendChild(s);
-        setTimeout(function () {
-          if (!done && location.protocol === 'file:') location.replace(target);
-        }, 3500);
-        return;
-      }
-      location.replace(target);
-    })();
-  </script>
-</head>
-<body>
-  <p>🦁 正在進入聖經跑道…</p>
-</body>
-</html>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>聖經跑道</title>
+  <script src="../js/b100_site_http_boot.js?v=20260813http"></script>
+  <script>
+    (function () {
+      var q = location.search || '';
+      var h = location.hash || '';
+      if (!/[?&]v=/.test(q)) {
+        q = (q ? q + '&' : '?') + 'v=20260813http';
+      }
+      if (!/[?&]fresh=/.test(q)) {
+        q += (q.indexOf('?') >= 0 ? '&' : '?') + 'fresh=1';
+      }
+      var target = 'shell/index.html' + q + h;
+      if (location.protocol === 'file:') {
+        var boot = window.B100SiteHttpBoot;
+        if (boot && boot.probeAny) {
+          boot.probeAny().then(function (live) {
+            if (live) {
+              location.replace(live.base + '/bible_app/' + target);
+              return;
+            }
+            location.replace(target);
+          });
+          return;
+        }
+      }
+      location.replace(target);
+    })();
+  </script>
+</head>
+<body>
+  <p>🦁 正在進入聖經跑道…</p>
+</body>
+</html>

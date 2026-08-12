@@ -32,6 +32,18 @@ export function bookName(book: BibleCatalogBook, locale: string): string {
   return book.nameZh;
 }
 
+/** 主語 + 對照語（思高站式：創世記 · Genesis） */
+export function bookNamePair(book: BibleCatalogBook, locale: string): { primary: string; secondary: string } {
+  const primary = bookName(book, locale);
+  if (locale === 'zh-Hant') {
+    const secondary = book.nameEn;
+    return { primary, secondary: secondary === primary ? '' : secondary };
+  }
+  /** VI／ID／EN：不再附中文對照，避免混語 */
+  const secondary = locale === 'en' ? '' : book.nameEn;
+  return { primary, secondary: secondary === primary ? '' : secondary };
+}
+
 export function chapterRef(
   book: BibleCatalogBook,
   chapter: number,
@@ -40,5 +52,7 @@ export function chapterRef(
   const name = bookName(book, locale);
   if (locale === 'zh-Hant') return `${name} 第 ${chapter} 章`;
   if (locale === 'en') return `${name} ${chapter}`;
+  if (locale === 'vi') return `${name} chương ${chapter}`;
+  if (locale === 'id') return `${name} pasal ${chapter}`;
   return `${name} ${chapter}`;
 }

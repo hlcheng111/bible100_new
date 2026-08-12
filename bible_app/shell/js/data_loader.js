@@ -30,5 +30,8 @@
     thematic: function () { return loadJson('thematic_readings.json', 'thematic'); },
     books: function () { return loadJson('books.json', 'books'); },
     sample: function () { return loadJson('sample_bible.json', 'sample'); },
+    plan1y: function () { return loadJson('one_year_plan.json', 'plan1y'); },
+    plan3y: function () { return loadJson('three_year_plan.json', 'plan3y'); },
+    lectionary: function () { return loadJson('lectionary_plan.json', 'lectionary'); },
   };
 })(window);

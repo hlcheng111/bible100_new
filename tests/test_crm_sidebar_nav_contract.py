@@ -52,7 +52,7 @@ def main() -> int:
         "assessment-os-hub.html",
         "cta-os-war-room.html",
         "crm-af-zone-entries",
-        "sidebar_c_education_journey.html",
+        "sidebar_church_layout_v1.html",
         "focus=f",
         "bible100ShellNav",
         "CRM_SIDEBAR_SSOT_M5.md",

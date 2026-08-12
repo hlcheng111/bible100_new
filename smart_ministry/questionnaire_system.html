@@ -737,6 +737,7 @@
     </div>
     
     <!-- 引入配对算法和数据库 -->
+    <script src="../js/smart_ministry_canonical_store.js"></script>
     <script src="js/database.js"></script>
     <script src="js/matching_algorithm.js"></script>
     
@@ -898,8 +899,7 @@
             }
             
             if (!isValid) {
-                alert('请完成以下必填项：
-' + missingFields.join('、'));
+                alert('请完成以下必填项：' + missingFields.join('、'));
             }
             
             return isValid;
@@ -1204,16 +1204,31 @@
         
         // 保存结果
         function saveResults() {
+            const savedData = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}questionnaire_data`) || '{}');
             const results = document.getElementById('results-content').innerHTML;
             const timestamp = new Date().toLocaleString();
             
             localStorage.setItem(`${STORAGE_PREFIX}results_${Date.now()}`, JSON.stringify({
                 timestamp: timestamp,
                 results: results,
-                questionnaire_data: localStorage.getItem(`${STORAGE_PREFIX}questionnaire_data`)
+                questionnaire_data: savedData
             }));
+
+            var talentId = null;
+            try {
+                var params = new URLSearchParams(window.location.search || '');
+                talentId = params.get('talent_id') || localStorage.getItem('bible100_mission_active_talent_id');
+            } catch (e) {}
+            if (talentId && window.SmartMinistryCanonical && SmartMinistryCanonical.attachAssessmentToTalent) {
+                SmartMinistryCanonical.attachAssessmentToTalent(
+                    String(talentId),
+                    'questionnaire_general',
+                    savedData,
+                    { note: '智慧事奉问卷 v1', saved_at: timestamp, hitl: true }
+                );
+            }
             
-            alert('结果已保存！您可以在"人才追踪"页面查看历史记录。');
+            alert('结果已保存！若已選會友，資料亦寫入 canonical。您可在「門徒定位中心」繼續下一步。');
         }
         
         // 重新开始问卷

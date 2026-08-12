@@ -273,6 +273,29 @@
     }, 280);
   }
 
+  function renderDoFeedbackBanners() {
+    if (!global.DoPlanFeedback || !DoPlanFeedback.renderPdcaDoFeedbackBanner) return;
+    DoPlanFeedback.renderPdcaDoFeedbackBanner();
+    var reportHost = global.document.getElementById("pdca-do-feedback-banner-report");
+    var surveyHost = global.document.getElementById("pdca-do-feedback-banner");
+    if (reportHost && surveyHost && surveyHost.innerHTML) {
+      reportHost.innerHTML = surveyHost.innerHTML;
+      reportHost.classList.remove("hidden");
+      var btn = reportHost.querySelector("#pdca-copy-do-feedback");
+      if (btn) btn.id = "pdca-copy-do-feedback-report";
+      var snap = DoPlanFeedback.loadDoPlanFeedback();
+      var reportBtn = global.document.getElementById("pdca-copy-do-feedback-report");
+      if (reportBtn && snap && !reportBtn.__bound) {
+        reportBtn.__bound = true;
+        reportBtn.addEventListener("click", function () {
+          DoPlanFeedback.copyPdcaCheckText(snap.pdca_check_text).then(function () {
+            showToast("已複製 Do 戰情摘要 · 可貼入 PDCA Check");
+          });
+        });
+      }
+    }
+  }
+
   function init() {
     if (!global.PdcaPack) {
       console.warn("PdcaAcsShell: PdcaPack not loaded");
@@ -281,6 +304,7 @@
     if (global.PdcaPastoralDesk) PdcaPastoralDesk.mountStaticDesk();
     global.loadDemoReport = loadDemoReport;
     renderUpstreamBanner();
+    renderDoFeedbackBanners();
     renderQuickSurvey();
     switchSurveyTrack("quick");
     autoPreviewReport();
@@ -295,7 +319,8 @@
     switchSurveyTrack: switchSurveyTrack,
     autoPreviewReport: autoPreviewReport,
     onWorkshopComplete: onWorkshopComplete,
-    showToast: showToast
+    showToast: showToast,
+    renderDoFeedbackBanners: renderDoFeedbackBanners
   };
 
   if (document.readyState === "loading") {

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>牧养策略与关怀 · Strategy | Church Ministry</title>
+    <link rel="stylesheet" href="../../css/pastoral_workspace.css">
+    <script src="../../../js/page_capability_badge.js" data-status="live"></script>
+    <script src="../../../js/cloud_config.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
+</head>
+<body data-b100-module="church_ministry" data-b100-ae-chrome="minimal" data-b100-ae-zone="b" data-b100-pattern="P-AE-PRIMARY" data-b100-ae-prefix="../..">
+    <div class="sg-wrap pst-wrap">
+        <header class="sg-header pst-header">
+            <nav class="sg-nav">
+                <a href="index.html">团契总览</a>
+                <a href="../support/visitation_index.html?crm_from=b_pastoral">探访事工</a>
+                <a href="pastoral-attendance.html?crm_from=b_pastoral">聚会出席</a>
+                <a href="pastoral-org-roster.html?crm_from=b_pastoral">组织名册</a>
+            </nav>
+            <h1>🎯 牧养策略与关怀</h1>
+            <p class="sg-tagline">痛点分类探访 · 提案效益模拟 · 代祷红绿灯推小组 · 教会健康指数</p>
+            <div class="sg-toolbar">
+                <button type="button" class="sg-btn outline" onclick="exportPastoralStrategyCsv()" data-w5-report="pastoral-strategy-csv">⬇ CSV</button>
+                <button type="button" class="sg-btn outline" onclick="printPastoralStrategy()" data-w5-report="pastoral-strategy-print">🖨 列印</button>
+                <button type="button" class="sg-btn outline" id="pst-seed-btn">载入示范数据</button>
+                <button type="button" class="sg-btn outline" id="pst-export-btn">导出 JSON</button>
+                <label class="muted" style="margin-left:8px">视角
+                    <select id="pst-role-sel" class="sg-select" style="min-width:100px">
+                        <option value="leader">leader</option>
+                        <option value="district">district</option>
+                        <option value="pastor">pastor</option>
+                    </select>
+                </label>
+            </div>
+        </header>
+        <div class="sg-tabs pst-tabs">
+            <button type="button" class="pst-tab sg-tab active" data-tab="visits">Tab1 · 探访与痛点分类</button>
+            <button type="button" class="pst-tab sg-tab" data-tab="proposals">Tab2 · 提案效益模拟</button>
+            <button type="button" class="pst-tab sg-tab" data-tab="prayer">Tab3 · 代祷红绿灯</button>
+            <button type="button" class="pst-tab sg-tab" data-tab="yearly">Tab4 · 教会健康指数</button>
+        </div>
+        <main class="sg-main">
+            <div id="pst-panel-visits" class="sg-panel active"></div>
+            <div id="pst-panel-proposals" class="sg-panel"></div>
+            <div id="pst-panel-prayer" class="sg-panel"></div>
+            <div id="pst-panel-yearly" class="sg-panel"></div>
+        </main>
+    </div>
+    <script src="../../js/pastoral_data_hub.js"></script>
+    <script src="../../js/pastoral_strategy_ui.js"></script>
+    <link rel="stylesheet" href="../../css/ae_pastoral_story_head.css" />
+    <script src="../../../js/shell_nav.js"></script>
+    <script src="../../js/ae_pastoral_story_nav.js"></script>
+    <script src="../../js/ae_subpage_shell.js"></script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+<script>
+(function () {
+  function exportPastoralStrategyCsv() {
+    var H = window.PastoralDataHub, U = window.CmReportUtils;
+    if (!H || !U) return;
+    var esc = U.csvEsc;
+    var s = H.getStrategyStore();
+    var lines = [['類型', '日期', '摘要', '狀態'].map(esc).join(',')];
+    (s.visitLogs || []).forEach(function (v) {
+      lines.push(['探訪', v.date || '', v.summary || v.topic || '', v.painCategory || ''].map(esc).join(','));
+    });
+    (s.proposals || []).forEach(function (p) {
+      lines.push(['提案', p.date || '', p.title || p.summary || '', p.status || ''].map(esc).join(','));
+    });
+    (s.prayerItems || []).forEach(function (p) {
+      lines.push(['代禱', p.date || '', p.request || '', p.urgency || ''].map(esc).join(','));
+    });
+    U.downloadCsv('pastoral_strategy_' + (H.todayISO ? H.todayISO() : '') + '.csv', lines);
+  }
+  function printPastoralStrategy() {
+    var H = window.PastoralDataHub, U = window.CmReportUtils;
+    if (!H || !U) return;
+    var s = H.getStrategyStore();
+    var rows = (s.visitLogs || []).map(function (v) {
+      return [v.date || '', v.summary || '', v.painCategory || ''];
+    });
+    U.printTable('牧養策略 · 探訪記錄', ['日期', '摘要', '痛點分類'], rows);
+  }
+  window.exportPastoralStrategyCsv = exportPastoralStrategyCsv;
+  window.printPastoralStrategy = printPastoralStrategy;
+})();
+</script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
+</body>
+</html>

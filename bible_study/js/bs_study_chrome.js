@@ -4,11 +4,7 @@
 (function (global) {
     'use strict';
 
-    var CMC_BANNER_HTML =
-        '<div class="bs-cmc-banner" role="status">' +
-        '<strong>☁️ 雲端釋經補充</strong>：本地綜合解讀不可用；目前為 <strong>CMC 雲端釋經（需連線）</strong>。' +
-        '內容供參考，正式教材以本地授權資料為準；結論須由教師／牧者審核。' +
-        '</div>';
+    var CMC_BANNER_HTML = ''; /* 保留占位；cloud-only 不再插入横幅 */
 
     function notifyCommentarySource(source) {
         try {
@@ -19,10 +15,7 @@
     }
 
     function showCmcBanner(container) {
-        if (!container) return;
-        var existing = container.querySelector('.bs-cmc-banner');
-        if (existing) return;
-        container.insertAdjacentHTML('afterbegin', CMC_BANNER_HTML);
+        /* cloud-only：不再显示「雲端釋經補充」横幅 */
         notifyCommentarySource('cmc');
     }
 
@@ -75,6 +68,8 @@
             linkEl.title = '換模組 · 聖經難題 Q&A（' + (ctx.bookName || '') + ' 第' + ctx.chapter + '章）';
         }
         refresh();
+        linkEl.classList.add('tool-link');
+        linkEl.classList.remove('nav-btn');
         linkEl.setAttribute('target', '_blank');
         linkEl.setAttribute('rel', 'noopener noreferrer');
         return refresh;

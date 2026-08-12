@@ -13,7 +13,7 @@
     "js/config-embedded.js",
     "church_ministry/sidebar_crm_journey.html",
     "church_ministry/sidebar_church_layout_v1.html",
-    "church_planning/sidebar_plan.html",
+    "church_planning/sidebar_plan_v5_preview.html",
     "church_planning/js/planning_tool_registry.js",
     "church_planning/js/assessment_run_store.js",
     "church_planning/js/governance_crm_bridge.js"
@@ -21,6 +21,20 @@
   "cleanupWaves": [
     { "wave": 0, "label": "P0 治理文档与 manifest", "status": "active" },
     { "wave": 1, "label": "壳与 config", "moduleIds": ["shell"], "status": "pending" },
+    {
+      "wave": 1.5,
+      "label": "material · languages + disciple_dynamics 归属（夹名冻结）",
+      "moduleIds": ["languages", "disciple_dynamics"],
+      "status": "active",
+      "doc": "docs/governance/MATERIAL_MODULE_CLEANUP_WAVE_V1.md"
+    },
+    {
+      "wave": 1.6,
+      "label": "study · bible_app 挂入 + 模组根/_tmp 清理",
+      "moduleIds": ["bible_study", "bible_app"],
+      "status": "active",
+      "doc": "docs/governance/SITE_CLEANUP_WAVE_V1.md"
+    },
     { "wave": 2, "label": "church_planning", "moduleIds": ["church_planning"], "status": "pending" },
     { "wave": 3, "label": "church_ministry", "moduleIds": ["church_ministry"], "status": "pending" },
     { "wave": 4, "label": "bible_study / ai_tools / school_management", "moduleIds": ["bible_study", "ai_tools", "school_management"], "status": "pending" },
@@ -42,7 +56,7 @@
       "name": "教会规划（🧭 规划分支）",
       "runtimeProfile": "hybrid",
       "landing": "church_planning/index_plan.html",
-      "sidebar": "church_planning/sidebar_plan.html",
+      "sidebar": "church_planning/sidebar_plan_v5_preview.html",
       "altLanding": "church_planning/index.html",
       "pattern": "P-LANDING",
       "modesId": "church",
@@ -59,7 +73,7 @@
       "landing": "church_ministry/dashboard.html",
       "sidebar": "church_ministry/sidebar_church_layout_v1.html",
       "altLanding": "church_ministry/dashboard_church_layout_v1.html",
-      "altSidebar": "church_ministry/sidebar_crm_journey.html",
+      "altSidebar": "church_ministry/sidebar_church_layout_v1.html",
       "retiredCompat": [
         "church_ministry/guide_crm_journey_hub.html",
         "church_ministry/sidebar_crm_journey.html"
@@ -67,49 +81,90 @@
       "pattern": "P-WORKBENCH",
       "modesId": "church",
       "tests": ["tests/test_church_nav_ui_contract.py", "tests/test_church_triangle_nav.py"],
-      "note": "Hub 行政入口＝dashboard + layout_v1；CRM hub/sidebar 仅书签相容，非顶栏主入口。"
+      "note": "Hub 行政入口＝dashboard + layout_v1；CRM hub/sidebar 仅书签相容 redirect，非顶栏主入口。SITE-5a 2026-08 收口。"
     },
     {
       "id": "bible_study",
       "name": "圣经研读",
       "runtimeProfile": "shell",
-      "landing": "bible_study/index.html",
+      "landing": "bible_study/_landing/home.html",
       "sidebar": "bible_study/sidebar.html",
+      "altLanding": "bible_study/index.html",
       "pattern": "P-MOD-STANDALONE",
       "modesId": "study",
+      "note": "Hub 内容=_landing/home；圣经跑道 bible_app 为同 mode 深链伴侣（非第七大模块）",
+      "tests": ["tests/test_module_manifest_p0.py"]
+    },
+    {
+      "id": "bible_app",
+      "name": "圣经跑道",
+      "runtimeProfile": "hybrid",
+      "landing": "bible_app/shell/index.html",
+      "sidebar": "bible_study/sidebar.html",
+      "altLanding": "bible_app/index.html",
+      "pattern": "P-MOD-STANDALONE",
+      "modesId": "study",
+      "note": "正式 HTTP 入口 bible_app/index.html→shell；Hub 挂在 study 顶栏「跑道」。完整体验可用新分页。",
       "tests": ["tests/test_module_manifest_p0.py"]
     },
     {
       "id": "ai_tools",
       "name": "AI 辅助中心",
       "runtimeProfile": "hybrid",
-      "landing": "ai_tools/ai_lab_landing.html",
+      "landing": "ai_tools/_landing/home.html",
       "sidebar": "ai_tools/sidebar_lab.html",
+      "altLanding": "ai_tools/ai_lab_landing.html",
       "altSidebar": "ai_tools/sidebar.html",
       "pattern": "P-MOD-STANDALONE",
       "modesId": "ai",
       "tests": ["tests/test_module_manifest_p0.py"]
     },
     {
+      "id": "hymn_management",
+      "name": "诗歌管理",
+      "runtimeProfile": "hybrid",
+      "landing": "hymn_management/dashboard.html",
+      "sidebar": "hymn_management/sidebar.html",
+      "altLanding": "hymn_management/index.html",
+      "pattern": "P-MOD-STANDALONE",
+      "note": "Hub 外层双栏 sidebar+dashboard；index.html 仅 Standalone／书签。勿把 L0 壳塞进 contentFrame。",
+      "tests": ["tests/test_module_manifest_p0.py"]
+    },
+    {
       "id": "school_management",
       "name": "学校管理",
       "runtimeProfile": "shell",
-      "landing": "school_management/index.html",
+      "landing": "school_management/_landing/home.html",
       "sidebar": "school_management/sidebar.html",
+      "altLanding": "school_management/index.html",
       "pattern": "P-MOD-STANDALONE",
       "modesId": "school",
-      "layout": "module-shell-embed",
+      "note": "Hub 外層雙欄載入 _landing/home.html；index.html 僅 Standalone 書籤。",
       "tests": ["tests/test_module_manifest_p0.py"]
     },
     {
       "id": "languages",
-      "name": "语言教材",
+      "name": "语言教材（百步／四宝）",
       "runtimeProfile": "shell",
-      "landing": "languages/landing_new_cn.html",
+      "landing": "languages/_landing/home.html",
       "sidebar": "languages/index_cn.html",
+      "altLanding": "languages/landing_new_cn.html",
       "pattern": "P-MOD-STANDALONE",
       "modesId": "material",
-      "tests": []
+      "registry": "config/locale_manifest.json",
+      "note": "路径冻结；课元 Alias=locale_manifest；媒体=MEDIA_STRUCTURE + media_registry",
+      "tests": ["tests/test_module_manifest_p0.py"]
+    },
+    {
+      "id": "disciple_dynamics",
+      "name": "门训动力站（无愧工人）",
+      "runtimeProfile": "hybrid",
+      "landing": "disciple_dynamics/dashboard.html",
+      "sidebar": "disciple_dynamics/sidebar.html",
+      "pattern": "P-MOD-STANDALONE",
+      "modesId": "material",
+      "note": "不搬入 languages/；顶栏「教材与培训」挂入口；CM-C 只深链不双写 roster",
+      "tests": ["tests/test_module_manifest_p0.py"]
     },
     {
       "id": "nav_hub",
@@ -125,25 +180,27 @@
     {
       "id": "crm-to-planning",
       "from": "church_ministry/sidebar_crm_journey.html",
-      "expect": "sidebar_plan.html",
+      "expect": "sidebar_plan_v5_preview.html",
       "note": "退役 CRM 侧栏仍可回规划（书签相容）"
     },
     {
       "id": "layout-to-planning",
       "from": "church_ministry/sidebar_church_layout_v1.html",
-      "expect": "church_planning/sidebar_plan.html",
+      "expect": "church_planning/sidebar_plan_v5_preview.html",
       "note": "行政地图回 🧭 规划（双栏）"
     },
     {
       "id": "planning-to-admin",
-      "from": "church_planning/sidebar_plan.html",
-      "expect": "planningOpenAdmin",
-      "note": "规划第 6 步／行政入口换双栏"
+      "from": "church_planning/sidebar_plan_v5_preview.html",
+      "expect": "行政管理",
+      "note": "规划侧栏含行政管理资料夹（Do）；JS 用 planningOpenDo／planningOpenContent"
     }
   ],
   "governanceDocs": [
     "docs/governance/SITE_GOVERNANCE.md",
     "docs/governance/UI_PATTERN_CATALOG.md",
-    "docs/governance/MODULE_INTEGRITY_CHECKLIST.md"
+    "docs/governance/MODULE_INTEGRITY_CHECKLIST.md",
+    "docs/governance/MATERIAL_MODULE_CLEANUP_WAVE_V1.md",
+    "docs/governance/SITE_CLEANUP_WAVE_V1.md"
   ]
 }

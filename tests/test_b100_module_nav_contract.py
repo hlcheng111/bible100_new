@@ -14,7 +14,7 @@ def read(rel: str) -> str:
 
 def test_module_nav_focus_ssot():
     js = read("js/b100_module_nav_ssot.js")
-    assert "20260812clean" in js
+    assert "20260812data" in js
     assert "shellPairForFocus" in js
     assert "isModuleShellUrl" in js
     assert "bible_study\\/index" in js or "bible_study/index" in js
@@ -35,11 +35,14 @@ def test_focus_sidebar_scripts():
 
 def test_study_sidebar_zones():
     html = read("bible_study/sidebar.html")
-    for z in ("tools", "versions", "commentary", "geo"):
+    for z in ("home", "track", "tools", "versions", "commentary", "geo"):
         assert 'data-b100-focus-zone="' + z + '"' in html
-    assert "target=\"_blank\"" in html and "index.html" in html
-    assert "目前資源" not in html
-    assert "b100-focus-banner" not in html  # injected by JS
+    assert "b100-sidebar-prod" in html
+    assert "b100_label.css" in html
+    assert "b100_sidebar_ssot_rail.js" not in html
+    assert "⚡ 核心捷徑" not in html
+    assert "track-plan3y.html" in html
+    assert "bible_app/shell/index.html" in html
 
 
 def test_modes_focus_zone():

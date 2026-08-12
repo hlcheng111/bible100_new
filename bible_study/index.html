@@ -303,7 +303,7 @@
     <!-- 主容器 -->
     <div class="main-container" style="position:relative;">
         <div class="sidebar-container" id="sidebarContainer">
-            <iframe id="sidebarFrame" src="sidebar.html?v=3" frameborder="0"></iframe>
+            <iframe id="sidebarFrame" src="sidebar.html?v=20260808a" frameborder="0"></iframe>
         </div>
         <button type="button" class="sidebar-toggle" id="sidebarToggle" title="收合/展開側邊欄" aria-label="收合側邊欄">◀</button>
         <div class="content-container">
@@ -402,6 +402,19 @@
 
         // 監聽來自 sidebar 的消息（子頁面可發送 syncPosition 聯動）
         window.addEventListener('message', function(event) {
+            if (!event.data) return;
+            if (event.data.type === 'navigate' && event.data.url) {
+                setContentFrame(event.data.url);
+                return;
+            }
+            if (event.data.type === 'bible100-shell') {
+                if (event.data.contentUrl) setContentFrame(event.data.contentUrl);
+                if (event.data.sidebarUrl) {
+                    var sb = document.getElementById('sidebarFrame');
+                    if (sb) sb.src = event.data.sidebarUrl + (event.data.sidebarUrl.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now();
+                }
+                return;
+            }
             if (event.data.action === 'syncPosition' && window.StudyState) {
                 var s = event.data.state || {};
                 if (s.book || s.chapter || s.verse) StudyState.change(s);

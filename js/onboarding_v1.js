@@ -143,7 +143,7 @@
       },
       "job-church": {
         mode: "church",
-        sidebar: "church_planning/sidebar_plan.html",
+        sidebar: "church_planning/sidebar_plan_v5_preview.html",
         content: "church_planning/index_plan.html"
       }
     };

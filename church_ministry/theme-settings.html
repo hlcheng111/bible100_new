@@ -29,6 +29,11 @@
         <h1>🎨 Church Center 主題設定</h1>
         <p style="margin-top:8px;opacity:0.95;">自訂會眾入口的主色與強調色</p>
     </div>
+    <div id="w5dReportBar" style="padding:8px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;margin-bottom:16px;font-size:12px;">
+        <strong>F-20 報告</strong>
+        <button type="button" class="btn" style="background:#059669;margin-left:8px;" onclick="exportThemeCsv()" data-w5-report="theme-settings-csv">⬇ 主題 CSV</button>
+        <button type="button" class="btn" style="background:#4b5563;margin-left:4px;" onclick="printTheme()" data-w5-report="theme-settings-print">🖨 列印</button>
+    </div>
     <div class="card">
         <div class="card-title">主題色彩</div>
         <div class="form-group">
@@ -117,6 +122,36 @@
 
         loadTheme();
         updateHex();
+
+        function exportThemeCsv() {
+            var theme = {
+                primaryColor: document.getElementById('primaryColor').value,
+                accentColor: document.getElementById('accentColor').value,
+                exportedAt: new Date().toISOString()
+            };
+            var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+            var lines = [
+                [ '欄位', '值' ].map(esc).join(','),
+                [ 'primaryColor', theme.primaryColor ].map(esc).join(','),
+                [ 'accentColor', theme.accentColor ].map(esc).join(','),
+                [ 'exportedAt', theme.exportedAt ].map(esc).join(',')
+            ];
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('church_center_theme.csv', lines);
+        }
+        function printTheme() {
+            var rows = [
+                ['主色 Primary', document.getElementById('primaryColor').value],
+                ['強調色 Accent', document.getElementById('accentColor').value]
+            ];
+            if (window.CmReportUtils) CmReportUtils.printTable('Church Center 主題設定', ['項目', '色碼'], rows);
+        }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="css/cm_desk.css" />
+<script src="js/cm_desk_registry.js"></script>
+<script src="js/cm_desk_kit.js"></script>
 </body>
 </html>

@@ -130,7 +130,12 @@
         .score-label { font-size: 12px; }
     </style>
 </head>
-<body>
+<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="e" data-b100-ae-chrome="minimal">
+    <div style="padding:10px 16px;background:#ecfdf5;border-bottom:1px solid #a7f3d0;font-size:12px;">
+      <strong>👔 志工事工完整系統</strong> · 崗位／配對／排班（與「義工排班」工具互補）。會友名單請先
+      <a href="../../load_central_member_seed.html" style="color:#047857;font-weight:700;">載入示範會友</a>；
+      主路徑排班：<a href="../../tools/volunteer_shift/index.html" style="color:#047857;font-weight:700;">義工排班</a>。
+    </div>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
         <div class="header-nav"><a href="../../dashboard.html">⛪ 教會事工中心</a></div>
         <h1>👔 志工事工完整系統</h1>
@@ -149,7 +154,7 @@
         <div class="tabs">
             <button class="tab active" onclick="switchTab('overview')">📊 總覽</button>
             <button class="tab" onclick="switchTab('ministries')">🎯 崗位管理</button>
-            <button class="tab" onclick="switchTab('matching')">🤖 智能配對</button>
+            <button class="tab" onclick="switchTab('matching')">🎯 本週缺額配對</button>
             <button class="tab" onclick="switchTab('schedule')">📅 排班管理</button>
             <button class="tab" onclick="switchTab('training')">📚 培訓管理</button>
             <button class="tab" onclick="switchTab('analysis')">📊 績效分析</button>
@@ -191,7 +196,10 @@
                         <input type="text" id="ministrySearch" placeholder="🔍 搜尋崗位" onkeyup="filterMinistries()">
                     </div>
                     <button class="btn btn-primary" onclick="showAddMinistryModal()">➕ 新增崗位</button>
-                    <button class="btn btn-info" onclick="exportMinistries()">📤 匯出資料</button>
+                    <button class="btn btn-info" onclick="exportMinistries()">📤 匯出 JSON</button>
+                    <button type="button" class="btn btn-success" onclick="exportMinistriesCsv()" data-w5-report="volunteer-ministries-csv">⬇ 崗位 CSV</button>
+                    <button type="button" class="btn btn-success" onclick="exportAssignmentsCsv()" data-w5-report="volunteer-assign-csv">⬇ 配對 CSV</button>
+                    <button type="button" class="btn btn-secondary" onclick="printMinistriesRoster()" data-w5-report="volunteer-print">🖨 列印崗位</button>
                 </div>
                 <table id="ministriesTable">
                     <thead>
@@ -210,46 +218,67 @@
             </div>
         </div>
         
-        <!-- 標籤頁3：智能配对 -->
+        <!-- 標籤頁3：本週缺額配對（任務式，非黑盒引擎） -->
         <div id="tab-matching" class="tab-content">
-            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
-                <div class="stat-card blue"><div class="stat-num" id="stat-available">0</div><div class="stat-label">可分配志工</div></div>
-                <div class="stat-card green"><div class="stat-num" id="stat-matched">0</div><div class="stat-label">已匹配</div></div>
-                <div class="stat-card orange"><div class="stat-num" id="stat-pending">0</div><div class="stat-label">待确认</div></div>
-                <div class="stat-card purple"><div class="stat-num" id="stat-match-rate">0%</div><div class="stat-label">匹配成功率</div></div>
+            <div style="background:linear-gradient(135deg,#4c1d95,#7c3aed);color:#fff;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+                <div style="font-size:16px;font-weight:700;">🎯 本週缺額工作桌</div>
+                <div style="font-size:11px;opacity:0.92;margin-top:4px;line-height:1.45;">
+                    不是玩分數。流程：① 選一個空缺崗位 → ② 看 Top 3 推薦（人話理由）→ ③ 一鍵排進崗位。
+                </div>
             </div>
-            <div class="three-col">
-                <div class="panel">
-                    <div class="panel-header">志工列表（显示技能）</div>
-                    <div class="search-box"><input type="text" id="volunteerSearch" placeholder="🔍 搜索志工" onkeyup="filterVolunteers()"></div>
-                    <div id="volunteersList"></div>
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card orange"><div class="stat-num" id="stat-vacant-match">0</div><div class="stat-label">空缺崗位</div></div>
+                <div class="stat-card blue"><div class="stat-num" id="stat-available">0</div><div class="stat-label">可分配志工</div></div>
+                <div class="stat-card green"><div class="stat-num" id="stat-matched">0</div><div class="stat-label">已分配</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">① 選空缺崗位</div>
+                    <div id="vacantMinistryList"></div>
                 </div>
-                <div class="panel panel-center">
-                    <div class="panel-header">🤖 AI配对引擎</div>
-                    <div id="matchScoreDisplay" class="match-score" style="display: none;">
-                        <div class="score-num" id="matchScoreValue">0</div>
-                        <div class="score-label">匹配度得分</div>
-                    </div>
-                    <div id="matchDetailsDisplay" style="display: none; background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 11px;">
-                        <h4 style="margin-bottom: 8px;">匹配分析</h4>
-                        <div id="matchReasonsDisplay"></div>
-                    </div>
-                    <div id="matchInfo" style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 11px;">
-                        <p>👈 左侧选择志工</p>
-                        <p>👉 右侧选择岗位</p>
-                        <p>🔗 点击按钮计算匹配度</p>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button class="btn btn-warning" onclick="calculateMatch()" style="width: 100%;">🎯 计算匹配度</button>
-                        <button class="btn btn-success" onclick="assignToMinistry()" style="width: 100%;">✅ 分配岗位</button>
-                        <button class="btn btn-info" onclick="autoMatchAll()" style="width: 100%;">🤖 批量智能配对</button>
+                <div class="card">
+                    <div class="card-title">② Top 3 推薦 · <span id="selectedVacantLabel" style="color:#7c3aed;">尚未選擇</span></div>
+                    <div id="top3Host">
+                        <div class="empty-state-text">先從左側點一個<strong>還缺人</strong>的崗位。</div>
                     </div>
                 </div>
-                <div class="panel">
-                    <div class="panel-header">岗位列表（需求）</div>
-                    <div class="search-box"><input type="text" id="ministrySearchRight" placeholder="🔍 搜尋崗位" onkeyup="filterMinistriesRight()"></div>
-                    <div id="ministriesListRight"></div>
-                </div>
+            </div>
+            <div class="card" style="margin-top:12px;border-left:4px solid #94a3b8;">
+                <div class="card-title">進階（可選）</div>
+                <p style="font-size:11px;color:#64748b;margin-bottom:8px;">若要手動左右對照算分，仍可用舊工具；預設請用上方缺額流程。</p>
+                <details>
+                    <summary style="cursor:pointer;font-weight:600;font-size:12px;">顯示舊版左右選人面板</summary>
+                    <div class="three-col" style="margin-top:10px;">
+                        <div class="panel">
+                            <div class="panel-header">志工列表</div>
+                            <div class="search-box"><input type="text" id="volunteerSearch" placeholder="🔍 搜索志工" onkeyup="filterVolunteers()"></div>
+                            <div id="volunteersList"></div>
+                        </div>
+                        <div class="panel panel-center">
+                            <div class="panel-header">手動對照</div>
+                            <div id="matchScoreDisplay" class="match-score" style="display: none;">
+                                <div class="score-num" id="matchScoreValue">0</div>
+                                <div class="score-label">參考分</div>
+                            </div>
+                            <div id="matchDetailsDisplay" style="display: none; background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 11px;">
+                                <h4 style="margin-bottom: 8px;">分析</h4>
+                                <div id="matchReasonsDisplay"></div>
+                            </div>
+                            <div id="matchInfo" style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 11px;">
+                                <p>👈 選志工　👉 選崗位　再按計算</p>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button class="btn btn-warning" onclick="calculateMatch()" style="width: 100%;">計算參考分</button>
+                                <button class="btn btn-success" onclick="assignToMinistry()" style="width: 100%;">分配崗位</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">崗位列表</div>
+                            <div class="search-box"><input type="text" id="ministrySearchRight" placeholder="🔍 搜尋崗位" onkeyup="filterMinistriesRight()"></div>
+                            <div id="ministriesListRight"></div>
+                        </div>
+                    </div>
+                </details>
             </div>
         </div>
         
@@ -266,7 +295,8 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <button class="btn btn-primary" onclick="showAddShiftModal()">➕ 新增排班</button>
                     <button class="btn btn-success" onclick="autoScheduleShifts()">🤖 智能排班</button>
-                    <button class="btn btn-info" onclick="exportSchedule()">📤 导出排班表</button>
+                    <button class="btn btn-info" onclick="exportSchedule()">📤 导出 JSON</button>
+                <button type="button" class="btn btn-success" onclick="exportScheduleCsv()" data-w5-report="volunteer-schedule-csv">⬇ 排班 CSV</button>
                 </div>
                 <div class="calendar" id="scheduleCalendar"></div>
             </div>
@@ -852,6 +882,63 @@
             a.click();
             showMessage('✅ 数据已导出', 'success');
         }
+
+        function csvEsc(v) {
+            var s = v == null ? '' : String(v);
+            if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+            return s;
+        }
+
+        function downloadCsv(filename, lines) {
+            var blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+        }
+
+        /** W5a · 志工崗位／配對／排班長執報告 */
+        function exportMinistriesCsv() {
+            var lines = [['id', 'name', 'category', 'needPeople', 'skills'].join(',')];
+            (data.ministries || []).forEach(function (m) {
+                lines.push([m.id, m.name, m.category || '', m.needPeople != null ? m.needPeople : '', m.skills || ''].map(csvEsc).join(','));
+            });
+            downloadCsv('volunteer_ministries_' + new Date().toISOString().split('T')[0] + '.csv', lines);
+            showMessage('✅ 已匯出崗位 CSV', 'success');
+        }
+
+        function exportAssignmentsCsv() {
+            var lines = [['assignment_id', 'memberId', 'memberName', 'ministryId', 'ministryName', 'startDate'].join(',')];
+            (data.assignments || []).forEach(function (a) {
+                var m = (data.ministries || []).find(function (x) { return x.id === a.ministryId; });
+                lines.push([
+                    a.id, a.memberId || '', a.memberName || '', a.ministryId || '',
+                    m ? m.name : '', a.startDate || a.date || ''
+                ].map(csvEsc).join(','));
+            });
+            downloadCsv('volunteer_assignments_' + new Date().toISOString().split('T')[0] + '.csv', lines);
+            showMessage('✅ 已匯出配對 CSV', 'success');
+        }
+
+        function printMinistriesRoster() {
+            var rows = (data.ministries || []).map(function (m) {
+                var assigned = (data.assignments || []).filter(function (a) { return a.ministryId === m.id; }).length;
+                return '<tr><td>' + (m.name || '') + '</td><td>' + (m.category || '') + '</td><td>' +
+                    (m.needPeople != null ? m.needPeople : '') + '</td><td>' + assigned + '</td></tr>';
+            }).join('');
+            var w = window.open('', '_blank');
+            if (!w) { showMessage('無法開啟列印視窗', 'error'); return; }
+            w.document.write(
+                '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>志工崗位名冊</title>' +
+                '<style>body{font-family:Microsoft JhengHei,sans-serif;font-size:12px;padding:16px}' +
+                'table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}</style></head><body>' +
+                '<h1>志工崗位名冊（' + (data.ministries || []).length + '）</h1>' +
+                '<table><thead><tr><th>崗位</th><th>類別</th><th>需求</th><th>已配</th></tr></thead><tbody>' +
+                (rows || '<tr><td colspan="4">無</td></tr>') +
+                '</tbody></table><script>window.onload=function(){window.print();}</' + 'script></body></html>'
+            );
+            w.document.close();
+        }
         
         // ========================================
         // 標籤頁3：智能配对
@@ -876,24 +963,184 @@
 
         async function renderMatchingTab() {
             await updateMatchingStats();
+            renderVacantMinistries();
+            if (selectedMinistry) renderTop3ForMinistry(selectedMinistry.id);
             renderVolunteersList();
             renderMinistriesListRight();
         }
         
         async function updateMatchingStats() {
-            const assigned = [...new Set(data.assignments.map(a => a.memberId))];
-            const available = 15 - assigned.length;  // 假设总共15个志工
-            document.getElementById('stat-available').textContent = available;
-            document.getElementById('stat-matched').textContent = data.assignments.length;
-            let pending = Math.max(0, (data.schedules || []).filter(s => !s.confirmed).length);
-            let matchRate = assigned.length > 0 ? Math.round((data.assignments.length / assigned.length) * 100) : 0;
-            const rsvp = await fetchVolunteerRsvpSummaryForUi(3);
-            if (rsvp) {
-                pending = rsvp.pending;
-                if (rsvp.responded_within_window_pct != null) matchRate = rsvp.responded_within_window_pct;
+            const assignedIds = [...new Set(data.assignments.map(a => a.memberId))];
+            const pool = getVolunteerPool();
+            const available = Math.max(0, pool.length - assignedIds.length);
+            const vacantCount = (data.ministries || []).filter(function (m) {
+                const assigned = data.assignments.filter(a => a.ministryId === m.id).length;
+                return assigned < (m.needPeople || 1);
+            }).length;
+            var elA = document.getElementById('stat-available');
+            var elM = document.getElementById('stat-matched');
+            var elV = document.getElementById('stat-vacant-match');
+            if (elA) elA.textContent = available || pool.length;
+            if (elM) elM.textContent = data.assignments.length;
+            if (elV) elV.textContent = vacantCount;
+        }
+
+        function getVolunteerPool() {
+            var map = {};
+            (data.assignments || []).forEach(function (a) {
+                map[a.memberId] = {
+                    memberId: a.memberId,
+                    memberName: a.memberName,
+                    skills: a.skills || '',
+                    times: (map[a.memberId] ? map[a.memberId].times : 0) + 1
+                };
+            });
+            // also invent pool from assignment names if ministries need people
+            var list = Object.keys(map).map(function (k) { return map[k]; });
+            if (!list.length && data.demoVolunteers) list = data.demoVolunteers;
+            // seed-like fallback from ministries demo load: create from assignment-less names in schedules
+            if (!list.length) {
+                (data.schedules || []).forEach(function (s, i) {
+                    var name = s.person || s.name || ('志工' + (i + 1));
+                    list.push({ memberId: 9000 + i, memberName: name, skills: s.role || '服事', times: 1 });
+                });
             }
-            document.getElementById('stat-pending').textContent = pending;
-            document.getElementById('stat-match-rate').textContent = matchRate + '%';
+            return list;
+        }
+
+        function scoreCandidate(person, ministry) {
+            var reasons = [];
+            var score = 40;
+            var reqs = String(ministry.requirements || '').split(/[,，、]/).map(function (x) { return x.trim(); }).filter(Boolean);
+            var skills = String(person.skills || '').split(/[,，、]/).map(function (x) { return x.trim(); }).filter(Boolean);
+            var skillHits = 0;
+            reqs.forEach(function (req) {
+                if (skills.some(function (s) { return s.indexOf(req) >= 0 || req.indexOf(s) >= 0; })) skillHits++;
+            });
+            if (skillHits) {
+                score += skillHits * 18;
+                reasons.push('技能符合「' + reqs.slice(0, 2).join('／') + '」');
+            } else if (!reqs.length) {
+                score += 10;
+                reasons.push('此崗未寫死技能，可彈性安排');
+            } else {
+                reasons.push('技能不完全吻合，可試崗觀察');
+            }
+            var already = (data.assignments || []).filter(function (a) { return a.memberId === person.memberId; }).length;
+            if (already === 0) {
+                score += 12;
+                reasons.push('目前尚未掛崗，可優先補缺');
+            } else if (already === 1) {
+                score += 6;
+                reasons.push('已有 1 個崗位經驗');
+            } else {
+                score -= 8;
+                reasons.push('已掛 ' + already + ' 崗，小心過勞');
+            }
+            if ((person.times || 0) >= 2) {
+                score += 8;
+                reasons.push('近期有服事紀錄');
+            }
+            score = Math.max(0, Math.min(100, score));
+            if (!reasons.length) reasons.push('可作為候補人選');
+            return { score: score, reasons: reasons };
+        }
+
+        function renderVacantMinistries() {
+            var host = document.getElementById('vacantMinistryList');
+            if (!host) return;
+            var vacant = (data.ministries || []).map(function (m) {
+                var assigned = data.assignments.filter(a => a.ministryId === m.id).length;
+                return { m: m, assigned: assigned, need: m.needPeople || 1, gap: (m.needPeople || 1) - assigned };
+            }).filter(function (x) { return x.gap > 0; });
+            if (!vacant.length) {
+                host.innerHTML = '<div class="empty-state-text">🎉 目前沒有空缺。可到「崗位管理」加需求人數。</div>';
+                return;
+            }
+            host.innerHTML = vacant.map(function (x) {
+                var sel = selectedMinistry && selectedMinistry.id === x.m.id ? 'selected' : '';
+                return '<div class="list-item ' + sel + '" onclick="selectVacantMinistry(' + x.m.id + ')">' +
+                    '<div class="list-item-title">' + x.m.name + '</div>' +
+                    '<div class="list-item-meta">還缺 <strong style="color:#c2410c;">' + x.gap + '</strong> 人 · 已有 ' + x.assigned + '/' + x.need +
+                    (x.m.requirements ? ' · 要求：' + x.m.requirements : '') + '</div></div>';
+            }).join('');
+        }
+
+        function selectVacantMinistry(id) {
+            selectedMinistry = data.ministries.find(function (m) { return m.id === id; });
+            var lab = document.getElementById('selectedVacantLabel');
+            if (lab && selectedMinistry) lab.textContent = selectedMinistry.name;
+            renderVacantMinistries();
+            renderTop3ForMinistry(id);
+            renderMinistriesListRight();
+        }
+
+        function renderTop3ForMinistry(ministryId) {
+            var host = document.getElementById('top3Host');
+            if (!host) return;
+            var ministry = data.ministries.find(function (m) { return m.id === ministryId; });
+            if (!ministry) {
+                host.innerHTML = '<div class="empty-state-text">先選左側空缺崗位。</div>';
+                return;
+            }
+            var assignedIds = {};
+            data.assignments.filter(function (a) { return a.ministryId === ministryId; }).forEach(function (a) {
+                assignedIds[a.memberId] = true;
+            });
+            var pool = getVolunteerPool().filter(function (p) { return !assignedIds[p.memberId]; });
+            var ranked = pool.map(function (p) {
+                var r = scoreCandidate(p, ministry);
+                return { person: p, score: r.score, reasons: r.reasons };
+            }).sort(function (a, b) { return b.score - a.score; }).slice(0, 3);
+            if (!ranked.length) {
+                host.innerHTML = '<div class="empty-state-text">沒有可推薦人選。請先在「崗位／排班」載入示例，或到會友種子後再配。</div>';
+                return;
+            }
+            var medals = ['🥇', '🥈', '🥉'];
+            host.innerHTML = ranked.map(function (r, i) {
+                return '<div style="border:1px solid #e9d5ff;background:#faf5ff;border-radius:10px;padding:12px;margin-bottom:8px;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">' +
+                    '<div><strong>' + medals[i] + ' ' + r.person.memberName + '</strong>' +
+                    '<div style="font-size:10px;color:#6b7280;margin-top:2px;">技能：' + (r.person.skills || '—') + '</div></div>' +
+                    '<div style="font-size:18px;font-weight:800;color:#7c3aed;">' + r.score + '</div></div>' +
+                    '<ul style="margin:8px 0 10px;padding-left:18px;font-size:11px;color:#4b5563;line-height:1.45;">' +
+                    r.reasons.map(function (x) { return '<li>' + x + '</li>'; }).join('') +
+                    '</ul>' +
+                    '<button type="button" class="btn btn-success" style="width:100%;" onclick="assignTop3(' +
+                    r.person.memberId + ', \'' + String(r.person.memberName).replace(/'/g, '') + '\', \'' +
+                    String(r.person.skills || '').replace(/'/g, '') + '\', ' + ministryId + ', ' + r.score +
+                    ')">✅ 排進「' + ministry.name + '」</button></div>';
+            }).join('');
+        }
+
+        function assignTop3(memberId, memberName, skills, ministryId, score) {
+            selectedVolunteer = { memberId: memberId, memberName: memberName, skills: skills };
+            selectedMinistry = data.ministries.find(function (m) { return m.id === ministryId; });
+            if (!selectedMinistry) return;
+            var exists = data.assignments.some(function (a) {
+                return a.ministryId === ministryId && a.memberId === memberId;
+            });
+            if (exists) {
+                showMessage('已在此崗位', 'error');
+                return;
+            }
+            data.assignments.push({
+                id: data.assignments.length + 1,
+                ministryId: ministryId,
+                memberId: memberId,
+                memberName: memberName,
+                skills: skills,
+                position: '同工',
+                startDate: new Date().toISOString().split('T')[0],
+                status: 'active',
+                performance: '良好',
+                matchScore: score,
+                source: 'vacancy-top3'
+            });
+            saveData();
+            void renderMatchingTab();
+            renderOverview();
+            showMessage('✨ ' + memberName + ' 已補上「' + selectedMinistry.name + '」空缺', 'success');
         }
         
         function renderVolunteersList() {
@@ -1043,7 +1290,16 @@
         }
         
         function autoMatchAll() {
-            showMessage('🤖 批量智能配对功能开发中...', 'info');
+            var vacant = (data.ministries || []).filter(function (m) {
+                var assigned = data.assignments.filter(a => a.ministryId === m.id).length;
+                return assigned < (m.needPeople || 1);
+            });
+            if (!vacant.length) {
+                showMessage('沒有空缺可批量補', 'info');
+                return;
+            }
+            selectVacantMinistry(vacant[0].id);
+            showMessage('已選第一個空缺，請從 Top 3 點「排進」', 'success');
         }
         
         function filterVolunteers() {
@@ -1134,6 +1390,18 @@
             a.download = `排班表_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             showMessage('✅ 排班表已导出', 'success');
+        }
+
+        function exportScheduleCsv() {
+            var lines = [['id', 'date', 'memberName', 'memberId', 'ministryId', 'shift'].join(',')];
+            (data.schedules || []).forEach(function (s) {
+                lines.push([
+                    s.id, s.date || '', s.memberName || '', s.memberId || '',
+                    s.ministryId || '', s.shift || ''
+                ].map(csvEsc).join(','));
+            });
+            downloadCsv('volunteer_schedules_' + new Date().toISOString().split('T')[0] + '.csv', lines);
+            showMessage('✅ 已匯出排班 CSV', 'success');
         }
 
         function getRsvpStoreEvents() {
@@ -1599,6 +1867,10 @@
             if (e.target.id === 'modal') closeModal();
         };
     </script>
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>
 

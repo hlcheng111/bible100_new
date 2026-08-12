@@ -12,7 +12,7 @@
       key: 'planning',
       label: '🧭 規劃',
       sub: '五年計劃／決策河',
-      sidebarUrl: 'church_planning/sidebar_plan.html',
+      sidebarUrl: 'church_planning/sidebar_plan_v5_preview.html',
       contentUrl: 'church_planning/index_plan.html'
     },
     journey: {

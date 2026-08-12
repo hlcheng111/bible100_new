@@ -18,21 +18,37 @@
             line-height: 1.6;
         }
 
-        /* 頂部狀態欄 */
-        .status-bar {
-            background: #000;
+        /* 頂部標題 */
+        .page-title-bar {
+            background: #3498db;
             color: white;
-            padding: 4px 15px;
+            padding: 10px 15px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .search-help-strip {
+            background: #ebf5fb;
+            color: #1a5276;
+            padding: 8px 15px;
             font-size: 11px;
-            height: 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            line-height: 1.45;
+            border-bottom: 1px solid #aed6f1;
+        }
+
+        .search-help-strip a {
+            color: #0b5fa5;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .search-help-strip a:hover {
+            text-decoration: underline;
         }
 
         /* 搜索欄 */
         .search-bar {
-            background: #3498db;
+            background: #2980b9;
             color: white;
             padding: 15px;
             text-align: center;
@@ -227,22 +243,14 @@
     </style>
 </head>
 <body>
-    <div style="padding:10px 20px;"><a href="index.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回聖經研讀中心</a></div>
-    <!-- 頂部狀態欄 -->
-    <div class="status-bar">
-        <div class="status-left">
-            <span>11:04</span>
-            <span>📶</span>
-        </div>
-        <div class="status-right">
-            <span>0.28 KB/s</span>
-            <span>📶</span>
-            <span>Vo LTE</span>
-            <span>4G+</span>
-            <span>🔋 90%</span>
-        </div>
+    <div class="page-title-bar">🔍 Search · 全文搜尋</div>
+    <div class="search-help-strip">
+      找<strong>经文字</strong>用这里；找<strong>指定经节</strong>请用
+      <a href="../bible_app/shell/pages/reader-multilang.html">多语查经</a>；
+      找<strong>功能入口</strong>用
+      <a href="../nav_hub/search/dashboard.html">目录搜</a>。
+      <a href="../bible_app/shell/pages/reader-multilang-help.html">搜查说明 →</a>
     </div>
-
     <!-- 搜索欄 -->
     <div class="search-bar">
         <input type="text" class="search-input" id="searchInput" placeholder="搜索經文、關鍵詞或經文引用（如：約3:16）" />
@@ -296,13 +304,18 @@
         </div>
     </div>
 
+    <script src="../data/bibles/bible_data_faith.js" charset="UTF-8"></script>
+    <script src="../data/bibles/bible_data_niv.js" charset="UTF-8"></script>
+    <script src="js/dev_http_hint.js"></script>
     <script src="js/bible_version_registry.js"></script>
     <script src="js/BibleEngine.js"></script>
     <script src="js/bible_lazy_chapter.js"></script>
     <script src="js/bible_fts.js"></script>
+    <script src="js/bs_registry_reader.js"></script>
     <script>
         let searchTimeout;
         let currentVersion = 'all';
+        let engineReady = false;
 
         const VERSION_FILES = {
             'faith': '../data/bibles/信望爱(和合本).json',
@@ -342,8 +355,14 @@
             });
         }
 
-        function init() {
+        async function init() {
             console.log('聖經搜索閱讀器初始化...');
+            try {
+                await BS_initReaderEngine();
+                engineReady = true;
+            } catch (e) {
+                console.warn('Reader engine init:', e);
+            }
             buildSearchOptionsFromRegistry();
             setupEventListeners();
             var params = new URLSearchParams(window.location.search);
@@ -392,10 +411,16 @@
                     results = results.concat(r);
                 }
                 results.sort((a,b)=>(a.book-b.book)||(a.chapter-b.chapter)||(a.verse-b.verse));
+                if (!results.length) {
+                    var hint = typeof BS_readerLoadHint === 'function' ? BS_readerLoadHint() : '';
+                    showError('沒有找到結果。' + (hint ? ' ' + hint : ''));
+                    return;
+                }
                 displayResults(results);
             } catch (e) {
                 console.error('搜索失敗:', e);
-                showError('搜索失敗。請透過「啟動聖經研讀.bat」開啟以取得完整功能。');
+                var hint = typeof BS_readerLoadHint === 'function' ? BS_readerLoadHint() : '';
+                showError('搜索失敗。' + (hint ? ' ' + hint : ''));
             }
         }
 
@@ -609,23 +634,22 @@
         }
 
         function goToVerse(book, chapter, verse) {
-            const bookNames = BOOK_NAMES;
-            const name = bookNames[book] || ('Book'+book);
-            const url = `reader.html?book=${book}&chapter=${chapter}`;
-            if (window.parent && window.parent !== window && window.parent.document.getElementById('contentFrame')) {
-                window.parent.document.getElementById('contentFrame').src = url;
-            } else {
-                window.location.href = url;
-            }
+            var url = '../bible_app/shell/pages/reader-multilang.html?book=' + book + '&chapter=' + chapter + '&verse=' + verse;
+            navigateContent(url);
         }
 
         function goToReader() {
-            const url = 'reader.html';
-            if (window.parent && window.parent !== window && window.parent.document.getElementById('contentFrame')) {
-                window.parent.document.getElementById('contentFrame').src = url;
-            } else {
-                window.location.href = url;
-            }
+            navigateContent('../bible_app/shell/pages/reader-multilang.html');
+        }
+
+        function navigateContent(url) {
+            try {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: 'navigate', url: url }, '*');
+                    return;
+                }
+            } catch (e) {}
+            window.location.href = url;
         }
 
         // 頁面載入完成後初始化

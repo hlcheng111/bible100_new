@@ -44,7 +44,9 @@
       cache[name] = global.BIBLE100_EMBEDDED_CONFIG[name];
       return Promise.resolve(cache[name]);
     }
-    return fetch(resolveConfigPath(name))
+    var url = resolveConfigPath(name);
+    if (global.bible100CacheBust) url = global.bible100CacheBust(url);
+    return fetch(url)
       .then(function (r) { return r.ok ? r.json() : {}; })
       .then(function (data) {
         cache[name] = data;

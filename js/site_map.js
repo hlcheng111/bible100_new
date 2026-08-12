@@ -25,14 +25,15 @@ window.SITE_MAP = {
     {
       id: "church",
       title: "教會事工",
-      index: "church_ministry/guide_crm_journey_hub.html",
+      index: "church_ministry/_landing/gateway.html",
       pages: [
-        "church_ministry/guide_crm_journey_hub.html",
+        "church_ministry/_landing/gateway.html",
         "church_ministry/dashboard.html",
         "church_ministry/modules/members/member-integrated.html",
         "church_ministry/modules/support/visitation_index.html",
         "church_ministry/tools/volunteer_shift/index.html",
-        "church_ministry/tools/visitation_followup/index.html"
+        "church_ministry/tools/visitation_followup/index.html",
+        "church_planning/ministry-position-matchmaker.html"
       ]
     },
     {
@@ -45,7 +46,7 @@ window.SITE_MAP = {
         "bible_study/comprehensive_exegesis_reader.html",
         "bible_study/sidebar.html",
         "bible_study/commentaries/reader.html",
-        "data/bibles/bible_reader_final.html"
+        "bible_study/reader.html"
       ]
     },
     {

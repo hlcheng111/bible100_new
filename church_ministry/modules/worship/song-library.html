@@ -6,7 +6,7 @@
     <title>詩歌庫 Song Library · Song Library | Church Ministry</title>
     <link rel="stylesheet" href="../../../css/unified_module_styles.css">
 </head>
-<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a">
+<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a">
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="content-container">
         <div class="page-header">
             <h1>📚 詩歌庫 Song Library</h1>
@@ -96,7 +96,8 @@
                 <button class="btn btn-success" onclick="showAddSongModal()">➕ 新增詩歌</button>
                 <button class="btn btn-info" onclick="createPlaylist()">📋 創建播放列表</button>
                 <button class="btn btn-primary" onclick="showStatistics()">📊 詩歌統計</button>
-                <button class="btn btn-secondary" onclick="exportSongs()">📥 導出詩歌</button>
+                <button class="btn btn-secondary" onclick="exportSongs()" data-w5-report="song-library-csv">📥 導出詩歌</button>
+                <button class="btn btn-secondary" type="button" onclick="printSongLibrary()" data-w5-report="song-library-print">🖨 列印</button>
             </div>
         </div>
     </div>
@@ -255,6 +256,18 @@
         }
 
         // 導出詩歌（預設＋自訂合併）
+
+        function printSongLibrary() {
+            var list = (typeof customSongs !== 'undefined' ? customSongs : []).concat(typeof seedSongs !== 'undefined' ? seedSongs : []);
+            if (!list.length && typeof songs !== 'undefined') list = songs;
+            var headers = ['歌名','調','分類','備註'];
+            var rows = (list || []).map(function (s) {
+                return [s.name || s.title, s.key, s.category || s.genre, s.note || s.lyrics || ''];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('詩歌庫', headers, rows);
+            else window.print();
+        }
+
         function exportSongs() {
             var rows = getMergedSongList();
             const csvContent = '編號,詩歌名稱,類別,詩集,語言,來源\n' +
@@ -291,6 +304,8 @@
     <script src="../../../js/module_navigation.js"></script>
 
 
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 <!-- b100-ae-worship-w1-shell -->
 <link rel="stylesheet" href="../../css/ae_worship_six_section.css" />
 <script src="../../js/church-master-database.js"></script>
@@ -317,6 +332,11 @@
 <script src="../../js/crm_context_bar.js"></script>
 <script src="../../js/ae_primary_nav.js"></script>
 <script src="../../js/ae_subpage_shell.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>
 

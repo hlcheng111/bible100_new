@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>進深追問 AI · 聖經難題</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+      margin: 0;
+      padding: 16px;
+      max-width: 720px;
+      line-height: 1.55;
+      color: #1e293b;
+      background: #f8fafc;
+    }
+    h1 { font-size: 1.15rem; color: #1e40af; margin: 0 0 8px; }
+    .lead { font-size: 0.88rem; color: #64748b; margin: 0 0 12px; }
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      box-sizing: border-box;
+      font: inherit;
+      font-size: 0.9rem;
+      padding: 10px;
+      border: 1px solid #93c5fd;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    button, .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid #2563eb;
+      background: #2563eb;
+      color: #fff;
+      font: inherit;
+      font-size: 0.88rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn.secondary { background: #fff; color: #1e40af; }
+    .note { font-size: 0.8rem; color: #64748b; margin-top: 14px; }
+    #status { font-size: 0.8rem; color: #047857; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <h1>進深追問 AI</h1>
+  <p class="lead">已帶入本題提示詞。請複製後到 AI 平台貼上（草稿須人審，不可當神學權威）。</p>
+  <textarea id="prompt" readonly></textarea>
+  <div class="row">
+    <button type="button" id="btnCopy">複製提示文字</button>
+    <a class="btn secondary" id="btnChooser" href="../help/ai-chooser.html" target="_blank" rel="noopener">選 AI 平台</a>
+    <button type="button" class="btn secondary" id="btnClose" style="border-color:#94a3b8;color:#475569;background:#fff">關閉本頁</button>
+  </div>
+  <p id="status"></p>
+  <p class="note">平台選擇：<code>help/ai-chooser.html</code>（Copilot／ChatGPT／Claude／Gemini 等）。</p>
+  <script>
+    (function () {
+      function buildPrompt(title, url) {
+        return (
+          "【聖經難題對照】我剛閱讀線上資料（僅作參考）：\n" +
+          "題目：" + (title || "（未指定）") + "\n" +
+          "網址：" + (url || "") + "\n\n" +
+          "請在福音派的正統範圍內：簡述不同看法（若有的話）、關鍵經文與需要注意的解經原則。" +
+          "若與我引用的網頁重點不同，請說明理由。最後可建議我還可追問哪 2～3 個問題。"
+        );
+      }
+      var sp = new URLSearchParams(location.search.replace(/^\?/, ""));
+      var title = sp.get("t") || "";
+      var url = sp.get("u") || "";
+      try {
+        if (!title && sessionStorage.getItem("qna_ask_t")) title = sessionStorage.getItem("qna_ask_t") || "";
+        if (!url && sessionStorage.getItem("qna_ask_u")) url = sessionStorage.getItem("qna_ask_u") || "";
+      } catch (e) {}
+      var ta = document.getElementById("prompt");
+      ta.value = buildPrompt(title, url);
+      document.getElementById("btnCopy").onclick = function () {
+        ta.focus();
+        ta.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e1) {}
+        if (!ok && navigator.clipboard) {
+          navigator.clipboard.writeText(ta.value).then(function () { ok = true; }).catch(function () {});
+        }
+        document.getElementById("status").textContent = ok ? "已複製。請到 AI 平台貼上。" : "請手動全選複製。";
+      };
+      document.getElementById("btnClose").onclick = function () {
+        try { window.close(); } catch (e2) {}
+      };
+    })();
+  </script>
+</body>
+</html>

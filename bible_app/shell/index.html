@@ -8,22 +8,29 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦁</text></svg>" />
   <script>
     (function () {
-      var ASSET_V = '20260618f';
-      var p = location.pathname.replace(/\\/g, '/');
-      var idx = p.toLowerCase().indexOf('/shell');
-      if (idx < 0) return;
-      var root = p.slice(0, idx) + '/shell/';
-      var tail = p.slice(idx);
-      if (/^\/shell\/?$/i.test(tail) || /^\/shell\/index$/i.test(tail)) {
-        location.replace(root + 'index.html' + location.search + location.hash);
+      var ASSET_V = '20260813dbfix';
+      var shellDir;
+      try {
+        shellDir = new URL('./', location.href);
+      } catch (eUrl) {
         return;
       }
-      window.B100_SHELL_ROOT = root;
+      window.B100_SHELL_ROOT = shellDir.href;
       window.B100_SHELL_ASSET_V = ASSET_V;
       window.b100ShellAsset = function (rel) {
-        var q = rel.indexOf('?') >= 0 ? '&' : '?';
-        return root + rel.replace(/^\//, '') + q + 'v=' + encodeURIComponent(ASSET_V);
+        try {
+          var u = new URL(String(rel || '').replace(/^\//, ''), shellDir);
+          u.searchParams.set('v', ASSET_V);
+          return u.href;
+        } catch (eRel) {
+          return rel;
+        }
       };
+      var path = (location.pathname || '').replace(/\\/g, '/');
+      if (/\/shell\/?$/i.test(path) || /\/shell\/index$/i.test(path)) {
+        location.replace(window.b100ShellAsset('index.html') + (location.search || '') + (location.hash || ''));
+        return;
+      }
       document.write('<link rel="stylesheet" href="' + window.b100ShellAsset('css/shell.css') + '" />');
     })();
   </script>
@@ -32,16 +39,17 @@
   <header class="shell-top" id="shellTop">
     <div class="shell-bar">
       <div class="shell-brand">
-        <a id="btnHome" class="home-pill" href="pages/home.html">🏠 <span data-i18n="home">首頁</span></a>
+        <a id="btnHome" class="home-pill" href="pages/landing.html">🏠 <span data-i18n="home">首頁</span></a>
         <span class="shell-logo">🦁</span>
         <span id="shellTitle" class="shell-title" data-i18n="appTitle">聖經跑道</span>
       </div>
 
       <nav class="track-nav" aria-label="賽道">
-        <button type="button" class="track-btn" data-group="track" data-value="bible66" data-i18n="t_bible66">六十六卷</button>
         <button type="button" class="track-btn" data-group="track" data-value="30day" data-i18n="t_30day">三十日</button>
-        <button type="button" class="track-btn" data-group="track" data-value="golden" data-i18n="t_golden">四十金句</button>
-        <button type="button" class="track-btn" data-group="track" data-value="theme" data-i18n="t_theme">主題讀經</button>
+        <button type="button" class="track-btn" data-group="track" data-value="golden" data-i18n="t_golden">100金句選</button>
+        <button type="button" class="track-btn" data-group="track" data-value="theme" data-i18n="t_theme">主題</button>
+        <button type="button" class="track-btn" data-group="track" data-value="plan3y" data-i18n="t_plan3y">三年</button>
+        <button type="button" class="track-btn" data-group="track" data-value="plan1y" data-i18n="t_plan1y">一年</button>
       </nav>
 
       <div class="shell-tools">
@@ -81,6 +89,10 @@
         <button type="button" class="tab-btn" data-group="bibleView" data-value="single" data-i18n="bible_single">單語</button>
       </div>
       <div class="more-section">
+        <span class="more-label" data-i18n="rowReader">進階讀經</span>
+        <button type="button" class="tab-btn tab-btn--reader" id="btnReaderHub" data-i18n="t_reader_btn">📖 譯本對照 / 釋經</button>
+      </div>
+      <div class="more-section">
         <span class="more-label">說明</span>
         <button type="button" class="tab-btn" data-group="footer" data-value="howto" data-i18n="f_howto">操作說明</button>
         <button type="button" class="tab-btn" data-group="footer" data-value="idea" data-i18n="f_idea">本站理念</button>
@@ -96,10 +108,12 @@
     (function () {
       var a = window.b100ShellAsset;
       if (!a) return;
-      document.getElementById('contentFrame').src = a('pages/track-30day.html');
+      document.getElementById('contentFrame').src = a('pages/landing.html');
       var home = document.getElementById('btnHome');
-      if (home) home.href = a('pages/home.html');
+      if (home) home.href = a('pages/landing.html');
       [
+        'js/live_db_bridge.js',
+        'js/live_db_cloud_patch.js',
         'js/shell_asset_v.js',
         'js/shell_boot.js',
         'js/bridge.js',

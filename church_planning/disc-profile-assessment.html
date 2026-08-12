@@ -23,6 +23,7 @@
         <button type="button" class="acs-tab" data-acs-tab="survey" aria-selected="false">② 開始測評</button>
         <button type="button" class="acs-tab" data-acs-tab="report" aria-selected="false">③ 分析報告</button>
         <button type="button" class="acs-tab" data-acs-tab="coaching" aria-selected="false">④ 輔導員手冊</button>
+        <button type="button" class="acs-btn acs-btn--demo acs-header-demo no-print" onclick="loadDemoReport()">🔍 先看示範報告</button>
       </nav>
     </header>
 
@@ -35,8 +36,11 @@
             <li>填完到 <strong>Tab ③</strong> 看四軸柱狀圖：自評風格 vs 工作壓力修飾風格</li>
             <li>牧者請到 <strong>Tab ④</strong> 取「高 D 長老開會」「高 I 帶職同工」等約談包與 AI 指令</li>
             <li>建議順序：先 SHAPE → Johari → 再 DISC + MBTI（DISC 不修飾事奉大類，只修飾節奏）</li>
+            <li><strong>免責：</strong>個人自我覺察，不是考核；解讀須經禱告、面談與人工確認。</li>
           </ol>
         </div>
+    <div class="acs-concept-mount" data-concept-tool="disc"></div>
+
         <div class="acs-hero">
           <span class="acs-role-badge">溝通節奏 · 個人自評</span>
           <h2 class="serif-title">DISC — 同工溝通與推進風格</h2>
@@ -129,7 +133,7 @@
       <div id="report-content" class="hidden">
         <div class="acs-card">
           <span id="report-demo-badge" class="acs-demo-badge hidden">示範報告</span>
-          <p id="report-style" class="acs-report-heart"></p>
+          <div id="report-heart"></div>
           <p id="report-affirm" class="acs-affirm"></p>
         </div>
         <div id="acs-report-extras"></div>
@@ -250,6 +254,7 @@
   <script src="js/matchmaker_urgent_jobs.js"></script>
   <script src="js/ministry_path_bridge.js"></script>
   <script src="js/disc_bars_viz.js"></script>
+  <script src="js/acs_report_gold.js"></script>
   <script src="js/coaching_desk_content.js"></script>
   <script src="js/matchmaker_prefill.js"></script>
   <script src="js/coaching_desk.js"></script>
@@ -321,16 +326,10 @@
       document.getElementById("report-content").classList.remove("hidden");
       document.getElementById("report-demo-badge").classList.toggle("hidden", !isDemo);
       var d = run.derived || {};
-      var stressNote =
-        d.stress_primary && d.stress_primary !== d.primary
-          ? " · 壓力修飾「" + (d.stress_primary_label || d.stress_primary) + "」"
-          : "";
-      document.getElementById("report-style").textContent =
-        "主型：" +
-        (d.primary_label || d.primary) +
-        " · 副型：" +
-        (d.secondary || "—") +
-        stressNote;
+      var heartEl = document.getElementById("report-heart");
+      if (heartEl && window.AcsReportGold) {
+        heartEl.innerHTML = AcsReportGold.renderReportHeart(AcsReportGold.buildDiscReportHeart(run));
+      }
       document.getElementById("report-affirm").textContent = d.affirmation || "";
       var pathHost = document.getElementById("report-path-cards");
       if (pathHost && MPB) {
@@ -396,5 +395,6 @@
       CTAOSBridge.initPage({ toolId: "disc", reportAnchor: "#tab-report", fab: false, autoRefresh: false });
     });
   </script>
+<script src="js/planning_concept_images.js"></script>
 </body>
 </html>

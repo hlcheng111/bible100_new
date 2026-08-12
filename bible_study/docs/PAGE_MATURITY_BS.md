@@ -84,8 +84,10 @@
 
 | 項目 | 狀態 | 備註 |
 |------|------|------|
-| `config/modules.json` path | ✅ | `bible_study/index.html` |
+| `config/modules.json` path | ✅ | `bible_study/index.html`（Standalone L0） |
 | `index_v5` study 模式 | ✅ | 右欄內容頁，非 L0 殼 |
+| Hub 跑道內容 | ✅ | `bible_app/shell/index.html`（非第七大模組；不嵌 `bible_study/index.html`） |
+| `b100_module_nav_ssot` study.`track` | ✅ | SITE-7：頂欄「跑道」→ shell |
 | 教會 C 側欄跨模組 | ✅ | `data-b100-content` → 釋經參讀 |
 | 與 `qna/` 同章節深連 | ✅ | `BS_QnaBridge` + 頂欄／釋經／對照 |
 | 與 `ai_tools/` 同上下文 Prompt | ✅ | `BS_PromptBuilder` 複製 UI（無 API） |
@@ -116,12 +118,13 @@
 - [x] `index.html` StudyState ↔ 頂欄位置 / URL / 搜尋聯動
 - [x] `SITE_PAGE_REGISTRY_V1.md` BS 前綴狀態同步
 
-## W3 驗收／後續（見 `docs/BS_W3_ACCEPTANCE.md`）
+## W3 驗收／後續（見 `bible_study/docs/BS_W3_ACCEPTANCE.md`）
 
 - [ ] 越/印尼 parallel 實機（需 `data/bibles/clean/`）
 - [x] 六語 ↔ `languages/` 文案對齊（`languagesHub` + 版本中心）
 - [x] 全站 W3 行為統一掃描（`tests/test_w3_navigation_scan.py`）
 - [x] FTS 索引（`bible_fts.js` + 可選 `scripts/build_bible_fts_index.py`）
+- [x] SITE-7：跑道區從 tools 拆出；`b100_module_nav_ssot` study.`track` → `bible_app/shell/index.html`
 
 ## W4 已完成（2026-07-26 · D1B–D5A）
 
@@ -141,6 +144,9 @@
 - [x] `tests/test_w3_navigation_scan.py` + `docs/BS_W5_REPORT.md`
 
 ## W6 起待填
+
+- [ ] 可選：`tests/test_bs_hub_paths.py`（跑道／釋經 Hub 路徑 smoke）
+- [ ] 側欄 focus 細部 polish（非阻塞）
 
 ## H2 已完成（2026-07-26 · 66 卷 wired）
 

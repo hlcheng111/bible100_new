@@ -168,13 +168,20 @@
   }
 
   function init() {
-    var load = global.B100DataLoader
-      ? global.B100DataLoader.thirtyDay()
-      : fetch('../data/thirty_day_plan.json').then(function (r) { return r.json(); });
-    load.then(render).catch(function () {
-      var el = document.getElementById('days');
-      if (el) el.innerHTML = '<p style="color:#b45309">' + ui('loadFail') + '</p>';
-    });
+    var run = function () {
+      var load = global.B100DataLoader
+        ? global.B100DataLoader.thirtyDay()
+        : fetch('../data/thirty_day_plan.json').then(function (r) { return r.json(); });
+      load.then(render).catch(function () {
+        var el = document.getElementById('days');
+        if (el) el.innerHTML = '<p style="color:#b45309">' + ui('loadFail') + '</p>';
+      });
+    };
+    if (global.B100LiveDb && global.B100LiveDb.afterLiveProbe) {
+      global.B100LiveDb.afterLiveProbe(run);
+    } else {
+      run();
+    }
   }
 
   if (document.readyState === 'loading') {

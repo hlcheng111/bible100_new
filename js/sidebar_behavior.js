@@ -1,6 +1,7 @@
 // Unified sidebar behavior for iframe-based modules (Bible100 NAV contract).
 (function () {
   const SITE_ROOT_PREFIXES = [
+    "bible_app/",
     "church_planning/",
     "church_ministry/",
     "bible_study/",
@@ -57,12 +58,29 @@
   const getParentContentFrame = () => {
     try {
       if (window.parent && window.parent !== window) {
-        return window.parent.document.getElementById("contentFrame");
+        try {
+          const el = window.parent.document.getElementById("contentFrame");
+          if (el) return el;
+        } catch (eDoc) {}
+        try {
+          const fr = window.parent.frames && window.parent.frames["contentFrame"];
+          if (fr && fr.frameElement) return fr.frameElement;
+        } catch (eFr) {}
       }
     } catch (err) {
       return null;
     }
     return null;
+  };
+
+  const resolveNavHref = (link) => {
+    if (!link) return "";
+    return (
+      link.getAttribute("data-b100-site-path") ||
+      link.getAttribute("data-b100-path") ||
+      link.getAttribute("href") ||
+      ""
+    );
   };
 
   const resolveUrl = (href, base) => {
@@ -87,9 +105,28 @@
     const resolved = resolveUrl(href, window.location.href);
     if (!resolved) return null;
     const path = normalizePath(resolved);
-    const idx = path.indexOf("/bible100_new/");
+    // 站根：依頂層模組目錄推算（不依賴 bible100_new / _2 資料夾名）
+    const markers = [
+      "/bible_study/", "/bible_app/", "/church_ministry/", "/church_planning/",
+      "/ai_tools/", "/school_management/", "/smart_ministry/", "/qna/",
+      "/hymn_management/", "/languages/", "/disciple_dynamics/", "/nav_hub/",
+      "/help/", "/data/", "/config/", "/css/", "/js/"
+    ];
+    const lower = path.toLowerCase();
+    let best = -1;
+    for (let i = 0; i < markers.length; i++) {
+      const at = lower.indexOf(markers[i]);
+      if (at >= 0 && (best < 0 || at < best)) best = at;
+    }
+    if (best >= 0) {
+      return path.slice(best + 1) + resolved.search + resolved.hash;
+    }
+    let idx = path.search(/\/bible100[^\/]*\//i);
     if (idx >= 0) {
-      return path.slice(idx + "/bible100_new/".length) + resolved.search + resolved.hash;
+      const end = path.indexOf("/", idx + 1);
+      if (end > idx) {
+        return path.slice(end + 1) + resolved.search + resolved.hash;
+      }
     }
     const cmIdx = path.indexOf("/church_ministry/");
     if (cmIdx >= 0) {
@@ -98,6 +135,18 @@
     const cpIdx = path.indexOf("/church_planning/");
     if (cpIdx >= 0) {
       return path.slice(cpIdx + 1) + resolved.search + resolved.hash;
+    }
+    const bsIdx = path.indexOf("/bible_study/");
+    if (bsIdx >= 0) {
+      return path.slice(bsIdx + 1) + resolved.search + resolved.hash;
+    }
+    const smIdx = path.indexOf("/school_management/");
+    if (smIdx >= 0) {
+      return path.slice(smIdx + 1) + resolved.search + resolved.hash;
+    }
+    const aiIdx = path.indexOf("/ai_tools/");
+    if (aiIdx >= 0) {
+      return path.slice(aiIdx + 1) + resolved.search + resolved.hash;
     }
     return null;
   };
@@ -116,6 +165,18 @@
     if (cpIdx >= 0) {
       return path.slice(cpIdx + 1) + resolved.search + resolved.hash;
     }
+    const bsIdx = path.indexOf("/bible_study/");
+    if (bsIdx >= 0) {
+      return path.slice(bsIdx + 1) + resolved.search + resolved.hash;
+    }
+    const smIdx = path.indexOf("/school_management/");
+    if (smIdx >= 0) {
+      return path.slice(smIdx + 1) + resolved.search + resolved.hash;
+    }
+    const aiIdx = path.indexOf("/ai_tools/");
+    if (aiIdx >= 0) {
+      return path.slice(aiIdx + 1) + resolved.search + resolved.hash;
+    }
     const basePath = normalizePath(resolveUrl(window.location.href));
     const baseIdx = basePath.indexOf("/church_ministry/");
     if (baseIdx >= 0 && href && !/^(https?:|mailto:|tel:|javascript:|#|\/)/i.test(href)) {
@@ -129,6 +190,13 @@
       const file = stripDotSlash(href).replace(/^\.\.\//, "");
       if (file && file.indexOf("/") === -1) {
         return "church_planning/" + file;
+      }
+    }
+    const baseBs = basePath.indexOf("/bible_study/");
+    if (baseBs >= 0 && href && !/^(https?:|mailto:|tel:|javascript:|#|\/)/i.test(href) && !isSiteRootRelativePath(href)) {
+      const file = stripDotSlash(href).replace(/^\.\.\//, "");
+      if (file) {
+        return file.indexOf("bible_study/") === 0 ? file : "bible_study/" + file;
       }
     }
     return null;
@@ -147,7 +215,7 @@
   const parentIsSiteHub = () => {
     try {
       const path = window.parent.location.pathname.replace(/\\/g, "/");
-      return /\/index_v5\.html$/i.test(path) || /\/bible100_new\/index\.html$/i.test(path);
+      return /\/index_v5\.html$/i.test(path) || /\/bible100[^\/]*\/index\.html$/i.test(path);
     } catch (err) {
       return false;
     }
@@ -157,19 +225,121 @@
     try {
       const path = window.parent.location.pathname.replace(/\\/g, "/");
       // 總站根殼不是模組殼
-      if (/\/index_v5\.html$/i.test(path) || /\/bible100_new\/index\.html$/i.test(path)) {
+      if (/\/index_v5\.html$/i.test(path) || /\/bible100[^\/]*\/index\.html$/i.test(path)) {
         return false;
       }
-      // 例：/church_ministry/index.html（本機 HTTP 根＝bible100_new 時路徑不含 bible100_new）
+      // 例：/church_ministry/index.html（本機 HTTP 根＝站根時路徑可不含包名）
       return /\/[^/]+\/index\.html$/i.test(path);
     } catch (err) {
       return false;
     }
   };
 
-  /** NAV-CONTENT：只換右欄；成功才 true（失敗時讓 href 降級） */
+  const G_PLAN_SIDEBAR = "church_planning/sidebar_plan_v5_preview.html";
+
+  const isCmSidebarLayoutUrl = (url) => {
+    if (!url) return false;
+    if (window.CmZoneNavSsot && window.CmZoneNavSsot.isSidebarLayoutUrl) {
+      return window.CmZoneNavSsot.isSidebarLayoutUrl(url);
+    }
+    return /(^|[/?#])sidebar_church_layout_v1\.html/i.test(String(url).replace(/\\/g, "/"));
+  };
+
+  const navigateCmSidebarPair = (url) => {
+    const Nav = window.CmZoneNavSsot;
+    if (!Nav || !Nav.recoverFromSidebarInContent) return false;
+    const pair = Nav.recoverFromSidebarInContent(url);
+    if (!pair) return false;
+    if (typeof window.bible100ShellNav === "function") {
+      if (
+        window.bible100ShellNav(null, {
+          sidebarUrl: pair.sidebarUrl,
+          contentUrl: pair.contentUrl,
+        })
+      ) {
+        return true;
+      }
+    }
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          {
+            type: "bible100-shell",
+            sidebarUrl: pair.sidebarUrl,
+            contentUrl: pair.contentUrl,
+          },
+          "*"
+        );
+        return true;
+      }
+    } catch (ePair) {}
+    return false;
+  };
+
+  const navigateModuleSidebarPair = (url) => {
+    const Nav = window.B100ModuleNavSsot;
+    if (!Nav || !Nav.recoverSidebarInContent) return false;
+    const pair = Nav.recoverSidebarInContent(url);
+    if (!pair) return false;
+    if (typeof window.bible100ShellNav === "function") {
+      if (
+        window.bible100ShellNav(null, {
+          sidebarUrl: pair.sidebarUrl,
+          contentUrl: pair.contentUrl,
+        })
+      ) {
+        return true;
+      }
+    }
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          {
+            type: "bible100-shell",
+            sidebarUrl: pair.sidebarUrl,
+            contentUrl: pair.contentUrl,
+          },
+          "*"
+        );
+        return true;
+      }
+    } catch (eModPair) {}
+    return false;
+  };
+
+  /** NAV-CONTENT：只換右欄；church_planning/* 在總站殼內改為 G v3 雙欄 */
   const navigateContentViaShell = (href) => {
     if (!href || isExternalLink(href)) return false;
+    try {
+      const shellUrlEarly = toShellContentUrl(href);
+      if (shellUrlEarly && isCmSidebarLayoutUrl(shellUrlEarly)) {
+        if (navigateCmSidebarPair(shellUrlEarly)) return true;
+      }
+      if (
+        shellUrlEarly &&
+        window.B100ModuleNavSsot &&
+        window.B100ModuleNavSsot.isForbiddenContentUrl(shellUrlEarly)
+      ) {
+        if (navigateModuleSidebarPair(shellUrlEarly)) return true;
+      }
+    } catch (eSbEarly) {}
+    try {
+      const shellUrl = toShellContentUrl(href);
+      if (shellUrl && shellUrl.indexOf("church_planning/") === 0 && parentIsSiteHub()) {
+        if (typeof window.bible100ShellNav === "function") {
+          if (window.bible100ShellNav(null, { sidebarUrl: G_PLAN_SIDEBAR, contentUrl: shellUrl })) {
+            return true;
+          }
+        }
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(
+            { type: "bible100-shell", sidebarUrl: G_PLAN_SIDEBAR, contentUrl: shellUrl },
+            "*"
+          );
+          return true;
+        }
+      }
+    } catch (eGPlan) { /* fall through */ }
     try {
       if (window.parent && window.parent !== window) {
         try {
@@ -202,11 +372,21 @@
           return true;
         }
         try {
-          window.parent.postMessage(
-            { type: "navigate", url: new URL(href, window.location.href).href },
-            "*"
-          );
-          return true;
+          const shellUrl = toShellContentUrl(href);
+          if (shellUrl) {
+            window.parent.postMessage({ type: "navigate", url: shellUrl }, "*");
+            try {
+              window.parent.postMessage({ type: "ai-tools-content-loading" }, "*");
+            } catch (e2) {}
+            return true;
+          }
+          if (isSiteRootRelativePath(href)) {
+            window.parent.postMessage({ type: "navigate", url: stripDotSlash(href) }, "*");
+            try {
+              window.parent.postMessage({ type: "ai-tools-content-loading" }, "*");
+            } catch (e3) {}
+            return true;
+          }
         } catch (eNav) {}
       }
     } catch (err) {}
@@ -245,18 +425,45 @@
   };
 
   const getNavMode = (link) => {
+    if (link.hasAttribute("data-b100-msb-nav") || link.hasAttribute("data-b100-route-nav")) {
+      return "";
+    }
     const mode = link.getAttribute("data-b100-nav");
-    if (mode) return mode;
+    if (mode === "content" || mode === "module" || mode === "exit") return mode;
     if (link.getAttribute("data-b100-shell-nav") === "content") return "content";
     if (link.getAttribute("data-b100-path")) return "content";
     return "";
+  };
+
+  const navigateContentViaFrames = (href) => {
+    if (!href || isExternalLink(href)) return false;
+    try {
+      if (!window.parent || window.parent === window) return false;
+      const fr = window.parent.frames && window.parent.frames["contentFrame"];
+      if (!fr) return false;
+      let targetSrc = "";
+      if (parentIsSiteHub()) {
+        const shellUrl = toShellContentUrl(href) || (isSiteRootRelativePath(href) ? stripDotSlash(href) : "");
+        if (!shellUrl) return false;
+        targetSrc = shellUrl;
+      } else {
+        targetSrc = new URL(href, window.location.href).href;
+      }
+      fr.location.href = bustUrl(targetSrc);
+      try {
+        window.parent.postMessage({ type: "ai-tools-content-loading" }, "*");
+      } catch (eLoad) {}
+      return true;
+    } catch (eFrNav) {
+      return false;
+    }
   };
 
   const handleUnifiedNavClick = (link) => {
     const mode = getNavMode(link);
     if (mode === "module") return navigateModuleViaShell(link);
     if (mode === "content" || mode === "exit") {
-      const href = link.getAttribute("data-b100-path") || link.getAttribute("href");
+      const href = resolveNavHref(link);
       if (mode === "exit" && link.getAttribute("target") === "_blank") return false;
       return navigateContentViaShell(href);
     }
@@ -264,7 +471,7 @@
   };
 
   const fallbackContentViaBase = (link) => {
-    const href = link.getAttribute("data-b100-path") || link.getAttribute("href");
+    const href = resolveNavHref(link);
     if (!href || isExternalLink(href)) return false;
     if (!isInShell()) return false;
     const cf = getParentContentFrame();
@@ -280,6 +487,11 @@
             cf.src = bustUrl(shellUrl);
             return true;
           }
+          if (isSiteRootRelativePath(href)) {
+            cf.src = bustUrl(stripDotSlash(href));
+            return true;
+          }
+          return false;
         }
         cf.src = bustUrl(new URL(href, window.location.href).href);
         return true;
@@ -329,7 +541,11 @@
       if (link.getAttribute("data-b100-path")) return;
       if (link.getAttribute("data-b100-nav")) return;
       if (link.getAttribute("data-b100-shell-nav")) return;
+      if (link.hasAttribute("data-cm-focus-switch")) return;
+      if (link.hasAttribute("data-cm-focus-expand")) return;
+      if (link.closest(".sb-kit-zone--rail")) return;
       const href = link.getAttribute("href");
+      if (href && /^\?focus=/i.test(href)) return;
       if (isExternalLink(href)) return;
       if (link.getAttribute("onclick")) return;
       link.setAttribute("target", "contentFrame");
@@ -373,16 +589,20 @@
         if (navMode) {
           let ok = handleUnifiedNavClick(link);
           if (!ok) ok = fallbackContentViaBase(link);
+          if (!ok) ok = navigateContentViaFrames(resolveNavHref(link));
           if (ok) {
             e.preventDefault();
             e.stopPropagation();
-            const markHref = pathAttr || href;
+            const markHref = pathAttr || resolveNavHref(link) || href;
             try {
               markActiveLink(new URL(markHref, window.location.href).href);
             } catch (err) {
               markActiveLink(markHref);
             }
             return;
+          }
+          if (!isExternalLink(href) && !link.getAttribute("target")) {
+            link.setAttribute("target", "contentFrame");
           }
           return;
         }

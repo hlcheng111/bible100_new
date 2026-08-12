@@ -1,0 +1,53 @@
+---
+description: 云端 FTP 镜像同步 bible100_new 到 bible100_new_2；改完 canonical 源后 Agent 必须 sync
+globs: "**/*"
+alwaysApply: true
+---
+
+# Bible100 · 云端镜像同步（bible100_new → bible100_new_2）
+
+## 双轨约定
+
+| 角色 | 路径 | 用途 |
+|------|------|------|
+| **唯一开发源（SSOT）** | `bible100_new/` | 本机 `file:///…/index_v5.html` 验收 |
+| **FTP 上传包** | `bible100_new_2/` | FileZilla → `htdocs` → `bible100.lovestoblog.com` |
+
+**云端必须与 bible100_new 对齐**，不是独立改版。`index.html` 已 redirect 到 `index_v5.html`，两站壳相同。
+
+## Agent 必做（改完 bible100_new 后）
+
+1. 若改了 `config/modes.json` 等 → 跑 `node scripts/generate_config_embedded.js`
+2. 跑 **`run_sync_cloud_mirror.bat`**（sync + audit + **FTP 增量清单/ZIP**）或：
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts\sync_cloud_pack_to_mirror.ps1
+   powershell -ExecutionPolicy Bypass -File scripts\audit_cloud_mirror.ps1
+   powershell -ExecutionPolicy Bypass -File scripts\build_ftp_upload_delta.ps1
+   ```
+3. 在任务汇报中写明：
+   - 已同步到 `bible100_new_2`（是/否）
+   - **FTP 搬运**：只取 `bible100_new_2\_ftp_outbox\FTP_yyyyMMdd_HHmm.zip`，解压到 htdocs 根（内附 `PATHS.txt` 列全部变更路径）
+   - 短说明：`FTP_yyyyMMdd_HHmm.txt`（一行指向 ZIP）
+   - 用户需 FileZilla 上传（若本次有云端相关改动）
+   - 云端验收 URL：`https://bible100.lovestoblog.com/index_v5.html?v=…`
+
+## 上传策略
+
+- 清单：`config/cloud_pack_4p8_include.txt`
+- 排除：`config/cloud_pack_4p8_exclude.txt`
+- 文档：`docs/governance/CLOUD_PACK_4P8_FULL_V1.md`
+- **不要**上传：`data/cj/`、`backups/`、`.git/`、`languages/vi/**/*.files`
+- FileZilla：同时传输 **1–2**，大目录分批
+
+## 禁止在 mirror 单独改
+
+勿在 `bible100_new_2` 手改 HTML/JS；一律改 `bible100_new` 再 sync。
+
+## 验收对照
+
+| 检查项 | 本机 | 云端 |
+|--------|------|------|
+| 顶栏 6 模式 | material/study/qna/church/school/ai | 同左 |
+| 智慧事奉 | 在 AI 模式内，非独立顶栏 | 不应有 `ai_smart_ministry_overview` 顶栏 |
+| Q&A | `qna/index.html` | 不应依赖 `qna_index_4layer*.htm` |
+| 教会事工侧栏 | `sidebar_church_layout_v1` + gateway | 同左 |
