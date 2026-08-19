@@ -92,6 +92,20 @@
             <div class="timeline" id="timeline"></div>
         </div>
 
+        <div class="content-card" id="serviceSeasonCard">
+            <h3>🌿 事奉季節（休息／卸任／更新恩賜）</h3>
+            <p class="hint">人比事重要。休息不是失敗；卸任須與牧者確認。系統<strong>不會</strong>自動撤職。</p>
+            <p id="serviceSeasonNow" class="hint"></p>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;">
+                <button type="button" class="btn btn-primary" data-season="serving">在任</button>
+                <button type="button" class="btn btn-secondary" data-season="pause">暫停邀請（休息）</button>
+                <button type="button" class="btn btn-secondary" data-season="released">卸任／調整崗位</button>
+            </div>
+            <label class="hint" for="serviceSeasonNote">給牧者的一句話（選填）</label>
+            <input id="serviceSeasonNote" type="text" style="width:100%;box-sizing:border-box;padding:8px;margin:6px 0 10px;border:1px solid #e2e8f0;border-radius:6px;" placeholder="例如：這學期課業忙，想暫停小組帶職">
+            <p class="hint"><a href="spiritual_gifts.html">更新恩賜測驗</a>（同一人、新一筆紀錄，不覆蓋歷史）</p>
+        </div>
+
         <details class="kpi-fold">
             <summary>展開：內部趨勢圖表（示例／非正式成績）</summary>
             <div class="kpi-fold-inner">
@@ -111,8 +125,8 @@
     <!-- 牧者視角 -->
     <div id="pastorView" style="display:none;">
         <div class="content-card">
-            <h3>👥 全會眾概覽（示例列）</h3>
-            <p class="hint"><strong>資料從哪來：</strong>表內為示範列；真實部署可改讀 canonical 人才與 assignment。<strong>不做</strong>績效排名；「牧者簡記」僅示意欄位。</p>
+            <h3>👥 全會眾概覽（canonical）</h3>
+            <p class="hint"><strong>資料從哪來：</strong>讀取 <code>bible100_smart_ministry_main</code> 人才與配對紀錄。<strong>不做</strong>績效排名。</p>
             <div class="member-table-wrap">
                 <table class="member-table">
                     <thead>
@@ -137,38 +151,66 @@
         </div>
     </div>
 
+    <div class="pipeline-footer" style="max-width:960px;margin:20px auto 12px;padding:14px 16px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;font-size:12px;line-height:1.6;color:#065f46;">
+        <strong>事奉心跳 · PDCA 檢討</strong><br>
+        追蹤與回顧後，可回到<strong>教會規劃</strong>做季度檢核：
+        <a href="../church_planning/Church_Governance_PDCA_cycle.html" target="contentFrame" style="color:#047857;font-weight:700;">本季 PDCA 檢討</a>
+        ·
+        <a href="../hub-audit-viewer.html" target="_blank" rel="noopener" style="color:#047857;font-weight:700;">審計日誌</a>
+        <span style="color:#64748b;">（異常／退出可查變更紀錄）</span>
+    </div>
+
     <div class="back-link">
         <a href="../smart_ministry/index.html" target="_parent">← 返回智慧事奉中心</a>
     </div>
 
+    <script src="../js/hub_base/hub_base_constant.js"></script>
+    <script src="../js/hub_base/hub_base_schema.js"></script>
+    <script src="../js/hub_base/hub_base_utils.js"></script>
+    <script src="../js/hub_base/hub_base_ops.js"></script>
+    <script src="../js/smart_ministry_canonical_store.js"></script>
+    <script src="js/sm_member_wizard.js"></script>
     <script>
         const SURVEY_STORAGE = 'bible100_smart_ministry_';
 
-        // ---- 模擬 + 整合資料 ----
+        /** canonical 優先；legacy survey_* 僅 fallback */
         function loadProfile() {
             let profile = {};
-            try {
-                profile = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_profile') || '{}');
-            } catch (e) {}
-
             let gifts = [];
-            try {
-                const giftsData = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_gifts') || '{}');
-                gifts = (giftsData.gifts || []).map(([g]) => g);
-            } catch (e) {}
-
             let mbti = '';
-            try {
-                const mbtiData = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_mbti') || '{}');
-                mbti = mbtiData.mbtiType || '';
-            } catch (e) {}
-
             let disc = '';
-            try {
-                const discData = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_disc') || '{}');
-                disc = discData.discType || '';
-            } catch (e) {}
-
+            const tid = resolveActiveTalentId();
+            if (window.SmartMinistryCanonical && tid) {
+                const row = SmartMinistryCanonical.loadTalentById(tid);
+                if (row) {
+                    profile = { name: row.name, member_id: tid, talent_id: tid };
+                    if (row.gift) gifts = String(row.gift).split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+                    mbti = row.mbti || '';
+                }
+                const store = SmartMinistryCanonical.getStore();
+                (store.assessments || []).filter(a => String(a.talent_id) === tid).forEach(a => {
+                    if (a.type === 'gifts_test' && a.summary && a.summary.topGifts) {
+                        gifts = a.summary.topGifts;
+                    }
+                });
+            }
+            if (!gifts.length && !mbti && !disc) {
+                try {
+                    profile = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_profile') || '{}');
+                } catch (e) {}
+                try {
+                    const giftsData = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_gifts') || '{}');
+                    gifts = (giftsData.gifts || []).map(([g]) => g);
+                } catch (e2) {}
+                try {
+                    const mbtiData = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_mbti') || '{}');
+                    mbti = mbtiData.mbtiType || '';
+                } catch (e3) {}
+                try {
+                    const discData = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_disc') || '{}');
+                    disc = discData.discType || '';
+                } catch (e4) {}
+            }
             return { profile, gifts, mbti, disc };
         }
 
@@ -417,12 +459,26 @@
             `).join('');
         }
 
-        // 牧者視角假資料
-        const members = [
-            {name:'陳小明', gifts:'勸勉、教導', role:'兒童主日學', score:'忠心可塑（示例）'},
-            {name:'李美華', gifts:'憐憫、服事', role:'關懷探訪', score:'溫柔穩定（示例）'},
-            {name:'王志強', gifts:'治理、施捨', role:'行政協調', score:'條理清楚（示例）'}
-        ];
+        function loadPastorMembers() {
+            const st = loadCanonicalAssessments();
+            const assigns = st.ministry_assignment || [];
+            const rows = (st.talents || []).map(t => {
+                const tid = String(t.talent_id || t.id || '');
+                const mine = assigns.filter(a => String(a.talent_id) === tid);
+                const role = mine.length
+                    ? mine.map(a => a.ministry_name || a.ministry_id).join('、')
+                    : '—';
+                return {
+                    name: t.name || tid || '（未命名）',
+                    gifts: t.gift || '—',
+                    role: role,
+                    score: mine.length ? (mine.length + ' 筆邀請') : '尚無紀錄'
+                };
+            });
+            if (rows.length) return rows;
+            return [{ name: '（尚無人才）', gifts: '—', role: '—', score: '請先註冊或配對' }];
+        }
+
         let memberSort = { key: 'name', dir: 'asc' };
 
         function sortIndicator(key) {
@@ -438,7 +494,7 @@
 
         function renderMemberTable() {
             const tbody = document.getElementById('memberTable');
-            const list = members.slice().sort((a,b) => {
+            const list = loadPastorMembers().slice().sort((a,b) => {
                 let av;
                 let bv;
                 if (memberSort.key === 'score') {
@@ -511,6 +567,66 @@
             `).join('');
         }
 
+        function resolveActiveTalentId() {
+            try {
+                const q = new URLSearchParams(location.search || '');
+                return q.get('talent_id') || localStorage.getItem('bible100_mission_active_talent_id') || profileTalentId(loadProfile().profile) || '';
+            } catch (e) { return ''; }
+        }
+
+        function refreshServiceSeason() {
+            const el = document.getElementById('serviceSeasonNow');
+            if (!el) return;
+            const tid = resolveActiveTalentId();
+            const labels = { serving: '在任', pause: '休息（暫停新邀請）', released: '卸任／調整' };
+            let st = 'serving';
+            if (tid && window.SmartMinistryCanonical && SmartMinistryCanonical.loadTalentById) {
+                const row = SmartMinistryCanonical.loadTalentById(tid);
+                if (row && row.service_status) st = row.service_status;
+            }
+            el.textContent = tid
+                ? ('目前：' + (labels[st] || st) + ' · talent_id=' + tid)
+                : '尚未對應會友 ID。請先註冊或從配對頁帶入 talent_id。';
+        }
+
+        function bindServiceSeason() {
+            const card = document.getElementById('serviceSeasonCard');
+            if (!card) return;
+            card.querySelectorAll('[data-season]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const tid = resolveActiveTalentId();
+                    if (!tid) { alert('請先完成註冊，或網址加上 ?talent_id='); return; }
+                    const note = (document.getElementById('serviceSeasonNote') || {}).value || '';
+                    const season = btn.getAttribute('data-season');
+                    const before = SmartMinistryCanonical.loadTalentById ? SmartMinistryCanonical.loadTalentById(tid) : null;
+                    if (season === 'pause' || season === 'released') {
+                        const fn = (window.HubBaseOps && HubBaseOps.pauseTalentService) || (window.HubBase && HubBase.pauseTalentService);
+                        if (fn) {
+                            fn(tid, note || (season === 'released' ? '卸任／調整崗位' : '休息暫停新邀請'), season);
+                        } else if (SmartMinistryCanonical.setServiceStatus) {
+                            SmartMinistryCanonical.setServiceStatus(tid, season, note);
+                        }
+                    } else if (SmartMinistryCanonical.setServiceStatus) {
+                        SmartMinistryCanonical.setServiceStatus(tid, season, note);
+                        if (window.HubBase && HubBase.logAudit) {
+                            HubBase.logAudit({
+                                domain: 'talent_pool',
+                                action: 'service_resume',
+                                target_id: tid,
+                                before: before ? { service_status: before.service_status } : null,
+                                after: { service_status: 'serving' },
+                                note: note || '恢復在任',
+                                source: 'talent_tracking.html'
+                            });
+                        }
+                    }
+                    refreshServiceSeason();
+                    alert('已記錄事奉季節（保留歷史 assignment）。休息／卸任後，配對頁不會再自動建議此人。');
+                });
+            });
+            refreshServiceSeason();
+        }
+
         function switchTab(n) {
             document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i === n));
             document.getElementById('personalView').style.display = n === 0 ? 'block' : 'none';
@@ -524,6 +640,7 @@
             buildTrainingRecommendations();
             renderMemberTable();
             buildPastorKpi();
+            bindServiceSeason();
             console.log('✅ 人才發展追踪頁面升級版載入完成');
         });
     </script>

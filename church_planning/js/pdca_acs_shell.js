@@ -305,6 +305,7 @@
     global.loadDemoReport = loadDemoReport;
     renderUpstreamBanner();
     renderDoFeedbackBanners();
+    if (global.PdcaHubShell && PdcaHubShell.init) PdcaHubShell.init();
     renderQuickSurvey();
     switchSurveyTrack("quick");
     autoPreviewReport();
