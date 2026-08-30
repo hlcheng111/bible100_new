@@ -15,7 +15,7 @@
     },
     {
       entry: '🦁 圣经跑道',
-      href: 'bible_app/shell/index.html',
+      href: 'bible_app/shell/pages/landing.html',
       does: '计划读经、打卡、四语并排',
       source: 'bible_reader.db',
       tip: '带班首选；有进度金星',

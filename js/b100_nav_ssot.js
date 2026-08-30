@@ -67,8 +67,8 @@
           nav: { mode: "study" },
           children: [
             { label: "研讀路線圖", tone: "study", level: 2, nav: { mode: "study", contentUrl: "bible_study/_landing/home.html" } },
-            { label: "譯本對照", tone: "study", level: 3, nav: { mode: "study", contentUrl: "bible_study/parallel_mode_v3.html" } },
-            { label: "聖經跑道", tone: "study", level: 2, nav: { mode: "study", contentUrl: "bible_app/shell/index.html" } },
+            { label: "譯本對照", tone: "study", level: 3, nav: { mode: "study", contentUrl: "bible_app/shell/pages/reader-multilang.html" } },
+            { label: "聖經跑道", tone: "study", level: 2, nav: { mode: "study", contentUrl: "bible_app/shell/pages/landing.html" } },
             { label: "綜合解讀", tone: "study", level: 3, nav: { mode: "study", contentUrl: "bible_study/comprehensive_exegesis_reader.html?book=創世記&chapter=1" } }
           ]
         },
@@ -180,9 +180,9 @@
         { stationLabel: "4", title: "地理歷史", desc: "背景 · 地圖", label: "4 地理歷史", tone: "study", nav: { mode: "study", contentUrl: "bible_study/_landing/geography_history.html" } },
         {
           stationLabel: "5", title: "聖經跑道", desc: "每日關卡 · 四跑道 · shell", label: "5 ★ 聖經跑道", tone: "study", highlight: true,
-          nav: { mode: "study", contentUrl: "bible_app/shell/index.html" },
+          nav: { mode: "study", contentUrl: "bible_app/shell/pages/landing.html" },
           children: [
-            { label: "跑道 shell（Hub 右欄）", tone: "study", level: 2, nav: { mode: "study", contentUrl: "bible_app/shell/index.html" } },
+            { label: "跑道 landing（Hub 右欄）", tone: "study", level: 2, nav: { mode: "study", contentUrl: "bible_app/shell/pages/landing.html" } },
             { label: "正式入口 index（轉址）", tone: "study", level: 3, nav: { mode: "study", contentUrl: "bible_app/index.html" } }
           ]
         }

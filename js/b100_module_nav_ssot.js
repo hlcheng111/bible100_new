@@ -4,7 +4,7 @@
 (function (global) {
   "use strict";
 
-  var NAV_BUILD = "20260812data";
+  var NAV_BUILD = "20260831hub"; // lineage 20260830ig 20260815sm 20260812data 20260812clean
 
   var SIDEBAR_FORBIDDEN = [
     /(^|[/?#])bible_study\/sidebar\.html/i,
@@ -17,7 +17,9 @@
   var MODULE_SHELL_FORBIDDEN = [
     /(^|[/?#])bible_study\/index\.html/i,
     /(^|[/?#])school_management\/index\.html/i,
+    /(^|[/?#])ai_tools\/index\.html/i,
     /(^|[/?#])ai_tools\/ai_lab\.html/i,
+    /(^|[/?#])bible_app\/shell\/index\.html/i,
   ];
 
   var MODULES = {
@@ -42,7 +44,7 @@
           labelShort: "跑道",
           labelZh: "聖經跑道",
           labelEn: "Bible Track",
-          content: "bible_app/shell/index.html",
+          content: "bible_app/shell/pages/landing.html",
         },
         {
           id: "tools",
@@ -59,7 +61,15 @@
           labelShort: "版本",
           labelZh: "多语查经",
           labelEn: "Versions",
-          content: "bible_study/parallel_mode_v3.html",
+          content: "bible_app/shell/pages/reader-multilang.html",
+        },
+        {
+          id: "interlinear",
+          focus: "interlinear",
+          labelShort: "逐字",
+          labelZh: "逐字對照",
+          labelEn: "Interlinear",
+          content: "bible_study/interlinear/index.html",
         },
         {
           id: "interlinear",
@@ -178,6 +188,17 @@
           content: "ai_tools/pages/crm_automation_console.html",
         },
         {
+          id: "smart",
+          focus: "smart",
+          labelShort: "事奉",
+          labelZh: "智慧事奉",
+          labelEn: "Smart Ministry",
+          content: "smart_ministry/landing.html",
+          moduleNav: true,
+          moduleSidebar: "smart_ministry/sidebar.html",
+          moduleContent: "smart_ministry/landing.html",
+        },
+        {
           id: "plan",
           focus: "plan",
           labelShort: "規劃",
@@ -235,7 +256,9 @@
     var u = String(url).replace(/\\/g, "/");
     if (/bible_study\/index/i.test(u)) return shellPairForFocus("study", "home");
     if (/school_management\/index/i.test(u)) return shellPairForFocus("school", "home");
+    if (/ai_tools\/index\.html/i.test(u)) return shellPairForFocus("ai", "home");
     if (/ai_tools\/ai_lab\.html/i.test(u)) return shellPairForFocus("ai", "workbench");
+    if (/bible_app\/shell\/index/i.test(u)) return shellPairForFocus("study", "track");
     return null;
   }
 
@@ -257,7 +280,7 @@
     if (/bible_study\/sidebar/i.test(u)) return shellPairForFocus("study", "home");
     if (/school_management\/sidebar/i.test(u)) return shellPairForFocus("school", "home");
     if (/ai_tools\/sidebar/i.test(u)) return shellPairForFocus("ai", "home");
-    if (/smart_ministry\/sidebar/i.test(u)) return shellPairForFocus("ai", "ministry");
+    if (/smart_ministry\/sidebar/i.test(u)) return shellPairForFocus("ai", "smart");
     return null;
   }
 
@@ -297,7 +320,8 @@
     path = String(path || "").replace(/\\/g, "/").toLowerCase();
     var found = "home";
     if (modeId === "ai") {
-      if (/smart_ministry|church_ministry|languages\/(index_ch|ad)|church_planning|crm_automation|outreach/i.test(path)) {
+      if (/smart_ministry/i.test(path)) return "smart";
+      if (/church_ministry|languages\/(index_ch|ad)|church_planning|crm_automation|outreach/i.test(path)) {
         if (/church_planning/i.test(path)) return "plan";
         return "ministry";
       }
@@ -311,7 +335,8 @@
       if (path.indexOf(key) >= 0) found = z.id;
     });
     if (/data_sources\.html/i.test(path)) found = "tools";
-    if (/parallel_mode_v3/i.test(path)) found = "versions";
+    if (/parallel_mode_v3|reader-multilang/i.test(path)) found = "versions";
+    if (/bible_app\/shell\/pages\/landing/i.test(path)) found = "track";
     if (/academic_integrated/i.test(path)) found = "workbench";
     if (/enrollment_brochure|portal\//i.test(path)) found = "enrollment";
     if (/manage\/students|manage\/courses|manage\/classes|manage\/teachers/i.test(path)) {

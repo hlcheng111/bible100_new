@@ -58,7 +58,7 @@
       lite: {
         title: "🦁 今日跑道 · 約 5 分鐘",
         hint: "斷更也沒關係，回來就好。",
-        nav: { sidebarUrl: "bible_study/sidebar.html", contentUrl: "bible_app/shell/index.html" },
+        nav: { sidebarUrl: "bible_study/sidebar.html", contentUrl: "bible_app/shell/pages/landing.html" },
       },
       pro: {
         title: "📖 譯本對照 · 綜合解讀",

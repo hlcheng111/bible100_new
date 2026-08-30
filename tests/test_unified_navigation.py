@@ -71,7 +71,8 @@ def test_bible_study_sidebar_is_reference():
     assert "sidebar_shell_target_fallback.js" in html
     assert "comprehensive_exegesis_reader.html" in html
     assert "reader-multilang.html" in html
-    assert "../bible_app/shell/index.html" in html
+    assert "../bible_app/shell/pages/landing.html" in html
+    assert "../bible_app/shell/index.html" not in html
     for _label, needle in FORBIDDEN_IN_SIDEBARS:
         assert needle not in html, f"bible_study sidebar must not contain {needle}"
     assert not INLINE_SHELL_ONCLICK.search(html), "no inline bible100ShellNav onclick"

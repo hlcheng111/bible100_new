@@ -1,7 +1,7 @@
 /**
- * Hub / sidebar: 聖經跑道入口（Hub 右欄 vs 完整版新分頁）
- * - Hub 右欄：bible_app/shell/index.html（file:// 可預覽；雲端可讀全庫若 .db 已上傳）
- * - 完整版：雲端 → /bible_app/ ；本機 → http://127.0.0.1:3000/bible_app/（需 bat）
+ * Hub / sidebar: 聖經跑道入口（Hub 右欄 vs 獨立開站）
+ * - Hub 右欄：landing.html（內容頁，勿塞 shell/index 殼中殼）
+ * - 獨立開站：bible_app/index.html → shell/index.html
  */
 (function (w) {
   'use strict';
@@ -28,7 +28,7 @@
 
   /** Hub contentFrame 用（根相對） */
   function shellContentPath() {
-    return 'bible_app/shell/index.html';
+    return 'bible_app/shell/pages/landing.html';
   }
 
   /** 新分頁完整版 URL */

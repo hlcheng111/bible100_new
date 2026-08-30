@@ -166,7 +166,7 @@
         hint: "讀完一關記得打卡；可帶去 🎨 讀後創意工作站畫圖、朗讀、問問題。",
       },
       sidebarUrl: "bible_study/sidebar.html?focus=track",
-      contentUrl: "bible_app/shell/index.html",
+      contentUrl: "bible_app/shell/pages/landing.html",
       extraHtml:
         '<div class="pg-link-box"><h4>🌍 跑道裡的四語</h4><p>越文、印尼文請<strong>優先用這裡</strong>；寮國、緬甸文在左欄「🌍 多語言」外站。</p></div>',
     },
