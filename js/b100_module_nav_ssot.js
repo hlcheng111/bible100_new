@@ -57,9 +57,17 @@
           id: "versions",
           focus: "versions",
           labelShort: "版本",
-          labelZh: "聖經版本",
+          labelZh: "多语查经",
           labelEn: "Versions",
           content: "bible_study/parallel_mode_v3.html",
+        },
+        {
+          id: "interlinear",
+          focus: "interlinear",
+          labelShort: "逐字",
+          labelZh: "逐字對照",
+          labelEn: "Interlinear",
+          content: "bible_study/interlinear/index.html",
         },
         {
           id: "commentary",

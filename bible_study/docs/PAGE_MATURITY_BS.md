@@ -42,6 +42,7 @@
 | BS-06 | `_landing/versions.html` | ✅ | 版本與多語導覽 |
 | BS-07 | `_landing/tools.html` | ✅ | 功能地圖（原 dashboard 卡片職責） |
 | BS-09 | `data_sources.html` | ✅ | 資料綠燈 · registry 掃描 |
+| BS-15 | `interlinear/index.html` | 🔄 | 越文逐字；任意句譯文為草稿（Gemini／MyMemory）；經節走本機經庫 |
 
 ---
 
