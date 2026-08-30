@@ -5,7 +5,7 @@
 (function (global) {
   'use strict';
 
-  var TM_KEY = 'b100_interlinear_tm_v1';
+  var TM_KEY = 'b100_interlinear_tm_v2';
   var API_KEY = 'b100_interlinear_gemini_key';
   var MODELS = ['gemini-2.0-flash', 'gemini-flash-latest', 'gemini-1.5-flash'];
 
@@ -42,20 +42,25 @@
     }
   }
 
-  function getCached(text) {
-    var map = loadTm();
-    return map[lookupKey(text)] || null;
+  function cacheKey(text, lang) {
+    return (lang || 'vi') + '|' + lookupKey(text);
   }
 
-  function remember(text, payload) {
+  function getCached(text, lang) {
+    var map = loadTm();
+    return map[cacheKey(text, lang)] || null;
+  }
+
+  function remember(text, payload, lang) {
     if (!payload || !payload.zh) return;
     var map = loadTm();
-    map[lookupKey(text)] = {
+    map[cacheKey(text, lang)] = {
       zh: payload.zh,
       en: payload.en || '',
       grammar: payload.grammar || '',
       tokens: payload.tokens || null,
       source: payload.source,
+      lang: lang || 'vi',
       savedAt: Date.now()
     };
     saveTm(map);
@@ -83,7 +88,11 @@
     });
   }
 
-  function geminiOnce(model, apiKey, text) {
+  function langLabel(lang) {
+    return lang === 'id' ? 'Indonesian (Bahasa Indonesia)' : 'Vietnamese (Tiếng Việt)';
+  }
+
+  function geminiOnce(model, apiKey, text, lang) {
     var url =
       'https://generativelanguage.googleapis.com/v1beta/models/' +
       model +
@@ -92,13 +101,14 @@
     var body = {
       systemInstruction: {
         parts: [{
-          text: 'You are a Vietnamese teaching linguist. Return only JSON. Do not invent Bible verses. Mark uncertain glosses. Translations must be natural Traditional Chinese and English, not a copy of the source.'
+          text: 'You are a teaching linguist for ' + langLabel(lang) +
+            '. Return only JSON. Do not invent Bible verses. Translations must be natural Traditional Chinese and English, not a copy of the source. Include a short grammarZh note on clause type (greeting, negation, wish, etc.).'
         }]
       },
       contents: [{
         parts: [{
           text:
-            'Gloss this Vietnamese sentence for language learners:\n' +
+            'Gloss this ' + langLabel(lang) + ' sentence for language learners:\n' +
             JSON.stringify(text) +
             '\nReturn JSON object with keys: translationZh, translationEn, grammarZh, words (array of {target, zh, en, pos}). pos one of noun,verb,adj,pron,prep,adv,part.'
         }]
@@ -128,10 +138,10 @@
     });
   }
 
-  function fromGemini(text, apiKey) {
+  function fromGemini(text, apiKey, lang) {
     var chain = Promise.reject(new Error('no model'));
     MODELS.forEach(function (model) {
-      chain = chain.catch(function () { return geminiOnce(model, apiKey, text); });
+      chain = chain.catch(function () { return geminiOnce(model, apiKey, text, lang); });
     });
     return chain.then(function (parsed) {
       var zh = String(parsed.translationZh || parsed.translation_zh || '').trim();
@@ -157,10 +167,11 @@
     });
   }
 
-  function fromMyMemory(text) {
-    return myMemory(text, 'vi|zh-TW').then(function (zh) {
+  function fromMyMemory(text, lang) {
+    var src = lang === 'id' ? 'id' : 'vi';
+    return myMemory(text, src + '|zh-TW').then(function (zh) {
       if (looksLikeSourceEcho(text, zh)) throw new Error('MyMemory 中文無效');
-      return myMemory(text, 'vi|en').then(function (en) {
+      return myMemory(text, src + '|en').then(function (en) {
         if (looksLikeSourceEcho(text, en)) en = '';
         return {
           zh: zh,
@@ -173,19 +184,20 @@
     });
   }
 
-  function translateFreeText(text) {
-    var cached = getCached(text);
+  function translateFreeText(text, lang) {
+    lang = lang || 'vi';
+    var cached = getCached(text, lang);
     if (cached && cached.zh && !looksLikeSourceEcho(text, cached.zh)) {
       return Promise.resolve(Object.assign({ fromCache: true }, cached));
     }
     var key = getApiKey();
     var start = key
-      ? fromGemini(text, key)
+      ? fromGemini(text, key, lang)
       : Promise.reject(new Error('no-key'));
     return start.catch(function () {
-      return fromMyMemory(text);
+      return fromMyMemory(text, lang);
     }).then(function (out) {
-      remember(text, out);
+      remember(text, out, lang);
       return out;
     });
   }

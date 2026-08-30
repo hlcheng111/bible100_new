@@ -80,6 +80,7 @@
 | AI 備課／助手 | AI Lab；CM-C 換模組；SMART | 工具在 AI；教會只留出口 |
 | 規劃／健康／SWOT | PLAN；CM 頂欄「教會規劃」 | 一律 PLAN 殼，CM 不雙開 |
 | 詩歌 | HY；CM-A 詩歌庫 | A＝敬拜選用；HY＝曲庫管理，可互鏈 |
+| 逐字 gloss／小語種 | BS-15 `interlinear/`；教材 `languages/` | **越＋印**教學對照在 BS；六語課件在 MAT。泰緬日韓不進 interlinear。見 `bible_study/docs/INTERLINEAR_SCOPE_V1.md` |
 | CRM／營運自動 | AI「營運自動化」；CM-0 旅程 | 對外一個「CRM」稱呼；另一個標自動化控制台 |
 
 完整教會頁列：`church_ministry/docs/PAGE_MATURITY_INVENTORY_0AF.md`  

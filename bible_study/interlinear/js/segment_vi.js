@@ -23,11 +23,19 @@
       .replace(/^[.,;:!?，。！？；：]+|[.,;:!?，。！？；：]+$/g, '');
   }
 
-  function findOverlay(sentence) {
-    var pack = global.B100InterlinearLexicon;
-    if (!pack) return null;
+  function lexiconFor(lang) {
+    var pack = global.B100InterlinearLexicon || {};
+    return lang === 'id' ? (pack.LEXICON_ID || {}) : (pack.LEXICON || {});
+  }
+
+  function overlayFor(lang) {
+    var pack = global.B100InterlinearLexicon || {};
+    return lang === 'id' ? (pack.OVERLAY_ID || []) : (pack.OVERLAY || []);
+  }
+
+  function findOverlay(sentence, lang) {
     var key = lookupKey(sentence);
-    var list = pack.OVERLAY || [];
+    var list = overlayFor(lang || 'vi');
     for (var i = 0; i < list.length; i++) {
       var keys = list[i].keys || [];
       for (var k = 0; k < keys.length; k++) {
@@ -51,24 +59,25 @@
       .filter(function (t) { return t.length > 0; });
   }
 
-  function lexiconGet(surface) {
-    var dict = (global.B100InterlinearLexicon && global.B100InterlinearLexicon.LEXICON) || {};
+  function lexiconGet(surface, lang) {
+    var dict = lexiconFor(lang);
     return dict[lookupKey(surface)] || null;
   }
 
-  function longestMatch(parts, i) {
+  function longestMatch(parts, i, lang) {
     var max = Math.min(3, parts.length - i);
     for (var n = max; n >= 2; n--) {
       var joined = parts.slice(i, i + n).join(' ');
       if (/^[,;:!?.，。！？；：]+$/.test(joined)) continue;
-      var hit = lexiconGet(joined);
+      var hit = lexiconGet(joined, lang);
       if (hit) return { n: n, surface: parts.slice(i, i + n).join(' '), entry: hit };
     }
     return null;
   }
 
-  function segmentSentence(sentence) {
-    var overlay = findOverlay(sentence);
+  function segmentSentence(sentence, lang) {
+    lang = lang || 'vi';
+    var overlay = findOverlay(sentence, lang);
     if (overlay && overlay.words && overlay.words.length) {
       return overlay.words.map(function (w) {
         return {
@@ -88,7 +97,7 @@
         words.push({ surface: tok, zh: '標點', en: 'punct', pos: 'part', status: 'rule-gloss' });
         continue;
       }
-      var multi = longestMatch(parts, i);
+      var multi = longestMatch(parts, i, lang);
       if (multi) {
         words.push({
           surface: multi.surface,
@@ -100,7 +109,7 @@
         i += multi.n - 1;
         continue;
       }
-      var one = lexiconGet(tok);
+      var one = lexiconGet(tok, lang);
       if (one) {
         words.push({
           surface: tok, zh: one.zh, en: one.en, pos: one.pos, status: 'rule-gloss'
@@ -114,11 +123,23 @@
     return words;
   }
 
-  function grammarHint(tokens, overlay) {
+  function grammarHint(tokens, overlay, lang) {
     if (overlay && overlay.notes) {
       return { level: 'verified-overlay', text: overlay.notes };
     }
     var low = (tokens || []).map(function (t) { return lookupKey(t.surface); });
+    if (lang === 'id') {
+      if (low.indexOf('selamat') >= 0) {
+        return { level: 'template', text: '受限句型：招呼語。Selamat + 時段（pagi／siang／sore／malam）。' };
+      }
+      if (low.indexOf('apa kabar') >= 0) {
+        return { level: 'template', text: '受限句型：問候。apa kabar 慣用為「你好嗎」，不是逐字「什麼消息」。' };
+      }
+      if (low.indexOf('tidak') >= 0 || low.indexOf('bukan') >= 0) {
+        return { level: 'template', text: '受限句型：否定。tidak 否定動詞／形容詞；bukan 否定名詞。' };
+      }
+      return { level: 'not-generated', text: null };
+    }
     if (low.indexOf('lạy') >= 0) {
       return { level: 'template', text: '受限句型：祈禱呼語。Lạy 表崇敬呼求。' };
     }

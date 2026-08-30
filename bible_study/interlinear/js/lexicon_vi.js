@@ -88,11 +88,65 @@
     }
   ];
 
+  var LEXICON_ID = {
+    'selamat': { zh: '平安／祝福', en: 'safe / blessed', pos: 'adj' },
+    'pagi': { zh: '早晨', en: 'morning', pos: 'noun' },
+    'siang': { zh: '中午', en: 'noon', pos: 'noun' },
+    'sore': { zh: '傍晚', en: 'afternoon', pos: 'noun' },
+    'malam': { zh: '夜晚', en: 'night', pos: 'noun' },
+    'apa': { zh: '什麼', en: 'what', pos: 'pron' },
+    'kabar': { zh: '消息／近況', en: 'news', pos: 'noun' },
+    'apa kabar': { zh: '近況如何', en: 'how are you', pos: 'pron' },
+    'anda': { zh: '您', en: 'you', pos: 'pron' },
+    'kamu': { zh: '你', en: 'you', pos: 'pron' },
+    'saya': { zh: '我', en: 'I', pos: 'pron' },
+    'kami': { zh: '我們（不含聽者）', en: 'we (exclusive)', pos: 'pron' },
+    'kita': { zh: '我們（含聽者）', en: 'we (inclusive)', pos: 'pron' },
+    'hari ini': { zh: '今天', en: 'today', pos: 'adv' },
+    'hari': { zh: '日子', en: 'day', pos: 'noun' },
+    'ini': { zh: '這', en: 'this', pos: 'pron' },
+    'tidak': { zh: '不', en: 'not', pos: 'adv' },
+    'bukan': { zh: '不是', en: 'is not', pos: 'adv' },
+    'dan': { zh: '和', en: 'and', pos: 'prep' },
+    'yang': { zh: '所／的（關係）', en: 'that / which', pos: 'part' },
+    'di': { zh: '在', en: 'at / in', pos: 'prep' },
+    'ke': { zh: '往', en: 'to', pos: 'prep' },
+    'dari': { zh: '從', en: 'from', pos: 'prep' },
+    'bapa': { zh: '父', en: 'Father', pos: 'noun' },
+    'surga': { zh: '天', en: 'heaven', pos: 'noun' },
+    'nama': { zh: '名', en: 'name', pos: 'noun' },
+    'kerajaan': { zh: '國／國度', en: 'kingdom', pos: 'noun' },
+    'datang': { zh: '來到', en: 'come', pos: 'verb' },
+    'terpujilah': { zh: '願被尊崇', en: 'hallowed', pos: 'verb' }
+  };
+
+  var OVERLAY_ID = [
+    {
+      keys: [
+        'selamat pagi, apa kabar anda hari ini?',
+        'selamat pagi apa kabar anda hari ini'
+      ],
+      translationZh: '早安，您今天近況如何？',
+      translationEn: 'Good morning, how are you today?',
+      notes: '招呼句：Selamat pagi 為固定晨安；apa kabar 字面「有什麼消息」，慣用為問候。',
+      words: [
+        { target: 'Selamat', zh: '平安／祝福', en: 'safe / blessed', pos: 'adj' },
+        { target: 'pagi', zh: '早晨', en: 'morning', pos: 'noun' },
+        { target: 'apa kabar', zh: '近況如何', en: 'how are you', pos: 'pron' },
+        { target: 'Anda', zh: '您', en: 'you', pos: 'pron' },
+        { target: 'hari ini', zh: '今天', en: 'today', pos: 'adv' }
+      ]
+    }
+  ];
+
   global.B100InterlinearLexicon = {
     LEXICON: LEXICON,
     OVERLAY: OVERLAY,
+    LEXICON_ID: LEXICON_ID,
+    OVERLAY_ID: OVERLAY_ID,
     SAMPLE_TEXT:
       'Lạy Cha chúng con ở trên trời,\n' +
-      'chúng con nguyện danh Cha cả sáng, nước Cha trị đến,'
+      'chúng con nguyện danh Cha cả sáng, nước Cha trị đến,',
+    SAMPLE_TEXT_ID: 'Selamat pagi, apa kabar Anda hari ini?'
   };
 })(typeof window !== 'undefined' ? window : this);

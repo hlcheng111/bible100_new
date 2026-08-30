@@ -28,8 +28,17 @@ def test_no_original_as_translation():
     assert "translateFreeText" in tr
     assert "mymemory.translated.net" in tr
     assert "generativelanguage.googleapis.com" in tr
-    assert "絕不把越南原文" in html or "絕不把原文" in html
-    assert "先不要上雲" in html
+    assert "絕不把原文" in html
+    assert "先不上雲" in html
+    assert "刻意不做" in html
+    lex = (IG / "js/lexicon_vi.js").read_text(encoding="utf-8")
+    assert "LEXICON_ID" in lex
+    assert "SAMPLE_TEXT_ID" in lex
+    tr = (IG / "js/translate_engine.js").read_text(encoding="utf-8")
+    assert "id|zh-TW" in tr or "src + '|zh-TW'" in tr
+    scope = (ROOT / "bible_study/docs/INTERLINEAR_SCOPE_V1.md").read_text(encoding="utf-8")
+    assert "泰／緬／日／韓" in scope
+    assert "只做越南文、印尼文" in scope
 
 
 def test_nav_wired():

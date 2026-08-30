@@ -17,7 +17,7 @@
     '羅': 45, '羅馬': 45, 'rom': 45, 'romans': 45
   };
 
-  var state = { db: null, ready: false, error: '', viIndex: null };
+  var state = { db: null, ready: false, error: '', viIndex: null, idIndex: null };
 
   function cleanVerseText(t) {
     if (global.cleanVerseText) return global.cleanVerseText(t);
@@ -130,11 +130,11 @@
     return t;
   }
 
-  function buildViIndex() {
-    if (!state.db || state.viIndex) return;
+  function buildIndex(version) {
     var Seg = global.B100ViSegment;
     var map = {};
-    var stmt = state.db.prepare("SELECT b, c, v, t FROM verses WHERE version = 'vi_1934'");
+    var stmt = state.db.prepare('SELECT b, c, v, t FROM verses WHERE version = ?');
+    stmt.bind([version]);
     while (stmt.step()) {
       var r = stmt.getAsObject();
       var t = cleanVerseText(r.t);
@@ -142,15 +142,19 @@
       if (key && !map[key]) map[key] = { b: r.b, c: r.c, v: r.v, t: t };
     }
     stmt.free();
-    state.viIndex = map;
+    return map;
   }
 
-  function findByViText(sentence) {
+  function findBySourceText(sentence, lang) {
     var Seg = global.B100ViSegment;
     var key = Seg ? Seg.lookupKey(sentence) : String(sentence || '').toLowerCase();
-    if (!key) return null;
-    buildViIndex();
-    return (state.viIndex && state.viIndex[key]) || null;
+    if (!key || !state.db) return null;
+    if (lang === 'id') {
+      if (!state.idIndex) state.idIndex = buildIndex('id_ayt');
+      return state.idIndex[key] || null;
+    }
+    if (!state.viIndex) state.viIndex = buildIndex('vi_1934');
+    return state.viIndex[key] || null;
   }
 
   function getAligned(b, c, v) {
@@ -190,7 +194,8 @@
     init: init,
     parseRef: parseRef,
     parseUrlVerse: parseUrlVerse,
-    findByViText: findByViText,
+    findByViText: function (s) { return findBySourceText(s, 'vi'); },
+    findBySourceText: findBySourceText,
     getAligned: getAligned,
     isReady: function () { return state.ready; },
     error: function () { return state.error; }
