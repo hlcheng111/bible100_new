@@ -149,11 +149,13 @@
     return { level: 'not-generated', text: null };
   }
 
-  function literalDraft(tokens) {
+  function literalDraft(tokens, field) {
+    field = field || 'zh';
     var bits = [];
     (tokens || []).forEach(function (t) {
       if (t.pos === 'part' && t.zh === '標點') return;
-      if (t.zh) bits.push(t.zh);
+      var val = field === 'en' ? t.en : t.zh;
+      if (val) bits.push(val);
     });
     return bits.length ? bits.join(' · ') : '';
   }

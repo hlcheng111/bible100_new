@@ -185,7 +185,7 @@
       });
     }).catch(function (err) {
       state.ready = false;
-      state.error = (err && err.message) || '經庫未載入';
+      state.error = (err && err.message) || '';
       return false;
     });
   }

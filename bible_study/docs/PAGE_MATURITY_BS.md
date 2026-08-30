@@ -42,7 +42,7 @@
 | BS-06 | `_landing/versions.html` | ✅ | 版本與多語導覽 |
 | BS-07 | `_landing/tools.html` | ✅ | 功能地圖（原 dashboard 卡片職責） |
 | BS-09 | `data_sources.html` | ✅ | 資料綠燈 · registry 掃描 |
-| BS-15 | `interlinear/index.html` | 🔄 | 越／印逐字；任意句譯文為草稿；泰緬日韓刻意不做。範圍：`docs/INTERLINEAR_SCOPE_V1.md` |
+| BS-15 | `interlinear/index.html` | 🔄 | V6 三步；無 Key 直譯草稿；不提示 bat；泰緬日韓刻意不做。範圍：`docs/INTERLINEAR_SCOPE_V1.md` |
 
 ---
 
