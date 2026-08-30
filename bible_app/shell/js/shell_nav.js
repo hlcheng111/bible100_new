@@ -69,7 +69,7 @@
   }
 
   function isBiblePage(path) {
-    return /bible66\.html/i.test(path || '');
+    return /bible66\.html|read66\.html/i.test(path || '');
   }
 
   function isValidResume(path, extra) {
@@ -149,6 +149,9 @@
     }
     var rel = basePath + '?' + queryParams(merged) + '&' + cacheBustQs();
     if (!skipRemember) rememberFrame(basePath, merged);
+    if (location.protocol === 'file:' && /bible66\.html/i.test(basePath)) {
+      rel = '../app/assets/bible/read66.html?' + queryParams(merged) + '&' + cacheBustQs();
+    }
     if (global.B100ShellPaths && global.B100ShellPaths.page) {
       frame.src = global.B100ShellPaths.page(rel);
     } else {

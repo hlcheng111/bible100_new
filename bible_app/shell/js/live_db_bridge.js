@@ -125,21 +125,13 @@
 
 
   function getShellUrl() {
-
-    var base = liveBase || 'http://127.0.0.1:8080';
-
-    return base + '/bible_app/shell/index.html';
-
+    if (!liveBase) return '';
+    return liveBase + '/bible_app/shell/index.html';
   }
 
-
-
   function getHubUrl() {
-
-    var base = liveBase || 'http://127.0.0.1:8080';
-
-    return base + '/index_v5.html';
-
+    if (!liveBase) return '';
+    return liveBase + '/index_v5.html';
   }
 
 
@@ -319,19 +311,12 @@
 
 
   function pageUrl(rel) {
-
     rel = String(rel || '').replace(/^\//, '');
-
-    var base = liveBase || 'http://127.0.0.1:8080';
-
+    if (!liveBase) return rel;
     if (rel.indexOf('pages/') === 0) {
-
-      return base + '/bible_app/shell/' + rel;
-
+      return liveBase + '/bible_app/shell/' + rel;
     }
-
-    return base + '/bible_app/shell/pages/' + rel;
-
+    return liveBase + '/bible_app/shell/pages/' + rel;
   }
 
 
@@ -349,31 +334,7 @@
 
 
   function ensureReaderPage() {
-
-    if (!isFile()) return Promise.resolve(false);
-
-    var name = ((global.location.pathname || '').split('/').pop() || '').split('?')[0];
-
-    if (!/^bible66\.html$/i.test(name)) return Promise.resolve(false);
-
-    return probe(2).then(function (ok) {
-
-      if (!ok) return false;
-
-      var target = pageUrl('bible66.html' + (global.location.search || '') + (global.location.hash || ''));
-
-      try {
-
-        if (global.location.href.replace(/#.*$/, '') === target.replace(/#.*$/, '')) return false;
-
-      } catch (eSame) {}
-
-      global.location.replace(target);
-
-      return true;
-
-    });
-
+    return Promise.resolve(false);
   }
 
 
@@ -405,23 +366,9 @@
 
 
   function afterLiveProbe(fn) {
-
-    if (!fn) return Promise.resolve();
-
-    if (!isFile()) {
-
-      fn();
-
-      return Promise.resolve();
-
-    }
-
-    return probe(2).then(function () {
-
-      fn();
-
-    });
-
+    /* 跑道列表只靠 data_bundle，不必等 8080 探測（file:// 上可空等數十秒）。 */
+    try { if (fn) fn(); } catch (eFn) {}
+    return Promise.resolve();
   }
 
 
@@ -459,13 +406,8 @@
 
 
   if (isFile()) {
-
-    probe(2).then(function () {
-
-      notifyChildFrames();
-
-    });
-
+    cached = true;
+    liveBase = null;
   } else {
 
     var h = (global.location.hostname || '').toLowerCase();

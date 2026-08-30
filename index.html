@@ -356,14 +356,30 @@
     body.mode-module-shell-embed table.layout td.right { width: 100%; }
     iframe { border: 0; width: 100%; height: 100%; }
     #fileProtocolBanner { display: none !important; }
-    #surveyUiBanner {
-      display: none;
-      background: #eef2ff; color: #312e81; padding: 5px 10px; text-align: center; font-size: 10px;
-      border-bottom: 1px solid #c7d2fe; line-height: 1.45;
-    }
+    #surveyUiBanner { display: none; }
     body.show-survey-banner #surveyUiBanner { display: block; }
-    #surveyUiBanner a { color: #4338ca; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
-    #surveyUiBanner a:hover { color: #1e1b4b; }
+    #hubQuickStartBanner {
+      display: block;
+      background: #ecfdf5;
+      color: #065f46;
+      padding: 6px 10px;
+      text-align: center;
+      font-size: 10px;
+      border-bottom: 1px solid #86efac;
+      line-height: 1.5;
+    }
+    #hubQuickStartBanner a { color: #047857; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; margin: 0 4px; }
+    #hubQuickStartBanner a:hover { color: #064e3b; }
+    #hubQuickStartBanner .hub-q-dismiss {
+      float: right;
+      font-size: 9px;
+      color: #64748b;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-weight: 600;
+    }
+    body.hub-quick-start-hidden #hubQuickStartBanner { display: none; }
     .loading-overlay { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); display: none; align-items: center; justify-content: center; z-index: 1000; flex-direction: column; }
     .loading-overlay.active { display: flex; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--h); border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin-bottom: 6px; }
@@ -376,20 +392,22 @@
       display: none;
       align-items: center;
       justify-content: center;
-      width: 40px;
+      min-width: 52px;
       height: 36px;
       margin: 0 4px 0 0;
-      padding: 0;
+      padding: 0 8px;
       border: 1px solid rgba(255,255,255,0.45);
       border-radius: 8px;
       background: rgba(255,255,255,0.2);
       color: #fff;
-      font-size: 18px;
+      font-size: 12px;
+      font-weight: 800;
       line-height: 1;
       cursor: pointer;
       flex-shrink: 0;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
     }
     .sidebar-toggle-btn:hover { background: rgba(255,255,255,0.35); }
     .sidebar-toggle-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
@@ -637,26 +655,28 @@
       align-items: center;
     }
     .sub-btn.sub-btn--compact {
-      flex-direction: row;
-      align-items: center;
+      flex-direction: column;
+      align-items: flex-start;
       justify-content: center;
       min-width: 0;
       white-space: nowrap;
-      padding: 5px 10px;
-      line-height: 1.2;
+      padding: 4px 9px 3px;
+      line-height: 1.15;
     }
     .sub-btn.sub-btn--compact .t-zh {
       font-size: 10px;
       font-weight: 700;
     }
-    .sub-btn.sub-btn--compact .t-en { display: none !important; }
-    body.ui-locale-vi .sub-btn.sub-btn--compact .t-en,
-    body.ui-locale-id .sub-btn.sub-btn--compact .t-en {
-      display: block !important;
+    .sub-btn.sub-btn--compact .t-en {
+      display: block;
       font-size: 7px;
       opacity: 0.9;
       font-weight: 400;
       line-height: 1.15;
+      margin-top: 1px;
+    }
+    body.ui-locale-en .sub-btn.sub-btn--compact .t-en {
+      display: none !important;
     }
     @media (max-width: 767px) {
       .lang-btn { min-width: 64px; padding: 2px 6px 2px; }
@@ -676,7 +696,7 @@
   <div class="top-wrap" id="topWrap">
     <div class="row1">
       <div class="brand" data-i18n="hub.brand" id="brandHomeBtn" role="button" tabindex="0" title="回全站首頁">聖經百步四寶</div>
-      <button type="button" class="sidebar-toggle-btn" id="btnSidebarToggle" aria-label="開啟側欄選單" aria-expanded="false" aria-controls="sidebarFrame" title="側欄">☰</button>
+      <button type="button" class="sidebar-toggle-btn" id="btnSidebarToggle" aria-label="開啟左側欄選單" aria-expanded="false" aria-controls="sidebarFrame" title="左側欄：譯本目錄">☰ 側欄</button>
       <div id="modeButtonsHost" class="mode-buttons-host" role="group" aria-label="模式導航"></div>
       <button type="button" class="top-tools-btn" id="btnCrmAutomationTop" title="教會行政 · 口述預填：文字解析後只預填表單，不自動儲存">
         <span class="t-zh" data-i18n="hub.crm_auto">口述預填</span>
@@ -710,13 +730,16 @@
     <div class="row2 top-nav-secondary" id="contextBar" role="navigation" aria-label="頂欄第二列 · 語言與模式捷徑" aria-live="polite"></div>
   </div>
 
-  <div id="surveyUiBanner">
-    <strong>問卷版面：</strong>教會規劃與智慧事奉已統一緊湊量表（頂部評分圖例、選項 1–5）。
-    <a href="smart_ministry/spiritual_gifts.html" target="contentFrame">屬靈恩賜示例</a>
-    ·
-    <a href="church_planning/index_plan.html" target="contentFrame">教會規劃索引</a>
+  <div id="hubQuickStartBanner" role="navigation" aria-label="小白快速入口">
+    <button type="button" class="hub-q-dismiss" id="btnHubQuickDismiss" title="收起（本機記憶）">收起 ✕</button>
+    <strong>3 點擊起點：</strong>
+    <a href="#" id="hubQJourneyFull">📋 事奉主線（教材→人找工→排班）</a>
+    · <a href="#" id="hubQSmStart">會友事奉（20 分）</a>
+    · <a href="#" id="hubQGateway">教會事工閘道</a>
+    · <a href="#" id="hubQMatch">配對工作台</a>
+    · <a href="hub-phase1-7-crm-status.html" target="contentFrame">Phase 1–7 對照</a>
+    · <a href="hub-mainline-maturity.html" target="contentFrame">收工自查</a>
   </div>
-  <!-- 開發者本機預覽：可在 bible100_new 用慣用方式啟靜態伺服器後以 http 開本頁；勿將指令寫入使用者橫幅 -->
 
   <div class="loading-overlay" id="loadingOverlay" style="top: var(--top-offset);">
     <div class="spinner"></div>
@@ -766,8 +789,9 @@
   <script src="js/config-loader.js?v=20260807a"></script>
   <script src="js/cm_zone_nav_ssot.js?v=20260807a"></script>
   <script src="js/b100_site_path.js?v=20260807a"></script>
-  <script src="js/b100_module_nav_ssot.js?v=20260812data"></script>
+  <script src="js/b100_module_nav_ssot.js?v=20260815sm"></script>
   <script src="js/shell_nav.js?v=20260807a"></script>
+  <script src="js/hub_journey_nav.js?v=20260819journey"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/cloud_config.js"></script>
   <script src="js/cloud_api.js"></script>
@@ -2211,6 +2235,59 @@
       window.addEventListener('resize', function () {
         if (!mq.matches) closeSidebarMobile();
       });
+    })();
+
+    (function initHubQuickStart() {
+      try {
+        if (localStorage.getItem('b100_hub_quick_hidden') === '1') {
+          document.body.classList.add('hub-quick-start-hidden');
+        }
+      } catch (eH) {}
+      var dismiss = document.getElementById('btnHubQuickDismiss');
+      if (dismiss) {
+        dismiss.addEventListener('click', function () {
+          document.body.classList.add('hub-quick-start-hidden');
+          try { localStorage.setItem('b100_hub_quick_hidden', '1'); } catch (e2) {}
+        });
+      }
+      if (window.B100HubJourneyNav && typeof B100HubJourneyNav.wireIndexQuickStart === 'function') {
+        B100HubJourneyNav.wireIndexQuickStart();
+      }
+      var sm = document.getElementById('hubQSmStart');
+      if (sm && !sm.dataset.journeyWired) {
+        sm.dataset.journeyWired = '1';
+        sm.addEventListener('click', function (e) {
+          e.preventDefault();
+          if (typeof openAISmartMinistry === 'function') openAISmartMinistry();
+          var bust = Date.now();
+          document.getElementById('contentFrame').src = 'smart_ministry/landing.html#start?v=' + bust;
+        });
+      }
+      var gw = document.getElementById('hubQGateway');
+      if (gw) {
+        gw.addEventListener('click', function (e) {
+          e.preventDefault();
+          applyMode('church');
+        });
+      }
+      var mt = document.getElementById('hubQMatch');
+      if (mt) {
+        mt.addEventListener('click', function (e) {
+          e.preventDefault();
+          clearHymnEmbedLayout();
+          selectedMode = 'ai';
+          document.body.className = document.body.className.replace(/\bmode-\S+/g, '').trim();
+          document.body.classList.add('mode-ai');
+          setModeButtonActive('ai');
+          setContextOpen(true);
+          renderContextBar();
+          var bust = Date.now();
+          var fm = window.frameManager || new MainFrameManager();
+          fm.showLoading('載入配對工作台…');
+          document.getElementById('sidebarFrame').src = 'smart_ministry/sidebar.html?v=' + bust;
+          document.getElementById('contentFrame').src = 'smart_ministry/talent_ministry_matching.html?v=' + bust;
+        });
+      }
     })();
   }
 

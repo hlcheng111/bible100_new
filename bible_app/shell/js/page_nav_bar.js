@@ -38,6 +38,18 @@
     return (p.split('/').pop() || '').split('?')[0].toLowerCase();
   }
 
+  function inBibleAssets() {
+    var p = (global.location.pathname || '').replace(/\\/g, '/');
+    return /\/app\/assets\/bible\//i.test(p) || pageName() === 'read66.html';
+  }
+
+  function pageHref(name, extraQuery) {
+    var prefix = inBibleAssets() ? '../../../shell/pages/' : '';
+    var href = prefix + name;
+    if (extraQuery) href += (name.indexOf('?') >= 0 ? '&' : '?') + extraQuery.replace(/^\?/, '');
+    return href;
+  }
+
   function shouldSkip() {
     var name = pageName();
     if (!name || name === 'landing.html' || name === 'landing-dashboard.html') return true;
@@ -48,23 +60,31 @@
   function trackFallbackUrl() {
     var q = new URLSearchParams(global.location.search);
     var track = q.get('track') || '';
-    if (track && TRACK_PAGES[track]) return TRACK_PAGES[track];
-    if (pageName() === 'bible66.html' && track) return TRACK_PAGES[track] || 'landing.html';
-    if (/track-plan/.test(pageName()) || /track-30day|track-golden|track-theme/.test(pageName())) {
-      return 'landing.html';
+    var extra = '';
+    if (track === 'theme' && q.get('theme')) extra = 'focus=' + encodeURIComponent(q.get('theme'));
+    var name = pageName();
+    if (track && TRACK_PAGES[track]) {
+      if (name === 'read66.html' || name === 'bible66.html' || name === 'read-done.html') {
+        return pageHref(TRACK_PAGES[track], extra);
+      }
     }
-    if (pageName() === 'read-done.html' && track) return TRACK_PAGES[track] || 'landing.html';
-    return 'landing.html';
+    if (name === 'bible66.html' && track) return pageHref(TRACK_PAGES[track] || 'landing.html', extra);
+    if (/track-plan/.test(name) || /track-30day|track-golden|track-theme/.test(name)) {
+      return pageHref('landing.html');
+    }
+    return pageHref('landing.html');
   }
 
   function goBack() {
     var fb = trackFallbackUrl();
+    var name = pageName();
+    if (name === 'read66.html' || name === 'bible66.html') {
+      global.location.href = fb;
+      return;
+    }
     try {
       if (global.history.length > 1) {
         global.history.back();
-        global.setTimeout(function () {
-          /* 若仍在本页（无历史），降级到 fallback */
-        }, 300);
         return;
       }
     } catch (eHist) {}
@@ -98,16 +118,18 @@
     }));
 
     if (track && TRACK_PAGES[track] && pageName() !== TRACK_PAGES[track].toLowerCase()) {
+      var extra = '';
+      if (track === 'theme' && q.get('theme')) extra = 'focus=' + encodeURIComponent(q.get('theme'));
       var trackLink = global.document.createElement('a');
       trackLink.className = 'page-nav-btn page-nav-btn--track';
-      trackLink.href = TRACK_PAGES[track];
+      trackLink.href = pageHref(TRACK_PAGES[track], extra);
       trackLink.textContent = t('track');
       bar.appendChild(trackLink);
     }
 
     var home = global.document.createElement('a');
     home.className = 'page-nav-btn page-nav-btn--home';
-    home.href = 'landing.html';
+    home.href = pageHref('landing.html');
     home.textContent = t('home');
     bar.appendChild(home);
 

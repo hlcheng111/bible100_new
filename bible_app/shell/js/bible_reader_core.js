@@ -7,10 +7,120 @@
     return p.indexOf('/pages/') >= 0 || /\/pages\/[^/]+\.html$/i.test(p);
   }
 
-  var IN_PAGES = pageInShellPages();
-  var DB_BASE = IN_PAGES ? '../../app/assets/bible/' : '../app/assets/bible/';
+  function pageInBibleAssets() {
+    var p = (location.pathname || '').replace(/\\/g, '/');
+    return /\/app\/assets\/bible\//i.test(p);
+  }
+
+  var IN_BIBLE_DIR = pageInBibleAssets();
+  var IN_PAGES = pageInShellPages() && !IN_BIBLE_DIR;
+  var DB_BASE = IN_BIBLE_DIR ? './' : (IN_PAGES ? '../../app/assets/bible/' : '../app/assets/bible/');
   var DB_URL = DB_BASE + 'bible_reader.db';
-  var DATA_PREFIX = IN_PAGES ? '../data/' : 'data/';
+  var DATA_PREFIX = IN_BIBLE_DIR ? '../../../shell/data/' : (IN_PAGES ? '../data/' : 'data/');
+
+  function sqlDir() {
+    if (IN_BIBLE_DIR) return '../../../shell/vendor/sqljs/';
+    if (IN_PAGES) return '../vendor/sqljs/';
+    return 'vendor/sqljs/';
+  }
+
+  function fileVerseSrc(bookId) {
+    var name = 'b' + bookId + '.js';
+    if (IN_BIBLE_DIR) return './verses/' + name;
+    if (IN_PAGES) return '../../app/assets/bible/verses/' + name;
+    return '../app/assets/bible/verses/' + name;
+  }
+
+  function loadFileBook(bookId) {
+    bookId = parseInt(bookId, 10) || 1;
+    if (global.B100FileVerses && global.B100FileVerses[bookId]) {
+      return Promise.resolve(true);
+    }
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = fileVerseSrc(bookId);
+      s.onload = function () {
+        try { s.remove(); } catch (eRm) {}
+        if (global.B100FileVerses && global.B100FileVerses[bookId]) resolve(true);
+        else reject(new Error('empty pack'));
+      };
+      s.onerror = function () {
+        try { s.remove(); } catch (eRm2) {}
+        reject(new Error('script'));
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  var IDB_NAME = 'b100_bible_sql';
+
+  function idbOpen() {
+    return new Promise(function (resolve, reject) {
+      try {
+        var req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = function () {
+          if (!req.result.objectStoreNames.contains('db')) req.result.createObjectStore('db');
+        };
+        req.onsuccess = function () { resolve(req.result); };
+        req.onerror = function () { reject(req.error); };
+      } catch (eIdb) {
+        reject(eIdb);
+      }
+    });
+  }
+
+  function idbGet() {
+    return idbOpen().then(function (db) {
+      return new Promise(function (resolve) {
+        var tx = db.transaction('db', 'readonly').objectStore('db').get('bible_reader');
+        tx.onsuccess = function () { resolve(tx.result || null); };
+        tx.onerror = function () { resolve(null); };
+      });
+    }).catch(function () { return null; });
+  }
+
+  function idbPut(buf) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (resolve) {
+        var tx = db.transaction('db', 'readwrite').objectStore('db').put(buf, 'bible_reader');
+        tx.onsuccess = function () { resolve(); };
+        tx.onerror = function () { resolve(); };
+      });
+    }).catch(function () {});
+  }
+
+  function cloudReaderHref() {
+    var name = ((location.pathname || '').split('/').pop() || '').split('?')[0];
+    var page = /reader-multilang\.html/i.test(name) ? 'reader-multilang.html' : 'bible66.html';
+    return 'https://bible100.lovestoblog.com/bible_app/shell/pages/' + page + (location.search || '');
+  }
+
+  function cloudReaderLink(label) {
+    return '<a href="' + cloudReaderHref() + '" target="_blank" rel="noopener">' + (label || '雲端讀經頁') + '</a>';
+  }
+
+  function cloudReadCta(self) {
+    var href = cloudReaderHref();
+    var book = self && self.books
+      ? self.books.find(function (b) { return b.id === self.bookId; })
+      : null;
+    var loc = (self && self.locale) || getLocale();
+    var name = book ? bookLabel(book, loc) : '';
+    var ch = self && self.chapter ? String(self.chapter) : '';
+    var verse = parseInt((urlContext().verse || ''), 10) || 0;
+    var ref = name
+      ? (name + ' ' + ch + ' 章' + (verse ? ' 第 ' + verse + ' 節' : ''))
+      : '這一章';
+    return (
+      '<p style="margin:0 0 10px">本機沒有「' + esc(ref) + '」的經文。</p>' +
+      '<p><label class="btn-track btn-done" style="display:inline-block;cursor:pointer">選取本機經庫 bible_reader.db' +
+        '<input id="b100PickDb" type="file" accept=".db,.sqlite,application/octet-stream" style="display:none" />' +
+      '</label></p>' +
+      '<p style="margin:8px 0 0;font-size:12px;color:#64748b">檔案位置：bible_app\\app\\assets\\bible\\bible_reader.db</p>' +
+      '<p style="margin:10px 0 0"><a class="btn-track" href="' + href + '" target="_blank" rel="noopener">或新分頁讀雲端「' + esc(ref) + '」</a></p>' +
+      '<p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#475569">雲端第一次約 30～60 秒載經庫；選本機檔則立刻用真 66 卷。</p>'
+    );
+  }
 
   function activeDbBase() {
     if (global.B100LiveDb && global.B100LiveDb.getDbBase) {
@@ -25,7 +135,7 @@
 
   function openSqlBuffer(self, buf) {
     if (!buf || buf.byteLength < 1000000) return Promise.reject(new Error('DB small'));
-    var sqlBase = IN_PAGES ? '../vendor/sqljs/' : 'vendor/sqljs/';
+    var sqlBase = sqlDir();
     return initSqlJs({
       locateFile: function (f) {
         return sqlBase + f;
@@ -35,6 +145,7 @@
       self.useSample = false;
       self.loadError = '';
       self.showDbAlert();
+      idbPut(buf);
     });
   }
 
@@ -74,64 +185,44 @@
           });
         });
     }
-    return getArrayBuffer(base + 'bible_reader.db?_=' + Date.now())
-      .then(function (buf) {
+    function loadWhole() {
+      return getArrayBuffer(base + 'bible_reader.db?_=' + Date.now()).then(function (buf) {
         if (bufferLooksLikeDb(buf)) return buf;
         throw new Error('DB small');
-      })
-      .catch(function () {
-        function loadManifest() {
-          return fetch(base + 'bible_reader.db.manifest.json?_=' + Date.now(), { cache: 'no-store' })
-            .then(function (r) {
-              if (!r.ok) throw new Error('no manifest');
-              return r.json();
-            })
-            .catch(function () {
-              return new Promise(function (resolve, reject) {
-                try {
-                  var xhr = new XMLHttpRequest();
-                  xhr.open('GET', base + 'bible_reader.db.manifest.json?_=' + Date.now(), true);
-                  xhr.onload = function () {
-                    if (xhr.status === 0 || xhr.status === 200) {
-                      try { resolve(JSON.parse(xhr.responseText)); }
-                      catch (eJ) { reject(eJ); }
-                    } else reject(new Error('manifest xhr'));
-                  };
-                  xhr.onerror = function () { reject(new Error('manifest xhr err')); };
-                  xhr.send();
-                } catch (eM) {
-                  reject(eM);
-                }
-              });
-            });
-        }
-        return loadManifest().then(function (manifest) {
-            var parts = manifest.parts || [];
-            if (!parts.length) throw new Error('empty manifest');
-            return Promise.all(
-              parts.map(function (name) {
-                return getArrayBuffer(base + name + '?_=' + Date.now()).then(function (partBuf) {
-                  if (!partBuf || partBuf.byteLength < 100000 || new Uint8Array(partBuf)[0] === 0x3C) {
-                    throw new Error('part bad ' + name);
-                  }
-                  return partBuf;
-                });
-              })
-            ).then(function (bufs) {
-              var total = 0;
-              bufs.forEach(function (b) {
-                total += b.byteLength;
-              });
-              var out = new Uint8Array(total);
-              var off = 0;
-              bufs.forEach(function (b) {
-                out.set(new Uint8Array(b), off);
-                off += b.byteLength;
-              });
-              return out.buffer;
-            });
-          });
       });
+    }
+    function loadParts() {
+      return getArrayBuffer(base + 'bible_reader.db.manifest.json?_=' + Date.now())
+        .then(function (buf) {
+          var manifest = JSON.parse(new TextDecoder().decode(buf));
+          var parts = (manifest && manifest.parts) || [];
+          if (!parts.length) throw new Error('empty manifest');
+          return Promise.all(
+            parts.map(function (name) {
+              return getArrayBuffer(base + name + '?_=' + Date.now()).then(function (partBuf) {
+                if (!partBuf || partBuf.byteLength < 100000 || new Uint8Array(partBuf)[0] === 0x3C) {
+                  throw new Error('part bad ' + name);
+                }
+                return partBuf;
+              });
+            })
+          ).then(function (bufs) {
+            var total = 0;
+            bufs.forEach(function (b) { total += b.byteLength; });
+            var out = new Uint8Array(total);
+            var off = 0;
+            bufs.forEach(function (b) {
+              out.set(new Uint8Array(b), off);
+              off += b.byteLength;
+            });
+            return out.buffer;
+          });
+        });
+    }
+    if (location.protocol === 'file:') {
+      return loadParts().catch(function () { return loadWhole(); });
+    }
+    return loadWhole().catch(function () { return loadParts(); });
   }
 
   function fetchDbBuffer() {
@@ -234,6 +325,7 @@
     this.db = null;
     this.books = [];
     this.useSample = false;
+    this.useFileVerses = false;
     this.loadError = '';
     this.sample = { data: [], en: [] };
     this.bookId = 1;
@@ -269,7 +361,27 @@
     if (ctx.gv) q += '&gv=' + encodeURIComponent(ctx.gv);
     if (ctx.theme) q += '&theme=' + encodeURIComponent(ctx.theme) + '&unit=' + encodeURIComponent(ctx.unit || '0');
     if (ctx.verse) q += '&verse=' + encodeURIComponent(ctx.verse);
-    return 'read-done.html?' + q;
+    var prefix = IN_BIBLE_DIR ? '../../../shell/pages/' : '';
+    return prefix + 'read-done.html?' + q;
+  }
+
+  function trackListHref() {
+    var ctx = urlContext();
+    var map = {
+      plan1y: 'track-plan1y.html',
+      plan3y: 'track-plan3y.html',
+      '30day': 'track-30day.html',
+      golden: 'track-golden.html',
+      theme: 'track-theme.html',
+    };
+    var page = map[ctx.track];
+    if (!page) return '';
+    var prefix = IN_BIBLE_DIR ? '../../../shell/pages/' : '';
+    var href = prefix + page;
+    if (ctx.track === 'theme' && ctx.theme) {
+      href += '?focus=' + encodeURIComponent(ctx.theme);
+    }
+    return href;
   }
 
   BibleReaderCore.prototype.showDbAlert = function () {
@@ -303,19 +415,15 @@
         (shellUrl || '#') +
         '" target="_blank" rel="noopener">重开跑道 ↗</a>。';
     } else if (location.protocol === 'file:') {
-      var hub =
-        global.B100LiveDb && global.B100LiveDb.getHubUrl
-          ? global.B100LiveDb.getHubUrl()
-          : 'http://127.0.0.1:8080/index_v5.html';
-      liveHint =
-        '请双击 Bible100 根目录 <strong>Bible100一键开启</strong> 打开总站；或 <a href="' +
-        hub +
-        '" target="_blank" rel="noopener">本机 HTTP 总站 ↗</a>。';
+      el.innerHTML = cloudReadCta(this);
+      this.bindLocalDbPicker();
+      return;
     } else {
-      liveHint = '请刷新页面；云端用户请稍后再试。';
+      liveHint = '請刷新頁面；雲端請稍後再試。';
     }
+    var title = '經庫未完整載入';
     el.innerHTML =
-      '<strong>⚠️ 完整經庫未載入</strong> ' +
+      '<strong>' + title + '</strong> ' +
       '<span>' + esc(msg) + '</span> ' +
       '<span class="br-db-alert__hint">' + liveHint + '</span>';
   };
@@ -325,7 +433,44 @@
     if (hint) hint.textContent = text;
   };
 
+  BibleReaderCore.prototype.bindLocalDbPicker = function () {
+    var self = this;
+    var input = document.getElementById('b100PickDb');
+    if (!input || input.getAttribute('data-bound')) return;
+    input.setAttribute('data-bound', '1');
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      if (!f) return;
+      self.setHint('正在讀取本機經庫…');
+      var reader = new FileReader();
+      reader.onload = function () {
+        openSqlBuffer(self, reader.result).then(function () {
+          self.renderAll();
+        }).catch(function () {
+          self.useSample = true;
+          self.loadError = '選的檔不是 bible_reader.db';
+          self.showDbAlert();
+        });
+      };
+      reader.onerror = function () {
+        self.loadError = '讀檔失敗';
+        self.showDbAlert();
+      };
+      reader.readAsArrayBuffer(f);
+    });
+  };
+
   BibleReaderCore.prototype.queryVerses = function (version, b, c) {
+    if (this.useFileVerses) {
+      var pack = global.B100FileVerses && global.B100FileVerses[b];
+      var ch = pack && pack[version] && pack[version][String(c)];
+      if (!ch || !ch.length) return [];
+      var rows = [];
+      for (var i = 1; i < ch.length; i++) {
+        if (ch[i]) rows.push({ v: i, t: cleanVerseText(ch[i]) });
+      }
+      return rows;
+    }
     if (!this.db) return [];
     var stmt = this.db.prepare(
       'SELECT v, t FROM verses WHERE version = ? AND b = ? AND c = ? ORDER BY v'
@@ -414,13 +559,18 @@
       self.updateChrome();
       self.showDbAlert();
       self.renderAll();
-      self.setHint('載入失敗：請雙擊「打開聖經跑道.bat」');
+      self.setHint('本機示範。完整經文請開雲端讀經頁。');
     });
   };
 
   BibleReaderCore.prototype.go = function (bookId, chapter) {
+    var self = this;
     this.bookId = bookId;
     this.chapter = chapter || 1;
+    if (this.useFileVerses) {
+      loadFileBook(this.bookId).then(function () { self.renderAll(); });
+      return;
+    }
     this.renderAll();
   };
 
@@ -452,6 +602,10 @@
       btn.addEventListener('click', function () {
         self.bookId = b.id;
         self.chapter = 1;
+        if (self.useFileVerses) {
+          loadFileBook(self.bookId).then(function () { self.renderAll(); });
+          return;
+        }
         self.renderAll();
       });
       list.appendChild(btn);
@@ -508,6 +662,11 @@
       this.setHint(single ? (L(pair.colL) + ' · ' + L('bible_single_hint')) : L(pair.hint));
     }
     if (!left.length && !right.length) {
+      if (this.useSample && location.protocol === 'file:') {
+        grid.innerHTML = '<div class="br-empty">' + cloudReadCta(this) + '</div>';
+        this.bindLocalDbPicker();
+        return;
+      }
       var msg = L('bible_empty');
       if (this.useSample) {
         msg = (function () {
@@ -516,12 +675,9 @@
             return '此章經文未載入。請確認雲端已上傳 bible_reader.db。';
           }
           if (global.B100LiveDb && global.B100LiveDb.isLive && global.B100LiveDb.isLive()) {
-            return '此章暫無資料。請 Ctrl+F5 或開完整版分頁重試。';
+            return '此章暫無資料。請 Ctrl+F5 重試。';
           }
-          if (location.protocol === 'file:') {
-            return '示範模式僅含創世記 1 與約 3:16 等樣本章。請雙擊「打開聖經跑道.bat」後重試。';
-          }
-          return '示範模式僅含樣本章。請雙擊「打開聖經跑道.bat」。';
+          return '此章暫無經文。';
         })();
       }
       grid.innerHTML = '<p class="br-empty">' + esc(msg) + '</p>';
@@ -563,7 +719,12 @@
       '<p style="margin:0 0 8px;font-weight:800">' + (already ? '✅ 這章打過卡了' : '🎉 讀完了嗎？') + '</p>' +
       '<a class="btn-track btn-done" href="' + readDoneHref(this) + '">' +
         (already ? '再看 AI 工具 →' : '讀完打卡 + 金星 →') +
-      '</a>';
+      '</a>' +
+      (function () {
+        var back = trackListHref();
+        if (!back) return '';
+        return ' <a class="btn-track" href="' + back + '">↩ 回跑道選其他關</a>';
+      })();
     grid.appendChild(bar);
   };
 
@@ -577,19 +738,19 @@
     if (location.protocol !== 'file:') {
       return loadFromBase(activeDbBase());
     }
-    // file://：先读 bundled 分片（Hub / USB 离线），再探本机 HTTP :3000
-    return loadFromBase(DB_BASE).catch(function () {
-      var probe = global.B100LiveDb && global.B100LiveDb.probe
-        ? global.B100LiveDb.probe(2)
-        : Promise.resolve(false);
-      return probe.then(function (ok) {
-        if (ok) {
-          var base = activeDbBase();
-          return loadFromBase(base);
-        }
-        self.loadError = '精簡離線模式（示範經文）';
-        return Promise.reject(new Error('file'));
+    return idbGet().then(function (cached) {
+      if (cached && bufferLooksLikeDb(cached)) {
+        return openSqlBuffer(self, cached);
+      }
+      return loadFileBook(self.bookId).then(function () {
+        self.useFileVerses = true;
+        self.useSample = false;
+        self.loadError = '';
+        self.showDbAlert();
       });
+    }).catch(function () {
+      self.loadError = '僅示範經節';
+      return Promise.reject(new Error('file'));
     });
   };
 
@@ -609,17 +770,20 @@
         return self.loadSql().catch(function (err) {
           self.useSample = true;
           if (!self.loadError) {
-            self.loadError = '经库未就绪 → 请从 index 打开总站（Bible100一键开启）';
+            self.loadError = '經庫未就緒';
           }
           if (err && err.message) {
             console.warn('[B100] bible DB:', err.message, DB_URL);
           }
         });
       };
+      if (location.protocol === 'file:') {
+        return ensureSql();
+      }
       if (typeof initSqlJs === 'undefined') {
         return new Promise(function (resolve) {
           var s = document.createElement('script');
-          var sqlBase = IN_PAGES ? '../vendor/sqljs/' : 'vendor/sqljs/';
+          var sqlBase = sqlDir();
           s.src = sqlBase + 'sql-wasm.js';
           s.onload = function () { ensureSql().then(resolve); };
           s.onerror = function () {
@@ -631,6 +795,22 @@
         });
       }
       return ensureSql();
+    });
+  };
+
+  /** 多語查經換卷用：不呼叫 renderAll，避免動到跑道 DOM。HTTPS／已開 sql 時直接略過。 */
+  BibleReaderCore.prototype.ensureFileBook = function (bookId) {
+    var self = this;
+    bookId = parseInt(bookId, 10) || 1;
+    this.bookId = bookId;
+    if (this.db && !this.useFileVerses) {
+      return Promise.resolve('sql');
+    }
+    return loadFileBook(bookId).then(function () {
+      self.useFileVerses = true;
+      self.useSample = false;
+      self.loadError = '';
+      return 'file';
     });
   };
 

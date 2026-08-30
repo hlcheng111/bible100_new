@@ -128,33 +128,44 @@
         '<div class="ml-head">' +
           '<h1 class="ml-title">多语查经</h1>' +
           '<div class="ml-tools">' +
-            '<div class="ml-lang-pills" id="mlLangPills" aria-label="译本"></div>' +
+            '<span class="ml-tools-lbl" id="mlLangHeadLbl">譯本</span>' +
+            '<div id="mlLangHeadSlot">' +
+              '<div class="ml-lang-pills" id="mlLangPills" aria-label="譯本"></div>' +
+            '</div>' +
             '<div class="font-size-bar" title="字体">' +
               '<button type="button" class="fs-btn" data-fs="sm">小</button>' +
               '<button type="button" class="fs-btn on" data-fs="md">中</button>' +
               '<button type="button" class="fs-btn" data-fs="lg">大</button>' +
             '</div>' +
           '</div>' +
+          '<button type="button" class="ml-drawer-btn" id="mlDrawerBtn" aria-expanded="false" aria-controls="mlDrawer" title="更多：譯本、分類、搜經（不是左側欄）">更多</button>' +
         '</div>' +
-        '<div class="ml-nav">' +
-          '<div class="ml-filters" id="mlFilters"></div>' +
-          '<select class="ml-select" id="mlBookSelect" aria-label="书卷"></select>' +
+        '<div class="ml-rail">' +
+          '<label class="ml-book-label">書卷 ' +
+            '<select class="ml-select" id="mlBookSelect" aria-label="書卷（66卷）"></select>' +
+          '</label>' +
           '<div class="ml-ch-nav">' +
             '<button type="button" class="ml-ch-btn" id="mlPrevCh" aria-label="上一章">◀</button>' +
-            '<span class="ml-ch-label" id="mlChLabel">1</span>' +
+            '<span class="ml-ch-label" id="mlChLabel">章 1</span>' +
             '<button type="button" class="ml-ch-btn" id="mlNextCh" aria-label="下一章">▶</button>' +
           '</div>' +
           '<label class="ml-verse-jump">' +
-            '节 <input type="number" id="mlVerseInput" min="1" max="176" placeholder="—">' +
+            '節 <input type="number" id="mlVerseInput" min="1" max="176" placeholder="—">' +
           '</label>' +
+        '</div>' +
+        '<div class="ml-drawer" id="mlDrawer" hidden>' +
+          '<p class="ml-drawer__h" id="mlLangDrawerLbl">譯本（對照哪幾種）</p>' +
+          '<div id="mlLangDrawerSlot"></div>' +
+          '<div class="ml-filters" id="mlFilters"></div>' +
+          '<p class="ml-drawer__h">書卷分類</p>' +
+          '<div class="b100-book-legend" id="mlBookLegend" aria-label="書卷分類"></div>' +
           '<div class="ml-quick-links">' +
             '<a class="ml-quick-link" href="reader-multilang-help.html">使用方法</a>' +
-            '<a class="ml-quick-link" id="mlLinkExegesis" href="#">释经参读</a>' +
-            '<a class="ml-quick-link" id="mlLinkSearch" href="../../../bible_study/search_reader.html">搜经</a>' +
-            '<a class="ml-quick-link" id="mlLinkSiteSearch" href="../../../nav_hub/search/dashboard.html">目录搜</a>' +
+            '<a class="ml-quick-link" id="mlLinkExegesis" href="#">釋經參讀</a>' +
+            '<a class="ml-quick-link" id="mlLinkSearch" href="../../../bible_study/search_reader.html">搜經</a>' +
+            '<a class="ml-quick-link" id="mlLinkSiteSearch" href="../../../nav_hub/search/dashboard.html">目錄搜</a>' +
           '</div>' +
         '</div>' +
-        '<div class="b100-book-legend" id="mlBookLegend" aria-label="书卷分类"></div>' +
       '</div>' +
       '<div id="mlDbAlert"></div>' +
       '<div class="ml-scroll" id="mlScroll">' +
@@ -179,10 +190,7 @@
       self.goChapter(self.chapter + 1);
     });
     this.root.querySelector('#mlBookSelect').addEventListener('change', function (ev) {
-      self.bookId = parseInt(ev.target.value, 10) || 1;
-      self.chapter = 1;
-      self.focusVerse = 0;
-      self.renderAll();
+      self.selectBook(parseInt(ev.target.value, 10) || 1);
     });
     this.root.querySelector('#mlVerseInput').addEventListener('change', function (ev) {
       var v = parseInt(ev.target.value, 10);
@@ -190,8 +198,19 @@
       self.renderVerses();
       pushUrlState(self);
     });
+    this.bindDrawer();
+    this.placeLangPills();
+    if (global.matchMedia) {
+      var mq = global.matchMedia('(max-width: 767px)');
+      var onW = function () { self.placeLangPills(); };
+      if (mq.addEventListener) mq.addEventListener('change', onW);
+      else if (mq.addListener) mq.addListener(onW);
+    }
 
+    this.core.bookId = this.bookId;
+    this.core.chapter = this.chapter;
     return this.core.load().then(function () {
+      self.adoptBooksFromBundle();
       self.core.root = self.root.querySelector('#mlDbAlert');
       self.core.showDbAlert = function () {
         var el = self.root.querySelector('#mlDbAlert');
@@ -203,14 +222,86 @@
         el.className = 'br-db-alert';
         el.setAttribute('role', 'alert');
         el.innerHTML =
-          '<strong>⚠️ 经库未载入</strong> ' +
-          '<span>' + esc(self.core.loadError || '请 HTTP 打开') + '</span>';
+          '<strong>本機示範</strong> ' +
+          '<span>' + esc(self.core.loadError || '僅少量經節') + '</span> ' +
+          '<span class="br-db-alert__hint">完整經文請 <a href="https://bible100.lovestoblog.com/bible_app/shell/pages/reader-multilang.html' +
+          (global.location.search || '') +
+          '" target="_blank" rel="noopener">開雲端讀經頁</a>。</span>';
       };
       self.core.showDbAlert();
-      self.renderAll();
+      return self.ensureBookData().then(function () { self.renderAll(); });
     }).catch(function () {
+      self.adoptBooksFromBundle();
       self.renderAll();
     });
+  };
+
+  MultilangReader.prototype.adoptBooksFromBundle = function () {
+    if (this.core.books && this.core.books.length) return;
+    var pack = global.B100_DATA && global.B100_DATA.books;
+    var list = pack && pack.books ? pack.books : pack;
+    if (Array.isArray(list) && list.length) this.core.books = list;
+  };
+
+  MultilangReader.prototype.ensureBookData = function () {
+    var core = this.core;
+    core.bookId = this.bookId;
+    core.chapter = this.chapter;
+    if (!core.ensureFileBook) return Promise.resolve();
+    if (core.db && !core.useFileVerses) return Promise.resolve();
+    if (global.location.protocol !== 'file:' && !core.useFileVerses) return Promise.resolve();
+    return core.ensureFileBook(this.bookId).catch(function () { return false; });
+  };
+
+  MultilangReader.prototype.bindDrawer = function () {
+    var btn = this.root.querySelector('#mlDrawerBtn');
+    var panel = this.root.querySelector('#mlDrawer');
+    if (!btn || !panel) return;
+    var self = this;
+    btn.addEventListener('click', function () {
+      var open = panel.hidden;
+      panel.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.classList.toggle('on', open);
+    });
+    self.closeDrawer = function () {
+      panel.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+      btn.classList.remove('on');
+    };
+  };
+
+  MultilangReader.prototype.placeLangPills = function () {
+    var pills = this.root.querySelector('#mlLangPills');
+    var head = this.root.querySelector('#mlLangHeadSlot');
+    var drawer = this.root.querySelector('#mlLangDrawerSlot');
+    var headLbl = this.root.querySelector('#mlLangHeadLbl');
+    var drawerLbl = this.root.querySelector('#mlLangDrawerLbl');
+    if (!pills || !head || !drawer) return;
+    var narrow = false;
+    try {
+      narrow = global.matchMedia && global.matchMedia('(max-width: 767px)').matches;
+    } catch (eMq) {}
+    if (narrow) {
+      drawer.appendChild(pills);
+      if (headLbl) headLbl.hidden = true;
+      if (drawerLbl) drawerLbl.hidden = false;
+    } else {
+      head.appendChild(pills);
+      if (headLbl) headLbl.hidden = false;
+      if (drawerLbl) drawerLbl.hidden = true;
+    }
+  };
+
+  MultilangReader.prototype.selectBook = function (bookId) {
+    var self = this;
+    this.bookId = parseInt(bookId, 10) || 1;
+    this.chapter = 1;
+    this.focusVerse = 0;
+    var grid = this.root.querySelector('#mlVerses');
+    if (grid) grid.innerHTML = '<p class="ml-empty">載入經文…</p>';
+    this.ensureBookData().then(function () { self.renderAll(); });
+    if (this.closeDrawer) this.closeDrawer();
   };
 
   MultilangReader.prototype.renderLangPills = function () {
@@ -256,10 +347,12 @@
       btn.setAttribute('data-f', f);
       btn.textContent = fl[f] || f;
       btn.addEventListener('click', function () {
+        var prev = self.bookId;
         self.filter = f;
         self.renderFilters();
         self.renderBookSelect();
         self.renderBookLegend();
+        if (self.bookId !== prev) self.selectBook(self.bookId);
       });
       wrap.appendChild(btn);
     });
@@ -300,10 +393,7 @@
       btn.textContent = global.B100BookCatalog.labelForGroup(g, self.locale);
       btn.title = '跳到' + g.labelZh;
       btn.addEventListener('click', function () {
-        self.bookId = g.min;
-        self.chapter = 1;
-        self.focusVerse = 0;
-        self.renderAll();
+        self.selectBook(g.min);
         var sel = self.root.querySelector('#mlBookSelect');
         if (sel) sel.value = String(g.min);
       });
@@ -382,7 +472,7 @@
     this.renderBookLegend();
     var book = this.currentBook();
     var chLabel = this.root.querySelector('#mlChLabel');
-    if (chLabel) chLabel.textContent = book ? String(this.chapter) : '—';
+    if (chLabel) chLabel.textContent = book ? ('章 ' + this.chapter) : '章 —';
     if (book && this.chapter > book.chapters) this.chapter = book.chapters;
     if (book && this.chapter < 1) this.chapter = 1;
     var vi = this.root.querySelector('#mlVerseInput');

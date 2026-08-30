@@ -14,7 +14,7 @@
       start: '📖 開始讀經',
       done: '🎉 背到了',
       doneMark: '已背到 ⭐',
-      loadFail: '資料載入失敗。請雙擊 <strong>聖經跑道一鍵開啟.vbs</strong>。',
+      loadFail: '資料載入失敗，請重新整理。',
     },
     en: {
       title: '100 Golden Verses',
@@ -189,7 +189,11 @@
             '<span class="ref">' + esc(ref) + '</span>' +
             '<span class="tag">' + esc(tag) + '</span>' +
             '<div class="golden-card__actions">' +
-              '<a class="btn-track btn-done" href="' + readLink(v) + '">' + esc(ui('start')) + '</a>' +
+              '<a class="btn-track btn-done" href="' + readLink(v) + '"' +
+              (global.B100PageLinks && global.B100PageLinks.bibleReadAnchorAttrs
+                ? global.B100PageLinks.bibleReadAnchorAttrs()
+                : '') +
+              '>' + esc(ui('start')) + '</a>' +
               (done
                 ? '<span class="golden-done-mark">' + esc(ui('doneMark')) + '</span>'
                 : '<a class="btn-track btn-ai" href="' + doneLink(v) + '">' + esc(ui('done')) + '</a>') +

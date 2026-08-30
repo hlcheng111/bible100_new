@@ -1,6 +1,6 @@
 /** 賽道子頁：與殼共用資源版本號 + 載入 live_db_bridge / page_nav_bar */
 (function (global) {
-  global.B100_SHELL_ASSET_V = global.B100_SHELL_ASSET_V || '20260813dbfix';
+  global.B100_SHELL_ASSET_V = global.B100_SHELL_ASSET_V || '20260830db66d';
   try {
     var scripts = global.document.getElementsByTagName('script');
     var me = scripts[scripts.length - 1];
@@ -32,6 +32,7 @@
       };
     }
     global.__B100_LIVE_DB_PATCH__ = true;
+  } catch (ePatch) {}
   try {
     if (global.parent !== global) {
       global.document.documentElement.classList.add('in-shell-iframe');
@@ -43,4 +44,19 @@
     var v = global.B100_SHELL_ASSET_V || '1';
     return rel + (rel.indexOf('?') >= 0 ? '&' : '?') + 'v=' + encodeURIComponent(v);
   };
+  try {
+    if (global.location.protocol === 'file:') {
+      global.document.addEventListener('click', function (ev) {
+        var t = ev.target;
+        var a = t && t.closest ? t.closest('a[href]') : null;
+        if (!a) return;
+        var href = a.href || '';
+        if (href.indexOf('https://bible100.lovestoblog.com/bible_app/shell/pages/') !== 0) return;
+        if (!/bible66\.html|reader-multilang\.html/i.test(href)) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        global.open(href, '_blank', 'noopener');
+      }, true);
+    }
+  } catch (eBlank) {}
 })(typeof window !== 'undefined' ? window : global);
