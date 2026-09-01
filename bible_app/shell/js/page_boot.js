@@ -1,12 +1,24 @@
 /** 賽道子頁：與殼共用資源版本號 + 載入 live_db_bridge / page_nav_bar */
 (function (global) {
-  global.B100_SHELL_ASSET_V = global.B100_SHELL_ASSET_V || '20260830db66d';
+  global.B100_SHELL_ASSET_V = global.B100_SHELL_ASSET_V || '20260901cloud';
   try {
     var scripts = global.document.getElementsByTagName('script');
     var me = scripts[scripts.length - 1];
     if (me && me.src) {
       var base = me.src.replace(/[#?].*$/, '').replace(/\/[^/]+$/, '/');
       var v = encodeURIComponent(global.B100_SHELL_ASSET_V);
+      if (!global.B100_sitePath) {
+        global.document.write('<script src="' + base + '../../../js/b100_site_path.js?v=' + v + '"><\/script>');
+      }
+      if (!global.document.getElementById('b100-page-nav-chrome-css')) {
+        global.document.write(
+          '<link id="b100-page-nav-chrome-css" rel="stylesheet" href="' +
+            base +
+            'page_nav_chrome.css?v=' +
+            v +
+            '" />'
+        );
+      }
       if (!global.B100LiveDb) {
         global.document.write('<script src="' + base + 'live_db_bridge.js?v=' + v + '"><\/script>');
       }
