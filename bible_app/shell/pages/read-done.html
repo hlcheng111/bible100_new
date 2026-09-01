@@ -6,9 +6,10 @@
   <title>讀完啦！</title>
   <link rel="stylesheet" href="../css/page.css?v=20260618f" />
   <link rel="stylesheet" href="../css/track-creative.css?v=20260813dbfix" />
-  <script src="../js/page_boot.js?v=20260813dbfix"></script>
+  <script src="../js/page_boot.js?v=20260901locale"></script>
+  <script src="../js/page_links.js?v=20260813dbfix"></script>
   <script src="../js/read_progress.js?v=20260813dbfix"></script>
-  <script src="../js/bridge.js?v=20260813dbfix"></script>
+  <script src="../js/bridge.js?v=20260901phasea"></script>
 </head>
 <body>
   <div class="track-page">
@@ -36,8 +37,8 @@
           repeat: '這關打過卡了 ',
           stars: '目前共 ⭐ ',
           starsUnit: ' 顆',
-          workTitle: '🎨 讀後創意工作站',
-          workLead: '把今天讀的經文帶去 AI 工具 · 畫圖、朗讀、問問題',
+          workTitle: '🎨 讀後下一步',
+          workLead: '有問題先問（D）· 想更深讀再開導讀（E）· 備課工具在總站 AI 輔助',
           backRead: '📖 繼續讀經',
           backTrack: '🏠 回賽道',
           share: '報喜：複製這句給同跑隊 → ',
@@ -50,8 +51,8 @@
           repeat: 'Already checked in ',
           stars: 'Total ⭐ ',
           starsUnit: ' stars',
-          workTitle: '🎨 After-reading studio',
-          workLead: 'Take today\'s passage to AI tools · art, audio, Q&A',
+          workTitle: '🎨 Next step',
+          workLead: 'Questions (D) · Deeper read (E) · Lesson tools in site AI Lab',
           backRead: '📖 Keep reading',
           backTrack: '🏠 Back to track',
           share: 'Share with your squad → ',
@@ -134,9 +135,9 @@
         root.innerHTML = '';
         list.forEach(function (tool) {
           var a = document.createElement('a');
-          a.className = 'card';
+          a.className = 'card' + (tool.hi ? ' card-hi' : '');
           a.href = tool.url;
-          a.target = '_blank';
+          if (tool.target) a.target = tool.target;
           a.innerHTML = '<span class="emoji">' + tool.emoji + '</span><span class="label">' + tool.label + '</span>' +
             '<div style="font-size:10px;margin-top:4px;color:#818cf8">' + tool.sub + '</div>';
           root.appendChild(a);
@@ -149,7 +150,17 @@
         renderTools(tools || []);
       }
 
-      var back = 'bible66.html?book=' + book + '&chapter=' + chapter + '&locale=' + encodeURIComponent(locale);
+      var back;
+      if (window.B100PageLinks && window.B100PageLinks.bibleReadUrl) {
+        var readOpts = { bookId: parseInt(book, 10) || 1, chapter: parseInt(chapter, 10) || 1, locale: locale, track: track };
+        if (day) readOpts.day = day;
+        if (gv) readOpts.gv = gv;
+        if (theme) { readOpts.theme = theme; readOpts.unit = unit; }
+        if (verse) readOpts.verse = verse;
+        back = window.B100PageLinks.bibleReadUrl(readOpts);
+      } else {
+        back = 'reader-multilang.html?book=' + book + '&chapter=' + chapter + '&track=' + track + '&locale=' + encodeURIComponent(locale);
+      }
       document.getElementById('backRead').href = back;
       var trackPages = {
         bible66: 'bible66.html',
