@@ -4,7 +4,7 @@
 (function (global) {
   "use strict";
 
-  var NAV_BUILD = "20260831hub"; // lineage 20260830ig 20260815sm 20260812data 20260812clean
+  var NAV_BUILD = "20260903w1"; // lineage 20260903nav2 · 頂2次序＋文案波
 
   var SIDEBAR_FORBIDDEN = [
     /(^|[/?#])bible_study\/sidebar\.html/i,
@@ -37,47 +37,15 @@
           labelZh: "路線圖",
           labelEn: "Route map",
           content: "bible_study/_landing/home.html",
+          topBar: false,
         },
         {
           id: "track",
           focus: "track",
           labelShort: "跑道",
-          labelZh: "聖經跑道",
+          labelZh: "讀經跑道",
           labelEn: "Bible Track",
           content: "bible_app/shell/pages/landing.html",
-        },
-        {
-          id: "tools",
-          focus: "tools",
-          labelShort: "工具",
-          labelZh: "核心捷徑",
-          labelEn: "Tools",
-          content: "bible_study/_landing/tools.html",
-          desk: true,
-        },
-        {
-          id: "versions",
-          focus: "versions",
-          labelShort: "版本",
-          labelZh: "多语查经",
-          labelEn: "Versions",
-          content: "bible_app/shell/pages/reader-multilang.html",
-        },
-        {
-          id: "interlinear",
-          focus: "interlinear",
-          labelShort: "逐字",
-          labelZh: "逐字對照",
-          labelEn: "Interlinear",
-          content: "bible_study/interlinear/index.html",
-        },
-        {
-          id: "interlinear",
-          focus: "interlinear",
-          labelShort: "逐字",
-          labelZh: "逐字對照",
-          labelEn: "Interlinear",
-          content: "bible_study/interlinear/index.html",
         },
         {
           id: "commentary",
@@ -94,8 +62,41 @@
           focus: "geo",
           labelShort: "地理",
           labelZh: "地理歷史",
-          labelEn: "Geo. Hist.",
+          labelEn: "Geo & History",
           content: "bible_study/_landing/geography_history.html",
+        },
+        {
+          id: "versions",
+          focus: "versions",
+          labelShort: "多語",
+          labelZh: "多語查經",
+          labelEn: "Versions",
+          content: "bible_app/shell/pages/reader-multilang.html",
+        },
+        {
+          id: "deepen",
+          focus: "deepen",
+          labelShort: "深研",
+          labelZh: "深研問答",
+          labelEn: "Go deeper",
+          content: "bible_app/shell/pages/ai-tutor.html",
+        },
+        {
+          id: "tools",
+          focus: "tools",
+          labelShort: "創意",
+          labelZh: "讀後創意",
+          labelEn: "After-read",
+          content: "bible_study/_landing/tools.html",
+          desk: true,
+        },
+        {
+          id: "interlinear",
+          focus: "interlinear",
+          labelShort: "逐字",
+          labelZh: "逐字對照",
+          labelEn: "Interlinear",
+          content: "bible_study/interlinear/index.html",
         },
       ],
     },

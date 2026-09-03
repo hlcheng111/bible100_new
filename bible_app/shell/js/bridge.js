@@ -53,6 +53,13 @@
       if (v) parts.push(k + '=' + encodeURIComponent(v));
     });
     var qs = parts.length ? '?' + parts.join('&') : '';
+    var creativeQs = qs;
+    var creative = hubAiBase()
+      ? hubToolUrl('tools/creative_tools_landing.html', creativeQs)
+      : '../../../ai_tools/tools/creative_tools_landing.html' + creativeQs;
+    var guide = hubAiBase()
+      ? hubToolUrl('pages/guide_reading_hub.html', creativeQs)
+      : '../../../ai_tools/pages/guide_reading_hub.html' + creativeQs;
     return [
       {
         emoji: '💬',
@@ -68,10 +75,23 @@
         url: 'ai-tutor.html' + qs,
         hi: true,
       },
+      {
+        emoji: '🎨',
+        label: '讀後創意工作站',
+        sub: '畫圖／朗讀／問 · 須老師審核',
+        url: creative,
+        hi: true,
+      },
+      {
+        emoji: '✍️',
+        label: '三鏡頭導讀站',
+        sub: '已修繕 Prompt 工作站',
+        url: guide,
+      },
     ];
   }
 
-  /** 同步：學生讀後兩卡 */
+  /** 同步：學生讀後卡（問／深讀／創意） */
   function getReadDoneTools(passage, ref) {
     return readDoneStudentTools(new URLSearchParams(global.location.search));
   }

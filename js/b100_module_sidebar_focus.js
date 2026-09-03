@@ -4,14 +4,25 @@
 (function (global, doc) {
   "use strict";
 
-  var FOCUS_BUILD = "20260812data";
+  var FOCUS_BUILD = "20260903w1";
+
+  /** 點「跑道／深研／創意」時，三區同顯；其餘 focus 只留該區 */
+  var FOCUS_KEEP_OPEN = {
+    study: {
+      track: ["track", "deepen", "tools"],
+      deepen: ["deepen", "track", "tools"],
+      tools: ["tools", "track", "deepen"],
+    },
+  };
 
   var FOCUS_LABELS = {
     study: {
       home: "路線圖",
-      track: "聖經跑道",
-      tools: "核心捷徑",
-      versions: "聖經版本",
+      track: "讀經跑道",
+      tools: "讀後創意",
+      deepen: "深研問答",
+      versions: "多語查經",
+      interlinear: "逐字對照",
       commentary: "釋經參讀",
       geo: "地理歷史",
     },
@@ -133,20 +144,36 @@
     }
     host.style.display = "block";
     host.className = "b100-focus-banner";
+    var keepMap = (FOCUS_KEEP_OPEN[modeId] || {})[focus] || null;
+    var keepHint =
+      keepMap && keepMap.length > 1
+        ? " · 跑道／深研／讀後創意同顯"
+        : " · 其餘區已收合";
     host.innerHTML =
       "📌 目前分區：<strong>" +
       focusLabel(modeId, focus) +
-      "</strong> · 其餘區已收合 · 點標題可切換";
+      "</strong>" +
+      keepHint +
+      " · 點標題可切換";
   }
 
   function applyFocusUi(focus) {
+    var modeId = getModeId();
+    var keepMap = (FOCUS_KEEP_OPEN[modeId] || {})[focus] || null;
     var sections = doc.querySelectorAll("[data-b100-focus-zone]");
     sections.forEach(function (sec) {
       var zone = String(sec.getAttribute("data-b100-focus-zone") || "").toLowerCase();
       sec.classList.remove("b100-focus-zone--active", "b100-focus-zone--collapsed");
       if (!focus) return;
-      if (zone === focus) {
+      var keep =
+        keepMap && keepMap.indexOf(zone) >= 0
+          ? true
+          : zone === focus;
+      if (keep) {
         sec.classList.add("b100-focus-zone--active");
+        if (sec.tagName === "DETAILS") {
+          sec.open = true;
+        }
         sec.querySelectorAll("details").forEach(function (d) {
           if (sec.getAttribute("data-b100-focus-open-details") === "1") {
             d.open = true;
@@ -154,6 +181,9 @@
         });
       } else {
         sec.classList.add("b100-focus-zone--collapsed");
+        if (sec.tagName === "DETAILS") {
+          sec.open = false;
+        }
       }
     });
   }
