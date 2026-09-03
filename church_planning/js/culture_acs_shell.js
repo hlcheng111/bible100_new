@@ -50,13 +50,19 @@
     el.classList.remove("hidden");
   }
 
+  function likertLbl(s) {
+    return global.AcsSurveyStandard ? AcsSurveyStandard.likertLabel(s, "agree") : String(s);
+  }
+
   function renderQuickSurvey() {
     var host = document.getElementById("culture-quick-survey-wrap");
     if (!host || !global.CulturePack) return;
     var lastSec = "";
+    var legend = global.AcsSurveyStandard ? AcsSurveyStandard.likertLegendHtml("agree") : "";
     var html =
       '<h2 class="font-black text-violet-900 text-lg mb-1">24 題文化契合快評</h2>' +
-      '<p class="text-sm text-slate-600 mb-3">約 20 分鐘 · <strong>1＝非常不同意 · 5＝非常同意</strong>。完成後將帶您到【3. 文化雷達儀表】。</p>' +
+      '<p class="text-sm text-slate-600 mb-2">約 20 分鐘 · 完成後將帶您到【3. 文化雷達儀表】。</p>' +
+      legend +
       '<form id="culture-quick-form" onsubmit="return CultureAcsShell.submitQuick(event)">' +
       '<label class="block text-sm font-bold mb-2">教會／團隊標籤<input name="church_label" class="w-full mt-1 border rounded p-2" placeholder="某某教會長執團隊"/></label>';
     CulturePack.QUESTIONS.forEach(function (q, i) {
@@ -67,13 +73,18 @@
       html +=
         '<fieldset class="acs-fieldset"><legend class="text-xs font-bold">第 ' + (i + 1) + "/24 題</legend><p class=\"text-sm mb-2\">" +
         esc(q.label) +
-        '</p><div class="acs-likert-row">';
-      for (var s = 1; s <= 5; s++) html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + s + "</label>";
+        '</p><div class="acs-likert-row acs-likert-row--anchored">';
+      for (var s = 1; s <= 5; s++) {
+        html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + likertLbl(s) + "</label>";
+      }
       html += "</div></fieldset>";
     });
     html +=
       '<p id="culture-quick-error" class="text-red-600 text-xs mt-2 hidden"></p>' +
-      '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">✓ 提交 → 文化雷達儀表</button></form>';
+      (global.AcsSurveyStandard
+        ? AcsSurveyStandard.submitButtonHtml("→ Tab ③ 文化雷達儀表")
+        : '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">提交並生成報告</button>') +
+      "</form>";
     host.innerHTML = html;
   }
 
@@ -114,6 +125,9 @@
       if ((run.risk_flags || []).indexOf("TRUST_BREACH") >= 0) {
         summary.innerHTML += '<p class="text-rose-800 font-bold mt-2">⚠️ 團隊信任 &lt;3.0：建議優先 NCD「相親相愛的關係」，再推五年擴建。</p>';
       }
+    }
+    if (summary && global.AcsReportGold && AcsReportGold.mountAfterSummary) {
+      AcsReportGold.mountAfterSummary(summary, run, "culture");
     }
     var viz = document.getElementById("culture-report-viz");
     if (viz && global.CultureRadarViz) {

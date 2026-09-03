@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>全站搜尋 Hub · Bible100</title>
+  <link rel="stylesheet" href="../css/site_search.css">
+  <style>
+    :root {
+      --ink: #1a2332;
+      --muted: #5a6a7a;
+      --line: #d8e0e8;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --accent: #2c5f7c;
+      --go: #1e4d3a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(165deg, #e8f0f6 0%, var(--bg) 40%, #eef2f6 100%);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 24px 18px 48px; }
+    h1 { font-size: 1.4rem; margin: 0 0 6px; }
+    .lead { color: var(--muted); font-size: 0.9rem; line-height: 1.5; margin: 0 0 12px; }
+    .howto {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.84rem;
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+    .howto strong { color: var(--accent); }
+    .honest {
+      background: #fff8e8;
+      border: 1px solid #f0d9a0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.8rem;
+      color: #6a5520;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .search-row input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 1rem;
+      background: var(--card);
+    }
+    .search-row button {
+      padding: 0 16px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .tabs button {
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--ink);
+    }
+    .tabs button.is-active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .panel { display: none; }
+    .panel.is-active { display: block; }
+    .hint-box {
+      background: #eef6ff;
+      border: 1px solid #b6d4fe;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+    .hint-box button, .scripture-box button {
+      display: inline-block;
+      margin: 6px 8px 0 0;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+    .hint-box button.secondary { background: var(--go); }
+    .scripture-box {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .scripture-box p { margin: 0 0 10px; color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+    .scripture-box .q-preview {
+      font-size: 1.05rem;
+      color: var(--ink);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .lang-row { margin: 0 0 10px; font-size: 0.8rem; color: var(--muted); }
+    .lang-row select {
+      margin-left: 6px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+    }
+    .foot-links { margin-top: 28px; font-size: 0.82rem; color: var(--muted); }
+    .foot-links a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>全站搜尋</h1>
+    <p class="lead">先想清楚要找的是哪一種，再選分頁（三欄各做一件事）。</p>
+
+    <div class="howto">
+      <div><strong>站內入口</strong>：找模組／功能頁（如 CRM、研讀、Q&amp;A）。人名「耶穌」通常沒有入口標題。</div>
+      <div><strong>教材課名</strong>：找百步／四寶<strong>課名</strong>（例：搜「耶穌」→ NT 某課）。</div>
+      <div><strong>經文全文</strong>：在譯本裡搜經文正文（例：所有含「耶穌」的經節）→ 會打開研讀搜尋頁。</div>
+    </div>
+
+    <div class="honest">
+      前兩欄是<strong>目錄級</strong>索引（標題／關鍵詞），不是經文正文。
+      課名目前以中文 cn 為主。路徑一律用站根（如 <code>languages/cn/…</code>），在總站右欄開啟。
+    </div>
+
+    <div class="search-row">
+      <input type="search" id="hubSearchInput" placeholder="例：CRM、約書亞、主禱文、耶穌…" autocomplete="off">
+      <button type="button" id="hubSearchBtn">搜尋</button>
+    </div>
+
+    <div class="tabs" id="kindTabs" role="tablist">
+      <button type="button" data-tab="nav" class="is-active" role="tab">站內入口</button>
+      <button type="button" data-tab="curriculum" role="tab">教材課名</button>
+      <button type="button" data-tab="scripture" role="tab">經文全文</button>
+    </div>
+
+    <div id="crossHint" class="hint-box" style="display:none;"></div>
+
+    <div id="panel-nav" class="panel is-active" role="tabpanel">
+      <div id="layerFilters" class="b100-search-layer-filters" aria-label="層級過濾（可選）">
+        <button type="button" class="b100-search-layer-btn is-active" data-layer="all">全部層級</button>
+        <button type="button" class="b100-search-layer-btn" data-layer="foundation">📖 根基</button>
+        <button type="button" class="b100-search-layer-btn" data-layer="execution">👥 執行</button>
+        <button type="button" class="b100-search-layer-btn" data-layer="strategy">🧭 戰略</button>
+        <button type="button" class="b100-search-layer-btn" data-layer="infra">🔧 設施</button>
+      </div>
+      <div id="resultsNav" class="b100-search-results"></div>
+    </div>
+
+    <div id="panel-curriculum" class="panel" role="tabpanel">
+      <div class="lang-row">
+        教材語系篩選
+        <select id="curLang">
+          <option value="all">全部（目前以 cn 為主）</option>
+          <option value="cn" selected>中文 cn</option>
+          <option value="en">English en（雛形）</option>
+        </select>
+      </div>
+      <div id="resultsCur" class="b100-search-results"></div>
+    </div>
+
+    <div id="panel-scripture" class="panel" role="tabpanel">
+      <div class="scripture-box">
+        <p>經文全文嵌在本頁下方（不另開瀏覽器分頁）。若空白，請用本機 HTTP 或確認譯本資料可用。</p>
+        <div class="q-preview" id="scripturePreview">請先在上方輸入關鍵詞</div>
+        <button type="button" id="btnOpenScripture">在下方搜尋／重新載入</button>
+        <iframe id="scriptureFrame" title="聖經全文搜尋" style="width:100%;height:min(70vh,560px);margin-top:12px;border:1px solid #d8e0e8;border-radius:10px;background:#fff;"></iframe>
+      </div>
+    </div>
+
+    <p class="foot-links">
+      也可瀏覽 <a href="#" id="linkSitemap">全站模組地圖</a>
+      · <a href="#" id="linkDocs">文檔中心</a>
+    </p>
+  </div>
+
+  <script src="../js/search_indexes_embedded.js"></script>
+  <script src="../js/site_search.js"></script>
+  <script>
+(function () {
+  "use strict";
+
+  function qs(name) {
+    try {
+      return new URLSearchParams(location.search).get(name) || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function go(path) {
+    Bible100SiteSearch.navigate(path, "");
+  }
+
+  var input = document.getElementById("hubSearchInput");
+  var q0 = qs("q");
+  if (q0) input.value = q0;
+
+  var tab = (qs("tab") || "").toLowerCase();
+  if (tab !== "curriculum" && tab !== "scripture" && tab !== "nav") tab = "";
+
+  var apiNav = null;
+  var apiCur = null;
+
+  function qVal() {
+    return String(input.value || "").trim();
+  }
+
+  function openScripture() {
+    var q = qVal();
+    updateScripturePreview();
+    var url =
+      "../bible_study/search_reader.html" +
+      (q ? "?q=" + encodeURIComponent(q) : "");
+    var frame = document.getElementById("scriptureFrame");
+    if (frame) frame.src = url;
+  }
+
+  function updateScripturePreview() {
+    var q = qVal();
+    var el = document.getElementById("scripturePreview");
+    el.textContent = q
+      ? "將搜尋經文正文：「" + q + "」"
+      : "請先在上方輸入關鍵詞（例如：耶穌）";
+  }
+
+  function updateCrossHint() {
+    var box = document.getElementById("crossHint");
+    var q = qVal();
+    if (!q || !window.Bible100SiteSearch) {
+      box.style.display = "none";
+      return;
+    }
+    var navHits = Bible100SiteSearch.search(q, { kind: "nav", limit: 5 });
+    var curHits = Bible100SiteSearch.search(q, { kind: "curriculum", limit: 5 });
+    var bits = [];
+
+    if (tab === "nav" && !navHits.length && curHits.length) {
+      bits.push(
+        "「站內入口」沒有「" +
+          q +
+          "」，但<strong>教材課名</strong>有 " +
+          curHits.length +
+          " 筆。"
+      );
+      bits.push('<button type="button" data-go-tab="curriculum">改看教材課名</button>');
+      bits.push('<button type="button" class="secondary" data-go-scripture="1">改搜經文全文</button>');
+    } else if (tab === "curriculum" && !curHits.length && navHits.length) {
+      bits.push("課名沒有命中，但站內入口有 " + navHits.length + " 筆。");
+      bits.push('<button type="button" data-go-tab="nav">改看站內入口</button>');
+    } else if (tab === "nav" && !navHits.length && !curHits.length) {
+      bits.push(
+        "目錄索引沒有「" + q + "」。若要找經文裡的字，請用<strong>經文全文</strong>。"
+      );
+      bits.push('<button type="button" class="secondary" data-go-scripture="1">打開經文全文搜尋</button>');
+    } else if ((tab === "nav" || tab === "curriculum") && q.length >= 1) {
+      bits.push(
+        "同時可在譯本正文搜「" + q + "」。"
+      );
+      bits.push('<button type="button" class="secondary" data-go-scripture="1">經文全文搜尋</button>');
+    }
+
+    if (!bits.length) {
+      box.style.display = "none";
+      return;
+    }
+    box.innerHTML = bits.join(" ");
+    box.style.display = "block";
+  }
+
+  function setTab(name) {
+    tab = name;
+    document.querySelectorAll("#kindTabs [data-tab]").forEach(function (b) {
+      b.classList.toggle("is-active", b.getAttribute("data-tab") === name);
+    });
+    document.querySelectorAll(".panel").forEach(function (p) {
+      p.classList.toggle("is-active", p.id === "panel-" + name);
+    });
+    if (name === "scripture") {
+      updateScripturePreview();
+      openScripture();
+    } else {
+      runActive();
+    }
+    updateCrossHint();
+  }
+
+  function runActive() {
+    if (tab === "nav" && apiNav) apiNav.refresh();
+    if (tab === "curriculum" && apiCur) apiCur.refresh();
+    updateCrossHint();
+  }
+
+  function pickSmartTab() {
+    if (tab) return tab;
+    var q = qVal();
+    if (!q) return "nav";
+    var navHits = Bible100SiteSearch.search(q, { kind: "nav", limit: 3 });
+    var curHits = Bible100SiteSearch.search(q, { kind: "curriculum", limit: 3 });
+    if (!navHits.length && curHits.length) return "curriculum";
+    return "nav";
+  }
+
+  document.getElementById("kindTabs").addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-tab]");
+    if (!btn) return;
+    setTab(btn.getAttribute("data-tab"));
+  });
+
+  document.getElementById("crossHint").addEventListener("click", function (e) {
+    var t = e.target.closest("[data-go-tab]");
+    if (t) {
+      setTab(t.getAttribute("data-go-tab"));
+      return;
+    }
+    if (e.target.closest("[data-go-scripture]")) {
+      setTab("scripture");
+    }
+  });
+
+  document.getElementById("btnOpenScripture").addEventListener("click", function () {
+    openScripture();
+  });
+
+  document.getElementById("hubSearchBtn").addEventListener("click", function () {
+    if (tab === "scripture") openScripture();
+    else runActive();
+  });
+
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (tab === "scripture") openScripture();
+      else runActive();
+    }
+  });
+
+  input.addEventListener("input", function () {
+    if (tab === "scripture") updateScripturePreview();
+    else updateCrossHint();
+  });
+
+  document.getElementById("linkSitemap").addEventListener("click", function (e) {
+    e.preventDefault();
+    go("nav_hub/site_modules_sitemap.html");
+  });
+  document.getElementById("linkDocs").addEventListener("click", function (e) {
+    e.preventDefault();
+    go("help/docs-hub.html");
+  });
+
+  Bible100SiteSearch.ensureReady().then(function () {
+    apiNav = Bible100SiteSearch.mount({
+      input: input,
+      results: "#resultsNav",
+      layerFilter: "#layerFilters",
+      basePrefix: "",
+      defaultKind: "nav",
+      limit: 60,
+      onAfterRender: function () {
+        updateCrossHint();
+      }
+    });
+
+    var langSel = document.getElementById("curLang");
+    apiCur = Bible100SiteSearch.mount({
+      input: input,
+      results: "#resultsCur",
+      basePrefix: "",
+      defaultKind: "curriculum",
+      lang: langSel.value === "all" ? null : langSel.value,
+      limit: 80,
+      onAfterRender: function () {
+        updateCrossHint();
+      }
+    });
+    langSel.addEventListener("change", function () {
+      apiCur.setLang(langSel.value === "all" ? null : langSel.value);
+    });
+
+    setTab(pickSmartTab());
+    if (qVal() && tab !== "scripture") runActive();
+  });
+})();
+  </script>
+</body>
+</html>

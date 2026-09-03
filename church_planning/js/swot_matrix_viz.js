@@ -236,7 +236,122 @@
       .join("");
   }
 
-  function renderMatrixBlock(derived, activeId) {
+  /** 經典 SWOT 四象限輸入摘要（2×2 SVG） */
+  function renderSwotSourceQuad(derived) {
+    derived = derived || {};
+    var quadrants = derived.quadrants || (derived.swot_contract && derived.swot_contract.quadrants) || {};
+    var matrix = getMatrix(derived);
+    var w = matrix.weights || {};
+    var cells = [
+      { id: "S", label: "S 優勢", sub: "內部 · 恩賜邊界", color: "#059669", bg: "#d1fae5", x: 0, y: 0, avg: w.S_avg },
+      { id: "W", label: "W 劣勢", sub: "內部 · 靈性破口", color: "#dc2626", bg: "#fee2e2", x: 1, y: 0, avg: w.W_avg },
+      { id: "O", label: "O 機會", sub: "外部 · 聖靈開門", color: "#0284c7", bg: "#e0f2fe", x: 0, y: 1, avg: w.O_avg },
+      { id: "T", label: "T 威脅", sub: "外部 · 爭戰壓力", color: "#7c3aed", bg: "#ede9fe", x: 1, y: 1, avg: w.T_avg }
+    ];
+    var svgW = 480;
+    var svgH = 300;
+    var pad = 52;
+    var cellW = (svgW - pad * 2) / 2;
+    var cellH = (svgH - pad * 2) / 2;
+    var svg =
+      '<svg class="swot-source-quad-svg" viewBox="0 0 ' +
+      svgW +
+      " " +
+      svgH +
+      '" role="img" aria-label="SWOT 四象限輸入摘要">';
+    svg +=
+      '<text x="' +
+      svgW / 2 +
+      '" y="18" text-anchor="middle" font-size="10" font-weight="800" fill="#92400e">SWOT 四象限 · 輸入權重摘要</text>';
+    svg +=
+      '<text x="' +
+      (pad + cellW * 0.5) +
+      '" y="' +
+      (pad - 10) +
+      '" text-anchor="middle" font-size="9" font-weight="800" fill="#047857">內部 Internal</text>';
+    svg +=
+      '<text x="' +
+      (pad + cellW * 1.5) +
+      '" y="' +
+      (pad + cellH * 2 + 22) +
+      '" text-anchor="middle" font-size="9" font-weight="800" fill="#0369a1">外部 External</text>';
+    cells.forEach(function (c) {
+      var q = quadrants[c.id] || {};
+      var x = pad + c.x * cellW;
+      var y = pad + c.y * cellH;
+      var locked = q.ncd_locked && c.id === "W";
+      svg +=
+        '<rect x="' +
+        x +
+        '" y="' +
+        y +
+        '" width="' +
+        cellW +
+        '" height="' +
+        cellH +
+        '" rx="8" fill="' +
+        c.bg +
+        '" stroke="' +
+        (locked ? "#dc2626" : c.color) +
+        '" stroke-width="' +
+        (locked ? 3 : 1.5) +
+        '"/>';
+      svg +=
+        '<text x="' +
+        (x + cellW / 2) +
+        '" y="' +
+        (y + 22) +
+        '" text-anchor="middle" font-size="11" font-weight="900" fill="' +
+        c.color +
+        '">' +
+        esc(c.label) +
+        "</text>";
+      svg +=
+        '<text x="' +
+        (x + cellW / 2) +
+        '" y="' +
+        (y + 36) +
+        '" text-anchor="middle" font-size="8" fill="#64748b">' +
+        esc(c.sub) +
+        "</text>";
+      svg +=
+        '<text x="' +
+        (x + cellW / 2) +
+        '" y="' +
+        (y + cellH / 2 + 4) +
+        '" text-anchor="middle" font-size="9" font-weight="800" fill="#1e293b">avg=' +
+        esc(String(c.avg != null ? c.avg : "—")) +
+        "</text>";
+      var primary = q.primary || "—";
+      var lines = primary.length > 28 ? primary.slice(0, 26) + "…" : primary;
+      svg +=
+        '<text x="' +
+        (x + cellW / 2) +
+        '" y="' +
+        (y + cellH / 2 + 22) +
+        '" text-anchor="middle" font-size="7.5" fill="#334155">' +
+        esc(lines) +
+        "</text>";
+      if (locked) {
+        svg +=
+          '<text x="' +
+          (x + cellW / 2) +
+          '" y="' +
+          (y + cellH - 8) +
+          '" text-anchor="middle" font-size="7" font-weight="800" fill="#dc2626">NCD 鎖定 W</text>';
+      }
+    });
+    svg += "</svg>";
+    return (
+      '<div class="swot-source-quad-wrap">' +
+      svg +
+      '<div class="swot-quad-row swot-quad-row--compact">' +
+      quadrantSummaryHtml(quadrants) +
+      "</div></div>"
+    );
+  }
+
+  function renderMatrixBlock(derived, activeId, run) {
     derived = derived || {};
     activeId = activeId || derived.focus_strategy || "WO";
     var contract = derived.swot_contract || {};
@@ -251,16 +366,25 @@
         : matrix.pastoral_override
           ? '<div class="swot-pastoral-override swot-pastoral-override--dim">' + esc(matrix.pastoral_override) + "</div>"
           : "";
+    var heart =
+      run && global.AcsReportGold && AcsReportGold.renderReportHeart
+        ? AcsReportGold.renderReportHeart(AcsReportGold.buildSwotReportHeart(run))
+        : !run && global.AcsReportGold && derived.summary_line
+          ? AcsReportGold.renderReportHeart(
+              AcsReportGold.buildSwotReportHeart({ derived: derived, is_demo: !!derived.is_preview })
+            )
+          : "";
 
     return (
       '<div class="acs-report-block swot-matrix-block">' +
+      heart +
+      '<div class="acs-report-block"><h3 class="acs-report-block__title">🧭 SWOT 四象限輸入摘要</h3>' +
+      renderSwotSourceQuad(derived) +
+      "</div>" +
       "<h3>📊 Weihrich TOWS 交叉戰略矩陣</h3>" +
       overrideBanner +
       '<p class="acs-matrix-lead">非靜態 2×2。系統執行 <code>calculateMatrix()</code>：將 NCD 八維轉為 S_w / W_i，與 O_j / T_k 交叉耦合，輸出 SO/ST/WO/WT <strong>優先級 P（0–100）</strong>與 <strong>Delta_Variance</strong>。</p>' +
       algorithmTraceHtml(matrix) +
-      '<div class="swot-quad-row">' +
-      quadrantSummaryHtml(quadrants) +
-      "</div>" +
       '<div class="swot-matrix-svg-wrap" id="swot-matrix-svg-host">' +
       crossMatrixSvg(activeId, matrix) +
       "</div>" +
@@ -297,6 +421,7 @@
 
   global.SwotMatrixViz = {
     renderMatrixBlock: renderMatrixBlock,
+    renderSwotSourceQuad: renderSwotSourceQuad,
     crossMatrixSvg: crossMatrixSvg,
     strategyCardHtml: strategyCardHtml,
     algorithmTraceHtml: algorithmTraceHtml,

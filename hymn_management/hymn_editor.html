@@ -38,6 +38,7 @@
         
         <div class="toolbar">
             <button class="btn btn-success" onclick="saveHymn()">💾 保存诗歌</button>
+            <button class="btn btn-success" onclick="saveToOverrides()" title="需先執行 node scripts/hymn-data-server.js">📁 存到 hymn-overrides</button>
             <button class="btn" onclick="clearEditor()">🗑️ 清空编辑器</button>
             <button class="btn" onclick="loadHymns()">📋 刷新列表</button>
             <button class="btn" onclick="loadFromSource()" title="從 2015 首中選取載入（需 HTTP）">📚 從資料庫載入</button>
@@ -139,6 +140,57 @@
     <script>
         let hymns = [];
         let currentEditId = null;
+        const HYMN_API = 'http://127.0.0.1:8765';
+
+        function buildHymnPayload() {
+            var yt = (document.getElementById('youtube').value || '').trim().split(/\n+/).filter(Boolean);
+            var imgs = (document.getElementById('imageUrls').value || '').trim().split(/\n+/).filter(Boolean);
+            var links = (document.getElementById('extraLinks').value || '').trim().split(/\n+/).filter(Boolean).map(function(line){
+                var p = line.indexOf('|');
+                return p >= 0 ? { title: line.slice(0,p).trim(), url: line.slice(p+1).trim() } : { title: '', url: line.trim() };
+            });
+            const title = document.getElementById('title').value;
+            const lyrics = document.getElementById('lyrics').value;
+            return {
+                id: currentEditId || 'hymn_new_' + Date.now(),
+                title: title,
+                title_zh: document.getElementById('title').value,
+                title_en: document.getElementById('titleEn').value,
+                number: document.getElementById('number').value,
+                hymnal: document.getElementById('hymnal').value,
+                category: document.getElementById('category').value,
+                author: document.getElementById('author').value,
+                tune: document.getElementById('tune').value,
+                catalogNumber: document.getElementById('catalogNumber').value,
+                copyright: document.getElementById('copyright').value,
+                lyrics: lyrics,
+                lyrics_zh: lyrics,
+                youtube: yt,
+                scoreImages: imgs,
+                extraLinks: links,
+                updatedAt: new Date().toISOString()
+            };
+        }
+
+        async function saveToOverrides() {
+            const hymn = buildHymnPayload();
+            if (!hymn.title_zh && !hymn.title_en) { alert('請填標題'); return; }
+            if (!hymn.lyrics) { alert('請填歌詞'); return; }
+            const isNew = !currentEditId || String(currentEditId).startsWith('hymn_new_');
+            try {
+                const res = await fetch(HYMN_API + '/api/hymn/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(isNew ? { mode: 'addition', hymn: hymn } : { id: currentEditId, patch: hymn })
+                });
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.error || 'save failed');
+                currentEditId = data.id || hymn.id;
+                alert('✅ 已寫入 data/hymn-overrides.json\n請執行 node scripts/build-sidebar-embedded.js 更新側欄（若為新歌）');
+            } catch (e) {
+                alert('無法連線 hymn-data-server。\n請在 hymn_management 目錄執行：\nnode scripts/hymn-data-server.js\n\n或使用「匯出覆寫」手動貼 JSON。');
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             if (!localStorage.getItem('hymns')) {
@@ -226,49 +278,26 @@
         }
 
         function saveHymn() {
-            const title = document.getElementById('title').value;
-            const lyrics = document.getElementById('lyrics').value;
-
-            if (!title || !lyrics) {
-                alert('请填写诗歌标题和歌词！');
+            const hymn = buildHymnPayload();
+            if (!hymn.title_zh && !hymn.title_en) {
+                alert('请填写诗歌标题！');
                 return;
             }
-
-            var yt = (document.getElementById('youtube').value || '').trim().split(/\n+/).filter(Boolean);
-            var imgs = (document.getElementById('imageUrls').value || '').trim().split(/\n+/).filter(Boolean);
-            var links = (document.getElementById('extraLinks').value || '').trim().split(/\n+/).filter(Boolean).map(function(line){
-                var p = line.indexOf('|');
-                return p >= 0 ? { title: line.slice(0,p).trim(), url: line.slice(p+1).trim() } : { title: '', url: line.trim() };
-            });
-            const hymn = {
-                id: currentEditId || 'hymn_new_' + Date.now(),
-                title: title,
-                title_zh: document.getElementById('title').value,
-                title_en: document.getElementById('titleEn').value,
-                number: document.getElementById('number').value,
-                hymnal: document.getElementById('hymnal').value,
-                category: document.getElementById('category').value,
-                author: document.getElementById('author').value,
-                tune: document.getElementById('tune').value,
-                catalogNumber: document.getElementById('catalogNumber').value,
-                copyright: document.getElementById('copyright').value,
-                lyrics: lyrics,
-                youtube: yt,
-                scoreImages: imgs,
-                extraLinks: links,
-                createdAt: currentEditId && hymns.find(h => h.id === currentEditId) ? hymns.find(h => h.id === currentEditId).createdAt : new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
+            if (!hymn.lyrics) {
+                alert('请填写歌词！');
+                return;
+            }
+            hymn.createdAt = currentEditId && hymns.find(h => h.id === currentEditId) ? hymns.find(h => h.id === currentEditId).createdAt : new Date().toISOString();
 
             if (currentEditId) {
                 hymns = hymns.map(h => h.id === currentEditId ? hymn : h);
             } else {
                 hymns.push(hymn);
+                currentEditId = hymn.id;
             }
 
             localStorage.setItem('hymns', JSON.stringify(hymns));
-            alert('✅ 诗歌已保存！');
-            clearEditor();
+            alert('✅ 已存本機草稿（localStorage）。正式資料請按「存到 hymn-overrides」。');
             loadHymns();
         }
 

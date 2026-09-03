@@ -16,6 +16,11 @@
     <div class="container mx-auto px-4 py-6">
         <h1 class="text-2xl font-bold text-gray-900 mb-2">會眾入口自訂頁面</h1>
         <p class="text-sm text-gray-600 mb-6">新增自訂區塊，顯示於會眾入口卡片上方。支援：文字、圖片、連結、活動列表。</p>
+        <div id="w5dReportBar" style="padding:8px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;margin-bottom:16px;font-size:12px;">
+            <strong>F-21 報告</strong>
+            <button type="button" onclick="exportBlocksCsv()" data-w5-report="custom-page-csv" class="bg-green-700 text-white px-3 py-1 rounded ml-2">⬇ 區塊 CSV</button>
+            <button type="button" onclick="printBlocks()" data-w5-report="custom-page-print" class="bg-gray-600 text-white px-3 py-1 rounded ml-1">🖨 列印</button>
+        </div>
 
         <details class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <summary class="cursor-pointer font-semibold text-blue-900">使用說明</summary>
@@ -214,6 +219,38 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(blocks));
             window.open('congregation/index.html', '_blank');
         }
+
+        function exportBlocksCsv() {
+            collectBlockData();
+            var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+            var lines = [[ '序號', '類型', '摘要' ].map(esc).join(',')];
+            blocks.forEach(function (b, i) {
+                var summary = b.type === 'text' ? (b.title || b.content || '') :
+                    b.type === 'link' ? (b.text + ' -> ' + b.url) :
+                    b.type === 'image' ? (b.url || '') :
+                    (b.items || []).length + ' 活動';
+                lines.push([i + 1, b.type, summary].map(esc).join(','));
+            });
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('custom_page_blocks.csv', lines);
+        }
+        function printBlocks() {
+            collectBlockData();
+            var rows = blocks.map(function (b, i) {
+                var summary = b.type === 'text' ? (b.title || b.content || '') :
+                    b.type === 'link' ? (b.text + ' -> ' + b.url) :
+                    b.type === 'image' ? (b.url || '') :
+                    (b.items || []).length + ' 活動';
+                return [i + 1, b.type, summary];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('自訂頁面區塊', ['序號', '類型', '摘要'], rows);
+        }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="css/cm_desk.css" />
+<script src="js/cm_desk_registry.js"></script>
+<script src="js/cm_desk_kit.js"></script>
 </body>
 </html>

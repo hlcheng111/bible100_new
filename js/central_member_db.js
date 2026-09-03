@@ -211,10 +211,14 @@
             }
         },
 
-        /** 寫入中央會友資料 */
+        /** 寫入中央會友資料（優先經 ChurchDataBridge，觸發 b100-cm-data-changed） */
         set: function (data) {
             try {
                 var normalized = normalizeDataset(data);
+                if (typeof global !== 'undefined' && global.ChurchDataBridge &&
+                    typeof global.ChurchDataBridge.saveMemberSystemData === 'function') {
+                    return global.ChurchDataBridge.saveMemberSystemData(normalized, { skipRbac: true });
+                }
                 storageSet(STORAGE_KEY, JSON.stringify(normalized));
                 return true;
             } catch (e) {
@@ -266,6 +270,12 @@
                 return { loaded: false, count: count, message: '已有 ' + count + ' 筆會友，未覆寫。' };
             }
             const seed = generateSeedMemberSystemData();
+            if (typeof global !== 'undefined' && global.ChurchDataBridge &&
+                typeof global.ChurchDataBridge.applyBootstrapSeed === 'function') {
+                var br = global.ChurchDataBridge.applyBootstrapSeed(seed);
+                var n = br && br.members != null ? br.members : seed.members.length;
+                return { loaded: true, count: n, message: '已載入 ' + n + ' 筆試用會友資料（Bridge · 已同步敬拜等）。' };
+            }
             this.set(seed);
             this._syncSeedToChurchMaster(seed.members);
             return { loaded: true, count: seed.members.length, message: '已載入 ' + seed.members.length + ' 筆試用會友資料（已同步至敬拜、小組等）。' };

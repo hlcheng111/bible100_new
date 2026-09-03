@@ -4,7 +4,12 @@ import { renderThirtyDay } from './ThirtyDayView';
 import { renderGolden } from './GoldenView';
 import { renderThematic } from './ThemeView';
 
-export function renderTracks(root: HTMLElement, trackId: TrackId, pickerBookId?: number) {
+export function renderTracks(
+  root: HTMLElement,
+  trackId: TrackId,
+  pickerBookId?: number,
+  themeId?: string
+) {
   if (trackId === 'bible66') {
     void renderBible66(root, pickerBookId ?? null);
     return;
@@ -18,7 +23,7 @@ export function renderTracks(root: HTMLElement, trackId: TrackId, pickerBookId?:
     return;
   }
   if (trackId === 'theme') {
-    void renderThematic(root);
+    void renderThematic(root, themeId);
     return;
   }
 }

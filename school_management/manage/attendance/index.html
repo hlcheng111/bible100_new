@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今日点名 · Attendance</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+    <script src="../../js/school-master-database.js"></script>
+    <script src="../../../js/central_member_db.js"></script>
+    <script src="../../../js/sch_validation.js"></script>
+    <style>
+        .att-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; margin-top: 10px; }
+        .att-chip { padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; font-size: 11px; cursor: pointer; }
+        .att-chip.present { background: #ecfdf5; border-color: #86efac; }
+        .att-chip.absent { background: #fef2f2; border-color: #fca5a5; }
+        .att-chip.late { background: #fff7ed; border-color: #fdba74; }
+        .att-summary { font-size: 11px; color: #475569; margin: 8px 0; }
+    </style>
+</head>
+<body>
+    <div class="module-header">
+        <h1>✅ 今日点名 · Attendance</h1>
+        <p>选课程 → 勾出席 → 写入 <code>student.attendance</code> · 连续缺席可至「教会连结」预填探访</p>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📅 点名设定</div>
+        <div class="module-form-row">
+            <label>日期</label>
+            <input type="date" id="attDate" class="module-input">
+            <label>课程</label>
+            <select id="attCourse" class="module-input" style="min-width:180px;"></select>
+            <button class="module-btn" id="btnLoad">载入名册</button>
+            <button class="module-btn module-btn-secondary" id="btnSaveAll">储存点名</button>
+        </div>
+        <p class="att-summary" id="attSummary"></p>
+        <div id="attGrid" class="att-grid"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📊 快速登分（及格线 60）</div>
+        <div class="module-form-row">
+            <label>学生</label>
+            <select id="gradeStudent" class="module-input"></select>
+            <label>分数</label>
+            <input type="number" id="gradeScore" class="module-input" min="0" max="100" value="85" style="width:60px;">
+            <button class="module-btn" id="btnGrade">登分</button>
+        </div>
+        <p id="gradeMsg" style="font-size:11px;color:#166534;margin-top:6px;"></p>
+    </div>
+
+    <script>
+        (function () {
+            var state = { roster: [], marks: {} };
+            var attDate = document.getElementById('attDate');
+            attDate.value = new Date().toISOString().slice(0, 10);
+
+            function courses() {
+                return (window.schoolDB && window.schoolDB.data.courses) || [];
+            }
+
+            function studentsForCourse(courseId) {
+                var db = window.schoolDB.data;
+                var en = (db.student && db.student.enrollments) || [];
+                var ids = en.filter(function (e) {
+                    return String(e.courseId) === String(courseId) && e.status !== 'dropped';
+                }).map(function (e) { return e.studentId; });
+                return (db.students || []).filter(function (s) {
+                    return ids.indexOf(s.id) >= 0 && s.status === 'active';
+                });
+            }
+
+            function fillCourses() {
+                var sel = document.getElementById('attCourse');
+                var list = courses().filter(function (c) { return c.status !== 'inactive'; });
+                sel.innerHTML = '<option value="">— 选择课程 —</option>' +
+                    list.map(function (c) { return '<option value="' + c.id + '">' + (c.name || c.id) + '</option>'; }).join('');
+            }
+
+            function loadExistingMarks(courseId, date) {
+                var att = (window.schoolDB.data.student && window.schoolDB.data.student.attendance) || [];
+                state.marks = {};
+                att.forEach(function (a) {
+                    if (String(a.courseId) === String(courseId) && a.date === date) {
+                        state.marks[a.studentId] = a.status || 'present';
+                    }
+                });
+            }
+
+            function renderGrid() {
+                var grid = document.getElementById('attGrid');
+                var sum = document.getElementById('attSummary');
+                if (!state.roster.length) {
+                    grid.innerHTML = '<p class="empty-state">请先选择课程并载入名册</p>';
+                    sum.textContent = '';
+                    return;
+                }
+                grid.innerHTML = state.roster.map(function (s) {
+                    var st = state.marks[s.id] || 'present';
+                    return '<div class="att-chip ' + st + '" data-sid="' + s.id + '" data-st="' + st + '">' +
+                        (s.name || s.id) + '<br><small>' + st + '</small></div>';
+                }).join('');
+                var present = Object.keys(state.marks).filter(function (k) { return state.marks[k] === 'present'; }).length;
+                sum.textContent = '共 ' + state.roster.length + ' 人 · 出席 ' + present + ' · 点击切换 出席/迟到/缺席';
+
+                grid.querySelectorAll('.att-chip').forEach(function (chip) {
+                    chip.onclick = function () {
+                        var sid = parseInt(chip.dataset.sid, 10);
+                        var cycle = { present: 'late', late: 'absent', absent: 'present' };
+                        var next = cycle[chip.dataset.st] || 'present';
+                        state.marks[sid] = next;
+                        renderGrid();
+                    };
+                });
+
+                var gsel = document.getElementById('gradeStudent');
+                gsel.innerHTML = state.roster.map(function (s) {
+                    return '<option value="' + s.id + '">' + s.name + '</option>';
+                }).join('');
+            }
+
+            document.getElementById('btnLoad').onclick = function () {
+                var cid = document.getElementById('attCourse').value;
+                if (!cid || !window.schoolDB) return alert('请选择课程');
+                state.roster = studentsForCourse(cid);
+                loadExistingMarks(cid, attDate.value);
+                state.roster.forEach(function (s) {
+                    if (!state.marks[s.id]) state.marks[s.id] = 'present';
+                });
+                state.courseId = cid;
+                renderGrid();
+            };
+
+            document.getElementById('btnSaveAll').onclick = function () {
+                if (!state.courseId || !window.schoolDB) return;
+                var cid = state.courseId;
+                var date = attDate.value;
+                var att = window.schoolDB.data.student.attendance || [];
+                window.schoolDB.data.student.attendance = att.filter(function (a) {
+                    return !(String(a.courseId) === String(cid) && a.date === date);
+                });
+                Object.keys(state.marks).forEach(function (sid) {
+                    window.schoolDB.insert('student.attendance', {
+                        studentId: parseInt(sid, 10),
+                        courseId: parseInt(cid, 10),
+                        date: date,
+                        status: state.marks[sid],
+                        recordedAt: new Date().toISOString()
+                    });
+                });
+                alert('已储存 ' + Object.keys(state.marks).length + ' 笔出席');
+            };
+
+            document.getElementById('btnGrade').onclick = function () {
+                var sid = parseInt(document.getElementById('gradeStudent').value, 10);
+                var score = parseInt(document.getElementById('gradeScore').value, 10);
+                var cid = state.courseId || parseInt(document.getElementById('attCourse').value, 10);
+                if (!sid || !cid || !window.schoolDB) return alert('请先载入课程名册');
+                window.schoolDB.saveGrade({ studentId: sid, courseId: cid, score: score });
+                document.getElementById('gradeMsg').textContent = '✅ 已登分 ' + score + ' 分';
+            };
+
+            fillCourses();
+        })();
+    </script>
+</body>
+</html>

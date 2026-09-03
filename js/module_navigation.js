@@ -18,7 +18,7 @@ class ModuleNavigation {
             'bible_study': {
                 name: '聖經研讀',
                 name_en: 'Bible Study',
-                path: 'bible_study/dashboard.html',
+                path: 'bible_study/index.html',
                 icon: '📚'
             },
             'church_ministry': {

@@ -23,6 +23,7 @@
         <button type="button" class="acs-tab" data-acs-tab="survey" aria-selected="false">② 開始測評</button>
         <button type="button" class="acs-tab" data-acs-tab="report" aria-selected="false">③ 分析報告</button>
         <button type="button" class="acs-tab" data-acs-tab="coaching" aria-selected="false">④ 輔導員手冊</button>
+        <button type="button" class="acs-btn acs-btn--demo acs-header-demo no-print" onclick="loadDemoReport()">🔍 先看示範報告</button>
       </nav>
     </header>
 
@@ -35,8 +36,12 @@
             <li>填完到 <strong>Tab ③</strong> 看九大恩賜雷達與出路卡（path_cards）</li>
             <li>牧者請到 <strong>Tab ④</strong> 取約談問題草稿、邀請信與 AI 同工指令</li>
             <li>建議順序：先 SHAPE → 再 Johari → 再 DISC + MBTI（六步路線可於下方工作流跳轉）</li>
+            <li><strong>免責：</strong>自我覺察與牧者對話，不是考核；配對須經禱告、面談與人工確認。</li>
           </ol>
+          <p class="acs-privacy-promise"><strong>隱私承諾：</strong>本測評結果<strong>僅限個人與牧者對話參考</strong>，預設只留本機，<strong>不作事奉任免、公開排名或組織績效考核依據</strong>；出路卡是探索可能性，不是派工命令。</p>
         </div>
+    <div class="acs-concept-mount" data-concept-tool="shape"></div>
+
         <div class="acs-hero">
           <span class="acs-role-badge">核心引擎 · 答「做什麼事」</span>
           <h2 class="serif-title">SHAPE 恩賜整合 — 呼召與事奉大類</h2>
@@ -90,8 +95,8 @@
         <form id="shape-form" onsubmit="handleShapeSubmit(event)">
           <div id="shape-questions"></div>
           <div class="acs-form-grid">
-            <label>姓名<input name="responder_name" id="responder_name" /></label>
-            <label>角色<input name="responder_role" id="responder_role" placeholder="小組長、執事…" /></label>
+            <label>姓名（選填）<input name="responder_name" id="responder_name" placeholder="可不填，僅本機備註" /></label>
+            <label>角色（選填）<input name="responder_role" id="responder_role" placeholder="小組長、執事…可不填" /></label>
           </div>
           <p id="shape-form-error" class="acs-form-error hidden"></p>
           <div class="acs-btn-row no-print mt-4">
@@ -106,7 +111,7 @@
       <div id="report-content" class="hidden">
         <div class="acs-card">
           <span id="report-demo-badge" class="acs-demo-badge hidden">示範</span>
-          <p id="report-heart" class="acs-report-heart"></p>
+          <div id="report-heart"></div>
           <p id="report-personality-note" class="acs-report-note"></p>
         </div>
         <div id="acs-report-extras"></div>
@@ -215,6 +220,7 @@
   <script src="js/matchmaker_urgent_jobs.js"></script>
   <script src="js/ministry_path_bridge.js"></script>
   <script src="js/shape_radar_svg.js"></script>
+  <script src="js/acs_report_gold.js"></script>
   <script src="js/coaching_desk_content.js"></script>
   <script src="js/matchmaker_prefill.js"></script>
   <script src="js/coaching_desk.js"></script>
@@ -228,16 +234,26 @@
 
     function renderQuestions() {
       var host = document.getElementById("shape-questions");
-      host.innerHTML = ShapePack.QUESTIONS.map(function (q, i) {
-        var html =
-          '<fieldset class="acs-fieldset"><legend>' +
-          (i + 1) + ". " + (AXIS_LABEL[q.axis] || q.axis) +
-          '</legend><p>' + q.label + '</p><div class="acs-likert-row">';
-        for (var s = 1; s <= 5; s++) {
-          html += '<label><input type="radio" name="q_' + q.id + '" value="' + s + '" required> ' + s + "</label>";
-        }
-        return html + "</div></fieldset>";
-      }).join("");
+      var legend =
+        '<p class="acs-likert-legend text-xs text-slate-600 mb-3 p-2 bg-indigo-50 rounded border border-indigo-100">' +
+        "<strong>錨點：</strong>1＝幾乎沒有／不符合　…　5＝幾乎總是／非常符合。請依<strong>真實近況</strong>選，無需討好；恩賜分數不作任免依據。</p>";
+      host.innerHTML =
+        legend +
+        ShapePack.QUESTIONS.map(function (q, i) {
+          var html =
+            '<fieldset class="acs-fieldset"><legend>' +
+            (i + 1) +
+            ". " +
+            (AXIS_LABEL[q.axis] || q.axis) +
+            '</legend><p>' +
+            q.label +
+            '</p><div class="acs-likert-row acs-likert-row--anchored">';
+          for (var s = 1; s <= 5; s++) {
+            var anchor = s === 1 ? "1 不符合" : s === 5 ? "5 非常符合" : String(s);
+            html += '<label><input type="radio" name="q_' + q.id + '" value="' + s + '" required> ' + anchor + "</label>";
+          }
+          return html + "</div></fieldset>";
+        }).join("");
     }
 
     function answersFromForm(form) {
@@ -277,8 +293,12 @@
       document.getElementById("report-content").classList.remove("hidden");
       document.getElementById("report-demo-badge").classList.toggle("hidden", !isDemo);
       var d = run.derived || {};
-      document.getElementById("report-heart").textContent =
-        "心志熱情主軸：「" + (d.top_heart || "—") + "」";
+      var heartEl = document.getElementById("report-heart");
+      if (heartEl && window.AcsReportGold) {
+        heartEl.innerHTML = AcsReportGold.renderReportHeart(AcsReportGold.buildShapeReportHeart(run));
+      } else if (heartEl) {
+        heartEl.textContent = "心志熱情主軸：「" + (d.top_heart || "—") + "」";
+      }
       document.getElementById("report-personality-note").textContent = d.personality_note || "";
       var pathHost = document.getElementById("report-path-cards");
       if (pathHost && MPB) {
@@ -343,5 +363,6 @@
       CTAOSBridge.initPage({ toolId: "shape", reportAnchor: "#tab-report", fab: false, autoRefresh: false });
     });
   </script>
+<script src="js/planning_concept_images.js"></script>
 </body>
 </html>

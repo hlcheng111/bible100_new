@@ -213,6 +213,60 @@
   }
 
   /**
+   * DISC 四格風格輪（D/I/S/C · 自評 vs 壓力修飾）
+   */
+  function renderDiscQuadrantGrid(derived) {
+    derived = derived || {};
+    var nat = derived.scores || {};
+    var str = derived.stress_scores || {};
+    var cells = [
+      { key: "D", cls: "acs-disc-trait--d", corner: "推進" },
+      { key: "I", cls: "acs-disc-trait--i", corner: "影響" },
+      { key: "S", cls: "acs-disc-trait--s", corner: "穩定" },
+      { key: "C", cls: "acs-disc-trait--c", corner: "嚴謹" }
+    ];
+    var primary = derived.primary || "";
+    var stressPrimary = derived.stress_primary || "";
+    var html =
+      '<div class="acs-quad-grid disc-style-quad" role="img" aria-label="DISC 四型輪廓格">';
+    cells.forEach(function (c) {
+      var n = score(derived, "natural", c.key);
+      var s = score(derived, "stress", c.key);
+      var delta = Math.round((s - n) * 10) / 10;
+      var activeNat = c.key === primary ? " acs-quad-cell--active" : "";
+      var activeStr = c.key === stressPrimary && stressPrimary !== primary ? " disc-quad-cell--stress" : "";
+      html +=
+        '<div class="acs-quad-cell ' +
+        c.cls +
+        activeNat +
+        activeStr +
+        '">' +
+        '<p class="acs-quad-cell__title">' +
+        esc(c.key) +
+        " · " +
+        esc(c.corner) +
+        "</p>" +
+        '<p class="disc-quad-scores"><span class="disc-quad-nat">' +
+        n +
+        '</span><span class="disc-quad-sep">→</span><span class="disc-quad-str">' +
+        s +
+        "</span></p>" +
+        '<p class="acs-quad-cell__harm">自評 → 壓力修飾 · Δ' +
+        (delta >= 0 ? "+" : "") +
+        delta +
+        "</p>" +
+        (c.key === primary
+          ? '<span class="acs-quad-cell__tag">主型</span>'
+          : c.key === stressPrimary && stressPrimary !== primary
+            ? '<span class="acs-quad-cell__tag">壓力修飾</span>'
+            : "") +
+        "</div>";
+    });
+    html += "</div>";
+    return html;
+  }
+
+  /**
    * @param {object} derived - run.derived（須含 scores、stress_scores）
    */
   function renderCompareBlock(derived) {
@@ -238,6 +292,9 @@
       "</strong> · 壓力下主修飾：<strong>" +
       esc(stressPrimary) +
       "</strong></p>" +
+      '<div class="acs-report-block"><h3 class="acs-report-block__title">🎯 四型輪廓格（一眼主型）</h3>' +
+      renderDiscQuadrantGrid(derived) +
+      "</div>" +
       '<div class="disc-bars-wrap">' +
       groupedBarsSvg(derived) +
       "</div>" +
@@ -250,6 +307,7 @@
 
   global.DiscBarsViz = {
     renderCompareBlock: renderCompareBlock,
+    renderDiscQuadrantGrid: renderDiscQuadrantGrid,
     groupedBarsSvg: groupedBarsSvg
   };
 })(typeof window !== "undefined" ? window : global);

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-靜態斷言：總站殼 index_v5.html（與 index.html 轉址）結構與關鍵字存在。
+靜態斷言：總站殼 index.html（index_v5.html 為舊書籤轉址）結構與關鍵字存在。
 不依賴瀏覽器；於 CI 或本機 `python tests/test_index_v5_shell.py` 執行。
 """
 from __future__ import annotations
@@ -10,15 +10,22 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-INDEX_V5 = REPO / "index_v5.html"
 INDEX_ROOT = REPO / "index.html"
+INDEX_V5 = REPO / "index_v5.html"
 
-REQUIRED_V5 = [
+REQUIRED_SHELL = [
     'class="row2 top-nav-secondary"',
-    '<title>聖經百步四寶 · index_v5 · 總站殼</title>',
-    "var DEFAULT_SIDEBAR = 'languages/index_cn.html'",
-    "var DEFAULT_CONTENT = 'languages/landing_new_cn.html'",
-    "selectedMode = 'material'",
+    'b100_site_http_boot.js',
+    'applyBootQueryParams',
+    'css/b100_label.css',
+    'index_v5_hub_clean.js',
+    "var SITE_HOME_CONTENT = 'help/site_home.html'",
+    "function loadSiteHome()",
+    "function navigateShell(opts)",
+    "window.loadSiteHome = loadSiteHome",
+    "window.navigateShell = navigateShell",
+    "G_PLAN_SIDEBAR = 'church_planning/sidebar_plan_v5_preview.html'",
+    "function openChurchGZone",
     "el.className = 'row2 top-nav-secondary material-bar'",
     "function renderLanguageGroupsBar(el, item)",
     "grid.className = 'lang-btn-grid'",
@@ -29,44 +36,47 @@ REQUIRED_V5 = [
     "function openBibleExplorer()",
     "openBibleAILabLearnShell",
     "btnToolsOverviewTop",
-    "document.body.classList.toggle('mode-qna', mode === 'qna')",
+    "function isQnaWorkbenchUrl(url)",
+    "function syncQnaShellLayout(contentUrl)",
     "function renderChurchContextBar(sub, navItems)",
     "CHURCH_NAV_GROUPS",
     "sub-nav-group",
     "nav-group-brain",
     "setContextOpen(!hideSecondary)",
+    "hub-lang-pills",
+    "getUiLocale",
 ]
 
-FORBIDDEN_V5 = [
+FORBIDDEN_SHELL = [
     "Language tracks",  # 舊文案；v5 應為「Language」雙行小標
 ]
 
 
 def main() -> int:
-    if not INDEX_V5.is_file():
-        print("FAIL: missing", INDEX_V5, file=sys.stderr)
-        return 1
-    text = INDEX_V5.read_text(encoding="utf-8", errors="replace")
-
-    for s in REQUIRED_V5:
-        if s not in text:
-            print(f"FAIL: index_v5.html missing expected fragment:\n  {s!r}", file=sys.stderr)
-            return 1
-
-    for s in FORBIDDEN_V5:
-        if s in text:
-            print(f"FAIL: index_v5.html should not contain:\n  {s!r}", file=sys.stderr)
-            return 1
-
     if not INDEX_ROOT.is_file():
-        print("WARN: missing index.html (skip redirect check)", file=sys.stderr)
-    else:
-        root = INDEX_ROOT.read_text(encoding="utf-8", errors="replace")
-        if "index_v5.html" not in root:
-            print("FAIL: index.html should reference index_v5.html", file=sys.stderr)
+        print("FAIL: missing", INDEX_ROOT, file=sys.stderr)
+        return 1
+    text = INDEX_ROOT.read_text(encoding="utf-8", errors="replace")
+
+    for s in REQUIRED_SHELL:
+        if s not in text:
+            print(f"FAIL: index.html missing expected fragment:\n  {s!r}", file=sys.stderr)
             return 1
 
-    print("OK: index_v5 shell static checks passed.")
+    for s in FORBIDDEN_SHELL:
+        if s in text:
+            print(f"FAIL: index.html should not contain:\n  {s!r}", file=sys.stderr)
+            return 1
+
+    if not INDEX_V5.is_file():
+        print("WARN: missing index_v5.html (skip redirect check)", file=sys.stderr)
+    else:
+        legacy = INDEX_V5.read_text(encoding="utf-8", errors="replace")
+        if "index.html" not in legacy:
+            print("FAIL: index_v5.html should reference index.html for redirect", file=sys.stderr)
+            return 1
+
+    print("OK: index shell static checks passed.")
     return 0
 
 

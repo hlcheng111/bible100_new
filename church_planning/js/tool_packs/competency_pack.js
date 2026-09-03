@@ -35,30 +35,30 @@
   };
 
   var QUESTIONS = [
-    { id: "a01", domain: "admin_ops", ksa: "K", label: "我清楚教會請購、場地借用與基本法規／安全流程。", projection: { P: 0, S: 0, G: 0.35, C: 0.55, R: 0.05, F: 0.1 } },
-    { id: "a02", domain: "admin_ops", ksa: "S", label: "我能熟練整理文書、排班與資料歸檔，讓團隊跟得上進度。", projection: { P: 0.05, S: 0, G: 0.3, C: 0.45, R: 0.1, F: 0.1 } },
-    { id: "a03", domain: "admin_ops", ksa: "A", label: "面對繁瑣行政，我仍能保持耐心與細心，不輕易敷衍。", projection: { P: 0.1, S: 0.05, G: 0.2, C: 0.4, R: 0.15, F: 0.1 } },
-    { id: "a04", domain: "admin_ops", ksa: "S", label: "我願意建立 SOP 或交接筆記，讓事工不因人事變動停擺。", projection: { P: 0.05, S: 0, G: 0.35, C: 0.45, R: 0.1, F: 0.05 } },
-    { id: "l01", domain: "lead_comm", ksa: "K", label: "我理解小組動力學與異象傳遞的基本原理。", projection: { P: 0.1, S: 0.1, G: 0.2, C: 0.35, R: 0.2, F: 0.05 } },
-    { id: "l02", domain: "lead_comm", ksa: "S", label: "我能在會議或小組中引導討論並收斂成可執行結論。", projection: { P: 0.15, S: 0.1, G: 0.15, C: 0.35, R: 0.25, F: 0 } },
-    { id: "l03", domain: "lead_comm", ksa: "A", label: "我具備成全他人、提攜後輩的謙卑心態。", projection: { P: 0.2, S: 0.1, G: 0.1, C: 0.25, R: 0.3, F: 0.05 } },
-    { id: "l04", domain: "lead_comm", ksa: "S", label: "我能用清楚、溫和的方式向同工傳達事工異象與期待。", projection: { P: 0.1, S: 0.1, G: 0.2, C: 0.35, R: 0.25, F: 0 } },
-    { id: "c01", domain: "care_practice", ksa: "K", label: "我明白基本輔導傾聽原則與探訪禁忌（不越權給醫療建議）。", projection: { P: 0.25, S: 0.1, G: 0, C: 0.3, R: 0.3, F: 0.05 } },
-    { id: "c02", domain: "care_practice", ksa: "S", label: "一對一傾聽時，我能專注、少打斷，讓對方感到被尊重。", projection: { P: 0.25, S: 0.15, G: 0, C: 0.25, R: 0.3, F: 0.05 } },
-    { id: "c03", domain: "care_practice", ksa: "A", label: "我能長期保守會友隱私，具備高度同理心與界線。", projection: { P: 0.3, S: 0.1, G: 0, C: 0.2, R: 0.35, F: 0.05 } },
-    { id: "c04", domain: "care_practice", ksa: "S", label: "當會友情緒激動，我能先安撫再轉介牧者或專業資源。", projection: { P: 0.2, S: 0.1, G: 0.05, C: 0.2, R: 0.35, F: 0.1 } },
-    { id: "t01", domain: "teach_design", ksa: "K", label: "我系統性掌握基要真理，能對準經文重點備課。", projection: { P: 0.05, S: 0.1, G: 0.1, C: 0.55, R: 0.15, F: 0.05 } },
-    { id: "t02", domain: "teach_design", ksa: "S", label: "我能獨立編寫教案，設計適合對象年齡的教學步驟。", projection: { P: 0.05, S: 0.1, G: 0.1, C: 0.55, R: 0.15, F: 0.05 } },
-    { id: "t03", domain: "teach_design", ksa: "A", label: "我對真理懷抱敬畏，樂意因材施教、調整節奏。", projection: { P: 0.1, S: 0.1, G: 0.05, C: 0.45, R: 0.2, F: 0.1 } },
-    { id: "t04", domain: "teach_design", ksa: "S", label: "帶領查經或主日學時，我能控制時間並留出討論空間。", projection: { P: 0.1, S: 0.1, G: 0.05, C: 0.5, R: 0.2, F: 0.05 } },
-    { id: "m01", domain: "team_collab", ksa: "K", label: "我理解堂會跨部門運作的整體架構與溝通節點。", projection: { P: 0.05, S: 0.05, G: 0.15, C: 0.25, R: 0.45, F: 0.05 } },
-    { id: "m02", domain: "team_collab", ksa: "S", label: "意見不合時，我能主動溝通、尋求共識而非堅持己見。", projection: { P: 0.1, S: 0.1, G: 0.1, C: 0.15, R: 0.5, F: 0.05 } },
-    { id: "m03", domain: "team_collab", ksa: "A", label: "我樂意放下個人堅持，配合整體調度與異象。", projection: { P: 0.1, S: 0.05, G: 0.1, C: 0.15, R: 0.55, F: 0.05 } },
-    { id: "m04", domain: "team_collab", ksa: "S", label: "我會主動與相鄰事工同步資訊，減少重複勞動。", projection: { P: 0.05, S: 0, G: 0.15, C: 0.25, R: 0.45, F: 0.1 } },
-    { id: "r01", domain: "crisis_resp", ksa: "K", label: "我清楚聚會突發狀況（設備、醫療、安全）的通報 SOP。", projection: { P: 0.1, S: 0.1, G: 0.15, C: 0.3, R: 0.2, F: 0.15 } },
-    { id: "r02", domain: "crisis_resp", ksa: "S", label: "主日突發狀況時，我能冷靜補位或照 SOP 應對。", projection: { P: 0.15, S: 0.05, G: 0.1, C: 0.3, R: 0.25, F: 0.15 } },
-    { id: "r03", domain: "crisis_resp", ksa: "A", label: "面對突發壓力或指責時，我具備情緒韌性，不輕易崩潰。", projection: { P: 0.2, S: 0.1, G: 0.05, C: 0.2, R: 0.25, F: 0.2 } },
-    { id: "r04", domain: "crisis_resp", ksa: "S", label: "面對突發衝突，我會先穩定現場，再請有權柄者介入。", projection: { P: 0.15, S: 0.05, G: 0.1, C: 0.2, R: 0.35, F: 0.15 } }
+    { id: "a01", domain: "admin_ops", ksa: "K", label: "教會借用場地或採買用品時，我知道該找誰、走什麼基本流程？", projection: { P: 0, S: 0, G: 0.35, C: 0.55, R: 0.05, F: 0.1 } },
+    { id: "a02", domain: "admin_ops", ksa: "S", label: "整理小組通知、簽到或資料時，我能讓同工跟得上、不會漏掉？", projection: { P: 0.05, S: 0, G: 0.3, C: 0.45, R: 0.1, F: 0.1 } },
+    { id: "a03", domain: "admin_ops", ksa: "A", label: "面對繁瑣行政，我仍能保持耐心，不輕易敷衍？", projection: { P: 0.1, S: 0.05, G: 0.2, C: 0.4, R: 0.15, F: 0.1 } },
+    { id: "a04", domain: "admin_ops", ksa: "S", label: "我願意寫簡短交接或 SOP，讓小組事工不因請假而停擺？", projection: { P: 0.05, S: 0, G: 0.35, C: 0.45, R: 0.1, F: 0.05 } },
+    { id: "l01", domain: "lead_comm", ksa: "K", label: "帶查經或小組時，我能說清楚這段要幫助組員明白什麼？", projection: { P: 0.1, S: 0.1, G: 0.2, C: 0.35, R: 0.2, F: 0.05 } },
+    { id: "l02", domain: "lead_comm", ksa: "S", label: "小組討論發散時，我能溫和地幫大家收斂到一兩個可實踐的結論？", projection: { P: 0.15, S: 0.1, G: 0.15, C: 0.35, R: 0.25, F: 0 } },
+    { id: "l03", domain: "lead_comm", ksa: "A", label: "我願意成全組員、提攜後輩，而不是自己一直當主角？", projection: { P: 0.2, S: 0.1, G: 0.1, C: 0.25, R: 0.3, F: 0.05 } },
+    { id: "l04", domain: "lead_comm", ksa: "S", label: "我能用清楚、溫和的方式向組員說明這週服事重點？", projection: { P: 0.1, S: 0.1, G: 0.2, C: 0.35, R: 0.25, F: 0 } },
+    { id: "c01", domain: "care_practice", ksa: "K", label: "探訪或傾聽時，我知道哪些話不該亂說（例如不替人下醫療或屬靈診斷）？", projection: { P: 0.25, S: 0.1, G: 0, C: 0.3, R: 0.3, F: 0.05 } },
+    { id: "c02", domain: "care_practice", ksa: "S", label: "一對一聊天時，我會少插話，讓對方感到被聽見？", projection: { P: 0.25, S: 0.15, G: 0, C: 0.25, R: 0.3, F: 0.05 } },
+    { id: "c03", domain: "care_practice", ksa: "A", label: "我能保守組員隱私，在同理與界線之間取得平衡？", projection: { P: 0.3, S: 0.1, G: 0, C: 0.2, R: 0.35, F: 0.05 } },
+    { id: "c04", domain: "care_practice", ksa: "S", label: "組員情緒激動時，我能先安撫，再請牧者或更資深同工介入？", projection: { P: 0.2, S: 0.1, G: 0.05, C: 0.2, R: 0.35, F: 0.1 } },
+    { id: "t01", domain: "teach_design", ksa: "K", label: "備查經前，我能先抓住經文重點，而不是只找故事填時間？", projection: { P: 0.05, S: 0.1, G: 0.1, C: 0.55, R: 0.15, F: 0.05 } },
+    { id: "t02", domain: "teach_design", ksa: "S", label: "我能為組員準備簡單教案或討論問題，步驟清楚？", projection: { P: 0.05, S: 0.1, G: 0.1, C: 0.55, R: 0.15, F: 0.05 } },
+    { id: "t03", domain: "teach_design", ksa: "A", label: "我對真理懷抱敬畏，願意依組員程度調整節奏？", projection: { P: 0.1, S: 0.1, G: 0.05, C: 0.45, R: 0.2, F: 0.1 } },
+    { id: "t04", domain: "teach_design", ksa: "S", label: "帶查經時，我會控制時間並留出組員分享？", projection: { P: 0.1, S: 0.1, G: 0.05, C: 0.5, R: 0.2, F: 0.05 } },
+    { id: "m01", domain: "team_collab", ksa: "K", label: "我大概知道教會各部門如何配合（例如主日學、敬拜、關懷）？", projection: { P: 0.05, S: 0.05, G: 0.15, C: 0.25, R: 0.45, F: 0.05 } },
+    { id: "m02", domain: "team_collab", ksa: "S", label: "與同工意見不同時，我會主動溝通、尋求共識？", projection: { P: 0.1, S: 0.1, G: 0.1, C: 0.15, R: 0.5, F: 0.05 } },
+    { id: "m03", domain: "team_collab", ksa: "A", label: "我願意配合整體調度，而不是堅持自己的做法？", projection: { P: 0.1, S: 0.05, G: 0.1, C: 0.15, R: 0.55, F: 0.05 } },
+    { id: "m04", domain: "team_collab", ksa: "S", label: "我會主動與相鄰事工同步資訊，避免重複勞動？", projection: { P: 0.05, S: 0, G: 0.15, C: 0.25, R: 0.45, F: 0.1 } },
+    { id: "r01", domain: "crisis_resp", ksa: "K", label: "主日或聚會若有人身體不適、設備故障，我知道該通知誰？", projection: { P: 0.1, S: 0.1, G: 0.15, C: 0.3, R: 0.2, F: 0.15 } },
+    { id: "r02", domain: "crisis_resp", ksa: "S", label: "主日突發狀況時，我能冷靜補位或照已知步驟應對？", projection: { P: 0.15, S: 0.05, G: 0.1, C: 0.3, R: 0.25, F: 0.15 } },
+    { id: "r03", domain: "crisis_resp", ksa: "A", label: "面對突發壓力或指責時，我仍能穩住情緒、不輕易崩潰？", projection: { P: 0.2, S: 0.1, G: 0.05, C: 0.2, R: 0.25, F: 0.2 } },
+    { id: "r04", domain: "crisis_resp", ksa: "S", label: "小組或聚會衝突時，我會先穩定現場，再請有權柄者介入？", projection: { P: 0.15, S: 0.05, G: 0.1, C: 0.2, R: 0.35, F: 0.15 } }
   ];
 
   var COMPETENCY_THRESHOLD = 3;
@@ -162,6 +162,43 @@
     return { P: 50, S: 50, G: 50, C: 55, R: 52, F: 50 };
   }
 
+  function buildMicroStep(derived) {
+    derived = derived || {};
+    var mp = derived.matrix_position || {};
+    var domainSteps = {
+      teach_design: "本週備查經時，先寫下「組員要帶走的一個重點」再開始帶領。",
+      lead_comm: "本週小組中，刻意留 5 分鐘讓組員分享，自己少講一點。",
+      care_practice: "本週關心一位組員，只傾聽、不給建議，結束時代禱一句。",
+      admin_ops: "本週把一項小組行政（通知／簽到）寫成三行交接給同工。",
+      team_collab: "本週主動與一位相鄰事工同工同步本週安排，避免重複。",
+      crisis_resp: "本週向一位資深同工確認：主日突發狀況該找誰？"
+    };
+    if (mp.profile_type === "passionate_rookie") {
+      return "本週跟一位有經驗的同工 shadow 一次查經或服事（只觀察、記一個學習點）。";
+    }
+    if (mp.profile_type === "skilled_burnout") {
+      return "本週與牧者談 15 分鐘，只談節奏與心志更新，不加新服事。";
+    }
+    return domainSteps[derived.weakest_domain] || "本週與牧者約 15 分鐘，談一項可 shadow 的成長小步。";
+  }
+
+  function buildCoaching(derived) {
+    var mp = derived.matrix_position || {};
+    return {
+      capability_note:
+        "強項「" +
+        derived.primary_label +
+        "」／成長中「" +
+        derived.weakest_label +
+        "」— 陪跑方向：" +
+        (derived.training_hint || ""),
+      growth_accompaniment:
+        mp.growth_label || mp.profile_label || "均衡成長區 — 與牧者談試任節奏。",
+      micro_step: buildMicroStep(derived),
+      redflag: "本報告是成長陪伴參考，不作升遷或淘汰依據；出路卡須 HITL 確認。"
+    };
+  }
+
   function buildMatrixPosition(ksa_overall) {
     ksa_overall = ksa_overall || { K: 3, S: 3, A: 3 };
     var k = Number(ksa_overall.K) || 0;
@@ -184,12 +221,20 @@
       profile_type: profile,
       profile_label:
         profile === "leader_core"
-          ? "領袖核心區"
+          ? "核心穩定區（可談授權與成全）"
           : profile === "passionate_rookie"
-            ? "高心志、低技能 · 熱血新人"
+            ? "熱心成長區（宜 shadow 陪跑）"
             : profile === "skilled_burnout"
-              ? "高技能、低心志 · 倦怠老手"
-              : "均衡發展／陪跑試任區"
+              ? "技能穩、心志需更新（宜節奏調整）"
+              : "均衡成長區（小步試任）",
+      growth_label:
+        profile === "leader_core"
+          ? "您在能力與心志上較穩定，適合與牧者談成全與授權。"
+          : profile === "passionate_rookie"
+            ? "您的心志很寶貴，技能可透過 shadow 慢慢長成。"
+            : profile === "skilled_burnout"
+              ? "您的技能是教會資產，宜先談心志更新與減負。"
+              : "您在各面向均衡成長中，適合小步試任與陪跑。"
     };
   }
 
@@ -259,19 +304,7 @@
         return { q: q.id, value: map[q.id], ksa: q.ksa, domain: q.domain };
       }),
       risk_flags: flags,
-      coaching: {
-        capability_note:
-          "強項「" +
-          domains.primary_label +
-          "」／待補「" +
-          domains.weakest_label +
-          "」— KSA 最弱：" +
-          KSA_LABELS[ksa.weakest_ksa] +
-          "（" +
-          ksa.weakest_ksa_score +
-          "）· " +
-          ksa.training_hint
-      },
+      coaching: buildCoaching(derived),
       source_note: "competency_pack v2 · KSA · " + QUESTIONS.length + " 題"
     };
     if (global.MinistryPathBridge && MinistryPathBridge.attachPathCards) {
@@ -294,7 +327,7 @@
       built.run.derived.ksa_overall = { K: 2.4, S: 2.6, A: 4.8 };
       built.run.derived.matrix_position = buildMatrixPosition(built.run.derived.ksa_overall);
       built.run.derived.matrix_note =
-        "高心志、低技能 · 熱血新人 — 宜 90 天 shadow 陪跑，不作淘汰。";
+        "熱心成長區 — 宜 90 天 shadow 陪跑，不作淘汰。";
       built.run.ksa_execution_contract = buildKsaExecutionContract(built.run.derived, global.AssessmentRunStore);
       built.run.derived.ksa_execution_contract = built.run.ksa_execution_contract;
     }

@@ -8,7 +8,7 @@
 | **P-MOD-STANDALONE** | 模組 index + sidebar + dashboard | school、bible_study、hymn | `config/modules.json` |
 | **P-LANDING** | 屬靈前言 + 步驟卡片 | 5F 規劃入口 | `church_planning/index_plan.html` |
 | **P-4TAB-ACS** | 理念／測評／報告／輔導 | planning 測評 live 工具 | `.cursor/rules/bible100-church-planning-assessment-4tab-charter.mdc` |
-| **P-CRM-HUB** | intro / journey / vision / matchmaker | CRM 旅程 | `guide_crm_journey_hub.html` |
+| **P-CRM-HUB** | intro / journey / vision / matchmaker | ~~CRM 旅程~~ **已退役主入口** | `guide_crm_journey_hub.html` — 見 [`W_UI_IA_AUDIT_V1.md`](./W_UI_IA_AUDIT_V1.md) |
 | **P-SIDEBAR-LAYOUT** | 六類事工側欄 + focus | 4F 執行 A–E | `sidebar_church_layout_v1.html` |
 | **P-WORKBENCH** | 單一工作桌 | 探訪、排班 | `modules/support/*` |
 | **S / P / M / H** | Playbook 四類 | 調查／計劃／配對／混合 | `docs/CHURCH_TOOL_PLAYBOOK.md` |

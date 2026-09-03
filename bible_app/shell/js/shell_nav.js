@@ -2,13 +2,14 @@
 (function () {
   var global = typeof window !== 'undefined' ? window : {};
   var STORAGE_KEY = 'bible_shell_state';
-  var STATE_SCHEMA = 2;
+  var STATE_SCHEMA = 3;
   var RESUME_MS = 7 * 24 * 60 * 60 * 1000;
+  var DEPRECATED_FRAMES = /app-hub\.html|home\.html|landing-dashboard/i;
   var DEFAULT = {
     schemaVersion: STATE_SCHEMA,
     locale: 'zh-Hant',
     persona: 'kids',
-    track: '30day',
+    track: 'plan1y',
     zone: '',
     footer: '',
     bibleView: 'dual',
@@ -19,7 +20,7 @@
 
   var ZONE_PAGES = {
     pacing: 'pages/pacing.html',
-    today: 'pages/today.html',
+    today: 'pages/track-plan1y.html',
     bible: 'pages/bible66.html',
     qna: 'pages/ai-qna.html',
     ai: 'pages/ai-tutor.html',
@@ -27,9 +28,12 @@
 
   var TRACK_PAGES = {
     bible66: 'pages/bible66.html',
+    plan1y: 'pages/track-plan1y.html',
+    plan3y: 'pages/track-plan3y.html',
     '30day': 'pages/track-30day.html',
     golden: 'pages/track-golden.html',
     theme: 'pages/track-theme.html',
+    landing: 'pages/landing.html',
   };
 
   var FOOTER_PAGES = {
@@ -51,6 +55,7 @@
           parsed.lastFrame = '';
           parsed.lastFrameExtra = null;
           parsed.lastFrameAt = 0;
+          parsed.track = parsed.track || 'plan1y';
           parsed.schemaVersion = STATE_SCHEMA;
         }
         return sanitizeState(parsed);
@@ -60,15 +65,16 @@
   }
 
   function isTrackListPage(path) {
-    return /track-30day|track-golden|track-theme/i.test(path || '');
+    return /track-30day|track-golden|track-theme|track-plan1y|track-plan3y/i.test(path || '');
   }
 
   function isBiblePage(path) {
-    return /bible66\.html/i.test(path || '');
+    return /bible66\.html|read66\.html/i.test(path || '');
   }
 
   function isValidResume(path, extra) {
     if (!path) return false;
+    if (DEPRECATED_FRAMES.test(path)) return false;
     if (!isBiblePage(path)) return true;
     extra = extra || {};
     var book = parseInt(extra.book, 10);
@@ -143,6 +149,9 @@
     }
     var rel = basePath + '?' + queryParams(merged) + '&' + cacheBustQs();
     if (!skipRemember) rememberFrame(basePath, merged);
+    if (location.protocol === 'file:' && /bible66\.html/i.test(basePath)) {
+      rel = '../app/assets/bible/read66.html?' + queryParams(merged) + '&' + cacheBustQs();
+    }
     if (global.B100ShellPaths && global.B100ShellPaths.page) {
       frame.src = global.B100ShellPaths.page(rel);
     } else {
@@ -173,7 +182,7 @@
     return global.B100NavMatrix
       ? global.B100NavMatrix.resolve(state.persona, trackId, state.locale)
       : {
-          page: TRACK_PAGES[trackId] || TRACK_PAGES['30day'],
+          page: TRACK_PAGES[trackId] || TRACK_PAGES['plan1y'],
           zone: trackId === 'bible66' ? 'bible' : '',
           extra: null,
           toast: '',
@@ -233,7 +242,8 @@
     state.zone = '';
     saveState();
     syncUI();
-    enterTrack(state.track || '30day');
+    setFrame(TRACK_PAGES.landing);
+    closeMore();
   }
 
   function reloadContent(opts) {
@@ -247,14 +257,14 @@
       return;
     }
     if (opts.forceTrackList || isTrackListPage(state.lastFrame)) {
-      enterTrack(state.track || '30day');
+      enterTrack(state.track || 'plan1y');
       return;
     }
     if (!opts.forceTrackList && shouldResume() && state.lastFrame && isValidResume(state.lastFrame, state.lastFrameExtra)) {
       setFrame(state.lastFrame, state.lastFrameExtra || null);
       return;
     }
-    enterTrack(state.track || '30day');
+    enterTrack(state.track || 'plan1y');
   }
 
   function pick(group, value) {
@@ -273,7 +283,7 @@
       saveState();
       syncUI();
       if (isTrackListPage(state.lastFrame)) {
-        enterTrack(state.track || '30day');
+        enterTrack(state.track || 'plan1y');
       } else if (isBiblePage(state.lastFrame) && isValidResume(state.lastFrame, state.lastFrameExtra)) {
         setFrame(state.lastFrame, state.lastFrameExtra || null);
       } else {
@@ -289,7 +299,7 @@
       if (isBiblePage(state.lastFrame) && isValidResume(state.lastFrame, state.lastFrameExtra)) {
         setFrame(state.lastFrame, state.lastFrameExtra || null);
       } else if (isTrackListPage(state.lastFrame)) {
-        enterTrack(state.track || '30day');
+        enterTrack(state.track || 'plan1y');
       } else {
         reloadContent({ forceTrackList: true });
       }
@@ -303,7 +313,7 @@
       saveState();
       syncUI();
       closeMore();
-      enterTrack(state.track || '30day');
+      enterTrack(state.track || 'plan1y');
       return;
     }
 
@@ -359,7 +369,32 @@
     var moreBtn = document.getElementById('btnMore');
     if (moreBtn) moreBtn.addEventListener('click', toggleMore);
 
+    var readerBtn = document.getElementById('btnReaderHub');
+    if (readerBtn) {
+      readerBtn.addEventListener('click', function () {
+        closeMore();
+        var studyUrl = 'bible_study/comprehensive_exegesis_reader.html?book=創世記&chapter=1';
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'navigate', url: studyUrl }, '*');
+            return;
+          }
+        } catch (eNav) {}
+        if (global.B100Bridge && global.B100Bridge.studyReaderUrl) {
+          window.open(global.B100Bridge.studyReaderUrl(), '_blank', 'noopener');
+        } else {
+          setFrame('pages/bible66.html', { track: 'study', locale: state.locale });
+        }
+      });
+    }
+
     var params = new URLSearchParams(location.search);
+    if (params.get('fresh') === '1') {
+      state.lastFrame = '';
+      state.lastFrameExtra = null;
+      state.lastFrameAt = 0;
+      saveState();
+    }
     if (params.get('track') && TRACK_PAGES[params.get('track')]) {
       state.track = params.get('track');
     }
@@ -376,12 +411,15 @@
     bindTabs();
     listenFrameSync();
     syncUI();
-    if (state.footer && FOOTER_PAGES[state.footer]) {
+    var params = new URLSearchParams(location.search);
+    if (params.get('track') && TRACK_PAGES[params.get('track')]) {
+      enterTrack(params.get('track'));
+    } else if (state.footer && FOOTER_PAGES[state.footer]) {
       setFrame(FOOTER_PAGES[state.footer]);
     } else if (shouldResume() && state.lastFrame && isValidResume(state.lastFrame, state.lastFrameExtra)) {
       setFrame(state.lastFrame, state.lastFrameExtra || null);
     } else {
-      enterTrack(state.track || '30day');
+      goHome();
     }
     if (frame && global.BibleFontSize && global.BibleFontSize.hookIframe) {
       global.BibleFontSize.hookIframe(frame);

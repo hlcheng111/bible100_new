@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../assets/css/lab-shell.css">
   <link rel="stylesheet" href="../assets/css/crm_automation_theater.css">
   <script src="../../js/cloud_config.js"></script>
+  <script src="../../js/central_member_db.js"></script>
   <script src="../../js/crm_intent_router.js"></script>
   <script src="../../js/data_trust_badge.js"></script>
   <script src="../assets/js/lab-frame-nav.js"></script>
@@ -37,12 +38,14 @@
     .mode-pill.off strong { color: #64748b; }
   </style>
 </head>
-<body class="crm5f-page">
+<body class="crm5f-page" data-b100-ai-hint="serve_crm">
+<script src="../js/ai_collab_page_hint.js"></script>
+<script src="../../js/ai_ministry_bridge.js"></script>
   <div class="wrap">
     <nav class="lab-context-nav" aria-label="模組脈絡">
       <a href="javascript:void(0)" onclick="labNav('ai_lab_landing.html'); return false;">🔭 Lab 總覽</a>
-      <a href="javascript:void(0)" onclick="labNav('pages/crm_automation_console.html'); return false;" aria-current="page">⚙️ 5F 口述預填</a>
-      <a href="javascript:void(0)" onclick="if(window.parent&amp;&amp;window.parent.applyMode){window.parent.applyMode('church');} return false;">⛪ 教會事工</a>
+      <a href="javascript:void(0)" onclick="labNav('pages/crm_automation_console.html'); return false;" aria-current="page">⚙️ 口述預填</a>
+      <a href="javascript:void(0)" onclick="if(window.parent&amp;&amp;window.parent.applyMode){window.parent.applyMode('church');} return false;">⛪ 教會行政</a>
     </nav>
 
     <header class="crm5f-hero">
@@ -138,6 +141,24 @@
 
   <script>
     (function () {
+      var urlCtx = { member_id: "", from_tool: "", pain: "" };
+      try {
+        var p = new URLSearchParams(window.location.search || "");
+        urlCtx.member_id = (p.get("member_id") || p.get("memberId") || "").trim();
+        urlCtx.from_tool = (p.get("from_tool") || p.get("tool") || "").trim();
+        urlCtx.pain = (p.get("pain") || "").trim();
+      } catch (eU) {}
+
+      if (urlCtx.member_id || urlCtx.from_tool) {
+        var ctxHost = document.getElementById("crm5fContext");
+        if (ctxHost) {
+          var parts = [];
+          if (urlCtx.from_tool) parts.push("來自工具：<strong>" + urlCtx.from_tool + "</strong>");
+          if (urlCtx.member_id) parts.push("帶入 member_id：<code>" + urlCtx.member_id + "</code>");
+          ctxHost.innerHTML = '<p class="hint">' + parts.join(" · ") + "（解析時會優先帶入預填）</p>";
+        }
+      }
+
       if (window.CrmAutomationTheater) {
         CrmAutomationTheater.initTheater({
           onSampleFilled: function () {
@@ -237,7 +258,8 @@
       if (quickHost && Bible100CrmIntent.listAvailableTools) {
         quickHost.innerHTML = Bible100CrmIntent.listAvailableTools().map(function (t) {
           var label = t.label + (t.optional ? '（可選）' : '');
-          return '<button type="button" class="btn" data-url="../../' + t.index_url + '">' + label + '</button>';
+          var q = urlCtx.member_id ? '?member_id=' + encodeURIComponent(urlCtx.member_id) + '&from_tool=' + encodeURIComponent(t.tool_id) : '';
+          return '<button type="button" class="btn" data-url="../../' + t.index_url + q + '">' + label + '</button>';
         }).join('');
         quickHost.querySelectorAll('button[data-url]').forEach(function (btn) {
           btn.onclick = function () { navigateParentTo(btn.getAttribute('data-url')); };
@@ -246,7 +268,11 @@
 
       document.getElementById('btnParse').onclick = function () {
         var raw = document.getElementById('crmIntentText').value;
-        var doc = Bible100CrmIntent.parseTextOffline(raw, { channel: hasSpeech ? 'text_or_voice' : 'text' });
+        var doc = Bible100CrmIntent.parseTextOffline(raw, {
+          channel: hasSpeech ? 'text_or_voice' : 'text',
+          member_id: urlCtx.member_id || null,
+          from_tool: urlCtx.from_tool || null
+        });
         document.getElementById('intentJson').value = JSON.stringify(doc, null, 2);
         selectedIntentIdx = 0;
         renderIntentPicker(doc);

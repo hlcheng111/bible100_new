@@ -3,68 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家長溝通 - Parent Communication</title>
-    <link rel="stylesheet" href="../css/module_common.css">
+    <title>家長通知草稿 W7</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f6f7fb; padding: 16px; font-size: 12px; color: #333; }
+        h1 { color: #0b5fa5; font-size: 18px; margin-bottom: 6px; }
+        .sub { color: #666; margin-bottom: 12px; line-height: 1.6; }
+        .tip { background: #fff7ed; border-left: 3px solid #f59e0b; padding: 10px 12px; margin-bottom: 12px; font-size: 11px; }
+        .card { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .card-title { font-weight: 600; color: #0b5fa5; margin-bottom: 10px; }
+        .inp { padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; }
+        .lbl { font-size: 10px; color: #64748b; }
+        .btn { padding: 8px 14px; background: #0b5fa5; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; margin: 2px 4px 2px 0; }
+        .btn-secondary { background: #64748b; }
+        .btn-success { background: #166534; }
+        textarea { width: 100%; min-height: 160px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; line-height: 1.6; margin-top: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { border-bottom: 1px solid #e2e8f0; padding: 8px; text-align: left; }
+        th { background: #f8fafc; }
+    </style>
 </head>
 <body>
-    <div class="module-header">
-        <h1>👪 家長溝通</h1>
-        <p>發送家校訊息、LINE／WhatsApp／WeChat 管道</p>
-        <details>
-            <summary>📋 功能與使用說明</summary>
-            <div><p><b>此頁是為誰而設？</b> 班導、行政、家長聯絡人。</p>
-            <p><b>有什麼功能？</b> 發送家長訊息，可選管道（parent 家長／line／whatsapp／wechat）。</p></div>
-        </details>
+    <h1>👪 家長通知草稿（W7）</h1>
+    <p class="sub">選學生＋事由 → 產生通知文字 · <strong>只產生文字，不會發送</strong> · 請複製後貼到 LINE／WhatsApp／週刊</p>
+
+    <div class="tip">
+        <strong>治理：</strong> 本頁不會呼叫外部 API、不會自動發送。可選「存為草稿」寫入 <code>communication.messages</code>（status=draft）。
     </div>
 
-    <div class="module-card">
-        <div class="module-card-title">📤 發送家校訊息</div>
-        <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
-            <div><label class="stat-label">收件人</label><br><input name="toUser" class="module-input" placeholder="parent_1 或 class_1" style="min-width:140px;"></div>
-            <div><label class="stat-label">內容</label><br><input name="content" class="module-input" placeholder="訊息內容" style="min-width:220px;"></div>
-            <div><label class="stat-label">管道</label><br><select name="channel" class="module-input"><option value="parent">家長</option><option value="line">LINE</option><option value="whatsapp">WhatsApp</option><option value="wechat">WeChat</option></select></div>
-            <div><label class="stat-label">優先</label><br><select name="priority" class="module-input"><option value="normal">一般</option><option value="high">高</option></select></div>
-            <div><br><button type="submit" class="module-btn">發送</button></div>
-        </form>
+    <div class="card">
+        <div class="card-title">📝 產生通知草稿</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
+            <div><span class="lbl">學生</span><br><select id="studentSelect" class="inp" style="min-width:160px;"></select></div>
+            <div><span class="lbl">事由</span><br><select id="noticeType" class="inp">
+                <option value="tuition_reminder">繳費提醒</option>
+                <option value="absence_care">缺席關懷</option>
+                <option value="activity_notice">活動通知</option>
+                <option value="general">一般通知</option>
+            </select></div>
+            <div><span class="lbl">管道（標示用）</span><br><select id="channel" class="inp">
+                <option value="parent">家長</option>
+                <option value="line">LINE</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="wechat">WeChat</option>
+            </select></div>
+            <div id="extraFields" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+            <button class="btn" id="btnGenerate">產生草稿</button>
+            <button class="btn btn-success" id="btnCopy">📋 複製全文</button>
+            <button class="btn btn-secondary" id="btnSaveDraft">存為草稿</button>
+        </div>
+        <div><span class="lbl">主旨</span><input id="draftSubject" class="inp" style="width:100%;margin-top:4px;" readonly></div>
+        <textarea id="draftBody" placeholder="按「產生草稿」…"></textarea>
+        <p id="draftMsg" style="font-size:11px;color:#166534;margin-top:8px;"></p>
     </div>
 
-    <div class="module-card">
-        <div class="module-card-title">📋 最近訊息</div>
-        <div id="list"></div>
+    <div class="card">
+        <div class="card-title">📋 已存草稿（最近 20 筆）</div>
+        <div id="draftList"></div>
     </div>
 
-    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+    <a href="../../dashboard.html" target="contentFrame" class="btn btn-secondary">返回儀表板</a>
+    <a href="../church_link_tabs.html" target="contentFrame" class="btn btn-secondary">教會連結 W6</a>
 
     <script src="../../js/school-master-database.js"></script>
     <script>
         (function() {
             const db = window.schoolDB;
             if (!db) return;
-            if (db.ensureSeedFull) db.ensureSeedFull();
+            let lastDraft = null;
 
-            const messages = (db.data.communication && db.data.communication.messages) || [];
-
-            function draw() {
-                const a = messages.filter(m => (m.channel || '').includes('parent') || (m.channel || '').includes('line') || (m.channel || '').includes('whatsapp') || (m.channel || '').includes('wechat') || !m.channel).slice(-100).reverse();
-                const body = a.map(m => '<tr><td>' + m.id + '</td><td>' + (m.toUser || m.to_user || '—') + '</td><td>' + (m.content || '—') + '</td><td>' + (m.priority || '—') + '</td><td>' + (m.channel || '—') + '</td><td>' + (m.createdAt || m.created_at || '').slice(0, 16) + '</td></tr>').join('');
-                document.getElementById('list').innerHTML = '<table class="module-table"><thead><tr><th>ID</th><th>收件人</th><th>內容</th><th>優先</th><th>管道</th><th>時間</th></tr></thead><tbody>' + (body || '<tr><td colspan="6">尚無訊息</td></tr>') + '</tbody></table>';
+            function loadStudents() {
+                const students = (db.data.students || []).filter(s => s.status !== 'pending');
+                document.getElementById('studentSelect').innerHTML = students.map(s =>
+                    '<option value="' + s.id + '">' + (s.name || s.id) + '</option>'
+                ).join('') || '<option value="">— 尚無學生 —</option>';
             }
 
-            document.getElementById('f').onsubmit = function(e) {
-                e.preventDefault();
-                const fm = new FormData(this);
-                db.insert('communication.messages', {
-                    fromUser: 'school',
-                    toUser: (fm.get('toUser') || '').trim(),
-                    channel: fm.get('channel') || 'parent',
-                    content: (fm.get('content') || '').trim(),
-                    priority: fm.get('priority') || 'normal'
-                });
-                this.reset();
-                draw();
+            function renderExtraFields() {
+                const t = document.getElementById('noticeType').value;
+                const box = document.getElementById('extraFields');
+                if (t === 'absence_care') {
+                    const s = db.getChurchLinkSettings();
+                    box.innerHTML = '<div><span class="lbl">連續缺席次數</span><br><input id="optStreak" type="number" class="inp" value="' + (s.absenceThreshold || 3) + '" style="width:50px;"></div>' +
+                        '<div><span class="lbl">補充說明</span><br><input id="optDetail" class="inp" placeholder="可選" style="width:140px;"></div>';
+                } else if (t === 'activity_notice') {
+                    box.innerHTML = '<div><span class="lbl">活動名稱</span><br><input id="optTitle" class="inp" placeholder="親子日" style="width:100px;"></div>' +
+                        '<div><span class="lbl">日期</span><br><input id="optDate" type="date" class="inp"></div>' +
+                        '<div><span class="lbl">詳情</span><br><input id="optDetail" class="inp" placeholder="地點／集合時間" style="width:140px;"></div>';
+                } else if (t === 'general') {
+                    box.innerHTML = '<div><span class="lbl">主旨</span><br><input id="optSubject" class="inp" placeholder="校務通知" style="width:100px;"></div>' +
+                        '<div><span class="lbl">內容</span><br><input id="optDetail" class="inp" placeholder="通知重點" style="width:180px;"></div>';
+                } else {
+                    box.innerHTML = '<div><span class="lbl">備註</span><br><input id="optDetail" class="inp" placeholder="可選；未選則取首筆待繳" style="width:160px;"></div>';
+                }
+            }
+
+            function buildOpts() {
+                const t = document.getElementById('noticeType').value;
+                const opts = { channel: document.getElementById('channel').value };
+                const detailEl = document.getElementById('optDetail');
+                if (detailEl && detailEl.value) opts.detail = detailEl.value.trim();
+                if (t === 'absence_care') {
+                    const streakEl = document.getElementById('optStreak');
+                    if (streakEl) opts.streak = parseInt(streakEl.value, 10) || 3;
+                }
+                if (t === 'activity_notice') {
+                    const titleEl = document.getElementById('optTitle');
+                    const dateEl = document.getElementById('optDate');
+                    if (titleEl && titleEl.value) opts.activityTitle = titleEl.value.trim();
+                    if (dateEl && dateEl.value) opts.activityDate = dateEl.value;
+                }
+                if (t === 'general') {
+                    const subEl = document.getElementById('optSubject');
+                    if (subEl && subEl.value) opts.subject = subEl.value.trim();
+                }
+                return opts;
+            }
+
+            function renderDraftList() {
+                const messages = (db.data.communication && db.data.communication.messages) || [];
+                const drafts = messages.filter(m => m.status === 'draft' || m.copy_only).slice(-20).reverse();
+                if (!drafts.length) {
+                    document.getElementById('draftList').innerHTML = '<p style="color:#888;">尚無草稿。</p>';
+                    return;
+                }
+                document.getElementById('draftList').innerHTML =
+                    '<table><thead><tr><th>時間</th><th>學生</th><th>類型</th><th>摘要</th></tr></thead><tbody>' +
+                    drafts.map(m => '<tr><td>' + (m.createdAt || '').slice(0, 16) + '</td><td>' + (m.studentId || m.toUser || '—') + '</td><td>' + (m.noticeType || '—') + '</td><td>' + String(m.content || '').slice(0, 40) + '…</td></tr>').join('') +
+                    '</tbody></table>';
+            }
+
+            document.getElementById('noticeType').onchange = renderExtraFields;
+
+            document.getElementById('btnGenerate').onclick = function() {
+                const sid = parseInt(document.getElementById('studentSelect').value, 10);
+                if (!sid) return alert('請選擇學生');
+                try {
+                    lastDraft = db.buildParentNoticeDraft(sid, document.getElementById('noticeType').value, buildOpts());
+                    document.getElementById('draftSubject').value = lastDraft.subject || '';
+                    document.getElementById('draftBody').value = lastDraft.body || '';
+                    document.getElementById('draftMsg').textContent = '✅ 草稿已產生（' + lastDraft.disclaimer + '）';
+                } catch (err) {
+                    document.getElementById('draftMsg').textContent = '❌ ' + (err.message || err);
+                }
             };
 
-            draw();
+            document.getElementById('btnCopy').onclick = function() {
+                const text = (document.getElementById('draftSubject').value ? document.getElementById('draftSubject').value + '\n\n' : '') + document.getElementById('draftBody').value;
+                if (!text.trim()) return alert('請先產生草稿');
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        document.getElementById('draftMsg').textContent = '✅ 已複製到剪貼簿，請人工貼到實際通訊渠道';
+                    });
+                } else {
+                    document.getElementById('draftBody').select();
+                    document.execCommand('copy');
+                    document.getElementById('draftMsg').textContent = '✅ 已複製（fallback）';
+                }
+            };
+
+            document.getElementById('btnSaveDraft').onclick = function() {
+                if (!lastDraft) return alert('請先產生草稿');
+                try {
+                    db.saveParentNoticeDraft(lastDraft);
+                    document.getElementById('draftMsg').textContent = '✅ 已存為草稿（communication.messages）';
+                    renderDraftList();
+                } catch (err) {
+                    document.getElementById('draftMsg').textContent = '❌ ' + (err.message || err);
+                }
+            };
+
+            loadStudents();
+            renderExtraFields();
+            renderDraftList();
         })();
     </script>
 </body>

@@ -34,7 +34,7 @@
         .w2-toolbar button { margin-right: 6px; margin-bottom: 4px; padding: 6px 10px; border-radius: 6px; border: 1px solid #9b59b6; background: #fff; color: #6b21a8; cursor: pointer; font-size: 10px; }
     </style>
 </head>
-<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a">
+<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a">
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
         <h1>🎵 敬拜团队管理</h1>
         <div class="tabs">
@@ -48,6 +48,9 @@
             <strong>W2</strong>
             <button type="button" id="btnLinkMembers">🔗 对齐 memberId（成员+排班）</button>
             <button type="button" id="btnSyncMaster">↗ 同步 churchMasterDatabase</button>
+            <button type="button" onclick="exportTeamMembersCsv()" data-w5-report="worship-team-members-csv">⬇ 成員 CSV</button>
+            <button type="button" onclick="exportTeamScheduleCsv()" data-w5-report="worship-team-schedule-csv">⬇ 排班 CSV</button>
+            <button type="button" onclick="printTeamRoster()" data-w5-report="worship-team-print">🖨 列印名冊</button>
             <span id="w2Status"></span>
         </div>
         <div id="tab-members" class="tab-content active">
@@ -177,9 +180,45 @@
         }
         function showAddSongModal() { showModal('➕ 新增曲目', `<div class="form-group"><label>歌名</label><input type="text" id="sname" class="form-input"></div><button class="btn" onclick="addSong()">确定</button>`); }
         function addSong() { alert('功能完成中'); closeModal(); }
+        function csvEsc(v) {
+            if (window.CmReportUtils) return CmReportUtils.csvEsc(v);
+            var s = v == null ? '' : String(v);
+            if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+            return s;
+        }
+        function downloadCsv(filename, lines) {
+            if (window.CmReportUtils) return CmReportUtils.downloadCsv(filename, lines);
+            var blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
+        function exportTeamMembersCsv() {
+            var lines = ['id,name,position,memberId,count'];
+            (data.members || []).forEach(function (m) {
+                lines.push([m.id, m.name, m.position, m.memberId || '', m.count || 0].map(csvEsc).join(','));
+            });
+            downloadCsv('worship_team_members_' + new Date().toISOString().slice(0,10) + '.csv', lines);
+        }
+        function exportTeamScheduleCsv() {
+            var lines = ['date,lead,keyboard,guitar,drums'];
+            (data.schedules || []).forEach(function (s) {
+                lines.push([s.date, s.lead, s.keyboard, s.guitar, s.drums].map(csvEsc).join(','));
+            });
+            downloadCsv('worship_team_schedule_' + new Date().toISOString().slice(0,10) + '.csv', lines);
+        }
+        function printTeamRoster() {
+            var headers = ['姓名','職位','memberId','次數'];
+            var rows = (data.members || []).map(function (m) {
+                return [m.name, m.position, m.memberId || '', m.count || 0];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('敬拜團隊名冊', headers, rows);
+            else window.print();
+        }
     </script>
 
 
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 <!-- b100-ae-worship-w1-shell -->
 <link rel="stylesheet" href="../../css/ae_worship_six_section.css" />
 <script src="../../js/church-master-database.js"></script>
@@ -208,5 +247,10 @@
 <script src="../../js/crm_context_bar.js"></script>
 <script src="../../js/ae_primary_nav.js"></script>
 <script src="../../js/ae_subpage_shell.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

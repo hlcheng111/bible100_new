@@ -83,8 +83,41 @@
     F5: { dim: "vision_mission", reversed: false }
   };
 
+  var QUESTION_LABELS = {
+    A1: "我有固定、為自己（非僅事工）的靈修時間？",
+    A2: "靈修中我能向主傾心吐意，而非僅完成「功課」？",
+    A3: "我常從神的話語得安慰或方向，而非僅為講章找材料？",
+    A4: "在忙碌壓力中，我仍常意識神與我同在？",
+    A5: "我深知被神所愛，這身分比「牧者／領袖」角色更根本？",
+    B1: "我能覺察並說出當下的情緒，而非一概壓下？",
+    B2: "挫折或委屈時，我會帶到神前或可信任的人面前？",
+    B3: "最近我沒有長期麻木、提不起勁、不想關心人？",
+    B4: "受批評或攻擊後，我能在合理時間內恢復，而非長期自責或苦毒？",
+    B5: "我不常用忙碌、追劇或滑手機來逃避內心問題？",
+    C1: "我一週的服事工作量整體可持續，不長期透支？",
+    C2: "我有意識安排固定休息與安息（含不接電話／訊息的時段）？",
+    C3: "我不習慣凡事自己扛，願意分工授權？",
+    C4: "事工有基本計劃與檢討節奏，而非只靠臨時救火？",
+    C5: "過度忙碌或身心警號出現時，我願主動與同工／執事溝通調整？",
+    D1: "我的配偶／家人感到被重視與陪伴，而非僅被捲入教會忙碌？",
+    D2: "我與同工有基本信任與開放，能談不同意見與張力？",
+    D3: "會友期望不合理時，我能設界線，而非一味迎合或爆發？",
+    D4: "我不是長期孤單，至少有一兩人了解我實際承受什麼？",
+    D5: "衝突中我盡量尋求和好與尊重，而非冷戰、切割或心中定罪？",
+    E1: "我深知呼召源於神，而非主要建立在果效或他人肯定上？",
+    E2: "果效不如預期時，我不會立刻覺得自己是「失敗的工人」？",
+    E3: "我不常拿自己教會與他者比較，來衡量自己的價值？",
+    E4: "面對新挑戰，我仍對神在教會與個人身上的計劃懷抱盼望？",
+    E5: "我能接受果效多年後才顯現，不急於用短期數字衡量一切？",
+    F1: "教會中有一兩位成熟者，能對我說真話、指出盲點？",
+    F2: "我願在合適範圍與核心團隊分享掙扎，而非維持完美形象？",
+    F3: "決策時我刻意尋求不同聲音，而非只聽贊同者？",
+    F4: "我不把自己的看法等同「神唯一的心意」，願承認可能看錯？",
+    F5: "在財務、用人、性別互動等高風險領域，我有清楚界線與問責？"
+  };
+
   var QUESTIONS = Object.keys(QUESTION_MAP).map(function (id) {
-    return { id: id, dim: QUESTION_MAP[id].dim, label: id + "（題幹見問卷頁）" };
+    return { id: id, dim: QUESTION_MAP[id].dim, label: QUESTION_LABELS[id] || id };
   });
 
   var THRESHOLDS = { green: 4.0, yellow: 2.8, min_answered: 20 };
@@ -114,6 +147,23 @@
       "【績效陷阱】容易把教會成敗當成自我價值——數字好才覺得有用。宜重述「被神所愛的兒女」身分，而非只看人數。",
     NUMBNESS:
       "【心靈麻木】情緒覺察低、與神也覺得遠——不一定立刻爆發，但像引擎沒機油。宜先恢復短禱告、短安息與可信任對話。"
+  };
+
+  /** Tab ③ 報告用：牧養現場對話語氣（少術語） */
+  var FLAG_SCENE_COPY = {
+    LOW_COMPLETION: "題目還沒填完——像煙霧探測器還沒接好線，先補填再開會解讀。",
+    BURNOUT:
+      "像連續兩個主日後仍覺得空虛、回家只想發呆——負荷高、休息少，油箱快見底。長執先談減負與強制安息，別再加新活動。",
+    POWER:
+      "像開會時只有自己說話、沒人敢潑冷水——決策容易變成「只有一個聲音」。先找一位能說真話的同行者。",
+    SPIRITUAL_STAGNATION:
+      "像事工還在跑、大家卻越來越疏離——咬牙做對的事，但同工之間少愛。先停一場會，修復關係再談績效。",
+    FAMILY:
+      "像家人常說「你又去教會了」——服事忙，家人卻覺得被晾在一邊。議程要排休假與家庭日。",
+    PERFORMANCE:
+      "像人數不如預期就覺得自己是失敗牧者——把教會成敗當成自我價值。宜重述「被神所愛的兒女」身分。",
+    NUMBNESS:
+      "像對什麼都提不起勁、禱告也變成例行——不一定立刻爆發，但像引擎缺機油。先恢復短禱告與可信任對話。"
   };
 
   var TIER_COPY = {
@@ -291,7 +341,7 @@
     return { ok: errors.length === 0, errors: errors, answers: map, answeredCount: answeredCount };
   }
 
-  function buildCoaching(dimScores, overall, flags) {
+  function findWeakestDim(dimScores) {
     var weakest = null;
     var weakestScore = 99;
     Object.keys(dimScores).forEach(function (dim) {
@@ -300,14 +350,39 @@
         weakest = dim;
       }
     });
+    return { dim: weakest, score: weakestScore };
+  }
+
+  function buildMicroStep(dimScores, overall, flags) {
+    var w = findWeakestDim(dimScores);
+    var steps = {
+      joy: "本週排一個 20 分鐘「無產出」安靜時刻，只與神同在、不處理事工。",
+      scripture_word: "本週每天 10 分鐘短讀＋一句禱告，區分「預備事工」與「自己被牧養」。",
+      load_boundary: "本週列出一件可暫停或交出的服事，與一位同工確認交接。",
+      rest_family: "本週排一個不可侵犯的家庭時段（例如週二晚），並告知團隊。",
+      team_support: "本週主動約一位可說真話的同行者，分享一項實際壓力。",
+      emotion_stress: "本週若感到麻木，先寫下三件具體憂慮，再帶到神前或可信任者。",
+      vision_mission: "本週重讀一段身分經文，與團隊說一句「忠心優於數字」。"
+    };
+    if (flags.indexOf("BURNOUT") >= 0) {
+      return "本週只做兩件事：排半天完全離線安息，並取消一項非緊急會議。";
+    }
+    return steps[w.dim] || steps.rest_family;
+  }
+
+  function buildCoaching(dimScores, overall, flags) {
+    var w = findWeakestDim(dimScores);
+    var weakest = w.dim;
     var tier = levelFromScore(overall);
+    var micro_step = buildMicroStep(dimScores, overall, flags);
     return {
       disclaimer: HITL_DISCLAIMER,
       tier_copy: TIER_COPY[tier] || TIER_COPY.yellow,
       growth:
         "優先關心「" +
         (DIM_LABELS[weakest] || "核心負擔") +
-        "」——選一個未來四週可守住的小步（休息、對話或界線），勿一次改全部。",
+        "」——本週只守報告裡的一個小步，勿一次改全部。",
+      micro_step: micro_step,
       collaboration:
         flags.indexOf("BURNOUT") >= 0 || flags.indexOf("SPIRITUAL_STAGNATION") >= 0
           ? "長執開會前先問：「我們是否在要求一台快爆掉的引擎再加速？」必要時暫緩新事工表決。"
@@ -479,6 +554,7 @@
     DIM_PROJECTION: DIM_PROJECTION,
     THRESHOLDS: THRESHOLDS,
     FLAG_DESCRIPTIONS: FLAG_DESCRIPTIONS,
+    FLAG_SCENE_COPY: FLAG_SCENE_COPY,
     TIER_COPY: TIER_COPY,
     RISK_PRIORITY: RISK_PRIORITY,
     validate: validate,

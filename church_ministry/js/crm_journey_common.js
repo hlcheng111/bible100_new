@@ -524,7 +524,7 @@
     { key: "pastoral", zh: "牧養及小組", en: "Pastoral & groups", emoji: "👥", href: "_landing/fellowship.html" },
     { key: "kids", zh: "兒童及門訓", en: "Kids & discipleship", emoji: "📚", href: "_landing/education.html" },
     { key: "outreach", zh: "外展及差傳", en: "Outreach", emoji: "🌍", href: "_landing/expansion.html" },
-    { key: "admin", zh: "行政支援", en: "Admin", emoji: "⚙️", href: "dashboard.html" },
+    { key: "admin", zh: "F. 行政支援", en: "Admin", emoji: "⚙️", href: "dashboard.html" },
     { key: "planning", zh: "教會規劃 OS", en: "Planning OS", emoji: "🧭", href: "../church_planning/index_plan.html" }
   ];
 
@@ -1058,7 +1058,7 @@
       ]
     },
     admin: {
-      titleZh: "⚙️ 行政支援",
+      titleZh: "⚙️ F. 行政支援",
       titleEn: "Admin",
       aiHintZh: "💡 搭配「少填表」：每週約 10 分鐘核對預填即可。",
       aiHintEn: "Low admin with prefill.",
@@ -2345,6 +2345,23 @@
     }
   }
 
+  function educationZoneShellPair(opts) {
+    opts = opts || {};
+    var tab = opts.tab || "guide";
+    var crm = opts.crmFrom || "hub";
+    var role = opts.role || "teacher";
+    /* 預設深鏈 #tab-guide；亦可 roster / attendance / discipleship / teaching */
+    return {
+      sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=c",
+      contentUrl:
+        "church_ministry/modules/education/education-integrated.html?crm_from=" +
+        encodeURIComponent(crm) +
+        "&role=" +
+        encodeURIComponent(role) +
+        (tab === "guide" ? "#tab-guide" : "#tab-" + tab)
+    };
+  }
+
   global.CrmJourneyBrand = {
     ROLES: ROLES,
     JOURNEY_MAPS: JOURNEY_MAPS,
@@ -2357,6 +2374,7 @@
     MATCHMAKER_MANAGER_STAGES: MATCHMAKER_MANAGER_STAGES,
     renderJourneyRoadmap: renderJourneyRoadmap,
     MINISTRY_DEPTS: MINISTRY_DEPTS,
+    educationZoneShellPair: educationZoneShellPair,
     initLanding: initLanding,
     initRedirect: initRedirect,
     switchMasterTab: switchMasterTab,

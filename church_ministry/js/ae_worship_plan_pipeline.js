@@ -152,6 +152,8 @@
       '<button type="button" class="volunteer-btn" id="w5NewPlan">新建</button>' +
       '<button type="button" class="volunteer-btn" id="w5SyncSub">↻ 从子页同步</button>' +
       '<button type="button" class="volunteer-btn" id="w5PushSub">↗ 写回讲台</button>' +
+      '<button type="button" class="volunteer-btn" id="w5ExportCsv" data-w2-report="worship-plan-csv">⬇ 策划 CSV</button>' +
+      '<button type="button" class="volunteer-btn" id="w5PrintPlan" data-w2-report="worship-plan-print">🖨 列印简报</button>' +
       '<select id="w5PlanSelect" class="w5-select"></select>' +
       "</div></div>" +
       alerts +
@@ -215,6 +217,18 @@
         alert("已写回讲台讲道计划（pulpit_sermons）");
       });
     }
+    var csvBtn = doc.getElementById("w5ExportCsv");
+    if (csvBtn) {
+      csvBtn.addEventListener("click", function () {
+        exportPlanCsv(plan);
+      });
+    }
+    var printBtn = doc.getElementById("w5PrintPlan");
+    if (printBtn) {
+      printBtn.addEventListener("click", function () {
+        printPlanBrief(plan);
+      });
+    }
     var sel = doc.getElementById("w5PlanSelect");
     if (sel) {
       var list = P.listPlans();
@@ -238,7 +252,115 @@
     }
   }
 
-  win.AeWorshipPlanPipeline = { render: render, openPlanTab: openPlanTab, STEPS: STEPS };
+  function csvEsc(v) {
+    var s = v == null ? "" : String(v);
+    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  /** W2 · 主日策划长执报告 */
+  function exportPlanCsv(plan) {
+    var p = plan.pulpit || {};
+    var t = plan.teams || {};
+    var rh = plan.rehearsal || {};
+    var songs = plan.songs || [];
+    var lines = [
+      ["field", "value"].join(","),
+      ["date", plan.date].map(csvEsc).join(","),
+      ["theme", plan.theme || ""].map(csvEsc).join(","),
+      ["liturgySeason", plan.liturgySeason || ""].map(csvEsc).join(","),
+      ["speaker", p.speaker || ""].map(csvEsc).join(","),
+      ["sermonTitle", p.sermonTitle || ""].map(csvEsc).join(","),
+      ["scripture", p.scripture || ""].map(csvEsc).join(","),
+      ["worship_lead", t.worship_lead || ""].map(csvEsc).join(","),
+      ["choir", t.choir || ""].map(csvEsc).join(","),
+      ["sound", t.sound || ""].map(csvEsc).join(","),
+      ["stream", t.stream || ""].map(csvEsc).join(","),
+      ["hospitality", t.hospitality || ""].map(csvEsc).join(","),
+      ["rehearsal", (rh.date || "") + " " + (rh.time || "") + " @ " + (rh.place || "")].map(csvEsc).join(",")
+    ];
+    songs.forEach(function (s, i) {
+      lines.push(["song_" + (i + 1), (s.slot || "") + " " + (s.title || "")].map(csvEsc).join(","));
+    });
+    STEPS.forEach(function (step) {
+      var st = (plan.pipeline && plan.pipeline[step.id]) || "pending";
+      lines.push(["pipeline_" + step.id, st].map(csvEsc).join(","));
+    });
+    var blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    var a = doc.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "worship_plan_" + (plan.date || "draft") + ".csv";
+    a.click();
+  }
+
+  function printPlanBrief(plan) {
+    var p = plan.pulpit || {};
+    var t = plan.teams || {};
+    var rh = plan.rehearsal || {};
+    var songs = (plan.songs || [])
+      .map(function (s) {
+        return "<li>" + esc(s.slot) + " · " + esc(s.title) + "</li>";
+      })
+      .join("");
+    var pipe = STEPS.map(function (step) {
+      var st = (plan.pipeline && plan.pipeline[step.id]) || "pending";
+      return "<li>" + esc(step.label) + "：" + esc(st) + "</li>";
+    }).join("");
+    var w = win.open("", "_blank");
+    if (!w) {
+      alert("无法开启列印视窗（请允许弹出）");
+      return;
+    }
+    w.document.write(
+      '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>主日策划简报</title>' +
+        "<style>body{font-family:Microsoft JhengHei,sans-serif;font-size:13px;padding:18px;line-height:1.5}" +
+        "h1{font-size:18px}h2{font-size:14px;margin-top:16px}ul{margin:6px 0}</style></head><body>" +
+        "<h1>主日崇拜策划 · " +
+        esc(plan.date) +
+        "</h1>" +
+        "<p>主题：" +
+        esc(plan.theme || "—") +
+        " · 圣历：" +
+        esc(plan.liturgySeason || "—") +
+        "</p>" +
+        "<h2>讲台</h2><p>" +
+        esc(p.speaker || "—") +
+        " · " +
+        esc(p.sermonTitle || "待定") +
+        "<br>" +
+        esc(p.scripture || "") +
+        "</p>" +
+        "<h2>诗歌</h2><ul>" +
+        (songs || "<li>（无）</li>") +
+        "</ul>" +
+        "<h2>人力</h2><p>主领：" +
+        esc(t.worship_lead || "—") +
+        " · 诗班：" +
+        esc(t.choir || "—") +
+        "<br>音响：" +
+        esc(t.sound || "—") +
+        " · 直播：" +
+        esc(t.stream || "—") +
+        " · 招待：" +
+        esc(t.hospitality || "—") +
+        "</p>" +
+        "<h2>彩排</h2><p>" +
+        esc(rh.date || "—") +
+        " " +
+        esc(rh.time || "") +
+        " @ " +
+        esc(rh.place || "") +
+        "</p>" +
+        "<h2>流程状态</h2><ul>" +
+        pipe +
+        "</ul>" +
+        "<script>window.onload=function(){window.print();}</" +
+        "script></body></html>"
+    );
+    w.document.close();
+  }
+
+  win.AeWorshipPlanPipeline = { render: render, openPlanTab: openPlanTab, STEPS: STEPS, exportPlanCsv: exportPlanCsv, printPlanBrief: printPlanBrief };
 
   function openPlanTab() {
     var tab = doc.querySelector('.tab[data-leader-only]');

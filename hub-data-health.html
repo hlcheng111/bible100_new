@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hub Base · 數據健康快照</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft YaHei", sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 16px 18px 32px; }
+    header {
+      background: linear-gradient(135deg, #065f46 0%, #059669 100%);
+      color: #fff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+    header h1 { margin: 0 0 6px; font-size: 1.2rem; }
+    header p { margin: 0; font-size: 0.85rem; opacity: 0.92; }
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+    .ok { border-color: #86efac; background: #ecfdf5; }
+    .warn { border-color: #fcd34d; background: #fffbeb; }
+    .kpi { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0; }
+    .kpi span { background: #f1f5f9; padding: 6px 10px; border-radius: 8px; font-size: 0.82rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 10px; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #f1f5f9; }
+    th { background: #f8fafc; }
+    button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      background: #059669;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    button.secondary { background: #64748b; }
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      margin-top: 8px;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.75rem;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    .links a { color: #059669; font-weight: 600; margin-right: 12px; font-size: 0.85rem; }
+    .hint { font-size: 0.82rem; color: #64748b; margin: 8px 0 0; }
+  </style>
+  <script src="js/central_member_db.js"></script>
+  <script src="js/smart_ministry_canonical_store.js"></script>
+  <script src="js/hub_base/hub_base_constant.js"></script>
+  <script src="js/hub_base/hub_base_schema.js"></script>
+  <script src="js/hub_base/hub_base_utils.js"></script>
+  <script src="js/hub_base/hub_base_ops.js"></script>
+</head>
+<body data-b100-page-tier="canonical">
+  <div class="wrap">
+    <header>
+      <h1>🩺 Hub Base · 數據健康快照</h1>
+      <p>可偵測、手動修復 · 不做黑箱自動修復 · 管理員巡查用</p>
+    </header>
+
+    <div class="card" id="summaryCard">
+      <button type="button" id="btnScan">重新掃描</button>
+      <button type="button" class="secondary" id="btnExport">匯出報告 JSON</button>
+      <div class="kpi" id="kpiRow"></div>
+      <p class="hint">異常列僅供人工修正；請到對應工作桌或 canonical 頁編輯單筆紀錄。</p>
+    </div>
+
+    <div class="card" id="issuesCard">
+      <h2 style="margin:0 0 8px;font-size:1rem;">異常清單</h2>
+      <div id="issuesHost"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 8px;font-size:1rem;">標籤保護測試（Phase 5 預覽）</h2>
+      <p class="hint">輸入 talent_id 與新恩賜字串，檢查是否因 <code>leader_confirmed_at</code> 而僅建議、不強制覆蓋。</p>
+      <label>talent_id <input id="tagTalentId" type="text" style="width:100%;padding:6px;margin:6px 0;border:1px solid #cbd5e1;border-radius:6px;"></label>
+      <label>新恩賜 <input id="tagGift" type="text" style="width:100%;padding:6px;margin:6px 0;border:1px solid #cbd5e1;border-radius:6px;" placeholder="例：教導、服事"></label>
+      <button type="button" id="btnTagTest">試算匯入策略</button>
+      <textarea id="tagResult" readonly aria-label="匯入策略結果"></textarea>
+    </div>
+
+    <p class="links">
+      <a href="hub-audit-viewer.html">審計日誌檢視</a>
+      <a href="smart_ministry/talent_skill_unified.html">恩賜統整</a>
+      <a href="index_v5.html">返回總站</a>
+    </p>
+  </div>
+
+  <script>
+    (function () {
+      var lastReport = null;
+
+      function renderReport(rep) {
+        lastReport = rep;
+        var card = document.getElementById("summaryCard");
+        card.className = "card " + (rep.ok ? "ok" : "warn");
+        var s = rep.summary;
+        document.getElementById("kpiRow").innerHTML =
+          "<span>spaceId: <strong>" +
+          esc(s.spaceId) +
+          "</strong></span>" +
+          "<span>會友: " +
+          (s.counts.members != null ? s.counts.members : "—") +
+          "</span>" +
+          "<span>人才: " +
+          (s.counts.talents != null ? s.counts.talents : "—") +
+          "</span>" +
+          "<span>崗位: " +
+          (s.counts.ministries != null ? s.counts.ministries : "—") +
+          "</span>" +
+          "<span>配對: " +
+          (s.counts.assignments != null ? s.counts.assignments : "—") +
+          "</span>" +
+          "<span>異常: <strong>" +
+          s.issue_count +
+          "</strong></span>";
+
+        var host = document.getElementById("issuesHost");
+        if (!rep.issues.length) {
+          host.innerHTML = "<p style='color:#059669;margin:0;'>✅ 未偵測到必要欄位缺失。</p>";
+          return;
+        }
+        host.innerHTML =
+          "<table><thead><tr><th>域</th><th>ID</th><th>欄位</th><th>訊息</th></tr></thead><tbody>" +
+          rep.issues
+            .map(function (i) {
+              return (
+                "<tr><td>" +
+                esc(i.domain) +
+                "</td><td class='mono'>" +
+                esc(i.id) +
+                "</td><td>" +
+                esc(i.field) +
+                "</td><td>" +
+                esc(i.message) +
+                "</td></tr>"
+              );
+            })
+            .join("") +
+          "</tbody></table>";
+      }
+
+      function esc(s) {
+        return String(s == null ? "" : s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;");
+      }
+
+      document.getElementById("btnScan").addEventListener("click", function () {
+        HubBase.setSimulatedRole("admin");
+        renderReport(HubBase.runHealthCheck());
+      });
+
+      document.getElementById("btnExport").addEventListener("click", function () {
+        if (!lastReport) return;
+        var blob = new Blob([JSON.stringify(lastReport, null, 2)], { type: "application/json" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "hub_health_" + Date.now() + ".json";
+        a.click();
+      });
+
+      document.getElementById("btnTagTest").addEventListener("click", function () {
+        var tid = (document.getElementById("tagTalentId").value || "").trim();
+        var gift = (document.getElementById("tagGift").value || "").trim();
+        var res = HubBase.proposeTalentTagImport(tid, { gift: gift }, { tags_source: "assessment" });
+        document.getElementById("tagResult").value = JSON.stringify(res, null, 2);
+      });
+
+      HubBase.setSimulatedRole("admin");
+      renderReport(HubBase.runHealthCheck());
+    })();
+  </script>
+</body>
+</html>

@@ -41,6 +41,8 @@
         <input type="text" id="filterMember" placeholder="可選">
       </label>
       <button type="button" class="cm-btn cm-btn-primary" id="btnFilter">篩選</button>
+      <button type="button" class="cm-btn cm-btn-success" id="btnExportShiftCsv" data-w1-report="shifts-csv">⬇ 班表 CSV</button>
+      <button type="button" class="cm-btn cm-btn-secondary" id="btnPrintShiftList" data-w1-report="shifts-print">🖨 列印班表</button>
     </section>
     <section class="cm-card">
       <div style="overflow-x:auto;">
@@ -69,11 +71,20 @@
     document.getElementById('toolNav').innerHTML = VolunteerShiftTool.renderToolNav('list');
     VolunteerShiftTool.renderTrustBadge('dataTrustMount', { position: 'top', write_behavior: 'read_only', notify_behavior: 'none' });
 
+    var _lastShiftRows = [];
+
+    function csvEscapeCell(v) {
+      var s = v == null ? '' : String(v);
+      if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+
     function renderList() {
       var b = VolunteerShiftTool.bridge();
       var tbody = document.getElementById('listBody');
       if (!b || !b.listVolunteerShifts) {
         tbody.innerHTML = '<tr><td colspan="7" class="cm-muted">Bridge 未就緒</td></tr>';
+        _lastShiftRows = [];
         return;
       }
       var filters = {};
@@ -87,6 +98,7 @@
       if (conf === '0') filters.confirmed = false;
       if (conf === '1') filters.confirmed = true;
       var rows = b.listVolunteerShifts(filters);
+      _lastShiftRows = rows;
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="7" class="cm-muted" style="padding:8px;">無符合資料</td></tr>';
         return;
@@ -137,7 +149,52 @@
       });
     }
 
+    function exportShiftCsv() {
+      var rows = _lastShiftRows || [];
+      var lines = [['id', 'date', 'member_id', 'member_name', 'ministry', 'shift', 'confirmed'].join(',')];
+      rows.forEach(function (s) {
+        lines.push([
+          s.id, s.date, s.memberId, s.memberName || '', s.ministryName || '', s.shift || '', s.confirmed ? 'yes' : 'no'
+        ].map(csvEscapeCell).join(','));
+      });
+      var blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'volunteer_shifts_' + new Date().toISOString().slice(0, 10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function printShiftList() {
+      var rows = _lastShiftRows || [];
+      var from = document.getElementById('filterFrom').value;
+      var to = document.getElementById('filterTo').value;
+      var htmlRows = rows.map(function (s) {
+        return '<tr><td>' + VolunteerShiftTool.esc(s.date) + '</td><td>' +
+          VolunteerShiftTool.esc(s.memberName || s.memberId) + '</td><td>' +
+          VolunteerShiftTool.esc(s.ministryName || '—') + '</td><td>' +
+          VolunteerShiftTool.esc(s.shift || '—') + '</td><td>' +
+          (s.confirmed ? '已確認' : '待確認') + '</td></tr>';
+      }).join('');
+      var w = window.open('', '_blank');
+      if (!w) { alert('無法開啟列印視窗（請允許彈出）'); return; }
+      w.document.write(
+        '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>義工班表</title>' +
+        '<style>body{font-family:Microsoft JhengHei,sans-serif;font-size:12px;padding:16px}' +
+        'table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}' +
+        'h1{font-size:16px}</style></head><body>' +
+        '<h1>義工班表（' + from + ' ~ ' + to + '）· ' + rows.length + ' 筆</h1>' +
+        '<table><thead><tr><th>日期</th><th>會友</th><th>崗位</th><th>班次</th><th>狀態</th></tr></thead><tbody>' +
+        (htmlRows || '<tr><td colspan="5">無資料</td></tr>') +
+        '</tbody></table><script>window.onload=function(){window.print();}</' + 'script></body></html>'
+      );
+      w.document.close();
+    }
+
     document.getElementById('btnFilter').addEventListener('click', renderList);
+    document.getElementById('btnExportShiftCsv').addEventListener('click', exportShiftCsv);
+    document.getElementById('btnPrintShiftList').addEventListener('click', printShiftList);
     document.getElementById('btnCopyListSnippet').addEventListener('click', function () {
       VolunteerShiftTool.copySnippet(document.getElementById('listSnippetText').textContent);
     });
@@ -152,5 +209,9 @@
       renderList();
     });
   </script>
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

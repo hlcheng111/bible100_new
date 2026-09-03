@@ -107,8 +107,133 @@
     return "default";
   }
 
+  function isPlanningFrom(from) {
+    if (!from) return false;
+    if (from === "planning_step6" || from === "planning_g_admin" || from === "planning") return true;
+    return String(from).indexOf("planning") === 0;
+  }
+
+  function planningBackTarget(from) {
+    if (from === "planning_step6") {
+      return {
+        trail: "🟩 規劃步 6 · 行政執行（Do）",
+        hint: "從「步驟 6」進入。本頁資料經 Bridge 寫入；完成後可回戰情總覽或規劃。",
+        sidebarUrl: "church_planning/sidebar_plan_v5_preview.html",
+        contentUrl: "church_planning/guides/guide_step6_crm.html",
+        backLabel: "⬅ 回步 6 導覽"
+      };
+    }
+    return {
+      trail: "🟢 G 行政管理 · Do 實戰",
+      hint: "從「教會規劃 → 行政管理」進入。左欄仍為 G 側欄；本頁 save 後戰情總覽 KPI 會更新。",
+      sidebarUrl: "church_planning/sidebar_plan_v5_preview.html",
+      contentUrl: "church_planning/landing_g_admin.html",
+      backLabel: "⬅ 回行政 landing"
+    };
+  }
+
+  function shellNavTo(ev, sidebarUrl, contentUrl) {
+    if (typeof global.bible100ShellNav === "function") {
+      global.bible100ShellNav(ev, { sidebarUrl: sidebarUrl, contentUrl: contentUrl });
+      return false;
+    }
+    try {
+      global.parent.postMessage(
+        { type: "bible100-shell", sidebarUrl: sidebarUrl, contentUrl: contentUrl },
+        "*"
+      );
+    } catch (ePm) { /* ignore */ }
+    return false;
+  }
+
+  function renderPlanningBar() {
+    var params = getParams();
+    if (!isPlanningFrom(params.from)) return false;
+    var meta = planningBackTarget(params.from);
+    var path = global.location.pathname || "";
+    var isDash = /dashboard\.html/i.test(path);
+    var hintExtra = isDash
+      ? " · 本頁＝<strong>Do 戰情總覽</strong>（SPAC KPI）；六維破口請開「健康雷達戰情室」。"
+      : " · 完成後開「戰情總覽」看 KPI 是否更新。";
+
+    var bar = global.document.createElement("div");
+    bar.className = "crm-ctx-bar crm-ctx-bar--planning";
+    bar.setAttribute("role", "navigation");
+    bar.setAttribute("aria-label", "Plan→Do 安全繩");
+    bar.innerHTML =
+      '<div class="crm-ctx-bar__trail">' + meta.trail + "</div>" +
+      '<div class="crm-ctx-bar__hint">' + meta.hint + hintExtra + "</div>" +
+      '<div class="crm-ctx-bar__actions">' +
+      '<a class="crm-ctx-bar__btn crm-ctx-bar__btn--primary" href="#" id="crmCtxBackPlan">' + meta.backLabel + "</a>" +
+      '<a class="crm-ctx-bar__btn crm-ctx-bar__btn--ghost" href="#" id="crmCtxDoDash">📡 戰情總覽</a>' +
+      '<a class="crm-ctx-bar__btn crm-ctx-bar__btn--ghost" href="#" id="crmCtxPlanWar">📊 健康雷達</a>' +
+      '<a class="crm-ctx-bar__btn crm-ctx-bar__btn--5f" href="#" id="crmCtxPlaybook">📖 W5 劇本</a>' +
+      "</div>";
+
+    var back = bar.querySelector("#crmCtxBackPlan");
+    var dash = bar.querySelector("#crmCtxDoDash");
+    var war = bar.querySelector("#crmCtxPlanWar");
+    var playbook = bar.querySelector("#crmCtxPlaybook");
+
+    if (back) {
+      back.addEventListener("click", function (ev) {
+        return shellNavTo(ev, meta.sidebarUrl, meta.contentUrl);
+      });
+    }
+    if (dash) {
+      dash.addEventListener("click", function (ev) {
+        var url = "church_ministry/dashboard.html?crm_from=" + encodeURIComponent(params.from || "planning_g_admin");
+        if (typeof global.bible100ShellNav === "function") {
+          global.bible100ShellNav(ev, { contentUrl: url });
+          return false;
+        }
+        try {
+          global.parent.postMessage({ type: "navigate", url: url }, "*");
+        } catch (eD) { /* ignore */ }
+        return false;
+      });
+    }
+    if (war) {
+      war.addEventListener("click", function (ev) {
+        return shellNavTo(ev, "church_planning/sidebar_plan_v5_preview.html", "church_planning/cta-os-war-room.html");
+      });
+    }
+    if (playbook) {
+      playbook.addEventListener("click", function (ev) {
+        return shellNavTo(ev, "help/sidebar_help.html", "help/user_playbooks_w5.html");
+      });
+    }
+
+    var mount = global.document.body;
+    if (!mount) return false;
+    var first = mount.firstChild;
+    if (first) mount.insertBefore(bar, first);
+    else mount.appendChild(bar);
+    return true;
+  }
+
+  function shouldHideInHub() {
+    if (global.B100HubEmbed && global.B100HubEmbed.shouldHideChrome) {
+      return global.B100HubEmbed.shouldHideChrome();
+    }
+    try {
+      if (global.parent && global.parent !== global && global.frameElement) {
+        var n = global.frameElement.id || global.frameElement.getAttribute("name") || "";
+        return n === "contentFrame";
+      }
+    } catch (eH) { /* ignore */ }
+    return false;
+  }
+
   function renderBar(opts) {
     opts = opts || {};
+    if (global.B100HubEmbed && global.B100HubEmbed.apply) {
+      global.B100HubEmbed.apply();
+    }
+    if (shouldHideInHub()) {
+      if (!opts.force) return;
+    }
+    if (renderPlanningBar()) return;
     var params = getParams();
     if (params.from !== "hub" && !opts.force) return;
     var role = params.role || "member";
@@ -162,7 +287,12 @@
     else mount.appendChild(bar);
   }
 
-  global.CrmContextBar = { render: renderBar, getParams: getParams, hubReturnUrl: hubReturnUrl };
+  global.CrmContextBar = {
+    render: renderBar,
+    getParams: getParams,
+    hubReturnUrl: hubReturnUrl,
+    isPlanningFrom: isPlanningFrom
+  };
   if (global.document.currentScript && global.document.currentScript.getAttribute("data-auto") !== "0") {
     global.document.addEventListener("DOMContentLoaded", function () {
       renderBar();

@@ -1,6 +1,5 @@
 /**
- * Bible App — 獨立 / Hub 互聯路徑（AI 補給站、主站）
- * 預設僅 supply/prompt.html；ai_tools 須 probe 成功才附加。
+ * Bible App — 獨立 / Hub 互聯路徑（讀後學生路徑 vs 老師備課台）
  */
 (function (global) {
   var PROBE_AI = '/ai_tools/tools/bible_prompt_generator.html';
@@ -45,35 +44,61 @@
     ];
   }
 
-  function hubTools(passage, ref) {
-    var q = '?passage=' + encodeURIComponent(passage) + '&ref=' + encodeURIComponent(ref);
-    var hub = hubAiBase();
-    if (!hub) return [];
+  /** 讀完打卡 · 學生路徑（2 卡：問答 + 更深讀；不鏈備課工作台／媒體 demo） */
+  function readDoneStudentTools(search) {
+    var q = search instanceof URLSearchParams ? search : new URLSearchParams(search || '');
+    var parts = [];
+    ['track', 'book', 'chapter', 'verse', 'ref', 'passage', 'locale', 'day', 'gv', 'theme', 'unit'].forEach(function (k) {
+      var v = q.get(k);
+      if (v) parts.push(k + '=' + encodeURIComponent(v));
+    });
+    var qs = parts.length ? '?' + parts.join('&') : '';
+    var creativeQs = qs;
+    var creative = hubAiBase()
+      ? hubToolUrl('tools/creative_tools_landing.html', creativeQs)
+      : '../../../ai_tools/tools/creative_tools_landing.html' + creativeQs;
+    var guide = hubAiBase()
+      ? hubToolUrl('pages/guide_reading_hub.html', creativeQs)
+      : '../../../ai_tools/pages/guide_reading_hub.html' + creativeQs;
     return [
-      { emoji: '📖', label: '神學 AI 導讀', sub: '背景·原文·問答', url: hub + 'pages/guide_reading_hub.html' + q + '#sec-passage' },
-      { emoji: '🔊', label: '文字轉語音', sub: '朗讀經文', url: hub + 'pages/ai_text_to_speech.html' + q },
-      { emoji: '🖼️', label: '文字轉圖像', sub: '畫插圖', url: hub + 'pages/ai_text_to_image.html' + q },
-      { emoji: '🎼', label: '文字轉音樂', sub: '敬拜氛圍', url: hub + 'pages/ai_text_to_music.html' + q },
-      { emoji: '✍️', label: 'Prompt 生成器', sub: '備課提問', url: hub + 'tools/bible_prompt_generator.html' + q },
+      {
+        emoji: '💬',
+        label: '我有問題',
+        sub: '複製 Prompt · 或查難題題庫',
+        url: 'ai-qna.html' + qs,
+        hi: true,
+      },
+      {
+        emoji: '📖',
+        label: '更深讀這段',
+        sub: '背景·原文·三鏡頭導讀',
+        url: 'ai-tutor.html' + qs,
+        hi: true,
+      },
+      {
+        emoji: '🎨',
+        label: '讀後創意工作站',
+        sub: '畫圖／朗讀／問 · 須老師審核',
+        url: creative,
+        hi: true,
+      },
+      {
+        emoji: '✍️',
+        label: '三鏡頭導讀站',
+        sub: '已修繕 Prompt 工作站',
+        url: guide,
+      },
     ];
   }
 
-  /** 同步：僅殼內 supply（上云預設） */
+  /** 同步：學生讀後卡（問／深讀／創意） */
   function getReadDoneTools(passage, ref) {
-    return supplyTools(passage, ref);
+    return readDoneStudentTools(new URLSearchParams(global.location.search));
   }
 
-  /** 非同步：supply 先顯示，probe 成功再附加 Hub */
+  /** 非同步：與同步相同（跑道不 probe 附加 Hub demo 工具） */
   function loadReadDoneTools(passage, ref, cb) {
-    var tools = supplyTools(passage, ref);
-    if (location.protocol === 'file:' || !isRepoRootServe()) {
-      cb(tools);
-      return;
-    }
-    probeHubAi(function (ok) {
-      if (ok) tools = tools.concat(hubTools(passage, ref));
-      cb(tools);
-    });
+    cb(readDoneStudentTools(new URLSearchParams(global.location.search)));
   }
 
   function probeHubAi(cb) {
@@ -96,9 +121,22 @@
     supplyBase: supplyBase,
     supplyPromptUrl: supplyPromptUrl,
     hubToolUrl: hubToolUrl,
+    readDoneStudentTools: readDoneStudentTools,
     getReadDoneTools: getReadDoneTools,
     loadReadDoneTools: loadReadDoneTools,
     probeHubAi: probeHubAi,
     isRepoRootServe: isRepoRootServe,
+    studyReaderUrl: function () {
+      var path = 'bible_study/comprehensive_exegesis_reader.html?book=創世記&chapter=1';
+      if (location.protocol === 'file:') return '../../' + path;
+      if (isRepoRootServe()) return location.origin + '/' + path;
+      return '../../' + path;
+    },
+    parallelReaderUrl: function () {
+      var path = 'bible_study/parallel_mode_v3.html';
+      if (location.protocol === 'file:') return '../../' + path;
+      if (isRepoRootServe()) return location.origin + '/' + path;
+      return '../../' + path;
+    },
   };
 })(typeof window !== 'undefined' ? window : global);

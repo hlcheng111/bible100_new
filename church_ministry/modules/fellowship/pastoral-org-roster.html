@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>组织与名册中心 · Organization | Church Ministry</title>
+    <link rel="stylesheet" href="../../css/pastoral_workspace.css">
+    <script src="../../../js/page_capability_badge.js" data-status="live"></script>
+    <script src="../../../js/cloud_config.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
+</head>
+<body data-b100-module="church_ministry" data-b100-ae-chrome="minimal" data-b100-ae-zone="b" data-b100-pattern="P-AE-PRIMARY" data-b100-ae-prefix="../..">
+    <div class="sg-wrap por-wrap">
+        <header class="sg-header por-header">
+            <nav class="sg-nav">
+                <a href="index.html">团契总览</a>
+                <a href="small-groups-integrated.html?crm_from=b_pastoral">小组工作桌</a>
+                <a href="pastoral-attendance.html?crm_from=b_pastoral">聚会出席</a>
+                <a href="../members/member-integrated.html?crm_from=b_pastoral">会友主档</a>
+            </nav>
+            <h1>👥 组织与名册中心</h1>
+            <p class="sg-tagline">领袖健康度 · 多维标签矩阵 · 生命周期状态机 · 360° 牧养履历（PastoralDataHub · pastoral_org_v1）</p>
+            <div class="sg-toolbar">
+                <button type="button" class="sg-btn outline" onclick="exportPastoralOrgRosterCsv()" data-w5-report="pastoral-org-roster-csv">⬇ CSV</button>
+                <button type="button" class="sg-btn outline" onclick="printPastoralOrgRoster()" data-w5-report="pastoral-org-roster-print">🖨 列印</button>
+                <button type="button" class="sg-btn outline" id="por-seed-btn">载入牧养深度示范数据</button>
+                <a href="pastoral-strategy.html?crm_from=b_pastoral" class="sg-btn outline" style="text-decoration:none;display:inline-block">战略桌</a>
+            </div>
+        </header>
+        <div class="sg-tabs por-tabs">
+            <button type="button" class="por-tab sg-tab active" data-tab="tree">Tab1 · 牧职树与同工健康度</button>
+            <button type="button" class="por-tab sg-tab" data-tab="roster">Tab2 · 多维矩阵名册</button>
+            <button type="button" class="por-tab sg-tab" data-tab="lifecycle">Tab3 · 生命周期转接</button>
+            <button type="button" class="por-tab sg-tab" data-tab="profiles">Tab4 · 360° 全景履历</button>
+        </div>
+        <main class="sg-main">
+            <div id="por-panel-tree" class="sg-panel active"></div>
+            <div id="por-panel-roster" class="sg-panel"></div>
+            <div id="por-panel-lifecycle" class="sg-panel"></div>
+            <div id="por-panel-profiles" class="sg-panel"></div>
+        </main>
+    </div>
+    <script src="../../js/pastoral_data_hub.js"></script>
+    <script src="../../js/pastoral_cross_module_bridge.js"></script>
+    <script src="../../js/pastoral_org_roster_ui.js"></script>
+    <link rel="stylesheet" href="../../css/ae_pastoral_story_head.css" />
+    <script src="../../../js/shell_nav.js"></script>
+    <script src="../../js/ae_pastoral_story_nav.js"></script>
+    <script src="../../js/ae_subpage_shell.js"></script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+<script>
+(function () {
+  function exportPastoralOrgRosterCsv() {
+    var H = window.PastoralDataHub, U = window.CmReportUtils;
+    if (!H || !U) return;
+    var esc = U.csvEsc;
+    var lines = [['memberId', '姓名', '小組', '年齡帶', '地區', '事奉標籤', '生命週期'].map(esc).join(',')];
+    H.getMembersMatrixFiltered({}).forEach(function (r) {
+      lines.push([
+        r.member.id, r.member.name, r.group ? r.group.name : '',
+        r.matrix.ageZone || '', r.matrix.geoZone || '',
+        (r.ministryLabels || []).join('、'),
+        H.getMemberLifecycleStage ? H.getMemberLifecycleStage(r.member.id) : ''
+      ].map(esc).join(','));
+    });
+    U.downloadCsv('pastoral_org_roster_' + (H.todayISO ? H.todayISO() : '') + '.csv', lines);
+  }
+  function printPastoralOrgRoster() {
+    var H = window.PastoralDataHub, U = window.CmReportUtils;
+    if (!H || !U) return;
+    var rows = H.getMembersMatrixFiltered({}).map(function (r) {
+      return [r.member.name, r.group ? r.group.name : '', r.matrix.ageZone || '', (r.ministryLabels || []).join('、')];
+    });
+    U.printTable('組織與名册', ['姓名', '小組', '年齡帶', '事奉標籤'], rows);
+  }
+  window.exportPastoralOrgRosterCsv = exportPastoralOrgRosterCsv;
+  window.printPastoralOrgRoster = printPastoralOrgRoster;
+})();
+</script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
+</body>
+</html>

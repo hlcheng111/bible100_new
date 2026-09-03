@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>外展跟進狀態 · D 區 | Church Ministry</title>
+  <style>
+    body { margin: 0; font-family: "Microsoft JhengHei", system-ui, sans-serif; background: #f0fdfa; color: #134e4a; font-size: 12px; padding: 14px; }
+    h2 { margin: 0 0 8px; font-size: 14px; color: #0f766e; }
+    .card { background: #fff; border: 1px solid #99f6e4; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+    .item { border: 1px solid #ccfbf1; border-radius: 8px; padding: 10px; margin-bottom: 8px; background: #ecfdf5; }
+    .muted { color: #64748b; font-size: 10px; }
+    .btn { display: inline-block; padding: 6px 12px; border-radius: 6px; background: #0f766e; color: #fff; text-decoration: none; font-size: 11px; font-weight: 600; border: none; cursor: pointer; margin-top: 6px; }
+    .btn.secondary { background: #fff; color: #0f766e; border: 1px solid #5eead4; }
+  </style>
+  <script src="../../../js/shell_nav.js"></script>
+  <script src="../../js/outreach_desk_store.js"></script>
+</head>
+<body data-b100-module="church_ministry" data-b100-ae-zone="d">
+  <div class="card">
+    <h2>② 外展需求 · 跟進狀態</h2>
+    <p class="muted">已「轉探訪」的需求會出現在探訪工作桌；此處列出本機需求與最近交接卡。</p>
+    <div id="out-follow-list"></div>
+    <p class="muted" id="out-follow-empty">尚無需求。請至 Tab① 新增。</p>
+  </div>
+  <div class="card">
+    <h2>最近交接（session）</h2>
+    <div id="out-handoff"></div>
+    <p class="muted" id="out-handoff-empty">尚無交接紀錄。</p>
+    <a class="btn" href="../support/visitation_index.html?crm_from=outreach_d">💬 探訪工作桌</a>
+  </div>
+  <script>
+    (function () {
+      var S = window.OutreachDeskStore;
+      var listEl = document.getElementById("out-follow-list");
+      var emptyEl = document.getElementById("out-follow-empty");
+      var handEl = document.getElementById("out-handoff");
+      var handEmpty = document.getElementById("out-handoff-empty");
+
+      function esc(s) {
+        return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      }
+
+      function renderList() {
+        if (!S) return;
+        var items = S.listItems();
+        listEl.innerHTML = "";
+        emptyEl.style.display = items.length ? "none" : "block";
+        items.forEach(function (it) {
+          var div = document.createElement("div");
+          div.className = "item";
+          div.innerHTML =
+            "<strong>" + esc(it.area) + " · " + esc(it.topic) + "</strong>" +
+            '<div class="muted">狀態：' + esc(it.status || "open") + " · " + esc(it.contact || "") + "</div>";
+          listEl.appendChild(div);
+        });
+      }
+
+      function renderHandoff() {
+        var raw = null;
+        try {
+          raw = sessionStorage.getItem("bible100_outreach_handoff_v1");
+        } catch (e) {}
+        if (!raw) {
+          handEmpty.style.display = "block";
+          return;
+        }
+        handEmpty.style.display = "none";
+        try {
+          var h = JSON.parse(raw);
+          handEl.innerHTML =
+            '<div class="item"><strong>' + esc(h.area) + " · " + esc(h.topic) + '</strong>' +
+            '<div class="muted">' + esc(h.note || "") + "</div></div>";
+        } catch (e2) {
+          handEmpty.style.display = "block";
+        }
+      }
+
+      renderList();
+      renderHandoff();
+    })();
+  </script>
+</body>
+</html>

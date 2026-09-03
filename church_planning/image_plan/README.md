@@ -1,13 +1,53 @@
-# image_plan（教會規劃模組 · 圖像／媒體）
+# image_plan · 教會規劃概念圖
 
-本目錄為 **`church_planning` 專用**之圖像、示意圖、流程圖與其他靜態媒體的預設歸檔處（與全站共用 `assets/` 區隔，便於模組內文與側欄引用）。
+## 資料夾
 
-## 使用約定
+| 路徑 | 用途 |
+|------|------|
+| `C/` | Concept · Tab① 框架圖（正式檔名） |
+| `_extras/` | 重複或未採用素材 |
+| `../plan_image/INDEX.md` | 01～18 編號對照 |
 
-- **路徑**：自 `church_planning` 內 HTML 引用時，可用相對路徑 `image_plan/...`。
-- **檔名**：語意化前綴（例如 `diagram_五階路徑.svg`、`screenshot_pdca_hub.png`）。
-- **授權**：僅放入有權散布之素材；大型二進位請考慮 Git LFS 或改由 CDN。
+## 檔名（簡版）
 
-## 狀態
+```
+C{两位编号}_{toolId}.{png|jpg|webp|avif}
+```
 
-目錄可為空；新增檔案時請在本 README 或 `docs/` 內對應工程備註中補一行說明即可。
+例：`C07_urgent.jpg`、`C17_ncd.avif`
+
+## 已整理（C/ 內）
+
+| 檔名 | 工具 |
+|------|------|
+| C01_spiritual.png | 靈命健康 |
+| C02_pastoral.jpeg | 領袖健康 |
+| C03_shape.jpg | SHAPE |
+| C04_competency.png | 事奉能力 |
+| C05_alda.png | ALDA |
+| C07_urgent.jpg | 重要 vs 緊急 |
+| C08_pdca.jpg | PDCA |
+| C09_johari.png | Johari |
+| C10_disc.png | DISC |
+| C11_mbti.webp | MBTI |
+| C12_ministry8020.jpg | 80/20 |
+| C13_swot.png | SWOT |
+| C14_culture.jpg | 文化 |
+| C15_smart.png | SMART |
+| C16_kpiokr.png | KPI/OKR |
+| C17_ncd.avif | NCD（原檔名 C15_NCD 已改編號） |
+| C18_raci.png | RACI |
+
+缺：**C06_matchmaker**（尚未提供圖）
+
+## 網頁引用
+
+- 共用：`js/planning_concept_images.js`
+- Tab①：`<div data-concept-tool="urgent"></div>`
+- 子目錄頁：`data-concept-base="../"`
+- Landing：`index_plan.html` → `#lp-concept-grid-mount`
+
+## 您再放新圖
+
+1. 丟進本目錄（檔名隨意）
+2. 跟 Agent 說「依 INDEX 改名進 C/」

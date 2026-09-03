@@ -37,6 +37,8 @@
             <li>建議順序：SHAPE → Johari → DISC + MBTI；MBTI 補足 SHAPE 的 <strong>P（Personality）軸</strong></li>
           </ol>
         </div>
+    <div class="acs-concept-mount" data-concept-tool="mbti"></div>
+
         <div class="acs-hero">
           <span class="acs-role-badge">決策節奏 · SHAPE P 軸 Fallback</span>
           <h2 class="serif-title">MBTI — 性格傾向自覺（教會治理版）</h2>
@@ -113,7 +115,8 @@
       <div id="report-content" class="hidden">
         <div class="acs-card">
           <span id="report-demo-badge" class="acs-demo-badge hidden">示範報告</span>
-          <p id="report-code" class="acs-report-heart"></p>
+          <div id="report-heart" class="acs-report-heart-wrap"></div>
+          <p id="report-code" class="acs-report-note"></p>
           <p id="report-type-label" class="acs-report-note"></p>
           <p id="report-affirm" class="acs-affirm"></p>
         </div>
@@ -230,6 +233,8 @@
   <script src="js/matchmaker_urgent_jobs.js"></script>
   <script src="js/ministry_path_bridge.js"></script>
   <script src="js/mbti_axes_viz.js"></script>
+  <script src="js/acs_report_gold.js"></script>
+  <script src="js/acs_survey_standard.js"></script>
   <script src="js/coaching_desk_content.js"></script>
   <script src="js/matchmaker_prefill.js"></script>
   <script src="js/coaching_desk.js"></script>
@@ -240,9 +245,16 @@
   <script>
     var acsDesk;
 
+    function likertLbl(s) {
+      return window.AcsSurveyStandard ? AcsSurveyStandard.likertLabel(s, "agree") : String(s);
+    }
+
     function renderQuestions() {
       var host = document.getElementById("mbti-questions");
-      host.innerHTML = MbtiPack.QUESTIONS.map(function (q, i) {
+      var legend = window.AcsSurveyStandard ? AcsSurveyStandard.likertLegendHtml("agree") : "";
+      host.innerHTML =
+        legend +
+        MbtiPack.QUESTIONS.map(function (q, i) {
         var html =
           '<fieldset class="acs-fieldset"><legend>' +
           (i + 1) +
@@ -250,7 +262,7 @@
           (MbtiPack.AXIS_LABELS[q.axis] || q.axis) +
           '</legend><p class="acs-fieldset-q">' +
           q.label +
-          '</p><div class="acs-likert-row">';
+          '</p><div class="acs-likert-row acs-likert-row--anchored">';
         for (var s = 1; s <= 5; s++) {
           html +=
             '<label class="acs-likert-opt"><input type="radio" name="q_' +
@@ -258,7 +270,7 @@
             '" value="' +
             s +
             '" required> ' +
-            s +
+            likertLbl(s) +
             "</label>";
         }
         return html + "</div></fieldset>";
@@ -300,6 +312,10 @@
       document.getElementById("report-empty").classList.add("hidden");
       document.getElementById("report-content").classList.remove("hidden");
       document.getElementById("report-demo-badge").classList.toggle("hidden", !isDemo);
+      var heartEl = document.getElementById("report-heart");
+      if (heartEl && window.AcsReportGold) {
+        heartEl.innerHTML = AcsReportGold.renderReportHeart(AcsReportGold.buildMbtiReportHeart(run));
+      }
       var d = run.derived || {};
       var code = d.mbti_code || d.code || "—";
       document.getElementById("report-code").textContent = "類型傾向：" + code;
@@ -370,5 +386,6 @@
       CTAOSBridge.initPage({ toolId: "mbti", reportAnchor: "#tab-report", fab: false, autoRefresh: false });
     });
   </script>
+<script src="js/planning_concept_images.js"></script>
 </body>
 </html>

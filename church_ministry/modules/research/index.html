@@ -25,6 +25,11 @@
     <span class="cm-back-bar__muted">研究與統計 · 索引</span>
   </nav>
   <div class="wrap">
+    <div id="w5dReportBar" style="padding:8px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;margin-bottom:1rem;font-size:0.8125rem;">
+      <strong>F-09 報告</strong>
+      <button type="button" onclick="exportResearchIndexCsv()" data-w5-report="research-index-csv" style="margin-left:8px;padding:4px 10px;border:1px solid #059669;background:#059669;color:#fff;border-radius:4px;cursor:pointer;">⬇ 索引 CSV</button>
+      <button type="button" onclick="printResearchIndex()" data-w5-report="research-index-print" style="margin-left:4px;padding:4px 10px;border:1px solid #4b5563;background:#4b5563;color:#fff;border-radius:4px;cursor:pointer;">🖨 列印</button>
+    </div>
     <h1>研究與統計 · 報表索引</h1>
     <p class="lead">下列頁面已套用統一頂部列與 <strong>ChurchDataBridge</strong> 即時 KPI（會友／小組／探訪／志工／財務）。圖表中若仍為示意曲線，請以頁內說明為準。</p>
 
@@ -60,5 +65,48 @@
 
     <p class="note">若 KPI 全為 0，請先至 <a href="../../load_central_member_seed.html">load_central_member_seed</a> 或會友事工頁建立資料。</p>
   </div>
+  <script>
+    var RESEARCH_INDEX_LINKS = [
+      ['spiritual-stage-funnel.html', '屬靈階段漏斗 · CRM'],
+      ['member-statistics.html', '會眾統計'],
+      ['ministry-performance.html', '事工成效'],
+      ['growth-trends.html', '增長趨勢'],
+      ['engagement-analysis.html', '參與度分析'],
+      ['activity-statistics.html', '活動統計'],
+      ['advanced-reports.html', '進階報表'],
+      ['financial-statistics.html', '財務統計'],
+      ['trend-analysis.html', '趨勢分析'],
+      ['performance-evaluation.html', '績效評估'],
+      ['volunteer-performance.html', '志工績效'],
+      ['participation-trends.html', '參與趨勢'],
+      ['activity-performance.html', '活動績效'],
+      ['effectiveness-trends.html', '成效趨勢'],
+      ['statistical-reports.html', '統計報告']
+    ];
+    function csvLine(fields) {
+      var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+      return (fields || []).map(esc).join(',');
+    }
+    function exportResearchIndexCsv() {
+      var lines = [csvLine(['頁面', '標題', '匯出時間'])];
+      var ts = new Date().toLocaleString();
+      RESEARCH_INDEX_LINKS.forEach(function (row) {
+        lines.push(csvLine([row[0], row[1], ts]));
+      });
+      if (window.CmReportUtils) CmReportUtils.downloadCsv('research_index.csv', lines);
+    }
+    function printResearchIndex() {
+      var headers = ['頁面', '標題'];
+      var rows = RESEARCH_INDEX_LINKS.map(function (r) { return [r[0], r[1]]; });
+      if (window.CmReportUtils) CmReportUtils.printTable('研究與統計索引', headers, rows);
+    }
+  </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

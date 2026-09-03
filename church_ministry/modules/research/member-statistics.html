@@ -14,6 +14,12 @@
       <a class="cm-back-bar__link" href="../../dashboard.html">⛪ 返回教會事工</a>
       <span class="cm-back-bar__muted">研究與統計 · 會員統計</span>
     </nav>
+    <div class="cm-merge-banner" style="padding:8px 16px;background:#fef3c7;border-bottom:1px solid #fcd34d;font-size:12px;color:#78350f;">
+      <strong>已合併至研究索引／儀表板</strong> — 請優先使用
+      <a href="index.html" style="color:#0b5fa5;font-weight:600;">研究索引 F-09</a> 或
+      <a href="../../dashboard.html" style="color:#0b5fa5;font-weight:600;">教會事工儀表板 F-01</a>。
+      本頁仍保留示意報表與 CSV 匯出。
+    </div>
     <p class="cm-data-banner" role="status"><strong>資料來源：</strong><span id="cm-data-source-line">讀取中…</span></p>
     <div class="cm-kpi-row" aria-label="即時匯總（Bridge）">
       <span class="cm-kpi-pill">會友 <b id="cm-kpi-members">—</b></span>
@@ -173,13 +179,13 @@
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">快速操作</h3>
             <div class="flex flex-wrap gap-4">
-                <button onclick="exportMemberStatsCSV()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                <button onclick="exportMemberStatsCSV()" data-w5-report="member-stats-csv" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                     <i class="fas fa-download mr-2"></i>匯出報表
                 </button>
                 <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
                     <i class="fas fa-chart-bar mr-2"></i>生成圖表
                 </button>
-                <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                <button type="button" onclick="printMemberStats()" data-w5-report="member-stats-print" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
                     <i class="fas fa-print mr-2"></i>列印統計
                 </button>
                 <button class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors">
@@ -321,25 +327,30 @@
         });
 
         function exportMemberStatsCSV() {
-            var members = [];
-            try {
-                var ms = localStorage.getItem('memberSystemData');
-                if (ms) { var d = JSON.parse(ms); members = d.members || []; }
-                if (members.length === 0) {
-                    var cm = localStorage.getItem('churchMasterDatabase');
-                    if (cm) { var c = JSON.parse(cm); members = c.members || []; }
-                }
-            } catch(e) {}
-            var rows = [['統計項目','數值']];
-            rows.push(['總會員數', (document.getElementById('statTotal')?.textContent || '0').replace(/,/g,'')]);
-            rows.push(['活躍會員', (document.getElementById('statActive')?.textContent || '0').replace(/,/g,'')]);
-            rows.push(['青年會員(18-35)', document.getElementById('statYouth')?.textContent || '0']);
-            rows.push(['中年會員(36-55)', document.getElementById('statMid')?.textContent || '0']);
-            rows.push(['資深會員(55+)', document.getElementById('statSenior')?.textContent || '0']);
-            rows.push(['新會員(1年內)', document.getElementById('statNew')?.textContent || '0']);
-            var csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
-            var a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF' + csv);
-            a.download = '會員統計_' + new Date().toISOString().split('T')[0] + '.csv'; a.click();
+            var rows = [
+                ['統計項目', '數值'],
+                ['總會員數', (document.getElementById('statTotal')?.textContent || '0').replace(/,/g, '')],
+                ['活躍會員', (document.getElementById('statActive')?.textContent || '0').replace(/,/g, '')],
+                ['青年會員(18-35)', document.getElementById('statYouth')?.textContent || '0'],
+                ['中年會員(36-55)', document.getElementById('statMid')?.textContent || '0'],
+                ['資深會員(55+)', document.getElementById('statSenior')?.textContent || '0'],
+                ['新會員(1年內)', document.getElementById('statNew')?.textContent || '0']
+            ];
+            var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+            var lines = rows.map(function (r) { return r.map(esc).join(','); });
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('member_stats.csv', lines);
+        }
+        function printMemberStats() {
+            var headers = ['統計項目', '數值'];
+            var rows = [
+                ['總會員數', document.getElementById('statTotal')?.textContent || '0'],
+                ['活躍會員', document.getElementById('statActive')?.textContent || '0'],
+                ['青年會員', document.getElementById('statYouth')?.textContent || '0'],
+                ['中年會員', document.getElementById('statMid')?.textContent || '0'],
+                ['資深會員', document.getElementById('statSenior')?.textContent || '0'],
+                ['新會員', document.getElementById('statNew')?.textContent || '0']
+            ];
+            if (window.CmReportUtils) CmReportUtils.printTable('會員統計', headers, rows);
         }
         document.querySelectorAll('button:not([onclick])').forEach(button => {
             button.addEventListener('click', function() {
@@ -347,6 +358,13 @@
             });
         });
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
     <script src="../../../js/coming-soon.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

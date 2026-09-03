@@ -29,6 +29,8 @@
         <select id="book-select"></select>
         <input type="number" id="chapter-input" min="1" style="width:60px;padding:4px;">
         <select id="version-select"></select>
+        <span id="bsReaderPromptSlot"></span>
+        <a href="#" id="bsReaderQnaLink" style="font-size:11px;color:#ecf0f1;margin-left:6px;">❓ 難題</a>
         <span id="status">載入中...</span>
     </div>
     <div class="main">
@@ -40,7 +42,14 @@
         </div>
     </div>
     <script src="js/dev_http_hint.js"></script>
+    <script src="js/bible_version_registry.js"></script>
     <script src="js/BibleEngine.js"></script>
+    <script src="js/bible_lazy_chapter.js"></script>
+    <script src="js/bs_qna_bridge.js"></script>
+    <script src="js/bs_prompt_builder.js"></script>
+    <script src="js/bs_study_chrome.js"></script>
+    <script src="js/bs_page_registry.js"></script>
+    <script src="js/universal-data-loader.js"></script>
     <script>
         const BOOKS = [
             { id: 1, name: '創世記', chapters: 50 }, { id: 2, name: '出埃及記', chapters: 40 }, { id: 3, name: '利未記', chapters: 27 },
@@ -110,11 +119,20 @@
                 bible100MaybeAutoredirectFromFile();
             }
             document.getElementById('status').textContent = '載入資料中...';
-            await window.initUniversalDataLoader();
+            if (window.BibleEngine && BibleEngine.getRegistrySearchBibles) {
+                var searchList = BibleEngine.getRegistrySearchBibles();
+                if (searchList.length && BibleEngine.probePath) {
+                    await BibleEngine.probePath((searchList[0].paths.json || [])[0] || '');
+                }
+            } else {
+                await window.initUniversalDataLoader();
+            }
             const bibles = window.BibleEngine.getAvailableBibles();
             const comms = window.BibleEngine.getAvailableCommentaries();
-            document.getElementById('status').textContent = '已載入 ' + bibles.length + ' 聖經 / ' + comms.length + ' 註釋';
-            if (bibles.length === 0 && comms.length === 0) {
+            var regBibles = BibleEngine.getRegistrySearchBibles ? BibleEngine.getRegistrySearchBibles().map(function (b) { return b.key; }) : bibles;
+            if (!regBibles.length) regBibles = bibles;
+            document.getElementById('status').textContent = 'registry · ' + regBibles.length + ' 譯本可搜尋';
+            if (regBibles.length === 0 && bibles.length === 0 && comms.length === 0) {
                 showReaderSetupHint();
                 document.getElementById('status').textContent = '資料未載入';
                 return;
@@ -123,7 +141,7 @@
             const params = new URLSearchParams(location.search);
             state.book = parseInt(params.get('book') || '1', 10) || 1;
             state.chapter = parseInt(params.get('chapter') || '1', 10) || 1;
-            state.version = params.get('version') || (bibles[0] || 'kjv');
+            state.version = params.get('version') || (regBibles[0] || bibles[0] || 'faith');
 
             const bookSel = document.getElementById('book-select');
             BOOKS.forEach(b => {
@@ -141,11 +159,11 @@
 
             const verSel = document.getElementById('version-select');
             verSel.innerHTML = '';
-            bibles.forEach(k => {
+            regBibles.forEach(function (k) {
                 const opt = document.createElement('option');
                 opt.value = k;
-                const meta = window.universalDataLoader.databases.bibles[k];
-                opt.textContent = (meta && meta.data && meta.data.version) || meta?.name || k;
+                var regEntry = (window.BS_DATA_REGISTRY && window.BS_DATA_REGISTRY.bibles || []).find(function (b) { return b.key === k; });
+                opt.textContent = regEntry ? regEntry.name : k;
                 verSel.appendChild(opt);
             });
             verSel.value = state.version;
@@ -167,29 +185,57 @@
                 render();
             });
 
+            if (window.BSStudyChrome) {
+                BSStudyChrome.initPage({
+                    promptContainer: document.getElementById('bsReaderPromptSlot'),
+                    qnaLink: document.getElementById('bsReaderQnaLink'),
+                    getContext: function () {
+                        return { bookId: state.book, chapter: state.chapter, bookName: getBook(state.book).name, versionKey: state.version };
+                    }
+                });
+            }
+
             await render();
+            if (window.BSStudyChrome) BSStudyChrome.maybeMountDebugFooter();
         }
 
-        function renderVerse(versionData, book, ch) {
-            const version = versionData.version || '版本';
-            const verses = (versionData.data || []).filter(v => v.b === book && v.c === ch).sort((a, b) => a.v - b.v);
-            let html = '<div class="ref-title">' + version + ' — ' + getBook(book).name + ' 第 ' + ch + ' 章</div>';
-            verses.forEach(v => {
-                html += '<div class="verse-row"><span class="v-num">' + v.v + '</span>';
-                html += '<span class="verse-text">' + (v.t || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span></div>';
+        function renderVerseFromRows(versionLabel, book, ch, rows) {
+            let html = '<div class="ref-title">' + versionLabel + ' — ' + getBook(book).name + ' 第 ' + ch + ' 章</div>';
+            if (!rows || !rows.length) return html + '<div class="empty-hint">此章暫無經文。</div>';
+            rows.sort(function (a, b) { return (a.Verse || 0) - (b.Verse || 0); });
+            rows.forEach(function (v) {
+                html += '<div class="verse-row"><span class="v-num">' + v.Verse + '</span>';
+                html += '<span class="verse-text">' + String(v.Text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span></div>';
             });
-            return html || '<div class="empty-hint">此章暫無經文。</div>';
+            return html;
         }
 
         async function render() {
-            const bibleMeta = window.universalDataLoader.databases.bibles[state.version];
-            if (bibleMeta && bibleMeta.data) {
-                document.getElementById('bible-view').innerHTML = renderVerse(bibleMeta.data, state.book, state.chapter);
+            var versionLabel = state.version;
+            var regEntry = (window.BS_DATA_REGISTRY && window.BS_DATA_REGISTRY.bibles || []).find(function (b) { return b.key === state.version; });
+            if (regEntry) versionLabel = regEntry.name;
+
+            if (window.BibleEngine && BibleEngine.getBibleChapterRows) {
+                try {
+                    var rows = await BibleEngine.getBibleChapterRows(state.version, state.book, state.chapter);
+                    document.getElementById('bible-view').innerHTML = renderVerseFromRows(versionLabel, state.book, state.chapter, rows);
+                } catch (e) {
+                    document.getElementById('bible-view').innerHTML = '<div class="empty-hint">經文載入失敗。</div>';
+                }
             } else {
                 document.getElementById('bible-view').innerHTML = '<div class="empty-hint">尚未載入此版本。</div>';
             }
 
+            if (window.BSStudyChrome) {
+                BSStudyChrome.syncStudyState(state.book, state.chapter, getBook(state.book).name, 'read');
+            }
+
             try {
+                var compEntry = (window.BS_DATA_REGISTRY && window.BS_DATA_REGISTRY.commentaries || []).find(function (c) { return c.key === 'comprehensive'; });
+                if (compEntry && BibleEngine.loadEntry) {
+                    var meta = (BibleEngine.db.commentaries || {}).comprehensive;
+                    if (!meta || !meta.loaded) await BibleEngine.loadEntry('commentaries', compEntry);
+                }
                 const comms = await window.queryCommentary('comprehensive', state.book, state.chapter);
                 let html = '<div class="ref-title">综合解读 — ' + getBook(state.book).name + ' 第 ' + state.chapter + ' 章</div>';
                 if (comms && comms.length) {

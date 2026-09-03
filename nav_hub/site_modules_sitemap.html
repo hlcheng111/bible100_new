@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全站模块 · 功能页地图</title>
+  <link rel="stylesheet" href="../css/b100_landing_shared.css">
+  <style>
+    .map-lead { font-size: 13px; color: #475569; margin: 0 0 16px; max-width: 44em; line-height: 1.55; }
+    .map-mod { margin-bottom: 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+    .map-mod h2 { margin: 0; padding: 10px 14px; font-size: 0.95rem; background: #f1f5f9; color: #0b5fa5; border-bottom: 1px solid #e2e8f0; }
+    .map-rows { padding: 8px 10px 10px; display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    .map-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      padding: 7px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 11px;
+    }
+    .map-row-label { flex: 1; color: #334155; }
+    .map-row-actions { display: flex; gap: 4px; }
+    .map-row-actions button, .map-row-actions a {
+      font-size: 10px; padding: 3px 7px; border-radius: 5px; cursor: pointer; font-family: inherit; text-decoration: none;
+    }
+    .map-in { background: #0b5fa5; color: #fff; border: none; }
+    .map-out { background: #fff; color: #0b5fa5; border: 1px solid #90caf9; }
+  </style>
+  <script src="../js/shell_nav.js"></script>
+  <script src="../js/b100_site_modules_map.js"></script>
+</head>
+<body class="b100-landing-page">
+  <div class="b100-page">
+    <p class="b100-kicker">🎊 全站模块 · 功能页</p>
+    <h1 id="mapTitle">全站模块功能地图</h1>
+    <p class="map-lead" id="mapLead"></p>
+    <div id="mapRoot"></div>
+  </div>
+  <script>
+    (function () {
+      var data = window.B100_SITE_MODULES_MAP || { modules: [], title: "", lead: "" };
+      document.getElementById("mapTitle").textContent = data.title || "全站模块功能地图";
+      document.getElementById("mapLead").innerHTML = data.lead || "";
+
+      function shellGo(path, sidebar, ev) {
+        if (ev) ev.preventDefault();
+        if (typeof bible100ShellNav === "function") {
+          return bible100ShellNav(ev || { preventDefault: function () {} }, {
+            sidebarUrl: sidebar || "",
+            contentUrl: path
+          });
+        }
+        return false;
+      }
+
+      function abs(path) {
+        try { return new URL("../" + path.replace(/^\.\.\//, ""), location.href).href; }
+        catch (e) { return "../" + path; }
+      }
+
+      var root = document.getElementById("mapRoot");
+      (data.modules || []).forEach(function (mod) {
+        var sec = document.createElement("section");
+        sec.className = "map-mod";
+        sec.id = "mod-" + mod.id;
+        var h2 = document.createElement("h2");
+        h2.textContent = (mod.icon || "") + " " + (mod.title || mod.id);
+        sec.appendChild(h2);
+        var rows = document.createElement("div");
+        rows.className = "map-rows";
+        (mod.tries || []).forEach(function (t) {
+          var row = document.createElement("div");
+          row.className = "map-row";
+          row.innerHTML = '<span class="map-row-label">' + t.label + '</span><span class="map-row-actions"></span>';
+          var act = row.querySelector(".map-row-actions");
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "map-in";
+          btn.textContent = "右栏";
+          btn.addEventListener("click", function (e) { shellGo(t.path, t.sidebar, e); });
+          var out = document.createElement("a");
+          out.className = "map-out";
+          out.target = "_blank";
+          out.rel = "noopener";
+          out.textContent = "新页";
+          out.href = abs(t.path);
+          act.appendChild(btn);
+          act.appendChild(out);
+          rows.appendChild(row);
+        });
+        sec.appendChild(rows);
+        root.appendChild(sec);
+      });
+    })();
+  </script>
+</body>
+</html>

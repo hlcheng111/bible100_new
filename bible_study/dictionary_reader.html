@@ -108,8 +108,14 @@
         </div>
     </div>
 
+    <script src="../data/cd/dictionary_data_bible_dict.js" charset="UTF-8"></script>
+    <script src="js/dev_http_hint.js"></script>
+    <script src="js/bible_version_registry.js"></script>
+    <script src="js/BibleEngine.js"></script>
+    <script src="js/bs_registry_reader.js"></script>
     <script>
-        let dictionaryData = null;
+        const DICT_KEY = 'bible_dict';
+        let dictionaryReady = false;
 
         function escapeHtml(s) {
             if (s == null) return '';
@@ -118,73 +124,43 @@
             return d.innerHTML;
         }
 
-        // 載入詞典資料（相對於本頁，支援 file:// 與 iframe / index_v5）
         async function loadDictionary() {
             try {
-                const path = new URL('../data/cd/圣经语汇词典.json', window.location.href).href;
-                const response = await fetch(path);
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                dictionaryData = await response.json();
-                console.log('✅ 詞典資料載入成功', dictionaryData);
+                await BS_loadRegistryResource('dictionaries', DICT_KEY);
+                dictionaryReady = true;
+                var params = new URLSearchParams(window.location.search);
+                var q = params.get('q');
+                if (q) {
+                    document.getElementById('searchInput').value = q;
+                    await searchDictionary();
+                }
             } catch (error) {
                 console.error('❌ 詞典資料載入失敗:', error);
-                showError('詞典資料載入失敗。若用 file:// 開啟，請改以本機 HTTP 伺服器開啟專案根目錄，或確認 ../data/cd/圣经语汇词典.json 存在。');
+                showError('詞典資料載入失敗。' + (typeof BS_readerLoadHint === 'function' ? BS_readerLoadHint() : ''));
             }
         }
 
-        // 搜索詞典
-        function searchDictionary() {
+        async function searchDictionary() {
             const keyword = document.getElementById('searchInput').value.trim();
             if (!keyword) {
                 alert('請輸入搜索詞彙');
                 return;
             }
-
-            if (!dictionaryData) {
-                showError('詞典資料尚未載入，請稍候...');
-                loadDictionary();
-                return;
+            if (!dictionaryReady) {
+                showError('詞典資料尚未載入，請稍候…');
+                await loadDictionary();
+                if (!dictionaryReady) return;
             }
-
-            const results = searchInDictionary(keyword);
-            displayResults(results, keyword);
+            const container = document.getElementById('resultContainer');
+            container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><h3>搜索中…</h3></div>';
+            try {
+                const results = await BibleEngine.searchDictionary(DICT_KEY, keyword, 40);
+                displayResults(results, keyword);
+            } catch (err) {
+                showError('搜索失敗：' + (err.message || err));
+            }
         }
 
-        // 在詞典中搜索（支援 Dictionary.data[] 格式：Word, Description, ComeFrom）
-        function searchInDictionary(keyword) {
-            const results = [];
-            const q = keyword.toLowerCase();
-            
-            const data = dictionaryData?.Dictionary?.data || dictionaryData?.data || 
-                (Array.isArray(dictionaryData) ? dictionaryData : []);
-            
-            if (Array.isArray(data)) {
-                data.forEach(item => {
-                    const term = item.Word || item.term || item.title || item.name;
-                    const def = item.Description || item.definition || item.content || item.value;
-                    if ((term && String(term).toLowerCase().includes(q)) || 
-                        (def && String(def).toLowerCase().includes(q))) {
-                        results.push({
-                            term: term || '未知',
-                            definition: (def || '') + (item.ComeFrom ? '\n\n來源：' + item.ComeFrom : '')
-                        });
-                    }
-                });
-            } else if (typeof dictionaryData === 'object') {
-                for (const key in dictionaryData) {
-                    if (key.toLowerCase().includes(q) || 
-                        (dictionaryData[key] && String(dictionaryData[key]).toLowerCase().includes(q))) {
-                        results.push({
-                            term: key,
-                            definition: dictionaryData[key]
-                        });
-                    }
-                }
-            }
-            return results;
-        }
-
-        // 顯示結果
         function displayResults(results, keyword) {
             const container = document.getElementById('resultContainer');
             

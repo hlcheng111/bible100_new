@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小測／考試 · Exams</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f6f7fb; padding: 16px; font-size: 12px; color: #333; }
+        .module-header h1 { color: #0b5fa5; font-size: 18px; margin-bottom: 6px; }
+        .module-header p { color: #666; margin-bottom: 12px; }
+        .module-card { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .module-card-title { font-weight: 600; color: #0b5fa5; margin-bottom: 8px; }
+        .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+        .module-input { padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; }
+        .module-btn { padding: 8px 14px; background: #0b5fa5; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .module-btn-secondary { background: #64748b; }
+        .module-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .module-table th, .module-table td { border-bottom: 1px solid #e2e8f0; padding: 8px; text-align: left; }
+        .module-table th { background: #f8fafc; color: #475569; }
+        .stat-label { font-size: 10px; color: #64748b; }
+        .tip { background: #ecfeff; border-left: 3px solid #06b6d4; padding: 10px 12px; margin-bottom: 12px; font-size: 11px; line-height: 1.6; }
+        .score-input { width: 56px; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="module-header">
+        <h1>📝 小測／考試</h1>
+        <p>建立考試 → 依選課學生批量登分（≤ 5 分鐘完成一班）</p>
+    </div>
+
+    <div class="tip">
+        <strong>W4 流程：</strong> ① 下方建立小測 ② 選擇考試 → 載入名單 ③ 填分數 → 一鍵儲存（寫入 <code>grade.grades</code>，可接 W3 證書及格判定）。
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">➕ 建立小測／考試</div>
+        <form id="examForm" class="toolbar">
+            <div><label class="stat-label">名稱</label><br><input name="name" class="module-input" placeholder="第1次小測" required style="width:140px;"></div>
+            <div><label class="stat-label">課程</label><br><select name="courseId" id="courseSelect" class="module-input" required style="min-width:160px;"></select></div>
+            <div><label class="stat-label">班級（選填）</label><br><select name="classId" id="classSelect" class="module-input"><option value="">全部選課生</option></select></div>
+            <div><label class="stat-label">滿分</label><br><input name="maxScore" type="number" class="module-input" value="100" style="width:60px;"></div>
+            <div><label class="stat-label">日期</label><br><input name="examDate" type="date" class="module-input"></div>
+            <div><br><button type="submit" class="module-btn">建立</button></div>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📋 考試列表</div>
+        <div id="examList"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">✏️ 批量登分</div>
+        <div class="toolbar" style="margin-bottom:10px;">
+            <div><label class="stat-label">選擇考試</label><br><select id="activeExam" class="module-input" style="min-width:200px;"></select></div>
+            <button class="module-btn" id="btnLoadCandidates">載入名單</button>
+            <button class="module-btn module-btn-secondary" id="btnSaveAll">一鍵儲存全班分數</button>
+        </div>
+        <p id="batchMsg" style="font-size:11px;color:#166534;margin-bottom:8px;"></p>
+        <div id="candidateGrid"></div>
+    </div>
+
+    <a href="../ai_prompts_tabs.html?type=exam_questions" target="contentFrame" class="module-btn module-btn-secondary" style="margin-top:8px;text-decoration:none;display:inline-block;">✨ W8 出題 AI Prompt</a>
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary" style="margin-top:8px;margin-left:6px;text-decoration:none;display:inline-block;">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+
+            function courses() { return (db.data.courses || []).filter(c => c.status !== 'inactive'); }
+            function classes() { return (db.data.class && db.data.class.classes) || []; }
+
+            function initSelectors() {
+                document.getElementById('courseSelect').innerHTML = courses().map(c =>
+                    '<option value="' + c.id + '">' + (c.name || c.id) + '</option>').join('');
+                document.getElementById('classSelect').innerHTML = '<option value="">全部選課生</option>' +
+                    classes().map(cl => '<option value="' + cl.id + '">' + (cl.name || cl.className || cl.id) + '</option>').join('');
+                const dateEl = document.querySelector('input[name="examDate"]');
+                if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0, 10);
+            }
+
+            function renderExams() {
+                const exams = db.getExams ? db.getExams() : [];
+                const cs = courses();
+                const body = exams.map(ex => {
+                    const c = cs.find(x => x.id === ex.courseId);
+                    return '<tr><td>' + ex.name + '</td><td>' + (c ? c.name : ex.courseId) + '</td><td>' + (ex.maxScore || 100) + '</td><td>' + (ex.examDate || '—') + '</td><td>' + (ex.status || 'open') + '</td><td><button class="module-btn pick-exam" data-id="' + ex.id + '" style="padding:2px 8px;font-size:10px;">登分</button></td></tr>';
+                }).join('');
+                document.getElementById('examList').innerHTML =
+                    '<table class="module-table"><thead><tr><th>名稱</th><th>課程</th><th>滿分</th><th>日期</th><th>狀態</th><th></th></tr></thead><tbody>' +
+                    (body || '<tr><td colspan="6">尚無考試，請先建立</td></tr>') + '</tbody></table>';
+                document.getElementById('activeExam').innerHTML = exams.map(ex =>
+                    '<option value="' + ex.id + '">' + ex.name + ' · ' + (ex.examDate || '') + '</option>').join('');
+            }
+
+            function loadCandidates() {
+                const examId = parseInt(document.getElementById('activeExam').value, 10);
+                if (!examId) return alert('請選擇考試');
+                const rows = db.getExamCandidates(examId);
+                if (!rows.length) {
+                    document.getElementById('candidateGrid').innerHTML = '<p style="color:#888;">此課程尚無選課學生。</p>';
+                    return;
+                }
+                const body = rows.map(r =>
+                    '<tr><td>' + r.studentName + '</td><td>' + (r.className || '—') + '</td><td>' +
+                    (r.existingScore != null ? r.existingScore : '—') + '</td><td><input type="number" class="score-input" data-sid="' + r.studentId + '" min="0" max="100" value="' + (r.existingScore != null ? r.existingScore : '') + '" placeholder="分"></td></tr>'
+                ).join('');
+                document.getElementById('candidateGrid').innerHTML =
+                    '<table class="module-table"><thead><tr><th>學生</th><th>班級</th><th>已有成績</th><th>本次分數</th></tr></thead><tbody>' + body + '</tbody></table>';
+                document.getElementById('batchMsg').textContent = '已載入 ' + rows.length + ' 人';
+            }
+
+            document.getElementById('examForm').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                const classId = fm.get('classId');
+                try {
+                    db.addExam({
+                        name: fm.get('name'),
+                        courseId: parseInt(fm.get('courseId'), 10),
+                        classId: classId ? parseInt(classId, 10) : null,
+                        maxScore: parseInt(fm.get('maxScore'), 10) || 100,
+                        examDate: fm.get('examDate')
+                    });
+                    this.reset();
+                    initSelectors();
+                    renderExams();
+                } catch (err) { alert(err.message || err); }
+            };
+
+            document.getElementById('btnLoadCandidates').onclick = loadCandidates;
+
+            document.getElementById('btnSaveAll').onclick = function() {
+                const examId = parseInt(document.getElementById('activeExam').value, 10);
+                if (!examId) return alert('請選擇考試');
+                const scores = {};
+                document.querySelectorAll('.score-input').forEach(inp => {
+                    if (inp.value !== '') scores[inp.dataset.sid] = inp.value;
+                });
+                if (!Object.keys(scores).length) return alert('請至少填一個分數');
+                try {
+                    const r = db.batchSaveExamGrades(examId, scores);
+                    document.getElementById('batchMsg').textContent = '✅ 已儲存 ' + r.savedCount + ' 筆成績';
+                    loadCandidates();
+                    renderExams();
+                } catch (err) { alert(err.message || err); }
+            };
+
+            document.getElementById('examList').addEventListener('click', function(e) {
+                if (e.target.classList.contains('pick-exam')) {
+                    document.getElementById('activeExam').value = e.target.dataset.id;
+                    loadCandidates();
+                }
+            });
+
+            initSelectors();
+            renderExams();
+        })();
+    </script>
+</body>
+</html>

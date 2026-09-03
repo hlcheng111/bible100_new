@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="Cache-Control" content="no-cache" />
   <title>六十六卷</title>
-  <link rel="stylesheet" href="../css/app-hub.css?v=20260618e" />
-  <link rel="stylesheet" href="../css/track-creative.css?v=20260618e" />
-  <script src="../js/page_boot.js?v=20260618e"></script>
-  <script src="../js/data_bundle.js?v=20260618e"></script>
-  <script src="../js/data_loader.js?v=20260618e"></script>
-  <script src="../js/page_locale.js?v=20260618e"></script>
-  <script src="../js/locale_pick.js?v=20260618e"></script>
-  <script src="../js/page_links.js?v=20260618e"></script>
-  <script src="../js/frame_sync.js?v=20260618e"></script>
-  <script src="../js/read_progress.js?v=20260618e"></script>
+  <link rel="stylesheet" href="../css/app-hub.css?v=20260813dbfix" />
+  <link rel="stylesheet" href="../css/track-creative.css?v=20260813dbfix" />
+  <script src="../js/page_boot.js?v=20260830quiet2"></script>
+  <script src="../js/data_bundle.js?v=20260813dbfix"></script>
+  <script src="../js/data_loader.js?v=20260813dbfix"></script>
+  <script src="../js/page_locale.js?v=20260813dbfix"></script>
+  <script src="../js/locale_pick.js?v=20260813dbfix"></script>
+  <script src="../js/page_links.js?v=20260813dbfix"></script>
+  <script src="../js/frame_sync.js?v=20260813dbfix"></script>
+  <script src="../js/read_progress.js?v=20260813dbfix"></script>
 </head>
 <body class="bible-standalone">
   <header class="bs-top">
@@ -28,7 +28,7 @@
   <section class="b66-hero track-hero" id="b66Hero" style="margin:8px 4px 0">
     <p class="track-hero__mascot">🗺️📜🦁</p>
     <h1 id="b66Title" style="font-size:1.15rem;margin:0 0 4px">六十六卷 · 聖經大冒險地圖</h1>
-    <p id="b66Tagline" style="margin:0;font-size:12px">探索舊約與新約 · 讀完一章打卡拿金星</p>
+    <p id="b66Tagline" style="margin:0;font-size:12px">自由探索 · 想有引导？→ <a href="track-plan1y.html" style="color:#4338ca;font-weight:800">一年计划</a> 或 <a href="track-plan3y.html" style="color:#059669;font-weight:800">三年计划</a></p>
     <div class="b66-map" title="讀經進度">
       <div class="b66-map__ot" id="mapOt" style="width:50%"></div>
       <div class="b66-map__nt" id="mapNt" style="width:50%"></div>
@@ -39,19 +39,27 @@
       <div class="track-stat">🔥 連續<strong id="b66Streak">0</strong>天</div>
     </div>
   </section>
-  <p id="fileNote" class="file-note" hidden>
-    完整經庫請雙擊資料夾裡的 <strong>打開聖經跑道</strong>（或 START-WEB.cmd），不要直接雙擊 html。
-  </p>
+  <p id="fileNote" class="file-note" hidden></p>
   <div id="bibleRoot"></div>
-  <script src="../js/font_size.js?v=20260618e"></script>
-  <script src="../js/bible_reader_core.js?v=20260618e"></script>
+  <script src="../js/font_size.js?v=20260813dbfix"></script>
+  <script src="../js/bible_reader_core.js?v=20260830db66"></script>
   <script>
-    if (location.protocol === 'file:') {
-      var n = document.getElementById('fileNote');
-      if (n) n.hidden = false;
-    }
     (function () {
+      if (location.protocol === 'file:' && !/\/app\/assets\/bible\//i.test((location.pathname || '').replace(/\\/g, '/'))) {
+        try {
+          location.replace(new URL('../../app/assets/bible/read66.html', location.href).href + (location.search || '') + (location.hash || ''));
+          return;
+        } catch (eGo) {}
+      }
+      function bootReader() {
+      var q = new URLSearchParams(location.search);
+      var track = q.get('track') || '';
+      if (track && track !== 'bible66') {
+        document.body.classList.add('bible-track-read');
+      }
+
       function refreshHero() {
+        if (document.body.classList.contains('bible-track-read')) return;
         var st = B100Progress.stats();
         var ch = B100Progress.countDone('b66:');
         document.getElementById('b66Stars').textContent = st.stars;
@@ -71,6 +79,10 @@
       }
 
       function applyContextTag(q, book, chapter) {
+        if (document.body.classList.contains('bible-track-read')) {
+          document.title = (B100LocalePick ? B100LocalePick.bookChapterRef(book, chapter, B100LocalePick.getLocale()) : ('Book ' + book + ' ' + chapter));
+          return;
+        }
         var tag = document.getElementById('b66Tagline');
         var titleEl = document.getElementById('b66Title');
         var loc = B100LocalePick ? B100LocalePick.getLocale() : 'zh-Hant';
@@ -82,6 +94,16 @@
           var dayRow = plan && plan.days && plan.days.find(function (d) { return String(d.day) === String(dayN); });
           var dayTitle = dayRow && B100LocalePick ? B100LocalePick.pick(dayRow, 'title') : '';
           tag.textContent = '📅 ' + (dayTitle || ('Day ' + dayN)) + ' · ' + ref;
+          if (titleEl) titleEl.textContent = '📖 ' + ref;
+          return;
+        }
+        if (track === 'plan1y' && q.get('day')) {
+          tag.textContent = '📅 一年計劃 · 第 ' + q.get('day') + ' 天 · ' + ref;
+          if (titleEl) titleEl.textContent = '📖 ' + ref;
+          return;
+        }
+        if (track === 'plan3y' && q.get('day')) {
+          tag.textContent = '⛪ 教會年 · ' + q.get('day') + ' · ' + ref;
           if (titleEl) titleEl.textContent = '📖 ' + ref;
           return;
         }
@@ -101,7 +123,6 @@
       }
 
       refreshHero();
-      var q = new URLSearchParams(location.search);
       var book = parseInt(q.get('book') || '1', 10);
       var chapter = parseInt(q.get('chapter') || '1', 10);
       if (!q.get('book') && q.get('track') && q.get('track') !== 'bible66') {
@@ -111,6 +132,13 @@
       var r = new BibleReaderCore();
       r.mount(document.getElementById('bibleRoot'), { bookId: book, chapter: chapter });
       r.onProgressChange = refreshHero;
+      }
+      var gate = window.B100LiveDb && window.B100LiveDb.ensureReaderPage
+        ? window.B100LiveDb.ensureReaderPage()
+        : Promise.resolve(false);
+      gate.then(function (redir) {
+        if (!redir) bootReader();
+      });
     })();
   </script>
 </body>

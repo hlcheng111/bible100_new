@@ -59,13 +59,19 @@
     host.classList.remove("hidden");
   }
 
+  function likertLbl(s) {
+    return global.AcsSurveyStandard ? AcsSurveyStandard.likertLabel(s, "agree") : String(s);
+  }
+
   function renderQuickSurvey() {
     var host = document.getElementById("swot-quick-survey-wrap");
     if (!host || !global.SwotPack) return;
     var lastQuad = "";
+    var legend = global.AcsSurveyStandard ? AcsSurveyStandard.likertLegendHtml("agree") : "";
     var html =
       '<h2 class="font-black text-amber-900 text-lg mb-1">⚡ A 軌 · 四象限 20 題快評</h2>' +
-      '<p class="text-sm text-slate-600 mb-3">約 5 分鐘 · <strong>1＝非常不同意 · 5＝非常同意</strong>。W 題高分代表破口嚴重；完成後執行 <code>calculateMatrix()</code> 並開啟 Tab ③。</p>' +
+      '<p class="text-sm text-slate-600 mb-2">約 5 分鐘 · W 題高分代表破口嚴重；完成後開啟 Tab ③ TOWS 矩陣。</p>' +
+      legend +
       '<form id="swot-quick-form" onsubmit="return SwotAcsShell.submitQuick(event)">';
     SwotPack.QUESTIONS.forEach(function (q, i) {
       if (q.quad !== lastQuad) {
@@ -82,7 +88,7 @@
         (i + 1) +
         '/20 題</legend><p class="text-sm mb-2">' +
         esc(q.label) +
-        '</p><div class="acs-likert-row">';
+        '</p><div class="acs-likert-row acs-likert-row--anchored">';
       for (var s = 1; s <= 5; s++) {
         html +=
           '<label><input type="radio" name="' +
@@ -90,7 +96,7 @@
           '" value="' +
           s +
           '" required> ' +
-          s +
+          likertLbl(s) +
           "</label>";
       }
       html += "</div></fieldset>";
@@ -101,7 +107,9 @@
       '<label class="text-sm font-bold">填寫身份<select name="role" class="w-full mt-1 border rounded p-2 bg-white"><option value="board">長執</option><option value="staff">同工</option></select></label>' +
       "</div>" +
       '<p id="swot-quick-error" class="text-red-600 text-xs mt-2 hidden"></p>' +
-      '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">✓ 提交 20 題 → Tab ③ TOWS 矩陣報告</button>' +
+      (global.AcsSurveyStandard
+        ? AcsSurveyStandard.submitButtonHtml("→ Tab ③ TOWS 矩陣報告")
+        : '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">提交並生成報告</button>') +
       "</form>";
     host.innerHTML = html;
     renderNcdWeaknessLock();
@@ -229,11 +237,14 @@
         wLock +
         extra;
     }
+    if (summary && global.AcsReportGold && AcsReportGold.mountAfterSummary) {
+      AcsReportGold.mountAfterSummary(summary, run, "swot");
+    }
 
     var matrixHost = document.getElementById("swot-report-matrix");
     if (matrixHost && global.SwotMatrixViz) {
       activeCross = (run.derived && run.derived.focus_strategy) || "WO";
-      matrixHost.innerHTML = SwotMatrixViz.renderMatrixBlock(run.derived, activeCross);
+      matrixHost.innerHTML = SwotMatrixViz.renderMatrixBlock(run.derived, activeCross, run);
       var svgWrap = matrixHost.querySelector(".swot-matrix-svg-wrap");
       if (svgWrap) {
         SwotMatrixViz.bindCrossClicks(svgWrap, run.derived, function (id) {

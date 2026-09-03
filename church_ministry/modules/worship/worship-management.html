@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../../assets/css/tailwind.min.css">
     <link href="../../assets/css/fontawesome.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50" data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a">
+<body class="bg-gray-50" data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a">
     <div style="padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
         <a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a>
         <a href="../../people/people_list.html" target="contentFrame" style="font-size:12px;color:#0b5fa5;text-decoration:none;">👥 人員總覽（500 人）</a>
@@ -69,9 +69,10 @@
                     <button onclick="showAddServiceModal()" class="w-full bg-purple-600 text-white py-3 px-4 rounded hover:bg-purple-700 mb-3">
                         安排司會
                     </button>
-                    <button onclick="exportWorshipData()" class="w-full bg-gray-600 text-white py-3 px-4 rounded hover:bg-gray-700">
+                    <button onclick="exportWorshipData()" data-w5-report="worship-mgmt-csv" class="w-full bg-gray-600 text-white py-3 px-4 rounded hover:bg-gray-700">
                         匯出數據
                     </button>
+                    <button type="button" onclick="printWorshipLiturgy()" data-w5-report="worship-mgmt-print" class="w-full bg-gray-500 text-white py-3 px-4 rounded hover:bg-gray-600 mt-2">🖨 列印場次</button>
                 </div>
 
                 <div class="bg-white rounded-lg shadow p-6">
@@ -681,6 +682,16 @@
         }
 
         // 匯出數據
+
+        function printWorshipLiturgy() {
+            var headers = ['日期','主題','講員','狀態'];
+            var rows = (typeof worshipData !== 'undefined' ? worshipData : []).map(function (w) {
+                return [w.date, w.theme || w.title, w.speaker, w.status];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('崇拜禮儀／場次', headers, rows);
+            else window.print();
+        }
+
         function exportWorshipData() {
             const csvContent = generateWorshipCSV();
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -716,6 +727,8 @@
     </script>
 
 
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 <!-- b100-ae-worship-w1-shell -->
 <link rel="stylesheet" href="../../css/ae_worship_six_section.css" />
 <script src="../../js/church-master-database.js"></script>
@@ -742,5 +755,10 @@
 <script src="../../js/crm_context_bar.js"></script>
 <script src="../../js/ae_primary_nav.js"></script>
 <script src="../../js/ae_subpage_shell.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

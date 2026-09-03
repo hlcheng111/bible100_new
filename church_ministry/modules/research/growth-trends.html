@@ -15,6 +15,17 @@
       <a class="cm-back-bar__link" href="../../dashboard.html">⛪ 返回教會事工</a>
       <span class="cm-back-bar__muted">研究與統計</span>
     </nav>
+    <div class="cm-merge-banner" style="padding:8px 16px;background:#fef3c7;border-bottom:1px solid #fcd34d;font-size:12px;color:#78350f;">
+      <strong>已合併至研究索引／儀表板</strong> — 請優先使用
+      <a href="index.html" style="color:#0b5fa5;font-weight:600;">研究索引 F-09</a> 或
+      <a href="../../dashboard.html" style="color:#0b5fa5;font-weight:600;">教會事工儀表板 F-01</a>。
+      本頁仍保留示意報表與 CSV 匯出。
+    </div>
+    <div id="w5dReportBar" style="padding:8px 16px;background:#ecfdf5;border-bottom:1px solid #a7f3d0;font-size:12px;">
+      <strong>F-12 報告</strong>
+      <button type="button" onclick="exportGrowthTrendsCsv()" data-w5-report="growth-trends-csv" style="margin-left:8px;padding:4px 10px;background:#059669;color:#fff;border:none;border-radius:4px;cursor:pointer;">⬇ CSV</button>
+      <button type="button" onclick="printGrowthTrends()" data-w5-report="growth-trends-print" style="margin-left:4px;padding:4px 10px;background:#4b5563;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨 列印</button>
+    </div>
     <p class="cm-data-banner" role="status"><strong>資料來源：</strong><span id="cm-data-source-line">讀取中…</span></p>
     <div class="cm-kpi-row" aria-label="即時匯總（ChurchDataBridge）">
       <span class="cm-kpi-pill">會友 <b id="cm-kpi-members">—</b></span>
@@ -335,11 +346,32 @@
         });
 
         console.log('增長趨勢分析模組已載入');
+        var GROWTH_TREND_ROWS = [
+            ['會友增長', '1月', 120], ['會友增長', '6月', 156],
+            ['志工數量', '1月', 75], ['志工數量', '6月', 89],
+            ['活動參與率', '1月', '65%'], ['活動參與率', '6月', '82%']
+        ];
+        function exportGrowthTrendsCsv() {
+            var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+            var lines = [[ '指標', '期間', '數值' ].map(esc).join(',')];
+            GROWTH_TREND_ROWS.forEach(function (r) { lines.push(r.map(esc).join(',')); });
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('growth_trends.csv', lines);
+        }
+        function printGrowthTrends() {
+            if (window.CmReportUtils) CmReportUtils.printTable('增長趨勢分析', ['指標', '期間', '數值'], GROWTH_TREND_ROWS);
+        }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 
 <script src="../../../js/church_data_bridge.js"></script>
 <script src="../../js/cm_research_snapshot.js"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){if(window.CMResearchSnapshot)CMResearchSnapshot.initPage();});</script>
 
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

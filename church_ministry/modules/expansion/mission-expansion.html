@@ -10,7 +10,11 @@ table { width: 100%; border-collapse: collapse; }
 table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
 table th { background: #f8f9fa; }</style></head>
 <body>
-    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header"><h1>✈️ 宣教拓展管理</h1></div>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header"><h1>✈️ 宣教拓展管理</h1>
+<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+<button type="button" onclick="exportMissionExpansionCsv()" data-w5-report="mission-expansion-csv" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">⬇ CSV</button>
+<button type="button" onclick="printMissionExpansion()" data-w5-report="mission-expansion-print" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">🖨 列印</button>
+</div></div>
 <div class="container">
     <div class="card"><h3 style="margin-bottom:15px;">🌍 宣教项目</h3>
         <button class="btn" onclick="add()">➕ 新增项目</button>
@@ -29,6 +33,29 @@ function render() {
     document.querySelector('#table tbody').innerHTML = missions.map(m => `<tr><td>${m.location}</td><td>${m.type}</td><td>${m.team}人</td><td>$${m.budget.toLocaleString()}</td><td>${m.status}</td></tr>`).join('');
 }
 function add() { alert('功能：新增宣教项目'); }
+function exportMissionExpansionCsv() {
+    var U = window.CmReportUtils; if (!U) return;
+    var esc = U.csvEsc;
+    var list = missions || [];
+    if (!list.length) { try { list = JSON.parse(localStorage.getItem('missionData') || '[]'); } catch (e) { list = []; } }
+    var lines = [['地點', '類型', '團隊', '預算', '狀態'].map(esc).join(',')];
+    list.forEach(function (m) { lines.push([m.location, m.type, m.team, m.budget, m.status].map(esc).join(',')); });
+    U.downloadCsv('mission_expansion_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+}
+function printMissionExpansion() {
+    var U = window.CmReportUtils; if (!U) return;
+    var list = missions || [];
+    if (!list.length) { try { list = JSON.parse(localStorage.getItem('missionData') || '[]'); } catch (e) { list = []; } }
+    var rows = list.map(function (m) { return [m.location, m.type, String(m.team), String(m.budget), m.status]; });
+    U.printTable('宣教拓展', ['地點', '類型', '團隊', '預算', '狀態'], rows);
+}
 </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

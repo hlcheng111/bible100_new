@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>主日一桌 · 點名／缺席／數字／匯出 | Church Ministry</title>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --accent: #0d9488;
+      --accent2: #0369a1;
+      --warm: #f59e0b;
+      --rose: #e11d48;
+      --bg: #f1f5f9;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(1200px 400px at 10% -10%, #ccfbf1 0%, transparent 55%),
+        radial-gradient(900px 360px at 100% 0%, #dbeafe 0%, transparent 50%),
+        var(--bg);
+      color: var(--ink);
+      font-size: 14px;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 12px 14px 40px; }
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      background: linear-gradient(135deg, #0f766e 0%, #0369a1 100%);
+      color: #fff;
+      border-radius: 18px;
+      padding: 16px 18px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+      margin-bottom: 12px;
+    }
+    .hero h1 { margin: 0 0 4px; font-size: 1.35rem; letter-spacing: 0.02em; }
+    .hero p { margin: 0; opacity: 0.92; font-size: 12px; line-height: 1.45; }
+    .ring {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: conic-gradient(#fbbf24 calc(var(--pct) * 1%), rgba(255,255,255,0.25) 0);
+      display: grid; place-items: center;
+      box-shadow: inset 0 0 0 8px rgba(255,255,255,0.15);
+    }
+    .ring-inner {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(15, 23, 42, 0.25);
+      display: grid; place-items: center;
+      font-weight: 800; font-size: 13px;
+    }
+    .tabs {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-bottom: 12px;
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(241,245,249,0.92);
+      backdrop-filter: blur(8px);
+      padding: 8px 0;
+    }
+    .tab {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .tab.active {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+    .panel {
+      display: none;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    }
+    .panel.active { display: block; animation: rise 0.28s ease; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-bottom: 12px; }
+    label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+    input, select {
+      padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px;
+      font: inherit; min-width: 140px;
+    }
+    .btn {
+      border: none; border-radius: 10px; padding: 9px 14px;
+      font-weight: 700; cursor: pointer; font: inherit;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-blue { background: var(--accent2); color: #fff; }
+    .btn-warm { background: var(--warm); color: #111; }
+    .btn-rose { background: var(--rose); color: #fff; }
+    .btn-ghost { background: #f8fafc; border: 1px solid var(--line); color: var(--ink); }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .stat {
+      background: #f8fafc; border: 1px solid var(--line); border-radius: 12px;
+      padding: 10px; text-align: center;
+    }
+    .stat b { display: block; font-size: 1.4rem; color: var(--accent2); }
+    .stat span { font-size: 11px; color: var(--muted); }
+    .member-list { max-height: 420px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
+    .member {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-bottom: 1px solid #f1f5f9;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .member:hover { background: #f8fafc; }
+    .member.present { background: #ecfdf5; }
+    .member.absent { background: #fff1f2; }
+    .member.highlight { outline: 2px solid var(--warm); background: #fffbeb; }
+    .member input { width: 18px; height: 18px; }
+    .member .name { font-weight: 700; }
+    .member .meta { font-size: 11px; color: var(--muted); }
+    .empty {
+      padding: 24px; text-align: center; color: var(--muted);
+      background: #fffbeb; border: 1px dashed #fcd34d; border-radius: 12px;
+    }
+    .spark {
+      position: fixed; inset: 0; pointer-events: none; z-index: 99;
+      display: none;
+    }
+    .spark.on { display: block; }
+    .spark i {
+      position: absolute; width: 8px; height: 8px; border-radius: 50%;
+      animation: fall 1.1s ease-out forwards;
+    }
+    @keyframes fall {
+      to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: #0f172a; color: #fff; padding: 10px 16px; border-radius: 999px;
+      font-size: 12px; font-weight: 700; opacity: 0; transition: 0.25s;
+      z-index: 100; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+    .hint { font-size: 12px; color: var(--muted); margin: 0 0 10px; line-height: 1.45; }
+    .absent-card {
+      border: 1px solid #fecdd3; background: #fff1f2; border-radius: 12px;
+      padding: 10px 12px; margin-bottom: 8px;
+      display: flex; justify-content: space-between; gap: 8px; align-items: center;
+    }
+    @media (max-width: 700px) {
+      .hero { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .ring { display: none; }
+    }
+  </style>
+</head>
+<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a" data-ae-worship-shell="skip" data-b100-ae-chrome="off" data-cm-desk-kit="off">
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>☀️ 主日一桌</h1>
+        <p>點名 → 缺席跟進 → 看數字 → 匯出。十分鐘做完本主日。不是教學牆，是工作桌。</p>
+      </div>
+      <div class="ring" id="progressRing" style="--pct:0" title="本場已點比例">
+        <div class="ring-inner" id="progressLabel">0%</div>
+      </div>
+    </div>
+
+    <nav class="tabs" aria-label="主日一桌">
+      <button type="button" class="tab active" data-tab="roll">① 點名</button>
+      <button type="button" class="tab" data-tab="absent">② 缺席跟進</button>
+      <button type="button" class="tab" data-tab="stats">③ 本週數字</button>
+      <button type="button" class="tab" data-tab="export">④ 匯出</button>
+    </nav>
+
+    <section class="panel active" id="panel-roll">
+      <p class="hint">勾選＝出席。名單優先讀會友種子；沒有人時請先載入示範會友。</p>
+      <div class="row">
+        <div>
+          <label>場次日期</label>
+          <input type="date" id="svcDate" />
+        </div>
+        <div>
+          <label>場次</label>
+          <select id="svcName">
+            <option>第一堂</option>
+            <option>第二堂</option>
+            <option>青年堂</option>
+            <option>晚堂</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-ghost" id="btnLoadSeed">📥 載入示範會友</button>
+        <button type="button" class="btn btn-primary" id="btnSaveRoll">💾 存本場點名</button>
+        <button type="button" class="btn btn-ghost" id="btnMarkAll">全出席</button>
+      </div>
+      <div class="row">
+        <div style="flex:1;min-width:200px;">
+          <label for="memberJump">快速选人（会友下拉）</label>
+          <select id="memberJump">
+            <option value="">— 跳到会友 —</option>
+          </select>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="nTotal">0</b><span>名冊</span></div>
+        <div class="stat"><b id="nPresent">0</b><span>出席</span></div>
+        <div class="stat"><b id="nAbsent">0</b><span>缺席</span></div>
+        <div class="stat"><b id="nRate">0%</b><span>出席率</span></div>
+      </div>
+      <div id="memberHost" class="member-list"></div>
+    </section>
+
+    <section class="panel" id="panel-absent">
+      <p class="hint">本場缺席者可一鍵建立探訪草稿（寫入本機探訪清單，不自動發訊）。</p>
+      <div id="absentHost"></div>
+      <button type="button" class="btn btn-rose" id="btnPushVisit" style="margin-top:10px;">🤝 全部缺席 → 探訪草稿</button>
+    </section>
+
+    <section class="panel" id="panel-stats">
+      <p class="hint">只看最近幾場的摘要數字（圖很小，不搶戲）。</p>
+      <div class="stats" id="weekStats"></div>
+      <canvas id="miniChart" height="120" style="width:100%;max-height:140px;"></canvas>
+    </section>
+
+    <section class="panel" id="panel-export">
+      <p class="hint">給長執／同工帶走的清單。</p>
+      <div class="row">
+        <button type="button" class="btn btn-blue" id="btnCsv" data-w5-report="sunday-desk-csv">⬇ 本場 CSV</button>
+        <button type="button" class="btn btn-ghost" id="btnPrint" data-w5-report="sunday-desk-print">🖨 列印名冊</button>
+        <a class="btn btn-ghost" href="worship-integrated.html" style="text-decoration:none;">敬拜策劃主桌</a>
+      </div>
+    </section>
+  </div>
+
+  <div class="spark" id="spark"></div>
+  <div class="toast" id="toast"></div>
+
+  <script src="../../js/cm_report_utils.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script>
+(function () {
+  var KEY = "attendanceRecords";
+  var members = [];
+  var marks = {}; // id -> 'P' | 'A'
+
+  function todayStr() {
+    var d = new Date();
+    return d.toISOString().slice(0, 10);
+  }
+
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(function () { el.classList.remove("show"); }, 2200);
+  }
+
+  function celebrate() {
+    var host = document.getElementById("spark");
+    host.innerHTML = "";
+    host.classList.add("on");
+    var colors = ["#f59e0b", "#14b8a6", "#3b82f6", "#f43f5e", "#a855f7"];
+    for (var i = 0; i < 36; i++) {
+      var d = document.createElement("i");
+      d.style.left = Math.random() * 100 + "%";
+      d.style.top = "-10px";
+      d.style.background = colors[i % colors.length];
+      d.style.animationDelay = (Math.random() * 0.35) + "s";
+      host.appendChild(d);
+    }
+    setTimeout(function () { host.classList.remove("on"); host.innerHTML = ""; }, 1200);
+  }
+
+  function loadMembers() {
+    members = [];
+    try {
+      if (window.ChurchDataBridge && ChurchDataBridge.getMembers) {
+        members = ChurchDataBridge.getMembers() || [];
+      }
+    } catch (e) {}
+    if (!members.length) {
+      try {
+        members = JSON.parse(localStorage.getItem("churchMembers") || "[]");
+      } catch (e2) {}
+    }
+    if (!members.length) {
+      try {
+        var ms = JSON.parse(localStorage.getItem("memberSystemData") || "null");
+        if (ms && ms.members) members = ms.members;
+      } catch (e3) {}
+    }
+    members = (members || []).map(function (m, i) {
+      return {
+        id: String(m.memberId || m.id || ("m" + i)),
+        name: m.name || m.chineseName || m.fullName || ("會友" + (i + 1)),
+        phone: m.phone || m.mobile || ""
+      };
+    });
+  }
+
+  function loadExistingMarks() {
+    marks = {};
+    var date = document.getElementById("svcDate").value;
+    var svc = document.getElementById("svcName").value;
+    var all = [];
+    try { all = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) {}
+    var hit = all.find(function (r) { return r.date === date && r.service === svc; });
+    if (hit && hit.marks) marks = hit.marks;
+  }
+
+  function counts() {
+    var p = 0, a = 0;
+    members.forEach(function (m) {
+      if (marks[m.id] === "P") p++;
+      else if (marks[m.id] === "A") a++;
+    });
+    var done = p + a;
+    var rate = members.length ? Math.round((p / members.length) * 100) : 0;
+    return { p: p, a: a, done: done, rate: rate, total: members.length };
+  }
+
+  function updateProgress() {
+    var c = counts();
+    document.getElementById("nTotal").textContent = c.total;
+    document.getElementById("nPresent").textContent = c.p;
+    document.getElementById("nAbsent").textContent = c.a;
+    document.getElementById("nRate").textContent = c.rate + "%";
+    var pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
+    document.getElementById("progressRing").style.setProperty("--pct", pct);
+    document.getElementById("progressLabel").textContent = pct + "%";
+  }
+
+  function renderMembers() {
+    var host = document.getElementById("memberHost");
+    fillMemberJumpSelect();
+    if (!members.length) {
+      host.innerHTML = '<div class="empty">尚無名冊。<br><button type="button" class="btn btn-warm" onclick="document.getElementById(\'btnLoadSeed\').click()">先載入示範會友</button></div>';
+      updateProgress();
+      return;
+    }
+    host.innerHTML = members.map(function (m) {
+      var st = marks[m.id] || "";
+      var cls = st === "P" ? " present" : (st === "A" ? " absent" : "");
+      return (
+        '<label class="member' + cls + '" data-id="' + m.id + '">' +
+        '<input type="checkbox" ' + (st === "P" ? "checked" : "") + ' />' +
+        '<div><div class="name">' + m.name + '</div>' +
+        '<div class="meta">' + (m.phone || "—") + (st === "A" ? " · 缺席" : "") + "</div></div>" +
+        "</label>"
+      );
+    }).join("");
+    host.querySelectorAll(".member").forEach(function (el) {
+      var id = el.getAttribute("data-id");
+      var cb = el.querySelector("input");
+      cb.addEventListener("change", function () {
+        marks[id] = cb.checked ? "P" : "A";
+        el.classList.toggle("present", cb.checked);
+        el.classList.toggle("absent", !cb.checked);
+        updateProgress();
+      });
+      el.addEventListener("dblclick", function () {
+        marks[id] = "A";
+        cb.checked = false;
+        el.classList.remove("present");
+        el.classList.add("absent");
+        updateProgress();
+        toast(members.find(function (x) { return x.id === id; }).name + " 標為缺席");
+      });
+    });
+    updateProgress();
+  }
+
+  function fillMemberJumpSelect() {
+    var sel = document.getElementById("memberJump");
+    if (!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">— 跳到会友 —</option>' +
+      members.map(function (m) {
+        return '<option value="' + m.id + '">' + m.name + (m.phone ? ' · ' + m.phone : '') + '</option>';
+      }).join('');
+    if (cur && members.some(function (m) { return m.id === cur; })) sel.value = cur;
+  }
+
+  function jumpToMember(id) {
+    if (!id) return;
+    var host = document.getElementById("memberHost");
+    var el = host && host.querySelector('.member[data-id="' + id + '"]');
+    if (!el) {
+      toast('找不到该会友');
+      return;
+    }
+    host.querySelectorAll(".member.highlight").forEach(function (x) { x.classList.remove("highlight"); });
+    el.classList.add("highlight");
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(function () { el.classList.remove("highlight"); }, 2400);
+  }
+
+  function saveRoll() {
+    var date = document.getElementById("svcDate").value;
+    var svc = document.getElementById("svcName").value;
+    var all = [];
+    try { all = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) {}
+    all = all.filter(function (r) { return !(r.date === date && r.service === svc); });
+    var c = counts();
+    all.push({
+      id: Date.now(),
+      date: date,
+      service: svc,
+      marks: JSON.parse(JSON.stringify(marks)),
+      present: c.p,
+      absent: c.a,
+      total: c.total,
+      rate: c.rate,
+      savedAt: new Date().toISOString()
+    });
+    localStorage.setItem(KEY, JSON.stringify(all));
+    celebrate();
+    toast("已存本場 · 出席 " + c.p + " / 缺席 " + c.a);
+    renderAbsent();
+    renderWeekStats();
+  }
+
+  function renderAbsent() {
+    var host = document.getElementById("absentHost");
+    var list = members.filter(function (m) { return marks[m.id] === "A"; });
+    if (!list.length) {
+      host.innerHTML = '<div class="empty">目前沒有缺席（先在「點名」標缺席，或雙擊人名）。</div>';
+      return;
+    }
+    host.innerHTML = list.map(function (m) {
+      return (
+        '<div class="absent-card"><div><strong>' + m.name + "</strong><div class=\"meta\">" +
+        (m.phone || "無電話") + "</div></div>" +
+        '<button type="button" class="btn btn-ghost" data-one="' + m.id + '">單筆探訪</button></div>'
+      );
+    }).join("");
+    host.querySelectorAll("[data-one]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        pushVisitation([btn.getAttribute("data-one")]);
+      });
+    });
+  }
+
+  function pushVisitation(ids) {
+    var date = document.getElementById("svcDate").value;
+    var svc = document.getElementById("svcName").value;
+    var reason = "主日缺席（" + date + " " + svc + "）";
+    var bridge = window.ChurchDataBridge;
+    var n = 0;
+    if (bridge && typeof bridge.savePastoralFollowup === "function") {
+      (ids || []).forEach(function (id) {
+        var m = members.find(function (x) { return x.id === id; });
+        if (!m) return;
+        try {
+          bridge.savePastoralFollowup({
+            member_id: id,
+            member_name: m.name,
+            reason: reason,
+            priority: "high",
+            status: "pending",
+            source: "worship-sunday-desk",
+            note: m.phone ? "電話：" + m.phone : ""
+          });
+          n++;
+        } catch (eBridge) {}
+      });
+      if (n) {
+        toast("已建立 " + n + " 筆探訪跟進（Bridge）");
+        celebrate();
+        return;
+      }
+    }
+    toast("Bridge 不可用，未能寫入探訪跟進");
+  }
+
+  function renderWeekStats() {
+    var all = [];
+    try { all = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) {}
+    all = all.slice().sort(function (a, b) { return (a.date || "").localeCompare(b.date || ""); }).slice(-6);
+    var host = document.getElementById("weekStats");
+    if (!all.length) {
+      host.innerHTML = '<div class="empty" style="grid-column:1/-1">尚無已存場次。先到「點名」存一場。</div>';
+      drawMini([]);
+      return;
+    }
+    host.innerHTML = all.map(function (r) {
+      return '<div class="stat"><b>' + (r.rate || 0) + '%</b><span>' + r.date + "<br>" + (r.service || "") + "</span></div>";
+    }).join("");
+    drawMini(all);
+  }
+
+  function drawMini(rows) {
+    var canvas = document.getElementById("miniChart");
+    if (!canvas || !canvas.getContext) return;
+    var ctx = canvas.getContext("2d");
+    var w = canvas.width = canvas.clientWidth * (window.devicePixelRatio || 1);
+    var h = canvas.height = 120 * (window.devicePixelRatio || 1);
+    ctx.clearRect(0, 0, w, h);
+    if (!rows.length) return;
+    var pad = 20;
+    var max = 100;
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.beginPath();
+    ctx.moveTo(pad, h - pad);
+    ctx.lineTo(w - pad, h - pad);
+    ctx.stroke();
+    ctx.strokeStyle = "#0d9488";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    rows.forEach(function (r, i) {
+      var x = pad + (i / Math.max(rows.length - 1, 1)) * (w - pad * 2);
+      var y = h - pad - ((r.rate || 0) / max) * (h - pad * 2);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    rows.forEach(function (r, i) {
+      var x = pad + (i / Math.max(rows.length - 1, 1)) * (w - pad * 2);
+      var y = h - pad - ((r.rate || 0) / max) * (h - pad * 2);
+      ctx.fillStyle = "#0369a1";
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  function exportCsv() {
+    var date = document.getElementById("svcDate").value;
+    var svc = document.getElementById("svcName").value;
+    var lines = ["date,service,memberId,name,status"];
+    members.forEach(function (m) {
+      var st = marks[m.id] === "P" ? "present" : (marks[m.id] === "A" ? "absent" : "unset");
+      var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+      lines.push([date, svc, m.id, m.name, st].map(esc).join(","));
+    });
+    if (window.CmReportUtils) CmReportUtils.downloadCsv("sunday_desk_" + date + ".csv", lines);
+  }
+
+  function printRoster() {
+    var date = document.getElementById("svcDate").value;
+    var svc = document.getElementById("svcName").value;
+    var rows = members.map(function (m) {
+      return [m.name, m.phone, marks[m.id] === "P" ? "出席" : (marks[m.id] === "A" ? "缺席" : "—")];
+    });
+    if (window.CmReportUtils) {
+      CmReportUtils.printTable("主日點名 " + date + " " + svc, ["姓名", "電話", "狀態"], rows);
+    } else window.print();
+  }
+
+  document.querySelectorAll(".tab").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".tab").forEach(function (t) { t.classList.remove("active"); });
+      document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
+      btn.classList.add("active");
+      document.getElementById("panel-" + btn.getAttribute("data-tab")).classList.add("active");
+      if (btn.getAttribute("data-tab") === "absent") renderAbsent();
+      if (btn.getAttribute("data-tab") === "stats") renderWeekStats();
+    });
+  });
+
+  document.getElementById("svcDate").value = todayStr();
+  document.getElementById("svcDate").addEventListener("change", function () {
+    loadExistingMarks();
+    renderMembers();
+  });
+  document.getElementById("svcName").addEventListener("change", function () {
+    loadExistingMarks();
+    renderMembers();
+  });
+  document.getElementById("btnSaveRoll").addEventListener("click", saveRoll);
+  document.getElementById("btnMarkAll").addEventListener("click", function () {
+    members.forEach(function (m) { marks[m.id] = "P"; });
+    renderMembers();
+    toast("已全標出席 · 記得按存檔");
+  });
+  document.getElementById("btnLoadSeed").addEventListener("click", function () {
+    location.href = "../../load_central_member_seed.html";
+  });
+  document.getElementById("btnPushVisit").addEventListener("click", function () {
+    var ids = members.filter(function (m) { return marks[m.id] === "A"; }).map(function (m) { return m.id; });
+    if (!ids.length) { toast("沒有缺席可送"); return; }
+    pushVisitation(ids);
+  });
+  document.getElementById("btnCsv").addEventListener("click", exportCsv);
+  document.getElementById("btnPrint").addEventListener("click", printRoster);
+  var memberJump = document.getElementById("memberJump");
+  if (memberJump) {
+    memberJump.addEventListener("change", function () {
+      jumpToMember(memberJump.value);
+      memberJump.value = "";
+    });
+  }
+
+  loadMembers();
+  loadExistingMarks();
+  renderMembers();
+  renderWeekStats();
+})();
+  </script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
+</body>
+</html>

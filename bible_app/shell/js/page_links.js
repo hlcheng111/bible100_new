@@ -18,6 +18,13 @@
     return q.get('view') === 'single' ? 'single' : 'dual';
   }
 
+  function shellPageHref(rel) {
+    if (global.B100LiveDb && global.B100LiveDb.resolvePageHref) {
+      return global.B100LiveDb.resolvePageHref(rel);
+    }
+    return rel;
+  }
+
   function bibleReadUrl(opts) {
     opts = opts || {};
     var q = new URLSearchParams();
@@ -31,8 +38,33 @@
     if (opts.verse != null) q.set('verse', String(opts.verse));
     q.set('locale', opts.locale || locale());
     q.set('view', opts.view || viewMode());
-    return 'bible66.html?' + q.toString();
+    var rel = 'bible66.html?' + q.toString();
+    if (location.protocol === 'file:') {
+      if (/\/app\/assets\/bible\//i.test((location.pathname || '').replace(/\\/g, '/'))) {
+        return 'read66.html?' + q.toString();
+      }
+      try {
+        return new URL('../../app/assets/bible/read66.html?' + q.toString(), location.href).href;
+      } catch (eRel) {
+        return '../../app/assets/bible/read66.html?' + q.toString();
+      }
+    }
+    return shellPageHref(rel);
   }
 
-  global.B100PageLinks = { bibleReadUrl: bibleReadUrl, viewMode: viewMode };
+  function bibleReadAnchorAttrs() {
+    return '';
+  }
+
+  function decorateReadAnchor(el) {
+    return el;
+  }
+
+  global.B100PageLinks = {
+    bibleReadUrl: bibleReadUrl,
+    bibleReadAnchorAttrs: bibleReadAnchorAttrs,
+    decorateReadAnchor: decorateReadAnchor,
+    viewMode: viewMode,
+    shellPageHref: shellPageHref
+  };
 })(window);

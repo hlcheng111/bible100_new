@@ -115,7 +115,7 @@
     }
     return crmShellGo(
       ev,
-      "church_planning/sidebar_plan.html",
+      "church_planning/sidebar_plan_v5_preview.html",
       "church_planning/" + relPath
     );
   }
@@ -129,11 +129,15 @@
   }
 
   function crmOpenAeLayout(ev, focus, contentPath) {
-    var sb =
-      focus === "a"
-        ? "church_ministry/sidebar_worship_journey.html"
-        : "church_ministry/sidebar_church_layout_v1.html" +
-          (focus ? "?focus=" + encodeURIComponent(focus) : "");
+    var sb;
+    if (focus === "a") {
+      sb = "church_ministry/sidebar_worship_journey.html";
+    } else {
+      // C／B／D／E／F：產品憲法——地圖穩在 layout_v1（C 不再預設紅側欄）
+      sb =
+        "church_ministry/sidebar_church_layout_v1.html" +
+        (focus ? "?focus=" + encodeURIComponent(focus) : "");
+    }
     return crmShellGo(ev, sb, toRootUrl(contentPath));
   }
 

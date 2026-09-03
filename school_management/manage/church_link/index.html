@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教會連結 · Church Link W6</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f6f7fb; padding: 16px; font-size: 12px; color: #333; }
+        h1 { color: #166534; font-size: 18px; margin-bottom: 6px; }
+        .sub { color: #666; margin-bottom: 12px; line-height: 1.6; }
+        .tip { background: #ecfdf5; border-left: 3px solid #22c55e; padding: 10px 12px; margin-bottom: 12px; font-size: 11px; line-height: 1.6; }
+        .card { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .card-title { font-weight: 600; color: #166534; margin-bottom: 10px; }
+        .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+        .col { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; min-height: 120px; }
+        .col h3 { font-size: 12px; color: #0b5fa5; margin-bottom: 8px; }
+        .col ul { margin: 0; padding-left: 16px; font-size: 11px; line-height: 1.6; max-height: 200px; overflow: auto; }
+        .btn { padding: 8px 14px; background: #166534; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; margin: 2px 4px 2px 0; }
+        .btn-secondary { background: #64748b; }
+        .btn-warn { background: #b45309; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { border-bottom: 1px solid #e2e8f0; padding: 8px; text-align: left; }
+        th { background: #f8fafc; }
+        .inp { padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; }
+        .lbl { font-size: 10px; color: #64748b; }
+    </style>
+</head>
+<body>
+    <h1>🔗 教會連結（W6）</h1>
+    <p class="sub">主日學 <code>educationSystemData</code> ↔ 學校 <code>schoolMasterDatabase</code> · 缺席門檻預設與主日學 <code>ABSENCE_ALERT_COUNT=3</code> 對齊 · 探訪預填欄位對應 <code>visitation_followup</code> 表單</p>
+
+    <div class="tip">
+        <strong>治理：</strong> 預填只進本機佇列，須到探訪跟進表單人工確認才寫入。智慧事奉技能須走 <code>SmartMinistryCanonical</code>，不可繞過。
+    </div>
+
+    <div class="card">
+        <div class="card-title">📊 名冊對齊報告（memberId）</div>
+        <button class="btn" id="btnRoster">重新整理</button>
+        <a href="../../../church_ministry/modules/education/education-integrated.html" target="_blank" class="btn btn-secondary">主日學工作桌</a>
+        <p id="rosterSummary" style="font-size:11px;margin:10px 0;color:#475569;"></p>
+        <div class="cols">
+            <div class="col"><h3>✅ 已對齊</h3><ul id="colAligned"></ul></div>
+            <div class="col"><h3>📗 僅主日學</h3><ul id="colSsOnly"></ul></div>
+            <div class="col"><h3>🏫 僅學校</h3><ul id="colSchoolOnly"></ul></div>
+        </div>
+        <p style="font-size:10px;color:#888;margin-top:8px;">未填 memberId 者見下方統計（無法對齊，請至學生／主日學名冊補連結）。</p>
+    </div>
+
+    <div class="card">
+        <div class="card-title">⚙️ 缺席／探訪設定（存 meta.churchLink）</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
+            <div><span class="lbl">連續缺席門檻</span><br><input id="cfgThreshold" type="number" class="inp" value="3" style="width:50px;" min="1"></div>
+            <div><span class="lbl">高優先門檻</span><br><input id="cfgHighStreak" type="number" class="inp" value="5" style="width:50px;" min="1"></div>
+            <div><span class="lbl">探訪到期（天）</span><br><input id="cfgDueDays" type="number" class="inp" value="3" style="width:50px;" min="0"></div>
+            <div><span class="lbl">預設來源</span><br>
+                <select id="cfgSource" class="inp">
+                    <option value="both">學校＋主日學</option>
+                    <option value="school">僅學校</option>
+                    <option value="education">僅主日學</option>
+                </select>
+            </div>
+            <div><label style="font-size:11px;"><input type="checkbox" id="cfgParentFallback" checked> 無 memberId 時改填家長</label></div>
+            <button class="btn btn-secondary" id="btnSaveCfg">儲存設定</button>
+        </div>
+        <p id="cfgMsg" style="font-size:10px;color:#64748b;"></p>
+    </div>
+
+    <div class="card">
+        <div class="card-title">⚠️ 連續缺席 → 牧養預填</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
+            <div><span class="lbl">連續缺席次數</span><br><input id="absThreshold" type="number" class="inp" value="3" style="width:50px;"></div>
+            <div><span class="lbl">來源</span><br>
+                <select id="absSource" class="inp">
+                    <option value="both">學校＋主日學</option>
+                    <option value="school">僅學校</option>
+                    <option value="education">僅主日學</option>
+                </select>
+            </div>
+            <button class="btn" id="btnScanAbs">掃描缺席</button>
+            <button class="btn btn-warn" id="btnQueue">加入 CRM 預填佇列</button>
+            <a href="../communication/parent.html" target="contentFrame" class="btn btn-secondary">W7 家長通知草稿</a>
+        </div>
+        <div id="absList"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📥 CRM 預填佇列（<code>bible100_crm_intent_v2_pending</code>）</div>
+        <div id="queueList"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">⚡ 教師技能 → 智慧事奉</div>
+        <p style="font-size:11px;color:#555;margin:0 0 8px;">須已連結 volunteerId（＝ member_id）。技能預設取自授課科目。</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+            <div><span class="lbl">教師</span><br><select id="teacherSelect" class="inp" style="min-width:160px;"></select></div>
+            <div><span class="lbl">額外技能（逗號分隔，選填）</span><br><input id="extraSkills" class="inp" placeholder="教導,小組帶領" style="width:180px;"></div>
+            <button class="btn" id="btnPushSkills">更新人才庫技能</button>
+        </div>
+        <p id="skillMsg" style="font-size:11px;color:#166534;margin-top:8px;"></p>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="btn btn-secondary">返回儀表板</a>
+
+    <script src="../../../js/church_data_bridge.js"></script>
+    <script src="../../../js/crm_intent_router.js"></script>
+    <script src="../../../js/smart_ministry_canonical_store.js"></script>
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+
+            let lastPrefills = [];
+
+            function renderRoster() {
+                const r = db.buildRosterAlignmentReport();
+                const c = r.counts || {};
+                document.getElementById('rosterSummary').textContent =
+                    '主日學 ' + (c.education_total || 0) + ' 人 · 學校 ' + (c.school_total || 0) + ' 人 · 已對齊 ' + (c.aligned || 0) +
+                    ' · 僅主日學 ' + (c.sunday_school_only || 0) + ' · 僅學校 ' + (c.school_only || 0) +
+                    ' · 未連結 memberId（主日學 ' + (c.unlinked_sunday_school || 0) + '／學校 ' + (c.unlinked_school || 0) + '）';
+                document.getElementById('colAligned').innerHTML = (r.aligned || []).map(x =>
+                    '<li>' + x.sundaySchoolName + ' ↔ ' + x.schoolName + ' <small>(#' + x.memberId + ')</small></li>'
+                ).join('') || '<li style="color:#888;">—</li>';
+                document.getElementById('colSsOnly').innerHTML = (r.sunday_school_only || []).map(x =>
+                    '<li>' + x.name + ' <small>(#' + x.memberId + ')</small></li>'
+                ).join('') || '<li style="color:#888;">—</li>';
+                document.getElementById('colSchoolOnly').innerHTML = (r.school_only || []).map(x =>
+                    '<li>' + x.name + ' <small>(#' + x.memberId + ')</small></li>'
+                ).join('') || '<li style="color:#888;">—</li>';
+            }
+
+            function renderAbsList(prefills) {
+                if (!prefills.length) {
+                    document.getElementById('absList').innerHTML = '<p style="color:#888;">未達門檻或無 memberId 可預填。</p>';
+                    return;
+                }
+                document.getElementById('absList').innerHTML =
+                    '<table><thead><tr><th>memberId</th><th>摘要</th><th>優先</th><th>到期</th><th></th></tr></thead><tbody>' +
+                    prefills.map((p, i) => '<tr><td>' + (p.member_id || '—') + '</td><td>' + (p.payload.summary || '') + '</td><td>' + (p.payload.priority || '') + '</td><td>' + (p.payload.due_date || '—') + '</td><td><button class="btn btn-sm-preview" data-idx="' + i + '" style="padding:2px 8px;font-size:10px;">預覽欄位</button></td></tr>').join('') +
+                    '</tbody></table>';
+            }
+
+            function loadSettings() {
+                const s = db.getChurchLinkSettings();
+                document.getElementById('cfgThreshold').value = s.absenceThreshold;
+                document.getElementById('cfgHighStreak').value = s.highPriorityStreak;
+                document.getElementById('cfgDueDays').value = s.dueDateDays;
+                document.getElementById('cfgSource').value = s.absenceSource || 'both';
+                document.getElementById('cfgParentFallback').checked = s.useParentFallback !== false;
+                document.getElementById('absThreshold').value = s.absenceThreshold;
+                document.getElementById('absSource').value = s.absenceSource || 'both';
+            }
+
+            function openVisitationPrefill(prefill) {
+                const base = '../../../church_ministry/tools/visitation_followup/form.html';
+                const q = [];
+                if (prefill.member_id) q.push('member_id=' + encodeURIComponent(prefill.member_id));
+                if (prefill.reason) q.push('reason=' + encodeURIComponent(prefill.reason));
+                if (prefill.priority) q.push('priority=' + encodeURIComponent(prefill.priority));
+                const url = base + (q.length ? '?' + q.join('&') : '');
+                const w = window.open(url, '_blank');
+                if (window.Bible100CrmIntent && window.Bible100CrmIntent.postPrefillToFrame) {
+                    window.Bible100CrmIntent.postPrefillToFrame(w, prefill, url);
+                }
+            }
+
+            function renderQueue() {
+                const q = db.getPendingCrmIntentQueue();
+                if (!q.length) {
+                    document.getElementById('queueList').innerHTML = '<p style="color:#888;">佇列為空。</p>';
+                    return;
+                }
+                document.getElementById('queueList').innerHTML =
+                    '<table><thead><tr><th>時間</th><th>來源</th><th>意圖數</th><th>操作</th></tr></thead><tbody>' +
+                    q.map(entry => {
+                        const n = (entry.envelope && entry.envelope.intents) ? entry.envelope.intents.length : 0;
+                        return '<tr><td>' + (entry.createdAt || '').slice(0, 16) + '</td><td>' + (entry.source || '') + '</td><td>' + n + '</td><td>' +
+                            '<button class="btn btn-sm-open" data-id="' + entry.id + '" style="padding:2px 8px;font-size:10px;">開啟探訪表單</button> ' +
+                            '<button class="btn btn-secondary btn-sm-del" data-id="' + entry.id + '" style="padding:2px 8px;font-size:10px;">移除</button></td></tr>';
+                    }).join('') + '</tbody></table>';
+            }
+
+            function loadTeachers() {
+                const teachers = (db.data.teachers || []).filter(t => t.status !== 'inactive');
+                document.getElementById('teacherSelect').innerHTML = teachers.map(t =>
+                    '<option value="' + t.id + '">' + (t.name || t.id) + (t.volunteerId ? ' · 義工#' + t.volunteerId : ' · 未連結') + '</option>'
+                ).join('');
+            }
+
+            document.getElementById('btnSaveCfg').onclick = function() {
+                db.setChurchLinkSettings({
+                    absenceThreshold: parseInt(document.getElementById('cfgThreshold').value, 10) || 3,
+                    highPriorityStreak: parseInt(document.getElementById('cfgHighStreak').value, 10) || 5,
+                    dueDateDays: parseInt(document.getElementById('cfgDueDays').value, 10) || 3,
+                    absenceSource: document.getElementById('cfgSource').value,
+                    useParentFallback: document.getElementById('cfgParentFallback').checked
+                });
+                loadSettings();
+                document.getElementById('cfgMsg').textContent = '✅ 已儲存（探訪預填含 reason／priority／due_date／note）';
+            };
+
+            document.getElementById('btnRoster').onclick = renderRoster;
+
+            document.getElementById('btnScanAbs').onclick = function() {
+                const threshold = parseInt(document.getElementById('absThreshold').value, 10) || 3;
+                const source = document.getElementById('absSource').value;
+                const s = db.getChurchLinkSettings();
+                lastPrefills = db.buildAbsencePastoralPrefills({
+                    threshold: threshold,
+                    source: source,
+                    dueDateDays: s.dueDateDays,
+                    highPriorityStreak: s.highPriorityStreak,
+                    useParentFallback: s.useParentFallback
+                });
+                renderAbsList(lastPrefills);
+            };
+
+            document.getElementById('absList').addEventListener('click', function(e) {
+                if (e.target.classList.contains('btn-sm-preview')) {
+                    const idx = parseInt(e.target.dataset.idx, 10);
+                    const intent = lastPrefills[idx];
+                    if (!intent) return;
+                    let prefill;
+                    if (window.Bible100CrmIntent && window.Bible100CrmIntent.intentToPrefillPayload) {
+                        prefill = window.Bible100CrmIntent.intentToPrefillPayload(intent);
+                    } else {
+                        prefill = {
+                            member_id: intent.member_id,
+                            reason: intent.payload.reason,
+                            priority: intent.payload.priority,
+                            due_date: intent.payload.due_date,
+                            note: intent.payload.note
+                        };
+                    }
+                    openVisitationPrefill(prefill);
+                }
+            });
+
+            document.getElementById('btnQueue').onclick = function() {
+                if (!lastPrefills.length) return alert('請先掃描缺席');
+                const r = db.queueCrmIntentPrefills(lastPrefills, { label: 'school_w6_absence', channel: 'school_management' });
+                alert('已加入 ' + r.queued + ' 筆預填（佇列共 ' + r.queue_size + ' 項）');
+                renderQueue();
+            };
+
+            document.getElementById('queueList').addEventListener('click', function(e) {
+                if (e.target.classList.contains('btn-sm-open')) {
+                    try {
+                        const route = db.routeCrmIntentFromQueue(e.target.dataset.id, 0);
+                        openVisitationPrefill(route.prefill || {});
+                    } catch (err) { alert(err.message || err); }
+                }
+                if (e.target.classList.contains('btn-sm-del')) {
+                    db.removePendingCrmIntent(e.target.dataset.id);
+                    renderQueue();
+                }
+            });
+
+            document.getElementById('btnPushSkills').onclick = function() {
+                const tid = parseInt(document.getElementById('teacherSelect').value, 10);
+                const extra = (document.getElementById('extraSkills').value || '').split(',').map(s => s.trim()).filter(Boolean);
+                try {
+                    const r = db.pushTeacherSkillsToSmartMinistry(tid, extra.length ? extra : null);
+                    document.getElementById('skillMsg').textContent = '✅ 已更新 talent#' + r.talent_id + '：' + r.skills.join('、');
+                } catch (err) {
+                    document.getElementById('skillMsg').textContent = '❌ ' + (err.message || err);
+                }
+            };
+
+            renderRoster();
+            loadTeachers();
+            loadSettings();
+            renderQueue();
+        })();
+    </script>
+</body>
+</html>

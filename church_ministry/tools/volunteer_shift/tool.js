@@ -22,7 +22,13 @@
 
   function notifySync() {
     try {
-      global.parent.postMessage({ type: 'SYNC_OBSERVER_UPDATED', module: TOOL_ID }, '*');
+      var b = bridge();
+      if (b && typeof b.notifyDomainChanged === 'function') {
+        b.notifyDomainChanged('volunteer');
+      }
+    } catch (e0) {}
+    try {
+      global.parent.postMessage({ type: 'SYNC_OBSERVER_UPDATED', module: TOOL_ID, domain: 'volunteer' }, '*');
     } catch (e) {}
   }
 
@@ -116,6 +122,7 @@
     var o = {
       source_key: 'volunteerSystemData.schedules',
       source_label_zh: '義工排班',
+      key: 'volunteerSystemData',
       storage: m.storage,
       count: m.count,
       last_updated: m.updated_at,
@@ -249,13 +256,92 @@
     return { ok: true, members: 3, ministries: 2, schedules: 2, ctv_added: ctvAdded };
   }
 
+  function getUpcomingSchedules(days) {
+    days = days == null ? 30 : Number(days);
+    var b = bridge();
+    if (!b || !b.getVolunteerData) return [];
+    var vol = b.getVolunteerData() || {};
+    var end = addDaysYmd(days);
+    var today = todayYmd();
+    return (vol.schedules || []).filter(function (s) {
+      var d = s.date || '';
+      return d >= today && d <= end;
+    }).sort(function (a, b) {
+      return String(a.date).localeCompare(String(b.date));
+    });
+  }
+
+  function getLeaveRequests() {
+    var b = bridge();
+    if (!b || !b.getVolunteerData) return [];
+    var vol = b.getVolunteerData() || {};
+    return Array.isArray(vol.leaveRequests) ? vol.leaveRequests : [];
+  }
+
+  function memberNameById(id) {
+    var sid = String(id == null ? '' : id);
+    if (!sid) return '';
+    var rows = getMembersOptions();
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].id) === sid) return rows[i].name;
+    }
+    return sid;
+  }
+
+  function saveLeaveRequest(payload) {
+    var b = bridge();
+    if (!b || !b.getVolunteerData || !b.saveVolunteerSystemData) {
+      return { ok: false, error: 'ChurchDataBridge 未載入' };
+    }
+    payload = payload || {};
+    var sid = String(payload.scheduleId || '');
+    if (!sid) return { ok: false, error: '缺少 scheduleId' };
+    var vol = b.getVolunteerData() || {};
+    if (!Array.isArray(vol.schedules)) vol.schedules = [];
+    if (!Array.isArray(vol.leaveRequests)) vol.leaveRequests = [];
+    var sch = vol.schedules.find(function (s) { return String(s.id) === sid; });
+    if (!sch) return { ok: false, error: '找不到班次 #' + sid };
+    var now = new Date().toISOString();
+    var subId = payload.substituteMemberId != null ? String(payload.substituteMemberId) : '';
+    var req = {
+      id: 'lr_' + Date.now(),
+      scheduleId: sch.id,
+      date: sch.date,
+      ministryId: sch.ministryId,
+      ministryName: sch.ministryName,
+      memberId: sch.memberId,
+      memberName: sch.memberName || memberNameById(sch.memberId),
+      substituteMemberId: subId || null,
+      substituteMemberName: subId ? memberNameById(subId) : '',
+      reason: String(payload.reason || '').trim(),
+      note: String(payload.note || '').trim(),
+      status: subId ? 'swapped' : 'leave_only',
+      created_at: now
+    };
+    vol.leaveRequests.push(req);
+    sch.leaveStatus = req.status;
+    sch.leaveReason = req.reason;
+    sch.leaveNote = req.note;
+    sch.leaveRequestedAt = now;
+    if (subId) {
+      sch.substituteMemberId = subId;
+      sch.substituteMemberName = req.substituteMemberName;
+      sch.confirmed = false;
+    }
+    sch.updated_at = now;
+    b.saveVolunteerSystemData(vol);
+    notifySync();
+    return { ok: true, request: req };
+  }
+
   function renderToolNav(activePage) {
     var pages = [
       { id: 'index', href: 'index.html', label: '① 首頁' },
       { id: 'dashboard', href: 'dashboard.html', label: '② 儀表板' },
       { id: 'form', href: 'form.html', label: '③ 新增排班' },
       { id: 'list', href: 'list.html', label: '④ 排班清單' },
-      { id: 'setting', href: 'setting.html', label: '⑤ 設定' }
+      { id: 'leave_swap', href: 'leave_swap.html', label: '⑤ 請假調班' },
+      { id: 'setting', href: 'setting.html', label: '⑥ 設定' }
     ];
     return pages.map(function (p) {
       var cur = p.id === activePage ? ' aria-current="page"' : '';
@@ -294,6 +380,9 @@
     renderTrustBadge: renderTrustBadge,
     renderDataSourceStrip: renderDataSourceStrip,
     loadA1DemoData: loadA1DemoData,
-    addDaysYmd: addDaysYmd
+    addDaysYmd: addDaysYmd,
+    getUpcomingSchedules: getUpcomingSchedules,
+    getLeaveRequests: getLeaveRequests,
+    saveLeaveRequest: saveLeaveRequest
   };
 })(typeof window !== 'undefined' ? window : this);

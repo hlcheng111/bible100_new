@@ -117,10 +117,10 @@
     <div class="input-group">
         <h3 style="color: #27ae60; margin: 0 0 15px 0; font-size: 16px;">選擇串珠資源</h3>
         <div class="source-selector">
-            <button class="source-btn active" data-source="xinwangai" onclick="selectSource(this, 'xinwangai')">
+            <button class="source-btn active" data-source="faith_crossref" onclick="selectSource(this, 'faith_crossref')">
                 信望愛串珠
             </button>
-            <button class="source-btn" data-source="heheben" onclick="selectSource(this, 'heheben')">
+            <button class="source-btn" data-source="cuv_crossref" onclick="selectSource(this, 'cuv_crossref')">
                 和合本串珠
             </button>
         </div>
@@ -214,34 +214,36 @@
         </div>
     </div>
 
+    <script src="../data/bibles/crossref_data_faith_crossref.js" charset="UTF-8"></script>
+    <script src="../data/bibles/crossref_data_cuv_crossref.js" charset="UTF-8"></script>
+    <script src="js/dev_http_hint.js"></script>
+    <script src="js/bible_version_registry.js"></script>
+    <script src="js/BibleEngine.js"></script>
+    <script src="js/bs_registry_reader.js"></script>
     <script>
-        let currentSource = 'xinwangai';
-        let crossrefData = null;
+        let currentSource = 'faith_crossref';
+        let crossrefReady = false;
 
         const BOOK_CHAPTERS = { 創世記:50,出埃及記:40,利未記:27,民數記:36,申命記:34,約書亞記:24,士師記:21,路得記:4,撒母耳記上:31,撒母耳記下:24,列王紀上:22,列王紀下:25,歷代志上:29,歷代志下:36,以斯拉記:10,尼希米記:13,以斯帖記:10,約伯記:42,詩篇:150,箴言:31,傳道書:12,雅歌:8,以賽亞書:66,耶利米書:52,耶利米哀歌:5,以西結書:48,但以理書:12,何西阿書:14,約珥書:3,阿摩司書:9,俄巴底亞書:1,約拿書:4,彌迦書:7,那鴻書:3,哈巴谷書:3,西番雅書:3,哈該書:2,撒迦利亞書:14,瑪拉基書:4,馬太福音:28,馬可福音:16,路加福音:24,約翰福音:21,使徒行傳:28,羅馬書:16,哥林多前書:16,哥林多後書:13,加拉太書:6,以弗所書:6,腓立比書:4,歌羅西書:4,帖撒羅尼迦前書:5,帖撒羅尼迦後書:3,提摩太前書:6,提摩太後書:4,提多書:3,腓利門書:1,希伯來書:13,雅各書:5,彼得前書:5,彼得後書:3,約翰一書:5,約翰二書:1,約翰三書:1,猶大書:1,啟示錄:22 };
 
-        async function loadCrossRef(source) {
-            const sourceFiles = {
-                'xinwangai': new URL('../data/bibles/信望爱串珠.json', window.location.href).href,
-                'heheben': new URL('../data/bibles/和合本串珠.json', window.location.href).href
-            };
+        const BOOK_NAME_TO_ID = { 創世記:1,出埃及記:2,利未記:3,民數記:4,申命記:5,約書亞記:6,士師記:7,路得記:8,撒母耳記上:9,撒母耳記下:10,列王紀上:11,列王紀下:12,歷代志上:13,歷代志下:14,以斯拉記:15,尼希米記:16,以斯帖記:17,約伯記:18,詩篇:19,箴言:20,傳道書:21,雅歌:22,以賽亞書:23,耶利米書:24,耶利米哀歌:25,以西結書:26,但以理書:27,何西阿書:28,約珥書:29,阿摩司書:30,俄巴底亞書:31,約拿書:32,彌迦書:33,那鴻書:34,哈巴谷書:35,西番雅書:36,哈該書:37,撒迦利亞書:38,瑪拉基書:39,馬太福音:40,馬可福音:41,路加福音:42,約翰福音:43,使徒行傳:44,羅馬書:45,哥林多前書:46,哥林多後書:47,加拉太書:48,以弗所書:49,腓立比書:50,歌羅西書:51,帖撒羅尼迦前書:52,帖撒羅尼迦後書:53,提摩太前書:54,提摩太後書:55,提多書:56,腓利門書:57,希伯來書:58,雅各書:59,彼得前書:60,彼得後書:61,約翰一書:62,約翰二書:63,約翰三書:64,猶大書:65,啟示錄:66 };
 
+        async function loadCrossRef(source) {
             try {
-                const response = await fetch(sourceFiles[source]);
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                crossrefData = await response.json();
-                console.log('✅ 串珠資料載入成功:', source, crossrefData);
+                await BS_loadRegistryResource('crossrefs', source);
+                crossrefReady = true;
             } catch (error) {
                 console.error('❌ 串珠資料載入失敗:', error);
-                showError('串珠資料載入失敗。若用 file:// 開啟，請改以本機 HTTP 開啟專案根目錄，或確認 ../data/bibles/ 下 JSON 存在。');
+                crossrefReady = false;
+                showError('串珠資料載入失敗。' + (typeof BS_readerLoadHint === 'function' ? BS_readerLoadHint() : ''));
             }
         }
 
-        // 選擇資源
         function selectSource(btn, source) {
             document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentSource = source;
+            crossrefReady = false;
             loadCrossRef(source);
         }
 
@@ -277,8 +279,7 @@
             }
         }
 
-        // 查詢串珠
-        function searchCrossRef() {
+        async function searchCrossRef() {
             const book = document.getElementById('bookSelect').value;
             const chapter = document.getElementById('chapterSelect').value;
             const verse = document.getElementById('verseSelect').value;
@@ -288,55 +289,24 @@
                 return;
             }
 
-            if (!crossrefData) {
-                showError('串珠資料尚未載入，請稍候...');
-                loadCrossRef(currentSource);
-                return;
+            if (!crossrefReady) {
+                showError('串珠資料尚未載入，請稍候…');
+                await loadCrossRef(currentSource);
+                if (!crossrefReady) return;
             }
 
             const reference = `${book} ${chapter}:${verse}`;
-            const results = findCrossReferences(book, chapter, verse);
-            displayCrossRefResults(results, reference);
-        }
-
-        const BOOK_NAME_TO_ID = { 創世記:1,出埃及記:2,利未記:3,民數記:4,申命記:5,約書亞記:6,士師記:7,路得記:8,撒母耳記上:9,撒母耳記下:10,列王紀上:11,列王紀下:12,歷代志上:13,歷代志下:14,以斯拉記:15,尼希米記:16,以斯帖記:17,約伯記:18,詩篇:19,箴言:20,傳道書:21,雅歌:22,以賽亞書:23,耶利米書:24,耶利米哀歌:25,以西結書:26,但以理書:27,何西阿書:28,約珥書:29,阿摩司書:30,俄巴底亞書:31,約拿書:32,彌迦書:33,那鴻書:34,哈巴谷書:35,西番雅書:36,哈該書:37,撒迦利亞書:38,瑪拉基書:39,馬太福音:40,馬可福音:41,路加福音:42,約翰福音:43,使徒行傳:44,羅馬書:45,哥林多前書:46,哥林多後書:47,加拉太書:48,以弗所書:49,腓立比書:50,歌羅西書:51,帖撒羅尼迦前書:52,帖撒羅尼迦後書:53,提摩太前書:54,提摩太後書:55,提多書:56,腓利門書:57,希伯來書:58,雅各書:59,彼得前書:60,彼得後書:61,約翰一書:62,約翰二書:63,約翰三書:64,猶大書:65,啟示錄:66 };
-
-        function findCrossReferences(book, chapter, verse) {
-            const results = [];
             const bookId = BOOK_NAME_TO_ID[book];
-            if (!bookId) return results;
-            
-            const v = parseInt(verse, 10);
-            const data = crossrefData?.tables?.CrossReferences?.data || crossrefData?.data || 
-                (Array.isArray(crossrefData) ? crossrefData : []);
-            
-            if (Array.isArray(data)) {
-                data.forEach(item => {
-                    const b = item.b ?? item.Book ?? item.book;
-                    const c = item.c ?? item.Chapter ?? item.chapter;
-                    const bv = item.bv ?? item.fromVerse ?? 0;
-                    const ev = item.ev ?? item.toVerse ?? 999;
-                    const chNum = parseInt(chapter, 10);
-                    const verseMatch = (bv === 0 && ev === 0) || (v >= bv && v <= ev);
-                    if (b === bookId && c === chNum && verseMatch) {
-                        const cr = item.cr || item.crossrefs || item.references || '';
-                        if (cr) {
-                            const refs = typeof cr === 'string' ? cr.split(/[;；]/).map(r=>r.trim()).filter(Boolean) : cr;
-                            results.push(...(Array.isArray(refs) ? refs : [cr]));
-                        }
-                    }
-                });
-            } else if (typeof crossrefData === 'object') {
-                const key = `${book}${chapter}:${verse}`;
-                const refs = crossrefData[key];
-                if (refs) {
-                    results.push(...(Array.isArray(refs) ? refs : String(refs).split(';').map(r=>r.trim())));
-                }
+            const container = document.getElementById('resultContainer');
+            container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><h3>查詢中…</h3></div>';
+            try {
+                const results = await BibleEngine.queryCrossRef(currentSource, bookId, chapter, verse);
+                displayCrossRefResults(results, reference);
+            } catch (err) {
+                showError('查詢失敗：' + (err.message || err));
             }
-            return results;
         }
 
-        // 顯示串珠結果
         function displayCrossRefResults(results, reference) {
             const container = document.getElementById('resultContainer');
             
@@ -370,9 +340,8 @@
             container.innerHTML = html;
         }
 
-        // 跳轉到指定經文：優先通知父層 shell 載入全文搜尋
         function jumpToVerse(reference) {
-            var q = 'bible_study/search_reader.html?v=2&q=' + encodeURIComponent(reference);
+            var q = 'search_reader.html?q=' + encodeURIComponent(reference);
             try {
                 if (window.parent && window.parent !== window) {
                     window.parent.postMessage({ type: 'navigate', url: q }, '*');
@@ -416,7 +385,7 @@
         // 頁面載入
         document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ 串珠工具已載入');
-            loadCrossRef('xinwangai');
+            loadCrossRef('faith_crossref');
         });
     </script>
 </body>

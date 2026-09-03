@@ -1,5 +1,5 @@
 /**
- * 媒合中心 · 職位門檻（虛線）vs 同工現況（實線）雙層雷達重疊圖（純 SVG）
+ * 媒合中心 · 職位輪廓 vs 同工現況（牧者語視覺化）
  */
 (function (global) {
   "use strict";
@@ -13,10 +13,6 @@
 
   function polar(cx, cy, radius, angleRad) {
     return { x: cx + radius * Math.cos(angleRad), y: cy + radius * Math.sin(angleRad) };
-  }
-
-  function round1(n) {
-    return Math.round(Number(n) * 10) / 10;
   }
 
   function polygonPoints(cx, cy, maxR, n, values, keys) {
@@ -37,8 +33,8 @@
     var n = axisKeys.length;
     var rings = [1, 2, 3, 4, 5];
     var svg = [
-      '<svg class="matchmaker-overlay-svg" viewBox="0 0 420 440" role="img" aria-label="職位門檻與同工現況雙層雷達重疊圖">',
-      '<text x="210" y="18" text-anchor="middle" font-size="11" font-weight="800" fill="#4338ca">跨維度恩賜適配 · 虛線=職位門檻 · 實線=同工現況</text>'
+      '<svg class="matchmaker-overlay-svg" viewBox="0 0 420 440" role="img" aria-label="職位與同工輪廓對照圖">',
+      '<text x="210" y="18" text-anchor="middle" font-size="11" font-weight="800" fill="#4338ca">這崗位 vs 這位同工（私下參考）</text>'
     ];
 
     rings.forEach(function (level) {
@@ -113,61 +109,106 @@
 
     svg.push(
       '<rect x="12" y="400" width="10" height="10" fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>',
-      '<text x="28" y="409" font-size="9" fill="#64748b">職位門檻</text>',
-      '<rect x="100" y="400" width="10" height="10" fill="rgba(99,102,241,0.35)" stroke="#4338ca" stroke-width="2"/>',
-      '<text x="116" y="409" font-size="9" fill="#64748b">同工現況</text>',
+      '<text x="28" y="409" font-size="9" fill="#64748b">崗位大概需要</text>',
+      '<rect x="110" y="400" width="10" height="10" fill="rgba(99,102,241,0.35)" stroke="#4338ca" stroke-width="2"/>',
+      '<text x="126" y="409" font-size="9" fill="#64748b">同工目前</text>',
       "</svg>"
     );
     return svg.join("");
   }
 
-  function deltaTableHtml(fit) {
+  function pastoralCompanionTable(fit) {
     fit = fit || {};
     var axes = fit.axes || [];
+    var MC = global.MatchmakerCore;
+    var copy = (MC && MC.GAP_PASTORAL_COPY) || {};
     var body = axes
       .map(function (ax) {
-        var alert = ax.status === "gap" ? " match-delta--gap" : ax.status === "overflow" ? " match-delta--overflow" : "";
-        var icon = ax.status === "gap" ? "⚠" : ax.status === "overflow" ? "✦" : "✓";
+        var tone =
+          ax.status === "gap"
+            ? " match-row--gap"
+            : ax.status === "overflow"
+              ? " match-row--overflow"
+              : "";
+        var tag = ax.status === "gap" ? "陪跑" : ax.status === "overflow" ? "亮點" : "均衡";
+        var pastoral =
+          ax.status === "overflow" && copy[ax.key]
+            ? copy[ax.key].overflow
+            : ax.status === "gap" && copy[ax.key]
+              ? copy[ax.key].gap
+              : "與這崗位大致相合——仍請面談確認試任節奏。";
         return (
-          "<tr><td><strong>" +
-          esc(ax.label) +
-          '</strong></td><td class="match-num">' +
-          ax.required +
-          '</td><td class="match-num">' +
-          ax.actual +
-          '</td><td class="match-num' +
-          alert +
-          '">' +
-          (ax.delta >= 0 ? "+" : "") +
-          ax.delta +
-          '</td><td class="match-num">' +
-          icon +
-          " " +
-          ax.fit_pct +
-          "%</td></tr>"
+          "<tr class=\"match-pastoral-row" +
+          tone +
+          '"><td><strong>' +
+          esc(ax.plain_label || ax.label) +
+          '</strong><span class="match-tag">' +
+          tag +
+          "</span></td><td>" +
+          esc(pastoral) +
+          "</td></tr>"
         );
       })
       .join("");
     return (
-      '<table class="acs-table match-delta-table"><thead><tr><th>維度</th><th>門檻</th><th>現況</th><th>Δ</th><th>適配</th></tr></thead><tbody>' +
+      '<div class="match-pastoral-block">' +
+      "<h4>⭐ 牧養陪伴對照——面談前先看這張（非任免依據）</h4>" +
+      '<p class="acs-matrix-lead">每一行右邊的話，您可以改寫成對同工說的語氣。</p>' +
+      '<table class="acs-table match-pastoral-table"><thead><tr><th>面向</th><th>您可以怎樣陪</th></tr></thead><tbody>' +
       body +
-      "</tbody></table>"
+      "</tbody></table></div>"
     );
   }
 
-  function renderOverlayBlock(fit, bundle) {
+  function renderMisplacementGuide(fit) {
+    fit = fit || {};
+    var gaps = (fit.axes || []).filter(function (a) {
+      return a.status === "gap";
+    });
+    var intro =
+      '<p class="acs-matrix-lead match-misplacement-intro">恩賜「放錯位置」很常見，不代表人不夠好——往往是還沒找到對的節奏與同伴。</p>';
+    if (!gaps.length) {
+      return (
+        '<div class="match-misplacement-guide">' +
+        "<h4>🌿 恩賜錯置牧養指南</h4>" +
+        intro +
+        '<div class="acs-affirm">未見明顯「陪跑區」——仍請您禱告、面談，確認同工意願與節奏。</div></div>'
+      );
+    }
+    var MC = global.MatchmakerCore;
+    var copy = (MC && MC.GAP_PASTORAL_COPY) || {};
+    var items = gaps
+      .map(function (ax) {
+        var text = (copy[ax.key] && copy[ax.key].gap) || "宜安排陪跑與試任，不作淘汰。";
+        return "<li><strong>" + esc(ax.plain_label || ax.label) + "：</strong>" + esc(text) + "</li>";
+      })
+      .join("");
+    return (
+      '<div class="match-misplacement-guide">' +
+      "<h4>🌿 恩賜錯置牧養指南（陪跑區）</h4>" +
+      intro +
+      '<p class="acs-step-hint">以下不是考核判決；正式調崗仍須您面談、拍板。</p>' +
+      "<ul class=\"acs-pastoral-list\">" +
+      items +
+      "</ul></div>"
+    );
+  }
+
+  function renderOverlayBlock(fit, bundle, opts) {
+    opts = opts || {};
     fit = fit || {};
     bundle = bundle || {};
+    var isDemo = !!opts.isDemo || !!bundle.is_demo;
     var MC = global.MatchmakerCore;
     var axisKeys = (MC && MC.MATCH_AXES ? MC.MATCH_AXES : []).map(function (a) {
       return a.key;
     });
     var axisLabels = (MC && MC.MATCH_AXES ? MC.MATCH_AXES : []).map(function (a) {
-      return a.label;
+      return a.plain || a.label;
     });
     if (!axisKeys.length) {
       axisKeys = ["shape_peak", "ksa_capability", "ksa_attitude", "alda_vision", "alda_delivery", "disc_precision"];
-      axisLabels = axisKeys;
+      axisLabels = ["恩賜", "能力", "心志", "方向", "做成", "精準"];
     }
 
     var role = (MC && MC.ROLE_BLUEPRINTS && MC.ROLE_BLUEPRINTS[fit.role_id]) || {};
@@ -176,44 +217,55 @@
 
     var coverageNote = "";
     if (bundle.coverage) {
-      var done = [];
-      var miss = [];
+      var loadedCount = 0;
       Object.keys(bundle.coverage).forEach(function (k) {
-        if (bundle.coverage[k]) done.push(k);
-        else miss.push(k);
+        if (bundle.coverage[k]) loadedCount += 1;
       });
-      coverageNote =
-        "已通電：" +
-        (done.length ? done.join(", ") : "—") +
-        (miss.length ? " · 缺：" + miss.join(", ") + "（已用 Fallback）" : "");
+      if (loadedCount === 0) {
+        coverageNote =
+          "目前尚未帶入問卷記錄——這份圖用「一般參考值」示範。要分析真實同工，請回 Tab② 帶入恩賜或能力問卷。";
+      } else {
+        coverageNote =
+          "已帶入 " +
+          loadedCount +
+          " 份問卷記錄（缺的部分用一般參考值補上，僅供私下分辨）。";
+      }
     }
 
+    var pctHint = isDemo
+      ? "示範常顯示較高數字，僅供熟悉版面——不是某人的真實成績。"
+      : "不是考試分數；數字高 = 較合拍，仍要面談確認。";
+
+    var affirm =
+      fit.overall_pct >= 85
+        ? "私下參考較合拍——建議您約談後談 6–12 週試任；請勿投影或公開張貼。"
+        : fit.overall_pct >= 70
+          ? "中度合拍——可談試任；陪跑區請對照上方表格。"
+          : "較需陪跑——心志高、技能弱可走師徒制；崗位不合可微調，不作淘汰。";
+
+    var demoBanner = isDemo
+      ? ""
+      : "";
+
     return (
+      pastoralCompanionTable(fit) +
+      renderMisplacementGuide(fit) +
       '<div class="acs-report-block matchmaker-overlay-block">' +
-      "<h3>📊 跨維度恩賜雷達重疊圖（" +
-      esc(fit.role_label || "職位") +
-      "）</h3>" +
-      '<p class="acs-matrix-lead">虛線 = 職位剛性門檻；實線 = 同工六戰聚合現況。<strong>溢出（✦）= 適配亮點；塌陷（⚠）= 牧養補足區。</strong></p>' +
-      '<p class="acs-step-hint">綜合適配度：<strong>' +
+      "<h3>📊 圖：這崗位 vs 這位同工（私下參考）</h3>" +
+      '<p class="acs-matrix-lead">① 虛線 = 這崗位「大概需要」的輪廓 · ② 實線 = 這位同工「目前」的輪廓 · ③ 凹下去 ≠ 不合格，= <strong>需要有人陪、別讓他燒盡</strong></p>' +
+      '<p class="acs-step-hint">私下參考合拍度：<strong>' +
       (fit.overall_pct != null ? fit.overall_pct : "—") +
-      "%</strong> · " +
-      esc(fit.role_note || "") +
+      "%</strong> — " +
+      pctHint +
       (bundle.person_name ? " · 同工：" + esc(bundle.person_name) : "") +
       "</p>" +
+      (fit.role_note ? '<p class="acs-step-hint">' + esc(fit.role_note) + "</p>" : "") +
       (coverageNote ? '<p class="acs-step-hint">' + esc(coverageNote) + "</p>" : "") +
       '<div class="matchmaker-overlay-wrap">' +
       overlaySvg(required, actual, axisKeys, axisLabels) +
       "</div>" +
-      "<h4>Δ 缺口媒合分析表</h4>" +
-      deltaTableHtml(fit) +
       '<div class="acs-affirm">' +
-      esc(
-        fit.overall_pct >= 85
-          ? "高度適配 — 建議牧者約談後進入試任或正式授權（仍 HITL）。"
-          : fit.overall_pct >= 70
-            ? "中度適配 — 可試任；塌陷維度請對照 Tab ④ 牧養指南陪跑。"
-            : "待陪跑 — 心志高能力低時走師徒制；性格錯置時微調崗位，不作淘汰。"
-      ) +
+      esc(affirm) +
       "</div></div>"
     );
   }
@@ -221,6 +273,7 @@
   global.MatchmakerViz = {
     renderOverlayBlock: renderOverlayBlock,
     overlaySvg: overlaySvg,
-    deltaTableHtml: deltaTableHtml
+    pastoralCompanionTable: pastoralCompanionTable,
+    renderMisplacementGuide: renderMisplacementGuide
   };
 })(typeof window !== "undefined" ? window : global);

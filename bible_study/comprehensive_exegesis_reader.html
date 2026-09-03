@@ -22,65 +22,91 @@
             background: #f6f7fb;
         }
         
-        /* 頂部工具列 */
-        .top-toolbar {
-            position: fixed;
-            left: 0;
-            right: 0;
-            top: 0;
-            height: 50px;
-            background: linear-gradient(135deg, #0b5fa5 0%, #2aa5ff 100%);
-            color: white;
-            border-bottom: 2px solid #1976d2;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            padding: 0 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        
-        .brand {
-            font-weight: bold;
-            font-size: 16px;
-            margin-right: 20px;
-        }
-        
-        .nav-buttons {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .nav-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            text-decoration: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            transition: background 0.3s;
-        }
-        
-        .nav-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        
-        /* 主要佈局 */
+        /* Phase A：單層導航，無大頂欄 */
         .main-layout {
-            margin-top: 52px;
-            height: calc(100vh - 52px);
+            margin-top: 0;
+            height: 100vh;
             display: flex;
             flex-direction: column;
         }
-        
+
         /* 導航控制條 */
         .navigation-bar {
             background: #f8f9fa;
-            border-bottom: 2px solid #e0e0e0;
-            padding: 10px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 6px 12px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .source-pill {
+            font-size: 11px;
+            font-weight: 600;
+            color: #0b5fa5;
+            background: #e3f2fd;
+            padding: 4px 10px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .nav-tools {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+
+        .nav-tools .tool-link {
+            font-size: 11px;
+            color: #0b5fa5;
+            text-decoration: none;
+            padding: 4px 8px;
+            border: 1px solid #bae6fd;
+            border-radius: 4px;
+            background: #fff;
+            white-space: nowrap;
+        }
+
+        .nav-tools .tool-link:hover {
+            background: #e3f2fd;
+        }
+
+        .nav-tools .bs-prompt-wrap .nav-btn {
+            background: #0b5fa5;
+            color: #fff;
+            border: none;
+        }
+
+        #statusInfo {
+            font-size: 11px;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .content-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-scroll .bb-patch {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-scroll .bb-patch iframe {
+            flex: 1;
+            width: 100%;
+            min-height: 280px;
+            border: none;
         }
         
         /* 內容區域 */
@@ -90,6 +116,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            min-height: 0;
         }
         
         /* 簡化導航按鈕 */
@@ -212,6 +239,29 @@
         .status-message.error {
             color: #e74c3c;
         }
+
+        .bs-cmc-banner {
+            background: #fff8e1;
+            border-left: 4px solid #f59e0b;
+            padding: 10px 14px;
+            font-size: 12px;
+            line-height: 1.55;
+            color: #78350f;
+            margin: 0;
+        }
+        .bs-debug-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            font-size: 10px;
+            color: #94a3b8;
+            background: rgba(248,250,252,0.95);
+            border-top: 1px solid #e2e8f0;
+            padding: 3px 10px;
+            z-index: 999;
+            text-align: right;
+        }
         
         /* 底部狀態列 */
         .status-bar {
@@ -251,79 +301,44 @@
     </style>
 </head>
 <body>
-    <!-- 第一行：細字導航 -->
-    <div class="top-toolbar">
-        <div class="brand" style="font-size:13px;">📖 釋經參讀</div>
-        <div class="nav-buttons" style="font-size:12px;">
-            <a href="../data/bibles/bible_reader_final.html" target="contentFrame" class="nav-btn">📖 回聖經</a>
-            <a href="dictionary_reader.html" target="contentFrame" class="nav-btn">📚 查詞典</a>
-            <a href="crossref_reader.html" target="contentFrame" class="nav-btn">🔗 看串珠</a>
-            <a href="search_reader.html" target="contentFrame" class="nav-btn">🔍 搜全書</a>
-            <a href="index.html" target="contentFrame" class="nav-btn">⛪ 研讀中心</a>
-        </div>
-    </div>
-
-    <!-- 主要佈局 -->
     <div class="main-layout">
-        <!-- 導航控制條 -->
         <div class="navigation-bar">
-            <div class="nav-control">
-                <label>釋經書:</label>
-                <!-- 新增釋經書：在此 <select> 內加 <option value="書代碼">書名</option>，
-                    並在 loadChapter 中依 exegesisSelect.value 分支處理該書的載入邏輯 -->
-                <select id="exegesisSelect">
-                    <option value="comprehensive">釋經參讀（整合）</option>
-                </select>
-            </div>
-            
+            <span class="source-pill">CMC 釋經</span>
+            <input type="hidden" id="exegesisSelect" value="cmc">
+
             <div class="nav-control">
                 <label>書卷:</label>
                 <select id="bookSelect">
                     <option value="">請選擇書卷</option>
                 </select>
             </div>
-            
+
             <div class="nav-control">
                 <label>章節:</label>
                 <select id="chapterSelect">
                     <option value="">請選擇章節</option>
                 </select>
             </div>
-            
+
             <div class="nav-control">
-                <button class="nav-btn" id="prevChapter">←</button>
-                <button class="nav-btn" id="nextChapter">→</button>
+                <button class="nav-btn" id="prevChapter" type="button">←</button>
+                <button class="nav-btn" id="nextChapter" type="button">→</button>
             </div>
-            
-            <div class="nav-control">
-                <div id="statusInfo" style="font-size: 12px; color: #666;">準備就緒</div>
+
+            <div id="statusInfo">準備就緒</div>
+
+            <div class="nav-tools">
+                <span id="bsPromptSlot"></span>
+                <a href="#" id="bsQnaChapterLink" class="tool-link">❓ 同章難題</a>
             </div>
         </div>
-        
-        <!-- 第三行：釋經參讀資源對接 + iframe -->
+
         <div class="content-area">
-            <div class="content-header" style="padding:6px 12px;display:none;">
-                <h1 class="chapter-title" id="chapterTitle">釋經參讀</h1>
-                <p class="chapter-subtitle" id="chapterSubtitle">請選擇書卷和章節來查看詳細的釋經內容</p>
-            </div>
-            
+            <div id="bsCmcBannerHost"></div>
             <div class="content-scroll" id="contentScroll">
                 <div class="status-message">
-                    <p>🎯 歡迎使用釋經參讀（Bible Commentary）</p>
-                    <p>請從左側選擇書卷和章節，查看深入的釋經注釋</p>
-                    <p>本系統提供：</p>
-                    <ul style="text-align: left; display: inline-block; margin-top: 10px;">
-                        <li>📖 逐節詳細注釋</li>
-                        <li>🔍 神學背景解釋</li>
-                        <li>💡 實用生活應用</li>
-                        <li>🖼️ 相關圖片資料</li>
-                    </ul>
+                    <p>請選擇書卷與章節，或從左側側欄點書卷進入 CMC 釋經。</p>
                 </div>
-            </div>
-            
-            <div class="status-bar">
-                <div id="statusInfo">準備就緒</div>
-                <div id="progressInfo"></div>
             </div>
         </div>
     </div>
@@ -392,16 +407,12 @@
         let currentChapter = 0;
         
         // DOM 元素
-        const exegesisSelect = document.getElementById('exegesisSelect');
         const bookSelect = document.getElementById('bookSelect');
         const chapterSelect = document.getElementById('chapterSelect');
         const prevButton = document.getElementById('prevChapter');
         const nextButton = document.getElementById('nextChapter');
-        const chapterTitle = document.getElementById('chapterTitle');
-        const chapterSubtitle = document.getElementById('chapterSubtitle');
         const contentScroll = document.getElementById('contentScroll');
         const statusInfo = document.getElementById('statusInfo');
-        const progressInfo = document.getElementById('progressInfo');
         
         // 初始化
         async function init() {
@@ -411,7 +422,7 @@
             initializeEventListeners();
             updateNavigationButtons();
             
-            // 先載入 CMC（綜合解讀用），不等待 JSON 數據
+            // 釋經：CMC 原站（書卷章節见 sidebar / URL）
             const params = new URLSearchParams(window.location.search);
             const urlBook = params.get('book') || '創世記';
             let urlChapter = parseInt(params.get('chapter'), 10);
@@ -421,9 +432,10 @@
             const ch = (urlChapter <= maxCh && urlChapter >= 1) ? urlChapter : 1;
             selectBook(book);
             chapterSelect.value = ch;
-            loadChapter(book, ch);
+            await loadChapter(book, ch);
+            initBsChrome();
             
-            // 背景初始化數據載入器（供其他功能用）
+            // 背景初始化數據載入器（供 Prompt / 本地釋經用）
             try {
                 if (typeof initUniversalDataLoader !== 'undefined') {
                     await initUniversalDataLoader();
@@ -507,30 +519,61 @@
             }
         }
         
-        // 載入章節內容
-        function loadChapter(book, chapter) {
+        // 載入章節：僅 CMC 原站（不讀本地綜合解讀 db/json）
+        async function loadChapter(book, chapter) {
             currentBook = book;
             currentChapter = chapter;
-            
-            // 更新選擇器
+
             chapterSelect.value = chapter;
-            
-            // 更新標題
-            chapterTitle.textContent = `${book} 第${chapter}章`;
-            chapterSubtitle.textContent = `深入解讀 · 釋經注釋 · 靈性默想`;
-            
-            // 更新導航按鈕
             updateNavigationButtons();
-            
-            // 綜合解讀：一律對接 CMC iframe（66 卷皆可用，不依賴本地 JSON）
-            var cmcUrl;
-            if (window.BibleBridge && window.BibleBridge.getCMCDirectLink) {
-                cmcUrl = window.BibleBridge.getCMCDirectLink(book, chapter);
-            } else {
-                cmcUrl = "https://cmcbiblereading.com/?s=" + encodeURIComponent(book + " 第" + chapter + "章 逐节注解");
+            if (window.BSStudyChrome) {
+                BSStudyChrome.hideCmcBanner(document.getElementById('bsCmcBannerHost'));
             }
-            contentScroll.innerHTML = '<div class="bb-patch" style="padding:0;"><iframe id="bb-cmc-iframe" src="' + cmcUrl + '" style="width:100%;height:calc(100vh - 150px);min-height:400px;border:none;border-radius:4px;"></iframe></div>';
-            updateStatus(book + " 第" + chapter + "章 · CMC 釋經參讀");
+
+            var direct = false;
+            if (window.BibleBridge && window.BibleBridge.CMC_DIRECT_URLS) {
+                var bm = window.BibleBridge.CMC_DIRECT_URLS[book];
+                direct = !!(bm && bm[chapter]);
+            }
+            updateStatus(
+                book + ' 第' + chapter + '章 · CMC 釋經' + (direct ? '' : '（搜尋入口）')
+            );
+
+            if (window.BibleBridge && typeof window.BibleBridge.patchReadingPage === 'function') {
+                window.BibleBridge.patchReadingPage(book, chapter);
+            } else {
+                var cmcUrl = 'https://cmcbiblereading.com/?s=' +
+                    encodeURIComponent(book + ' 第' + chapter + '章 逐节注解');
+                contentScroll.innerHTML =
+                    '<div class="bb-patch" style="padding:0;height:100%;"><iframe id="bb-cmc-iframe" src="' +
+                    cmcUrl +
+                    '" title="CMC 釋經" style="width:100%;height:100%;min-height:280px;border:none;"></iframe></div>';
+            }
+            refreshBsChrome();
+        }
+
+        function getBsContext() {
+            return {
+                bookId: getBookId(currentBook),
+                chapter: currentChapter,
+                bookName: currentBook,
+                versionKey: 'faith',
+                commentarySource: 'cmc'
+            };
+        }
+
+        var refreshBsChrome = function () {};
+
+        function initBsChrome() {
+            if (!window.BSStudyChrome) return;
+            var qnaRefresh;
+            BSStudyChrome.initPage({
+                promptContainer: document.getElementById('bsPromptSlot'),
+                qnaLink: document.getElementById('bsQnaChapterLink'),
+                getContext: getBsContext,
+                onContextChange: function (fn) { qnaRefresh = fn; refreshBsChrome = fn; }
+            });
+            refreshBsChrome = qnaRefresh || refreshBsChrome;
         }
         
         // 更新狀態資訊
@@ -971,8 +1014,15 @@ ${book}是聖經中重要的書卷，每一章都包含豐富的神學真理和�
         document.addEventListener('DOMContentLoaded', init);
     </script>
     
-    <!-- 數據載入器 + CMC 雲端補丁（BibleEngine 用 JSON，無需預載 sql-wasm） -->
+    <!-- 數據載入器 + CMC 雲端補丁（BibleEngine + registry SSOT） -->
+    <script src="./js/bible_version_registry.js"></script>
     <script src="./js/BibleEngine.js"></script>
+    <script src="./js/bible_lazy_chapter.js"></script>
+    <script src="./js/bs_qna_bridge.js"></script>
+    <script src="./js/bs_prompt_builder.js"></script>
+    <script src="./js/bs_study_chrome.js"></script>
+    <script src="./js/bs_page_registry.js"></script>
+    <script src="./js/universal-data-loader.js"></script>
     <script>
         // 確保數據載入器正確初始化
         document.addEventListener('DOMContentLoaded', async function() {
@@ -1001,35 +1051,6 @@ ${book}是聖經中重要的書卷，每一章都包含豐富的神學真理和�
                 console.error('❌ 通用數據載入器未找到');
             }
         });
-    </script>
-    <!-- 有 book 參數時：立即注入 CMC iframe，不依賴 BibleBridge -->
-    <script>
-        (function() {
-            var urlParams = new URLSearchParams(window.location.search);
-            var book = urlParams.get('book') || "創世記";
-            var chapter = urlParams.get('chapter') || "1";
-            var hasBook = !!urlParams.get('book') || urlParams.get('force') === '1';
-            if (!hasBook) return;
-
-            function injectCMC() {
-                var c = document.getElementById('contentScroll') || document.getElementById('commentary_content');
-                if (!c) return;
-                var url;
-                if (window.BibleBridge && window.BibleBridge.getCMCDirectLink) {
-                    url = window.BibleBridge.getCMCDirectLink(book, chapter);
-                } else {
-                    url = "https://cmcbiblereading.com/?s=" + encodeURIComponent(book + " 第" + chapter + "章 逐节注解");
-                }
-                c.innerHTML = '<div style="padding:0;"><iframe id="bb-cmc-iframe" src="' + url + '" style="width:100%;height:calc(100vh - 150px);min-height:400px;border:none;"></iframe></div>';
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() { setTimeout(injectCMC, 50); });
-            } else {
-                setTimeout(injectCMC, 50);
-            }
-            setTimeout(injectCMC, 600);
-        })();
     </script>
 </body>
 </html>

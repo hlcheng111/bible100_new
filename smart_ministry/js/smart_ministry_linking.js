@@ -1,11 +1,13 @@
 /**
  * Smart Ministry Data Linking Manager
  * 智慧事奉数据联动管理器
- * 版本: v1.0
+ * 版本: v1.1 — C-06：新写入经 SmartMinistryCanonical；本键仅 legacy 读取/迁移
  */
 
 (function(window) {
     'use strict';
+
+    var _legacySaveWarned = false;
 
     class SmartMinistryLinking {
         constructor() {
@@ -23,6 +25,12 @@
         }
 
         save() {
+            if (!_legacySaveWarned) {
+                _legacySaveWarned = true;
+                try {
+                    console.warn('[C-06] smart_ministry_linking 为 legacy 桶；新配对请经 SmartMinistryCanonical');
+                } catch (eW) {}
+            }
             try {
                 localStorage.setItem(this.storageKey, JSON.stringify(this.linkingData));
                 return true;
@@ -32,7 +40,35 @@
             }
         }
 
+        /** 尝试经 canonical 写入事奉配对 / 技能 */
+        _tryCanonicalLink(type, sourceId, targetId, metadata) {
+            var canon = window.SmartMinistryCanonical;
+            if (!canon) return null;
+            var t = String(type || '').toLowerCase();
+            if (t === 'talent_ministry' || t === 'ministry_assignment' || t === 'ministry') {
+                var r = canon.addMinistryAssignment({
+                    talent_id: String(sourceId),
+                    ministry_id: String(targetId),
+                    status: (metadata && metadata.status) || 'proposed',
+                    source: 'smart_ministry_linking',
+                    notes: (metadata && metadata.notes) || ''
+                });
+                return r && r.success ? r : null;
+            }
+            if (t === 'talent_skill' || t === 'skill') {
+                var sk = canon.addTalentSkillLink(String(sourceId), Object.assign({}, metadata || {}, {
+                    id: targetId,
+                    skill_id: targetId
+                }));
+                return sk && sk.success ? sk : null;
+            }
+            return null;
+        }
+
         link(type, sourceId, targetId, metadata = {}) {
+            var canonResult = this._tryCanonicalLink(type, sourceId, targetId, metadata);
+            if (canonResult) return true;
+
             const key = `${type}_${sourceId}_${targetId}`;
             if (this.linkingData.links[key]) return false;
 
@@ -110,24 +146,6 @@
     }
 
     window.SmartMinistryLinking = SmartMinistryLinking;
-    console.log('📦 Smart Ministry Data Linking 已加载');
+    console.log('📦 Smart Ministry Data Linking 已加载 (C-06 canonical-first)');
 
 })(window);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -11,7 +11,21 @@
   global.B100ShellPaths = {
     root: shellRoot,
     page: function (rel) {
-      return shellRoot() + rel.replace(/^\//, '');
+      rel = String(rel || '').replace(/^\//, '');
+      var root = global.B100_SHELL_ROOT;
+      if (root && String(root).indexOf('://') >= 0) {
+        try {
+          return new URL(rel, root).href;
+        } catch (eUrl) {}
+      }
+      var base = shellRoot();
+      if (String(base).indexOf('://') >= 0) {
+        try {
+          return new URL(rel, base).href;
+        } catch (eBase) {}
+      }
+      if (base.slice(-1) !== '/') base += '/';
+      return base + rel;
     },
   };
 })(window);

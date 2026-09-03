@@ -14,6 +14,10 @@
         <div class="bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg p-6 mb-4">
             <h1 class="text-3xl font-bold">📱 新媒体事工</h1>
             <p class="text-purple-100 mt-2">利用社交媒体传播福音</p>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" onclick="exportNewMediaCsv()" data-w5-report="new-media-csv" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">⬇ CSV</button>
+                <button type="button" onclick="printNewMedia()" data-w5-report="new-media-print" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">🖨 列印</button>
+            </div>
         </div>
         <details class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
             <summary class="cursor-pointer font-semibold text-amber-800">📋 功能說明／計畫願景</summary>
@@ -114,7 +118,30 @@
         function getPlatformLabel(p) {
             return { wechat: '微信公众号', youtube: 'YouTube', facebook: 'Facebook', instagram: 'Instagram' }[p] || p;
         }
+        function exportNewMediaCsv() {
+            var U = window.CmReportUtils; if (!U) return;
+            var esc = U.csvEsc;
+            var list = contents || [];
+            if (!list.length) { try { list = JSON.parse(localStorage.getItem('new_media') || '[]'); } catch (e) { list = []; } }
+            var lines = [['標題', '平台', '觸及', '日期'].map(esc).join(',')];
+            list.forEach(function (c) { lines.push([c.title, c.platform, c.reach, c.date].map(esc).join(',')); });
+            U.downloadCsv('new_media_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+        }
+        function printNewMedia() {
+            var U = window.CmReportUtils; if (!U) return;
+            var list = contents || [];
+            if (!list.length) { try { list = JSON.parse(localStorage.getItem('new_media') || '[]'); } catch (e) { list = []; } }
+            var rows = list.map(function (c) { return [c.title, getPlatformLabel(c.platform), String(c.reach || ''), c.date || '']; });
+            U.printTable('新媒體事工', ['標題', '平台', '觸及', '日期'], rows);
+        }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>
 

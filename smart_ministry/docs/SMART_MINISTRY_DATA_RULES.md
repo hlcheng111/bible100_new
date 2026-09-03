@@ -146,8 +146,9 @@
 | 頁面 | 行為 |
 |------|------|
 | `registration.html` | 寫入 `memberSystemData` 後 **`saveOrUpdateTalent`**（✅ 已接） |
-| `questionnaire_system.html` | 應：`attachAssessmentToTalent`；需先有 `talent_id`（⏳ 待接） |
-| `assessment.html` / `mbti_test.html` | 應：同上（⏳ 待接） |
+| `questionnaire_system.html` | 草稿仍存 localStorage；有 `talent_id` 時 **`attachAssessmentToTalent`**（✅） |
+| `spiritual_gifts.html`（原 assessment 導向） | 草稿 LS + 有 `talent_id` 時 **`attachAssessmentToTalent('gifts_test')`**（✅） |
+| `mbti_test.html` | 草稿 LS + 有 `talent_id` 時 **`attachAssessmentToTalent('MBTI')`**（✅） |
 | `talent_skill_unified.html` | 只透過 **`addTalentSkillLink` / `remove` / `clear`** 寫 `talent_skill`（✅ 已接；技能主檔仍用 unified 表） |
 | `talent_ministry_matching.html` | 只讀 canonical `talents` / `talent_skill`；寫入 **`ministry_assignment`**（✅ 已接） |
 | `dashboard.html` | 僅讀取統計；數字來自 `dashboard_live_stats.js`（✅ 優先 canonical） |

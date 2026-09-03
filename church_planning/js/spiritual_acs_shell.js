@@ -27,6 +27,9 @@
     var lastSec = "";
     var html =
       '<h2 class="font-black text-rose-900 text-lg mb-1">13 題靈命快評</h2>' +
+      '<p class="acs-likert-legend text-xs text-slate-600 mb-3 p-2 bg-rose-50 rounded border border-rose-100">' +
+      '<strong>錨點：</strong>1＝幾乎沒有／不符合　…　5＝幾乎總是／非常符合。' +
+      '請依<strong>真實近況</strong>選，無需討好；奉獻題僅私人自覺，不會上報。</p>' +
       '<form id="spiritual-form" onsubmit="return SpiritualAcsShell.submitQuick(event)">';
     SpiritualPack.QUESTIONS.forEach(function (q, i) {
       if (q.section && q.section !== lastSec) {
@@ -38,13 +41,19 @@
         (i + 1) +
         '/13</legend><p class="text-sm mb-2">' +
         esc(q.label) +
-        '</p><div class="acs-likert-row">';
-      for (var s = 1; s <= 5; s++) html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + s + "</label>";
+        '</p><div class="acs-likert-row acs-likert-row--anchored">';
+      for (var s = 1; s <= 5; s++) {
+        var anchor = s === 1 ? "1 不符合" : s === 5 ? "5 非常符合" : String(s);
+        html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + anchor + "</label>";
+      }
       html += "</div></fieldset>";
     });
     html +=
       '<p id="spiritual-form-error" class="text-red-600 text-xs hidden"></p>' +
-      '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">✓ 提交 → 靈命儀表</button></form>';
+      (global.AcsSurveyStandard
+        ? AcsSurveyStandard.submitButtonHtml("→ Tab ③ 靈命儀表")
+        : '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">提交並生成報告</button>') +
+      "</form>";
     host.innerHTML = html;
   }
 
@@ -54,9 +63,13 @@
     document.getElementById("spiritual-report-content").classList.remove("hidden");
     document.getElementById("spiritual-report-empty").classList.add("hidden");
     document.getElementById("spiritual-demo-badge").classList.toggle("hidden", !run.is_demo);
-    var d = run.derived || {};
-    document.getElementById("spiritual-report-summary").innerHTML =
-      "<p>" + esc((run.coaching && run.coaching.growth) || "") + "</p>";
+    var summary = document.getElementById("spiritual-report-summary");
+    if (summary) {
+      summary.innerHTML =
+        '<p class="text-sm m-0">' +
+        (run.is_demo ? "<strong>示範報告</strong> · " : "") +
+        "資料預設留本機 · 非考核 · 奉獻題僅私人自覺</p>";
+    }
     var viz = document.getElementById("spiritual-report-viz");
     if (viz && global.SpiritualHealthViz) {
       viz.innerHTML = SpiritualHealthViz.renderHealthBlock(run, { animate: !!opts.animate });

@@ -20,10 +20,54 @@
   };
 
   var LIFECYCLE_LABELS = {
-    A: "願景 Aspiration",
-    L: "學習 Learning",
-    D: "執行 Delivery",
-    Ag: "敏捷 Agility"
+    A: "看方向 Aspiration",
+    L: "持續學習 Learning",
+    D: "把事情做成 Delivery",
+    Ag: "變局中調整 Agility"
+  };
+
+  var LIFECYCLE_PLAIN = {
+    A: "看方向",
+    L: "持續學習",
+    D: "把事情做成",
+    Ag: "變局中調整"
+  };
+
+  var DRAFT_STORAGE_KEY = "bible100_alda_survey_draft";
+
+  var QUESTION_PLAIN_LEADS = {
+    1: "💡 小組長版：主日聚會前設備或人手出狀況，你的第一反应？",
+    2: "💡 事奉很累、家庭也吃緊，你通常怎麼面對？",
+    3: "💡 小組分享時大家只說「很好」，你對自己真實狀況會？",
+    4: "💡 教會要改用新流程／新工具，同工有抗拒，你會？",
+    5: "💡 教會有一筆奉獻要怎麼用，你的第一直覺？",
+    6: "💡 帶領團隊的決定與你想法不同，你會？",
+    7: "💡 有人想大筆奉獻但要求自己全權決定怎麼用，你傾向？",
+    8: "💡 你帶的年輕同工搞錯了簽到或奉獻記錄，你會？",
+    9: "💡 要推一個有爭議的關懷計劃，你怎麼跟會友溝通？",
+    10: "💡 有人匿名中傷你的服事或家庭，你會？",
+    11: "💡 誠實面對：服事中你有沒有私心或驕傲？",
+    12: "💡 小組分裂問題開會討論很久沒結論，你最容易？",
+    13: "💡 教會要開展新事工或外展，你覺得第一步是？",
+    14: "💡 有人要求停掉日常聚會、全部資源做外展，你會？",
+    15: "💡 有人說你做事不公平或有偏見，你的真實反应？",
+    16: "💡 青年事工連續虧損，從管錢角度你會？"
+  };
+
+  var SURVEY_SECTIONS = [
+    { title: "第一節 · 危機與真實（1–4 題）", ids: [1, 2, 3, 4] },
+    { title: "第二節 · 治理與責任（5–8 題）", ids: [5, 6, 7, 8] },
+    { title: "第三節 · 溝通與內耗（9–12 題）", ids: [9, 10, 11, 12] },
+    { title: "第四節 · 異象與取捨（13–16 題）", ids: [13, 14, 15, 16] }
+  ];
+
+  var LIFECYCLE_GROWTH_COPY = {
+    agile_leader: "四軸都還不錯——可以談成全誰、怎麼授權，而不是再加更多專案。",
+    delivery_machine: "你很可能很會把事情做成——這一季先安排一項裝備或 shadow，防燒盡。",
+    vision_stuck: "方向感是禮物——先拆成 90 天小實驗，再找執行夥伴一起落地。",
+    aspiration_burst: "異象很大——配一位能幫你落地的同工，小步試驗比一次推全部更安全。",
+    learning_explore: "正在學習探索——宜安排試任與導師陪跑，不必急著獨當一面。",
+    developing: "整體在成長區——與牧者談一個小步試任，持續陪伴即可。"
   };
 
   var LIFECYCLE_THRESHOLD = 3.0;
@@ -58,16 +102,19 @@
     else if (L >= hi && D < hi) profile = "learning_explore";
     else profile = "developing";
     var labels = {
-      agile_leader: "全面成熟的敏捷領袖期",
-      delivery_machine: "戰功執行期 · 事工機器（高 D 低 L）",
-      vision_stuck: "有願景卻在敏捷變革中受挫（高 A 低 Ag）",
-      aspiration_burst: "願景爆發期（高 A · 宜補執行）",
-      learning_explore: "學習探索期（高 L）",
-      developing: "均衡培育／梯隊試任區"
+      agile_leader: "核心穩定期（四軸均衡，可談成全授權）",
+      delivery_machine: "執行強、學習需更新（宜安排裝備，防燒盡）",
+      vision_stuck: "方向感強、變革節奏需調（宜小步試驗）",
+      aspiration_burst: "異象大、落地需同伴（宜配對執行夥伴）",
+      learning_explore: "學習探索期（宜 shadow 試任）",
+      developing: "均衡成長區（小步試任、持續陪伴）"
     };
+    var growth =
+      LIFECYCLE_GROWTH_COPY[profile] || LIFECYCLE_GROWTH_COPY.developing;
     return {
       profile_type: profile,
       profile_label: labels[profile] || labels.developing,
+      growth_accompaniment: growth,
       dominant_axis:
         D >= A && D >= L && D >= Ag
           ? "D"
@@ -105,6 +152,59 @@
     LOW_CONSISTENCY: "邏輯一致度偏低——前後對照題矛盾；建議隔週重填或與導師談。",
     CLUSTER_GAP: "四大群組中有明顯弱勢維度——團隊功能可能缺位，宜找互補同工。"
   };
+
+  var FLAG_SCENE_COPY = {
+    LOW_SINCERITY: "填答可能偏「理想形象」——宜私下面談後再解讀，不作任免或考核。",
+    LOW_CONSISTENCY: "前後選項不太一致——可能當天狀態起伏；隔週重填或與導師談一次即可。",
+    CLUSTER_GAP: "某方面特別弱——找互補同工配搭，先陪跑最弱維度，不作淘汰。"
+  };
+
+  function buildMicroStep(lifecycle) {
+    lifecycle = lifecycle || {};
+    var weakest = "L";
+    var minV = 99;
+    ["A", "L", "D", "Ag"].forEach(function (k) {
+      var v = Number(lifecycle[k]) || 0;
+      if (v < minV) {
+        minV = v;
+        weakest = k;
+      }
+    });
+    var steps = {
+      A: "本週與牧者談一次：這季小組／服事要往哪裡去？只定一個可檢核的小方向。",
+      L: "本週約一位資深同工 shadow 一次帶查經或服事，不必一次學會全部。",
+      D: "本週把一項小組行政（通知／簽到）寫成三行交接，讓請假時事工不斷線。",
+      Ag: "本週若計劃有變，先與一位同工對齊，再通知組員——小步調整即可。"
+    };
+    return steps[weakest] || "本週與牧者約 15 分鐘，談一個生命週期小突破。";
+  }
+
+  function buildCoaching(derived, risk_flags) {
+    derived = derived || {};
+    var lp = derived.lifecycle_position || {};
+    var lc = derived.lifecycle || {};
+    var growth = lp.growth_accompaniment || LIFECYCLE_GROWTH_COPY.developing;
+    var micro = buildMicroStep(lc);
+    var flagScene = "";
+    if (risk_flags && risk_flags.length) {
+      flagScene = risk_flags
+        .map(function (f) {
+          return FLAG_SCENE_COPY[f] || FLAG_DESCRIPTIONS[f] || f;
+        })
+        .join(" ");
+    }
+    return {
+      leadership_note:
+        "主使徒「" +
+        (derived.primary || "—") +
+        "」／副使徒「" +
+        (derived.secondary || "—") +
+        "」— 修飾帶領節奏，不作任免依據。",
+      growth_accompaniment: growth,
+      micro_step: micro,
+      redflag: flagScene || growth
+    };
+  }
 
   var APOSTLE_NAMES = [
     "彼得", "雅各", "約翰", "安得烈", "腓力", "巴多羅買",
@@ -320,8 +420,9 @@
       lifecycle_position: lifecycle_position,
       lifecycle_threshold: LIFECYCLE_THRESHOLD,
       lifecycle_note:
+        lifecycle_position.growth_accompaniment ||
         lifecycle_position.profile_label +
-        " — 最弱維度建議陪跑，不作淘汰。"
+          " — 最弱維度建議陪跑，不作淘汰。"
     };
     var lifecycleContract = buildLifecycleContract(derived, global.AssessmentRunStore);
     derived.alda_lifecycle_contract = lifecycleContract;
@@ -341,14 +442,15 @@
       alda_lifecycle_contract: lifecycleContract,
       raw_answers: raw_answers,
       risk_flags: risk_flags,
-      coaching: {
-        leadership_note:
-          "主使徒「" +
-          scored.primary +
-          "」／副使徒「" +
-          scored.secondary +
-          "」— 修飾帶領節奏，不作任免依據。"
-      },
+      coaching: buildCoaching(
+        {
+          primary: scored.primary,
+          secondary: scored.secondary,
+          lifecycle: lifecycle,
+          lifecycle_position: lifecycle_position
+        },
+        risk_flags
+      ),
       source_note: "alda_pack v1 · " + QUESTIONS.length + " 題迫選"
     };
     if (global.MinistryPathBridge && MinistryPathBridge.attachPathCards) {
@@ -377,7 +479,7 @@
       built.run.derived.lifecycle = { A: 3.3, L: 2.2, D: 4.7, Ag: 2.5 };
       built.run.derived.lifecycle_position = buildLifecyclePosition(built.run.derived.lifecycle);
       built.run.derived.lifecycle_note =
-        "戰功執行期 · 事工機器（高 D 低 L）— 宜安排學習陪跑與節奏調整，防燒盡。";
+        "執行強、學習需更新——這一季先安排一項裝備或 shadow，防燒盡。";
       built.run.alda_lifecycle_contract = buildLifecycleContract(
         built.run.derived,
         global.AssessmentRunStore
@@ -411,6 +513,14 @@
     CLUSTER_LABELS: CLUSTER_LABELS,
     THRESHOLDS: THRESHOLDS,
     FLAG_DESCRIPTIONS: FLAG_DESCRIPTIONS,
+    FLAG_SCENE_COPY: FLAG_SCENE_COPY,
+    QUESTION_PLAIN_LEADS: QUESTION_PLAIN_LEADS,
+    SURVEY_SECTIONS: SURVEY_SECTIONS,
+    DRAFT_STORAGE_KEY: DRAFT_STORAGE_KEY,
+    LIFECYCLE_PLAIN: LIFECYCLE_PLAIN,
+    LIFECYCLE_GROWTH_COPY: LIFECYCLE_GROWTH_COPY,
+    buildMicroStep: buildMicroStep,
+    buildCoaching: buildCoaching,
     validate: validate,
     computeScores: computeScores,
     computeFeatureVector: computeFeatureVector,

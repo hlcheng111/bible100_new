@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sitemap 側欄</title>
+  <base target="contentFrame">
+  <link rel="stylesheet" href="../css/site_search.css">
+  <style>
+    body { margin: 0; font-family: "Microsoft YaHei", "Segoe UI", sans-serif; background: #eef6ff; font-size: 12px; }
+    .wrap { padding: 12px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
+    .head { background: linear-gradient(135deg, #0b5fa5, #1565c0); color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 12px; text-align: center; }
+    .head h2 { margin: 0 0 4px; font-size: 1rem; }
+    .head p { margin: 0; font-size: 10px; opacity: 0.92; }
+    .search-box { width: 100%; padding: 8px 10px; border: 2px solid #90caf9; border-radius: 8px; font-size: 12px; margin-bottom: 8px; }
+    .search-results { max-height: 180px; overflow-y: auto; background: #fff; border-radius: 8px; display: none; margin-bottom: 12px; border: 1px solid #e2e8f0; }
+    .search-results.active { display: block; }
+    .mod { margin-bottom: 10px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
+    .mod summary { cursor: pointer; padding: 8px 10px; font-weight: 700; color: #0b5fa5; list-style: none; }
+    .mod summary::-webkit-details-marker { display: none; }
+    .mod a {
+      display: block; padding: 6px 12px 6px 18px; color: #334155; text-decoration: none; font-size: 11px;
+      border-top: 1px solid #f1f5f9;
+    }
+    .mod a:hover { background: #e3f2fd; color: #0b5fa5; }
+    .mod a.landing { font-weight: 600; background: #f8fafc; }
+  </style>
+  <script src="../js/sidebar_shell_target_fallback.js"></script>
+  <script src="../js/shell_nav.js"></script>
+  <script src="../js/sidebar_behavior.js"></script>
+  <script src="../js/search_indexes_embedded.js"></script>
+  <script src="../js/site_search.js"></script>
+  <script src="../js/b100_sitemap_guide_data.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h2>🗺️ 站點 Sitemap</h2>
+      <p>搜索 · 兩層推薦試用</p>
+    </div>
+    <input type="search" class="search-box" id="searchInput" placeholder="🔍 搜索全站功能…" autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
+    <div id="modList"></div>
+    <p style="font-size:10px;color:#64748b;margin-top:12px;">
+      <a href="sitemap_guide.html" data-b100-nav="content">↻ 刷新路線總表</a>
+    </p>
+  </div>
+  <script>
+    (function () {
+      var data = window.B100_SITEMAP_GUIDE || { modules: [] };
+      var list = document.getElementById("modList");
+      (data.modules || []).forEach(function (mod) {
+        var det = document.createElement("details");
+        det.className = "mod";
+        det.open = mod.id === "material" || mod.id === "church";
+        var sum = document.createElement("summary");
+        sum.textContent = (mod.icon || "") + " " + (mod.title || mod.id);
+        det.appendChild(sum);
+        if (mod.landing && mod.landing.path) {
+          var la = document.createElement("a");
+          la.className = "landing";
+          la.href = "../" + mod.landing.path.replace(/^\.\.\//, "");
+          la.setAttribute("data-b100-nav", "content");
+          la.textContent = "→ 模組路線 landing";
+          det.appendChild(la);
+        }
+        (mod.tries || []).forEach(function (t) {
+          var a = document.createElement("a");
+          a.href = "../" + t.path.replace(/^\.\.\//, "");
+          a.setAttribute("data-b100-nav", "content");
+          a.textContent = t.label;
+          det.appendChild(a);
+        });
+        list.appendChild(det);
+      });
+      if (window.Bible100SiteSearch) {
+        Bible100SiteSearch.mount({
+          input: "#searchInput",
+          results: "#searchResults",
+          basePrefix: "../"
+        });
+        var input = document.getElementById("searchInput");
+        var results = document.getElementById("searchResults");
+        if (input && results) {
+          input.addEventListener("input", function () {
+            results.classList.toggle("active", !!input.value.trim());
+          });
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

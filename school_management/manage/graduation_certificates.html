@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>結業證書</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>🎓 結業證書</h1>
+        <p>依成績及格線核發可列印證書；核發記錄存於 schoolMasterDatabase.meta.certificates</p>
+        <details>
+            <summary>📋 說明</summary>
+            <p>學生須已選課且成績達及格線（預設 60 分）。核發後可列印；進階可至 <a href="../../course_completion.html" target="contentFrame">課程完成登記</a> 回寫中央會員培訓履歷。</p>
+        </details>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">篩選</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+            <div><label class="stat-label">課程</label><br><select id="courseSelect" class="module-input" style="min-width:180px;"></select></div>
+            <div><label class="stat-label">及格線</label><br><input id="passScore" type="number" class="module-input" value="60" style="width:60px;"></div>
+            <button class="module-btn" id="btnLoad">載入候選名單</button>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📋 候選／已核發</div>
+        <div id="candidateList"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📜 已核發證書列表</div>
+        <div id="certList"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+
+            function loadCourses() {
+                const courses = (db.data.courses || []).filter(c => c.status !== 'inactive');
+                document.getElementById('courseSelect').innerHTML =
+                    '<option value="">— 選擇課程 —</option>' +
+                    courses.map(c => '<option value="' + c.id + '">' + (c.name || c.id) + '</option>').join('');
+            }
+
+            function renderCandidates() {
+                const cid = parseInt(document.getElementById('courseSelect').value, 10);
+                const pass = parseInt(document.getElementById('passScore').value, 10) || 60;
+                if (!cid) return alert('請選擇課程');
+                const rows = db.getCompletionCandidates(cid, pass);
+                const body = rows.map(r => {
+                    let ops = '';
+                    if (r.alreadyIssued) {
+                        ops = '<button class="module-btn btn-print" data-cno="' + r.certificateNo + '" style="padding:2px 8px;font-size:10px;">🖨️ 證書</button>';
+                    } else if (r.eligible) {
+                        ops = '<button class="module-btn btn-issue" data-sid="' + r.studentId + '" data-cid="' + cid + '" style="padding:2px 8px;font-size:10px;">核發</button>';
+                    } else {
+                        ops = '<span style="color:#888;">—</span>';
+                    }
+                    return '<tr><td>' + r.studentName + '</td><td>' + (r.score != null ? r.score : '—') + '</td><td>' + r.reason + '</td><td>' + (r.alreadyIssued ? '✅ ' + r.certificateNo : '—') + '</td><td>' + ops + '</td></tr>';
+                }).join('');
+                document.getElementById('candidateList').innerHTML =
+                    '<table class="module-table"><thead><tr><th>學生</th><th>成績</th><th>狀態</th><th>證書編號</th><th>操作</th></tr></thead><tbody>' +
+                    (body || '<tr><td colspan="5">無選課學生</td></tr>') + '</tbody></table>';
+            }
+
+            function renderAllCerts() {
+                const certs = (db.data.meta && db.data.meta.certificates) || [];
+                const body = certs.slice().reverse().map(c =>
+                    '<tr><td>' + c.certificateNo + '</td><td>' + c.studentName + '</td><td>' + c.courseName + '</td><td>' + c.score + '</td><td>' + c.issuedAt + '</td><td><button class="module-btn btn-print-id" data-id="' + c.id + '" style="padding:2px 8px;font-size:10px;">🖨️</button></td></tr>'
+                ).join('');
+                document.getElementById('certList').innerHTML =
+                    '<table class="module-table"><thead><tr><th>編號</th><th>學生</th><th>課程</th><th>成績</th><th>日期</th><th></th></tr></thead><tbody>' +
+                    (body || '<tr><td colspan="6">尚無核發紀錄</td></tr>') + '</tbody></table>';
+            }
+
+            function printCert(id) {
+                const w = window.open('', '_blank', 'width=720,height=640');
+                if (!w) return alert('請允許彈出視窗');
+                w.document.write(db.buildCertificateHtml(id));
+                w.document.close();
+            }
+
+            document.getElementById('btnLoad').onclick = function() { renderCandidates(); renderAllCerts(); };
+
+            document.getElementById('candidateList').addEventListener('click', function(e) {
+                if (e.target.classList.contains('btn-issue')) {
+                    const sid = parseInt(e.target.dataset.sid, 10);
+                    const cid = parseInt(e.target.dataset.cid, 10);
+                    const pass = parseInt(document.getElementById('passScore').value, 10) || 60;
+                    try {
+                        const cert = db.issueCertificate(sid, cid, { passScore: pass });
+                        alert('已核發：' + cert.certificateNo);
+                        renderCandidates();
+                        renderAllCerts();
+                    } catch (err) { alert(err.message || err); }
+                }
+                if (e.target.classList.contains('btn-print')) {
+                    const certs = (db.data.meta && db.data.meta.certificates) || [];
+                    const c = certs.find(x => x.certificateNo === e.target.dataset.cno);
+                    if (c) printCert(c.id);
+                }
+            });
+
+            document.getElementById('certList').addEventListener('click', function(e) {
+                if (e.target.classList.contains('btn-print-id')) {
+                    printCert(parseInt(e.target.dataset.id, 10));
+                }
+            });
+
+            loadCourses();
+            renderAllCerts();
+        })();
+    </script>
+</body>
+</html>
