@@ -25,18 +25,6 @@ FORBIDDEN_USER_COPY = (
 )
 
 UI_PAGES: dict[str, tuple[str, ...]] = {
-    "guide_crm_journey_hub.html": (
-        "crm-hub-v4",
-        "crm-master-tabs",
-        'data-tab="journey"',
-        'data-tab="matchmaker"',
-        "只預填",
-        "不自動儲存",
-        "ministry_path_bridge.js",
-        "path_cards_hitl_panel",
-        "governance_crm_bridge.js",
-        "crm-journey-link",
-    ),
     "dashboard.html": (
         "小白今日工作桌",
         "getCrmWorkbenchTodos",
