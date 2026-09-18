@@ -34,7 +34,7 @@ def test_study_modes_tools_zone():
 
 def test_module_nav_tools_content():
     js = read("js/b100_module_nav_ssot.js")
-    assert "20260807a" in js
+    assert "20260903w1" in js
     assert "_landing/tools.html" in js
 
 

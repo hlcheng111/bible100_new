@@ -11,6 +11,7 @@ window.GEOGRAPHY_HISTORY_DATA = {
       nameZh: '時間軸',
       nameEn: 'Timeline',
       links: [
+        { label: '本站時間軸', url: 'timeline_viewer.html', local: true },
         { label: 'Bible Timeline (共享)', url: 'https://bibleeveryone.com/bible-timeline.php', embed: true },
         { label: 'Bible Timeline (cnbible)', url: 'https://cnbible.com/timeline/', embed: true }
       ]

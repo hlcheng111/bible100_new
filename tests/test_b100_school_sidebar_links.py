@@ -69,7 +69,7 @@ def sidebar_hrefs(html: str) -> list[str]:
 
 def test_school_ssot_zones():
     js = read("js/b100_module_nav_ssot.js")
-    assert "20260812data" in js
+    assert "20260903w1" in js
     assert "school:" in js
     assert "school_management/course_completion.html" in js
     assert "school_management/_landing/home.html" in js

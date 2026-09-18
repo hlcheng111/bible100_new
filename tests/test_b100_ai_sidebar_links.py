@@ -53,10 +53,11 @@ class TestAiSidebarLinks(unittest.TestCase):
         for h in hrefs:
             if h.startswith("#") or h.startswith("http"):
                 continue
-            if h.startswith("../"):
-                p = (ROOT / h[3:]).resolve()
+            clean = h.split("#")[0].split("?")[0]
+            if clean.startswith("../"):
+                p = (ROOT / clean[3:]).resolve()
             else:
-                p = (ROOT / "ai_tools" / h).resolve()
+                p = (ROOT / "ai_tools" / clean).resolve()
             if not p.exists():
                 missing.append(h)
         self.assertEqual(missing, [], f"missing: {missing}")
