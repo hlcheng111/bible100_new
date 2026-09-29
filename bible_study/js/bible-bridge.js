@@ -1504,8 +1504,8 @@
             const initialChapterUrl = this.getCMCDirectLink(book, chapter);
 
             const patchHtml = `
-                <div class="bb-patch" style="padding:0;">
-                    <iframe id="bb-cmc-iframe" src="${initialChapterUrl}" style="width:100%;height:calc(100vh - 180px);min-height:400px;border:none;border-radius:4px;"></iframe>
+                <div class="bb-patch" style="padding:0;height:100%;">
+                    <iframe id="bb-cmc-iframe" src="${initialChapterUrl}" title="CMC 釋經" style="width:100%;height:100%;min-height:280px;border:none;border-radius:0;"></iframe>
                 </div>
             `;
 

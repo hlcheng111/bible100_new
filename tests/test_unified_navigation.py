@@ -7,7 +7,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # 合規範本與關鍵側欄（逐步擴充）
 SIDEBAR_WATCH = [
-    "church_ministry/sidebar_c_education_journey.html",
+    "church_ministry/sidebar_church_layout_v1.html",
+    "bible_study/sidebar.html",
 ]
 
 FORBIDDEN_IN_SIDEBARS = [
@@ -39,6 +40,9 @@ def test_sidebar_behavior_contract():
         "navigateModuleViaShell",
         "navigateContentViaShell",
         "hrefToSiteRootRelative",
+        "isSiteRootRelativePath",
+        "SITE_ROOT_PREFIXES",
+        "church_planning/",
         "fallbackContentViaBase",
         "isInShell",
     ):
@@ -52,16 +56,25 @@ def test_shell_nav_returns_boolean():
     assert "return false" in js
 
 
-def test_c_education_sidebar_is_reference():
+def test_c_education_sidebar_redirects_to_layout():
     html = read("church_ministry/sidebar_c_education_journey.html")
+    assert "sidebar_church_layout_v1.html?focus=c" in html
+    assert "education-integrated.html" in html
+    assert "shell_nav.js" in html
+
+
+def test_bible_study_sidebar_is_reference():
+    html = read("bible_study/sidebar.html")
     assert 'data-b100-nav="content"' in html
-    assert 'data-b100-nav="module"' in html
     assert "sidebar_behavior.js" in html
     assert "shell_nav.js" in html
-    assert "modules/development/discipleship-training.html" in html
-    assert "bible_study/sidebar.html" in html
+    assert "sidebar_shell_target_fallback.js" in html
+    assert "comprehensive_exegesis_reader.html" in html
+    assert "reader-multilang.html" in html
+    assert "../bible_app/shell/pages/landing.html" in html
+    assert "../bible_app/shell/index.html" not in html
     for _label, needle in FORBIDDEN_IN_SIDEBARS:
-        assert needle not in html, f"C sidebar must not contain {needle}"
+        assert needle not in html, f"bible_study sidebar must not contain {needle}"
     assert not INLINE_SHELL_ONCLICK.search(html), "no inline bible100ShellNav onclick"
 
 
@@ -75,6 +88,21 @@ def test_watched_sidebars_no_forbidden_patterns():
         if INLINE_SHELL_ONCLICK.search(text):
             fails.append(f"{rel}: inline bible100ShellNav onclick")
     assert not fails, "; ".join(fails)
+
+
+def test_church_layout_g_zone_is_landing_only():
+    """G 工具 IA 僅 sidebar_plan_v5_preview；A–G 大地圖 G 區只留可點標題 ▶。"""
+    html = read("church_ministry/sidebar_church_layout_v1.html")
+    assert 'data-focus-zone="g"' in html
+    assert "sidebar_plan_v5_preview.html" in html
+    assert 'data-b100-nav="module"' in html
+    assert "▶" in html
+    assert "cm-g-landing-hint" not in html
+    assert "進入 G 規劃行政工作台" not in html
+    assert "assessment-os-hub" not in html
+    assert "cta-os-war-room" not in html
+    assert "cm-g-phase-tools" not in html
+    assert "cm-g-unlocked-tools" not in html
 
 
 def test_module_hub_rule_references_unified_nav():

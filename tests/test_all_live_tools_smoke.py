@@ -25,6 +25,7 @@ REGISTRY = PLAN / "js" / "planning_tool_registry.js"
 SUBTESTS: tuple[tuple[str, str], ...] = (
     ("strategic chain integrity (4 links)", "tests/test_strategic_chain_integrity.py"),
     ("governance + coaching 4-Tab", "tests/test_assessment_4tab_shell.py"),
+    ("planning ACS gate (18 tools)", "tests/test_planning_tool_acs_gate.py"),
     ("urgency pack", "tests/test_urgency_pack.py"),
     ("spiritual pack", "tests/test_spiritual_pack.py"),
     ("pastoral pack", "tests/test_pastoral_pack.py"),

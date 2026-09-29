@@ -20,14 +20,15 @@
 | L4 | 工作桌 Tab 殼 | `education-integrated.html` |
 | L5 | 單一功能子頁 | `edu_roster.html` |
 
-Hub 進 C 區：
+Hub 進 C 區（**產品憲法 · 地圖穩**）：
 
 ```
 index_v5
-├── sidebarFrame → church_ministry/sidebar_c_education_journey.html
+├── sidebarFrame → church_ministry/sidebar_church_layout_v1.html?focus=c
 └── contentFrame → church_ministry/modules/education/education-integrated.html
 ```
 
+專用紅側欄 `sidebar_c_education_journey.html` 僅作**明示捷徑**（文案含「換側欄」），不作頂欄 C 預設。
 **禁止** Hub 右欄載入模組 `index.html`（殼中殼）。
 
 ## 四種導航模式
@@ -120,5 +121,18 @@ file:///.../bible100_new/index_v5.html  → 教會事工 C 區
 
 ```powershell
 python tests/test_unified_navigation.py
+python tests/test_g_desk_nav.py
+python tests/test_index_v5_shell.py
 python church_ministry/tests/test_education_data_hub.py
 ```
+
+## G 規劃行政 · L2 事工桌（2026-08-02 鎖定）
+
+| 層 | SSOT | 行為 |
+|----|------|------|
+| 教會事工 A–G 地圖 | `church_ministry/sidebar_church_layout_v1.html` | G 區**只留標題 ▶**，不列工具 IA |
+| 頂欄2 **G** / 點 G 標題 | `config/modes.json` → `secondaryNav` G 項 | 左欄換 `church_planning/sidebar_plan_v5_preview.html` |
+| G 工具清單 | 同上 v5 側欄 | 📂 戰略規劃／📂 行政管理；**禁止** A–G 重複列工具 |
+| 舊 `sidebar_plan.html` | redirect stub | 書籤相容；runtime 導覽不得再硬編 |
+
+**F 詩歌**已先行同模式（頂欄2 F → 專用 hymn 側欄）。新增 L2 事工桌時比照：**modes.json secondaryNav + 獨立 sidebar SSOT + 地圖只留路牌**。

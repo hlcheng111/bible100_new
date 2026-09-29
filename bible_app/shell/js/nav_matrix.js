@@ -4,24 +4,32 @@
 (function (global) {
   var MATRIX = {
     kids: {
-      bible66: { allowed: true, page: 'pages/bible66.html', zone: 'today' },
+      plan1y: { allowed: true, page: 'pages/track-plan1y.html' },
+      plan3y: { allowed: true, page: 'pages/track-plan3y.html' },
+      bible66: { allowed: true, page: 'pages/bible66.html', zone: 'bible' },
       '30day': { allowed: true, page: 'pages/track-30day.html' },
       golden: { allowed: true, page: 'pages/track-golden.html' },
       theme: { allowed: true, page: 'pages/track-theme.html' },
     },
     adult: {
+      plan1y: { allowed: true, page: 'pages/track-plan1y.html' },
+      plan3y: { allowed: true, page: 'pages/track-plan3y.html' },
       bible66: { allowed: true, page: 'pages/bible66.html' },
       '30day': { allowed: true, page: 'pages/track-30day.html' },
       golden: { allowed: true, page: 'pages/track-golden.html' },
       theme: { allowed: true, page: 'pages/track-theme.html' },
     },
     seeker: {
+      plan1y: { allowed: true, page: 'pages/track-plan1y.html' },
+      plan3y: { allowed: true, page: 'pages/track-plan3y.html' },
       bible66: { allowed: true, page: 'pages/bible66.html' },
       '30day': { allowed: true, page: 'pages/track-30day.html' },
       golden: { allowed: true, page: 'pages/track-golden.html' },
       theme: { allowed: true, page: 'pages/track-theme.html' },
     },
     parent: {
+      plan1y: { allowed: true, page: 'pages/track-plan1y.html' },
+      plan3y: { allowed: true, page: 'pages/track-plan3y.html' },
       bible66: { allowed: true, page: 'pages/bible66.html' },
       '30day': { allowed: true, page: 'pages/track-30day.html' },
       golden: { allowed: true, page: 'pages/track-golden.html' },
@@ -30,6 +38,8 @@
   };
 
   var DEFAULT_TRACK_PAGE = {
+    plan1y: 'pages/track-plan1y.html',
+    plan3y: 'pages/track-plan3y.html',
     bible66: 'pages/bible66.html',
     '30day': 'pages/track-30day.html',
     golden: 'pages/track-golden.html',
@@ -38,7 +48,7 @@
 
   function resolve(persona, track, locale) {
     var p = MATRIX[persona] || MATRIX.adult;
-    var rule = p[track] || { allowed: true, page: DEFAULT_TRACK_PAGE[track] || 'pages/home.html' };
+    var rule = p[track] || { allowed: true, page: DEFAULT_TRACK_PAGE[track] || 'pages/landing.html' };
     var loc = locale || 'zh-Hant';
     var toast = '';
     if (rule.toast) {

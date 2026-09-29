@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>崗位需求表單 · 教會事工</title>
+  <link rel="stylesheet" href="../css/unified_module_styles.css">
+  <link rel="stylesheet" href="css/church_ministry_ui.css">
+  <style>
+    .df-page { max-width: 720px; margin: 0 auto; padding: 0 14px 28px; font-size: 12px; }
+    .df-hero {
+      background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
+      color: #fff; padding: 16px 18px; border-radius: 0 0 12px 12px; margin: 0 -14px 14px;
+    }
+    .df-hero h1 { margin: 0 0 6px; font-size: 18px; }
+    .df-hero p { margin: 0; opacity: 0.92; line-height: 1.55; }
+    .df-role-bar {
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      padding: 10px 12px; margin-bottom: 12px;
+      background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; font-size: 11px;
+    }
+    .df-role-bar select { padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; }
+    .df-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 12px;
+    }
+    .df-field { display: block; margin-bottom: 12px; }
+    .df-field span { display: block; font-weight: 600; margin-bottom: 4px; color: #334155; }
+    .df-field input, .df-field select, .df-field textarea {
+      width: 100%; max-width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1;
+      border-radius: 6px; font-family: inherit; font-size: 12px;
+    }
+    .df-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .df-btn {
+      padding: 8px 14px; border: none; border-radius: 8px; font-weight: 700;
+      cursor: pointer; font-size: 12px; font-family: inherit;
+    }
+    .df-btn-primary { background: #4338ca; color: #fff; }
+    .df-btn-secondary { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+    .df-status { margin-top: 10px; font-size: 11px; color: #64748b; }
+    .df-status.ok { color: #166534; }
+    .df-status.err { color: #b91c1c; }
+    .df-foot { font-size: 10px; color: #64748b; line-height: 1.55; margin-top: 16px; }
+  </style>
+  <script src="../js/hub_base/hub_base_constant.js"></script>
+  <script src="../js/hub_base/hub_base_schema.js"></script>
+  <script src="../js/hub_base/hub_base_utils.js"></script>
+  <script src="../js/smart_ministry_canonical_store.js"></script>
+  <script src="../js/shell_nav.js"></script>
+</head>
+<body class="cm-tool-page" data-b100-module="church_ministry" data-b100-pattern="P-FORM">
+  <div class="df-page">
+    <header class="df-hero">
+      <h1>📋 崗位需求表單</h1>
+      <p>A–G 事工區提交人力缺口，寫入智慧事奉工庫（<code>ministries</code>）。經 Hub Base 審計；正式寫入仍走 SmartMinistryCanonical。</p>
+    </header>
+
+    <div class="df-role-bar" id="dfRoleBar">
+      <span>測試角色：<strong id="dfRoleLabel">—</strong></span>
+      <label>切換
+        <select id="dfRoleSelect" aria-label="模擬角色">
+          <option value="member">普通會友</option>
+          <option value="ministry_leader">事工負責人</option>
+          <option value="admin">管理員</option>
+        </select>
+      </label>
+      <span id="dfPermHint" style="color:#92400e;"></span>
+    </div>
+
+    <form id="demandForm" class="df-card">
+      <label class="df-field">
+        <span>事工區（A–G）*</span>
+        <select id="fieldZone" name="zone" required>
+          <option value="">請選擇</option>
+          <option value="a">A 敬拜音樂</option>
+          <option value="b">B 牧養小組</option>
+          <option value="c">C 聖經門訓</option>
+          <option value="d">D 外展差傳</option>
+          <option value="e">E 社會服務</option>
+          <option value="f">F 詩歌應用</option>
+          <option value="g">G 規劃行政</option>
+        </select>
+      </label>
+      <label class="df-field">
+        <span>崗位名稱 *</span>
+        <input type="text" id="fieldName" name="name" required placeholder="例：主日學教師、招待同工">
+      </label>
+      <label class="df-field">
+        <span>所需恩賜／技能（逗號分隔）</span>
+        <input type="text" id="fieldRequires" name="requires" placeholder="例：教導,耐心,兒童">
+      </label>
+      <label class="df-field">
+        <span>人數缺口 *</span>
+        <input type="number" id="fieldGap" name="headcount_gap" min="1" max="99" value="1" required>
+      </label>
+      <label class="df-field">
+        <span>優先度</span>
+        <select id="fieldUrgency" name="urgency">
+          <option value="高">高</option>
+          <option value="中" selected>中</option>
+          <option value="低">低</option>
+        </select>
+      </label>
+      <label class="df-field">
+        <span>所屬部門（選填）</span>
+        <input type="text" id="fieldDept" name="department" placeholder="例：兒童主日學">
+      </label>
+      <label class="df-field">
+        <span>備註（選填）</span>
+        <textarea id="fieldNote" name="note" rows="2" placeholder="服事時段、特殊條件等"></textarea>
+      </label>
+      <div class="df-actions">
+        <button type="submit" class="df-btn df-btn-primary" id="btnSubmit">提交至工庫</button>
+        <a class="df-btn df-btn-secondary" href="_landing/gateway.html" data-b100-nav="content">← 路線首頁</a>
+        <a class="df-btn df-btn-secondary" href="../smart_ministry/talent_ministry_matching.html" data-b100-nav="content">→ 配對工作台</a>
+      </div>
+      <p class="df-status" id="formStatus" role="status"></p>
+    </form>
+
+    <p class="df-foot">
+      資料寫入 <code>bible100_smart_ministry_main.ministries</code>；審計 <code>bible100_audit_log</code>。
+      普通會友不可提交工庫（Hub Base 角色模擬）。
+    </p>
+  </div>
+  <script>
+  (function () {
+    var C = window.SmartMinistryCanonical;
+    var statusEl = document.getElementById('formStatus');
+    var roleSelect = document.getElementById('dfRoleSelect');
+    var roleLabel = document.getElementById('dfRoleLabel');
+    var permHint = document.getElementById('dfPermHint');
+    var btnSubmit = document.getElementById('btnSubmit');
+
+    function roleLabelText() {
+      if (!window.HubBase) return '未載入 HubBase';
+      var r = HubBase.getSimulatedRole();
+      var roles = HubBase.Constant && HubBase.Constant().ROLES;
+      return roles && roles[r] ? roles[r].label : r;
+    }
+
+    function refreshRoleUi() {
+      if (window.HubBase && roleSelect) {
+        roleSelect.value = HubBase.getSimulatedRole();
+      }
+      if (roleLabel) roleLabel.textContent = roleLabelText();
+      var canWrite = !window.HubBase || HubBase.canPerform('write_talent');
+      if (btnSubmit) btnSubmit.disabled = !canWrite;
+      if (permHint) {
+        permHint.textContent = canWrite
+          ? '可提交工庫'
+          : '目前角色僅可瀏覽；請切換事工負責人或管理員';
+      }
+    }
+
+    if (roleSelect) {
+      roleSelect.addEventListener('change', function () {
+        if (window.HubBase) HubBase.setSimulatedRole(roleSelect.value);
+        refreshRoleUi();
+      });
+    }
+
+    var params = new URLSearchParams(location.search);
+    var zoneParam = (params.get('zone') || '').toLowerCase();
+    if (zoneParam && document.getElementById('fieldZone')) {
+      var zel = document.getElementById('fieldZone');
+      if (Array.prototype.some.call(zel.options, function (o) { return o.value === zoneParam; })) {
+        zel.value = zoneParam;
+      }
+    }
+
+    document.getElementById('demandForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!C || typeof C.upsertMinistryCatalog !== 'function') {
+        statusEl.className = 'df-status err';
+        statusEl.textContent = 'SmartMinistryCanonical 未載入';
+        return;
+      }
+      if (window.HubBase && !HubBase.canPerform('write_talent')) {
+        statusEl.className = 'df-status err';
+        statusEl.textContent = '權限不足：' + roleLabelText() + ' 不可修改工庫';
+        return;
+      }
+
+      var zone = document.getElementById('fieldZone').value;
+      var name = String(document.getElementById('fieldName').value || '').trim();
+      var gap = parseInt(document.getElementById('fieldGap').value, 10) || 1;
+      if (!zone || !name) {
+        statusEl.className = 'df-status err';
+        statusEl.textContent = '請填寫事工區與崗位名稱';
+        return;
+      }
+
+      var mid = 'demand_' + zone + '_' + Date.now().toString(36);
+      var row = {
+        ministry_id: mid,
+        id: mid,
+        name: name,
+        zone: zone,
+        requires: String(document.getElementById('fieldRequires').value || '').trim(),
+        needPeople: gap,
+        headcount_gap: gap,
+        urgency: document.getElementById('fieldUrgency').value || '中',
+        department: String(document.getElementById('fieldDept').value || '').trim(),
+        status: 'open',
+        source: 'cm_demand_form',
+        note: String(document.getElementById('fieldNote').value || '').trim(),
+        church_id: window.HubBase ? HubBase.getSpaceId() : 'default'
+      };
+
+      var before = C.listMinistriesCatalog().length;
+      var saved = C.upsertMinistryCatalog(row);
+      if (window.HubBase && typeof HubBase.logAudit === 'function') {
+        HubBase.logAudit({
+          domain: 'ministry_catalog',
+          action: 'demand_submit',
+          target_id: mid,
+          before: { catalogCount: before },
+          after: { name: name, zone: zone, headcount_gap: gap, ministry_id: mid },
+          note: row.note,
+          source: 'church_ministry/demand-form.html'
+        });
+      }
+
+      statusEl.className = 'df-status ok';
+      statusEl.textContent = '已寫入工庫：「' + name + '」（' + zone.toUpperCase() + ' 區，缺口 ' + gap + ' 人）。可到配對工作台撮合。';
+      document.getElementById('fieldName').value = '';
+      document.getElementById('fieldRequires').value = '';
+      document.getElementById('fieldGap').value = '1';
+      document.getElementById('fieldNote').value = '';
+    });
+
+    if (C && typeof C.migrateLegacyToCanonical === 'function') {
+      C.migrateLegacyToCanonical();
+    }
+    refreshRoleUi();
+  })();
+  </script>
+</body>
+</html>

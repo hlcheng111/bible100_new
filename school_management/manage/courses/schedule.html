@@ -1,12 +1,146 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>課程排程 - 已合併至課程管理</title>
-    <script>location.replace('index.html#schedule');</script>
+    <title>週課表 · Course Timetable</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f6f7fb; padding: 16px; font-size: 12px; color: #333; }
+        .module-header h1 { color: #0b5fa5; font-size: 18px; margin-bottom: 6px; }
+        .module-header p { color: #666; margin-bottom: 12px; }
+        .module-card { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .module-card-title { font-weight: 600; color: #0b5fa5; margin-bottom: 8px; }
+        .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
+        .module-input { padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; }
+        .module-btn { padding: 8px 14px; background: #0b5fa5; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; }
+        .module-btn-secondary { background: #64748b; }
+        .conflict-box { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 11px; line-height: 1.6; }
+        .conflict-box.ok { background: #f0fdf4; border-color: #86efac; color: #166534; }
+        .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .day-col { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 120px; padding: 6px; }
+        .day-col h4 { text-align: center; color: #0b5fa5; font-size: 11px; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0; }
+        .slot { background: #e8f4fd; border-left: 3px solid #0b5fa5; border-radius: 4px; padding: 6px; margin-bottom: 6px; font-size: 10px; line-height: 1.5; }
+        .slot.conflict { background: #fee2e2; border-left-color: #dc2626; }
+        .slot .time { font-weight: 600; color: #0b5fa5; }
+        .slot.conflict .time { color: #dc2626; }
+        .stat-label { font-size: 10px; color: #64748b; }
+        @media (max-width: 900px) { .week-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
 </head>
 <body>
-    <p>課程排程已合併至 <a href="index.html#schedule">課程管理頁</a>，正在跳轉…</p>
+    <div class="module-header">
+        <h1>📅 週課表 · Timetable</h1>
+        <p>教師／教室視角；衝堂以紅色標示</p>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">檢視模式</div>
+        <div class="toolbar">
+            <div><label class="stat-label">視角</label><br>
+                <select id="viewMode" class="module-input">
+                    <option value="all">全部課程</option>
+                    <option value="teacher">依教師</option>
+                    <option value="room">依教室</option>
+                </select>
+            </div>
+            <div id="teacherFilterWrap" style="display:none;"><label class="stat-label">教師</label><br><select id="teacherFilter" class="module-input"></select></div>
+            <div id="roomFilterWrap" style="display:none;"><label class="stat-label">教室</label><br><select id="roomFilter" class="module-input"></select></div>
+            <button class="module-btn" id="btnRefresh">重新整理</button>
+            <a href="index.html" target="contentFrame" class="module-btn module-btn-secondary">← 課程列表</a>
+        </div>
+        <div id="conflictBox" class="conflict-box ok">載入中…</div>
+        <div id="weekGrid" class="week-grid"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">➕ 新增排課</div>
+        <form id="schedForm" class="toolbar">
+            <div><label class="stat-label">課程</label><br><select name="courseId" id="courseSelect" class="module-input" required style="min-width:160px;"></select></div>
+            <div><label class="stat-label">星期</label><br><select name="day" class="module-input"><option>一</option><option>二</option><option>三</option><option>四</option><option>五</option><option>六</option><option>日</option></select></div>
+            <div><label class="stat-label">時間</label><br><input name="time" class="module-input" value="10:00-12:00" style="width:110px;"></div>
+            <div><label class="stat-label">教室</label><br><select name="room" id="roomSelect" class="module-input"></select></div>
+            <div><br><button type="submit" class="module-btn">儲存</button></div>
+        </form>
+    </div>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+
+            function render() {
+                const mode = document.getElementById('viewMode').value;
+                const opts = { view: mode };
+                if (mode === 'teacher') opts.filterId = parseInt(document.getElementById('teacherFilter').value, 10);
+                if (mode === 'room') opts.filterId = document.getElementById('roomFilter').value;
+                const tt = db.getWeeklyTimetable(opts);
+                const box = document.getElementById('conflictBox');
+                if (tt.conflicts.length) {
+                    box.className = 'conflict-box';
+                    box.innerHTML = '<strong>⚠️ 發現 ' + tt.conflicts.length + ' 處衝堂：</strong><br>' +
+                        tt.conflicts.map(c => c.message).join('<br>');
+                } else {
+                    box.className = 'conflict-box ok';
+                    box.textContent = '✅ 目前視角無衝堂';
+                }
+                let html = '';
+                tt.days.forEach(day => {
+                    html += '<div class="day-col"><h4>週' + day + '</h4>';
+                    (tt.grid[day] || []).forEach(s => {
+                        html += '<div class="slot' + (s.hasConflict ? ' conflict' : '') + '">' +
+                            '<div class="time">' + (s.time || '—') + '</div>' +
+                            '<div>' + (s.courseName || '') + '</div>' +
+                            '<div style="color:#64748b;">' + (s.teacherName || '') + ' · ' + (s.room || '—') + '</div></div>';
+                    });
+                    if (!(tt.grid[day] || []).length) html += '<div style="color:#94a3b8;font-size:10px;text-align:center;padding:20px 0;">—</div>';
+                    html += '</div>';
+                });
+                document.getElementById('weekGrid').innerHTML = html;
+            }
+
+            function initFilters() {
+                const teachers = db.data.teachers || [];
+                const rooms = db.getRooms ? db.getRooms() : [];
+                const courses = db.data.courses || [];
+                document.getElementById('teacherFilter').innerHTML = teachers.map(t =>
+                    '<option value="' + t.id + '">' + t.name + '</option>').join('');
+                document.getElementById('roomFilter').innerHTML = rooms.map(r =>
+                    '<option value="' + r.name + '">' + r.name + '</option>').join('');
+                document.getElementById('roomSelect').innerHTML = rooms.map(r =>
+                    '<option value="' + r.name + '">' + r.name + '</option>').join('');
+                document.getElementById('courseSelect').innerHTML = courses.map(c =>
+                    '<option value="' + c.id + '">' + (c.name || c.id) + '</option>').join('');
+            }
+
+            document.getElementById('viewMode').onchange = function() {
+                const v = this.value;
+                document.getElementById('teacherFilterWrap').style.display = v === 'teacher' ? '' : 'none';
+                document.getElementById('roomFilterWrap').style.display = v === 'room' ? '' : 'none';
+                render();
+            };
+            document.getElementById('btnRefresh').onclick = render;
+            document.getElementById('teacherFilter').onchange = render;
+            document.getElementById('roomFilter').onchange = render;
+
+            document.getElementById('schedForm').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                try {
+                    db.addCourseSchedule({
+                        courseId: parseInt(fm.get('courseId'), 10),
+                        day: fm.get('day'),
+                        time: fm.get('time'),
+                        room: fm.get('room')
+                    });
+                    render();
+                } catch (err) { alert(err.message || err); }
+            };
+
+            initFilters();
+            render();
+        })();
+    </script>
 </body>
 </html>

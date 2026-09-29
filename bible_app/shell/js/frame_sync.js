@@ -3,6 +3,7 @@
   function framePath() {
     var p = (location.pathname || '').replace(/\\/g, '/');
     var name = p.split('/').pop() || 'index.html';
+    if (/^read66\.html$/i.test(name)) name = 'bible66.html';
     return 'pages/' + name + (location.search || '');
   }
 

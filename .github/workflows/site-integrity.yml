@@ -1,0 +1,44 @@
+name: Site Interconnect Integrity (fail-on-broken)
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+jobs:
+  interconnect-chain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Planning ACS gate (18 tools)
+        run: python tests/test_planning_tool_acs_gate.py
+
+      - name: Full interconnect chain tier 1-5 (fail on any red)
+        run: python tests/test_church_interconnect_smoke.py --tier all
+
+      - name: Nav/help/tools link chain (fail on MISSING)
+        run: python scripts/check_phase_tool_and_nav_links.py
+
+      - name: Shell + config sync
+        run: |
+          python tests/test_index_v5_shell.py
+          python tests/test_config_embedded_sync.py
+
+      - name: Module sidebar links (study + school + ai)
+        run: |
+          python tests/test_bs_study_links.py
+          python tests/test_b100_school_sidebar_links.py
+          python tests/test_b100_ai_sidebar_links.py

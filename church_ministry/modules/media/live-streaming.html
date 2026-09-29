@@ -44,7 +44,7 @@
         .platform-zoom { border-color: #2d8cff; }
     </style>
 </head>
-<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a">
+<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a">
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
     <div class="header">
         <h1>📺 视频直播管理系统</h1>
@@ -85,7 +85,8 @@
             <div class="card">
                 <div class="card-title">📹 直播记录管理</div>
                 <button class="btn btn-primary" onclick="showAddStreamModal()">➕ 新增直播记录</button>
-                <button class="btn btn-success" onclick="exportStreams()">📤 导出记录</button>
+                <button class="btn btn-success" onclick="exportStreams()" data-w5-report="live-streams-csv">📤 导出记录</button>
+                <button class="btn btn-secondary" type="button" onclick="printLiveStreams()" data-w5-report="live-print">🖨 列印</button>
                 <table id="streamsTable">
                     <thead>
                         <tr>
@@ -605,6 +606,17 @@
             }
         }
         
+
+        function printLiveStreams() {
+            var list = (typeof streams !== 'undefined' ? streams : (typeof data !== 'undefined' && data.streams ? data.streams : []));
+            var headers = ['日期','標題','平台','觀看','狀態'];
+            var rows = (list || []).map(function (s) {
+                return [s.date, s.title, s.platform, s.views || s.viewers, s.status];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('直播場次', headers, rows);
+            else window.print();
+        }
+
         function exportStreams() {
             const csv = '日期时间,活动,平台,观看人数,峰值,时长,负责人\n' + 
                 data.streams.map(s => `${s.datetime},${s.event},${s.platform},${s.viewers},${s.peak},${s.duration},${s.operator}`).join('\n');
@@ -617,6 +629,8 @@
     </script>
 
 
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 <!-- b100-ae-worship-w1-shell -->
 <link rel="stylesheet" href="../../css/ae_worship_six_section.css" />
 <script src="../../js/church-master-database.js"></script>
@@ -643,5 +657,10 @@
 <script src="../../js/crm_context_bar.js"></script>
 <script src="../../js/ae_primary_nav.js"></script>
 <script src="../../js/ae_subpage_shell.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

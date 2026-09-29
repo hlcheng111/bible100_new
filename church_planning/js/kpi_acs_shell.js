@@ -51,13 +51,19 @@
     el.classList.remove("hidden");
   }
 
+  function likertLbl(s) {
+    return global.AcsSurveyStandard ? AcsSurveyStandard.likertLabel(s, "agree") : String(s);
+  }
+
   function renderQuickSurvey() {
     var host = document.getElementById("kpi-quick-survey-wrap");
     if (!host || !global.KpiPack) return;
     var lastSec = "";
+    var legend = global.AcsSurveyStandard ? AcsSurveyStandard.likertLegendHtml("agree") : "";
     var html =
       '<h2 class="font-black text-indigo-900 text-lg mb-1">12 題 KPI/OKR 快評</h2>' +
-      '<p class="text-sm text-slate-600 mb-3">約 12 分鐘 · 非人事考核 · 完成後前往【3. 對齊漏斗儀表】。</p>' +
+      '<p class="text-sm text-slate-600 mb-2">約 12 分鐘 · 非人事考核。</p>' +
+      legend +
       '<form id="kpi-quick-form" onsubmit="return KpiAcsShell.submitQuick(event)">' +
       '<label class="block text-sm font-bold mb-2">本季焦點<input name="focus_label" class="w-full mt-1 border rounded p-2" placeholder="2026 青年門訓"/></label>';
     KpiPack.QUESTIONS.forEach(function (q, i) {
@@ -68,13 +74,18 @@
       html +=
         '<fieldset class="acs-fieldset"><legend class="text-xs font-bold">第 ' + (i + 1) + "/12 題</legend><p class=\"text-sm mb-2\">" +
         esc(q.label) +
-        '</p><div class="acs-likert-row">';
-      for (var s = 1; s <= 5; s++) html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + s + "</label>";
+        '</p><div class="acs-likert-row acs-likert-row--anchored">';
+      for (var s = 1; s <= 5; s++) {
+        html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + likertLbl(s) + "</label>";
+      }
       html += "</div></fieldset>";
     });
     html +=
       '<p id="kpi-quick-error" class="text-red-600 text-xs mt-2 hidden"></p>' +
-      '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">✓ 提交 → 對齊漏斗儀表</button></form>';
+      (global.AcsSurveyStandard
+        ? AcsSurveyStandard.submitButtonHtml("→ Tab ③ 對齊漏斗儀表")
+        : '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">提交並生成報告</button>') +
+      "</form>";
     host.innerHTML = html;
   }
 
@@ -115,6 +126,9 @@
         summary.innerHTML +=
           '<p class="text-rose-800 font-bold mt-2">⚠️ 卡關率 ≥70%：請開啟 <a href="Church_Governance_8020_focus.html" class="underline">80/20 資源聚焦儀</a></p>';
       }
+    }
+    if (summary && global.AcsReportGold && AcsReportGold.mountAfterSummary) {
+      AcsReportGold.mountAfterSummary(summary, run, "kpiokr");
     }
     var viz = document.getElementById("kpi-report-viz");
     if (viz && global.KpiFunnelViz) {

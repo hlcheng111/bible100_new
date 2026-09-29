@@ -15,9 +15,12 @@
     { re: /\/modules\/development\/development-plan/i, zone: "c" },
     { re: /\/modules\/expansion\//i, zone: "d" },
     { re: /\/modules\/innovation\//i, zone: "d" },
-    { re: /\/modules\/(members|finance|administration|equipment|library|research|tech|volunteer|support)\//i, zone: "e" },
-    { re: /\/(dashboard|people\/|congregation\/|theme-settings|custom-page-editor|vision_and_plan|roadmap-overview|ministry_core|ai-and-compliance|community-overview)\.html/i, zone: "e" },
-    { re: /\/church_ministry\/dashboard\.html/i, zone: "e" }
+    { re: /\/tools\/volunteer_shift\//i, zone: "e" },
+    { re: /\/modules\/volunteer\//i, zone: "e" },
+    { re: /\/congregation\//i, zone: "e" },
+    { re: /\/modules\/(members|finance|administration|equipment|library|research|tech|support)\//i, zone: "f" },
+    { re: /\/(dashboard|people\/|theme-settings|custom-page-editor|vision_and_plan|roadmap-overview|ministry_core|ai-and-compliance|community-overview)\.html/i, zone: "f" },
+    { re: /\/church_ministry\/dashboard\.html/i, zone: "f" }
   ];
 
   function normPath(p) {
@@ -70,8 +73,8 @@
   }
 
   function hubUrl(role) {
-    if (role === "leader") return "guide_crm_journey_hub.html?tab=vision&role=leader";
-    return "guide_crm_journey_hub.html?tab=journey&role=" + encodeURIComponent(role || "staff");
+    if (role === "teacher") return "modules/development/discipleship-training.html";
+    return "dashboard.html";
   }
 
   function injectTopStrip(zoneId, cmPre) {
@@ -106,50 +109,40 @@
 
     var strip = doc.createElement("div");
     strip.id = "ae-primary-nav-strip";
-    strip.className = "ae-primary-nav-strip";
-    var shell = typeof win.bible100ShellNav === "function";
+    strip.className = "ae-primary-nav-strip ae-nav-slim";
+    var deskMap = {
+      a: cmPre + "desks/worship-team.html",
+      b: cmPre + "desks/pastoral.html",
+      c: cmPre + "modules/education/education-integrated.html",
+      d: cmPre + "desks/outreach.html",
+      e: cmPre + "modules/volunteer/volunteer-integrated.html",
+      f: cmPre + "desks/admin.html"
+    };
+    var deskHref = deskMap[zoneId] || cmPre + "desks/index.html";
+    var homeHref = cmPre + "desks/index.html";
     strip.innerHTML =
-      '<span class="ae-nav-zone">' + z.emoji + " " + z.label + "</span>" +
-      (shell
-        ? '<a href="#" id="aeNavCrm">🗺️ 回 CRM 旅程</a><a href="#" class="ae-nav-muted" id="aeNavLayout">📂 本區完整側欄</a>'
-        : '<a href="' + cmPre + hubUrl(z.role) + '">🗺️ 回 CRM 旅程</a>') +
-      '<a href="' + cmPre + 'load_central_member_seed.html?crm_from=sidebar&amp;role=' +
-      encodeURIComponent(z.role) +
-      '" class="ae-nav-muted" target="_parent">📥 載入試用會友</a>';
+      '<a class="ae-nav-home" href="' +
+      homeHref +
+      '">← 15 主桌</a>' +
+      '<span class="ae-nav-zone">' +
+      z.emoji +
+      " " +
+      (zm.label || z.label) +
+      "</span>" +
+      '<a href="' +
+      deskHref +
+      '">本區主桌</a>' +
+      '<a href="' +
+      cmPre +
+      'load_central_member_seed.html" class="ae-nav-muted" target="_parent">📥 示範會友</a>';
     doc.body.insertBefore(strip, doc.body.firstChild);
-
-    if (shell) {
-      var crm = doc.getElementById("aeNavCrm");
-      var lay = doc.getElementById("aeNavLayout");
-      if (crm) {
-        crm.onclick = function (ev) {
-          if (ev.preventDefault) ev.preventDefault();
-          win.bible100ShellNav(ev, {
-            sidebarUrl: "church_ministry/sidebar_crm_journey.html",
-            contentUrl: "church_ministry/" + hubUrl(z.role)
-          });
-          return false;
-        };
-      }
-      if (lay) {
-        lay.onclick = function (ev) {
-          if (ev.preventDefault) ev.preventDefault();
-          var sidebarUrl =
-            z.focus === "a"
-              ? "church_ministry/sidebar_worship_journey.html"
-              : "church_ministry/sidebar_church_layout_v1.html?focus=" + z.focus;
-          win.bible100ShellNav(ev, {
-            sidebarUrl: sidebarUrl,
-            contentUrl: "church_ministry/" + z.path
-          });
-          return false;
-        };
-      }
-    }
   }
 
   function injectRoadmap(zoneId, rel, cmPre) {
+    /* 預設不再注入「同區格子側欄」——改由殼左欄／本區主桌承載 */
     if (doc.getElementById("ae-zone-roadmap")) return;
+    var chrome = doc.body && doc.body.getAttribute("data-b100-ae-chrome");
+    if (chrome !== "full") return;
     var reg = win.CrmJourneyRegistry;
     if (!reg || !reg.subpagesByZone) return;
     var pages = reg.subpagesByZone[zoneId];
@@ -164,7 +157,7 @@
     var title = (zm ? zm.emoji + " " + zm.label : zoneId.toUpperCase()) + " · 同區工具一覽";
     var html =
       '<p class="ae-zone-roadmap__title">' + title + "</p>" +
-      '<p class="ae-zone-roadmap__hint">點格子換工具頁；完成後用頂條 <strong>回 CRM 旅程</strong>。</p>';
+      '<p class="ae-zone-roadmap__hint">進階：完整工具清單（預設已隱藏）</p>';
 
     var lastGroup = "";
     pages.forEach(function (pg) {
@@ -184,13 +177,76 @@
     doc.body.appendChild(wrap);
   }
 
+  function isEducationIntegratedPage() {
+    try {
+      var p = String(win.location.pathname || "").replace(/\\/g, "/").toLowerCase();
+      return p.indexOf("education-integrated.html") >= 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function isEducationCZone() {
+    var z = doc.body && doc.body.getAttribute("data-b100-ae-zone");
+    if (z === "c") return true;
+    return isEducationIntegratedPage();
+  }
+
+  /** C 區主殼自管 5 Tab；子頁不注入 AE 通用殼 */
+  function bootEducationShell() {
+    if (isEducationIntegratedPage()) return true;
+    if (doc.body && doc.body.getAttribute("data-b100-pattern") === "P-AE-EDU-SHELL") return true;
+    return false;
+  }
+
+  function shouldHideInHub() {
+    if (win.B100HubEmbed && win.B100HubEmbed.shouldHideChrome) {
+      return win.B100HubEmbed.shouldHideChrome();
+    }
+    try {
+      if (win.parent && win.parent !== win && win.frameElement) {
+        var n = win.frameElement.id || win.frameElement.getAttribute("name") || "";
+        if (n === "contentFrame") {
+          if (doc.body) doc.body.classList.add("b100-hub-embedded");
+          if (win.B100HubEmbed && win.B100HubEmbed.apply) win.B100HubEmbed.apply();
+          return true;
+        }
+      }
+    } catch (eHub) { /* ignore */ }
+    return false;
+  }
+
+  function injectHubHiddenStyles() {
+    if (doc.getElementById("b100-hub-embed-style")) return;
+    var st = doc.createElement("style");
+    st.id = "b100-hub-embed-style";
+    st.textContent =
+      "body.b100-hub-embedded #ae-primary-nav-strip," +
+      "body.b100-hub-embedded .crm-ctx-bar," +
+      "body.b100-hub-embedded nav.top-nav,body.b100-hub-embedded .top-nav," +
+      "body.b100-hub-embedded nav.anchor-nav,body.b100-hub-embedded .anchor-nav{display:none!important;}";
+    (doc.head || doc.documentElement).appendChild(st);
+  }
+
   function boot() {
+    if (bootEducationShell()) return;
+    if (win.B100HubEmbed && win.B100HubEmbed.apply) {
+      win.B100HubEmbed.apply();
+    }
+    var chrome = doc.body && doc.body.getAttribute("data-b100-ae-chrome");
+    if (chrome === "off") return;
+    if (shouldHideInHub()) {
+      injectHubHiddenStyles();
+      return;
+    }
     var rel = currentRelPath();
     var zoneId = detectZone(rel);
     if (!zoneId) return;
     var cmPre = cmPrefix(rel);
     injectTopStrip(zoneId, cmPre);
-    injectRoadmap(zoneId, rel, cmPre);
+    if (chrome !== "minimal") {
+      injectRoadmap(zoneId, rel, cmPre);
+    }
     if (win.CrmContextBar && typeof win.CrmContextBar.render === "function") {
       var params = new URLSearchParams(win.location.search || "");
       if (!params.get("crm_from")) {
@@ -215,5 +271,12 @@
     boot();
   }
 
-  win.AeSubpageShell = { boot: boot, detectZone: detectZone, currentRelPath: currentRelPath };
+  win.AeSubpageShell = {
+    boot: boot,
+    detectZone: detectZone,
+    currentRelPath: currentRelPath,
+    isEducationIntegratedPage: isEducationIntegratedPage,
+    isEducationCZone: isEducationCZone,
+    bootEducationShell: bootEducationShell
+  };
 })(document, window);

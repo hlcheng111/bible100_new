@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學年學期設定</title>
+    <link rel="stylesheet" href="../css/module_common.css">
+</head>
+<body>
+    <div class="module-header">
+        <h1>📅 學年／學期設定</h1>
+        <p>設定目前學期，供選課、學費、成績、證書使用</p>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">目前學期</div>
+        <p id="currentInfo" style="font-size:13px;margin:0 0 10px;"></p>
+        <select id="semesterSelect" class="module-input" style="max-width:280px;"></select>
+        <button class="module-btn" id="btnSetCurrent" style="margin-left:8px;">設為目前學期</button>
+        <p id="msg" style="font-size:11px;color:#27ae60;margin:8px 0 0;"></p>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">➕ 新增學年</div>
+        <form id="yearForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+            <div><label class="stat-label">學年標籤</label><br><input name="label" class="module-input" placeholder="2025-2026 學年" required style="width:160px;"></div>
+            <div><br><button type="submit" class="module-btn">新增學年</button></div>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">➕ 為學年新增學期</div>
+        <form id="semForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+            <div><label class="stat-label">所屬學年</label><br><select name="yearId" id="yearIdSelect" class="module-input" style="width:140px;"></select></div>
+            <div><label class="stat-label">學期 ID</label><br><input name="id" class="module-input" placeholder="2025-1" required style="width:80px;"></div>
+            <div><label class="stat-label">顯示名稱</label><br><input name="label" class="module-input" placeholder="2025 上學期" required style="width:120px;"></div>
+            <div><label class="stat-label">開始</label><br><input name="start" type="date" class="module-input"></div>
+            <div><label class="stat-label">結束</label><br><input name="end" type="date" class="module-input"></div>
+            <div><br><button type="submit" class="module-btn">新增學期</button></div>
+        </form>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">📋 學年列表</div>
+        <div id="yearList"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+
+            function refresh() {
+                const years = db.getAcademicYears();
+                const current = db.getCurrentSemesterId();
+                const info = db.getCurrentSemesterInfo();
+                document.getElementById('currentInfo').textContent =
+                    '目前：' + (info.semester ? info.semester.label : current) +
+                    (info.year ? '（' + info.year.label + '）' : '');
+
+                let opts = '';
+                years.forEach(y => {
+                    (y.semesters || []).forEach(s => {
+                        opts += '<option value="' + s.id + '"' + (s.id === current ? ' selected' : '') + '>' +
+                            y.label + ' · ' + s.label + ' (' + s.id + ')</option>';
+                    });
+                });
+                document.getElementById('semesterSelect').innerHTML = opts || '<option value="">— 請先新增學期 —</option>';
+
+                let yOpts = years.map(y => '<option value="' + y.id + '">' + y.label + '</option>').join('');
+                document.getElementById('yearIdSelect').innerHTML = yOpts;
+
+                let html = '';
+                years.forEach(y => {
+                    html += '<h4 style="margin:12px 0 6px;color:#0b5fa5;">' + y.label + ' <small>(' + y.id + ')</small></h4><ul style="margin:0 0 8px 20px;">';
+                    (y.semesters || []).forEach(s => {
+                        html += '<li>' + s.label + ' · ID: <code>' + s.id + '</code>' +
+                            (s.start ? ' · ' + s.start + ' ~ ' + (s.end || '') : '') +
+                            (s.id === current ? ' <strong style="color:#27ae60;">← 目前</strong>' : '') + '</li>';
+                    });
+                    if (!(y.semesters || []).length) html += '<li style="color:#888;">尚無學期</li>';
+                    html += '</ul>';
+                });
+                document.getElementById('yearList').innerHTML = html || '<p>尚無學年</p>';
+            }
+
+            document.getElementById('btnSetCurrent').onclick = function() {
+                const v = document.getElementById('semesterSelect').value;
+                if (!v) return alert('請選擇學期');
+                db.setCurrentSemester(v);
+                document.getElementById('msg').textContent = '✅ 已設目前學期為 ' + v;
+                refresh();
+            };
+
+            document.getElementById('yearForm').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                const label = fm.get('label').trim();
+                try {
+                    db.addAcademicYear(label, []);
+                    this.reset();
+                    refresh();
+                } catch (err) { alert(err.message || err); }
+            };
+
+            document.getElementById('semForm').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                try {
+                    db.addSemesterToYear(fm.get('yearId'), {
+                        id: fm.get('id').trim(),
+                        label: fm.get('label').trim(),
+                        start: fm.get('start') || '',
+                        end: fm.get('end') || ''
+                    });
+                    this.reset();
+                    refresh();
+                } catch (err) { alert(err.message || err); }
+            };
+
+            refresh();
+        })();
+    </script>
+</body>
+</html>

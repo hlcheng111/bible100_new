@@ -3,80 +3,177 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>課程完成登記</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 text-slate-800">
-  <main class="max-w-4xl mx-auto p-4 md:p-6">
-    <header class="bg-white border border-slate-200 rounded-xl p-4 mb-4">
-      <div class="flex items-center justify-between flex-wrap gap-2">
-        <h1 class="text-xl font-bold">課程完成登記</h1>
-        <a href="dashboard.html" class="px-3 py-2 border rounded text-sm">返回 School Dashboard</a>
-      </div>
-      <p class="text-sm text-slate-600 mt-2">完成登記後會回寫到 `CentralMemberDB`：更新 `training_credits` 與 `skills`，並新增 trainings 記錄。</p>
-    </header>
-
-    <section class="bg-white border border-slate-200 rounded-xl p-4">
-      <div class="grid md:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-sm mb-1">選擇會友</label>
-          <select id="member" class="w-full border rounded px-3 py-2 text-sm"></select>
-        </div>
-        <div>
-          <label class="block text-sm mb-1">課程名稱</label>
-          <input id="course" class="w-full border rounded px-3 py-2 text-sm" placeholder="例如：門徒培訓進階">
-        </div>
-        <div>
-          <label class="block text-sm mb-1">增加學分（training_credits）</label>
-          <input id="credits" type="number" min="1" value="1" class="w-full border rounded px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-sm mb-1">新增技能標籤</label>
-          <input id="skill" class="w-full border rounded px-3 py-2 text-sm" placeholder="例如：教導,小組帶領">
-        </div>
-      </div>
-      <div class="mt-4 flex items-center gap-2">
-        <button id="submit" class="px-3 py-2 rounded bg-blue-600 text-white text-sm font-semibold">登記完課並回寫</button>
-        <span id="status" class="text-sm text-slate-600"></span>
-      </div>
-    </section>
-  </main>
-
+  <title>结业登记 · Graduation</title>
+  <link rel="stylesheet" href="manage/css/module_common.css">
+  <script src="js/school-master-database.js"></script>
   <script src="../js/church_data_bridge_phase1.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/persistence_provider.js"></script>
   <script src="../js/central_member_db.js"></script>
+  <script src="../js/sch_member_guard.js"></script>
+</head>
+<body>
+  <div class="module-header">
+    <h1>🎓 结业登记 · 回写 CentralMemberDB</h1>
+    <p>① 依学校成绩判定及格 → ② 核发证书 → ③ 回写会友 training_credits／skills（file:// 可用，无 CDN）</p>
+    <p style="margin-top:8px;">
+      <a href="manage/graduation_certificates.html" target="contentFrame" class="module-btn module-btn-secondary">🎓 结业证书</a>
+      <a href="manage/academic_integrated.html" target="contentFrame" class="module-btn module-btn-secondary">← 教务工作台</a>
+    </p>
+  </div>
+
+  <div class="module-card" id="schoolSection">
+    <div class="module-card-title">① 学校学籍（成绩及格判定）</div>
+    <div class="module-form-row">
+      <label>学生</label>
+      <select id="schoolStudent" class="module-input" style="min-width:180px;"></select>
+      <label>课程</label>
+      <select id="schoolCourse" class="module-input" style="min-width:180px;"></select>
+      <label>及格线</label>
+      <input id="passScore" type="number" min="0" max="100" value="60" class="module-input" style="width:60px;">
+      <button type="button" class="module-btn" id="btnCheck">检查及格</button>
+      <button type="button" class="module-btn" id="btnIssueCert" style="background:#166534;">核发并打印证书</button>
+    </div>
+    <p id="checkStatus" style="font-size:11px;color:#475569;margin-top:8px;"></p>
+  </div>
+
+  <div class="module-card">
+    <div class="module-card-title">② 回写中央会员库</div>
+    <div class="module-form-row">
+      <label>会友</label>
+      <select id="member" class="module-input" style="min-width:180px;"></select>
+      <label>课程名称</label>
+      <input id="course" class="module-input" placeholder="例如：门徒培训进阶">
+      <label>学分</label>
+      <input id="credits" type="number" min="1" value="1" class="module-input" style="width:50px;">
+      <label>技能</label>
+      <input id="skill" class="module-input" placeholder="教导,小组带领">
+    </div>
+    <div style="margin-top:10px;">
+      <button type="button" class="module-btn" id="submit">登记完课并回写</button>
+      <span id="status" style="font-size:11px;color:#475569;margin-left:8px;"></span>
+    </div>
+    <p style="font-size:10px;color:#b45309;margin-top:10px;">须人工确认后再写入；会友须已在 CentralMemberDB。</p>
+  </div>
+
   <script>
     (function () {
-      if (!window.CentralMemberDB) return;
+      var schoolDB = window.schoolDB;
+      var memberSel = document.getElementById("member");
+      var status = document.getElementById("status");
+      var checkStatus = document.getElementById("checkStatus");
+      var courseInput = document.getElementById("course");
+
+      function esc(v) {
+        var d = document.createElement("div");
+        d.textContent = String(v == null ? "" : v);
+        return d.innerHTML;
+      }
+
+      function loadSchoolPickers() {
+        if (!schoolDB) {
+          checkStatus.textContent = "SchoolMasterDatabase 未载入。";
+          return;
+        }
+        var students = (schoolDB.data.students || []).filter(function (s) {
+          return s.status !== "pending" && (!window.SchMemberGuard || window.SchMemberGuard.isLinked(s.memberId || s.member_id));
+        });
+        var courses = (schoolDB.data.courses || []).filter(function (c) { return c.status !== "inactive"; });
+        document.getElementById("schoolStudent").innerHTML = students.map(function (s) {
+          return '<option value="' + s.id + '">' + esc(s.name) + (s.memberId ? " · 会友#" + s.memberId : "") + "</option>";
+        }).join("") || '<option value="">— 尚无已连结会友的在学学生 —</option>';
+        document.getElementById("schoolCourse").innerHTML = courses.map(function (c) {
+          return '<option value="' + c.id + '">' + esc(c.name) + "</option>";
+        }).join("") || '<option value="">— 尚无课程 —</option>';
+        if (courses.length) courseInput.value = courses[0].name || "";
+      }
+
+      document.getElementById("schoolCourse").addEventListener("change", function () {
+        var cid = Number(this.value);
+        var c = (schoolDB.data.courses || []).find(function (x) { return x.id === cid; });
+        if (c) courseInput.value = c.name || "";
+      });
+
+      document.getElementById("schoolStudent").addEventListener("change", function () {
+        var sid = Number(this.value);
+        var s = (schoolDB.data.students || []).find(function (x) { return x.id === sid; });
+        if (s && s.memberId && memberSel) {
+          for (var i = 0; i < memberSel.options.length; i++) {
+            if (String(memberSel.options[i].value) === String(s.memberId)) {
+              memberSel.selectedIndex = i;
+              break;
+            }
+          }
+        }
+      });
+
+      document.getElementById("btnCheck").addEventListener("click", function () {
+        if (!schoolDB || !schoolDB.checkCourseCompletion) return;
+        var sid = Number(document.getElementById("schoolStudent").value);
+        var cid = Number(document.getElementById("schoolCourse").value);
+        var pass = Number(document.getElementById("passScore").value) || 60;
+        if (!sid || !cid) return alert("请选择学生与课程");
+        var r = schoolDB.checkCourseCompletion(sid, cid, pass);
+        checkStatus.textContent = r.eligible
+          ? "✅ 已达及格（" + r.score + " 分）— 可核发证书"
+          : "⚠️ " + r.reason + (r.score != null ? "（目前 " + r.score + " 分）" : "");
+      });
+
+      document.getElementById("btnIssueCert").addEventListener("click", function () {
+        if (!schoolDB || !schoolDB.issueCertificate) return;
+        var sid = Number(document.getElementById("schoolStudent").value);
+        var cid = Number(document.getElementById("schoolCourse").value);
+        var pass = Number(document.getElementById("passScore").value) || 60;
+        if (!sid || !cid) return alert("请选择学生与课程");
+        try {
+          var cert = schoolDB.issueCertificate(sid, cid, { passScore: pass });
+          checkStatus.textContent = "✅ 已核发证书 " + cert.certificateNo;
+          var w = window.open("", "_blank", "width=720,height=640");
+          if (w) {
+            w.document.write(schoolDB.buildCertificateHtml(cert));
+            w.document.close();
+          }
+        } catch (err) {
+          alert(err.message || err);
+        }
+      });
+
+      if (!window.CentralMemberDB) {
+        status.textContent = "CentralMemberDB 未载入。";
+        loadSchoolPickers();
+        return;
+      }
       var db = CentralMemberDB.get() || {};
       var members = Array.isArray(db.members) ? db.members : [];
       var trainings = Array.isArray(db.trainings) ? db.trainings : [];
 
-      var memberSel = document.getElementById("member");
-      var status = document.getElementById("status");
-
       memberSel.innerHTML = members.map(function (m) {
-        return '<option value="' + m.id + '">' + esc(m.name) + " (#" + m.id + ")</option>";
+        var id = m.memberId != null ? m.memberId : m.id;
+        return '<option value="' + id + '">' + esc(m.name) + " (#" + id + ")</option>";
       }).join("");
 
       document.getElementById("submit").addEventListener("click", function () {
-        var memberId = Number(memberSel.value);
+        var memberId = memberSel.value;
         var course = String(document.getElementById("course").value || "").trim();
         var credits = Math.max(1, Number(document.getElementById("credits").value || 1));
         var skillRaw = String(document.getElementById("skill").value || "").trim();
         if (!memberId || !course) {
-          status.textContent = "請選擇會友並填寫課程名稱。";
+          status.textContent = "请选择会友并填写课程名称。";
+          return;
+        }
+        if (window.SchMemberGuard && !window.SchMemberGuard.memberExists(memberId)) {
+          status.textContent = "中央会友库找不到此 member_id。";
           return;
         }
 
-        var target = members.find(function (m) { return Number(m.id) === memberId; });
+        var target = members.find(function (m) {
+          var id = m.memberId != null ? m.memberId : m.id;
+          return String(id) === String(memberId);
+        });
         if (!target) {
-          status.textContent = "找不到會友資料。";
+          status.textContent = "找不到会友资料。";
           return;
         }
 
-        // Required field naming: training_credits
         var oldCredits = Number(target.training_credits || 0);
         target.training_credits = oldCredits + credits;
         if (skillRaw) {
@@ -92,7 +189,7 @@
           memberId: memberId,
           courseName: course,
           completedDate: new Date().toISOString().split("T")[0],
-          instructor: "系統登記",
+          instructor: "系统登记",
           grade: "A"
         });
 
@@ -103,17 +200,12 @@
           try { window.ChurchDataBridge.triggerDataSync("course_completion_updated"); } catch (e) {}
         }
         status.textContent = ok
-          ? "已回寫 CentralMemberDB（training_credits 與 skills 已更新）"
-          : "回寫失敗，請檢查 localStorage 權限。";
+          ? "✅ 已回写 CentralMemberDB（training_credits 与 skills 已更新）"
+          : "回写失败，请检查 localStorage 权限。";
       });
 
-      function esc(v) {
-        var d = document.createElement("div");
-        d.textContent = String(v == null ? "" : v);
-        return d.innerHTML;
-      }
+      loadSchoolPickers();
     })();
   </script>
 </body>
 </html>
-

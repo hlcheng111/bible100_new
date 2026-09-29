@@ -1,17 +1,15 @@
-import { navigate } from '../router';
+import { navigate, navigateToUnit } from '../router';
+import { unitFromGolden } from '../contract/readingUnit';
 import { getLocale } from '../stores/locale';
 import { t } from '../i18n/strings';
+import { goldenCardDisplay } from '../i18n/trackLocale';
 import { loadGolden, type GoldenItem } from '../tracks/trackData';
+import { mountLoadError } from '../ui/loadError';
 
 function esc(s: string) {
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
-}
-
-function refLabel(v: GoldenItem, loc: string) {
-  if (loc === 'en') return v.refEn || v.refZh;
-  return v.refZh;
 }
 
 export async function renderGolden(root: HTMLElement) {
@@ -33,25 +31,26 @@ export async function renderGolden(root: HTMLElement) {
   try {
     const data = await loadGolden();
     list.innerHTML = data.verses
-      .map(
-        (v) => `
-      <button type="button" class="track-day-card track-day-card--golden" data-book="${v.bookId}" data-chapter="${v.chapter}">
-        <span class="track-day-card__title">${esc(refLabel(v, loc))}</span>
-        ${v.tagZh ? `<span class="track-day-card__hint">${esc(v.tagZh)}</span>` : ''}
-      </button>`
-      )
+      .map((v: GoldenItem) => {
+        const card = goldenCardDisplay(v, loc);
+        const tagHtml = card.tag
+          ? `<span class="track-day-card__hint">${esc(card.tag)}</span>`
+          : '';
+        return `
+      <button type="button" class="track-day-card track-day-card--golden" data-gv="${v.id}" data-book="${v.bookId}" data-chapter="${v.chapter}">
+        <span class="track-day-card__title">${esc(card.ref)}</span>
+        ${tagHtml}
+      </button>`;
+      })
       .join('');
+
     list.querySelectorAll('.track-day-card').forEach((btn) => {
       btn.addEventListener('click', () => {
-        navigate({
-          view: 'reader',
-          bookId: Number((btn as HTMLElement).dataset.book),
-          chapter: Number((btn as HTMLElement).dataset.chapter),
-          trackId: 'golden',
-        });
+        const v = data.verses.find((x) => x.id === (btn as HTMLElement).dataset.gv);
+        if (v) navigateToUnit(unitFromGolden(v));
       });
     });
-  } catch {
-    list.innerHTML = `<p class="error">${t('trackLoadFail', loc)}</p>`;
+  } catch (err) {
+    mountLoadError(list, loc, { kind: 'tracks', trackId: 'golden' }, err);
   }
 }

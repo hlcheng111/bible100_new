@@ -1,5 +1,8 @@
 import type { Locale } from '../router';
 import manifest from '../../data/reading_tracks_manifest.json';
+import { resolveTrackToday } from '../coach/resolveToday';
+import type { ReadingUnit } from '../contract/readingUnit';
+import { loadProgress } from '../stores/progress';
 
 export type TrackId = 'bible66' | '30day' | 'golden' | 'theme';
 
@@ -69,17 +72,13 @@ export function summarizeTrack(row: TrackMeta, locale: Locale, done = 0): TrackS
 }
 
 export function trackDoneCount(id: TrackId): number {
-  try {
-    const raw = localStorage.getItem(`bible_journey_track_${id}`);
-    if (raw) return Number(JSON.parse(raw).done) || 0;
-  } catch {
-    /* ignore */
-  }
-  return 0;
+  const st = loadProgress();
+  const prefix =
+    id === '30day' ? '30d:' : id === 'golden' ? 'gv:' : id === 'theme' ? 'theme:' : 'b66:';
+  return Object.keys(st.done).filter((k) => k.startsWith(prefix) && st.done[k]).length;
 }
 
-export function enterTrackReader(id: TrackId): { bookId: number; chapter: number } {
-  if (id === '30day' || id === 'bible66') return { bookId: 1, chapter: 1 };
-  if (id === 'golden') return { bookId: 1, chapter: 1 };
-  return { bookId: 1, chapter: 1 };
+/** 依跑道進度解析下一關 ReadingUnit（取代硬編碼 1:1） */
+export function enterTrackReader(id: TrackId): Promise<ReadingUnit> {
+  return resolveTrackToday(id);
 }

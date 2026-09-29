@@ -14,6 +14,10 @@
         <div class="bg-gradient-to-r from-pink-600 to-pink-800 text-white rounded-lg p-6 mb-4">
             <h1 class="text-3xl font-bold mb-2">🌏 跨文化事工</h1>
             <p class="text-pink-100">服事不同文化背景的群体</p>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" onclick="exportCrossCulturalCsv()" data-w5-report="cross-cultural-csv" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">⬇ CSV</button>
+                <button type="button" onclick="printCrossCultural()" data-w5-report="cross-cultural-print" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">🖨 列印</button>
+            </div>
         </div>
         <details class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
             <summary class="cursor-pointer font-semibold text-amber-800">📋 功能說明／計畫願景</summary>
@@ -165,7 +169,33 @@
         function getStatusLabel(status) {
             return { active: '进行中', planning: '筹备中', paused: '已暂停' }[status] || status;
         }
+
+        function exportCrossCulturalCsv() {
+            var U = window.CmReportUtils; if (!U) return;
+            var esc = U.csvEsc;
+            var list = projects || [];
+            if (!list.length) { try { list = JSON.parse(localStorage.getItem('cross_cultural') || '[]'); } catch (e) { list = []; } }
+            var lines = [['項目', '族群', '負責人', '服事人數', '團隊', '狀態'].map(esc).join(',')];
+            list.forEach(function (p) {
+                lines.push([p.name, p.targetGroup, p.leader, p.served, p.workers, p.status].map(esc).join(','));
+            });
+            U.downloadCsv('cross_cultural_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+        }
+        function printCrossCultural() {
+            var U = window.CmReportUtils; if (!U) return;
+            var list = projects || [];
+            if (!list.length) { try { list = JSON.parse(localStorage.getItem('cross_cultural') || '[]'); } catch (e) { list = []; } }
+            var rows = list.map(function (p) { return [p.name, p.targetGroup, p.leader, String(p.served), getStatusLabel(p.status)]; });
+            U.printTable('跨文化事工', ['項目', '族群', '負責人', '服事人數', '狀態'], rows);
+        }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>
 

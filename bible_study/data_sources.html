@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資料來源狀態 · 聖經研讀</title>
+    <style>
+        body { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 13px; background: #f6f7fb; color: #1e293b; margin: 0; padding: 16px 20px 40px; line-height: 1.5; }
+        h1 { font-size: 20px; margin: 0 0 6px; color: #14532d; }
+        .sub { color: #64748b; font-size: 12px; margin-bottom: 16px; }
+        .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; padding: 10px 14px; background: #ecfdf5; border-radius: 8px; border-left: 4px solid #22c55e; }
+        .bar button { padding: 6px 14px; border: none; border-radius: 6px; background: #16a34a; color: #fff; cursor: pointer; font-size: 12px; }
+        .bar button:hover { background: #15803d; }
+        .bar a { color: #166534; font-size: 12px; }
+        .summary { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+        .pill { padding: 8px 14px; border-radius: 8px; background: #fff; border: 1px solid #e2e8f0; font-size: 12px; }
+        .pill strong { font-size: 18px; display: block; }
+        section { margin-bottom: 22px; }
+        section h2 { font-size: 14px; color: #0b5fa5; border-bottom: 2px solid #bae6fd; padding-bottom: 4px; margin: 0 0 10px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); font-size: 12px; }
+        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+        th { background: #f8fafc; color: #475569; font-weight: 600; }
+        .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+        .dot-ok { background: #22c55e; }
+        .dot-file { background: #eab308; }
+        .dot-miss { background: #ef4444; }
+        .path { font-family: Consolas, monospace; font-size: 10px; color: #64748b; word-break: break-all; }
+        .hint { font-size: 11px; color: #92400e; background: #fef3c7; padding: 10px 12px; border-radius: 6px; margin-top: 16px; }
+        code { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; }
+    </style>
+    <script src="js/dev_http_hint.js"></script>
+    <script src="js/bible_version_registry.js"></script>
+    <script src="js/BibleEngine.js"></script>
+</head>
+<body>
+    <h1>📡 資料來源狀態</h1>
+    <p class="sub">依 <code>bible_version_registry.js</code> 掃描本機 <code>data/</code>；綠燈＝已載入可用，黃燈＝檔案在但尚未載入，紅燈＝缺檔。</p>
+
+    <div class="bar">
+        <button type="button" id="btnRescan">🔄 重新掃描</button>
+        <button type="button" id="btnLoad">📥 載入全部</button>
+        <a href="index.html" target="_blank" rel="noopener">⛪ Standalone 全屏</a>
+        <a href="_landing/tools.html" data-b100-nav="content">🧭 功能地圖</a>
+        <span class="sb-path" style="font-size:10px;color:#64748b;">bible_study/_landing/tools.html</span>
+        <span id="scanMsg" style="font-size:11px;color:#64748b;"></span>
+    </div>
+
+    <div class="summary">
+        <div class="pill"><strong id="cntOk">—</strong>已載入</div>
+        <div class="pill"><strong id="cntFile">—</strong>檔案在／未載入</div>
+        <div class="pill"><strong id="cntMiss">—</strong>缺檔</div>
+        <div class="pill"><strong id="cntTotal">—</strong>註冊項</div>
+    </div>
+
+    <section>
+        <h2>📖 聖經譯本</h2>
+        <table><thead><tr><th>狀態</th><th>名稱</th><th>語系</th><th>路徑</th></tr></thead><tbody id="tblBibles"></tbody></table>
+    </section>
+    <section>
+        <h2>📝 註釋</h2>
+        <table><thead><tr><th>狀態</th><th>名稱</th><th>語系</th><th>路徑</th></tr></thead><tbody id="tblComm"></tbody></table>
+    </section>
+    <section>
+        <h2>🔗 串珠 · 📚 詞典</h2>
+        <table><thead><tr><th>狀態</th><th>名稱</th><th>類別</th><th>路徑</th></tr></thead><tbody id="tblOther"></tbody></table>
+    </section>
+
+    <div class="hint">
+        <strong>小白提示：</strong>若多數紅燈，請用 <code>啟動聖經研讀.bat</code> 或 HTTP 開啟本站，並確認本機已有 <code>data/bibles/</code>、<code>data/cj/</code>（Git 不含大檔，需自行還原備份）。
+    </div>
+
+    <script>
+        var CAT_LABEL = { bibles: '譯本', commentaries: '註釋', crossrefs: '串珠', dictionaries: '詞典' };
+
+        function statusDot(st) {
+            if (st.status === 'ok') return '<span class="dot dot-ok"></span>已載入';
+            if (st.status === 'file_ok') return '<span class="dot dot-file"></span>檔案在';
+            return '<span class="dot dot-miss"></span>缺檔';
+        }
+
+        function renderRows(list, tbodyId, showCat) {
+            var tb = document.getElementById(tbodyId);
+            if (!tb) return;
+            tb.innerHTML = list.map(function (st) {
+                var langs = (st.langs || []).join(', ') || '—';
+                var extra = showCat ? ('<td>' + (CAT_LABEL[st.category] || st.category) + '</td>') : ('<td>' + langs + '</td>');
+                return '<tr><td>' + statusDot(st) + '</td><td>' + st.name + '</td>' + extra +
+                    '<td class="path">' + (st.path || '—') + '</td></tr>';
+            }).join('') || '<tr><td colspan="4">（無項目）</td></tr>';
+        }
+
+        function updateSummary(list) {
+            var ok = 0, file = 0, miss = 0;
+            list.forEach(function (s) {
+                if (s.status === 'ok') ok++;
+                else if (s.status === 'file_ok') file++;
+                else miss++;
+            });
+            document.getElementById('cntOk').textContent = ok;
+            document.getElementById('cntFile').textContent = file;
+            document.getElementById('cntMiss').textContent = miss;
+            document.getElementById('cntTotal').textContent = list.length;
+        }
+
+        function splitTables(list) {
+            renderRows(list.filter(function (s) { return s.category === 'bibles'; }), 'tblBibles', false);
+            renderRows(list.filter(function (s) { return s.category === 'commentaries'; }), 'tblComm', false);
+            renderRows(list.filter(function (s) {
+                return s.category === 'crossrefs' || s.category === 'dictionaries';
+            }), 'tblOther', true);
+            updateSummary(list);
+        }
+
+        async function runScan(loadAll) {
+            var msg = document.getElementById('scanMsg');
+            msg.textContent = '掃描中…';
+            if (!window.BibleEngine) { msg.textContent = 'BibleEngine 未載入'; return; }
+            try {
+                if (loadAll) await window.BibleEngine.initialize();
+                var list = await window.BibleEngine.probeAllSources();
+                splitTables(list);
+                msg.textContent = loadAll ? '載入完成 ' + new Date().toLocaleTimeString() : '掃描完成 ' + new Date().toLocaleTimeString();
+            } catch (e) {
+                msg.textContent = '錯誤：' + (e.message || e);
+            }
+        }
+
+        document.getElementById('btnRescan').addEventListener('click', function () { runScan(false); });
+        document.getElementById('btnLoad').addEventListener('click', function () { runScan(true); });
+        runScan(false);
+    </script>
+</body>
+</html>

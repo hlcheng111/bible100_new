@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache" />
+  <title>六十六卷</title>
+  <link rel="stylesheet" href="../../../shell/css/app-hub.css?v=20260830db66b" />
+  <link rel="stylesheet" href="../../../shell/css/track-creative.css?v=20260830db66b" />
+  <script src="../../../shell/js/page_boot.js?v=20260830db66d"></script>
+  <script src="../../../shell/js/data_bundle.js?v=20260830db66d"></script>
+  <script src="../../../shell/js/data_loader.js?v=20260830db66d"></script>
+  <script src="../../../shell/js/page_locale.js?v=20260830db66d"></script>
+  <script src="../../../shell/js/locale_pick.js?v=20260830db66d"></script>
+  <script src="../../../shell/js/page_links.js?v=20260830db66d"></script>
+  <script src="../../../shell/js/frame_sync.js?v=20260830db66d"></script>
+  <script src="../../../shell/js/read_progress.js?v=20260830db66d"></script>
+</head>
+<body class="bible-standalone">
+  <header class="bs-top">
+    <div class="font-size-bar">
+      <span class="font-size-label">字體</span>
+      <button type="button" class="fs-btn" data-fs="sm">小</button>
+      <button type="button" class="fs-btn on" data-fs="md">中</button>
+      <button type="button" class="fs-btn" data-fs="lg">大</button>
+    </div>
+  </header>
+  <section class="b66-hero track-hero" id="b66Hero" style="margin:8px 4px 0">
+    <p class="track-hero__mascot">🗺️📜🦁</p>
+    <h1 id="b66Title" style="font-size:1.15rem;margin:0 0 4px">六十六卷 · 聖經大冒險地圖</h1>
+    <p id="b66Tagline" style="margin:0;font-size:12px">自由探索 · 想有引导？→ <a href="../../../shell/pages/track-plan1y.html" data-shell-track="plan1y" style="color:#4338ca;font-weight:800">一年计划</a> 或 <a href="../../../shell/pages/track-plan3y.html" data-shell-track="plan3y" style="color:#059669;font-weight:800">三年计划</a></p>
+    <div class="b66-map" title="讀經進度">
+      <div class="b66-map__ot" id="mapOt" style="width:50%"></div>
+      <div class="b66-map__nt" id="mapNt" style="width:50%"></div>
+    </div>
+    <div class="track-stats">
+      <div class="track-stat">⭐ 金星<strong id="b66Stars">0</strong></div>
+      <div class="track-stat">📖 已讀章<strong id="b66Chapters">0</strong></div>
+      <div class="track-stat">🔥 連續<strong id="b66Streak">0</strong>天</div>
+    </div>
+  </section>
+  <div id="bibleRoot"></div>
+  <script src="../../../shell/js/font_size.js?v=20260830db66b"></script>
+  <script src="../../../shell/js/bible_reader_core.js?v=20260830db66d"></script>
+  <script>
+    (function () {
+      document.addEventListener('click', function (ev) {
+        var a = ev.target && ev.target.closest && ev.target.closest('a[data-shell-track]');
+        if (!a) return;
+        var track = a.getAttribute('data-shell-track');
+        try {
+          if (window.parent && window.parent !== window && window.parent.BibleShellNav && window.parent.BibleShellNav.enterTrack) {
+            ev.preventDefault();
+            window.parent.BibleShellNav.enterTrack(track);
+          }
+        } catch (eNav) {}
+      }, true);
+      function bootReader() {
+        var q = new URLSearchParams(location.search);
+        var track = q.get('track') || '';
+        if (track && track !== 'bible66') {
+          document.body.classList.add('bible-track-read');
+          var map = {
+            plan1y: 'track-plan1y.html',
+            plan3y: 'track-plan3y.html',
+            '30day': 'track-30day.html',
+            golden: 'track-golden.html',
+            theme: 'track-theme.html',
+          };
+          var page = map[track];
+          if (page) {
+            var href = '../../../shell/pages/' + page;
+            if (track === 'theme' && q.get('theme')) {
+              href += '?focus=' + encodeURIComponent(q.get('theme'));
+            }
+            var row = document.createElement('p');
+            row.id = 'trackBackRow';
+            row.style.cssText = 'margin:8px 12px;font-weight:800';
+            var aBack = document.createElement('a');
+            aBack.href = href;
+            aBack.textContent = '↩ 回跑道選其他關';
+            row.appendChild(aBack);
+            var rootEl = document.getElementById('bibleRoot');
+            if (rootEl && rootEl.parentNode) {
+              rootEl.parentNode.insertBefore(row, rootEl);
+            }
+          }
+        }
+        function refreshHero() {
+          if (document.body.classList.contains('bible-track-read')) return;
+          if (!window.B100Progress) return;
+          var st = B100Progress.stats();
+          var ch = B100Progress.countDone('b66:');
+          document.getElementById('b66Stars').textContent = st.stars;
+          document.getElementById('b66Chapters').textContent = ch;
+          document.getElementById('b66Streak').textContent = st.streak || '0';
+        }
+        refreshHero();
+        var book = parseInt(q.get('book') || '1', 10);
+        var chapter = parseInt(q.get('chapter') || '1', 10);
+        if (window.B100LocalePick) {
+          document.title = B100LocalePick.bookChapterRef(book, chapter, B100LocalePick.getLocale());
+        }
+        var r = new BibleReaderCore();
+        r.mount(document.getElementById('bibleRoot'), { bookId: book, chapter: chapter });
+        r.onProgressChange = refreshHero;
+      }
+      bootReader();
+    })();
+  </script>
+</body>
+</html>

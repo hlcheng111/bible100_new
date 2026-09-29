@@ -129,14 +129,14 @@
         }
     </style>
 </head>
-<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a">
+<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a">
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <!-- Topbar -->
     <div class="topbar">
         <h1><span>📖</span>讲台事奉管理系统</h1>
         <div class="topbar-actions">
-            <button onclick="generateReport()">📊 生成报告</button>
-            <button onclick="exportData()">📤 导出数据</button>
-            <button onclick="printSchedule()">🖨️ 打印排班</button>
+            <button onclick="generateReport()" data-w5-report="pulpit-report">📊 生成报告</button>
+            <button onclick="exportData()" data-w5-report="pulpit-sermons-csv">📤 导出数据</button>
+            <button onclick="printSermonRoster()" data-w5-report="pulpit-print">🖨️ 打印排班</button>
             <button onclick="showHelp()">❓ 帮助</button>
             <button onclick="location.href='../../index.html'">🏠 返回</button>
         </div>
@@ -626,25 +626,36 @@
             showToast('ℹ️ 功能开发中...', 'info');
         }
         
+        function csvEsc(v) {
+            if (window.CmReportUtils) return CmReportUtils.csvEsc(v);
+            var s = v == null ? '' : String(v);
+            if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+            return s;
+        }
+        function downloadCsv(filename, lines) {
+            if (window.CmReportUtils) return CmReportUtils.downloadCsv(filename, lines);
+            var blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
         function exportData() {
-            const csv = '周次,日期,系列,主题,讲员,经文,状态\n' + 
-                sermons.map(s => `${s.week},${s.date},${s.series},${s.title},${s.speaker},${s.scripture},${getStatusText(s.status)}`).join('\n');
-            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = '讲台事奉计划_2025年.csv';
-            a.click();
-            showToast('✅ 数据导出成功！', 'success');
+            var lines = ['week,date,series,title,speaker,scripture,status'];
+            (sermons || []).forEach(function (s) {
+                lines.push([s.week, s.date, s.series, s.title, s.speaker, s.scripture, (typeof getStatusText === 'function' ? getStatusText(s.status) : s.status)].map(csvEsc).join(','));
+            });
+            downloadCsv('pulpit_sermons_' + new Date().toISOString().slice(0,10) + '.csv', lines);
+            if (typeof showToast === 'function') showToast('✅ 数据导出成功！', 'success');
         }
-        
-        function generateReport() {
-            showToast('📊 正在生成年度报告...', 'info');
+        function printSermonRoster() {
+            var headers = ['週次','日期','系列','題目','講員','經文','狀態'];
+            var rows = (sermons || []).map(function (s) {
+                return [s.week, s.date, s.series, s.title, s.speaker, s.scripture, (typeof getStatusText === 'function' ? getStatusText(s.status) : s.status)];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('講壇排程', headers, rows);
+            else window.print();
         }
-        
-        function printSchedule() {
-            window.print();
-        }
+        function generateReport() { exportData(); printSermonRoster(); }
+        function printSchedule() { printSermonRoster(); }
         
         function showHelp() {
             alert('📖 讲台事奉管理系统 - 使用帮助\n\n【讲员管理】\n• 点击讲员卡片查看详情\n• 使用搜索快速定位讲员\n• 按类型筛选讲员\n\n【讲道计划】\n• 查看全年52周计划\n• 按月份查看（每页4周）\n• 系列化主题深度教导\n\n【统计分析】\n• 顶部仪表板实时统计\n• 系列分布饼图\n• 讲员服事排名\n\n【数据管理】\n• 导出Excel备份\n• 打印排班表\n• 生成年度报告');
@@ -673,6 +684,8 @@
     </script>
 
 
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 <!-- b100-ae-worship-w1-shell -->
 <link rel="stylesheet" href="../../css/ae_worship_six_section.css" />
 <script src="../../js/church-master-database.js"></script>
@@ -701,5 +714,10 @@
 <script src="../../js/crm_context_bar.js"></script>
 <script src="../../js/ae_primary_nav.js"></script>
 <script src="../../js/ae_subpage_shell.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

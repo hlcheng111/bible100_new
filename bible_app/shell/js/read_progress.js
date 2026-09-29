@@ -81,6 +81,14 @@
     return 'theme:' + themeId + ':' + idx;
   }
 
+  function plan1yId(day) {
+    return '1y:' + day;
+  }
+
+  function plan3yId(day) {
+    return '3y:' + day;
+  }
+
   global.B100Progress = {
     load: load,
     markDone: markDone,
@@ -91,5 +99,7 @@
     dayId: dayId,
     goldenId: goldenId,
     themeUnitId: themeUnitId,
+    plan1yId: plan1yId,
+    plan3yId: plan3yId,
   };
 })(window);

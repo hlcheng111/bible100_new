@@ -7,10 +7,10 @@
 
   var DIM_ORDER = ["A", "L", "D", "Ag"];
   var DIM_LABELS = {
-    A: "A 願景 Aspiration",
-    L: "L 學習 Learning",
-    D: "D 執行 Delivery",
-    Ag: "Ag 敏捷 Agility"
+    A: "看方向",
+    L: "持續學習",
+    D: "把事情做成",
+    Ag: "變局中調整"
   };
   var STAGE_THRESH = 3.0;
 
@@ -29,6 +29,90 @@
     return Math.round(n * 10) / 10;
   }
 
+  function badgeForScore(v) {
+    v = Number(v) || 0;
+    if (global.AcsReportGold && AcsReportGold.renderStatusBadge) {
+      if (v >= STAGE_THRESH) return AcsReportGold.renderStatusBadge("ok", "穩定");
+      if (v >= 2.5) return AcsReportGold.renderStatusBadge("mid", "成長中");
+      return AcsReportGold.renderStatusBadge("low", "陪跑中");
+    }
+    return v >= STAGE_THRESH ? "穩定" : "陪跑中";
+  }
+
+  var GROWTH_COMPANION = {
+    A: {
+      plain: "看方向",
+      companion: "異象太大時，拆成 90 天小實驗；與牧者對齊再推動，不必一次推全部。"
+    },
+    L: {
+      plain: "持續學習",
+      companion: "安排 shadow、讀書會或微課程，不要獨自硬扛新事；先肯定已有服事。"
+    },
+    D: {
+      plain: "把事情做成",
+      companion: "減少重複行政，騰出反思；戰功值得肯定，也留空間更新方法。"
+    },
+    Ag: {
+      plain: "變局中調整",
+      companion: "計劃變更時先與一位同工對齊，小步調整；變革不必全有或全無。"
+    }
+  };
+
+  var QUAD_DIMS = [
+    { key: "A", pos: "tl", title: "看方向", color: "#7c3aed", hint: "異象太大—拆成 90 天小實驗，與牧者對齊" },
+    { key: "L", pos: "tr", title: "持續學習", color: "#0284c7", hint: "裝備探索—shadow 與讀書會，不必獨扛" },
+    { key: "Ag", pos: "bl", title: "變局中調整", color: "#059669", hint: "變革節奏—先與同工對齊，小步試" },
+    { key: "D", pos: "br", title: "把事情做成", color: "#d97706", hint: "可靠交付—減行政重複，騰出反思" }
+  ];
+
+  function renderAldaQuadGrid(derived) {
+    derived = derived || {};
+    var lc = derived.lifecycle || { A: 3, L: 3, D: 3, Ag: 3 };
+    var th = derived.lifecycle_threshold != null ? derived.lifecycle_threshold : STAGE_THRESH;
+    var weakest = null;
+    var minV = 99;
+    DIM_ORDER.forEach(function (k) {
+      var v = Number(lc[k]) || 0;
+      if (v < minV) {
+        minV = v;
+        weakest = k;
+      }
+    });
+    var cells = QUAD_DIMS.map(function (c) {
+      var val = Number(lc[c.key]) || 0;
+      var isWeak = weakest === c.key || val < th;
+      return (
+        '<div class="acs-quad-cell acs-quad-cell--' +
+        c.pos +
+        (isWeak ? " acs-quad-cell--active" : "") +
+        '" style="border-color:' +
+        c.color +
+        '">' +
+        '<div class="acs-quad-cell__head"><strong>' +
+        esc(c.title) +
+        "</strong> " +
+        badgeForScore(val) +
+        '<span class="acs-quad-cell__pct">' +
+        val.toFixed(1) +
+        "</span></div>" +
+        '<p class="acs-quad-cell__harm">陪伴参考線 ' +
+        th +
+        " · 本輪分數 " +
+        val.toFixed(1) +
+        "</p>" +
+        '<p class="acs-quad-cell__action"><strong>陪伴提示：</strong>' +
+        esc(c.hint) +
+        "</p></div>"
+      );
+    }).join("");
+    return (
+      '<div class="acs-quad-grid" aria-label="ALDA 四維生命週期四格">' +
+      '<p class="acs-quad-grid__hint">四格對照 · 虛線 = 陪伴参考 · 亮框 = 本季最宜陪跑（非考核）</p>' +
+      cells +
+      "</div>"
+    );
+  }
+
   function lifecycleRadarSvg(lc) {
     lc = lc || { A: 3, L: 3, D: 3, Ag: 3 };
     var cx = 200;
@@ -38,7 +122,7 @@
     var rings = [1, 2, 3, 4, 5];
     var svg = [
       '<svg class="alda-radar-svg" viewBox="0 0 400 420" role="img" aria-label="ALDA 四維生命週期雷達圖">',
-      '<text x="200" y="18" text-anchor="middle" font-size="11" font-weight="800" fill="#4338ca">ALDA 帶領力生命週期雷達 · 漏斗能量環</text>'
+      '<text x="200" y="18" text-anchor="middle" font-size="11" font-weight="800" fill="#4338ca">ALDA 四維生命週期成長輪廓</text>'
     ];
 
     rings.forEach(function (level) {
@@ -149,33 +233,29 @@
     return svg.join("");
   }
 
-  function deltaTableHtml(derived) {
+  function growthCompanionTable(derived) {
     var lc = derived.lifecycle || { A: 3, L: 3, D: 3, Ag: 3 };
-    var th = derived.lifecycle_threshold != null ? derived.lifecycle_threshold : STAGE_THRESH;
     var body = DIM_ORDER.map(function (key) {
       var v = Number(lc[key]) || 0;
-      var delta = round1(v - th);
-      var alert = v < th ? " alda-delta--alert" : "";
+      var gc = GROWTH_COMPANION[key] || { plain: key, companion: "與牧者談一個小步突破。" };
+      var tone = v < STAGE_THRESH ? " alda-delta--alert" : "";
       return (
         "<tr><td><strong>" +
-        esc(DIM_LABELS[key] || key) +
-        '</strong></td><td class="alda-num">' +
+        esc(gc.plain) +
+        '</strong><span class="alda-num' +
+        tone +
+        '"> · ' +
         v.toFixed(1) +
-        '</td><td class="alda-num">' +
-        th +
-        '</td><td class="alda-num' +
-        alert +
-        '">' +
-        (delta >= 0 ? "+" : "") +
-        delta +
+        "</span></td><td>" +
+        esc(gc.companion) +
         "</td></tr>"
       );
     }).join("");
-    return (
-      '<table class="acs-table alda-delta-table"><thead><tr><th>維度</th><th>得分</th><th>梯隊門檻</th><th>Δ</th></tr></thead><tbody>' +
-      body +
-      "</tbody></table>"
-    );
+      return (
+        '<table class="acs-table alda-growth-table"><thead><tr><th>面向</th><th>牧養陪伴建議</th></tr></thead><tbody>' +
+        body +
+        "</tbody></table>"
+      );
   }
 
   function renderLifecycleBlock(derived) {
@@ -185,28 +265,33 @@
     var note =
       derived.lifecycle_note ||
       (pos.profile_label || "生命週期輪廓") +
-        " — 門檻 " +
-        (derived.lifecycle_threshold != null ? derived.lifecycle_threshold : STAGE_THRESH) +
-        " 以下宜陪跑，不作淘汰。";
+        " — 分數偏低的那一面向，宜先陪跑，不作淘汰。";
+    var tagFn =
+      global.CoachingDeskContent && CoachingDeskContent.pastorPracticeTag
+        ? CoachingDeskContent.pastorPracticeTag.bind(CoachingDeskContent)
+        : function () {
+            return "";
+          };
 
     return (
-      '<div class="acs-report-block alda-lifecycle-block">' +
-      "<h3>📊 ALDA 四維生命週期雷達／漏斗能量環</h3>" +
-      '<p class="acs-matrix-lead">四軸：<strong>A 願景 · L 學習 · D 執行 · Ag 敏捷</strong>。虛線環 = 梯隊門檻 3.0；黃色漏斗環 = 試任→小組長→長執能量帶。<strong>帶領力是流動的，不是一次打分。</strong></p>' +
+      '<div class="acs-report-block alda-lifecycle-block" id="alda-zone-radar">' +
+      "<h3>帶領生命週期一覽</h3>" +
+      tagFn("private", "先看四格與下方表格，在安靜中為同工禱告，看見亮點與本季陪跑區。") +
+      '<p class="acs-matrix-lead">四個面向：<strong>看方向 · 持續學習 · 把事情做成 · 變局中調整</strong>。分數僅供<strong>陪伴參考</strong>，不是考核判決。</p>' +
       '<p class="acs-step-hint">階段輪廓：<strong>' +
       esc(pos.profile_label || "—") +
-      "</strong> · 主使徒「" +
+      "</strong> · 帶領風格：" +
       esc(derived.primary || "—") +
-      "」／副使徒「" +
+      "／" +
       esc(derived.secondary || "—") +
-      "」</p>" +
+      "</p>" +
+      renderAldaQuadGrid(derived) +
       '<div class="alda-radar-wrap">' +
       lifecycleRadarSvg(lc) +
       "</div>" +
-      "<h4>Δ 成熟度階梯（相對梯隊門檻 " +
-      (derived.lifecycle_threshold != null ? derived.lifecycle_threshold : STAGE_THRESH) +
-      "）</h4>" +
-      deltaTableHtml(derived) +
+      "<h4 class=\"acs-report-zone-title\">【牧養雷達】同工優勢與成長守護區（非考核）</h4>" +
+      tagFn("both", "表格右欄可直接當話題；談話時先肯定，再聊哪一軸想有人陪。") +
+      growthCompanionTable(derived) +
       '<div class="acs-affirm">' +
       esc(note) +
       "</div></div>"
@@ -215,6 +300,7 @@
 
   global.AldaLifecycleViz = {
     renderLifecycleBlock: renderLifecycleBlock,
+    renderAldaQuadGrid: renderAldaQuadGrid,
     lifecycleRadarSvg: lifecycleRadarSvg,
     DIM_ORDER: DIM_ORDER,
     DIM_LABELS: DIM_LABELS

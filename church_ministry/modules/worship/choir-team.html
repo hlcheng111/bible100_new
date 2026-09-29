@@ -31,6 +31,15 @@
             background: #eef2ff;
         }
         .top-nav a:hover { background: #e0e7ff; }
+        .top-nav button.w5-btn {
+            font-size: 11px;
+            color: #065f46;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid #6ee7b7;
+            background: #ecfdf5;
+            cursor: pointer;
+        }
         
         .container { max-width: 1100px; margin: 0 auto; }
         .header { background: rgba(255,255,255,0.95); padding: 16px 20px; border-radius: 12px; backdrop-filter: blur(10px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); margin-bottom: 14px; }
@@ -111,13 +120,15 @@
         .member-id-badge { font-size: 9px; color: #059669; background: #ecfdf5; padding: 1px 5px; border-radius: 4px; margin-left: 4px; }
     </style>
 </head>
-<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a" data-b100-ae-zone="a" data-ae-worship-shell="skip">
+<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a" data-b100-ae-zone="a" data-ae-worship-shell="skip">
     <div class="container">
         <nav class="top-nav" aria-label="页面导航">
             <span class="lbl">本页导航</span>
             <a href="../../_landing/worship.html">🎵 敬拜中心导览</a>
             <a href="worship-integrated.html">敬拜工作台</a>
             <a href="../../dashboard.html">⛪ 事工中心</a>
+            <button type="button" class="w5-btn" onclick="exportChoirMembersCsv()" data-w5-report="choir-members-csv">⬇ 成員 CSV</button>
+            <button type="button" class="w5-btn" onclick="printChoirRoster()" data-w5-report="choir-print">🖨 列印</button>
         </nav>
 
         <nav class="anchor-nav" aria-label="诗班六项">
@@ -605,6 +616,33 @@
     </script>
 
 
+<script>
+
+        function exportChoirMembersCsv() {
+            var list = [];
+            try { list = JSON.parse(localStorage.getItem('choir_members') || '[]'); } catch (e) {}
+            if (!list.length && typeof members !== 'undefined') list = members;
+            var lines = ['name,part,phone,memberId'];
+            (list || []).forEach(function (m) {
+                var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+                lines.push([m.name, m.part || m.voice, m.phone, m.memberId || ''].map(esc).join(','));
+            });
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('choir_members.csv', lines);
+        }
+        function printChoirRoster() {
+            var list = [];
+            try { list = JSON.parse(localStorage.getItem('choir_members') || '[]'); } catch (e) {}
+            if (!list.length && typeof members !== 'undefined') list = members;
+            var rows = (list || []).map(function (m) {
+                return [m.name, m.part || m.voice, m.phone || '', m.memberId || ''];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('詩班名冊', ['姓名','聲部','電話','memberId'], rows);
+            else window.print();
+        }
+
+</script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 <!-- b100-ae-worship-w1-shell -->
 <!-- b100-ae-worship-w2 -->
 <script src="../../js/church-master-database.js"></script>
@@ -618,6 +656,8 @@
 <script src="../../js/ae_worship_hub_panel.js"></script>
 
 
+<!-- b100-hub-embed -->
+<script src="../../../js/b100_hub_embed.js?v=20260805f"></script>
 <!-- b100-ae-subpage-shell -->
 <link rel="stylesheet" href="../../css/ae_primary_nav_strip.css" />
 <link rel="stylesheet" href="../../css/ae_zone_roadmap.css" />
@@ -628,5 +668,10 @@
 <script src="../../js/crm_context_bar.js"></script>
 <script src="../../js/ae_primary_nav.js"></script>
 <script src="../../js/ae_subpage_shell.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

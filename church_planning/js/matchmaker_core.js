@@ -8,13 +8,49 @@
   var TOOL_IDS = ["shape", "johari", "disc", "mbti", "competency", "alda"];
 
   var MATCH_AXES = [
-    { key: "shape_peak", label: "SHAPE 恩賜峰值" },
-    { key: "ksa_capability", label: "KSA 能力 (K+S)/2" },
-    { key: "ksa_attitude", label: "KSA 心志 A" },
-    { key: "alda_vision", label: "ALDA 願景 A" },
-    { key: "alda_delivery", label: "ALDA 執行 D" },
-    { key: "disc_precision", label: "DISC 精準 C" }
+    { key: "shape_peak", label: "SHAPE 恩賜峰值", plain: "恩賜方向" },
+    { key: "ksa_capability", label: "KSA 能力 (K+S)/2", plain: "事奉能力" },
+    { key: "ksa_attitude", label: "KSA 心志 A", plain: "服事心志" },
+    { key: "alda_vision", label: "ALDA 願景 A", plain: "看見方向" },
+    { key: "alda_delivery", label: "ALDA 執行 D", plain: "把事情做成" },
+    { key: "disc_precision", label: "DISC 精準 C", plain: "流程精準" }
   ];
+
+  var PLAIN_AXIS_LABELS = {
+    shape_peak: "恩賜方向",
+    ksa_capability: "事奉能力",
+    ksa_attitude: "服事心志",
+    alda_vision: "看見方向",
+    alda_delivery: "把事情做成",
+    disc_precision: "流程精準"
+  };
+
+  var GAP_PASTORAL_COPY = {
+    shape_peak: {
+      gap: "恩賜與職位方向不完全對口——先談呼召與 90 天試任，不作否定。",
+      overflow: "恩賜峰值突出——可公開肯定，仍須面談確認節奏與界線。"
+    },
+    ksa_capability: {
+      gap: "技能尚在成長——安排 shadow 或師徒制，禁止立刻獨立高風險崗。",
+      overflow: "能力充裕——談授權邊界，避免單點英雄主義。"
+    },
+    ksa_attitude: {
+      gap: "心志需要陪伴確認——私下談服事動機與節奏，不作考核。",
+      overflow: "心志突出——肯定熱情，配技能型導師防燒盡。"
+    },
+    alda_vision: {
+      gap: "方向感可再對齊——與牧者拆 90 天小實驗，不必一次推全部。",
+      overflow: "方向感強——配執行夥伴落地，談授權而非加專案。"
+    },
+    alda_delivery: {
+      gap: "交付節奏可陪跑——減行政重複，安排 SOP shadow。",
+      overflow: "可靠交付——肯定戰功，也留學習與安息空間。"
+    },
+    disc_precision: {
+      gap: "流程精準度非首要——若為關懷／開荒崗，可談崗位微調。",
+      overflow: "流程精準——適合音控／行政；內向 I 宜幕後深度服事。"
+    }
+  };
 
   var ROLE_BLUEPRINTS = {
     pioneer: {
@@ -228,7 +264,7 @@
       }
       return false;
     });
-    if (opts.is_demo) name = name || "示範同工（跨六戰聚合）";
+    if (opts.is_demo) name = name || "示範同工（教學用）";
     return {
       runs: loaded.runs,
       coverage: loaded.coverage,
@@ -268,6 +304,7 @@
       axes.push({
         key: ax.key,
         label: ax.label,
+        plain_label: ax.plain || PLAIN_AXIS_LABELS[ax.key] || ax.label,
         required: required,
         actual: actual,
         delta: delta,
@@ -286,6 +323,34 @@
     };
   }
 
+  function buildCoaching(fit, bundle) {
+    fit = fit || {};
+    bundle = bundle || {};
+    var axes = fit.axes || [];
+    var gaps = axes.filter(function (a) {
+      return a.status === "gap";
+    });
+    var overflows = axes.filter(function (a) {
+      return a.status === "overflow";
+    });
+    var primary = gaps[0] || overflows[0];
+    var pastoral = "這份参考供您私下分辨；正式安排服事仍須您禱告、面談、拍板。";
+    if (primary && GAP_PASTORAL_COPY[primary.key]) {
+      pastoral =
+        primary.status === "overflow"
+          ? GAP_PASTORAL_COPY[primary.key].overflow
+          : GAP_PASTORAL_COPY[primary.key].gap;
+    } else if (fit.overall_pct >= 85) {
+      pastoral = "整體較為合拍——仍請面談、禱告後再談試任；電腦不會自動排班。";
+    }
+    return {
+      growth_accompaniment: pastoral,
+      micro_step:
+        "本週找這位同工約 20 分鐘：談是否願意試跑 6–12 週、需要誰陪跑；報告請勿公開張貼。",
+      hitl_note: "僅供牧者私下分辨；不作任免或自動派工。"
+    };
+  }
+
   function buildMatchContract(bundle, fit) {
     bundle = bundle || {};
     fit = fit || {};
@@ -300,7 +365,7 @@
       coverage: bundle.coverage || {},
       axes: fit.axes,
       timestamp: Date.now(),
-      hitl_note: "媒合建議僅供牧者分辨；正式派任須人工確認。"
+      hitl_note: "媒合建議僅供牧者分辨；正式派任須人工確認，不作公開考核或自動派工。"
     };
   }
 
@@ -330,12 +395,15 @@
   global.MatchmakerCore = {
     TOOL_IDS: TOOL_IDS,
     MATCH_AXES: MATCH_AXES,
+    PLAIN_AXIS_LABELS: PLAIN_AXIS_LABELS,
+    GAP_PASTORAL_COPY: GAP_PASTORAL_COPY,
     ROLE_BLUEPRINTS: ROLE_BLUEPRINTS,
     loadRuns: loadRuns,
     buildPersonVector: buildPersonVector,
     buildTalentBundle: buildTalentBundle,
     buildDemoTalentBundle: buildDemoTalentBundle,
     analyzeFit: analyzeFit,
+    buildCoaching: buildCoaching,
     buildMatchContract: buildMatchContract,
     searchRoles: searchRoles,
     resolveRoleId: resolveRoleId

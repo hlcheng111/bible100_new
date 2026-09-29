@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圣工与活动通告 · Events | Church Ministry</title>
+    <link rel="stylesheet" href="../../css/pastoral_workspace.css">
+    <script src="../../../js/page_capability_badge.js" data-status="live"></script>
+    <script src="../../../js/cloud_config.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
+</head>
+<body data-b100-module="church_ministry" data-b100-ae-chrome="minimal" data-b100-ae-zone="b" data-b100-pattern="P-AE-PRIMARY" data-b100-ae-prefix="../..">
+    <div class="sg-wrap pev-wrap">
+        <header class="sg-header pev-header">
+            <nav class="sg-nav">
+                <a href="index.html">团契总览</a>
+                <a href="small-groups-integrated.html?crm_from=b_pastoral">小组工作桌</a>
+                <a href="pastoral-org-roster.html?crm_from=b_pastoral">组织名册</a>
+                <a href="../support/visitation_index.html?crm_from=b_pastoral">探访事工</a>
+            </nav>
+            <h1>📣 圣工与活动通告</h1>
+            <p class="sg-tagline">小组传递率 · 小组 PK 报名 · 服侍冲突校验 · 复盘物资知识库</p>
+            <div class="sg-toolbar">
+                <button type="button" class="sg-btn outline" onclick="exportPastoralEventsCsv()" data-w5-report="pastoral-events-csv">⬇ CSV</button>
+                <button type="button" class="sg-btn outline" onclick="printPastoralEvents()" data-w5-report="pastoral-events-print">🖨 列印</button>
+                <button type="button" class="sg-btn outline" id="pev-seed-btn">载入示范数据</button>
+            </div>
+        </header>
+        <div class="sg-tabs pev-tabs">
+            <button type="button" class="pev-tab sg-tab active" data-tab="announce">Tab1 · 通告与小组传递率</button>
+            <button type="button" class="pev-tab sg-tab" data-tab="register">Tab2 · 小组 PK 报名</button>
+            <button type="button" class="pev-tab sg-tab" data-tab="rota">Tab3 · 服侍冲突校验</button>
+            <button type="button" class="pev-tab sg-tab" data-tab="archive">Tab4 · 复盘物资库</button>
+        </div>
+        <main class="sg-main">
+            <div id="pev-panel-announce" class="sg-panel active"></div>
+            <div id="pev-panel-register" class="sg-panel"></div>
+            <div id="pev-panel-rota" class="sg-panel"></div>
+            <div id="pev-panel-archive" class="sg-panel"></div>
+        </main>
+    </div>
+    <script src="../../js/pastoral_data_hub.js"></script>
+    <script src="../../js/pastoral_cross_module_bridge.js"></script>
+    <script src="../../js/pastoral_events_ui.js"></script>
+    <link rel="stylesheet" href="../../css/ae_pastoral_story_head.css" />
+    <script src="../../../js/shell_nav.js"></script>
+    <script src="../../js/ae_pastoral_story_nav.js"></script>
+    <script src="../../js/ae_subpage_shell.js"></script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+<script>
+(function () {
+  function exportPastoralEventsCsv() {
+    var H = window.PastoralDataHub, U = window.CmReportUtils;
+    if (!H || !U) return;
+    var esc = U.csvEsc;
+    var b = H.getEventsBoard();
+    var lines = [['類型', '標題', '日期', '狀態/備註'].map(esc).join(',')];
+    (b.announcements || []).forEach(function (a) {
+      var st = H.getAnnouncementRelayStats ? H.getAnnouncementRelayStats(a.id) : null;
+      lines.push(['通告', a.title || '', a.date || '', st ? ('傳遞率' + st.relayRate + '%') : ''].map(esc).join(','));
+    });
+    (b.registrations || []).forEach(function (r) {
+      lines.push(['報名', r.title || r.eventTitle || '', r.date || '', r.groupName || ''].map(esc).join(','));
+    });
+    (b.rotas || []).forEach(function (r) {
+      lines.push(['排班', r.title || r.role || '', r.date || '', (r.memberName || r.memberId || '')].map(esc).join(','));
+    });
+    U.downloadCsv('pastoral_events_' + (H.todayISO ? H.todayISO() : '') + '.csv', lines);
+  }
+  function printPastoralEvents() {
+    var H = window.PastoralDataHub, U = window.CmReportUtils;
+    if (!H || !U) return;
+    var b = H.getEventsBoard();
+    var rows = (b.announcements || []).map(function (a) {
+      var st = H.getAnnouncementRelayStats ? H.getAnnouncementRelayStats(a.id) : null;
+      return [a.title || '', a.date || '', st ? st.relayRate + '%' : ''];
+    });
+    U.printTable('聖工與活動通告', ['標題', '日期', '小組傳遞率'], rows);
+  }
+  window.exportPastoralEventsCsv = exportPastoralEventsCsv;
+  window.printPastoralEvents = printPastoralEvents;
+})();
+</script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
+</body>
+</html>

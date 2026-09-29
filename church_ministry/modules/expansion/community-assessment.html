@@ -23,6 +23,11 @@
 </head>
 <body>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container">
+        <div style="padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#ecfdf5;border-radius:8px;margin-bottom:12px;border:1px solid #a7f3d0;">
+            <strong>D-02 報告</strong>
+            <button type="button" onclick="exportCommunityAssessmentCsv()" data-w5-report="community-assessment-csv">⬇ CSV</button>
+            <button type="button" onclick="printCommunityAssessment()" data-w5-report="community-assessment-print">🖨 列印</button>
+        </div>
         <div class="header">
             <h1>📡 社区需求调研 - 雷达图分析</h1>
             <p style="color:#7f8c8d;margin-top:10px;">🎯 多维度需求分析 · 优先级评估 · 数据可视化</p>
@@ -116,6 +121,28 @@
                 </div>
             `).join('');
         }
+
+        function exportCommunityAssessmentCsv() {
+            var U = window.CmReportUtils; if (!U) return;
+            var esc = U.csvEsc;
+            var lines = [['區域', '主題', '發現', '優先級', '分數'].map(esc).join(',')];
+            surveys.forEach(function (s) {
+                lines.push([s.area, s.topic, s.findings, s.priority, s.score].map(esc).join(','));
+            });
+            U.downloadCsv('community_assessment_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+        }
+        function printCommunityAssessment() {
+            var U = window.CmReportUtils; if (!U) return;
+            var rows = surveys.map(function (s) { return [s.area, s.topic, s.priority, String(s.score)]; });
+            U.printTable('社區需求調研', ['區域', '主題', '優先級', '分數'], rows);
+        }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

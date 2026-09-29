@@ -9,6 +9,22 @@
   var TOOL_ID = "shape";
   var TOOL_LABEL = "SHAPE 恩賜整合量表";
 
+  var GIFT_LABELS_ZH = {
+    teaching: "教導",
+    shepherding: "牧養",
+    encouragement: "勸慰",
+    administration: "治理",
+    evangelism: "佈道",
+    serving: "服事",
+    hospitality: "款待",
+    worship: "敬拜",
+    discernment: "辨別"
+  };
+
+  function giftLabelZh(key) {
+    return GIFT_LABELS_ZH[key] || key || "—";
+  }
+
   var SHAPE_AFFIRMATION = {
     S: "屬靈恩賜是神所賜的工具箱——教導、牧養、治理、憐憫等，每一樣都能在 Body 中找到位置。",
     H: "心志熱情是服事的燃料——您最關心哪群人，往往就是神預備您服事的方向。",
@@ -16,6 +32,30 @@
     P: "個性節奏不重複在此問卷填寫；請用 DISC／MBTI 工具，本 pack 會自動讀取修飾出路。",
     E: "生命經歷（含傷痕與恩典）讓您最能安慰同路的人——這是事奉的深度，不是包袱。"
   };
+
+  function buildMicroStep(top_heart, top_gift) {
+    var heartSteps = {
+      新人: "本週主日後主動問一位新朋友「今天怎麼來教會的？」並為對方代禱一句。",
+      兒少: "本週與主日學或青少年同工聊 10 分鐘，了解一個實際需要。",
+      長者: "本週打電話或探訪一位長者／病弱肢體，只問候、不帶事工壓力。",
+      外展: "本週為一位未信同事或鄰居做一件具體關心（問候、陪餐、代禱）。"
+    };
+    if (heartSteps[top_heart]) return heartSteps[top_heart];
+    return (
+      "本週與牧者或小組長約 15 分鐘，談「" +
+      giftLabelZh(top_gift) +
+      "」恩賜方向是否適合一張出路卡試任。"
+    );
+  }
+
+  function buildCoaching(top_heart, top_gift) {
+    return {
+      shape_affirmation: SHAPE_AFFIRMATION,
+      next_tools: "建議補填 Johari（團隊互知）與 DISC/MBTI（溝通節奏），出路卡會更完整。",
+      micro_step: buildMicroStep(top_heart, top_gift),
+      redflag: "勿用單一恩賜分數綁架呼召；出路卡是探索可能性，須經牧者面談與 HITL 確認。"
+    };
+  }
 
   var QUESTIONS = [
     { id: "s01", axis: "S", gift: "teaching", label: "教導主日學或查經時，我能清楚傳遞真理並感到喜樂。", projection: { P: 0.05, S: 0.2, G: 0.05, C: 0.55, R: 0.1, F: 0.05 } },
@@ -168,10 +208,7 @@
         return { q: q.id, value: map[q.id] };
       }),
       risk_flags: [],
-      coaching: {
-        shape_affirmation: SHAPE_AFFIRMATION,
-        next_tools: "建議補填 Johari（團隊互知）與 DISC/MBTI（溝通節奏），出路卡會更完整。"
-      },
+      coaching: buildCoaching(top_heart, engineContract.top_gift),
       source_note: "shape_pack v2 · S/H/A/E " + QUESTIONS.length + " 題 · shape_engine_contract"
     };
     if (global.MinistryPathBridge && MinistryPathBridge.attachPathCards) {
@@ -196,6 +233,8 @@
     TOOL_ID: TOOL_ID,
     TOOL_LABEL: TOOL_LABEL,
     QUESTIONS: QUESTIONS,
+    GIFT_LABELS_ZH: GIFT_LABELS_ZH,
+    giftLabelZh: giftLabelZh,
     SHAPE_AFFIRMATION: SHAPE_AFFIRMATION,
     validate: validate,
     buildRun: buildRun,

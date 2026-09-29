@@ -93,11 +93,36 @@
     return true;
   }
 
+  function injectJourneyReportCta(toolKey) {
+    if (!toolKey) return;
+    var panel = document.getElementById("strategic-tab-report");
+    if (!panel || panel.querySelector(".planning-journey-cta")) return;
+    var cfg = global.PlanningPhaseConfig;
+    var cta = cfg && cfg.postCompleteCta ? cfg.postCompleteCta(toolKey) : { warRoom: true };
+    var html =
+      '<div class="planning-journey-cta">' +
+      "<p><strong>✅ 填完了，下一步？</strong> 這是對話的起點，不是考核排名。請與牧者禱告、面談後再作決定。</p>" +
+      '<div class="planning-journey-cta__actions">' +
+      '<a href="#" class="pp-btn pp-btn--primary" onclick="return typeof planningOpenContent===\'function\'&&planningOpenContent(event,\'cta-os-war-room.html\');">' +
+      (cta.label || "→ 回健康雷達戰情室看六維結果") +
+      "</a> " +
+      '<a href="#" class="pp-btn" onclick="return typeof planningOpenContent===\'function\'&&planningOpenContent(event,\'assessment-os-hub.html\');">📋 健康診斷中心</a>' +
+      "</div></div>";
+    var wrap = document.createElement("div");
+    wrap.innerHTML = html;
+    panel.appendChild(wrap.firstChild);
+  }
+
   function initPage(toolKey) {
     showDefaultTab();
     bindTabButtons();
     bindDemoButtons();
     if (toolKey) verifyDeps(toolKey);
+    if (global.PlanningJourneyCta && typeof PlanningJourneyCta.injectReportCta === "function" && toolKey) {
+      PlanningJourneyCta.injectReportCta(toolKey);
+    } else if (toolKey) {
+      injectJourneyReportCta(toolKey);
+    }
   }
 
   global.B100AcsBoot = {

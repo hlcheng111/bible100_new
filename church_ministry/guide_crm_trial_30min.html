@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRM 30 分鐘試玩地圖</title>
+  <meta http-equiv="refresh" content="0;url=_landing/gateway.html">
+  <title>轉到教會選路（舊 CRM 試玩已退役）</title>
   <link rel="stylesheet" href="css/crm_journey_brand.css">
   <script src="../config/build_version.js"></script>
   <style>
@@ -24,6 +25,13 @@
   </style>
 </head>
 <body>
+
+<div id="w5eDocBar" style="padding:8px 14px;background:#fefce8;border-bottom:1px solid #fde68a;font-size:12px;">
+  <strong>長執報告</strong>
+  <button type="button" onclick="exportW5eDocMetaCsv()" data-w5-report="crm-trial-csv">⬇ 頁面摘要 CSV</button>
+  <button type="button" onclick="printW5eDocMeta()" data-w5-report="crm-trial-print">🖨 列印摘要</button>
+</div>
+
   <div class="wrap">
     <a class="back" href="guide_crm_journey_hub.html?tab=journey">⬅ 返回旅程中樞</a>
     <h1>⏱️ CRM 30 分鐘試玩地圖</h1>
@@ -61,5 +69,39 @@
       </ol>
     </section>
   </div>
+<!-- b100-w5-report-utils -->
+<script src="js/cm_report_utils.js"></script>
+
+<script>
+(function(){
+  function metaRows(){
+    var title = document.title || '';
+    var h1 = (document.querySelector('h1') || {}).textContent || '';
+    return [
+      ['title', title],
+      ['h1', h1],
+      ['path', location.pathname],
+      ['exportedAt', new Date().toISOString()]
+    ];
+  }
+  window.exportW5eDocMetaCsv = function(){
+    var lines = ['field,value'];
+    metaRows().forEach(function(r){
+      var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function(v){ return v; };
+      lines.push(esc(r[0]) + ',' + esc(r[1]));
+    });
+    if (window.CmReportUtils) CmReportUtils.downloadCsv('page_meta_crm-trial.csv', lines);
+  };
+  window.printW5eDocMeta = function(){
+    if (window.CmReportUtils) CmReportUtils.printTable(document.title || '頁面摘要', ['欄位','內容'], metaRows());
+    else window.print();
+  };
+})();
+</script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="css/cm_desk.css" />
+<script src="js/cm_desk_registry.js"></script>
+<script src="js/cm_desk_kit.js"></script>
 </body>
 </html>

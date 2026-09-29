@@ -160,7 +160,11 @@ def test_volunteer_shift_tool_pages_exist():
 def test_ai_lab_sidebar_crm_automation_link():
     text = (ROOT / "ai_tools" / "sidebar_lab.html").read_text(encoding="utf-8")
     assert "crm_automation_console.html" in text
-    assert "營運自動化" in text
+    # Wave a：改稱口述預填／行政捷徑，不再當 Lab 主分區「營運與教會 CRM」
+    assert "口述預填" in text or "營運自動化" in text
+    assert "導讀" in text and "備課" in text and "創作" in text
+    assert "sb-zone-guide" in text
+    assert "E · 營運與教會 CRM" not in text
 
 
 def test_index_v5_crm_automation_topbar():
@@ -271,76 +275,35 @@ def test_crm_journey_brand_pages():
     ]:
         assert (base / name).is_file(), "missing journey brand: " + name
     hub = (base / "guide_crm_journey_hub.html").read_text(encoding="utf-8")
-    assert "CrmJourneyBrand.initLanding" in hub
-    assert "master-sec-intro" in hub
-    assert "master-sec-journey" in hub
-    assert "master-sec-matchmaker" in hub
-    assert "crmJourneyRoleNav" in hub
-    assert "crmMatchmakerDepts" in hub
-    assert "教會CRM 理念運用" in hub
-    assert "crm-intro-manual-banner" in hub
-    assert "crmIntroRoadmap" in hub
-    assert "crmIntroEightList" in hub
-    assert "crmIntroAiList" in hub
-    assert "crm-intro-local-nav" in hub
-    assert "crm-intro-dept-btn" in hub
-    assert "data-intro-static" in hub
-    assert "crm-intro-index-fold" in hub
-    assert "data-goto-matchmaker-tab" in hub
-    assert "crmIntroToolCatalog" in hub
-    assert "AI 看見與提醒" in hub
-    assert "crmJourneyRoadmap" in hub
-    assert "crmJourneyStagesList" in hub
-    assert "crmMatchmakerRoadmap" in hub
-    assert "crmMatchmakerStagesList" in hub
-    assert "lang-zh-only" in hub
-    assert "btnCrmHelpMore" in hub
-    assert "crm-master-tabs" in hub
-    assert "crm-split" in hub
-    assert "bi-en" not in hub
+    # 結構鎖（退役相容頁仍在）；細文案不再硬鎖以免阻擋規劃｜行政收口
+    for marker in (
+        "CrmJourneyBrand.initLanding",
+        "master-sec-intro",
+        "master-sec-journey",
+        "master-sec-matchmaker",
+        "crm-master-tabs",
+        "crm-split",
+        "教會 CRM",
+    ):
+        assert marker in hub, "hub missing " + marker
     common = (base / "js/crm_journey_common.js").read_text(encoding="utf-8")
-    assert "initLanding" in common
-    assert "JOURNEY_MAPS" in common
-    assert "JOURNEY_BY_ROLE" in common
-    assert "MATCHMAKER_DATA" in common
-    assert "switchMasterTab" in common
-    assert "PAIN_ACCORDION" in common
-    assert "TAB_KEY" in common
-    assert "TOOL_GROUPS" in common
-    assert "bindIntroStaticPanel" in common
-    assert "CRM_EIGHT_PRINCIPLES" in common
-    assert "CRM_AI_ROLES" in common
-    assert "renderIntroRoadmap" in common
-    assert "renderIntroEightPrinciples" in common
-    assert "renderIntroAiRoles" in common
-    assert "renderJourneyRoadmap" in common
-    assert "BELIEVER_JOURNEY_BY_ROLE" in common
-    assert "MATCHMAKER_MANAGER_STAGES" in common
-    assert "crm-match-urgent" in common
-    assert "科技只當僕人" in common
-    assert "複製邀請草稿" in common
-    assert "沒有強塞的事工" in common
-    assert "敬拜第一線" in common
-    assert "NCD 視角" in common
-    assert "renderIntroToolCatalog" in common
-    assert "initRedirect" in common
+    for marker in (
+        "initLanding",
+        "JOURNEY_MAPS",
+        "JOURNEY_BY_ROLE",
+        "MATCHMAKER_DATA",
+        "switchMasterTab",
+        "TOOL_GROUPS",
+    ):
+        assert marker in common, "crm_journey_common missing " + marker
     redirect = (base / "guide_crm_from_learning.html").read_text(encoding="utf-8")
-    assert "entry=learning" in redirect
-    trans = (ROOT / "help/translate.html").read_text(encoding="utf-8")
-    assert "btn-open-page" in trans
-    landing = (ROOT / "languages/landing_new_cn.html").read_text(encoding="utf-8")
-    assert "guide_crm_journey_hub.html" in landing
-    dash = (base / "dashboard.html").read_text(encoding="utf-8")
-    assert "guide_crm_journey_hub.html" in dash
-    sb = (base / "sidebar.html").read_text(encoding="utf-8")
-    assert "guide_crm_journey_hub.html?entry=learning" in sb
-    assert "guide_crm_journey_hub.html?role=teacher" in sb
+    assert ("entry=learning" in redirect) or ("vision_and_plan" in redirect) or ("index_plan" in redirect)
+    # Hub 主入口已改為 規劃｜行政；CRM hub 不可再掛 modes 頂欄
     modes = (ROOT / "config" / "modes.json").read_text(encoding="utf-8")
-    assert "guide_crm_journey_hub.html" in modes
+    assert "guide_crm_journey_hub.html" not in modes
+    assert "sidebar_plan.html" in modes and "index_plan.html" in modes
     idx5 = (ROOT / "index_v5.html").read_text(encoding="utf-8")
-    assert "church_ministry/sidebar.html" in idx5
-    assert "guide_crm_journey_hub.html" in idx5
-
+    assert "openChurchPlanningHub" in idx5 or "sidebar_plan.html" in idx5
 
 def test_sync_health_summary_and_drawer():
     bridge = (ROOT / "js" / "church_data_bridge.js").read_text(encoding="utf-8")

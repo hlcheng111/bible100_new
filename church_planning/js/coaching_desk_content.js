@@ -94,6 +94,50 @@
       .replace(/"/g, "&quot;");
   }
 
+  /** mode: private | talk | both */
+  function pastorPracticeTag(mode, text) {
+    var cls =
+      mode === "talk"
+        ? "acs-practice-tag--talk"
+        : mode === "both"
+          ? "acs-practice-tag--both"
+          : "acs-practice-tag--private";
+    var modeLabel =
+      mode === "talk"
+        ? "可約談陪跑"
+        : mode === "both"
+          ? "先禱告默想，再約談"
+          : "留給您私下禱告參謀";
+    return (
+      '<p class="acs-practice-tag ' +
+      cls +
+      '"><span class="acs-practice-tag__badge">【牧者實戰指南】</span> ' +
+      esc(text) +
+      ' <em class="acs-practice-tag__mode">（' +
+      modeLabel +
+      "）</em></p>"
+    );
+  }
+
+  function aldaTalkQuotes(primary, secondary) {
+    var p = primary || "—";
+    var s = secondary || "—";
+    return (
+      '<div class="acs-pastoral-quote-block">' +
+      "<p><strong>開場可先這樣說：</strong></p>" +
+      "<ul>" +
+      "<li>「" +
+      esc(p) +
+      "型帶領的恩賜，這段時間神好像特別在使用您……」</li>" +
+      "<li>「我們一起聊聊，哪一塊您覺得最活潑、哪一塊最想有人陪？」</li>" +
+      "<li>「這不是考核，是想與您同行，看看下一步怎麼服事得更健康。」</li>" +
+      (s !== "—"
+        ? "<li>「您也有 " + esc(s) + " 型的特質，可以成為團隊很好的互補。」</li>"
+        : "") +
+      "</ul></div>"
+    );
+  }
+
   function quickStartHtml(toolId) {
     return (
       '<div class="acs-quickstart">' +
@@ -112,7 +156,14 @@
 
   function jobMatrixHtml(toolId, run) {
     var rows = "";
-    var title = "🏛️ 神國職位推薦矩陣";
+    var title =
+      toolId === "alda"
+        ? "【服事定位指引】恩賜與崗位配搭參考"
+        : "🏛️ 神國職位推薦矩陣";
+    var matrixLead =
+      toolId === "alda"
+        ? "對照<strong>使徒帶領風格</strong>與常見服事方向；須與恩賜問卷及您的禱告分辨一併使用，<strong>不是任免命令</strong>。"
+        : "以下為<strong>參考方向</strong>，須與 SHAPE 主軸及牧者分辨一併使用；不是任免命令。";
     if (toolId === "disc") {
       var p = (run && run.derived && run.derived.primary) || "";
       rows = DISC_JOB_MATRIX.map(function (r) {
@@ -170,12 +221,28 @@
         .join("");
     }
     return (
-      '<div class="acs-report-block acs-job-matrix">' +
+      '<div class="acs-report-block acs-job-matrix' +
+      (toolId === "alda" ? " alda-service-guide" : "") +
+      '"' +
+      (toolId === "alda" ? ' id="alda-zone-service-guide"' : "") +
+      ">" +
       "<h3>" +
       title +
       "</h3>" +
-      '<p class="acs-matrix-lead">以下為<strong>參考方向</strong>，須與 SHAPE 主軸及牧者分辨一併使用；不是任免命令。</p>' +
-      '<table class="acs-table"><thead><tr><th>輪廓</th><th>常見適配事奉方向</th></tr></thead><tbody>' +
+      (toolId === "alda"
+        ? pastorPracticeTag(
+            "both",
+            "先看高亮那一列，心裡有數「他帶領像哪一型」；合適時再與同工談服事方向。"
+          )
+        : "") +
+      '<p class="acs-matrix-lead">' +
+      matrixLead +
+      "</p>" +
+      '<table class="acs-table"><thead><tr><th>' +
+      (toolId === "alda" ? "帶領風格" : "輪廓") +
+      "</th><th>" +
+      (toolId === "alda" ? "常見服事方向（參考）" : "常見適配事奉方向") +
+      "</th></tr></thead><tbody>" +
       rows +
       "</tbody></table></div>"
     );
@@ -427,7 +494,7 @@
       return aldaBarsHtml(d);
     }
     if (toolId === "competency") {
-      if (global.KsaMatrixViz) return KsaMatrixViz.renderMatrixBlock(d);
+      if (global.KsaMatrixViz) return KsaMatrixViz.renderMatrixBlock(run);
       return competencyBarsHtml(d) + competencyKsaBarsHtml(d);
     }
     if (toolId === "ncd") return ncdDimBarsHtml(d);
@@ -554,14 +621,14 @@
   INTRO.aldaBody = function () {
     return (
       '<div class="acs-hero">' +
-      '<span class="acs-role-badge">長執／帶領基準 · 五工具族第 5 塊</span>' +
+      '<span class="acs-role-badge">長執／核心同工 · 答「怎麼帶」</span>' +
       '<h2 class="serif-title">ALDA — 十二使徒領導力動力學</h2>' +
-      "<p>專給<strong>執事、小組長、長執會核心同工</strong>：在危機、決策、財務、團隊張力情境中，看見您的帶領動力輪廓。</p>" +
+      "<p>專給<strong>執事、小組長、長執會核心同工</strong>：在危機、決策、團隊張力情境中，看見帶領動力輪廓與生命週期四軸。</p>" +
       '<p class="acs-relation-plain">' +
       esc(RELATION_PLAIN) +
       "</p>" +
-      '<p class="acs-pastoral-note"><strong>迫選說明：</strong>每題選一個「最像」與一個「最不像」— 不是 Likert 打分。真實度／一致度偏低時，系統會提示宜私下面談後再解讀。</p>' +
-      '<p class="acs-pastoral-note"><strong>免責：</strong>不作人事考核或任免唯一依據；部署仍須牧者 HITL 確認。</p>' +
+      '<p class="acs-pastoral-note"><strong>迫選說明：</strong>每題選「最像」與「最不像」— 不是打分。真實度／一致度偏低時，宜私下面談後再解讀。</p>' +
+      '<p class="acs-pastoral-note"><strong>免責：</strong>不作人事考核或任免唯一依據；正式派任須牧者面談確認。</p>' +
       "</div>" +
       jobMatrixHtml("alda", null)
     );
@@ -579,8 +646,8 @@
     if (toolId === "alda") {
       return (
         '<div class="acs-survey-banner no-print">' +
-        '<button type="button" class="acs-btn acs-btn--demo" onclick="loadDemoReport()">🔍 先看示範報告</button>' +
-        '<p class="acs-survey-tip">填寫約 15–20 分鐘 · 每題選 <strong>最像</strong> 與 <strong>最不像</strong> 各一項（不可相同）</p></div>'
+        '<button type="button" class="acs-btn acs-btn--demo" onclick="loadDemoReport()">🔍 先看示範（不用填資料）</button>' +
+        '<p class="acs-survey-tip">填寫約 15–20 分鐘 · 每題選 <strong>最像</strong> 與 <strong>最不像</strong> 各一項（不可相同）· 本機自動暫存</p></div>'
       );
     }
     if (toolId === "ncd") {
@@ -626,15 +693,18 @@
     }
     if (toolId === "alda" && d.primary) {
       html +=
-        '<div class="acs-report-block"><h3>🛡️ 帶領修飾提示</h3><p>主使徒「' +
+        '<div class="acs-report-block acs-pastoral-guide-block" id="alda-zone-talk-quotes">' +
+        "<h3>【約談金句草稿】教您如何溫暖開口</h3>" +
+        pastorPracticeTag("talk", "以下句子可複製改寫，約 20 分鐘輕鬆談心時使用——先肯定，再聊成長。") +
+        "<p>主帶領風格「<strong>" +
         esc(d.primary) +
-        "」／副使徒「" +
+        "</strong>」／輔助風格「<strong>" +
         esc(d.secondary || "—") +
-        "」— 已寫入出路卡 fit_note；真實度 " +
+        "」</p>" +
+        aldaTalkQuotes(d.primary, d.secondary) +
+        "<p class=\"acs-step-hint\">若填答誠意度偏低（" +
         esc(String(d.sincerity != null ? d.sincerity : "—")) +
-        "% · 一致度 " +
-        esc(String(d.consistency != null ? d.consistency : "—")) +
-        "%。</p></div>";
+        "%），宜先關心近況，再談報告內容。</p></div>";
     }
     if (toolId === "competency" && d.domain_scores) {
       html +=
@@ -691,9 +761,9 @@
     }
     if (toolId === "alda") {
       return [
-        "主使徒「" + (d.primary || "—") + "」輪廓中，哪一項是神目前最使用的帶領恩賜？",
-        "若真實度或一致度偏低，您願意與誰做私下面談、重新對齊？",
-        "四大叢集（C/O/S/F）中，您最需要哪類同工互補？"
+        "帶領風格「" + (d.primary || "—") + "」中，哪一項是神目前最使用的恩賜？",
+        "若填答誠意偏低，您願意與誰私下談談、重新對齊？",
+        "您最需要哪類同工互補？"
       ];
     }
     if (toolId === "competency") {
@@ -712,7 +782,13 @@
     var name = (run.profile && run.profile.name) || "這位同工";
     var shape = global.AssessmentRunStore ? global.AssessmentRunStore.loadLatest("shape") : null;
     var shapeNote =
-      shape && shape.derived ? "SHAPE 熱情「" + (shape.derived.top_heart || "—") + "」" : "（建議先完成 SHAPE）";
+      shape && shape.derived
+        ? (toolId === "alda" ? "恩賜熱情「" : "SHAPE 熱情「") +
+          (shape.derived.top_heart || "—") +
+          "」"
+        : toolId === "alda"
+          ? "（建議先完成恩賜問卷）"
+          : "（建議先完成 SHAPE）";
     var lines = [
       "【給牧者的約談邀請信草稿 · 請審核後使用】",
       "",
@@ -739,13 +815,13 @@
       lines.push("類型 " + (d.code || "—") + "；談服事耐久與壓力，避免標籤化。");
     } else if (toolId === "alda") {
       lines.push(
-        "主使徒 " +
+        "主帶領風格 " +
           (d.primary || "—") +
-          "／副使徒 " +
+          "／輔助風格 " +
           (d.secondary || "—") +
-          "；真實度 " +
+          "；填答誠意 " +
           (d.sincerity != null ? d.sincerity : "?") +
-          "% — 強調這是帶領節奏參考，不是考核。"
+          "% — 強調這是陪跑參考，不是考核。"
       );
     } else if (toolId === "competency") {
       lines.push(
@@ -757,12 +833,12 @@
       );
     }
     if (run.path_cards && run.path_cards.length) {
-      lines.push("", "出路卡摘要：");
+      lines.push("", "同行成長地圖摘要：");
       run.path_cards.slice(0, 3).forEach(function (c, i) {
         lines.push((i + 1) + ". " + (c.role_label || c.ministry_type) + "（" + c.tier + "）");
       });
     }
-    lines.push("", "勿編造經文。正式派任須在「事奉媒合中心」經人工確認。");
+    lines.push("", "勿編造經文。正式試任須經您禱告與面談確認。");
     return lines.join("\n");
   }
 
@@ -785,9 +861,9 @@
       else if (toolId === "mbti") memo = "類型傾向：" + (run.derived.code || "—");
       else if (toolId === "alda")
         memo =
-          "主使徒「" +
+          "主帶領風格「" +
           (run.derived.primary || "—") +
-          "」· 真實度 " +
+          "」· 填答誠意 " +
           (run.derived.sincerity != null ? run.derived.sincerity : "?") +
           "%";
       else if (toolId === "competency")
@@ -1025,6 +1101,8 @@
     buildPastoralInvite: buildPastoralInvite,
     buildAiInstruction: buildAiInstruction,
     buildHitlPrompt: buildPastoralInvite,
-    interviewQuestions: interviewQuestions
+    interviewQuestions: interviewQuestions,
+    pastorPracticeTag: pastorPracticeTag,
+    aldaTalkQuotes: aldaTalkQuotes
   };
 })(typeof window !== "undefined" ? window : global);

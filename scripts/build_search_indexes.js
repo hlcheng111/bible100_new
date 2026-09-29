@@ -1,0 +1,629 @@
+/**
+ * Build data/search/*.json + js/search_indexes_embedded.js
+ * Run: node scripts/build_search_indexes.js
+ */
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+
+const root = path.resolve(__dirname, "..");
+const dir = path.join(root, "config", "search");
+fs.mkdirSync(dir, { recursive: true });
+// 相容副本（本機／舊路徑）；正式以 config/search 為準
+const dataDir = path.join(root, "data", "search");
+fs.mkdirSync(dataDir, { recursive: true });
+
+const nav = [
+  {
+    title: "教材與培訓路線圖",
+    path: "languages/_landing/home.html",
+    keywords: "教材,培訓,百步,四寶,material,landing",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "教材與培訓（中文落地）",
+    path: "languages/landing_new_cn.html",
+    keywords: "教材,動作版,中文,百步四寶,cn",
+    layer: "foundation",
+    kind: "nav",
+    lang: "cn",
+  },
+  {
+    title: "中文版側欄目錄",
+    path: "languages/index_cn.html",
+    keywords: "中文,側欄,百步,四寶,cn,chinese",
+    layer: "foundation",
+    kind: "nav",
+    lang: "cn",
+  },
+  {
+    title: "英文教材入口",
+    path: "languages/landP_en.html",
+    keywords: "英文,english,en,material",
+    layer: "foundation",
+    kind: "nav",
+    lang: "en",
+  },
+  {
+    title: "越文教材入口",
+    path: "languages/landP_vi.html",
+    keywords: "越南,vietnamese,vi",
+    layer: "foundation",
+    kind: "nav",
+    lang: "vi",
+  },
+  {
+    title: "印尼教材入口",
+    path: "languages/landP_id.html",
+    keywords: "印尼,indonesia,id",
+    layer: "foundation",
+    kind: "nav",
+    lang: "id",
+  },
+  {
+    title: "舊約百步 OT100 總覽",
+    path: "languages/ot_landing.html",
+    keywords: "舊約,OT,百步,ot100",
+    layer: "foundation",
+    kind: "nav",
+    lang: "cn",
+  },
+  {
+    title: "新約百步 NT100 總覽",
+    path: "languages/nt_landing.html",
+    keywords: "新約,NT,百步,nt100",
+    layer: "foundation",
+    kind: "nav",
+    lang: "cn",
+  },
+  {
+    title: "信仰四寶 T4 總覽",
+    path: "languages/t4_landing.html",
+    keywords: "四寶,T4,約316,主禱文,使徒信經,軍裝",
+    layer: "foundation",
+    kind: "nav",
+    lang: "cn",
+  },
+  {
+    title: "門訓動力站 · 無愧工人",
+    path: "disciple_dynamics/dashboard.html",
+    keywords: "門訓,動力,無愧工人,disciple,dd",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh-Hant",
+  },
+  {
+    title: "聖經研讀路線圖",
+    path: "bible_study/_landing/home.html",
+    keywords: "聖經,研讀,bible,study,landing",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "聖經研讀中心",
+    path: "bible_study/index.html",
+    keywords: "聖經,研讀,釋經,讀經,bible,study",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "譯本對照 Parallel",
+    path: "bible_study/parallel_mode_v3.html",
+    keywords: "對照,譯本,parallel,versions",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "聖經全文搜尋（經文）",
+    path: "bible_study/search_reader.html",
+    keywords: "經文,全文,搜尋,scripture,verse,耶穌,基督,神,愛",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "綜合解讀",
+    path: "bible_study/comprehensive_exegesis_reader.html",
+    keywords: "釋經,解讀,commentary,exegesis",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "詞典",
+    path: "bible_study/dictionary_reader.html",
+    keywords: "詞典,字典,lexicon",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "串珠",
+    path: "bible_study/crossref_reader.html",
+    keywords: "串珠,交叉,crossref",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "聖經跑道",
+    path: "bible_app/shell/index.html",
+    keywords: "跑道,bible app,每日,track",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh-Hant",
+  },
+  {
+    title: "聖經難題 Q&A",
+    path: "qna/index.html",
+    keywords: "難題,Q&A,問答,查經,qna,以斯拉,護教",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "百步四寶總論手冊",
+    path: "help/bible100_curriculum_manual.html",
+    keywords: "課程,總論,手冊,curriculum,manual",
+    layer: "foundation",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "CRM 旅程地圖",
+    path: "church_ministry/guide_crm_journey_hub.html",
+    keywords: "CRM,旅程,牧養,事工,church,ministry,journey",
+    layer: "execution",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "教會事工入口",
+    path: "church_ministry/_landing/gateway.html",
+    keywords: "教會,事工,gateway,church,CRM",
+    layer: "execution",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "教會事工儀表板",
+    path: "church_ministry/dashboard.html",
+    keywords: "戰情,儀表板,dashboard,行政,CRM",
+    layer: "execution",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "會友主檔",
+    path: "church_ministry/modules/members/member-integrated.html",
+    keywords: "會友,通訊錄,member,crm,CRM",
+    layer: "execution",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "探訪工作桌",
+    path: "church_ministry/modules/support/visitation_index.html",
+    keywords: "探訪,關懷,visitation",
+    layer: "execution",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "義工排班",
+    path: "church_ministry/tools/volunteer_shift/index.html",
+    keywords: "排班,義工,志工,volunteer",
+    layer: "execution",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "財務對帳",
+    path: "church_ministry/tools/finance_reconciliation/index.html",
+    keywords: "財務,對帳,finance",
+    layer: "execution",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "主日學 C 區",
+    path: "church_ministry/modules/education/education-integrated.html",
+    keywords: "主日學,門訓,education,C",
+    layer: "execution",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "學校管理",
+    path: "school_management/_landing/home.html",
+    keywords: "學校,學籍,school",
+    layer: "execution",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "智慧事奉",
+    path: "smart_ministry/landing.html",
+    keywords: "事奉,恩賜,配對,smart",
+    layer: "execution",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "事奉媒合",
+    path: "smart_ministry/talent_ministry_matching.html",
+    keywords: "媒合,CTV,matching",
+    layer: "execution",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "教會規劃 OS",
+    path: "church_planning/index_plan.html",
+    keywords: "規劃,planning,OS,5F",
+    layer: "strategy",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "SWOT 規劃",
+    path: "church_planning/Church_Governance_SWOT_matrix.html",
+    keywords: "SWOT,策略",
+    layer: "strategy",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "SMART 目標",
+    path: "church_planning/smart-planning.html",
+    keywords: "SMART,目標,okr",
+    layer: "strategy",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "PDCA 循環",
+    path: "church_planning/Church_Governance_PDCA_cycle.html",
+    keywords: "PDCA,改善",
+    layer: "strategy",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "重要 vs 緊急",
+    path: "church_planning/Church_Governance_urgent_matrix.html",
+    keywords: "緊急,重要,urgent,四象限",
+    layer: "strategy",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "CTA-OS 戰情室",
+    path: "church_planning/cta-os-war-room.html",
+    keywords: "戰情,CTV,CTA",
+    layer: "strategy",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "ALDA 領導力",
+    path: "church_planning/alda-leadership-assessment.html",
+    keywords: "ALDA,領導,leadership",
+    layer: "strategy",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "AI 輔助路線圖",
+    path: "ai_tools/_landing/home.html",
+    keywords: "AI,lab,輔助,prompt",
+    layer: "infra",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "AI 學習 Lab",
+    path: "ai_tools/ai_lab_landing.html",
+    keywords: "AI,lab,學習",
+    layer: "infra",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "Prompt 生成器",
+    path: "ai_tools/tools/bible_prompt_generator.html",
+    keywords: "prompt,備課,生成器",
+    layer: "infra",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "詩歌管理",
+    path: "hymn_management/dashboard.html",
+    keywords: "詩歌,敬拜,hymn",
+    layer: "infra",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "目錄 Sitemap",
+    path: "nav_hub/site_modules_sitemap.html",
+    keywords: "目錄,sitemap,模組地圖",
+    layer: "infra",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "目錄搜尋中心",
+    path: "nav_hub/index.html",
+    keywords: "目錄,搜尋,nav,hub",
+    layer: "infra",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "全站搜尋 Hub",
+    path: "nav_hub/site_search_hub.html",
+    keywords: "搜尋,search,hub,探照燈",
+    layer: "infra",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "文檔中心",
+    path: "help/docs-hub.html",
+    keywords: "文檔,docs,help",
+    layer: "infra",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "全站工具說明",
+    path: "help/global-tools.htm",
+    keywords: "工具,說明,翻譯,收藏",
+    layer: "infra",
+    kind: "nav",
+    lang: "zh",
+  },
+  {
+    title: "選 AI 平台",
+    path: "help/ai-chooser.html",
+    keywords: "AI,平台,chatgpt,claude,gemini",
+    layer: "infra",
+    kind: "nav",
+    lang: "zh",
+  },
+];
+
+const ot = [
+  ["chapter1.html", "OT第一課 第1-11步 加利利海 - 波斯灣", "OT,舊約,第一課,加利利"],
+  ["chapter2.html", "OT第二課 第12-22步 四件大事 - 賜福", "OT,舊約,第二課"],
+  ["chapter3.html", "OT第三課 第23-30步 去吧 - 雅各", "OT,舊約,第三課,雅各"],
+  ["chapter4.html", "OT第四課 第31-36步 12個兒子 - 做夢", "OT,舊約,第四課"],
+  ["chapter5.html", "OT第五課 第37-42步 十災 - 會幕", "OT,舊約,第五課,十災"],
+  ["chapter6.html", "OT第六課 第43-51步 祭司 - 飄流40年", "OT,舊約,第六課"],
+  ["chapter7.html", "OT第七課 第52-58步 死海北邊 - 約書亞", "OT,舊約,第七課,約書亞"],
+  ["chapter8.html", "OT第八課 第59-63步 惡性循環 - 拯救", "OT,舊約,第八課"],
+  ["chapter9.html", "OT第九課 第64-71步 三個國王", "OT,舊約,第九課"],
+  ["chapter10.html", "OT第十課 第72-80步 亞述帝國", "OT,舊約,第十課,亞述"],
+  ["chapter11.html", "OT第十一課 第81-90步 南國 - 拆毀聖殿", "OT,舊約,第十一課"],
+  ["chapter12.html", "OT第十二課 第91-100步 70年 - 沉默400年", "OT,舊約,第十二課"],
+];
+
+const ntTitles = {
+  1: "NT第一課 第1-13步 加利利海 - 羅馬",
+  2: "NT第二課 第14-19步 希臘征服波斯 - 天使與博士",
+  3: "NT第三課 第20-29步 逃往埃及 - 重生真理",
+  4: "NT第四課 第30-38步 井旁女人 - 榮耀父神",
+  5: "NT第五課 第39-47步 兩種反應 - 耶穌說：我是神",
+  6: "NT第六課 第48-56步 我是光 - 和散那",
+  7: "NT第七課 第57-63步 再潔淨聖殿 - 五百多證人",
+  8: "NT第八課 第64-71步 聖子升天 - 兇殘掃羅",
+  9: "NT第九課 第72-79步 耶穌發光 - 馬可退縮",
+  10: "NT第十課 第80-87步 回到安提阿 - 帶提摩太",
+  11: "NT第十一課 第88-94步 請過來幫助我們 - 到耶路撒冷去",
+  12: "NT第十二課 第95-100步 暴亂 - 主必快來",
+};
+
+const t4 = [
+  [1, "T1 《約316》 第1課", "約316,約翰,T4,四寶,john,love,gospel"],
+  [2, "T1 《約316》 第2課", "約316,T4,john,love"],
+  [3, "T1 《約316》 第3課", "約316,T4,john,love"],
+  [4, "T1 《約316》 第4課", "約316,T4,john,love"],
+  [5, "T2 《主祷文》 第1課", "主禱文,主祷文,T4,prayer,hallowed,holy,lord's prayer"],
+  [6, "T2 《主祷文》 第2課", "主禱文,T4,prayer,holy,hallowed"],
+  [7, "T2 《主祷文》 第3課", "主禱文,T4,prayer,holy"],
+  [8, "T2 《主祷文》 第4課", "主禱文,T4,prayer,holy"],
+  [9, "T3 《使徒信經》 第1課", "使徒信經,T4,creed,holy,holy spirit,聖靈,apostles"],
+  [10, "T3 《使徒信經》 第2課", "使徒信經,T4,creed,holy,聖靈"],
+  [11, "T3 《使徒信經》 第3課", "使徒信經,T4,creed,holy,聖靈,catholic,church"],
+  [12, "T3 《使徒信經》 第4課", "使徒信經,T4,creed,holy,聖靈"],
+  [13, "T4 《屬靈軍裝》 第1課", "軍裝,T4,armor,spirit,holy spirit,聖靈,屬靈"],
+  [14, "T4 《屬靈軍裝》 第2課", "軍裝,T4,armor,spirit,holy,聖靈"],
+  [15, "T4 《屬靈軍裝》 第3課", "軍裝,T4,armor,spirit,holy,聖靈"],
+  [16, "T4 《屬靈軍裝》 第4課", "軍裝,T4,armor,spirit,holy,聖靈"],
+];
+
+const curriculum = [];
+function addCur(title, p, kw, track, lang) {
+  curriculum.push({
+    title,
+    path: p,
+    keywords: kw + ",教材,百步," + (lang || "cn"),
+    layer: "foundation",
+    kind: "curriculum",
+    lang: lang || "cn",
+    track,
+  });
+}
+
+ot.forEach(function (row) {
+  addCur(row[1], "languages/cn/OT/chapters/" + row[0], row[2], "OT");
+});
+for (let i = 1; i <= 12; i++) {
+  addCur(
+    ntTitles[i],
+    "languages/cn/NT/chapters/chapter" + i + ".html",
+    "NT,新約,第" + i + "課",
+    "NT"
+  );
+}
+t4.forEach(function (row) {
+  addCur(row[1], "languages/cn/T4/chapters/chapter" + row[0] + ".html", row[2], "T4");
+});
+addCur("舊約百步總覽", "languages/ot_landing.html", "舊約,OT,總覽", "OT");
+addCur("新約百步總覽", "languages/nt_landing.html", "新約,NT,總覽", "NT");
+addCur("信仰四寶總覽", "languages/t4_landing.html", "四寶,T4,總覽", "T4");
+
+[
+  ["基要真理", "disciple_dynamics/c/doctrine_basics.html", "基要,教義,門訓"],
+  ["防備辯駁異端", "disciple_dynamics/c/doctrine_heresy.html", "異端,教義"],
+  ["基督化家庭", "disciple_dynamics/d/christian_family.html", "家庭,生活"],
+  ["教會管理實務", "disciple_dynamics/e/church_management.html", "教會管理"],
+  ["查經技巧（上）", "disciple_dynamics/f/bss1.html", "查經,BSS"],
+  ["巴拿巴手冊說明", "disciple_dynamics/g/barnabas_guide.html", "巴拿巴"],
+].forEach(function (row) {
+  curriculum.push({
+    title: row[0],
+    path: row[1],
+    keywords: row[2] + ",門訓,無愧工人,dd",
+    layer: "foundation",
+    kind: "curriculum",
+    lang: "zh-Hant",
+    track: "DD",
+  });
+});
+
+const curriculumEn = [
+  {
+    title: "English materials landing",
+    path: "languages/landP_en.html",
+    keywords: "english,en,material,bible100,holy,bible",
+    layer: "foundation",
+    kind: "curriculum",
+    lang: "en",
+    track: "map",
+  },
+  {
+    title: "OT landing (EN)",
+    path: "languages/ot_landing_en.html",
+    keywords: "ot,old testament,en,holy",
+    layer: "foundation",
+    kind: "curriculum",
+    lang: "en",
+    track: "OT",
+  },
+  {
+    title: "NT landing (EN)",
+    path: "languages/nt_landing_en.html",
+    keywords: "nt,new testament,en,jesus,christ,holy",
+    layer: "foundation",
+    kind: "curriculum",
+    lang: "en",
+    track: "NT",
+  },
+  {
+    title: "T4 Treasures landing (EN)",
+    path: "languages/t4_landing_en.html",
+    keywords: "t4,treasures,en,holy,creed,prayer,armor",
+    layer: "foundation",
+    kind: "curriculum",
+    lang: "en",
+    track: "T4",
+  },
+  {
+    title: "T2 Lord's Prayer · Lesson 1 (EN index)",
+    path: "languages/cn/T4/chapters/chapter5.html",
+    keywords: "lord's prayer,hallowed,holy,prayer,father,t4,en",
+    layer: "foundation",
+    kind: "curriculum",
+    lang: "en",
+    track: "T4",
+  },
+  {
+    title: "T3 Apostles' Creed · Lesson 1 (EN index)",
+    path: "languages/cn/T4/chapters/chapter9.html",
+    keywords: "apostles creed,creed,holy,holy spirit,catholic,church,t4,en",
+    layer: "foundation",
+    kind: "curriculum",
+    lang: "en",
+    track: "T4",
+  },
+  {
+    title: "T4 Spiritual Armor · Lesson 1 (EN index)",
+    path: "languages/cn/T4/chapters/chapter13.html",
+    keywords: "armor,armour,holy spirit,spirit,spiritual,ephesians,t4,en",
+    layer: "foundation",
+    kind: "curriculum",
+    lang: "en",
+    track: "T4",
+  },
+  {
+    title: "John 3:16 · Lesson 1 (EN index)",
+    path: "languages/cn/T4/chapters/chapter1.html",
+    keywords: "john,love,gospel,god,holy,t4,en,316",
+    layer: "foundation",
+    kind: "curriculum",
+    lang: "en",
+    track: "T4",
+  },
+];
+
+function writePair(name, obj) {
+  const body = JSON.stringify(obj, null, 2);
+  fs.writeFileSync(path.join(dir, name), body);
+  fs.writeFileSync(path.join(dataDir, name), body);
+}
+
+writePair(
+  "nav_index.json",
+  { version: "1.0", description: "站內入口／樞紐索引（非全文）", items: nav }
+);
+writePair(
+  "curriculum_cn.json",
+  {
+    version: "1.0",
+    lang: "cn",
+    description: "中文教材課名／門訓系列（目錄級）",
+    items: curriculum,
+  }
+);
+writePair(
+  "curriculum_en.json",
+  {
+    version: "1.0",
+    lang: "en",
+    description: "English curriculum stub; expand later",
+    items: curriculumEn,
+  }
+);
+
+const payload = {
+  nav: nav,
+  curriculum_cn: curriculum,
+  curriculum_en: curriculumEn,
+  version: "20260805s",
+};
+const emb =
+  "/**\n" +
+  " * file:// 可用之搜尋索引（與 config/search/*.json 同步）\n" +
+  " * 上云／HTTP 時 site_search.js 會優先 fetch JSON；失敗則用本檔。\n" +
+  " * 重建：node scripts/build_search_indexes.js\n" +
+  " */\n" +
+  "(function (g) {\n" +
+  '  "use strict";\n' +
+  "  g.B100_SEARCH_INDEXES = " +
+  JSON.stringify(payload) +
+  ";\n" +
+  '})(typeof window !== "undefined" ? window : this);\n';
+
+fs.writeFileSync(path.join(root, "js", "search_indexes_embedded.js"), emb);
+console.log(
+  "OK nav=" + nav.length + " curriculum_cn=" + curriculum.length + " curriculum_en=" + curriculumEn.length
+);

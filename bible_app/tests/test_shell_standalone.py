@@ -47,8 +47,8 @@ def main() -> int:
         import json
         data = json.loads(golden.read_text(encoding="utf-8"))
         n = len(data.get("verses", []))
-        if n != 40:
-            errors.append(f"golden verses expected 40, got {n}")
+        if n != 100:
+            errors.append(f"golden verses expected 100, got {n}")
         for v in data.get("verses", []):
             for key in ("refVi", "refId", "tagVi", "tagId"):
                 if not v.get(key):

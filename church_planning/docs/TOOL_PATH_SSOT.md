@@ -11,8 +11,8 @@
 
 | 層 | 用途 | 目錄慣例 | 檔名慣例（現行 → Batch 2 目標） | 側欄擁有者 |
 |----|------|----------|----------------------------------|------------|
-| **planning** | 5F 十四項量表、RACI、戰情室 | `church_planning/` | 現：`*.html` 根目錄 → 目標：`tools/tool_{id}.html` | `sidebar_plan.html` |
-| **guide** | 七步故事線「本步導覽」 | `church_planning/guides/` | `guide_step{N}_{topic}.html` | `sidebar_plan.html` |
+| **planning** | 5F 十四項量表、RACI、戰情室 | `church_planning/` | 現：`*.html` 根目錄 → 目標：`tools/tool_{id}.html` | `sidebar_plan_v5_preview.html` |
+| **guide** | 七步故事線「本步導覽」 | `church_planning/guides/` | `guide_step{N}_{topic}.html` | `sidebar_plan_v5_preview.html` |
 | **crm** | 4F 會友／探訪／排班等 | `church_ministry/modules/`、`tools/` | 現：模組路徑 → 目標：`crm/crm_{tool_id}.html` | `sidebar_crm_journey.html` |
 | **crm_guide** | CRM 理念、試玩、角色入口 | `church_ministry/` | `guide_crm_*.html` | `sidebar_crm_journey.html` |
 | **automation** | 同步佇列、AI 營運輔助（HITL） | `church_ministry/modules/tech/`、`ai_tools/pages/` | 目標：`auto/auto_{id}.html` | 頂欄 AI／Bridge 文件指向 |

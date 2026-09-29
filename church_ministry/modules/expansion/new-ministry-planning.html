@@ -42,6 +42,11 @@
 </head>
 <body>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container">
+        <div style="padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#ecfdf5;border-radius:8px;margin-bottom:12px;border:1px solid #a7f3d0;">
+            <strong>D-04 報告</strong>
+            <button type="button" onclick="exportNewMinistryPlanningCsv()" data-w5-report="new-ministry-planning-csv">⬇ CSV</button>
+            <button type="button" onclick="printNewMinistryPlanning()" data-w5-report="new-ministry-planning-print">🖨 列印</button>
+        </div>
         <div class="header">
             <h1>🎯 新事工规划 - 看板管理系统 (Kanban)</h1>
             <p style="color:#7f8c8d;margin-top:10px;font-size:12px;">📋 拖拽式项目管理 · 可视化进度追踪 · 4阶段工作流</p>
@@ -142,6 +147,32 @@
             localStorage.setItem('new_ministry_projects', JSON.stringify(projects));
             renderAll();
         }
+        
+        function exportNewMinistryPlanningCsv() {
+            var U = window.CmReportUtils; if (!U) return;
+            var esc = U.csvEsc;
+            var list = projects || [];
+            if (!list.length) { try { list = JSON.parse(localStorage.getItem('new_ministry_projects') || '[]'); } catch (e) { list = []; } }
+            var lines = [['名稱', '類型', '負責人', '預算', '狀態', '進度', '開始日期'].map(esc).join(',')];
+            list.forEach(function (p) {
+                lines.push([p.name, p.type, p.leader, p.budget, p.status, p.progress, p.startDate].map(esc).join(','));
+            });
+            U.downloadCsv('new_ministry_planning_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+        }
+        function printNewMinistryPlanning() {
+            var U = window.CmReportUtils; if (!U) return;
+            var list = projects || [];
+            if (!list.length) { try { list = JSON.parse(localStorage.getItem('new_ministry_projects') || '[]'); } catch (e) { list = []; } }
+            var rows = list.map(function (p) { return [p.name, p.leader, p.status, String(p.progress) + '%']; });
+            U.printTable('新事工規劃', ['名稱', '負責人', '狀態', '進度'], rows);
+        }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

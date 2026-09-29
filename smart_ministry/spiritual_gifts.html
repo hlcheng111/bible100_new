@@ -197,16 +197,18 @@
     </div>
   </div>
 
-  <p class="meta">與舊版 <code>assessment.html</code> 同一導向；儲存鍵與試作頁 <code>test04_spiritual_gifts_grok.html</code> 相容。</p>
+  <p class="meta" id="more-personality">主線是本頁八向度。MBTI／DISC／SHAPE 獨立頁已搬移；結果用語為「較明顯／尚未顯出」，不是沒有某恩賜。輸出語言與備課請到 AI 工作台選 <code>?lang=</code>。</p>
 
   <div class="nav-row">
-    <a href="landing.html#journey" target="contentFrame">回智慧事奉首頁</a>
-    <a href="talent_skill_unified.html" target="contentFrame">← 恩賜與技能統整</a>
-    <a href="talent_ministry_matching.html" target="contentFrame">事奉配對工作台 →</a>
+    <a href="landing.html#start" target="contentFrame">回智慧事奉 · 開始</a>
+    <a href="registration.html" target="contentFrame">← 註冊</a>
+    <a href="talent_tracking.html" target="contentFrame">下一步：我的歷程 →</a>
   </div>
 
+  <script src="../js/smart_ministry_canonical_store.js"></script>
   <script src="../church_planning/js/survey_ui_common.js"></script>
   <script src="js/spiritual_gifts_report.js"></script>
+  <script src="js/sm_member_wizard.js"></script>
   <script>
     var SURVEY_STORAGE = 'bible100_smart_ministry_';
 
@@ -447,14 +449,28 @@
       });
       var sortedGifts = Object.keys(giftScores).sort(function (a, b) { return giftScores[b] - giftScores[a]; }).slice(0, 3);
       try {
-        localStorage.setItem(SURVEY_STORAGE + 'survey_spiritual_gifts', JSON.stringify({
+        var giftsPayload = {
           topGifts: sortedGifts,
           scores: giftScores,
           savedAt: new Date().toISOString()
-        }));
+        };
+        localStorage.setItem(SURVEY_STORAGE + 'survey_spiritual_gifts', JSON.stringify(giftsPayload));
         var profile = JSON.parse(localStorage.getItem(SURVEY_STORAGE + 'survey_profile') || '{}');
         profile.spiritual_gifts = sortedGifts;
         localStorage.setItem(SURVEY_STORAGE + 'survey_profile', JSON.stringify(profile));
+        var talentId = null;
+        try {
+          var params = new URLSearchParams(window.location.search || '');
+          talentId = params.get('talent_id') || localStorage.getItem('bible100_mission_active_talent_id');
+        } catch (eTid) {}
+        if (talentId && window.SmartMinistryCanonical && SmartMinistryCanonical.attachAssessmentToTalent) {
+          SmartMinistryCanonical.attachAssessmentToTalent(
+            String(talentId),
+            'gifts_test',
+            giftsPayload,
+            { topGifts: sortedGifts, scores: giftScores, note: 'spiritual_gifts v1', hitl: true }
+          );
+        }
       } catch (err) {}
 
       var qBox = document.getElementById('questionContainer');

@@ -17,6 +17,7 @@
     .field-row input:focus { outline: none; border-color: #2aa5ff; }
     .result-list { max-height: calc(100vh - 220px); overflow-y: auto; margin-top: 8px; }
     .result-item { display: flex; align-items: flex-start; padding: 8px 10px; margin-bottom: 4px; background: #f8f9fa; border-radius: 4px; cursor: pointer; font-size: 11px; border-left: 3px solid transparent; transition: all 0.15s; }
+    a.result-item { text-decoration: none; color: inherit; }
     .result-item:hover { background: #e3f2fd; border-left-color: #2aa5ff; color: #0b5fa5; }
     .result-item .num { font-weight: 600; color: #666; margin-right: 6px; min-width: 36px; flex-shrink: 0; }
     .result-item .content { flex: 1; min-width: 0; }
@@ -28,6 +29,10 @@
     .tools-row a:hover { background: #e3f2fd; }
     .empty-msg { padding: 20px; text-align: center; color: #999; font-size: 12px; }
   </style>
+<script src="../js/sidebar_shell_target_fallback.js"></script>
+<script src="../js/shell_nav.js"></script>
+<script src="../js/sidebar_behavior.js"></script>
+  <base target="contentFrame">
 </head>
 <body>
   <div class="section" style="background: linear-gradient(135deg, #e3f2fd 0%, #eef6ff 100%);">
@@ -57,6 +62,7 @@
         <option value="author">作詞者</option>
         <option value="tune">曲調名</option>
         <option value="catalogNumber">分類</option>
+        <option value="lyrics">歌詞全文</option>
       </select>
     </div>
     <div class="field-row">
@@ -70,8 +76,10 @@
 
     <div class="tools-row">
       <h4 style="margin:0 0 8px 0;font-size:12px;color:#0b5fa5;">🎵 核心工具</h4>
-      <a href="hymn_editor.html?v=2" target="contentFrame">✏️ 詩歌編輯器</a>
-      <a href="ppt_generator.html?v=3" target="contentFrame">📊 PPT投影片生成器</a>
+      <a href="hymn_template.html" data-b100-nav="content" target="contentFrame">📄 摘要頁（hymnary 風格）</a>
+      <a href="hymn_ai_tools.html" data-b100-nav="content" target="contentFrame">🤖 AI 分析／創作（外連）</a>
+      <a href="hymn_editor.html?v=2" data-b100-nav="content" target="contentFrame">✏️ 詩歌編輯器</a>
+      <a href="ppt_generator.html?v=3" data-b100-nav="content" target="contentFrame">📊 PPT投影片生成器</a>
     </div>
   </div>
 
@@ -82,9 +90,15 @@
       let allHymns = [];
       let searchTimeout = null;
 
+      function encodeHymnPath(url) {
+        if (!url || url === '#') return '#';
+        return url.split('/').map(function(part, i) {
+          return i === 0 ? part : encodeURIComponent(part);
+        }).join('/');
+      }
       function toHymnUrl(sourcePath) {
         if (!sourcePath) return '#';
-        return 'hymn/' + (sourcePath || '').replace(/^\.\.\//, '');
+        return encodeHymnPath('hymn/' + (sourcePath || '').replace(/^\.\.\//, ''));
       }
 
       function getFieldValue(h, field) {
@@ -163,40 +177,29 @@
             secondaryVal = titleZh(h) || titleEn(h);
           }
           if (secondaryVal === primaryVal) secondaryVal = '';
-          html += '<div class="result-item" data-url="' + esc(url) + '" data-id="' + esc(h.id || '') + '">';
+          html += '<a class="result-item" href="' + esc(url) + '" target="contentFrame" rel="noopener" data-id="' + esc(h.id || '') + '" title="開啟原詩全頁（含樂譜）">';
           html += '<span class="num">' + esc(h.number || '') + '</span>';
           html += '<div class="content">';
           html += '<span class="primary">' + esc(primaryVal) + '</span>';
           if (secondaryVal) html += '<span class="secondary">' + esc(secondaryVal) + '</span>';
-          html += '</div></div>';
+          html += '</div></a>';
         });
         container.innerHTML = html;
 
-        container.querySelectorAll('.result-item').forEach(function(el) {
-          el.addEventListener('click', function() {
-            var url = el.getAttribute('data-url');
-            var id = el.getAttribute('data-id');
-            if (window.parent && window.parent !== window) {
-              // 優先開啟真頁（原詩歌 HTML），無 url 時才用 hymn_template 摘要
-              if (url && url !== '#') {
-                window.parent.postMessage({ type: 'navigate', url: url }, '*');
-              } else if (id) {
-                window.parent.postMessage({ type: 'navigate', url: 'hymn_template.html?id=' + encodeURIComponent(id), id: id }, '*');
-              }
-            }
-          });
-        });
+        /* 點歌：<a target="contentFrame"> 直開舊 .htm 全頁 */
       }
 
       function loadData() {
         (window.loadSourceHymns || function(){ return fetch('data/source-hymns.json').then(function(r){ return r.ok ? r.json() : Promise.reject(); }); })()
           .then(function(d) {
             allHymns = (d.hymns || []).filter(function(h) { return h.sourcePath; });
+            window.allHymns = allHymns;
             filterAndRender();
           })
           .catch(function() {
             if (typeof EMBEDDED !== 'undefined' && EMBEDDED.hymns) {
               allHymns = EMBEDDED.hymns.filter(function(h) { return h.sourcePath; });
+              window.allHymns = allHymns;
               filterAndRender();
             } else {
               document.getElementById('resultList').innerHTML = '<div class="empty-msg">無法載入詩歌資料</div>';

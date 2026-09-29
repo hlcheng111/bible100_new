@@ -20,11 +20,17 @@ body { font-family: 'Microsoft YaHei'; background: linear-gradient(135deg, #667e
 </style></head>
 <body>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="container">
+<div style="padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#ecfdf5;border-radius:8px;margin-bottom:12px;border:1px solid #a7f3d0;">
+<strong>B-12 報告</strong>
+<button type="button" onclick="exportYouthActivitiesCsv()" data-w5-report="youth-ministry-csv">⬇ CSV</button>
+<button type="button" onclick="printYouthActivities()" data-w5-report="youth-ministry-print">🖨 列印</button>
+</div>
 <div class="header"><h1>🎯 青年事工发展 - 社交媒体风格</h1><p style="color:#7f8c8d;margin-top:10px;">📱 Instagram式展示 · 活动记录 · 互动追踪</p></div>
 <button class="load-btn" onclick="loadDemo()" id="loadBtn">🎯 载入青年活动（6个活动）</button>
 <div class="posts-grid" id="postsGrid"></div>
 </div>
 <script>
+var youthActivities = [];
 function loadDemo() {
 const activities = [
 {icon:'🎵', name:'周五青年敬拜', date:'每周五19:30', participants:25, type:'定期聚会'},
@@ -45,7 +51,33 @@ document.getElementById('postsGrid').innerHTML = activities.map(a => `
 </div>
 </div>
 `).join('');
+youthActivities = activities;
+try { localStorage.setItem('youth_ministry_activities', JSON.stringify(activities)); } catch (e) {}
 document.getElementById('loadBtn').style.display = 'none';
 }
+function getYouthActivities() {
+  if (youthActivities && youthActivities.length) return youthActivities;
+  try { return JSON.parse(localStorage.getItem('youth_ministry_activities') || '[]'); } catch (e) { return []; }
+}
+function exportYouthActivitiesCsv() {
+  var U = window.CmReportUtils; if (!U) return;
+  var esc = U.csvEsc;
+  var list = getYouthActivities();
+  var lines = [['活動', '日期', '類型', '參與人數'].map(esc).join(',')];
+  list.forEach(function (a) { lines.push([a.name, a.date, a.type, a.participants].map(esc).join(',')); });
+  U.downloadCsv('youth_ministry_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+}
+function printYouthActivities() {
+  var U = window.CmReportUtils; if (!U) return;
+  var rows = getYouthActivities().map(function (a) { return [a.name, a.date, a.type, String(a.participants)]; });
+  U.printTable('青年事工活動', ['活動', '日期', '類型', '參與人數'], rows);
+}
 </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body></html>

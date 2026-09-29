@@ -156,12 +156,16 @@
     var html = "";
     html += card(
       "📅 近 14 天待確認排班",
-      "<strong>" + esc(sum.pending_confirm != null ? sum.pending_confirm : "—") + "</strong> 筆待同工確認（A1）。",
-      link("tools/volunteer_shift/list.html", "處理排班清單")
+      "<strong>" + esc(sum.pending_confirm != null ? sum.pending_confirm : "—") + "</strong> 筆待同工確認（A1）· 缺口 <strong>" +
+        esc(sum.leave_gaps != null ? sum.leave_gaps : "—") +
+        "</strong>（請假未代班）。",
+      link("tools/volunteer_shift/list.html", "處理排班清單") + link("tools/volunteer_shift/leave_swap.html", "請假調班")
     );
     html += card(
       "🤝 近 7 天探訪跟進待處理",
-      "<strong>" + esc(pf.pending != null ? pf.pending : "—") + "</strong> 筆待跟進（A2 · 不含 note 全文）。",
+      "<strong>" + esc(pf.pending != null ? pf.pending : "—") + "</strong> 筆待跟進 · 逾期 <strong>" +
+        esc(pf.overdue != null ? pf.overdue : "—") +
+        "</strong>（A2 · 不含 note 全文）。",
       link("tools/visitation_followup/list.html", "跟進清單") + link("tools/visitation_followup/form.html", "新增跟進")
     );
     html += card(
@@ -260,9 +264,15 @@
       '<div class="stat-pill"><div class="stat-label"><span>A1 待確認排班</span><span>14 天</span></div>' +
       '<div class="stat-main">' + esc(sum.pending_confirm != null ? sum.pending_confirm : "—") + '</div>' +
       '<div class="stat-foot"><a href="tools/volunteer_shift/list.html" target="_parent">排班清單 →</a></div></div>' +
+      '<div class="stat-pill"><div class="stat-label"><span>排班缺口</span><span>請假未代班</span></div>' +
+      '<div class="stat-main">' + esc(sum.leave_gaps != null ? sum.leave_gaps : "—") + '</div>' +
+      '<div class="stat-foot"><a href="tools/volunteer_shift/leave_swap.html" target="_parent">請假調班 →</a></div></div>' +
       '<div class="stat-pill"><div class="stat-label"><span>A2 待跟進</span><span>7 天</span></div>' +
       '<div class="stat-main">' + esc(pf.pending != null ? pf.pending : "—") + '</div>' +
       '<div class="stat-foot"><a href="tools/visitation_followup/list.html" target="_parent">跟進清單 →</a></div></div>' +
+      '<div class="stat-pill"><div class="stat-label"><span>探訪逾期</span><span>due &lt; 今天</span></div>' +
+      '<div class="stat-main">' + esc(pf.overdue != null ? pf.overdue : "—") + '</div>' +
+      '<div class="stat-foot"><a href="tools/visitation_followup/list.html" target="_parent">逾期跟進 →</a></div></div>' +
       '<div class="stat-pill"><div class="stat-label"><span>A2 今日到期</span><span>7 天窗</span></div>' +
       '<div class="stat-main">' + esc(pf.due_today != null ? pf.due_today : "—") + '</div>' +
       '<div class="stat-foot"><a href="tools/visitation_followup/form.html" target="_parent">新增跟進 →</a></div></div>' +
@@ -285,9 +295,11 @@
     if (!b || !metaShifts || !metaFollow) return;
     var snap = getCrmKpiSnapshot(b);
     metaShifts.textContent =
-      "近 14 天待確認 " + (snap.vs.pending_confirm != null ? snap.vs.pending_confirm : "—") + " 筆";
+      "近 14 天待確認 " + (snap.vs.pending_confirm != null ? snap.vs.pending_confirm : "—") +
+      " · 缺口 " + (snap.vs.leave_gaps != null ? snap.vs.leave_gaps : "—");
     metaFollow.textContent =
       "今日到期 " + (snap.pf.due_today != null ? snap.pf.due_today : "—") +
+      " · 逾期 " + (snap.pf.overdue != null ? snap.pf.overdue : "—") +
       " · 待跟進 " + (snap.pf.pending != null ? snap.pf.pending : "—");
   }
 

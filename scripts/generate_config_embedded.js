@@ -1,45 +1,40 @@
 #!/usr/bin/env node
 /**
- * SSOT mirror: config/*.json → js/config-embedded.js (file:// 專用)
- * Run after any change to config/modules.json, modes.json, etc.:
- *   node scripts/generate_config_embedded.js
+ * Regenerate js/config-embedded.js from config/*.json (file:// SSOT).
+ * Usage: node scripts/generate_config_embedded.js
  */
-'use strict';
+"use strict";
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const configDir = path.join(__dirname, '..', 'config');
-const outputFile = path.join(__dirname, '..', 'js', 'config-embedded.js');
+const REPO = path.resolve(__dirname, "..");
+const CONFIG_DIR = path.join(REPO, "config");
+const OUT = path.join(REPO, "js", "config-embedded.js");
 
-const filesToEmbed = [
-  'modules.json',
-  'modes.json',
-  'languages.json',
-  'paths.json',
-  'local-languages.json'
+const SYNC_FILES = [
+  "modules.json",
+  "modes.json",
+  "languages.json",
+  "paths.json",
+  "local-languages.json",
 ];
 
-const payload = {};
-
-filesToEmbed.forEach(function (file) {
-  const filePath = path.join(configDir, file);
-  if (!fs.existsSync(filePath)) {
-    console.warn('[SSOT] Skip missing:', file);
-    return;
+const embedded = {};
+for (const name of SYNC_FILES) {
+  const fp = path.join(CONFIG_DIR, name);
+  if (fs.existsSync(fp)) {
+    embedded[name] = JSON.parse(fs.readFileSync(fp, "utf8"));
   }
-  const jsonContent = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  payload[file] = jsonContent;
-  console.log('[SSOT] Embedded', file);
-});
+}
 
-const header = '/* AUTO-GENERATED — DO NOT EDIT. Run: node scripts/generate_config_embedded.js */\n';
 const body =
-  '(function (g) {\n' +
-  '  g.BIBLE100_EMBEDDED_CONFIG = ' +
-  JSON.stringify(payload, null, 0) +
-  ';\n' +
+  "/* AUTO-GENERATED — DO NOT EDIT. Run: node scripts/generate_config_embedded.js */\n" +
+  "(function (g) {\n" +
+  "  g.BIBLE100_EMBEDDED_CONFIG = " +
+  JSON.stringify(embedded) +
+  ";\n" +
   "})(typeof window !== 'undefined' ? window : this);\n";
 
-fs.writeFileSync(outputFile, header + body, 'utf8');
-console.log('[SSOT] Wrote', outputFile, '—', Object.keys(payload).length, 'config files synchronized.');
+fs.writeFileSync(OUT, body, "utf8");
+console.log("Wrote", OUT);

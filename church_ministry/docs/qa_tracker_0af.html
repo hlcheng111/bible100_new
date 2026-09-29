@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+  <title>教會事工 · 0–F 一鍵查驗</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #fff;
+      --ink: #1e293b;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --accent: #4338ca;
+      --warn-bg: #fef3c7;
+      --warn-bd: #f59e0b;
+      --ok-bg: #ecfdf5;
+      --ok-bd: #10b981;
+      --prio: #fff7ed;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft JhengHei", "Segoe UI", sans-serif;
+      font-size: 13px;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.45;
+    }
+    .sticky {
+      position: sticky; top: 0; z-index: 20;
+      background: #312e81; color: #fff;
+      padding: 8px 10px;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      border-bottom: 3px solid #818cf8;
+    }
+    .sticky h1 { margin: 0; font-size: 14px; font-weight: 700; flex: 1 1 auto; }
+    .sticky a, .sticky button {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      font-size: 11px; text-decoration: none; color: #fff;
+      background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35);
+      cursor: pointer; font-family: inherit;
+    }
+    .sticky a:hover, .sticky button:hover { background: rgba(255,255,255,0.32); }
+    .wrap { padding: 10px; max-width: 960px; margin: 0 auto; }
+    .notice {
+      background: var(--warn-bg); border: 2px solid var(--warn-bd);
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;
+    }
+    .notice.ok { background: var(--ok-bg); border-color: var(--ok-bd); }
+    .notice h2 { margin: 0 0 8px; font-size: 15px; }
+    .notice ul { margin: 6px 0 0; padding-left: 1.2em; }
+    .notice li { margin: 4px 0; }
+    .notice code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 11px; word-break: break-all;
+    }
+    .notice a { color: #1d4ed8; font-weight: 600; }
+    .md-note {
+      background: #f1f5f9; border: 1px dashed #94a3b8;
+      border-radius: 8px; padding: 8px 10px; margin-bottom: 12px;
+      color: var(--muted); font-size: 12px;
+    }
+    .filter {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center;
+    }
+    .filter input {
+      flex: 1 1 160px; min-width: 120px; padding: 6px 8px;
+      border: 1px solid var(--line); border-radius: 6px; font-size: 12px;
+    }
+    .filter label { font-size: 11px; color: var(--muted); }
+    section { margin-bottom: 14px; }
+    section h3 {
+      margin: 0 0 6px; font-size: 13px; color: var(--accent);
+      border-bottom: 1px solid var(--line); padding-bottom: 4px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; background: var(--card);
+      border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+    }
+    th, td {
+      padding: 6px 8px; text-align: left; vertical-align: top;
+      border-bottom: 1px solid var(--line); font-size: 12px;
+    }
+    th { background: #eef2ff; font-size: 11px; color: #3730a3; }
+    tr.prio { background: var(--prio); }
+    tr:last-child td { border-bottom: none; }
+    .id { font-weight: 700; white-space: nowrap; }
+    .name { min-width: 5em; }
+    .path { font-family: Consolas, "Courier New", monospace; font-size: 10px; color: var(--muted); word-break: break-all; }
+    .note { color: var(--muted); font-size: 11px; }
+    .acts { white-space: nowrap; }
+    .acts a {
+      display: inline-block; margin: 2px 2px 2px 0; padding: 3px 8px;
+      border-radius: 5px; font-size: 11px; text-decoration: none;
+      border: 1px solid #c7d2fe; background: #eef2ff; color: #3730a3;
+    }
+    .acts a.single { background: #f0fdf4; border-color: #86efac; color: #166534; }
+    .acts a.disabled, .acts span.na {
+      opacity: 0.45; pointer-events: none; cursor: default;
+      border-color: #cbd5e1; background: #f8fafc; color: #94a3b8;
+      display: inline-block; margin: 2px 2px 2px 0; padding: 3px 8px;
+      border-radius: 5px; font-size: 11px;
+    }
+    @media (max-width: 520px) {
+      th:nth-child(4), td:nth-child(4) { display: none; }
+      .acts a { display: block; margin: 2px 0; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header class="sticky">
+    <h1>📋 0–F 一鍵查驗</h1>
+    <a id="btn-open-shell" href="#">打開殼</a>
+    <a id="btn-hub" href="#" target="_top">總站 Hub</a>
+  </header>
+
+  <div class="wrap">
+    <div id="originNotice" class="notice" role="status">
+      <h2>⚠ 請用 HTTP 打開本頁（不要用 file://）</h2>
+      <ul>
+        <li>正確入口：<a id="selfLink" href="http://127.0.0.1:8080/church_ministry/docs/qa_tracker_0af.html"><code>http://127.0.0.1:8080/church_ministry/docs/qa_tracker_0af.html</code></a></li>
+        <li><strong>雙欄</strong>＝開教會事工殼，並把右欄設為該頁（<code>?content=…</code>）</li>
+        <li><strong>單頁</strong>＝直接開功能頁（無側欄）</li>
+        <li>Chrome 與 Cursor Simple Browser 皆可；先在站根啟動本機 HTTP（常見埠 8080）</li>
+      </ul>
+    </div>
+
+    <p class="md-note">
+      對照文件（純文字參考，md 在編輯器／file:// 下通常無法一鍵導航）：
+      <span class="mono">church_ministry/docs/QA_TRACKER_0AF_P0.md</span>
+      · SSOT：
+      <span class="mono">church_ministry/docs/PAGE_MATURITY_INVENTORY_0AF.md</span>
+    </p>
+
+    <div class="filter">
+      <label for="q">篩選</label>
+      <input type="search" id="q" placeholder="編號／頁名／路徑…" autocomplete="off">
+      <label><input type="checkbox" id="prioOnly"> 只看優先抽樣</label>
+    </div>
+
+    <div id="sections"></div>
+  </div>
+
+  <script>
+(function () {
+  "use strict";
+
+  var DEFAULT_ORIGIN = "http://127.0.0.1:8080";
+
+  /** @type {{id:string,name:string,path:string,note?:string,section:string,prio?:boolean}[]} */
+  var PAGES = [
+    /* —— 殼／側欄 —— */
+    { id: "CM-INDEX", name: "教會事工 Standalone 殼", path: "church_ministry/index.html", note: "雙欄殼本身", section: "殼／側欄", prio: true },
+    { id: "CM-SB-LAYOUT", name: "教會佈局側欄 V1", path: "church_ministry/sidebar_church_layout_v1.html", note: "查驗主側欄", section: "殼／側欄" },
+    { id: "CM-DASH-LAYOUT", name: "佈局儀表板（預設右欄）", path: "church_ministry/dashboard_church_layout_v1.html", note: "殼預設 content", section: "殼／側欄" },
+    { id: "HUB-INDEX", name: "總站 index_v5", path: "index_v5.html", note: "聯邦入口", section: "殼／側欄", prio: true },
+    { id: "CM-SB-CRM", name: "CRM 旅程側欄", path: "church_ministry/sidebar_crm_journey.html", note: "", section: "殼／側欄" },
+    { id: "CM-SB-WORSHIP", name: "敬拜旅程側欄", path: "church_ministry/sidebar_worship_journey.html", note: "", section: "殼／側欄" },
+    { id: "CM-SB-C", name: "C 教育側欄", path: "church_ministry/sidebar_c_education_journey.html", note: "主日學／跨模換欄", section: "殼／側欄" },
+
+    /* —— 0 · CRM —— */
+    { id: "0-00", name: "導覽說明", path: "help/site-navigation-guide.html", note: "跨模 help", section: "0 · CRM" },
+    { id: "0-01", name: "會友主檔", path: "church_ministry/modules/members/member-integrated.html", note: "亂碼已修", section: "0 · CRM", prio: true },
+    { id: "0-02", name: "探訪工作桌", path: "church_ministry/modules/support/visitation_index.html", note: "亂碼已修", section: "0 · CRM", prio: true },
+    { id: "0-03", name: "義工排班", path: "church_ministry/tools/volunteer_shift/index.html", note: "主入口", section: "0 · CRM", prio: true },
+    { id: "0-03b", name: "義工班表 list", path: "church_ministry/tools/volunteer_shift/list.html", note: "亂碼已修", section: "0 · CRM" },
+    { id: "0-04", name: "教會規劃 OS", path: "church_planning/index_plan.html", note: "跨模", section: "0 · CRM" },
+    { id: "0-05", name: "健康診斷中心", path: "church_planning/assessment-os-hub.html", note: "跨模", section: "0 · CRM" },
+    { id: "0-06", name: "健康雷達戰情室", path: "church_planning/cta-os-war-room.html", note: "跨模", section: "0 · CRM" },
+    { id: "0-07", name: "CRM 理念", path: "church_ministry/guide_crm_journey_hub.html?tab=intro", note: "", section: "0 · CRM" },
+    { id: "0-08", name: "我的事奉旅程", path: "church_ministry/guide_crm_journey_hub.html?tab=journey", note: "", section: "0 · CRM" },
+    { id: "0-09", name: "執事牧者視角", path: "church_ministry/guide_crm_journey_hub.html?tab=vision&role=leader", note: "", section: "0 · CRM" },
+    { id: "0-10", name: "事奉媒合", path: "church_ministry/guide_crm_journey_hub.html?tab=matchmaker", note: "", section: "0 · CRM" },
+    { id: "0-11", name: "30 分鐘試玩", path: "church_ministry/guide_crm_trial_30min.html", note: "", section: "0 · CRM" },
+    { id: "0-16", name: "志工體系／崗位", path: "church_ministry/modules/volunteer/volunteer-integrated.html", note: "= E-02；亂碼已修", section: "0 · CRM", prio: true },
+
+    /* —— A · 敬拜 —— */
+    { id: "A-01", name: "公園導覽", path: "church_ministry/_landing/worship.html", note: "", section: "A · 敬拜" },
+    { id: "A-02", name: "會眾築壇", path: "church_ministry/modules/worship/worship-together.html", note: "", section: "A · 敬拜" },
+    { id: "A-03", name: "同工·今日祭壇", path: "church_ministry/modules/worship/worship-integrated.html?view=volunteer", note: "", section: "A · 敬拜" },
+    { id: "A-04", name: "部長·主日策劃", path: "church_ministry/modules/worship/worship-integrated.html?view=leader#plan", note: "主桌", section: "A · 敬拜", prio: true },
+    { id: "A-05", name: "講壇事奉", path: "church_ministry/modules/worship/pulpit-ministry.html", note: "", section: "A · 敬拜" },
+    { id: "A-06", name: "講道筆記", path: "church_ministry/modules/worship/sermon-notes-admin.html", note: "", section: "A · 敬拜" },
+    { id: "A-07", name: "招待事奉", path: "church_ministry/modules/worship/hospitality.html", note: "", section: "A · 敬拜" },
+    { id: "A-08", name: "敬拜完整系統", path: "church_ministry/modules/worship/worship-integrated.html", note: "合併→A-04", section: "A · 敬拜" },
+    { id: "A-09", name: "敬拜團隊", path: "church_ministry/modules/worship/worship-team-management.html", note: "", section: "A · 敬拜" },
+    { id: "A-10", name: "詩班", path: "church_ministry/modules/worship/choir-team.html", note: "", section: "A · 敬拜" },
+    { id: "A-11", name: "器樂", path: "church_ministry/modules/worship/instrument-team.html", note: "", section: "A · 敬拜" },
+    { id: "A-12", name: "會眾詩歌", path: "church_ministry/modules/worship/congregational-songs.html", note: "", section: "A · 敬拜" },
+    { id: "A-13", name: "樂譜", path: "church_ministry/modules/worship/sheet-music.html", note: "", section: "A · 敬拜" },
+    { id: "A-14", name: "詩歌庫", path: "church_ministry/modules/worship/song-library.html", note: "", section: "A · 敬拜" },
+    { id: "A-15", name: "崇拜禮儀", path: "church_ministry/modules/worship/worship-management.html", note: "", section: "A · 敬拜" },
+    { id: "A-16", name: "崇拜統計", path: "church_ministry/modules/worship/worship-reports.html", note: "側欄→主日一桌", section: "A · 敬拜" },
+    { id: "A-17", name: "崇拜出席", path: "church_ministry/modules/worship/attendance-management.html", note: "側欄→主日一桌", section: "A · 敬拜" },
+    { id: "A-16/17壳", name: "主日一桌", path: "church_ministry/modules/worship/worship-sunday-desk.html", note: "點名／缺席／數字", section: "A · 敬拜", prio: true },
+    { id: "A-18", name: "音響團隊", path: "church_ministry/modules/media/audio-team.html", note: "", section: "A · 敬拜" },
+    { id: "A-19", name: "視頻直播", path: "church_ministry/modules/media/live-streaming.html", note: "", section: "A · 敬拜" },
+
+    /* —— B · 牧養 —— */
+    { id: "B-02", name: "牧羊導覽", path: "church_ministry/_landing/fellowship.html", note: "", section: "B · 牧養" },
+    { id: "B-03", name: "團契總覽", path: "church_ministry/modules/fellowship/index.html", note: "", section: "B · 牧養" },
+    { id: "B-04", name: "小組工作桌", path: "church_ministry/modules/fellowship/small-groups-integrated.html", note: "亂碼已修", section: "B · 牧養", prio: true },
+    { id: "B-05", name: "組織與名冊", path: "church_ministry/modules/fellowship/pastoral-org-roster.html", note: "", section: "B · 牧養" },
+    { id: "B-06", name: "聚會出席", path: "church_ministry/modules/fellowship/pastoral-attendance.html", note: "", section: "B · 牧養" },
+    { id: "B-07", name: "活動通告", path: "church_ministry/modules/fellowship/pastoral-events.html", note: "", section: "B · 牧養" },
+    { id: "B-08", name: "門徒訓練", path: "church_ministry/modules/fellowship/pastoral-training.html", note: "", section: "B · 牧養" },
+    { id: "B-09", name: "牧養戰略桌", path: "church_ministry/modules/fellowship/pastoral-strategy.html", note: "", section: "B · 牧養" },
+    { id: "B-10", name: "團契的圈", path: "church_ministry/modules/fellowship/fellowship-circles.html", note: "", section: "B · 牧養" },
+    { id: "B-12", name: "青年團契", path: "church_ministry/modules/development/youth-ministry-dev.html", note: "", section: "B · 牧養" },
+
+    /* —— C · 教育 —— */
+    { id: "C-01", name: "主日學工作桌", path: "church_ministry/modules/education/education-integrated.html", note: "五 Tab", section: "C · 教育", prio: true },
+    { id: "C-02", name: "聖經研讀", path: "bible_study/dashboard.html?lang=CN", note: "跨模", section: "C · 教育" },
+    { id: "C-03", name: "學校管理", path: "school_management/dashboard.html", note: "跨模", section: "C · 教育" },
+    { id: "C-04", name: "門訓動力站", path: "church_ministry/modules/development/discipleship-training.html", note: "", section: "C · 教育" },
+    { id: "C-05", name: "AI 工具", path: "ai_tools/dashboard.html", note: "跨模", section: "C · 教育" },
+
+    /* —— D · 外展 —— */
+    { id: "D-01", name: "外展需求真鏈", path: "church_ministry/modules/expansion/outreach-strategy.html", note: "亂碼已修", section: "D · 外展", prio: true },
+    { id: "D-02", name: "社區需求調研", path: "church_ministry/modules/expansion/community-assessment.html", note: "", section: "D · 外展" },
+    { id: "D-03", name: "宣教機會", path: "church_ministry/modules/expansion/mission-opportunities.html", note: "", section: "D · 外展" },
+    { id: "D-04", name: "新事工規劃", path: "church_ministry/modules/expansion/new-ministry-planning.html", note: "", section: "D · 外展" },
+    { id: "D-06", name: "植堂計劃", path: "church_ministry/modules/expansion/church-planting.html", note: "", section: "D · 外展" },
+    { id: "D-07", name: "分堂管理", path: "church_ministry/modules/expansion/branch-management.html", note: "", section: "D · 外展" },
+    { id: "D-08", name: "宣教拓展", path: "church_ministry/modules/expansion/mission-expansion.html", note: "", section: "D · 外展" },
+    { id: "D-09", name: "跨文化", path: "church_ministry/modules/expansion/cross-cultural.html", note: "", section: "D · 外展" },
+    { id: "D-10", name: "新媒體", path: "church_ministry/modules/innovation/new-media.html", note: "", section: "D · 外展" },
+    { id: "D-11", name: "創新項目", path: "church_ministry/modules/innovation/innovation-projects.html", note: "", section: "D · 外展" },
+    { id: "D-12", name: "科技應用", path: "church_ministry/modules/innovation/technology-integration.html", note: "", section: "D · 外展" },
+
+    /* —— E · 社會服務 —— */
+    { id: "E-03", name: "會眾／社區學苑", path: "church_ministry/congregation/index.html", note: "", section: "E · 社會服務", prio: true },
+
+    /* —— F · 行政支援 —— */
+    { id: "F-01", name: "戰情儀表板", path: "church_ministry/dashboard.html", note: "", section: "F · 行政支援", prio: true },
+    { id: "F-02", name: "人員總覽", path: "church_ministry/people/people_list.html", note: "合併→0-01", section: "F · 行政支援" },
+    { id: "F-04", name: "財務事工", path: "church_ministry/modules/finance/finance-integrated.html", note: "亂碼已修", section: "F · 行政支援", prio: true },
+    { id: "F-05", name: "財務管理（舊）", path: "church_ministry/modules/administration/financial-management.html", note: "合併→F-04", section: "F · 行政支援" },
+    { id: "F-06", name: "設備", path: "church_ministry/modules/equipment/equipment-management.html", note: "", section: "F · 行政支援" },
+    { id: "F-07", name: "圖書", path: "church_ministry/modules/library/library-management.html", note: "", section: "F · 行政支援" },
+    { id: "F-08", name: "社群捐款人", path: "church_ministry/community-overview.html", note: "", section: "F · 行政支援" },
+    { id: "F-09", name: "研究索引", path: "church_ministry/modules/research/index.html", note: "", section: "F · 行政支援" },
+    { id: "F-10", name: "會眾統計", path: "church_ministry/modules/research/member-statistics.html", note: "", section: "F · 行政支援" },
+    { id: "F-11", name: "事工成效", path: "church_ministry/modules/research/ministry-performance.html", note: "", section: "F · 行政支援" },
+    { id: "F-12", name: "增長趨勢", path: "church_ministry/modules/research/growth-trends.html", note: "", section: "F · 行政支援" },
+    { id: "F-13", name: "參與度", path: "church_ministry/modules/research/engagement-analysis.html", note: "", section: "F · 行政支援" },
+    { id: "F-14", name: "影片製作", path: "church_ministry/modules/media/video-production.html", note: "", section: "F · 行政支援" },
+    { id: "F-15", name: "AI 助手", path: "church_ministry/modules/tech/ai-assistant.html", note: "", section: "F · 行政支援" },
+    { id: "F-16", name: "數位事工", path: "church_ministry/modules/tech/smart-recommendation.html", note: "", section: "F · 行政支援" },
+    { id: "F-17", name: "數位化轉型", path: "church_ministry/modules/innovation/digital-transformation.html", note: "", section: "F · 行政支援" },
+    { id: "F-18", name: "智能提醒", path: "church_ministry/modules/support/smart-reminders.html", note: "", section: "F · 行政支援" },
+    { id: "F-19", name: "Workflow", path: "church_ministry/modules/support/workflow.html", note: "", section: "F · 行政支援" },
+    { id: "F-20", name: "主題設定", path: "church_ministry/theme-settings.html", note: "", section: "F · 行政支援" },
+    { id: "F-21", name: "自訂頁編輯", path: "church_ministry/custom-page-editor.html", note: "", section: "F · 行政支援" },
+    { id: "F-22", name: "新技術應用", path: "church_ministry/modules/innovation/technology-apps.html", note: "", section: "F · 行政支援" },
+    { id: "F-23", name: "智能工具開發", path: "church_ministry/modules/innovation/smart-tools-dev.html", note: "", section: "F · 行政支援" },
+    { id: "F-24", name: "最佳實踐", path: "church_ministry/modules/innovation/best-practices.html", note: "", section: "F · 行政支援" },
+    { id: "F-25", name: "技術支援", path: "church_ministry/modules/support/technical-support.html", note: "", section: "F · 行政支援" },
+    { id: "F-26", name: "幫助文檔", path: "church_ministry/modules/support/help-documentation.html", note: "", section: "F · 行政支援" },
+    { id: "F-27", name: "願景藍圖", path: "church_ministry/vision_and_plan.html", note: "", section: "F · 行政支援" },
+    { id: "F-28", name: "路線圖", path: "church_ministry/roadmap-overview.html", note: "", section: "F · 行政支援" },
+    { id: "F-29", name: "事工總覽", path: "church_ministry/ministry_core.html", note: "", section: "F · 行政支援" },
+    { id: "F-30", name: "AI 合規", path: "church_ministry/ai-and-compliance.html", note: "", section: "F · 行政支援" }
+  ];
+
+  function detectOrigin() {
+    var proto = (location.protocol || "").toLowerCase();
+    if (proto === "http:" || proto === "https:") {
+      return { origin: location.origin, ok: true };
+    }
+    return { origin: DEFAULT_ORIGIN, ok: false };
+  }
+
+  function isInsideCm(path) {
+    return String(path || "").indexOf("church_ministry/") === 0;
+  }
+
+  function contentRel(path) {
+    var p = String(path || "");
+    if (p.indexOf("church_ministry/") === 0) p = p.slice("church_ministry/".length);
+    return p;
+  }
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  var det = detectOrigin();
+  var origin = det.origin.replace(/\/$/, "");
+
+  var notice = document.getElementById("originNotice");
+  var selfHref = origin + "/church_ministry/docs/qa_tracker_0af.html";
+  document.getElementById("selfLink").href = selfHref;
+  document.getElementById("selfLink").innerHTML = "<code>" + esc(selfHref) + "</code>";
+
+  document.getElementById("btn-open-shell").href = origin + "/church_ministry/index.html";
+  document.getElementById("btn-hub").href = origin + "/index_v5.html";
+
+  if (det.ok) {
+    notice.className = "notice ok";
+    notice.querySelector("h2").textContent = "✓ 目前以 HTTP(S) 開啟 · ORIGIN = " + origin;
+  } else {
+    notice.className = "notice";
+    notice.querySelector("h2").textContent = "⚠ 偵測到非 HTTP（file:// 或未知）— 連結已改為預設 " + DEFAULT_ORIGIN;
+    var extra = document.createElement("li");
+    extra.innerHTML = "請改開：<a href=\"" + esc(selfHref) + "\"><code>" + esc(selfHref) + "</code></a>";
+    notice.querySelector("ul").appendChild(extra);
+  }
+
+  function dualUrl(path) {
+    if (!isInsideCm(path)) return null;
+    if (path === "church_ministry/index.html") {
+      return origin + "/church_ministry/index.html";
+    }
+    var rel = contentRel(path);
+    return origin + "/church_ministry/index.html?content=" + encodeURIComponent(rel);
+  }
+
+  function singleUrl(path) {
+    return origin + "/" + String(path || "").replace(/^\//, "");
+  }
+
+  function rowHtml(p) {
+    var dual = dualUrl(p.path);
+    var single = singleUrl(p.path);
+    var acts;
+    if (p.id === "CM-INDEX") {
+      acts =
+        '<a href="' + esc(single) + '" target="_blank" rel="noopener">雙欄殼</a>' +
+        '<span class="na" title="殼本身即雙欄">單頁 N/A</span>';
+    } else if (dual) {
+      acts =
+        '<a href="' + esc(dual) + '" target="_blank" rel="noopener">雙欄</a>' +
+        '<a class="single" href="' + esc(single) + '" target="_blank" rel="noopener">單頁</a>';
+    } else {
+      acts =
+        '<span class="na" title="跨模／站外：僅單頁">雙欄 N/A</span>' +
+        '<a class="single" href="' + esc(single) + '" target="_blank" rel="noopener">單頁</a>';
+    }
+    return (
+      '<tr class="' + (p.prio ? "prio" : "") + '" data-q="' + esc((p.id + " " + p.name + " " + p.path + " " + (p.note || "")).toLowerCase()) + '"' +
+      (p.prio ? ' data-prio="1"' : "") + ">" +
+      '<td class="id">' + esc(p.id) + "</td>" +
+      '<td class="name">' + esc(p.name) + "</td>" +
+      '<td class="acts">' + acts + "</td>" +
+      '<td><div class="path">' + esc(p.path) + "</div>" +
+      (p.note ? '<div class="note">' + esc(p.note) + "</div>" : "") +
+      "</td></tr>"
+    );
+  }
+
+  function render() {
+    var q = (document.getElementById("q").value || "").trim().toLowerCase();
+    var prioOnly = document.getElementById("prioOnly").checked;
+    var order = [];
+    var seen = {};
+    PAGES.forEach(function (p) {
+      if (!seen[p.section]) {
+        seen[p.section] = true;
+        order.push(p.section);
+      }
+    });
+    var html = "";
+    order.forEach(function (sec) {
+      var rows = PAGES.filter(function (p) {
+        if (p.section !== sec) return false;
+        if (prioOnly && !p.prio) return false;
+        if (q) {
+          var hay = (p.id + " " + p.name + " " + p.path + " " + (p.note || "")).toLowerCase();
+          if (hay.indexOf(q) < 0) return false;
+        }
+        return true;
+      });
+      if (!rows.length) return;
+      html +=
+        "<section><h3>" +
+        esc(sec) +
+        "（" +
+        rows.length +
+        "）</h3><table><thead><tr><th>編號</th><th>頁名</th><th>開啟</th><th>路徑／備註</th></tr></thead><tbody>" +
+        rows.map(rowHtml).join("") +
+        "</tbody></table></section>";
+    });
+    document.getElementById("sections").innerHTML =
+      html || '<p class="md-note">無符合條件的列。</p>';
+  }
+
+  document.getElementById("q").addEventListener("input", render);
+  document.getElementById("prioOnly").addEventListener("change", render);
+  render();
+})();
+  </script>
+</body>
+</html>

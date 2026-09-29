@@ -304,7 +304,7 @@
   var HUB = {
     assessment: "assessment-os-hub.html",
     strategy: "guides/guide_step5_strategy.html",
-    matchmaker: "church_ministry/guide_crm_journey_hub.html?tab=matchmaker",
+    matchmaker: "church_planning/ministry-position-matchmaker.html",
     dashboard: "dashboard.html"
   };
 
@@ -814,7 +814,7 @@
           " · Tab ④ 預填包待審核（" +
           (prefill.mode === "job_seek_talent" ? "工找人" : "人找工") +
           "）",
-        href: HUB.matchmaker + "&mode=" + encodeURIComponent(prefill.mode || "talent_seek_job") + "&dept=" + encodeURIComponent(prefill.suggested_dept || "")
+        href: HUB.matchmaker + "?mode=" + encodeURIComponent(prefill.mode || "talent_seek_job") + "&dept=" + encodeURIComponent(prefill.suggested_dept || "")
       });
     }
     if (global.AssessmentRunStore && AssessmentRunStore.loadLatest && AssessmentRunStore.listPeerRuns) {
@@ -1021,6 +1021,26 @@
 
     var coverageHtml = buildCoverageBlock(state);
     var weakFixHtml = hasData ? renderWeakDimFixes(weak, state.composite) : "";
+    var recommendHtml = "";
+    if (global.PlanningRecommendEngine && typeof PlanningRecommendEngine.getRecommendation === "function") {
+      var rec = PlanningRecommendEngine.getRecommendation();
+      if (rec && rec.primary) {
+        recommendHtml =
+          '<div class="pp-recommend-banner" style="margin:0 0 1rem;">' +
+          "<h3>🎯 系統建議下一個工具</h3>" +
+          "<p>" +
+          rec.primary.reason +
+          "</p>" +
+          '<p class="pp-recommend-actions">' +
+          '<a href="#" class="wr-btn wr-btn-primary" onclick="return planningOpenByToolId(event,' +
+          JSON.stringify(rec.primary.toolId) +
+          ');">→ ' +
+          rec.primary.label +
+          "</a> " +
+          '<a href="#" class="wr-btn" onclick="return planningOpenContent(event,\'assessment-os-hub.html\');">📋 健康診斷中心</a>' +
+          "</p></div>";
+      }
+    }
 
     var riskEmptyCopy =
       '<li class="wr-empty-warm">' +
@@ -1080,7 +1100,19 @@
         navLink("健康診斷中心", "content", HUB.assessment) +
         " 填寫量表，回到此頁按「掃描本機各工具分數」。";
 
+    var emptyCta = !hasData
+      ? '<div class="wr-empty-cta">' +
+        "<p><strong>尚未有量表資料</strong> · 請先完成至少一份健康快評，再回來按「掃描」。</p>" +
+        '<a class="wr-btn wr-btn-primary" href="Church_Governance_spiritual_health.html" onclick="return planningOpenByToolId(event,' +
+        JSON.stringify("spiritual") +
+        ');">👉 先去填 13 題靈命快評</a> ' +
+        '<a class="wr-btn" href="index_plan.html" onclick="return planningOpenContent(event,' +
+        JSON.stringify("index_plan.html") +
+        ');">🏠 回起步指南</a></div>'
+      : "";
+
     root.innerHTML =
+      emptyCta +
       '<section class="wr-section">' +
       '<div class="wr-layman-hero">' +
       "<p><strong>這頁是什麼？</strong>長執會與牧長的<strong>戰略決策桌</strong>——不是給會友填表的頁面。目的：把前面各份問卷簡化成<strong>六大健康指標</strong>，開會時大家看同一張圖，少憑感覺爭吵，多對準破口。</p>" +
@@ -1092,6 +1124,7 @@
       "</p>" +
       '<p class="wr-hitl">⚠️ 本戰情室是「煙霧探測器」：供禱告、對話與議程排序。不作人事考核、績效排名或自動派工；敏感分辨須回到牧者一對一陪伴。開放題心聲<strong>不會</strong>進入戰情室，只留本機一對一報告。</p>' +
       renderStorageFaq() +
+      recommendHtml +
       "</div>" +
       renderEpochPlaceholder() +
       '<div class="wr-actions">' +
@@ -1177,6 +1210,9 @@
     if (scanBtn) {
       scanBtn.addEventListener("click", function () {
         var synced = Bridge.scanAllToolsFromStorage();
+        if (global.PlanningPhaseGate && typeof PlanningPhaseGate.markWarRoomScanned === "function") {
+          PlanningPhaseGate.markWarRoomScanned();
+        }
         scanBtn.textContent = "已掃描 " + synced.length + " 個工具，重新載入…";
         mountWarRoom(root);
       });

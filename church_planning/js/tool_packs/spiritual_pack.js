@@ -19,19 +19,19 @@
   };
 
   var QUESTIONS = [
-    { id: "q1", dim: "reading_devotion", section: "一、讀經與靈修生活", label: "每日固定安靜時光讀經親近神？" },
-    { id: "q2", dim: "reading_devotion", section: null, label: "讀經能明白真理，願意默想消化？" },
-    { id: "q3", dim: "reading_devotion", section: null, label: "能將聖經話語實行在日常生活？" },
-    { id: "q4", dim: "prayer", section: "二、禱告與親近神關係", label: "每日個人禱告、親近神？" },
-    { id: "q5", dim: "prayer", section: null, label: "憂慮、軟弱、難處懂得禱告交托？" },
-    { id: "q6", dim: "prayer", section: null, label: "懂得讚美感恩，不住禱告？" },
-    { id: "q7", dim: "church_life", section: "三、教會聚會與肢體事奉", label: "穩定主日聚會，不輕易缺席？" },
-    { id: "q8", dim: "church_life", section: null, label: "願意參與教會服侍、關顧弟兄姊妹？" },
-    { id: "q9", dim: "church_life", section: null, label: "對教會有委身，願意一起建造？" },
-    { id: "q10", dim: "character", section: "四、生命品格與肢體相處", label: "能忍耐、包容、彼此相愛？" },
-    { id: "q11", dim: "character", section: null, label: "願意饒恕人，少發脾氣少爭執？" },
-    { id: "q12", dim: "gospel_giving", section: "五、福音負擔與金錢奉獻", label: "有心見證主，關心未信家人朋友？" },
-    { id: "q13", dim: "gospel_giving", section: null, label: "忠心十一奉獻，看重屬靈財寶？" }
+    { id: "q1", dim: "reading_devotion", section: "一、讀經與靈修生活", label: "這一週裡，我有至少 3 天留 10 分鐘以上安靜讀經或聽道？" },
+    { id: "q2", dim: "reading_devotion", section: null, label: "讀經或聽道後，我會用一兩句話記下或向人分享我領受到的？" },
+    { id: "q3", dim: "reading_devotion", section: null, label: "最近一兩週，我有因某段經文而調整一個具體行為（例如說話、用錢、待人）？" },
+    { id: "q4", dim: "prayer", section: "二、禱告與親近神關係", label: "這一週裡，我有至少 3 天有開口向神說話（不限長短）？" },
+    { id: "q5", dim: "prayer", section: null, label: "遇到憂慮或難處時，我會先向神訴說，而不是只自己硬撐或發洩？" },
+    { id: "q6", dim: "prayer", section: null, label: "這一週裡，我有因具體的事向神說過「謝謝」或讚美？" },
+    { id: "q7", dim: "church_life", section: "三、教會聚會與肢體事奉", label: "過去一個月，我主日聚會出席穩定（除生病、出差等不得已）？" },
+    { id: "q8", dim: "church_life", section: null, label: "這一個月內，我有實際關心或服事至少一位弟兄姊妹（問候、代禱、幫手都算）？" },
+    { id: "q9", dim: "church_life", section: null, label: "若教會有合理需要（例如聚會、事工），我願意配合調整時間參與？" },
+    { id: "q10", dim: "character", section: "四、生命品格與肢體相處", label: "與家人或教會肢體相處時，我能在被觸怒後仍選擇語氣溫和、不報復？" },
+    { id: "q11", dim: "character", section: null, label: "最近若有人得罪我，我有嘗試饒恕或至少不當面翻舊帳？" },
+    { id: "q12", dim: "gospel_giving", section: "五、福音負擔與金錢奉獻", label: "這一個月內，我有主動關心或向一位未信者分享信仰（哪怕只是一句見證）？" },
+    { id: "q13", dim: "gospel_giving", section: null, label: "對於金錢奉獻，我按自己能力有規律地參與（不必與他人比較；僅供私人自覺）？" }
   ];
 
   var QUESTION_MAP = {
@@ -188,7 +188,7 @@
     return flags;
   }
 
-  function buildCoaching(dimScores, overall, flags) {
+  function findWeakestDim(dimScores) {
     var weakest = null;
     var weakestScore = 99;
     Object.keys(dimScores).forEach(function (dim) {
@@ -197,10 +197,35 @@
         weakest = dim;
       }
     });
+    return { dim: weakest, score: weakestScore };
+  }
+
+  function buildMicroStep(dimScores, overall, flags) {
+    var w = findWeakestDim(dimScores);
+    var steps = {
+      reading_devotion: "本週選定一個固定時段（例如起床後 10 分鐘），只讀一章或一段經文並寫下一句領受。",
+      prayer: "本週每天選同一個小時段，對神說出一件憂慮或一件感恩（各一句即可）。",
+      church_life: "本週主日或聚會後，主動問一位肢體「近況如何」並為對方代禱一句。",
+      character: "本週若被觸怒一次，先離開 5 分鐘再回應，避免當場爭辯。",
+      gospel_giving: "本週為一位未信者做一件具體關心（問候、陪餐、代禱），不必強迫傳福音。"
+    };
+    if (flags.indexOf("INNER_LIFE_LOW") >= 0) {
+      return "本週只做兩件事：每天 5 分鐘短讀＋短禱，並出席一次主日聚會。";
+    }
+    if (overall != null && levelFromScore(overall) === "green") {
+      return "本週維持節奏，並主動陪伴一位初信者或軟弱的肢體（一次問候或代禱即可）。";
+    }
+    return steps[w.dim] || steps.reading_devotion;
+  }
+
+  function buildCoaching(dimScores, overall, flags) {
+    var w = findWeakestDim(dimScores);
+    var weakest = w.dim;
+    var micro_step = buildMicroStep(dimScores, overall, flags);
     var growth =
       overall != null && levelFromScore(overall) === "green"
         ? "整體大致良好：請維持節奏，並考慮陪伴一位初信者或軟弱的肢體。"
-        : "建議先選 1～2 個範疇（優先「" + (DIM_LABELS[weakest] || "靈修") + "」）訂下未來 3 個月可守住的小步驟。";
+        : "建議先聚焦「" + (DIM_LABELS[weakest] || "靈修") + "」，本週只守一個可檢核的小步（見報告「本週一小步」）。";
     var collab =
       flags.indexOf("DIM_CRITICAL") >= 0
         ? "有範疇需特別關注：請主動與牧者或小組長約 30 分鐘，不要獨自硬扛。"
@@ -213,6 +238,7 @@
           : "若長期抑鬱、無助或安全受威脅，請尋求專業協助與緊急支援。";
     return {
       growth: growth,
+      micro_step: micro_step,
       collaboration: collab,
       redflag: redflag,
       peer_questions: [

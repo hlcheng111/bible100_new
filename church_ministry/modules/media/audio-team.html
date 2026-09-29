@@ -45,7 +45,7 @@
         .status-broken { background: #f8d7da; color: #721c24; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; }
     </style>
 </head>
-<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a">
+<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a">
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
     <div class="header">
         <h1>🎚️ 音响团队管理系统</h1>
@@ -93,7 +93,8 @@
             <div class="card">
                 <div class="card-title">👥 音响同工管理</div>
                 <button class="btn btn-primary" onclick="showAddMemberModal()">➕ 新增同工</button>
-                <button class="btn btn-success" onclick="exportMembers()">📤 导出名单</button>
+                <button class="btn btn-success" onclick="exportMembers()" data-w5-report="audio-members-csv">📤 导出名单</button>
+                <button class="btn btn-secondary" type="button" onclick="printAudioRoster()" data-w5-report="audio-print">🖨 列印名冊</button>
                 <table id="membersTable">
                     <thead>
                         <tr>
@@ -116,7 +117,7 @@
             <div class="card">
                 <div class="card-title">🎛️ 设备清单管理</div>
                 <button class="btn btn-primary" onclick="showAddEquipmentModal()">➕ 新增设备</button>
-                <button class="btn btn-success" onclick="exportEquipment()">📤 导出清单</button>
+                <button class="btn btn-success" onclick="exportEquipment()" data-w5-report="audio-equip-csv">📤 导出清单</button>
                 <div class="grid-3" style="margin-top:15px;">
                     <div style="background:#d4edda;padding:15px;border-radius:8px;text-align:center;">
                         <div style="font-size:24px;font-weight:bold;color:#155724;" id="goodCount">0</div>
@@ -689,6 +690,17 @@
             }
         }
         
+
+        function printAudioRoster() {
+            var list = (typeof data !== 'undefined' && data.members) ? data.members : (typeof members !== 'undefined' ? members : []);
+            var headers = ['姓名','崗位','電話','備註'];
+            var rows = (list || []).map(function (m) {
+                return [m.name, m.role || m.position, m.phone, m.note || ''];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('音響團隊名冊', headers, rows);
+            else window.print();
+        }
+
         function exportMembers() {
             const csv = '姓名,专长,技能等级,联系电话,本年服事次数,最后服事日期\n' + 
                 data.members.map(m => `${m.name},${m.specialty},${m.level},${m.phone},${m.count},${m.lastService}`).join('\n');
@@ -729,6 +741,8 @@
     </script>
 
 
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 <!-- b100-ae-worship-w1-shell -->
 <link rel="stylesheet" href="../../css/ae_worship_six_section.css" />
 <script src="../../js/church-master-database.js"></script>
@@ -755,5 +769,10 @@
 <script src="../../js/crm_context_bar.js"></script>
 <script src="../../js/ae_primary_nav.js"></script>
 <script src="../../js/ae_subpage_shell.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

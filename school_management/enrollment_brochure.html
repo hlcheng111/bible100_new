@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招生簡章</title>
+    <style>
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f6f7fb; padding: 16px; font-size: 12px; color: #333; }
+        .module-header h1 { color: #0b5fa5; font-size: 18px; margin: 0 0 6px; }
+        .module-header p { color: #666; margin: 0 0 12px; }
+        .module-card { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .module-card-title { font-weight: 600; color: #0b5fa5; margin-bottom: 8px; }
+        .module-btn { display: inline-block; padding: 8px 14px; background: #0b5fa5; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; text-decoration: none; }
+        .module-btn-secondary { background: #64748b; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .preview { border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; min-height: 400px; }
+        .preview iframe { width: 100%; min-height: 480px; border: none; }
+        textarea { width: 100%; min-height: 100px; font-size: 12px; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <div class="module-header">
+        <h1>📋 招生簡章</h1>
+        <p>依目前學期與開放課程自動生成；文案可編輯後重新整理預覽</p>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">目前學期</div>
+        <p id="semInfo" style="margin:0;font-size:13px;"></p>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">✏️ 簡章前言（HTML 可含連結）</div>
+        <p style="font-size:11px;color:#666;margin:0 0 8px;">儲存於本機 <code>school_html_editor_enrollment_brochure</code>；留空則用預設歡迎詞。</p>
+        <textarea id="introEditor" placeholder="例：歡迎報名主日學／聖經培訓課程…"></textarea>
+        <div class="toolbar" style="margin-top:8px;">
+            <button class="module-btn" id="btnSaveIntro">儲存文案</button>
+            <button class="module-btn module-btn-secondary" id="btnRefresh">重新整理預覽</button>
+            <button class="module-btn module-btn-secondary" id="btnPrint">🖨️ 列印／另存 PDF</button>
+            <a href="manage/ai_prompts_tabs.html" target="contentFrame" class="module-btn module-btn-secondary" style="text-decoration:none;display:inline-block;">✨ W8 招生 AI Prompt</a>
+            <a href="portal/index.html" target="contentFrame" class="module-btn module-btn-secondary" style="text-decoration:none;display:inline-block;">→ 學員入口報名</a>
+            <a href="manage/academic_settings.html" target="contentFrame" class="module-btn module-btn-secondary" style="text-decoration:none;display:inline-block;">📅 學年設定</a>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">👁️ 預覽</div>
+        <div class="preview"><iframe id="previewFrame" title="招生簡章預覽"></iframe></div>
+    </div>
+
+    <script src="js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const KEY = 'school_html_editor_enrollment_brochure';
+            const db = window.schoolDB;
+            if (!db) return;
+
+            function loadIntro() {
+                try {
+                    document.getElementById('introEditor').value = localStorage.getItem(KEY) || '';
+                } catch (e) {}
+            }
+
+            function saveIntro() {
+                try {
+                    localStorage.setItem(KEY, document.getElementById('introEditor').value);
+                    alert('文案已儲存');
+                } catch (e) { alert('儲存失敗'); }
+            }
+
+            function refreshPreview() {
+                const info = db.getCurrentSemesterInfo();
+                document.getElementById('semInfo').textContent =
+                    '招生學期：' + (info.semester ? info.semester.label : db.getDefaultSemester()) +
+                    (info.year ? '（' + info.year.label + '）' : '');
+                const html = db.buildEnrollmentBrochureHtml();
+                const frame = document.getElementById('previewFrame');
+                frame.srcdoc = html;
+            }
+
+            function printBrochure() {
+                const w = window.open('', '_blank');
+                if (!w) return alert('請允許彈出視窗');
+                w.document.write(db.buildEnrollmentBrochureHtml());
+                w.document.close();
+            }
+
+            document.getElementById('btnSaveIntro').onclick = function() { saveIntro(); refreshPreview(); };
+            document.getElementById('btnRefresh').onclick = refreshPreview;
+            document.getElementById('btnPrint').onclick = printBrochure;
+
+            loadIntro();
+            refreshPreview();
+        })();
+    </script>
+</body>
+</html>

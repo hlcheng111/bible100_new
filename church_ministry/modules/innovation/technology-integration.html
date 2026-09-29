@@ -10,7 +10,11 @@ table { width: 100%; border-collapse: collapse; }
 table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
 table th { background: #f8f9fa; }</style></head>
 <body>
-    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header"><h1>💻 科技应用管理</h1></div>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header"><h1>💻 科技应用管理</h1>
+<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+<button type="button" onclick="exportTechnologyIntegrationCsv()" data-w5-report="technology-integration-csv" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">⬇ CSV</button>
+<button type="button" onclick="printTechnologyIntegration()" data-w5-report="technology-integration-print" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">🖨 列印</button>
+</div></div>
 <div class="container">
     <div class="card"><h3 style="margin-bottom:15px;">📱 科技工具</h3>
         <button class="btn" onclick="add()">➕ 新增工具</button>
@@ -29,6 +33,29 @@ function render() {
     document.querySelector('#table tbody').innerHTML = tools.map(t => `<tr><td>${t.name}</td><td>${t.category}</td><td>${t.usage}%</td><td>${t.rating}分</td></tr>`).join('');
 }
 function add() { alert('功能：新增科技工具'); }
+function exportTechnologyIntegrationCsv() {
+    var U = window.CmReportUtils; if (!U) return;
+    var esc = U.csvEsc;
+    var list = tools || [];
+    if (!list.length) { try { list = JSON.parse(localStorage.getItem('techData') || '[]'); } catch (e) { list = []; } }
+    var lines = [['工具', '類別', '使用率', '評價'].map(esc).join(',')];
+    list.forEach(function (t) { lines.push([t.name, t.category, t.usage, t.rating].map(esc).join(',')); });
+    U.downloadCsv('technology_integration_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+}
+function printTechnologyIntegration() {
+    var U = window.CmReportUtils; if (!U) return;
+    var list = tools || [];
+    if (!list.length) { try { list = JSON.parse(localStorage.getItem('techData') || '[]'); } catch (e) { list = []; } }
+    var rows = list.map(function (t) { return [t.name, t.category, String(t.usage) + '%', String(t.rating)]; });
+    U.printTable('科技應用', ['工具', '類別', '使用率', '評價'], rows);
+}
 </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

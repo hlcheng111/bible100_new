@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function churchMember(churchId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/churches/$(churchId)/members/$(uid()));
+    }
+
+    function churchRole(churchId) {
+      return get(/databases/$(database)/documents/churches/$(churchId)/members/$(uid())).data.role;
+    }
+
+    function isPastor(churchId) {
+      return churchMember(churchId) && churchRole(churchId) == 'pastor';
+    }
+
+    function isLeaderOrPastor(churchId) {
+      return churchMember(churchId) && churchRole(churchId) in ['leader', 'pastor'];
+    }
+
+    // User profile — owner read/write
+    match /users/{userId} {
+      allow read: if signedIn() && (uid() == userId || isPastor(resource.data.churchId));
+      allow create: if signedIn() && uid() == userId;
+      allow update: if signedIn() && uid() == userId;
+
+      match /progress/{progressId} {
+        allow read, write: if signedIn() && uid() == userId;
+      }
+
+      match /rewards/{rewardId} {
+        allow read: if signedIn() && uid() == userId;
+        allow write: if signedIn() && uid() == userId;
+      }
+    }
+
+    // Church tenant
+    match /churches/{churchId} {
+      allow read: if churchMember(churchId);
+      allow write: if isPastor(churchId);
+
+      match /members/{memberId} {
+        allow read: if churchMember(churchId);
+        allow write: if isPastor(churchId) || (signedIn() && uid() == memberId);
+      }
+
+      match /groups/{groupId} {
+        allow read: if churchMember(churchId);
+        allow write: if isLeaderOrPastor(churchId);
+      }
+
+      match /qna/{qnaId} {
+        allow read: if churchMember(churchId)
+          && (resource.data.visibility == 'church' || resource.data.askedBy == uid() || isLeaderOrPastor(churchId));
+        allow create: if churchMember(churchId) && request.resource.data.askedBy == uid();
+        allow update: if isLeaderOrPastor(churchId);
+      }
+
+      match /featuredResources/{resId} {
+        allow read: if churchMember(churchId);
+        allow write: if isPastor(churchId);
+      }
+    }
+
+    // Group sync-reading sessions
+    match /groupSessions/{sessionId} {
+      allow read: if signedIn()
+        && churchMember(resource.data.churchId);
+      allow create: if signedIn()
+        && isLeaderOrPastor(request.resource.data.churchId);
+      allow update: if signedIn()
+        && churchMember(resource.data.churchId);
+
+      match /participants/{participantId} {
+        allow read: if signedIn() && churchMember(get(/databases/$(database)/documents/groupSessions/$(sessionId)).data.churchId);
+        allow write: if signedIn() && uid() == participantId;
+      }
+    }
+
+    // AI assets — private by default
+    match /aiAssets/{assetId} {
+      allow read: if signedIn() && (
+        resource.data.userId == uid()
+        || (resource.data.visibility == 'church' && churchMember(resource.data.churchId))
+        || (resource.data.visibility == 'group' && churchMember(resource.data.churchId))
+      );
+      allow create: if signedIn() && request.resource.data.userId == uid();
+      allow update, delete: if signedIn() && resource.data.userId == uid();
+    }
+  }
+}

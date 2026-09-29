@@ -1,17 +1,17 @@
-import { navigate } from '../router';
+import { navigate, navigateToUnit } from '../router';
+import { unitFrom30Day } from '../contract/readingUnit';
 import { getLocale } from '../stores/locale';
+import type { Locale } from '../contract/routeState';
 import { t } from '../i18n/strings';
+import { thirtyDayCardDisplay } from '../i18n/trackLocale';
+import { loadBibleCatalog, chapterRef } from '../bible/catalog';
 import { loadThirtyDay, type ThirtyDayItem } from '../tracks/trackData';
+import { mountLoadError } from '../ui/loadError';
 
 function esc(s: string) {
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
-}
-
-function dayTitle(d: ThirtyDayItem, loc: string) {
-  if (loc === 'en') return d.titleEn || d.titleZh;
-  return d.titleZh;
 }
 
 export async function renderThirtyDay(root: HTMLElement) {
@@ -32,28 +32,38 @@ export async function renderThirtyDay(root: HTMLElement) {
   const list = root.querySelector('#trackList') as HTMLElement;
   try {
     const data = await loadThirtyDay();
+    let catalog: Awaited<ReturnType<typeof loadBibleCatalog>> | null = null;
+    try {
+      catalog = await loadBibleCatalog();
+    } catch {
+      catalog = null;
+    }
+
     list.innerHTML = data.days
-      .map(
-        (d) => `
-      <button type="button" class="track-day-card" data-book="${d.bookId}" data-chapter="${d.chapter}">
-        <span class="track-day-card__n">Day ${d.day}</span>
-        <span class="track-day-card__title">${esc(dayTitle(d, loc))}</span>
-        <span class="track-day-card__ref">${d.bookId}:${d.chapter}</span>
-        ${d.hintZh ? `<span class="track-day-card__hint">${esc(d.hintZh)}</span>` : ''}
-      </button>`
-      )
+      .map((d: ThirtyDayItem) => {
+        const book = catalog?.books.find((b) => b.id === d.bookId);
+        const refLabel = book ? chapterRef(book, d.chapter, loc) : undefined;
+        const card = thirtyDayCardDisplay(d, loc, refLabel);
+        const hintHtml = card.hint
+          ? `<span class="track-day-card__hint">${esc(card.hint)}</span>`
+          : '';
+        return `
+      <button type="button" class="track-day-card" data-day="${d.day}" data-book="${d.bookId}" data-chapter="${d.chapter}">
+        <span class="track-day-card__n">${esc(card.dayLabel)}</span>
+        <span class="track-day-card__title">${esc(card.title)}</span>
+        <span class="track-day-card__ref">${esc(card.ref)}</span>
+        ${hintHtml}
+      </button>`;
+      })
       .join('');
+
     list.querySelectorAll('.track-day-card').forEach((btn) => {
       btn.addEventListener('click', () => {
-        navigate({
-          view: 'reader',
-          bookId: Number((btn as HTMLElement).dataset.book),
-          chapter: Number((btn as HTMLElement).dataset.chapter),
-          trackId: '30day',
-        });
+        const day = data.days.find((d) => d.day === Number((btn as HTMLElement).dataset.day));
+        if (day) navigateToUnit(unitFrom30Day(day));
       });
     });
-  } catch {
-    list.innerHTML = `<p class="error">${t('trackLoadFail', loc)}</p>`;
+  } catch (err) {
+    mountLoadError(list, loc, { kind: 'tracks', trackId: '30day' }, err);
   }
 }

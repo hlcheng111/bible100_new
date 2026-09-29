@@ -1,6 +1,6 @@
 /**
- * A–E primary 頁頂部導航條（回 CRM 旅程 · 本區側欄）
- * body 需 data-b100-ae-zone="a|b|c|d|e"
+ * A–E primary 頁頂部導航條（回日常工作 · 本區側欄）
+ * body 需 data-b100-ae-zone="a|b|c|d|e|f"
  */
 (function (doc, win) {
   "use strict";
@@ -39,22 +39,38 @@
       focus: "d"
     },
     e: {
+      emoji: "🤝",
+      label: "E · 社會服務",
+      role: "staff",
+      step: 3,
+      path: "tools/volunteer_shift/index.html",
+      focus: "e"
+    },
+    f: {
       emoji: "⚙️",
-      label: "E · 行政支援",
+      label: "F · 行政",
       role: "leader",
       step: 1,
       path: "dashboard.html",
-      focus: "admin"
+      focus: "f"
     }
   };
 
-  function hubUrl(role) {
-    var base = "guide_crm_journey_hub.html?tab=journey";
-    if (role === "leader") return "guide_crm_journey_hub.html?tab=vision&role=leader";
-    return base + "&role=" + encodeURIComponent(role || "staff");
+  function shouldHideInHub() {
+    if (win.B100HubEmbed && win.B100HubEmbed.shouldHideChrome) {
+      return win.B100HubEmbed.shouldHideChrome();
+    }
+    try {
+      if (win.parent && win.parent !== win && win.frameElement) {
+        var n = win.frameElement.id || win.frameElement.getAttribute("name") || "";
+        return n === "contentFrame";
+      }
+    } catch (eHub) { /* ignore */ }
+    return false;
   }
 
   function inject() {
+    if (shouldHideInHub()) return;
     var zoneId = (doc.body && doc.body.getAttribute("data-b100-ae-zone")) || "";
     var z = ZONES[zoneId];
     if (!z || doc.getElementById("ae-primary-nav-strip")) return;
@@ -63,7 +79,7 @@
     strip.id = "ae-primary-nav-strip";
     strip.className = "ae-primary-nav-strip";
     strip.setAttribute("role", "navigation");
-    strip.setAttribute("aria-label", "CRM 與本區導航");
+    strip.setAttribute("aria-label", "日常與本區導航");
 
     var prefix = doc.body.getAttribute("data-b100-ae-prefix");
     if (prefix === null || prefix === undefined) prefix = "../../";
@@ -72,10 +88,8 @@
     }
 
     var shell = typeof win.bible100ShellNav === "function";
-    var crmOnclick = shell
-      ? "return bible100ShellNav(event,{sidebarUrl:'church_ministry/sidebar_crm_journey.html',contentUrl:'church_ministry/" +
-        hubUrl(z.role) +
-        "'});"
+    var homeOnclick = shell
+      ? "return bible100ShellNav(event,{sidebarUrl:'church_ministry/sidebar_church_layout_v1.html?focus=f',contentUrl:'church_ministry/dashboard.html'});"
       : "";
     var layoutSidebar =
       z.focus === "a"
@@ -95,15 +109,13 @@
       " " +
       z.label +
       "</span>" +
-      (crmOnclick
+      (homeOnclick
         ? '<a href="#" onclick="' +
-          crmOnclick +
-          '">🗺️ 回 CRM 旅程</a>'
+          homeOnclick +
+          '">🟩 回日常工作</a>'
         : '<a href="' +
           prefix +
-          "guide_crm_journey_hub.html?tab=journey&amp;role=" +
-          encodeURIComponent(z.role) +
-          '">🗺️ 回 CRM 旅程</a>') +
+          'dashboard.html">🟩 回日常工作</a>') +
       (layoutOnclick
         ? '<a href="#" class="ae-nav-muted" onclick="' +
           layoutOnclick +

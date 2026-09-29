@@ -19,7 +19,11 @@ table th { background: #f8f9fa; }
 .form-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }</style></head>
 <body>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
-<div class="header"><h1>🏛️ 植堂计划管理</h1></div>
+<div class="header"><h1>🏛️ 植堂计划管理</h1>
+<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+<button type="button" onclick="exportChurchPlantingCsv()" data-w5-report="church-planting-csv" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">⬇ CSV</button>
+<button type="button" onclick="printChurchPlanting()" data-w5-report="church-planting-print" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">🖨 列印</button>
+</div></div>
 <div class="container">
     <div class="card"><h3 style="margin-bottom:15px;">🌱 植堂项目</h3>
         <button class="btn" onclick="showAddModal()">➕ 新增项目</button>
@@ -65,6 +69,29 @@ function del(id) {
         render();
     }
 }
+function exportChurchPlantingCsv() {
+    var U = window.CmReportUtils; if (!U) return;
+    var esc = U.csvEsc;
+    var list = projects || [];
+    if (!list.length) { try { list = JSON.parse(localStorage.getItem('plantingData') || '[]'); } catch (e) { list = []; } }
+    var lines = [['地點', '負責人', '預算', '進度'].map(esc).join(',')];
+    list.forEach(function (p) { lines.push([p.location, p.leader, p.budget, p.progress].map(esc).join(',')); });
+    U.downloadCsv('church_planting_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+}
+function printChurchPlanting() {
+    var U = window.CmReportUtils; if (!U) return;
+    var list = projects || [];
+    if (!list.length) { try { list = JSON.parse(localStorage.getItem('plantingData') || '[]'); } catch (e) { list = []; } }
+    var rows = list.map(function (p) { return [p.location, p.leader, String(p.budget), String(p.progress) + '%']; });
+    U.printTable('植堂計劃', ['地點', '負責人', '預算', '進度'], rows);
+}
 </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

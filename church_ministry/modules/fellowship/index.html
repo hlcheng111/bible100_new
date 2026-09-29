@@ -6,12 +6,17 @@
     <title>團契互動 · Module Home | Church Ministry</title>
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
     <link href="assets/css/fontawesome.min.css" rel="stylesheet">
+    <script src="../../../js/b100_chrome_i18n.js?v=20260725d"></script>
+    <script src="../../js/cm_chrome_i18n_pack.js?v=20260725d"></script>
+    <script src="../../js/cm_chrome_i18n_boot.js?v=20260725d"></script>
 </head>
 <body class="bg-gray-50">
     <div style="padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
-    <a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a>
-    <a href="../../people/people_list.html" target="contentFrame" style="font-size:12px;color:#0b5fa5;text-decoration:none;">👥 人員總覽（500 人）</a>
-  </div>    <!-- 頁面標題和導航 -->
+    <a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;" data-i18n="cm.page.fellow.back" data-i18n-bridge="1">⛪ 返回教會事工中心</a>
+    <a href="../members/member-integrated.html" target="contentFrame" style="font-size:12px;color:#0b5fa5;text-decoration:none;">👥 會友主檔</a>
+  </div>
+  <div id="cmI18nLangHost" style="padding:0 20px;"></div>
+    <!-- 頁面標題和導航 -->
     <div class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
@@ -19,16 +24,21 @@
                     <i class="fas fa-arrow-left text-xl"></i>
                 </button>
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">團契互動</h1>
-                    <p class="text-sm text-gray-600">促進教會成員間的互動與關懷，建立緊密的團契關係</p>
+                    <h1 class="text-2xl font-bold text-gray-900" data-i18n="cm.page.fellow.title" data-i18n-bridge="1">團契互動</h1>
+                    <p class="text-sm text-gray-600" data-i18n="cm.page.fellow.lead" data-i18n-bridge="1">促進教會成員間的互動與關懷，建立緊密的團契關係</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
-                <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">優先開發</span>
+                <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">B 區 Hub</span>
             </div>
         </div>
     </div>
 
+    <div id="w5ReportBar" style="padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#ecfdf5;border-bottom:1px solid #a7f3d0;">
+        <strong>B-03 報告</strong>
+        <button type="button" onclick="exportFellowshipOverviewCsv()" data-w5-report="fellowship-index-csv">⬇ CSV</button>
+        <button type="button" onclick="printFellowshipOverview()" data-w5-report="fellowship-index-print">🖨 列印</button>
+    </div>
     <div class="p-6">
         <!-- 歡迎區域 -->
         <div class="text-center mb-8">
@@ -323,24 +333,17 @@
 
         // 載入模組
         function loadModule(moduleName) {
-            console.log(`載入模組: ${moduleName}`);
-            
-            // 這裡可以實現模組載入邏輯
-            // 例如：AJAX 載入內容、路由切換等
-            
-            // 暫時顯示提示
-            showMessage(`正在載入 ${moduleName} 模組...`, 'info');
-            
-            // 模擬載入延遲
-            setTimeout(() => {
-                if (moduleName === 'groups') {
-                    window.location.href = 'groups.html';
-                } else if (moduleName === 'visitation') {
-                    window.location.href = 'visitation.html';
-                } else if (moduleName === 'visitation-reports') {
-                    window.location.href = 'visitation-reports.html';
-                }
-            }, 1000);
+            var routes = {
+                groups: 'small-groups-integrated.html?crm_from=fellowship_hub',
+                visitation: '../support/visitation_index.html?crm_from=fellowship_hub',
+                'visitation-reports': '../support/visitation_index.html?crm_from=fellowship_hub#tab-reports'
+            };
+            var url = routes[moduleName];
+            if (url) {
+                window.location.href = url;
+                return;
+            }
+            showMessage('找不到模組：' + moduleName, 'error');
         }
 
         // 顯示即將推出提示
@@ -386,15 +389,61 @@
             updateStats();
         });
 
+        function readLs(key, fallback) {
+            try { var r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback; } catch (e) { return fallback; }
+        }
+        function exportFellowshipOverviewCsv() {
+            var U = window.CmReportUtils;
+            if (!U) return;
+            var esc = U.csvEsc;
+            var groups = readLs('groups', []);
+            var members = readLs('groupMembers', []);
+            var plans = readLs('visitPlans', []);
+            var records = readLs('visitRecords', []);
+            var lines = [['類別', '名稱', '備註'].map(esc).join(',')];
+            groups.forEach(function (g) { lines.push(['小組', g.name || g.id, (g.leader || '') + ' · ' + (g.memberCount || '')].map(esc).join(',')); });
+            members.forEach(function (m) { lines.push(['組員', m.name || m.memberId, m.groupName || ''].map(esc).join(',')); });
+            plans.forEach(function (p) { lines.push(['探訪計劃', p.memberName || p.target || '', p.date || ''].map(esc).join(',')); });
+            records.forEach(function (r) { lines.push(['探訪記錄', r.memberName || r.target || '', r.date || ''].map(esc).join(',')); });
+            U.downloadCsv('fellowship_overview_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+        }
+        function printFellowshipOverview() {
+            var U = window.CmReportUtils;
+            if (!U) return;
+            var groups = readLs('groups', []);
+            var rows = groups.map(function (g) { return [g.name || '', g.leader || '', String(g.memberCount || ''), g.status || '']; });
+            U.printTable('團契互動概況', ['小組', '組長', '人數', '狀態'], rows);
+        }
+
         // 更新統計數據
         function updateStats() {
-            // 這裡可以從後端或 LocalStorage 載入實際數據
-            // 目前使用示例數據
-            document.getElementById('totalGroups').textContent = '3';
-            document.getElementById('totalMembers').textContent = '47';
-            document.getElementById('monthlyVisits').textContent = '8';
-            document.getElementById('completionRate').textContent = '85%';
+            var groups = readLs('groups', []);
+            var members = readLs('groupMembers', []);
+            var plans = readLs('visitPlans', []);
+            var records = readLs('visitRecords', []);
+            if (window.PastoralDataHub) {
+                try {
+                    var d = window.PastoralDataHub.getRawData ? window.PastoralDataHub.getRawData() : null;
+                    if (d && d.groups && d.groups.length) groups = d.groups;
+                } catch (eP) {}
+            }
+            document.getElementById('totalGroups').textContent = String(groups.length || 0);
+            document.getElementById('totalMembers').textContent = String(members.length || 0);
+            document.getElementById('monthlyVisits').textContent = String(records.length || plans.length || 0);
+            var done = records.filter(function (r) { return r.status === 'completed' || r.completed; }).length;
+            var rate = plans.length ? Math.round((done / plans.length) * 100) : 0;
+            document.getElementById('completionRate').textContent = (plans.length ? rate + '%' : '—');
         }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
+<script>
+(function () { if (window.B100CmI18nBoot) window.B100CmI18nBoot.boot(); })();
+</script>
 </body>
 </html>

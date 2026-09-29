@@ -1,6 +1,5 @@
 /**
- * 偵測 file://、推算相對於 bible100_new 根的路徑，並產生建議的本機 HTTP 網址。
- * reader / parallel_mode_v3 等頁在無資料時共用。
+ * Detect file://, build repo-relative HTTP URLs for reader / parallel v3.
  */
 (function (w) {
   'use strict';
@@ -13,7 +12,7 @@
     }
   };
 
-  /** 例如 /bible_study/reader.html（供掛在 http://127.0.0.1:PORT 之後） */
+  /** e.g. /bible_study/parallel_mode_v3.html (after http://127.0.0.1:PORT) */
   w.bible100RelativePathFromRoot = function () {
     var path = '';
     try {
@@ -22,25 +21,17 @@
       path = w.location.pathname || '';
     }
     path = String(path).replace(/\\/g, '/');
-    var lower = path.toLowerCase();
-    var key = 'bible100_new';
-    var idx = lower.indexOf(key + '/');
-    var skip = key.length + 1;
-    if (idx < 0) {
-      idx = lower.indexOf(key);
-      skip = key.length;
+    var m = path.match(/bible100_new(?:_\d+)?\/(.+)$/i);
+    if (m && m[1]) {
+      return '/' + m[1].replace(/^\/+/, '');
     }
-    if (idx >= 0) {
-      var after = path.slice(idx + skip).replace(/^\/+/, '');
-      return '/' + after;
-    }
-    var m = path.match(/bible_study\/[^/]+\.html?$/i);
+    m = path.match(/bible_study\/[^/]+\.html?$/i);
     if (m) return '/' + m[0];
     return '/bible_study/reader.html';
   };
 
   w.bible100SuggestedHttpUrls = function (ports) {
-    ports = ports || [8765, 5500, 8000, 8080];
+    ports = ports || [3000, 8765, 5500, 8000, 8080];
     var tail = w.bible100RelativePathFromRoot();
     return ports.map(function (p) {
       return { port: p, href: 'http://127.0.0.1:' + p + tail };
@@ -71,13 +62,12 @@
     }
   };
 
-  /** file 且帶 ?autoredirect=http 時，導向第一個建議埠（預設 8765） */
   w.bible100MaybeAutoredirectFromFile = function (ports) {
     try {
       var q = new w.URLSearchParams(w.location.search || '');
       if (q.get('autoredirect') !== 'http') return;
       if (!w.bible100IsFileProtocol()) return;
-      var list = w.bible100SuggestedHttpUrls(ports || [8765]);
+      var list = w.bible100SuggestedHttpUrls(ports || [3000, 8765]);
       if (list.length && list[0].href) {
         w.location.replace(list[0].href);
       }

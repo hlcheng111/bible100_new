@@ -10,7 +10,11 @@ table { width: 100%; border-collapse: collapse; }
 table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
 table th { background: #f8f9fa; }</style></head>
 <body>
-    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header"><h1>💡 创新项目管理</h1></div>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header"><h1>💡 创新项目管理</h1>
+<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+<button type="button" onclick="exportInnovationProjectsCsv()" data-w5-report="innovation-projects-csv" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">⬇ CSV</button>
+<button type="button" onclick="printInnovationProjects()" data-w5-report="innovation-projects-print" style="padding:6px 12px;border:1px solid #fff;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;cursor:pointer;">🖨 列印</button>
+</div></div>
 <div class="container">
     <div class="card"><h3 style="margin-bottom:15px;">🚀 创新项目</h3>
         <button class="btn" onclick="add()">➕ 新增项目</button>
@@ -29,6 +33,29 @@ function render() {
     document.querySelector('#table tbody').innerHTML = projects.map(p => `<tr><td>${p.name}</td><td>${p.category}</td><td>${p.progress}%</td><td>${p.effect}</td></tr>`).join('');
 }
 function add() { alert('功能：新增创新项目'); }
+function exportInnovationProjectsCsv() {
+    var U = window.CmReportUtils; if (!U) return;
+    var esc = U.csvEsc;
+    var list = projects || [];
+    if (!list.length) { try { list = JSON.parse(localStorage.getItem('innovationData') || '[]'); } catch (e) { list = []; } }
+    var lines = [['項目', '類別', '進度', '預期效果'].map(esc).join(',')];
+    list.forEach(function (p) { lines.push([p.name, p.category, p.progress, p.effect].map(esc).join(',')); });
+    U.downloadCsv('innovation_projects_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+}
+function printInnovationProjects() {
+    var U = window.CmReportUtils; if (!U) return;
+    var list = projects || [];
+    if (!list.length) { try { list = JSON.parse(localStorage.getItem('innovationData') || '[]'); } catch (e) { list = []; } }
+    var rows = list.map(function (p) { return [p.name, p.category, String(p.progress) + '%', p.effect]; });
+    U.printTable('創新項目', ['項目', '類別', '進度', '預期效果'], rows);
+}
 </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

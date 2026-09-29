@@ -185,6 +185,23 @@ feed me till I want no more.</div>
     (function() {
       function cleanTitleZh(s) { return (s||'').replace(/^[＿．\s]*第\s*\d*\s*首\s*[．\s]*/g,'').replace(/^[＿．\s]+/g,'').trim(); }
       function cleanTitleEn(s) { return (s||'').replace(/^\d{3,4}\s+/, '').trim(); }
+      /** 解析樂譜 URL：http(s) 優先，其次 hymn/image_hymn 相對路徑（含 C:/hymn/ 舊路徑） */
+      function resolveScoreUrl(h, base) {
+        var list = [].concat(h.scoreImages || [], h.scoreImage ? [h.scoreImage] : []).filter(Boolean);
+        for (var i = 0; i < list.length; i++) {
+          var s = String(list[i]).trim();
+          if (!s) continue;
+          if (/^https?:\/\//i.test(s)) return s;
+          var norm = s.replace(/\\/g, '/');
+          var m = norm.match(/(?:^C:\/hymn\/|(?:\.\.\/)?hymn\/)?image_hymn\/([^/?#]+)/i);
+          if (m) return base + '/hymn/image_hymn/' + m[1];
+          if (/image_hymn\//i.test(norm)) {
+            var file = norm.split('image_hymn/').pop().split('/').pop();
+            if (file) return base + '/hymn/image_hymn/' + file;
+          }
+        }
+        return null;
+      }
       var id = new URLSearchParams(window.location.search).get('id');
       if (!id) return;
       var base = window.location.pathname.replace(/\/[^/]*$/, '') || '.';
@@ -212,8 +229,21 @@ feed me till I want no more.</div>
           if (cat) { cat.textContent = h.catalogNumber || 'hymnary'; cat.href = 'https://hymnary.org/search?qu=' + encodeURIComponent((h.title_en || h.title_zh || '').split(' ')[0] || 'hymn'); }
           var scoreImg = document.getElementById('scoreImage');
           if (scoreImg) {
-            var scoreUrl = (h.scoreImages || []).find(function(s) { return s && s.startsWith('http'); }) || (h.scoreImage && h.scoreImage.startsWith('http') ? h.scoreImage : null);
+            var scoreUrl = resolveScoreUrl(h, base);
             scoreImg.src = scoreUrl || (base + '/assets/scores/placeholder.svg');
+            scoreImg.alt = scoreUrl ? '樂譜' : '樂譜（placeholder）';
+          }
+          if (h.lyrics_zh) {
+            var lz = document.getElementById('lyricsZh');
+            if (lz) lz.textContent = h.lyrics_zh;
+          }
+          if (h.lyrics_en) {
+            var le = document.getElementById('lyricsEn');
+            if (le) le.textContent = h.lyrics_en;
+          }
+          if (h.lyrics && !h.lyrics_zh) {
+            var lz2 = document.getElementById('lyricsZh');
+            if (lz2) lz2.textContent = h.lyrics;
           }
           var ytList = document.getElementById('youtubeList');
           if (h.youtube && h.youtube.length && ytList) { ytList.innerHTML = h.youtube.slice(0, 5).map(function(u) { return '<li><a href="' + u + '" target="_blank" rel="noopener">' + u.replace(/^.*\/watch\?v=|\/.*$/, '') + '</a></li>'; }).join(''); }

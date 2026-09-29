@@ -18,6 +18,10 @@
         th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f6f7fb; color: #0b5fa5; }
         .empty { padding: 40px; text-align: center; color: #9ca3af; }
+        .btn { padding: 4px 10px; font-size: 12px; border: 1px solid #0b5fa5; background: #fff; color: #0b5fa5; border-radius: 4px; cursor: pointer; margin-right: 4px; }
+        .btn:hover { background: #e8f4fd; }
+        .notice-box { display: none; margin-top: 12px; padding: 12px; background: #fffbeb; border: 1px dashed #f59e0b; border-radius: 8px; font-size: 12px; white-space: pre-wrap; }
+        .hint { font-size: 11px; color: #92400e; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -28,13 +32,15 @@
     </div>
     <div class="stats" id="stats"></div>
     <div id="paymentList"></div>
+    <div class="notice-box" id="noticeBox"></div>
+    <p class="hint" id="noticeHint" style="display:none;">⚠️ 以上為繳費通知草稿，需家長／教務人工審核後再透過 LINE／WhatsApp 等渠道發送。系統<b>不會</b>自動通知。</p>
     <script src="../js/school-master-database.js"></script>
     <script>
         (function() {
             const params = new URLSearchParams(location.search);
             const studentId = parseInt(params.get('studentId'), 10);
             if (!studentId || !window.schoolDB) {
-                document.getElementById('paymentList').innerHTML = '<p class="empty">請先從學員入口選擇學員，或載入示範資料。</p>';
+                document.getElementById('paymentList').innerHTML = '<p class="empty">請先從學員入口選擇學員。</p>';
                 return;
             }
             const db = window.schoolDB.data;
@@ -46,15 +52,54 @@
             const paid = mine.filter(p => p.status === 'paid');
             const pendingSum = pending.reduce((s, p) => s + (p.amount || 0), 0);
             const paidSum = paid.reduce((s, p) => s + (p.amount || 0), 0);
-            document.getElementById('stats').innerHTML = `
-                <div class="stat pending">待繳：${pending.length} 筆 · ¥${pendingSum.toLocaleString()}</div>
-                <div class="stat paid">已繳：${paid.length} 筆 · ¥${paidSum.toLocaleString()}</div>
-            `;
-            const rows = mine.slice(-20).reverse().map(p => 
-                `<tr><td>${p.paymentDate || '—'}</td><td>¥${(p.amount || 0).toLocaleString()}</td><td>${p.semester || '—'}</td><td><span style="color:${p.status==='paid'?'#10b981':'#f59e0b'}">${p.status==='paid'?'已繳':'待繳'}</span></td></tr>`
-            ).join('');
+            document.getElementById('stats').innerHTML =
+                '<div class="stat pending">待繳：' + pending.length + ' 筆 · ¥' + pendingSum.toLocaleString() + '</div>' +
+                '<div class="stat paid">已繳：' + paid.length + ' 筆 · ¥' + paidSum.toLocaleString() + '</div>';
+
+            function copyText(text) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    return navigator.clipboard.writeText(text);
+                }
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                return Promise.resolve();
+            }
+
+            window.showNotice = function(pid) {
+                if (!window.schoolDB.buildPaymentNoticeText) return;
+                const text = window.schoolDB.buildPaymentNoticeText(pid);
+                const box = document.getElementById('noticeBox');
+                box.textContent = text;
+                box.style.display = 'block';
+                document.getElementById('noticeHint').style.display = 'block';
+                copyText(text).then(function() {
+                    alert('繳費通知文字已產生並複製到剪貼簿（請人工審核後再發送）');
+                });
+            };
+
+            window.printMyReceipt = function(pid) {
+                if (!window.schoolDB.buildReceiptHtml) return;
+                const w = window.open('', '_blank', 'width=520,height=640');
+                if (!w) return alert('請允許彈出視窗以列印收據');
+                w.document.write(window.schoolDB.buildReceiptHtml(pid));
+                w.document.close();
+            };
+
+            const rows = mine.slice(-20).reverse().map(p => {
+                let actions = '';
+                if (p.status === 'pending') {
+                    actions = '<button type="button" class="btn" onclick="showNotice(' + p.id + ')">📋 產生繳費通知</button>';
+                } else if (p.receiptNo) {
+                    actions = '<button type="button" class="btn" onclick="printMyReceipt(' + p.id + ')">🖨️ 收據</button>';
+                }
+                return '<tr><td>' + (p.paymentDate || '—') + '</td><td>¥' + (p.amount || 0).toLocaleString() + '</td><td>' + (p.semester || '—') + '</td><td><span style="color:' + (p.status === 'paid' ? '#10b981' : '#f59e0b') + '">' + (p.status === 'paid' ? '已繳' : '待繳') + '</span></td><td>' + (p.receiptNo || '—') + '</td><td>' + actions + '</td></tr>';
+            }).join('');
             document.getElementById('paymentList').innerHTML = rows
-                ? `<table><thead><tr><th>日期</th><th>金額</th><th>學期</th><th>狀態</th></tr></thead><tbody>${rows}</tbody></table>`
+                ? '<table><thead><tr><th>日期</th><th>金額</th><th>學期</th><th>狀態</th><th>收據編號</th><th>操作</th></tr></thead><tbody>' + rows + '</tbody></table>'
                 : '<p class="empty">尚無繳費記錄</p>';
         })();
     </script>

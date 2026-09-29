@@ -19,7 +19,8 @@ table th { background: #f8f9fa; }
 .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
 .form-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
 </style></head>
-<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a">
+<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a">
+    <div style="padding:8px 20px;"><button type="button" onclick="exportCongSongsCsv()" data-w5-report="cong-songs-csv">⬇ 詩歌 CSV</button> <button type="button" onclick="printCongSongs()" data-w5-report="cong-songs-print">🖨 列印</button></div>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header"><h1>🎵 会众诗歌管理</h1>
     <details style="margin-top:10px;font-size:11px;opacity:0.95;">
         <summary style="cursor:pointer;font-weight:600;">📋 角色說明</summary>
@@ -123,6 +124,31 @@ function del(id) {
 </script>
 
 
+<script>
+
+        function exportCongSongsCsv() {
+            var list = [];
+            try { list = JSON.parse(localStorage.getItem('songsData') || '[]'); } catch (e) {}
+            var lines = ['name,key,category'];
+            (list || []).forEach(function (s) {
+                var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+                lines.push([s.name || s.title, s.key, s.category].map(esc).join(','));
+            });
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('congregational_songs.csv', lines);
+        }
+        function printCongSongs() {
+            var list = [];
+            try { list = JSON.parse(localStorage.getItem('songsData') || '[]'); } catch (e) {}
+            var rows = (list || []).map(function (s) {
+                return [s.name || s.title, s.key, s.category || ''];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('會眾詩歌', ['歌名','調','分類'], rows);
+            else window.print();
+        }
+
+</script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 <!-- b100-ae-worship-w1-shell -->
 <link rel="stylesheet" href="../../css/ae_worship_six_section.css" />
 <script src="../../js/church-master-database.js"></script>
@@ -149,6 +175,11 @@ function del(id) {
 <script src="../../js/crm_context_bar.js"></script>
 <script src="../../js/ae_primary_nav.js"></script>
 <script src="../../js/ae_subpage_shell.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>
 

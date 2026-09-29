@@ -26,6 +26,11 @@
 </head>
 <body>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container">
+        <div style="padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#ecfdf5;border-radius:8px;margin-bottom:12px;border:1px solid #a7f3d0;">
+            <strong>D-03 報告</strong>
+            <button type="button" onclick="exportMissionOpportunitiesCsv()" data-w5-report="mission-opportunities-csv">⬇ CSV</button>
+            <button type="button" onclick="printMissionOpportunities()" data-w5-report="mission-opportunities-print">🖨 列印</button>
+        </div>
         <div class="header">
             <h1>✈️ 宣教机会探索 - 世界地图视图</h1>
             <p style="color:#7f8c8d;margin-top:10px;">🌍 全球宣教机会 · 可行性评估 · 团队规划</p>
@@ -70,6 +75,28 @@
                 </div>
             `).join('');
         }
+
+        function exportMissionOpportunitiesCsv() {
+            var U = window.CmReportUtils; if (!U) return;
+            var esc = U.csvEsc;
+            var lines = [['地點', '類型', '時長', '團隊', '預算', '需要', '可行性'].map(esc).join(',')];
+            missions.forEach(function (m) {
+                lines.push([m.location, m.type, m.duration, m.team, m.cost, m.needs, m.feasibility].map(esc).join(','));
+            });
+            U.downloadCsv('mission_opportunities_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+        }
+        function printMissionOpportunities() {
+            var U = window.CmReportUtils; if (!U) return;
+            var rows = missions.map(function (m) { return [m.location, m.type, String(m.team), String(m.cost), m.feasibility]; });
+            U.printTable('宣教機會', ['地點', '類型', '團隊', '預算', '可行性'], rows);
+        }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

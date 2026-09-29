@@ -5,26 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>學費管理 - Tuition</title>
     <link rel="stylesheet" href="../css/module_common.css">
+    <style>
+        .export-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 12px; margin-bottom: 12px; font-size: 11px; line-height: 1.6; }
+        .export-box strong { color: #166534; }
+    </style>
 </head>
 <body>
     <div class="module-header">
         <h1>💰 學費管理 · Tuition</h1>
-        <p>學費繳收、支付方式（現金／轉帳／支付寶／PayMe 等）</p>
+        <p>學費繳收、收據、匯出至教會財政（financeSystemData）</p>
         <details>
             <summary>📋 功能與使用說明</summary>
-            <div><p><b>此頁是為誰而設？</b> 財務、行政同工。</p>
-            <p><b>有什麼功能？</b> 新增繳費、篩選學期／狀態、匯出 CSV。</p></div>
+            <div>
+                <p><b>此頁是為誰而設？</b> 財務、行政同工。</p>
+                <p><b>流程：</b> ① 新增應收／登記已繳 → ② 列印收據 → ③ 月末「匯出至教會財政」交 F 區對帳。</p>
+                <p><b>注意：</b> 預設只下載匯出檔；「寫入 financeSystemData」需勾選確認，不會自動雙寫。</p>
+            </div>
         </details>
+    </div>
+
+    <div class="module-card">
+        <div class="export-box" id="exportStats">載入統計中…</div>
     </div>
 
     <div class="module-card">
         <div class="module-card-title">篩選</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
-            <div><label class="stat-label">學期</label><br><input id="semester" class="module-input" value="2024-2" placeholder="2024-2" style="width:100px;"></div>
+            <div><label class="stat-label">學期</label><br><input id="semester" class="module-input" value="" placeholder="目前學期" style="width:100px;"></div>
             <div><label class="stat-label">狀態</label><br><select id="status" class="module-input"><option value="">全部</option><option value="paid">已繳</option><option value="pending">未繳</option></select></div>
             <button class="module-btn" id="btnApply">套用</button>
-            <button class="module-btn module-btn-secondary" id="btnExport">📤 匯出 CSV</button>
+            <button class="module-btn module-btn-secondary" id="btnExportCsv">📤 匯出 CSV</button>
         </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-title">🏦 匯出至教會財政</div>
+        <p style="font-size:11px;color:#555;margin:0 0 8px;">將<b>已繳</b>且<b>尚未匯出</b>的學費，轉成 <code>financeSystemData.transactions</code> 相容格式（含 A3 對帳欄位）。</p>
+        <button class="module-btn" id="btnExportFinanceJson">📥 下載匯出 JSON</button>
+        <button class="module-btn" id="btnExportA3Csv">📥 下載 A3 對帳 CSV</button>
+        <button class="module-btn module-btn-secondary" id="btnWriteFinance">✍️ 寫入 financeSystemData（需確認）</button>
+        <p id="exportMsg" style="font-size:11px;color:#166534;margin:8px 0 0;"></p>
     </div>
 
     <div class="module-card">
@@ -36,7 +56,7 @@
         <div class="module-card-title">➕ 新增繳費</div>
         <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
             <div><label class="stat-label">學員</label><br><select name="studentId" class="module-input" required style="min-width:140px;"></select></div>
-            <div><label class="stat-label">學期</label><br><input name="semester" class="module-input" value="2024-2" style="width:90px;"></div>
+            <div><label class="stat-label">學期</label><br><input name="semester" class="module-input" value="" style="width:90px;"></div>
             <div><label class="stat-label">金額</label><br><input name="amount" class="module-input" type="number" value="3000" style="width:90px;"></div>
             <div><label class="stat-label">支付方式</label><br><select name="paymentMethod" class="module-input"><option value="cash">現金</option><option value="transfer">轉帳</option><option value="alipay">支付寶</option><option value="payme">PayMe</option></select></div>
             <div><label class="stat-label">狀態</label><br><select name="status" class="module-input"><option value="pending">未繳</option><option value="paid">已繳</option></select></div>
@@ -46,60 +66,104 @@
 
     <a href="../../dashboard.html" target="contentFrame" class="module-btn module-btn-secondary">返回儀表板</a>
 
+    <script src="../../../js/church_data_bridge.js"></script>
     <script src="../../js/school-master-database.js"></script>
     <script>
         (function() {
             const db = window.schoolDB;
             if (!db) return;
-            if (db.ensureSeedFull) db.ensureSeedFull();
 
-            const data = db.data;
-            const payments = (data.finance && data.finance.payments) || [];
-            const students = data.students || [];
+            const defaultSem = db.getDefaultSemester ? db.getDefaultSemester() : '2024-2';
+            document.getElementById('semester').value = defaultSem;
+            document.querySelector('input[name="semester"]').value = defaultSem;
+
+            function payments() {
+                return (db.data.finance && db.data.finance.payments) || [];
+            }
+
+            function students() {
+                return db.data.students || [];
+            }
 
             function rows() {
                 const sem = document.getElementById('semester').value.trim();
                 const st = document.getElementById('status').value;
-                return payments.filter(p => (!sem || p.semester === sem) && (!st || p.status === st));
+                return payments().filter(p => (!sem || p.semester === sem) && (!st || p.status === st));
+            }
+
+            function refreshStats() {
+                const s = db.getFinanceExportStats ? db.getFinanceExportStats() : {};
+                document.getElementById('exportStats').innerHTML =
+                    '<strong>學費匯總：</strong> 共 ' + (s.total_payments || 0) + ' 筆 · ' +
+                    '已繳 ' + (s.paid_count || 0) + ' · 待繳 ' + (s.pending_count || 0) + ' · ' +
+                    '有收據 ' + (s.with_receipt || 0) + ' · ' +
+                    '已匯出教會帳 ' + (s.exported_count || 0) + ' · ' +
+                    '<b>待匯出 ' + (s.ready_to_export || 0) + '</b>';
             }
 
             function draw() {
                 const a = rows();
+                const stu = students();
                 const body = a.map(p => {
-                    const s = students.find(x => x.id === p.studentId);
-                    return '<tr><td>' + p.id + '</td><td>' + (s ? s.name : p.studentId) + '</td><td>' + (p.semester || '—') + '</td><td>' + (p.amount || 0) + '</td><td>' + (p.paymentMethod || '—') + '</td><td>' + (p.status === 'paid' ? '已繳' : '未繳') + '</td><td>' + (p.paymentDate || '—') + '</td><td><a href="#" onclick="editP(' + p.id + ');return false;">編輯</a> | <a href="#" onclick="delP(' + p.id + ');return false;">刪除</a></td></tr>';
+                    const s = stu.find(x => x.id === p.studentId);
+                    const receipt = p.receiptNo || '—';
+                    const exported = p.exportedToChurchFinanceAt ? '✅' : '—';
+                    const ops = [];
+                    if (p.status !== 'paid') ops.push('<a href="#" onclick="markPaid(' + p.id + ');return false;">標記已繳</a>');
+                    if (p.status === 'paid' && p.receiptNo) ops.push('<a href="#" onclick="printReceipt(' + p.id + ');return false;">🖨️ 收據</a>');
+                    if (p.status === 'paid' && !p.receiptNo) ops.push('<a href="#" onclick="markPaid(' + p.id + ');return false;">配收據</a>');
+                    ops.push('<a href="#" onclick="editP(' + p.id + ');return false;">編輯</a>');
+                    ops.push('<a href="#" onclick="delP(' + p.id + ');return false;">刪除</a>');
+                    return '<tr><td>' + p.id + '</td><td>' + (s ? s.name : p.studentId) + '</td><td>' + (p.semester || '—') + '</td><td>' + (p.amount || 0) + '</td><td>' + (db._paymentMethodLabel ? db._paymentMethodLabel(p.paymentMethod) : p.paymentMethod) + '</td><td>' + (p.status === 'paid' ? '已繳' : '未繳') + '</td><td>' + (p.paymentDate || '—') + '</td><td>' + receipt + '</td><td>' + exported + '</td><td>' + ops.join(' | ') + '</td></tr>';
                 }).join('');
-                document.getElementById('list').innerHTML = '<table class="module-table"><thead><tr><th>ID</th><th>學員</th><th>學期</th><th>金額</th><th>支付方式</th><th>狀態</th><th>日期</th><th>操作</th></tr></thead><tbody>' + (body || '<tr><td colspan="8">尚無資料</td></tr>') + '</tbody></table>';
+                document.getElementById('list').innerHTML = '<table class="module-table"><thead><tr><th>ID</th><th>學員</th><th>學期</th><th>金額</th><th>支付</th><th>狀態</th><th>日期</th><th>收據</th><th>已匯出</th><th>操作</th></tr></thead><tbody>' + (body || '<tr><td colspan="10">尚無資料</td></tr>') + '</tbody></table>';
 
                 const sel = document.querySelector('select[name="studentId"]');
-                sel.innerHTML = '<option value="">-- 選擇學員 --</option>' + students.slice(0, 100).map(s => '<option value="' + s.id + '">' + (s.name || s.studentNumber || s.id) + '</option>').join('');
+                sel.innerHTML = '<option value="">-- 選擇學員 --</option>' + stu.filter(s => s.status !== 'pending').slice(0, 200).map(s => '<option value="' + s.id + '">' + (s.name || s.studentNumber || s.id) + '</option>').join('');
+                refreshStats();
             }
 
             document.getElementById('f').onsubmit = function(e) {
                 e.preventDefault();
                 const fm = new FormData(this);
-                db.insert('finance.payments', {
+                const status = fm.get('status') || 'pending';
+                const rec = db.insert('finance.payments', {
                     studentId: parseInt(fm.get('studentId'), 10),
-                    semester: (fm.get('semester') || '').trim() || '2024-2',
+                    semester: (fm.get('semester') || '').trim() || (db.getDefaultSemester ? db.getDefaultSemester() : '2024-2'),
                     amount: parseInt(fm.get('amount'), 10) || 0,
                     paymentMethod: fm.get('paymentMethod') || 'cash',
-                    status: fm.get('status') || 'pending',
+                    status: status,
                     paymentDate: new Date().toISOString().slice(0, 10)
                 });
+                if (status === 'paid' && db.markPaymentPaid) {
+                    db.markPaymentPaid(rec.id);
+                }
                 this.reset();
                 draw();
             };
 
+            window.markPaid = function(id) {
+                if (!db.markPaymentPaid) return;
+                db.markPaymentPaid(id);
+                draw();
+            };
+
+            window.printReceipt = function(id) {
+                if (!db.buildReceiptHtml) return;
+                const w = window.open('', '_blank', 'width=520,height=640');
+                if (!w) return alert('請允許彈出視窗以列印收據');
+                w.document.write(db.buildReceiptHtml(id));
+                w.document.close();
+            };
+
             window.editP = function(id) {
-                const p = payments.find(x => x.id === id);
+                const p = payments().find(x => x.id === id);
                 if (!p) return;
                 const v = prompt('JSON 編輯（不改 id）', JSON.stringify(p, null, 2));
                 if (!v) return;
                 try {
                     const o = JSON.parse(v);
-                    delete o.id;
-                    delete o.createdAt;
-                    delete o.updatedAt;
+                    delete o.id; delete o.createdAt; delete o.updatedAt;
                     db.update('finance.payments', id, o);
                     draw();
                 } catch (e) { alert('JSON 無效'); }
@@ -108,16 +172,62 @@
                 if (confirm('確認刪除？')) { db.delete('finance.payments', id); draw(); }
             };
 
+            function downloadBlob(filename, content, mime) {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([content], { type: mime }));
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            }
+
+            function stamp() {
+                return new Date().toISOString().slice(0, 10);
+            }
+
             document.getElementById('btnApply').onclick = draw;
-            document.getElementById('btnExport').onclick = function() {
+            document.getElementById('btnExportCsv').onclick = function() {
                 const a = rows();
-                const cols = ['id', 'studentId', 'semester', 'amount', 'paymentMethod', 'status', 'paymentDate'];
+                const cols = ['id', 'studentId', 'semester', 'amount', 'paymentMethod', 'status', 'paymentDate', 'receiptNo', 'exportedToChurchFinanceAt'];
                 const head = cols.join(',');
                 const body = a.map(r => cols.map(k => '"' + String(r[k] ?? '').replace(/"/g, '""') + '"').join(',')).join('\n');
-                const A = document.createElement('a');
-                A.href = URL.createObjectURL(new Blob(['\ufeff' + head + '\n' + body], { type: 'text/csv;charset=utf-8' }));
-                A.download = 'tuition_' + new Date().toISOString().slice(0, 10) + '.csv';
-                A.click();
+                downloadBlob('tuition_' + stamp() + '.csv', '\ufeff' + head + '\n' + body, 'text/csv;charset=utf-8');
+            };
+
+            document.getElementById('btnExportFinanceJson').onclick = function() {
+                if (!db.buildChurchFinanceExport) return;
+                const sem = document.getElementById('semester').value.trim();
+                const bundle = db.buildChurchFinanceExport({ semester: sem || undefined, onlyUnexported: true });
+                if (!bundle.payment_count) return alert('沒有待匯出的已繳學費');
+                downloadBlob('school_tuition_finance_export_' + stamp() + '.json', JSON.stringify(bundle, null, 2), 'application/json');
+                document.getElementById('exportMsg').textContent = '✅ 已下載 ' + bundle.payment_count + ' 筆（尚未標記為已匯出；若需寫入請用下方按鈕或交財務同工匯入）';
+            };
+
+            document.getElementById('btnExportA3Csv').onclick = function() {
+                if (!db.buildChurchFinanceExport) return;
+                const sem = document.getElementById('semester').value.trim();
+                const bundle = db.buildChurchFinanceExport({ semester: sem || undefined, onlyUnexported: true });
+                if (!bundle.payment_count) return alert('沒有待匯出的已繳學費');
+                const cols = ['member_id', 'member_name', 'date', 'amount', 'fund', 'method', 'status', 'receipt_status', 'receipt_no', 'source_payment_id', 'note'];
+                const head = cols.join(',');
+                const body = bundle.reconciliation_records.map(r => cols.map(k => '"' + String(r[k] ?? '').replace(/"/g, '""') + '"').join(',')).join('\n');
+                downloadBlob('school_tuition_a3_reconciliation_' + stamp() + '.csv', '\ufeff' + head + '\n' + body, 'text/csv;charset=utf-8');
+                document.getElementById('exportMsg').textContent = '✅ 已下載 A3 對帳 CSV ' + bundle.payment_count + ' 筆';
+            };
+
+            document.getElementById('btnWriteFinance').onclick = function() {
+                if (!db.importToChurchFinanceSystem) return;
+                const sem = document.getElementById('semester').value.trim();
+                const preview = db.buildChurchFinanceExport({ semester: sem || undefined, onlyUnexported: true });
+                if (!preview.payment_count) return alert('沒有待匯出的已繳學費');
+                const msg = '將寫入 ' + preview.payment_count + ' 筆至教會 financeSystemData（本機）。\n\n需人工確認：此操作會修改教會財政資料。\n\n確定繼續？';
+                if (!confirm(msg)) return;
+                const r = db.importToChurchFinanceSystem({ semester: sem || undefined, onlyUnexported: true, markExported: true });
+                if (r.ok) {
+                    document.getElementById('exportMsg').textContent = '✅ 已寫入 financeSystemData ' + r.written + ' 筆，並標記學校端為已匯出';
+                    draw();
+                } else {
+                    alert(r.error + (r.bundle ? '\n\n可改按下載 JSON 交財務同工匯入。' : ''));
+                }
             };
 
             draw();

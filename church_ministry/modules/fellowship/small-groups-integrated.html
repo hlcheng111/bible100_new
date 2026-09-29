@@ -8,6 +8,7 @@
     <script src="../../../js/persistence_provider.js"></script>
     <script src="../../../js/church_data_bridge.js"></script>
     <link rel="stylesheet" href="../../css/module_onboarding.css">
+    <link rel="stylesheet" href="../../css/pastoral_workspace.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f0f2f5; color: #333; font-size: 12px; }
@@ -128,6 +129,40 @@
     </style>
 </head>
 <body>
+    <div class="sg-wrap" id="pastoral-workspace-root" data-b100-ae-zone="b">
+        <header class="sg-header">
+            <nav class="sg-nav">
+                <a href="../../dashboard.html">⛪ 教會事工中心</a>
+                <a href="../support/visitation_index.html?crm_from=b_pastoral">探訪工作桌</a>
+                <a href="pastoral-attendance.html?crm_from=b_pastoral">聚會出席統計</a>
+                <a href="../members/member-integrated.html?crm_from=b_pastoral">會友主檔</a>
+            </nav>
+            <h1>🏠 小組工作桌 · B 區主路</h1>
+            <p class="sg-tagline">總覽看板 · 本週開組 · 目標 · 5 分鐘快評 · memberId 對齊 Bridge</p>
+            <div class="sg-toolbar">
+                <label>選擇小組
+                    <select id="sg-group-select" class="sg-select"></select>
+                </label>
+                <button type="button" class="sg-btn outline" id="sg-seed-btn">📥 載入示範數據</button>
+            </div>
+        </header>
+        <div class="sg-tabs">
+            <button type="button" class="sg-tab active" id="sg-tab-overview" data-tab="overview">📊 总览看板</button>
+            <button type="button" class="sg-tab" data-tab="weekly">本週開組</button>
+            <button type="button" class="sg-tab" data-tab="goals">目標</button>
+            <button type="button" class="sg-tab" data-tab="checkin">快評</button>
+        </div>
+        <main class="sg-main">
+            <div id="sg-panel-overview" class="sg-panel active"></div>
+            <div id="sg-panel-weekly" class="sg-panel"></div>
+            <div id="sg-panel-goals" class="sg-panel"></div>
+            <div id="sg-panel-checkin" class="sg-panel"></div>
+        </main>
+    </div>
+    <details style="margin:12px 16px;border:1px dashed #94a3b8;border-radius:10px;padding:8px 14px;background:#f8fafc;">
+        <summary style="cursor:pointer;font-weight:600;font-size:12px;color:#64748b;">進階 · 舊版七 Tab（legacy／DEMO · 日常請用上方四 Tab）</summary>
+        <p style="font-size:11px;color:#64748b;margin:8px 0 0;">SITE-6 F3：主桌僅 overview／weekly／goals／checkin；下方僅維護／對照，不升級為主路。</p>
+    <div style="padding-top:10px;">
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
         <div class="header-nav"><a href="../../dashboard.html">⛪ 教會事工中心</a><a href="../../activities-overview.html">🎯 A 模組總覽</a></div>
         <h1>🏠 小组事工完整系统</h1>
@@ -214,7 +249,10 @@
                         <input type="text" id="groupSearch" placeholder="🔍 搜索小组（名称/组长）" onkeyup="filterGroups()">
                     </div>
                     <button class="btn btn-primary" onclick="showAddGroupModal()">➕ 新增小组</button>
-                    <button class="btn btn-info" onclick="exportGroups()">📤 导出数据</button>
+                    <button class="btn btn-info" onclick="exportGroups()">📤 导出 JSON</button>
+                    <button type="button" class="btn btn-success" onclick="exportGroupsCsv()" data-w3-report="groups-csv">⬇ 小組 CSV</button>
+                    <button type="button" class="btn btn-secondary" onclick="exportGroupMembersCsv()" data-w3-report="group-members-csv">⬇ 組員 CSV</button>
+                    <button type="button" class="btn btn-secondary" onclick="printGroupsRoster()" data-w3-report="groups-print">🖨 列印名冊</button>
                 </div>
                 <div id="groupsList"></div>
             </div>
@@ -266,7 +304,8 @@
             <div class="card">
                 <div class="card-title">📅 聚会记录</div>
                 <button class="btn btn-primary" onclick="showAddMeetingModal()">➕ 记录聚会</button>
-                <button class="btn btn-info" onclick="exportMeetings()">📤 导出记录</button>
+                <button class="btn btn-info" onclick="exportMeetings()">📤 导出 JSON</button>
+                <button type="button" class="btn btn-success" onclick="exportMeetingsCsv()" data-w3-report="meetings-csv">⬇ 聚會 CSV</button>
                 <a class="btn btn-success" href="group-report-copilot.html" style="text-decoration:none;display:inline-block;">🎙️ 小組回報 Copilot</a>
                 <table id="meetingsTable">
                     <thead>
@@ -868,6 +907,85 @@
             a.click();
             showMessage('✅ 数据已导出', 'success');
         }
+
+        function csvEsc(v) {
+            var s = v == null ? '' : String(v);
+            if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+            return s;
+        }
+
+        function downloadCsv(filename, lines) {
+            var blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+        }
+
+        /** W3 · 長執小組／組員／聚會報告 */
+        function exportGroupsCsv() {
+            var lines = [['group_id', 'name', 'leader', 'area', 'type', 'status'].join(',')];
+            (data.groups || []).forEach(function (g) {
+                lines.push([g.id, g.name, g.leader || '', g.area || '', g.type || '', g.status || ''].map(csvEsc).join(','));
+            });
+            downloadCsv('small_groups_' + new Date().toISOString().split('T')[0] + '.csv', lines);
+            showMessage('✅ 已匯出小組 CSV（' + (data.groups || []).length + '）', 'success');
+        }
+
+        function exportGroupMembersCsv() {
+            var lines = [['member_id', 'name', 'group_id', 'group_name', 'role', 'joinDate'].join(',')];
+            (data.groupMembers || []).forEach(function (gm) {
+                var g = (data.groups || []).find(function (x) { return x.id === gm.groupId; });
+                lines.push([
+                    gm.memberId || gm.id || '',
+                    gm.name || '',
+                    gm.groupId || '',
+                    g ? g.name : '',
+                    gm.role || '',
+                    gm.joinDate || ''
+                ].map(csvEsc).join(','));
+            });
+            downloadCsv('group_members_' + new Date().toISOString().split('T')[0] + '.csv', lines);
+            showMessage('✅ 已匯出組員 CSV（' + (data.groupMembers || []).length + '）', 'success');
+        }
+
+        function exportMeetingsCsv() {
+            var lines = [['date', 'group', 'theme', 'attendance', 'capacity', 'leader', 'note'].join(',')];
+            (data.meetings || []).forEach(function (m) {
+                var g = (data.groups || []).find(function (x) { return x.id === m.groupId; });
+                lines.push([
+                    m.date || '',
+                    g ? g.name : m.groupId,
+                    m.theme || '',
+                    m.attendance != null ? m.attendance : '',
+                    m.capacity != null ? m.capacity : '',
+                    m.leader || '',
+                    m.note || m.notes || ''
+                ].map(csvEsc).join(','));
+            });
+            downloadCsv('group_meetings_' + new Date().toISOString().split('T')[0] + '.csv', lines);
+            showMessage('✅ 已匯出聚會 CSV（' + (data.meetings || []).length + '）', 'success');
+        }
+
+        function printGroupsRoster() {
+            var rows = (data.groups || []).map(function (g) {
+                var n = (data.groupMembers || []).filter(function (gm) { return gm.groupId === g.id; }).length;
+                return '<tr><td>' + (g.name || '') + '</td><td>' + (g.leader || '') + '</td><td>' +
+                    (g.area || '') + '</td><td>' + n + '</td></tr>';
+            }).join('');
+            var w = window.open('', '_blank');
+            if (!w) { showMessage('無法開啟列印視窗', 'error'); return; }
+            w.document.write(
+                '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>小組名冊</title>' +
+                '<style>body{font-family:Microsoft JhengHei,sans-serif;font-size:12px;padding:16px}' +
+                'table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}</style></head><body>' +
+                '<h1>小組名冊（' + (data.groups || []).length + '）</h1>' +
+                '<table><thead><tr><th>小組</th><th>組長</th><th>區域</th><th>人數</th></tr></thead><tbody>' +
+                (rows || '<tr><td colspan="4">無</td></tr>') +
+                '</tbody></table><script>window.onload=function(){window.print();}</' + 'script></body></html>'
+            );
+            w.document.close();
+        }
         
         // ========================================
         // 标签页3：成员管理
@@ -1280,6 +1398,14 @@
             if (e.target.id === 'modal') closeModal();
         };
     </script>
+    </div>
+    </details>
+    <script src="../../js/pastoral_data_hub.js"></script>
+    <script src="../../js/small_groups_workspace.js"></script>
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>
 

@@ -288,6 +288,9 @@
         esc(String(min.score != null ? min.score : "—")) +
         " 分</p>";
     }
+    if (summary && global.AcsReportGold && AcsReportGold.mountAfterSummary) {
+      AcsReportGold.mountAfterSummary(summary, run, "ncd");
+    }
     var barrelHost = document.getElementById("ncd-report-barrel");
     if (barrelHost) barrelHost.innerHTML = buildBarrelHtml(run);
     var radarHost = document.getElementById("ncd-report-radar");
@@ -304,14 +307,20 @@
     renderCoachingPanel(run);
   }
 
+  function likertLbl(s) {
+    return global.AcsSurveyStandard ? AcsSurveyStandard.likertLabel(s, "agree") : String(s);
+  }
+
   function renderQuickSurvey() {
     var host = document.getElementById("ncd-quick-survey-wrap");
     if (!host || !global.NcdPack) return;
     var Q = NcdPack.QUESTIONS;
     var lastDim = "";
+    var legend = global.AcsSurveyStandard ? AcsSurveyStandard.likertLegendHtml("agree") : "";
     var html =
       '<h2 class="font-black text-indigo-900 text-xl mb-2">【核心快評】國際標準八維健康度（24 題）</h2>' +
-      '<p class="text-sm text-slate-600 mb-3">約 10 分鐘 · <strong>1＝非常不同意 · 5＝非常同意</strong>。涵蓋恩賜、領導、靈性、組織、崇拜、小組、佈道、關係八維。</p>' +
+      '<p class="text-sm text-slate-600 mb-2">約 10 分鐘 · 涵蓋恩賜、領導、靈性、組織、崇拜、小組、佈道、關係八維。</p>' +
+      legend +
       '<form id="ncd-quick-form" onsubmit="return NcdAcsShell.submitQuick(event)">';
     Q.forEach(function (q, i) {
       if (q.dim !== lastDim) {
@@ -326,7 +335,7 @@
         (i + 1) +
         ' / 24 題</legend><p class="text-sm mb-2">' +
         esc(q.label) +
-        '</p><div class="flex flex-wrap gap-3">';
+        '</p><div class="flex flex-wrap gap-3 acs-likert-row acs-likert-row--anchored">';
       for (var s = 1; s <= 5; s++) {
         html +=
           '<label class="text-xs font-semibold"><input type="radio" name="q_' +
@@ -334,7 +343,7 @@
           '" value="' +
           s +
           '" required> ' +
-          s +
+          likertLbl(s) +
           "</label>";
       }
       html += "</div></fieldset>";
@@ -345,7 +354,9 @@
       '<label class="text-sm font-bold">規模<select name="church_size" class="w-full mt-1 border rounded p-2 bg-white"><option value="100">小型</option><option value="500">中型</option><option value="1000">大型</option></select></label>' +
       "</div>" +
       '<p id="ncd-quick-error" class="text-red-600 text-xs mt-2 hidden"></p>' +
-      '<button type="submit" class="acs-btn acs-btn--primary mt-3 text-base px-6 py-3">✓ 提交 24 題快評 → 查看 Tab ③ 報告</button>' +
+      (global.AcsSurveyStandard
+        ? AcsSurveyStandard.submitButtonHtml("→ Tab ③ 八維健康報告")
+        : '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">提交並生成報告</button>') +
       "</form>";
     host.innerHTML = html;
   }

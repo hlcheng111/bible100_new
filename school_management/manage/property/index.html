@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物業管理 · Property</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f6f7fb; padding: 16px; font-size: 12px; color: #333; }
+        h1 { color: #0b5fa5; font-size: 18px; margin-bottom: 6px; }
+        .sub { color: #666; margin-bottom: 12px; }
+        .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .stat { background: #fff; padding: 10px 14px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); min-width: 90px; text-align: center; }
+        .stat .n { font-size: 18px; font-weight: 700; color: #0b5fa5; }
+        .stat .l { font-size: 10px; color: #64748b; }
+        .stat.warn .n { color: #b45309; }
+        .card { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .card-title { font-weight: 600; color: #0b5fa5; margin-bottom: 10px; }
+        .alert-box { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 11px; line-height: 1.6; }
+        .alert-box.ok { background: #f0fdf4; border-color: #86efac; color: #166534; }
+        .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 10px; }
+        .inp { padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; }
+        .btn { padding: 8px 14px; background: #0b5fa5; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; }
+        .btn-secondary { background: #64748b; }
+        .btn-sm { padding: 3px 8px; font-size: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { border-bottom: 1px solid #e2e8f0; padding: 8px; text-align: left; }
+        th { background: #f8fafc; color: #475569; }
+        .tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; }
+        .tag-owned { background: #dbeafe; color: #1e40af; }
+        .tag-rented { background: #fef3c7; color: #92400e; }
+        .tag-reported { background: #fee2e2; color: #991b1b; }
+        .tag-progress { background: #fef9c3; color: #854d0e; }
+        .tag-done { background: #dcfce7; color: #166534; }
+        .lbl { font-size: 10px; color: #64748b; }
+    </style>
+</head>
+<body>
+    <h1>🏢 物業管理</h1>
+    <p class="sub">場地登記、租約提醒、預約、維修工單（<code>schoolMasterDatabase.property</code>）</p>
+
+    <div class="stats" id="statsRow"></div>
+    <div id="leaseAlerts" class="alert-box ok">載入租約提醒…</div>
+
+    <div class="card">
+        <div class="card-title">📍 場地／教室</div>
+        <form id="roomForm" class="toolbar">
+            <div><span class="lbl">名稱</span><br><input name="name" class="inp" required placeholder="C301" style="width:80px;"></div>
+            <div><span class="lbl">容量</span><br><input name="capacity" type="number" class="inp" value="30" style="width:50px;"></div>
+            <div><span class="lbl">樓棟</span><br><input name="building" class="inp" placeholder="主樓" style="width:70px;"></div>
+            <div><span class="lbl">類型</span><br><select name="ownershipType" class="inp"><option value="owned">自有</option><option value="rented">租用</option></select></div>
+            <div><span class="lbl">月租</span><br><input name="monthlyRent" type="number" class="inp" value="0" style="width:70px;"></div>
+            <div><span class="lbl">合約到期</span><br><input name="leaseExpiresAt" type="date" class="inp"></div>
+            <div><span class="lbl">房東</span><br><input name="landlord" class="inp" placeholder="選填" style="width:80px;"></div>
+            <div><br><button type="submit" class="btn">新增場地</button></div>
+        </form>
+        <div id="roomList"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📅 場地預約</div>
+        <form id="bookingForm" class="toolbar">
+            <div><span class="lbl">場地</span><br><select name="roomId" id="bookingRoom" class="inp" required style="min-width:100px;"></select></div>
+            <div><span class="lbl">標題</span><br><input name="title" class="inp" placeholder="主日學排練" style="width:120px;"></div>
+            <div><span class="lbl">用途</span><br><select name="purpose" class="inp"><option value="schedule">排課</option><option value="activity">活動</option><option value="other">其他</option></select></div>
+            <div><span class="lbl">開始日</span><br><input name="startDate" type="date" class="inp"></div>
+            <div><span class="lbl">結束日</span><br><input name="endDate" type="date" class="inp"></div>
+            <div><span class="lbl">時段</span><br><input name="time" class="inp" placeholder="14:00-16:00" style="width:90px;"></div>
+            <div><br><button type="submit" class="btn">新增預約</button></div>
+        </form>
+        <div id="bookingList"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">🔧 維修工單</div>
+        <form id="maintForm" class="toolbar">
+            <div><span class="lbl">場地</span><br><select name="roomId" id="maintRoom" class="inp" style="min-width:100px;"><option value="">—</option></select></div>
+            <div><span class="lbl">標題</span><br><input name="title" class="inp" required placeholder="冷氣故障" style="width:100px;"></div>
+            <div><span class="lbl">說明</span><br><input name="description" class="inp" placeholder="詳述" style="width:160px;"></div>
+            <div><span class="lbl">優先</span><br><select name="priority" class="inp"><option value="normal">一般</option><option value="high">急</option></select></div>
+            <div><span class="lbl">報修人</span><br><input name="reportedBy" class="inp" placeholder="同工姓名" style="width:80px;"></div>
+            <div><br><button type="submit" class="btn">提交報修</button></div>
+        </form>
+        <div id="maintList"></div>
+    </div>
+
+    <a href="../../dashboard.html" target="contentFrame" class="btn btn-secondary" style="margin-top:4px;">返回儀表板</a>
+    <a href="../courses/schedule.html" target="contentFrame" class="btn btn-secondary" style="margin-top:4px;">📅 週課表</a>
+
+    <script src="../../js/school-master-database.js"></script>
+    <script>
+        (function() {
+            const db = window.schoolDB;
+            if (!db) return;
+
+            const statusLabel = { reported: '已報修', in_progress: '處理中', done: '已完成', cancelled: '已取消' };
+            const statusClass = { reported: 'tag-reported', in_progress: 'tag-progress', done: 'tag-done' };
+
+            function roomOptions() {
+                return (db.getRooms ? db.getRooms() : []).map(r =>
+                    '<option value="' + r.id + '">' + r.name + '</option>').join('');
+            }
+
+            function refreshStats() {
+                const s = db.getPropertyStats ? db.getPropertyStats() : {};
+                document.getElementById('statsRow').innerHTML =
+                    '<div class="stat"><div class="n">' + (s.room_count || 0) + '</div><div class="l">場地</div></div>' +
+                    '<div class="stat"><div class="n">' + (s.rented_count || 0) + '</div><div class="l">租用</div></div>' +
+                    '<div class="stat"><div class="n">' + (s.booking_count || 0) + '</div><div class="l">預約</div></div>' +
+                    '<div class="stat' + ((s.maintenance_open || 0) > 0 ? ' warn' : '') + '"><div class="n">' + (s.maintenance_open || 0) + '</div><div class="l">待修</div></div>' +
+                    '<div class="stat' + ((s.lease_alerts || 0) > 0 ? ' warn' : '') + '"><div class="n">' + (s.lease_alerts || 0) + '</div><div class="l">租約提醒</div></div>';
+                const alerts = db.getLeaseAlerts ? db.getLeaseAlerts(90) : [];
+                const box = document.getElementById('leaseAlerts');
+                if (!alerts.length) {
+                    box.className = 'alert-box ok';
+                    box.textContent = '✅ 90 天內無租約到期提醒（租用場地請填「合約到期」）';
+                } else {
+                    box.className = 'alert-box';
+                    box.innerHTML = '<strong>⚠️ 租約到期提醒（90 天內）：</strong><br>' +
+                        alerts.map(a => (a.urgent ? '🔴 ' : '🟡 ') + a.roomName + ' · 到期 ' + a.leaseExpiresAt +
+                            '（剩 ' + a.daysLeft + ' 天）' + (a.monthlyRent ? ' · 月租 ' + a.monthlyRent : '')).join('<br>');
+                }
+            }
+
+            function renderRooms() {
+                const rooms = db.getRooms ? db.getRooms() : [];
+                const body = rooms.map(r => {
+                    const typeTag = r.ownershipType === 'rented'
+                        ? '<span class="tag tag-rented">租用</span>'
+                        : '<span class="tag tag-owned">自有</span>';
+                    const lease = r.ownershipType === 'rented' && r.leaseExpiresAt
+                        ? r.leaseExpiresAt + (r.monthlyRent ? ' · $' + r.monthlyRent : '') : '—';
+                    return '<tr><td>' + r.name + '</td><td>' + (r.building || '—') + '</td><td>' + (r.capacity || '—') + '</td><td>' + typeTag + '</td><td>' + lease + '</td><td>' + (r.landlord || '—') + '</td></tr>';
+                }).join('');
+                document.getElementById('roomList').innerHTML =
+                    '<table><thead><tr><th>名稱</th><th>樓棟</th><th>容量</th><th>類型</th><th>租約</th><th>房東</th></tr></thead><tbody>' +
+                    (body || '<tr><td colspan="6">尚無場地</td></tr>') + '</tbody></table>';
+                document.getElementById('bookingRoom').innerHTML = roomOptions();
+                document.getElementById('maintRoom').innerHTML = '<option value="">—</option>' + roomOptions();
+            }
+
+            function renderBookings() {
+                const rows = db.getBookings ? db.getBookings() : [];
+                const body = rows.map(b => {
+                    const ops = b.status === 'active'
+                        ? '<button class="btn btn-sm btn-cancel-book" data-id="' + b.id + '">取消</button>' : b.status;
+                    return '<tr><td>' + (b.roomName || '—') + '</td><td>' + (b.title || '—') + '</td><td>' + (b.purpose || '—') + '</td><td>' + (b.startDate || '') + '~' + (b.endDate || '') + '</td><td>' + (b.time || '—') + '</td><td>' + ops + '</td></tr>';
+                }).join('');
+                document.getElementById('bookingList').innerHTML =
+                    '<table><thead><tr><th>場地</th><th>標題</th><th>用途</th><th>日期</th><th>時段</th><th></th></tr></thead><tbody>' +
+                    (body || '<tr><td colspan="6">尚無預約</td></tr>') + '</tbody></table>';
+            }
+
+            function renderMaint() {
+                const rows = db.getMaintenanceTickets ? db.getMaintenanceTickets() : [];
+                const body = rows.map(t => {
+                    let ops = '';
+                    if (t.status === 'reported') ops = '<button class="btn btn-sm btn-start" data-id="' + t.id + '">接單</button>';
+                    else if (t.status === 'in_progress') ops = '<button class="btn btn-sm btn-done" data-id="' + t.id + '">完成</button>';
+                    else ops = '—';
+                    return '<tr><td>' + (t.roomName || '—') + '</td><td>' + (t.title || '') + '</td><td>' + (t.description || '—') + '</td><td><span class="tag ' + (statusClass[t.status] || '') + '">' + (statusLabel[t.status] || t.status) + '</span></td><td>' + (t.reportedAt || '—') + '</td><td>' + ops + '</td></tr>';
+                }).join('');
+                document.getElementById('maintList').innerHTML =
+                    '<table><thead><tr><th>場地</th><th>標題</th><th>說明</th><th>狀態</th><th>報修日</th><th>操作</th></tr></thead><tbody>' +
+                    (body || '<tr><td colspan="6">尚無工單</td></tr>') + '</tbody></table>';
+            }
+
+            function refreshAll() {
+                refreshStats();
+                renderRooms();
+                renderBookings();
+                renderMaint();
+            }
+
+            document.getElementById('roomForm').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                try {
+                    db.addRoom(fm.get('name'), {
+                        capacity: parseInt(fm.get('capacity'), 10),
+                        building: fm.get('building'),
+                        ownershipType: fm.get('ownershipType'),
+                        monthlyRent: parseInt(fm.get('monthlyRent'), 10) || 0,
+                        leaseExpiresAt: fm.get('leaseExpiresAt') || '',
+                        landlord: fm.get('landlord')
+                    });
+                    this.reset();
+                    refreshAll();
+                } catch (err) { alert(err.message || err); }
+            };
+
+            document.getElementById('bookingForm').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                try {
+                    db.addBooking({
+                        roomId: parseInt(fm.get('roomId'), 10),
+                        title: fm.get('title'),
+                        purpose: fm.get('purpose'),
+                        startDate: fm.get('startDate'),
+                        endDate: fm.get('endDate') || fm.get('startDate'),
+                        time: fm.get('time')
+                    });
+                    this.reset();
+                    refreshAll();
+                } catch (err) { alert(err.message || err); }
+            };
+
+            document.getElementById('maintForm').onsubmit = function(e) {
+                e.preventDefault();
+                const fm = new FormData(this);
+                const rid = fm.get('roomId');
+                try {
+                    db.addMaintenanceTicket({
+                        roomId: rid ? parseInt(rid, 10) : null,
+                        title: fm.get('title'),
+                        description: fm.get('description'),
+                        priority: fm.get('priority'),
+                        reportedBy: fm.get('reportedBy')
+                    });
+                    this.reset();
+                    refreshAll();
+                } catch (err) { alert(err.message || err); }
+            };
+
+            document.getElementById('bookingList').addEventListener('click', function(e) {
+                if (e.target.classList.contains('btn-cancel-book')) {
+                    db.cancelBooking(parseInt(e.target.dataset.id, 10));
+                    refreshAll();
+                }
+            });
+
+            document.getElementById('maintList').addEventListener('click', function(e) {
+                if (e.target.classList.contains('btn-start')) {
+                    db.updateMaintenanceStatus(parseInt(e.target.dataset.id, 10), 'in_progress');
+                    refreshAll();
+                }
+                if (e.target.classList.contains('btn-done')) {
+                    db.updateMaintenanceStatus(parseInt(e.target.dataset.id, 10), 'done');
+                    refreshAll();
+                }
+            });
+
+            const today = new Date().toISOString().slice(0, 10);
+            document.querySelector('#bookingForm input[name="startDate"]').value = today;
+            document.querySelector('#bookingForm input[name="endDate"]').value = today;
+
+            refreshAll();
+        })();
+    </script>
+</body>
+</html>

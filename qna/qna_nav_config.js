@@ -12,8 +12,7 @@ var QNA_NAV_CONFIG = {
     {"id": "A_OT", "label": "舊約難題", "desc": "創世記～瑪拉基書"},
     {"id": "A_NT", "label": "新約難題", "desc": "馬太～啟示錄"},
     {"id": "B", "label": "神學教義難題", "desc": "辯道、護教、神學問答"},
-    {"id": "C", "label": "信徒教會難題", "desc": "信仰、生活、教會實務"},
-    {"id": "HUB", "label": "多站導覽（試）", "desc": "頂列「來源」切換站點；右欄為該站 qna_*_index 導覽（單一側欄，不重複）"}
+    {"id": "C", "label": "信徒教會難題", "desc": "信仰、生活、教會實務"}
   ],
   "sources": [
     {"id": "all", "label": "全部來源（大表）", "category": "A", "sidebar": "qna_list_auto.htm", "landing": "about:blank"},
@@ -43,13 +42,6 @@ var QNA_NAV_CONFIG = {
     {"id": "billygraham", "label": "葛培理 Answers", "category": "C", "sidebar": "qna_list_auto.htm", "landing": "https://billygraham.org/answers", "lang": ["en"]},
     {"id": "logosbaptist", "label": "證道浸信會", "category": "C", "sidebar": "qna_list_auto.htm", "landing": "https://www.logosbaptist.org/", "lang": ["zh"]},
     {"id": "wellsofgrace_chen_life", "label": "陳終道·生活問題", "category": "C", "sidebar": "qna_list_auto.htm", "landing": "https://wellsofgrace.com/messages/chen/bible_qna/index3.htm", "lang": ["zh"]},
-    {"id": "wellsofgrace_chen_church", "label": "陳終道·教會問題", "category": "C", "sidebar": "qna_list_auto.htm", "landing": "https://wellsofgrace.com/messages/chen/bible_qna/index5.htm", "lang": ["zh"]},
-    {"id": "hub_ca_teens", "label": "CA · Teen Qs", "category": "HUB", "sidebar": "qna_list_auto.htm", "landing": "qna_ca_teens_index.htm", "lang": []},
-    {"id": "hub_ca_family", "label": "CA · Family", "category": "HUB", "sidebar": "qna_list_auto.htm", "landing": "qna_ca_family_index.htm", "lang": []},
-    {"id": "hub_ca_zh", "label": "CA · 繁中導覽", "category": "HUB", "sidebar": "qna_list_auto.htm", "landing": "qna_ca_zh_index.htm", "lang": []},
-    {"id": "hub_ca_id", "label": "CA · Indonesia", "category": "HUB", "sidebar": "qna_list_auto.htm", "landing": "qna_ca_id_index.htm", "lang": []},
-    {"id": "hub_billy", "label": "Billy Graham Answers", "category": "HUB", "sidebar": "qna_list_auto.htm", "landing": "qna_billy_index.htm", "lang": []},
-    {"id": "hub_etspedia", "label": "以斯拉百科 etspedia", "category": "HUB", "sidebar": "qna_list_auto.htm", "landing": "qna_etspedia_index.htm", "lang": []},
-    {"id": "hub_reformed", "label": "ReformedAnswers（試）", "category": "HUB", "sidebar": "qna_list_auto.htm", "landing": "qna_reformed_index.htm", "lang": []}
+    {"id": "wellsofgrace_chen_church", "label": "陳終道·教會問題", "category": "C", "sidebar": "qna_list_auto.htm", "landing": "https://wellsofgrace.com/messages/chen/bible_qna/index5.htm", "lang": ["zh"]}
   ]
 };

@@ -340,6 +340,58 @@
     return !!(c && c.checked);
   }
 
+  function renderPainQuadGrid(counts, priority) {
+    counts = counts || { A: 0, B: 0, C: 0, D: 0 };
+    var cells = [
+      { key: "A", pos: "tl", color: "#2563eb" },
+      { key: "B", pos: "tr", color: "#ea580c" },
+      { key: "D", pos: "bl", color: "#16a34a" },
+      { key: "C", pos: "br", color: "#dc2626" }
+    ];
+    var badge = function (lit, pri) {
+      if (pri) return '<span class="acs-status-badge acs-status-badge--warn">優先留意</span>';
+      if (lit) return '<span class="acs-status-badge acs-status-badge--mid">一起留意</span>';
+      return '<span class="acs-status-badge acs-status-badge--ok">門檻內</span>';
+    };
+    var grid = cells
+      .map(function (c) {
+        var m = TYPE_META[c.key];
+        var n = counts[c.key] || 0;
+        var lit = n >= 2;
+        var pri = priority === c.key && lit;
+        return (
+          '<div class="acs-quad-cell acs-quad-cell--' +
+          c.pos +
+          (pri ? " acs-quad-cell--active" : "") +
+          '" style="border-color:' +
+          c.color +
+          '">' +
+          '<div class="acs-quad-cell__head"><strong>' +
+          escapeHtml(m.short) +
+          "</strong> " +
+          badge(lit, pri) +
+          '<span class="acs-quad-cell__pct">' +
+          n +
+          "/4</span></div>" +
+          '<p class="acs-quad-cell__harm">' +
+          escapeHtml(m.labelPastoral) +
+          "</p>" +
+          '<p class="acs-quad-cell__action"><strong>經文：</strong>' +
+          escapeHtml(m.bible) +
+          " · " +
+          escapeHtml(m.process) +
+          "</p></div>"
+        );
+      })
+      .join("");
+    return (
+      '<div class="acs-quad-grid" aria-label="RACI 痛點四型四格">' +
+      '<p class="acs-quad-grid__hint">每區 ≥2 勾選 = 「一起留意」；<strong>不是</strong>成績或貼標籤。亮框 = 本輪建議優先談的面向。</p>' +
+      grid +
+      "</div>"
+    );
+  }
+
   function analyze() {
     var lens = el("raci-lens").value;
     var role = el("raci-role").value;
@@ -373,7 +425,24 @@
     if (!dom) return;
 
     var html = "";
-    html += '<p class="raci-result-hero">本輪整理（先讀這段）</p>';
+    var heartPayload = {
+      situation:
+        triggered.length > 0
+          ? "本輪較多共同感受：" + triggered.map(function (k) { return TYPE_META[k].short; }).join("、")
+          : "四軸均未達 ≥2 勾選門檻；仍可把「唯一 A」帶進下一次會議。",
+      risk: priority
+        ? TYPE_META[priority].labelPastoral
+        : "尚無單一優先軸；可先談主日或行政事工誰是 A。",
+      step: "本週試一件事：把某一事工的 A 名字寫在白板或群組（只寫一個）。",
+      demo: !!window.__raciDemoMode
+    };
+    if (window.AcsReportGold && AcsReportGold.renderReportHeart) {
+      html += AcsReportGold.renderReportHeart(AcsReportGold.buildRaciReportHeart(heartPayload));
+    } else {
+      html += '<p class="raci-result-hero">本輪整理（先讀這段）</p>';
+    }
+
+    html += renderPainQuadGrid(counts, priority);
 
     html += '<div class="raci-lamp-cards">';
     ["A", "B", "C", "D"].forEach(function (k) {
@@ -550,6 +619,21 @@
     return lines.join("\n");
   }
 
+  function loadDemoReport() {
+    window.__raciDemoMode = true;
+    if (el("raci-lens")) el("raci-lens").value = "team";
+    if (el("raci-role")) el("raci-role").value = "A";
+    if (el("raci-ministry")) el("raci-ministry").value = "主日崇拜";
+    var flat = [true, true, false, false, false, false, false, false, false, false, false, false, true, true, false, false];
+    renderQuestions("team", flat);
+    gotoTab("survey");
+    setTimeout(function () {
+      analyze();
+      window.__raciDemoMode = false;
+    }, 120);
+  }
+  window.loadDemoReport = loadDemoReport;
+
   function copyReport() {
     var t = window.__raciLastReport;
     if (!t) {
@@ -667,13 +751,19 @@
       renderQuestions(el("raci-lens").value, null);
       if (el("raci-result")) {
         el("raci-result").innerHTML =
-          '<p class="raci-muted">尚無結果。完成上方勾選後按「產生我的結果卡」。</p>';
+          '<p class="raci-muted">尚無結果。完成上方勾選後按「提交並生成報告」。</p>';
       }
       window.__raciLastReport = "";
     };
 
     el("raci-analyze-btn").onclick = analyze;
     el("raci-copy-btn").onclick = copyReport;
+    var demoBtn = el("raci-demo-btn");
+    if (demoBtn) demoBtn.onclick = loadDemoReport;
+    var demoHeader = el("raci-demo-header");
+    if (demoHeader) demoHeader.onclick = loadDemoReport;
+    var demoWhy = el("raci-demo-why");
+    if (demoWhy) demoWhy.onclick = loadDemoReport;
 
     el("raci-lens").addEventListener("change", function () {
       renderQuestions(el("raci-lens").value, null);

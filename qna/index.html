@@ -1,31 +1,1342 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>聖經難題 Q&amp;A（全部來源＋iframe）</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>聖經難題 Q&amp;A · 引導式目錄</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --card: #fff;
+    --border: #c8d4e0;
+    --text: #1e293b;
+    --muted: #64748b;
+    --green: #15803d;
+    --teal: #0d9488;
+    --blue: #2563eb;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .bar {
+    flex-shrink: 0;
+    padding: 1px 6px 2px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+  }
+  .bar1 { background: #f5f5f5; padding-top: 0; }
+  .bar2 { background: #e8f4fc; }
+  .bar .label {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #334155;
+    margin-right: 0;
+    flex: 0 0 auto;
+  }
+  .pills {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .pill {
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid #6c9;
+    background: #fff;
+    font: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
+    color: #333;
+    line-height: 1.2;
+  }
+  .pill:hover { border-color: #17a2b8; background: #17a2b8; color: #fff; }
+  .pill.is-on {
+    background: #28a745;
+    border-color: #28a745;
+    color: #fff;
+  }
+  .pill.src-on {
+    background: #17a2b8;
+    border-color: #17a2b8;
+    color: #fff;
+  }
+  .pill.lang {
+    font-size: 0.7rem;
+    padding: 1px 5px;
+  }
+  .pill.cap-hub { border-style: dashed; opacity: 0.92; }
+  .pill .cap-tag {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-left: 3px;
+  }
+  .pill.src-on .cap-tag { color: #e0f2fe; }
+  #sidebarTree .flat-list {
+    margin: 0;
+    padding: 4px 8px 8px 18px;
+    list-style: disc;
+  }
+  #sidebarTree .cap-note {
+    font-size: 0.75rem;
+    color: #64748b;
+    padding: 6px 4px 8px;
+    line-height: 1.4;
+  }
+  /* 與「來源」同一列銜接膠囊，節省垂直空間 */
+  .lang-row { margin-top: 0; margin-left: 0; }
+  /* 多站導覽：第二列左起標籤，右側膠囊可多行整齊換行 */
+  .bar2.hub-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    padding-top: 1px;
+    padding-bottom: 2px;
+  }
+  .bar2.hub-bar > .label {
+    flex: 0 0 auto;
+    margin-right: 0;
+  }
+  .bar2.hub-bar #layer2 {
+    flex: 1 1 200px;
+    min-width: 0;
+    gap: 6px;
+  }
+  .bar2.hub-bar #layer2 .pill {
+    font-size: 0.74rem;
+    padding: 3px 8px;
+    line-height: 1.25;
+  }
+
+  .work {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+  .side {
+    width: 16%;
+    min-width: 140px;
+    max-width: 220px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    background: var(--card);
+  }
+  .side-head {
+    padding: 4px 6px;
+    font-size: 0.65rem;
+    color: var(--muted);
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  #sidebarTree {
+    flex: 1;
+    overflow: auto;
+    padding: 3px 4px 8px;
+    font-size: 0.68rem;
+  }
+  #sidebarTree details {
+    margin-bottom: 2px;
+    border: 1px solid #e2e8f0;
+    border-radius: 3px;
+    background: #fafafa;
+  }
+  #sidebarTree summary {
+    cursor: pointer;
+    padding: 3px 5px;
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.68rem;
+  }
+  #sidebarTree ul {
+    margin: 0;
+    padding: 2px 4px 4px 14px;
+    list-style: disc;
+  }
+  #sidebarTree li { margin: 1px 0; }
+  #sidebarTree a.q-link {
+    color: var(--blue);
+    text-decoration: none;
+    word-break: break-word;
+    font-size: 0.66rem;
+    line-height: 1.25;
+  }
+  #sidebarTree a.q-link:hover { text-decoration: underline; }
+  #sidebarTree .sb-block { margin-bottom: 6px; }
+  #sidebarTree .sb-lvl0 {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--muted);
+    padding: 3px 2px 2px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 3px;
+  }
+  #sidebarTree .cap-note {
+    font-size: 0.62rem;
+    color: #64748b;
+    padding: 3px 2px 4px;
+    line-height: 1.3;
+  }
+  #sidebarTree .flat-list {
+    margin: 0;
+    padding: 2px 4px 4px 12px;
+    list-style: disc;
+  }
+
+  #sidebarFrame {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    min-height: 120px;
+    display: none;
+  }
+  #sidebarFrame.show { display: block; }
+
+  .mainPane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #fff;
+    position: relative;
+  }
+  .mainPane header {
+    padding: 4px 8px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+  }
+  .mainPane header .main-title-text { min-width: 0; }
+  .mainPane header .ask-ai-inline {
+    color: #1e40af;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-decoration: none;
+    cursor: pointer;
+    border: 0;
+    background: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 600;
+    color: #1e40af;
+  }
+  .mainPane header .ask-ai-inline:hover { text-decoration: underline; }
+  .mainPane header .ask-ai-inline[hidden] { display: none !important; }
+  #mainFrame {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    min-height: 120px;
+  }
+
+  .bar2.hub-bar #layer2 .pill,
+  .bar2 #layer2 .pill {
+    font-size: 0.62rem;
+    padding: 1px 5px;
+    line-height: 1.2;
+  }
+  .pill .cap-tag { display: none; }
+
+  #btnOpenExt {
+    padding: 1px 6px;
+    font-size: 0.65rem;
+    border: 1px solid #f59e0b;
+    border-radius: 3px;
+    background: #fff7ed;
+    color: #b45309;
+    cursor: pointer;
+  }
+
+  .v3-banner[hidden] { display: none !important; }
+
+  .foot {
+    flex-shrink: 0;
+    padding: 2px 8px 3px;
+    font-size: 0.68rem;
+    line-height: 1.35;
+    color: var(--muted);
+    background: #e8edf2;
+    border-top: 1px solid var(--border);
+  }
+  .v3-banner {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    background: #ecfdf5;
+    border-bottom: 1px solid #6ee7b7;
+    color: #065f46;
+  }
+  .v3-banner a { color: #047857; font-weight: 600; }
+  .mainPane header .ext-hint {
+    color: #b45309;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+
+  .work.full-main .side,
+  .work.hub-mode .side { display: none; }
+  .work.full-main .mainPane,
+  .work.hub-mode .mainPane { flex: 1; max-width: 100%; }
+
+  @media (max-width: 768px) {
+    .work { flex-direction: column; }
+    .side { width: 100%; max-width: none; min-width: 0; height: 36vh; }
+    .mainPane { min-height: 42vh; }
+  }
+</style>
 </head>
-<!--
-  靜態版：左側分層載入（qna_sidebar_progressive.html）、右側 iframe。
-  依賴：qna_layer1_static.htm、qna_sidebar_progressive.html、qna_landing.htm、data/qna_level1.json、data/qna_data_*.json
-  雲端請開：.../qna/index.html（需上傳 data/ 下 JSON）
--->
-<frameset rows="42,*">
-  <frame name="layer1" src="qna_layer1_static.htm" scrolling="no" noresize>
-  <frameset cols="26%,*">
-    <frame name="contents" src="qna_sidebar_progressive.html" scrolling="auto" target="main">
-    <frame name="main" src="qna_landing.htm" scrolling="auto">
-  </frameset>
-</frameset>
-<noframes>
 <body>
-  <p>你的瀏覽器不支援 frames。</p>
-  <ul>
-    <li><a href="index_file.html"><b>file:// 專用版</b></a>（左側單頁目錄＋右側 iframe，無需 localhost）</li>
-    <li><a href="qna_list_auto.htm">全部來源目錄（單頁，約 4.3MB，可伸縮開合）</a></li>
-    <li><a href="qna_sidebar_progressive.html">分層載入版</a>（需 HTTP 伺服器，否則 Level 2 會 Failed to fetch）</li>
-    <li><a href="qna_index_4layer.html">四層導航版（需 nav_config）</a></li>
-    <li><a href="qna_catalog.html">目錄版（JSON 資料）</a></li>
-  </ul>
+
+  <div class="v3-banner" id="v3Banner" hidden>
+    <strong>載入提示</strong> · 題庫未就緒時請改用本機 HTTP 開啟本頁（勿用 file:// 載大檔）。
+  </div>
+
+  <div class="bar bar1">
+    <span class="label">大類</span>
+    <div class="pills" id="layer1"></div>
+  </div>
+  <div class="bar bar2">
+    <span class="label">來源</span>
+    <div class="pills" id="layer2"></div>
+    <div class="pills lang-row" id="langNav" hidden></div>
+  </div>
+
+  <div class="work">
+    <aside class="side" aria-label="題目目錄">
+      <div class="side-head"><strong id="sideHeadLabel">題目目錄</strong></div>
+      <div id="sidebarTree"></div>
+      <iframe id="sidebarFrame" class="show" title="完整目錄（備援）" src="qna_list_auto.htm?v=6"></iframe>
+    </aside>
+    <div class="mainPane">
+      <header>
+        <span class="main-title-text"><strong id="mainTitleLabel">原站解答</strong></span>
+        <button type="button" class="ask-ai-inline" id="btnAskAi" hidden title="開新頁：帶本題提示詞並可選 AI 平台">進深追問 AI</button>
+        <span class="ext-hint" id="mainExtHint" hidden>· 本站不支持嵌入</span>
+        <button type="button" id="btnOpenExt" hidden>新分頁開啟</button>
+      </header>
+      <iframe id="mainFrame" name="main" title="解答頁面"></iframe>
+    </div>
+  </div>
+
+  <footer class="foot">
+    結構化題庫：<code>data/qna_sidebar_bundle.js</code> · 設定：<code>qna_nav_config.js</code>
+  </footer>
+
+<script>
+(function () {
+  var ASSET_VER = "20260805r";
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=" + ASSET_VER;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+  // 先載入導航設定（小檔），再載入大包，避免大包失敗時連頂欄都無法顯示
+  loadScript("qna_nav_config.js")
+    .then(function () {
+      return loadScript("data/qna_sidebar_bundle.js");
+    })
+    .then(startApp)
+    .catch(function () {
+      var ban = document.getElementById("v3Banner");
+      if (ban) ban.hidden = false;
+      try {
+        startApp();
+      } catch (e) {}
+      alert("題庫 bundle 可能未載入（file:// 下大檔易被擋）。請用本機 http 伺服器開 qna 資料夾，或檢查 data/qna_sidebar_bundle.js 路徑。");
+    });
+
+function startApp() {
+  var cfg = window.QNA_NAV_CONFIG || { layer1_categories: [], sources: [] };
+  var bundle = window.QNA_SIDEBAR_BUNDLE || {};
+  var bundleReady = !!(window.QNA_SIDEBAR_BUNDLE && Object.keys(window.QNA_SIDEBAR_BUNDLE).length);
+  var state = {
+    cat: "A",
+    src: "",
+    refBook: "",
+    refChapter: 0,
+    qf: "",
+    currentTitle: "",
+    currentUrl: "",
+    currentNoEmbed: false
+  };
+
+  /**
+   * V3 能力表（試做）：決定側欄呈現，不改頂欄結構。
+   * book = 書卷樹可篩 OT/NT；topic = 主題樹整包；flat = 單層題目、藏「未分類」；
+   * hub = 導覽入口（無可用題樹時不當假分類）。
+   */
+  var SOURCE_CAPABILITY = {
+    chineseapologetics: "book",
+    equiptoserve_etspedia: "book",
+    equiptoserve: "book",
+    equiptoserve_deut_ruth: "topic",
+    equiptoserve_ot_bg: "hub",
+    equiptoserve_nt_bg: "hub",
+    equiptoserve_apologetics: "topic",
+    defendinginerrancy: "book",
+    biblequestions: "topic",
+    gotquestions: "topic",
+    christiananswers: "topic",
+    christiananswers_zh_trad: "hub",
+    christiananswers_id: "hub",
+    wellsofgrace: "hub",
+    wellsofgrace_archer: "book",
+    wellsofgrace_chen_book: "hub",
+    wellsofgrace_chen_ot: "flat",
+    wellsofgrace_chen_nt: "flat",
+    wellsofgrace_su_nt: "book",
+    wellsofgrace_su_reading: "flat",
+    wellsofgrace_li_ot: "book",
+    wellsofgrace_lv: "flat",
+    wellsofgrace_wenti2: "flat",
+    ccbiblestudy: "toc",
+    reformedanswers: "topic",
+    wellsofgrace_chen_theology: "topic",
+    billygraham: "topic",
+    logosbaptist: "topic",
+    wellsofgrace_chen_life: "topic",
+    wellsofgrace_chen_church: "topic"
+  };
+  /** V3 頂欄隱藏：空殼／與子系列重複的入口（資料仍在 bundle，不刪） */
+  var SOURCE_V3_HIDE = {
+    wellsofgrace: 1,
+    wellsofgrace_chen_book: 1
+  };
+  var JUNK_GROUP_RE = /^(未分類|待整理|雜題|未標註經文／主題|未標註經文\/主題|Uncategorized|Other|其他)$/i;
+
+  /** 垃圾組／單層包 → 側欄第1層顯示名 */
+  function junkLayer1Label() {
+    return "雜題";
+  }
+
+  /** 英文題庫裡的「首頁／分類頁」——點了只會飛到目錄，側欄應隱藏 */
+  function isEnglishIndexUrl(url) {
+    if (!url) return false;
+    var u = String(url).toLowerCase();
+    if (/\/bible-difficulties\/?$/.test(u)) return true;
+    if (/\/content\.html$/.test(u)) return true;
+    if (/\/content_[a-z0-9_-]+\.html$/.test(u)) return true;
+    if (/\/home\.html$/.test(u)) return true;
+    if (/gotquestions\.org\/(chinese\/)?chinese-(ask|about|faq|good-news|crucial)/i.test(u)) return true;
+    if (/christiananswers\.net\/[^/]+\/home\.html$/i.test(u)) return true;
+    if (/\/answers\/?$/.test(u) && /billygraham|reformedanswers/i.test(u)) return true;
+    return false;
+  }
+
+  function filterEnglishIndexItems(items) {
+    if (!items || !items.length) return items;
+    var kept = items.filter(function (it) {
+      return !isEnglishIndexUrl(it.url);
+    });
+    return kept.length ? kept : items;
+  }
+
+  function getCapability(srcId) {
+    if (!srcId) return "topic";
+    if (SOURCE_CAPABILITY[srcId]) return SOURCE_CAPABILITY[srcId];
+    if (/^hub_/.test(srcId)) return "hub";
+    if (/^christiananswers/.test(srcId)) return "hub";
+    return "topic";
+  }
+
+  function isJunkGroupName(name) {
+    var n = displayGroupName(name || "");
+    return JUNK_GROUP_RE.test(n);
+  }
+
+  /** flat 能力，或「僅一組且組名為未分類」→ 直接列題、不顯示組名 */
+  function shouldFlattenGroups(groups, cap) {
+    if (cap === "flat") return true;
+    if (!groups || groups.length !== 1) return false;
+    return isJunkGroupName(groups[0].name);
+  }
+
+  var EQ_UNIFIED_BLOCKS = [
+    { bundleKey: "equiptoserve", title: "書卷難題", mode: "book" },
+    { bundleKey: "equiptoserve_deut_ruth", title: "申命記～路得記", mode: "deut" },
+    { bundleKey: "equiptoserve_ot_bg", title: "舊約背景", mode: "otbg" },
+    { bundleKey: "equiptoserve_nt_bg", title: "新約背景", mode: "ntbg" },
+    { bundleKey: "equiptoserve_apologetics", title: "辯道護教", mode: "apo" }
+  ];
+
+  var NT_TAIL = new Set([
+    "MATTHEW", "MARK", "LUKE", "JOHN", "ACTS", "ROMANS", "GALATIANS", "EPHESIANS",
+    "PHILIPPIANS", "COLOSSIANS", "HEBREWS", "JAMES", "JUDE", "REVELATION",
+    "New Testament"
+  ]);
+  var NT_PARTS = [
+    "1 CORINTHIANS", "2 CORINTHIANS", "1 THESSALONIANS", "2 THESSALONIANS",
+    "1 TIMOTHY", "2 TIMOTHY", "1 PETER", "2 PETER", "1 JOHN", "2 JOHN", "3 JOHN",
+    "TITUS", "PHILEMON"
+  ];
+  NT_PARTS.forEach(function (x) { NT_TAIL.add(x); });
+
+  function catSetFor(cat) {
+    var set = {};
+    if (["A", "A_OT", "A_NT"].indexOf(cat) >= 0) {
+      ["A", "A_OT", "A_NT"].forEach(function (c) { set[c] = 1; });
+    } else {
+      set[cat] = 1;
+    }
+    return set;
+  }
+
+  function sourcesForCategory(cat) {
+    var set = catSetFor(cat);
+    var list = cfg.sources.filter(function (s) {
+      if (SOURCE_V3_HIDE[s.id]) return false;
+      if (s.categories && s.categories.length) {
+        return s.categories.indexOf(cat) >= 0;
+      }
+      return set[s.category];
+    });
+    // 小白模式：不顯示「全部來源」避免左欄載入舊巨型目錄、搜尋框與引導語意衝突
+    var trimmed = list.filter(function (s) { return s.id !== "all" && s.id !== "all_B" && s.id !== "all_C"; });
+    if (trimmed.length) return trimmed;
+    return list.length ? list : cfg.sources.slice();
+  }
+
+  function resolveDefaultSrc(cat, list) {
+    var src = state.src;
+    if (!list.length) return src;
+    if (list.some(function (s) { return s.id === src; })) return src;
+    if (/^equiptoserve/.test(src) && src !== "equiptoserve_etspedia" &&
+        list.some(function (s) { return s.id === "equiptoserve_etspedia"; })) {
+      return "equiptoserve_etspedia";
+    }
+    return list[0].id;
+  }
+
+  function lastSegment(name) {
+    var parts = name.split("·");
+    return parts[parts.length - 1].trim();
+  }
+
+  function isNtGroupName(name) {
+    if (name.indexOf("新約") >= 0) return true;
+    var tail = lastSegment(name).toUpperCase();
+    if (NT_TAIL.has(tail)) return true;
+    return false;
+  }
+
+  function isOtGroupName(name) {
+    if (name.indexOf("舊約") >= 0) return true;
+    var tail = lastSegment(name).toUpperCase();
+    if (tail === "OLD TESTAMENT") return true;
+    if (isNtGroupName(name)) return false;
+    if (/^[A-Z0-9 ]+$/.test(tail) && tail.length > 2 && !NT_TAIL.has(tail)) {
+      if (tail.indexOf("CORINTHIANS") >= 0 || tail.indexOf("THESSALONIANS") >= 0 ||
+          tail.indexOf("TIMOTHY") >= 0 || tail.indexOf("PETER") >= 0 || tail.indexOf("JOHN") >= 0) {
+        return !isNtGroupName(name);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function filterGroupsByCat(groups, cat, cap) {
+    // V3：非 book／toc → A_OT／A_NT 仍顯示整包，不空篩
+    if (cap && cap !== "book" && cap !== "toc") return groups;
+    if (cat === "B" || cat === "C" || cat === "A") return groups;
+    var filtered = groups.filter(function (g) {
+      if (cat === "A_NT") return isNtGroupName(g.name);
+      if (cat === "A_OT") return isOtGroupName(g.name);
+      return true;
+    });
+    // 保險：書卷篩完若空，仍回整包（與產品定案一致）
+    if (filtered.length === 0 && groups.length) return groups;
+    return filtered;
+  }
+
+  function shouldShowEqBlock(cat, mode) {
+    if (cat === "B") return mode === "apo";
+    if (cat === "A_NT") return mode === "book" || mode === "ntbg";
+    if (cat === "A_OT") return mode === "book" || mode === "deut" || mode === "otbg";
+    if (cat === "A") return mode === "book" || mode === "deut" || mode === "otbg" || mode === "ntbg";
+    return false;
+  }
+
+  function displayGroupName(name) {
+    if (!name) return "";
+    // 將建包時的「來源短名 · 原本分組」縮成只顯示後半段
+    // 例：GotQuestions 中文 · MATTHEW -> MATTHEW
+    if (name.indexOf(" · ") >= 0) return name.split(" · ").slice(-1)[0].trim();
+    return name.trim();
+  }
+
+  function currentSourceRow() {
+    return cfg.sources.filter(function (s) { return s.id === state.src; })[0];
+  }
+
+  function isExternalHttp(url) {
+    if (!url || url === "about:blank") return false;
+    try {
+      var u = new URL(url, location.href);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+      return u.origin !== location.origin;
+    } catch (e) {
+      return /^https?:\/\//i.test(String(url));
+    }
+  }
+
+  /** 英文／已知禁嵌：用說明卡。中文常可嵌站：允許 iframe（恢復舊體驗）。 */
+  function isNoFrameEmbedHost(url) {
+    try {
+      var h = new URL(url, location.href).hostname;
+      return (
+        /\.gotquestions\.org$/i.test(h) ||
+        /(^|\.)billygraham\.org$/i.test(h) ||
+        /(^|\.)christiananswers\.net$/i.test(h) ||
+        /(^|\.)reformedanswers\.org$/i.test(h) ||
+        /(^|\.)biblequestions\.org$/i.test(h) ||
+        /(^|\.)logosbaptist\.org$/i.test(h)
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** 可嵌 iframe：中文站 + Defending（無 XFO；右欄直達答案） */
+  function isPreferEmbedHost(url) {
+    try {
+      var h = new URL(url, location.href).hostname;
+      return (
+        /(^|\.)wellsofgrace\.com$/i.test(h) ||
+        /(^|\.)tochrist\.org$/i.test(h) ||
+        /(^|\.)chineseapologetics\.net$/i.test(h) ||
+        /(^|\.)equiptoserve\.org$/i.test(h) ||
+        /(^|\.)ccbiblestudy\.org$/i.test(h) ||
+        /(^|\.)defendinginerrancy\.com$/i.test(h) ||
+        /(^|\.)127\.0\.0\.1$/i.test(h) ||
+        /(^|\.)localhost$/i.test(h)
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setMainExtHint(on) {
+    var el = document.getElementById("mainExtHint");
+    if (el) el.hidden = !on;
+    var btn = document.getElementById("btnOpenExt");
+    if (btn) btn.hidden = !on;
+  }
+
+  function updateAfterReadBar(title, url, noEmbed) {
+    state.currentTitle = title || "";
+    state.currentUrl = url || "";
+    state.currentNoEmbed = !!noEmbed;
+    var titleEl = document.getElementById("mainTitleLabel");
+    if (titleEl) {
+      titleEl.textContent = title ? ("原站解答 · " + title) : "原站解答";
+    }
+    var ask = document.getElementById("btnAskAi");
+    if (ask) ask.hidden = !(title && url);
+    setMainExtHint(!!noEmbed);
+  }
+
+  function openCurrentExternal() {
+    var u = state.currentUrl;
+    if (!u) return;
+    try {
+      window.open(u, "_blank", "noopener,noreferrer");
+    } catch (e) {}
+  }
+
+  function openAskAiPage() {
+    if (!state.currentUrl) {
+      alert("請先在左欄點一道題目，再按「進深追問 AI」。");
+      return;
+    }
+    try {
+      sessionStorage.setItem("qna_ask_t", state.currentTitle || "");
+      sessionStorage.setItem("qna_ask_u", state.currentUrl || "");
+    } catch (eS) {}
+    var q =
+      "qna_ask_ai.html?t=" +
+      encodeURIComponent(state.currentTitle || "") +
+      "&u=" +
+      encodeURIComponent(state.currentUrl || "");
+    try {
+      window.open(q, "_blank", "noopener,noreferrer");
+    } catch (eO) {
+      location.href = q;
+    }
+  }
+
+  function showExternalCard(url, title, opened) {
+    var f = document.getElementById("mainFrame");
+    var uEsc = escapeAttr(url);
+    var tEsc = escapeHtml(title || "外部頁面");
+    updateAfterReadBar(title, url, true);
+    f.removeAttribute("src");
+    f.src = "about:blank";
+    f.srcdoc =
+      "<!DOCTYPE html><html lang=\"zh-Hant\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>外部連結</title></head>" +
+      "<body style=\"font-family:Microsoft JhengHei,system-ui,sans-serif;padding:1.25rem;line-height:1.55;color:#334155;max-width:40rem;background:#fffbeb\">" +
+      "<p style=\"margin:0 0 8px;font-size:0.8rem;color:#92400e;font-weight:700\">本站不支持嵌入此來源</p>" +
+      "<h1 style=\"font-size:1.1rem;margin:0 0 10px\">" + tEsc + "</h1>" +
+      (opened
+        ? "<p style=\"color:#047857;font-weight:600\">已在<strong>新分頁</strong>開啟原文。若被瀏覽器擋下，請按標題列「新分頁開啟」。</p>"
+        : "<p>請用<strong>新分頁</strong>閱讀原文（已知禁嵌，不嘗試塞進右欄）。</p>") +
+      "<p><a href=\"" + uEsc + "\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"display:inline-block;padding:8px 14px;background:#b45309;color:#fff;border-radius:6px;text-decoration:none;font-weight:600\">在新分頁開啟原文</a></p>" +
+      "<p style=\"font-size:0.8rem;color:#64748b;word-break:break-all\">" + uEsc + "</p>" +
+      "</body></html>";
+  }
+
+  function setMain(url, title, fromUserClick) {
+    var f = document.getElementById("mainFrame");
+    if (!url || url === "about:blank") {
+      updateAfterReadBar("", "", false);
+      f.removeAttribute("srcdoc");
+      f.src = "about:blank";
+      return;
+    }
+    // 點題時再修一次以斯拉路徑（書卷缺前綴／主題缺 section）
+    url = fixEquiptoserveLegacyUrl(url);
+
+    if (!isExternalHttp(url)) {
+      updateAfterReadBar(title || "", url, false);
+      f.removeAttribute("srcdoc");
+      f.src = url;
+      return;
+    }
+    // 已知禁嵌：點題＝立刻新分頁，右欄只留說明（不猜能不能嵌）
+    if (isNoFrameEmbedHost(url)) {
+      var opened = false;
+      if (fromUserClick) {
+        try {
+          var w = window.open(url, "_blank", "noopener,noreferrer");
+          opened = !!w;
+        } catch (eO) {
+          opened = false;
+        }
+      }
+      showExternalCard(url, title || ((currentSourceRow() || {}).label) || "原站頁面", opened || fromUserClick);
+      return;
+    }
+    // 可嵌（含修好路徑的以斯拉）
+    if (isPreferEmbedHost(url)) {
+      updateAfterReadBar(title || "", url, false);
+      f.removeAttribute("srcdoc");
+      f.src = url;
+      return;
+    }
+    // 未知外站：保守當禁嵌
+    if (fromUserClick) {
+      try { window.open(url, "_blank", "noopener,noreferrer"); } catch (eU) {}
+    }
+    showExternalCard(url, title || ((currentSourceRow() || {}).label) || "原站頁面", !!fromUserClick);
+  }
+
+  function buildAiPrompt(title, url) {
+    return "【聖經難題對照】我剛閱讀線上資料（僅作參考）：\n題目：" + title + "\n網址：" + url + "\n\n請在福音派的正統範圍內：簡述不同看法（若有的話）、關鍵經文與需要注意的解經原則。若與我引用的網頁重點不同，請說明理由。最後可建議我還可追問哪 2～3 個問題。";
+  }
+
+  function appendItemLinksHtml(items, groupNameForFix) {
+    var html = "";
+    items.forEach(function (it) {
+      var ti = escapeHtml(it.title);
+      var fixedUrl = fixEquiptoserveLegacyUrl(it.url, groupNameForFix);
+      var finalUrl = fixedUrl;
+      if (/^https?:\/\/(www\.)?equiptoserve\.org\//i.test(finalUrl) && /[^\x00-\x7F]/.test(finalUrl)) {
+        try { finalUrl = encodeURI(finalUrl); } catch (e) {}
+      }
+      var u = escapeAttr(finalUrl);
+      html += "<li><a class=\"q-link\" href=\"" + u + "\" target=\"_blank\" rel=\"noopener noreferrer\" data-title=\"" + escapeAttr(it.title) + "\" data-url=\"" + u + "\">" + ti + "</a></li>";
+    });
+    return html;
+  }
+
+  function renderCcBibleStudySidebar(groups, qf) {
+    var sections = {
+      "主題查經": [],
+      "舊約查經": [],
+      "新約查經": [],
+      "其他": []
+    };
+    (groups || []).forEach(function (g) {
+      var name = g.name || "";
+      var sec = "其他";
+      var book = name;
+      if (/^主題查經/.test(name)) {
+        sec = "主題查經";
+        book = name.replace(/^主題查經\s*[>·／/]\s*/, "") || name;
+      } else if (/^舊約查經/.test(name)) {
+        sec = "舊約查經";
+        book = name.replace(/^舊約查經\s*[>·／/]\s*/, "") || name;
+      } else if (/^新約查經/.test(name)) {
+        sec = "新約查經";
+        book = name.replace(/^新約查經\s*[>·／/]\s*/, "") || name;
+      }
+      var items = (g.items || []).filter(function (it) {
+        if (!qf) return true;
+        return (it.title || "").toLowerCase().indexOf(qf) >= 0 ||
+          book.toLowerCase().indexOf(qf) >= 0;
+      });
+      if (!items.length && qf) return;
+      sections[sec].push({ book: book, items: items.length ? items : g.items || [] });
+    });
+
+    var html =
+      "<p class=\"cap-note\"><strong>三層選單</strong>：預設只顯示①主題／舊約／新約；點開才見②書卷或主題 → ③章／篇。" +
+      "亦可開 <a class=\"q-link\" href=\"https://www.ccbiblestudy.org/index-T.htm\" data-title=\"查經網總目錄\" data-url=\"https://www.ccbiblestudy.org/index-T.htm\" target=\"_blank\" rel=\"noopener\">總目錄 index-T</a>。</p>";
+    var order = ["主題查經", "舊約查經", "新約查經", "其他"];
+    order.forEach(function (sec) {
+      var books = sections[sec];
+      if (!books || !books.length) return;
+      html +=
+        "<details class=\"sb-sec\"><summary style=\"cursor:pointer;font-weight:700;color:#0f766e;padding:6px 4px\">" +
+        escapeHtml(sec) +
+        "（" +
+        books.length +
+        "）</summary>";
+      books.forEach(function (b) {
+        var items = b.items || [];
+        if (!items.length) return;
+        html +=
+          "<details style=\"margin:4px 0 6px 10px;border:1px solid #e2e8f0;border-radius:4px;background:#fafafa\">" +
+          "<summary style=\"cursor:pointer;padding:5px 8px;font-weight:600\">" +
+          escapeHtml(b.book) +
+          "（" +
+          items.length +
+          "）</summary><ul style=\"margin:0;padding:4px 8px 8px 22px\">";
+        html += appendItemLinksHtml(items, b.book);
+        html += "</ul></details>";
+      });
+      html += "</details>";
+    });
+    return html;
+  }
+
+  function appendGroupsDetailsHtml(groups, qf, firstOpenedRef, flatten) {
+    var html = "";
+    var srcId = state.src;
+    var scrubEn = /^(defendinginerrancy|gotquestions|biblequestions|christiananswers|christiananswers_zh_trad|christiananswers_id|reformedanswers|billygraham)$/.test(srcId);
+    // 搜尋時才自動展開有結果的組；平時全部收合，只露第1層
+    var allowAutoOpen = !!(qf && String(qf).trim());
+    if (flatten) {
+      var flatItems = [];
+      groups.forEach(function (g) {
+        var items = scrubEn ? filterEnglishIndexItems(g.items || []) : g.items || [];
+        items.forEach(function (it) {
+          if (qf && (it.title || "").toLowerCase().indexOf(qf) < 0) return;
+          flatItems.push({ it: it, gname: displayGroupName(g.name) });
+        });
+      });
+      if (!flatItems.length) return "";
+      // 單層／未分類：仍包成第1層「雜題」，勿一次攤開幾百題
+      html += "<p class=\"cap-note\">點「" + junkLayer1Label() + "」才展開題目（" + flatItems.length + " 則）</p>";
+      html += "<details" + (allowAutoOpen ? " open" : "") + "><summary>" + escapeHtml(junkLayer1Label()) + "（" + flatItems.length + "）</summary><ul class=\"flat-list\">";
+      flatItems.forEach(function (row) {
+        html += appendItemLinksHtml([row.it], row.gname);
+      });
+      html += "</ul></details>";
+      if (firstOpenedRef) firstOpenedRef.v = true;
+      return html;
+    }
+    groups.forEach(function (g) {
+      var rawItems = scrubEn ? filterEnglishIndexItems(g.items || []) : g.items || [];
+      var items = rawItems.filter(function (it) {
+        if (!qf) return true;
+        return (it.title || "").toLowerCase().indexOf(qf) >= 0;
+      });
+      if (!items.length) return;
+      var openAttr = "";
+      if (allowAutoOpen && firstOpenedRef && !firstOpenedRef.v) {
+        openAttr = " open";
+        firstOpenedRef.v = true;
+      }
+      var gLabel = displayGroupName(g.name);
+      if (isJunkGroupName(g.name)) gLabel = junkLayer1Label();
+      html += "<details" + openAttr + "><summary>" + escapeHtml(gLabel) + "（" + items.length + "）</summary><ul>";
+      html += appendItemLinksHtml(items, gLabel);
+      html += "</ul></details>";
+    });
+    return html;
+  }
+
+  function attachQLinkHandlers(tree) {
+    tree.querySelectorAll("a.q-link").forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        var t = a.getAttribute("data-title") || a.textContent;
+        var u = a.getAttribute("data-url") || a.href;
+        u = fixEquiptoserveLegacyUrl(u);
+        e.preventDefault();
+        setMain(u, t, true);
+      });
+    });
+  }
+
+  function renderEqUnifiedSidebar(qf) {
+    var tree = document.getElementById("sidebarTree");
+    var html = "";
+    var firstOpenedRef = { v: false };
+    var cap = getCapability("equiptoserve_etspedia");
+    EQ_UNIFIED_BLOCKS.forEach(function (block) {
+      if (!shouldShowEqBlock(state.cat, block.mode)) return;
+      var data = bundle[block.bundleKey];
+      if (!data || !data.groups || !data.groups.length) return;
+      var blockCap = getCapability(block.bundleKey);
+      var groups = block.mode === "book"
+        ? filterGroupsByCat(data.groups, state.cat, blockCap === "book" ? "book" : cap)
+        : data.groups;
+      var flatten = shouldFlattenGroups(groups, blockCap);
+      var inner = appendGroupsDetailsHtml(groups, qf || "", firstOpenedRef, flatten);
+      if (!inner) return;
+      html += "<div class=\"sb-block\"><div class=\"sb-lvl0\">" + escapeHtml(block.title) + "</div>" + inner + "</div>";
+    });
+    tree.innerHTML = html || "<p style=\"color:#64748b;padding:8px;\">此組合下無題目，請換大類或來源。</p>";
+    attachQLinkHandlers(tree);
+  }
+
+  function fixEquiptoserveLegacyUrl(url) {
+    if (!url) return url;
+    var s = String(url).replace(/^http:\/\//i, "https://");
+    if (!/equiptoserve\.org\/etspedia/i.test(s)) return url;
+    // 舊站路徑 /聖經難題/… → 首頁（勿猜）
+    if (/%E8%81%96%E7%B6%93%E9%9B%A3%E9%A1%8C/i.test(s)) return "https://www.equiptoserve.org/etspedia/";
+    if (/\/聖經難題(\/|$)/i.test(s)) return "https://www.equiptoserve.org/etspedia/";
+
+    var reserved = {
+      "old-testament-bible-questions": 1,
+      "new-testament-bible-questions": 1,
+      "old-testament-background": 1,
+      "new-testament-background": 1,
+      "apologetics-and-defense-of-faith": 1,
+      "religious-apologetics": 1,
+      "biblical-characters-dictionary": 1,
+      "biblical-geography-dictionary": 1,
+      "jewish-culture": 1,
+      "biblical-archaeology": 1,
+      "biblical-customs": 1,
+      "book-collection-vs-reading-books": 1,
+      "writing-library": 1,
+      "deuteronomy-ruth": 1
+    };
+
+    // 主題系列缺 section 前綴（站改版後常見）
+    // 例：/etspedia/goals-and-content-of-apologetics/post-3
+    //  → /etspedia/apologetics-and-defense-of-faith/goals-and-content-of-apologetics/post-3
+    var EQ_TOPIC_SECTION = {
+      "goals-and-content-of-apologetics": "apologetics-and-defense-of-faith",
+      "meaning-and-mission-of-apologetics": "apologetics-and-defense-of-faith",
+      "revival-of-apologetics": "apologetics-and-defense-of-faith",
+      "authority-of-apologetics": "apologetics-and-defense-of-faith",
+      "understanding-confucianism": "religious-apologetics",
+      "understanding-buddhism": "religious-apologetics",
+      "understanding-taoism": "religious-apologetics",
+      "understanding-islam": "religious-apologetics",
+      "understanding-catholicism": "religious-apologetics"
+    };
+
+    var m = s.match(/^(https:\/\/(?:www\.)?equiptoserve\.org\/etspedia)\/([a-z0-9-]+)\/(.+)$/i);
+    if (m) {
+      var seg = m[2].toLowerCase();
+      var rest = m[3];
+      // 已是 section/topic/... → 不重複加
+      if (reserved[seg]) {
+        return s;
+      }
+      if (EQ_TOPIC_SECTION[seg]) {
+        return m[1] + "/" + EQ_TOPIC_SECTION[seg] + "/" + seg + "/" + rest;
+      }
+      var ot = {
+          genesis: 1, exodus: 1, leviticus: 1, numbers: 1, deuteronomy: 1,
+          joshua: 1, judges: 1, ruth: 1, samuel: 1, kings: 1,
+          "leviticus-numbers": 1, "psalms-songofsolomon": 1,
+          "isaiah-lamentations": 1, "ezekiel-hosea": 1, "joel-malachi": 1,
+          "first-samuel": 1, "second-samuel": 1, "first-kings": 1, "second-kings": 1,
+          "first-chronicles": 1, "second-chronicles": 1, ezra: 1, nehemiah: 1,
+          esther: 1, job: 1, psalms: 1, proverbs: 1, ecclesiastes: 1,
+          "song-of-solomon": 1, isaiah: 1, jeremiah: 1, lamentations: 1,
+          ezekiel: 1, daniel: 1, hosea: 1, joel: 1, amos: 1, obadiah: 1,
+          jonah: 1, micah: 1, nahum: 1, habakkuk: 1, zephaniah: 1,
+          haggai: 1, zechariah: 1, malachi: 1
+        };
+      var nt = {
+          matthew: 1, mark: 1, luke: 1, john: 1, acts: 1, romans: 1,
+          "1-corinthians": 1, "2-corinthians": 1, galatians: 1, ephesians: 1,
+          philippians: 1, colossians: 1, "1-thessalonians": 1, "2-thessalonians": 1,
+          "1-timothy": 1, "2-timothy": 1, titus: 1, philemon: 1, hebrews: 1,
+          james: 1, "1-peter": 1, "2-peter": 1, "1-john": 1, "2-john": 1,
+          "3-john": 1, jude: 1, revelation: 1,
+          "first-corinthians": 1, "second-corinthians": 1,
+          "first-thessalonians": 1, "second-thessalonians": 1,
+          "first-timothy": 1, "second-timothy": 1,
+          "first-peter": 1, "second-peter": 1,
+          "first-john": 1, "second-john": 1, "third-john": 1
+        };
+      if (ot[seg]) {
+        return m[1] + "/old-testament-bible-questions/" + seg + "/" + rest;
+      }
+      if (nt[seg]) {
+        return m[1] + "/new-testament-bible-questions/" + seg + "/" + rest;
+      }
+    }
+    return s;
+  }
+
+  function updateAiQuickVisibility() {
+    /* 追問改為頂2常駐 + 讀後條；不再綁大類 B */
+  }
+
+  function updateSideHeadLabel() {
+    var el = document.getElementById("sideHeadLabel");
+    if (!el) return;
+    var cap = getCapability(state.src);
+    var map = {
+      book: "題目目錄 · 書卷",
+      topic: "題目目錄 · 主題（整包）",
+      flat: "題目目錄 · 單層",
+      toc: "題目目錄 · 卷→章",
+      hub: "導覽入口（非題庫樹）"
+    };
+    el.textContent = map[cap] || "題目目錄";
+  }
+
+  function updateHubBarClass() {
+    var bar = document.querySelector(".bar2");
+    if (bar) bar.classList.toggle("hub-bar", state.cat === "HUB");
+  }
+
+  function renderSidebar() {
+    var tree = document.getElementById("sidebarTree");
+    var frame = document.getElementById("sidebarFrame");
+    var work = document.querySelector(".work");
+    var qf = (state.qf || "").trim().toLowerCase();
+    var srcRow = currentSourceRow();
+    var cap = getCapability(state.src);
+
+    if (work) {
+      work.classList.remove("full-main");
+      work.classList.remove("hub-mode");
+    }
+
+    updateSideHeadLabel();
+
+    if (
+      srcRow &&
+      srcRow.use_full_main &&
+      srcRow.landing &&
+      !/^https?:\/\//i.test(String(srcRow.landing))
+    ) {
+      if (work) work.classList.add("full-main");
+      frame.classList.remove("show");
+      frame.src = "about:blank";
+      tree.innerHTML = "";
+      tree.style.display = "none";
+      return;
+    }
+
+    if (state.cat === "HUB") state.cat = "A";
+
+    // hub 能力來源（CA 繁中／印尼等）：不載大表，提示改選題庫來源
+    if (cap === "hub") {
+      frame.classList.remove("show");
+      frame.src = "about:blank";
+      tree.style.display = "block";
+      var landH = (srcRow && srcRow.landing) ? srcRow.landing : "";
+      var landLinkH = landH && landH !== "about:blank"
+        ? "<p><button type=\"button\" class=\"pill\" id=\"hubOpenLand\">開啟原站／導覽（新分頁）</button></p>"
+        : "";
+      tree.innerHTML =
+        "<p class=\"cap-note\">此來源為 <strong>導覽（hub）</strong>：不載入舊版「全部來源」大表，避免英文選單把側欄換成巨型目錄。</p>" +
+        landLinkH +
+        "<p class=\"cap-note\">若需題目樹，請改選標有「書卷／主題／單層」的來源。</p>";
+      var btnH = document.getElementById("hubOpenLand");
+      if (btnH && landH) {
+        btnH.onclick = function () {
+          try { window.open(landH, "_blank", "noopener,noreferrer"); } catch (eH) {}
+          setMain(landH, (srcRow && srcRow.label) || "導覽");
+        };
+      }
+      return;
+    }
+
+    if (state.src === "equiptoserve_etspedia") {
+      frame.classList.remove("show");
+      frame.src = "about:blank";
+      tree.style.display = "block";
+      if (!bundleReady) {
+        tree.innerHTML =
+          "<p style=\"color:#b45309;padding:8px;font-size:0.85rem;\">未載入 <code>data/qna_sidebar_bundle.js</code>。" +
+          "若用 <strong>file://</strong> 開啟，瀏覽器常擋大型腳本；請在 <code>qna</code> 目錄執行 <code>npx serve .</code> 或 <code>python -m http.server</code>，再以 <strong>http://</strong> 網址開本頁。</p>";
+        return;
+      }
+      renderEqUnifiedSidebar(qf);
+      return;
+    }
+
+    var data = bundle[state.src];
+
+    if (
+      state.src === "all" ||
+      state.src === "all_B" ||
+      state.src === "all_C"
+    ) {
+      tree.innerHTML = "";
+      tree.style.display = "none";
+      frame.classList.add("show");
+      frame.src = "qna_list_auto.htm?v=6";
+      return;
+    }
+
+    if (!bundleReady || !data || !data.groups) {
+      // V3c：不要退回 qna_list_auto（英文／缺 bundle 時會「跳出」舊側欄＋點題直進壞掉的 iframe 404）
+      frame.classList.remove("show");
+      frame.src = "about:blank";
+      tree.style.display = "block";
+      var landM = (srcRow && srcRow.landing) ? srcRow.landing : "";
+      tree.innerHTML =
+        "<p class=\"cap-note\" style=\"color:#b45309\">此來源沒有可用的結構化題樹（bundle 缺資料）。V3 <strong>不再</strong>自動載入舊大表，以免側欄跳動與 404。</p>" +
+        (landM && landM !== "about:blank"
+          ? "<p><button type=\"button\" class=\"pill\" id=\"missOpenLand\">開啟來源 landing（新分頁／說明卡）</button></p>"
+          : "");
+      var btnM = document.getElementById("missOpenLand");
+      if (btnM && landM) {
+        btnM.onclick = function () {
+          setMain(landM, (srcRow && srcRow.label) || "landing");
+        };
+      }
+      return;
+    }
+
+    frame.classList.remove("show");
+    frame.src = "about:blank";
+    tree.style.display = "block";
+
+    var groups = filterGroupsByCat(data.groups, state.cat, cap);
+    if (state.src === "ccbiblestudy") {
+      tree.innerHTML = renderCcBibleStudySidebar(groups, qf);
+      attachQLinkHandlers(tree);
+      return;
+    }
+    var flatten = shouldFlattenGroups(groups, cap);
+    var firstOpenedRef = { v: false };
+    var html = appendGroupsDetailsHtml(groups, qf, firstOpenedRef, flatten);
+    if (/^wellsofgrace_chen_(ot|nt)$/.test(state.src)) {
+      html =
+        "<p class=\"cap-note\">陳終道問答：請用「陈终道·旧约／新约」；頂欄已隱藏僅入口頁的空殼來源。</p>" +
+        (html || "");
+    }
+    tree.innerHTML = html || "<p style=\"color:#64748b;padding:8px;\">此組合下無題目，請換來源或改選其他資料來源。</p>";
+    if (state.refBook) {
+      tree.innerHTML =
+        "<p class=\"cap-note\" style=\"color:#047857\"><strong>研讀深連</strong>：" +
+        escapeHtml(state.refBook) +
+        (state.refChapter ? " 第" + state.refChapter + "章" : "") +
+        " · 左欄已依關鍵字篩選；請點題目後於右欄閱讀。</p>" +
+        tree.innerHTML;
+    }
+    attachQLinkHandlers(tree);
+  }
+
+  function escapeHtml(s) {
+    if (!s) return "";
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function escapeAttr(s) {
+    return escapeHtml(s).replace(/'/g, "&#39;");
+  }
+
+  function renderLayer1() {
+    var el = document.getElementById("layer1");
+    el.innerHTML = "";
+    cfg.layer1_categories.forEach(function (c) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "pill" + (c.id === state.cat ? " is-on" : "");
+      b.textContent = c.label;
+      b.title = c.desc || "";
+      b.onclick = function () {
+        state.cat = c.id;
+        var list = sourcesForCategory(state.cat);
+        state.src = resolveDefaultSrc(state.cat, list);
+        syncUi();
+      };
+      el.appendChild(b);
+    });
+  }
+
+  function shortSourceLabel(s) {
+    var map = {
+      wellsofgrace_archer: "恩泉",
+      wellsofgrace_chen_ot: "陈终道.OT",
+      wellsofgrace_chen_nt: "陈终道.NT",
+      wellsofgrace_chen_theology: "陈终道.神學",
+      wellsofgrace_chen_life: "陈终道.生活",
+      wellsofgrace_chen_church: "陈终道.教會",
+      wellsofgrace_su_nt: "蘇佐揚.NT",
+      wellsofgrace_su_reading: "蘇佐揚",
+      wellsofgrace_li_ot: "李道生.OT",
+      wellsofgrace_lv: "呂鴻基",
+      wellsofgrace_wenti2: "恩泉.卷二",
+      equiptoserve_etspedia: "以斯拉.書卷",
+      equiptoserve: "以斯拉.書卷",
+      equiptoserve_deut_ruth: "以斯拉.申路",
+      equiptoserve_ot_bg: "以斯拉.OT背景",
+      equiptoserve_nt_bg: "以斯拉.NT背景",
+      equiptoserve_apologetics: "以斯拉.辯道",
+      chineseapologetics: "华人护教",
+      gotquestions: "GotQ",
+      christiananswers: "CA.英",
+      christiananswers_zh_trad: "CA.繁",
+      christiananswers_id: "CA.印",
+      defendinginerrancy: "Defending",
+      biblequestions: "BibleQ",
+      reformedanswers: "Reformed",
+      billygraham: "葛培理",
+      logosbaptist: "證道浸信",
+      ccbiblestudy: "查經網"
+    };
+    if (map[s.id]) return map[s.id];
+    var lab = s.label || s.id || "";
+    if (lab.indexOf("·") >= 0) return lab.split("·")[0].trim();
+    return lab;
+  }
+
+  function renderLayer2() {
+    var el = document.getElementById("layer2");
+    el.innerHTML = "";
+    var list = sourcesForCategory(state.cat);
+    state.src = resolveDefaultSrc(state.cat, list);
+
+    list.forEach(function (s) {
+      var b = document.createElement("button");
+      b.type = "button";
+      var cap = getCapability(s.id);
+      b.className = "pill" + (s.id === state.src ? " src-on" : "") + (cap === "hub" ? " cap-hub" : "");
+      b.textContent = shortSourceLabel(s);
+      b.title = s.label + " · " + cap;
+      b.onclick = function () {
+        state.src = s.id;
+        renderLayer2();
+      };
+      el.appendChild(b);
+    });
+    onSourceChange();
+  }
+
+  function renderLangNav() {
+    var row = document.getElementById("langNav");
+    row.innerHTML = "";
+    var cur = currentSourceRow();
+    if (!cur || !cur.lang || cur.lang.length < 2) {
+      row.hidden = true;
+      return;
+    }
+    row.hidden = false;
+    cur.lang.forEach(function (l) {
+      var u = (l === "zh" && cur.zh_url) ? cur.zh_url : cur.landing;
+      var a = document.createElement("a");
+      a.href = "#";
+      a.className = "pill lang";
+      a.textContent = l === "zh" ? "本站 · 中文首頁" : "English landing";
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        setMain(u, l === "zh" ? "中文首頁" : "English landing");
+      });
+      row.appendChild(a);
+    });
+  }
+
+  function onSourceChange() {
+    var cur = currentSourceRow();
+    if (!cur) return;
+    if (state.cat === "HUB") state.cat = "A";
+    // 英文禁嵌站：切換來源時不要載入 landing（多為目錄／首頁），改提示點左欄題目
+    if (cur.landing && isNoFrameEmbedHost(cur.landing)) {
+      var f = document.getElementById("mainFrame");
+      updateAfterReadBar("", "", false);
+      setMainExtHint(true);
+      f.src = "about:blank";
+      f.srcdoc =
+        "<!DOCTYPE html><html lang=\"zh-Hant\"><head><meta charset=\"utf-8\"><title>選題</title></head>" +
+        "<body style=\"font-family:Microsoft JhengHei,system-ui,sans-serif;padding:1.25rem;line-height:1.55;color:#334155;max-width:40rem;background:#fffbeb\">" +
+        "<p style=\"color:#92400e;font-weight:700\">" + escapeHtml(cur.label) + " · 本站不支持嵌入</p>" +
+        "<p>請在<strong>左欄</strong>點具體題目；點題後會<strong>立刻開新分頁</strong>讀原文（不猜能不能嵌）。</p>" +
+        "<p style=\"font-size:0.85rem;color:#64748b\">讀完可用頂列「追問」產生 AI 提示（草稿須人審）。</p>" +
+        "</body></html>";
+      renderLangNav();
+      renderSidebar();
+      return;
+    }
+    if (cur.landing && cur.landing !== "about:blank") {
+      setMain(cur.landing, cur.label);
+    } else {
+      var landingMap = {
+        A: "qna_landing_A.htm",
+        A_OT: "qna_landing_A_OT.htm",
+        A_NT: "qna_landing_A_NT.htm",
+        B: "qna_landing_B.htm",
+        C: "qna_landing_C.htm"
+      };
+      setMain(landingMap[state.cat] || "qna_landing.htm", "本站導覽");
+    }
+    renderLangNav();
+    renderSidebar();
+  }
+
+  function syncUi() {
+    updateSideHeadLabel();
+    renderLayer1();
+    renderLayer2();
+    updateHubBarClass();
+  }
+
+  document.getElementById("btnAskAi").addEventListener("click", openAskAiPage);
+  document.getElementById("btnOpenExt").addEventListener("click", openCurrentExternal);
+
+  if (location.hash === "#hub") state.cat = "A";
+  try {
+    var _sp = new URLSearchParams(window.location.search.replace(/^\?/, ""));
+    var catP = String(_sp.get("cat") || "").toUpperCase();
+    if (catP && catP !== "HUB") state.cat = catP;
+    if (catP === "HUB") state.cat = "A";
+    var srcP = String(_sp.get("src") || "").trim();
+    if (srcP) state.src = srcP;
+    state.refBook = String(_sp.get("book") || "").trim();
+    state.refChapter = parseInt(_sp.get("chapter"), 10) || 0;
+    state.qf = String(_sp.get("q") || "").trim().toLowerCase();
+    if (!state.qf && state.refBook) {
+      state.qf = (state.refBook + (state.refChapter ? " " + state.refChapter : "")).toLowerCase();
+    }
+  } catch (eHub) {}
+
+  var list0 = sourcesForCategory(state.cat);
+  if (!state.src || !list0.some(function (s) { return s.id === state.src; })) {
+    state.src = resolveDefaultSrc(state.cat, list0);
+  }
+  syncUi();
+}
+})();
+</script>
 </body>
-</noframes>
 </html>

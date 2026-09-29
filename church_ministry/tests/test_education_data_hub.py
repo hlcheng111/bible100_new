@@ -132,22 +132,29 @@ def test_landing_redirects_to_integrated_guide():
     assert "ae_subpage_shell.js" not in landing
 
 
-def test_sidebar_c_education_slim():
+def test_cm_c_menu_ssot_journey_merged():
+    js = read("js/cm_c_menu_ssot.js")
+    assert "20260811e" in js
+    assert "主日學工作桌" in js
+    assert 'eduTab("guide")' in js
+    assert 'eduTab("attendance")' in js
+    assert 'eduTab("discipleship")' in js
+    assert '#tab-" + tab' in js
+    assert "_landing/education.html" in js
+    assert "modules/development/discipleship-training.html" in js
+    assert "school_management/sidebar.html" in js
+    assert "bible_study/sidebar.html" in js
+    assert "ai_tools/sidebar_lab.html" in js
+    assert "c_education_absence" in js
+    assert "sidebar_crm_journey.html" in js
+    assert "回 CRM" in js
+
+
+def test_sidebar_c_education_redirects_to_layout():
     journey = read("church_ministry/sidebar_c_education_journey.html")
-    assert "主日學工作桌" in journey
-    assert "tab-attendance" not in journey
-    assert "tab-discipleship" not in journey
-    assert "_landing/education.html" not in journey
-    assert "modules/development/discipleship-training.html" in journey
-    assert 'data-b100-nav="content"' in journey
-    assert 'data-b100-nav="module"' in journey
-    assert "../bible_study/dashboard.html" in journey
-    assert "bible_study/sidebar.html" in journey
-    assert "javascript:void(0)" not in journey
-    assert "data-edu-cross" not in journey
-    assert 'href="#"' not in journey
-    assert "onclick" not in journey
-    assert "回 CRM" in journey
+    assert "sidebar_church_layout_v1.html?focus=c" in journey
+    assert "education-integrated.html" in journey
+    assert "tab-guide" in journey
 
 
 def test_story_nav_and_shell_lite():
@@ -166,25 +173,26 @@ def test_crm_journey_shell_nav_for_c():
     reg = read("church_ministry/js/crm_journey_registry.js")
     nav = read("church_ministry/js/crm_nav.js")
     render = read("church_ministry/js/crm_sidebar_render.js")
-    common = read("church_ministry/js/crm_journey_common.js")
     layout = read("church_ministry/sidebar_church_layout_v1.html")
     crm_sb = read("church_ministry/sidebar_crm_journey.html")
     for key in (
         "cZoneShellLinks",
-        "sidebar_c_education_journey.html",
+        "sidebar_church_layout_v1.html?focus=c",
         "education-integrated.html",
         "bible_study/sidebar.html",
+        "ai_tools/sidebar_lab.html",
     ):
         assert key in reg, f"missing {key} in crm_journey_registry"
+    assert "sidebar_c_education_journey.html" not in reg.split("C_ZONE_SHELL_LINKS")[1].split("];")[0]
     assert "_landing/education.html" not in reg.split("C_ZONE_SHELL_LINKS")[1].split("];")[0]
-    assert 'focus === "c"' in nav
     assert "isC && reg.cZoneShellLinks" in render
-    assert "sidebar_church_layout_v1.html?focus=c" not in render
-    assert "educationZoneShellPair" in common
-    assert "tab-guide" in common
-    assert "redirectCZoneToEducationJourneySidebar" in layout
-    assert "20260610_c_fusion" in crm_sb
-
+    assert "tab-guide" in reg
+    assert "loadCZoneContentPreferRightPane" in layout
+    assert "redirectCZoneToEducationJourneySidebar" not in layout
+    assert "sidebar_church_layout_v1.html" in nav
+    ae = nav.split("function crmOpenAeLayout")[1].split("function ")[0]
+    assert "sidebar_c_education_journey.html" not in ae
+    assert "data-crm-retired" in crm_sb
 
 def test_sidebar_bust_hash():
     sb = read("js/sidebar_behavior.js")

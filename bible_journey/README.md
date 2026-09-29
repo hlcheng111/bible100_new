@@ -5,9 +5,11 @@
 Vite + TypeScript 單頁應用（SPA）。同一套程式可：
 
 - 本機開發：`npm run dev`
-- 上雲靜態站：`npm run build` → 部署 `dist/`
-- 日後 Electron：包 `dist/` 成 `.exe`
-- 日後 PWA：已預留 `vite-plugin-pwa`
+- **PWA 真機試用（建議）**：`npm run build:pwa` → 部署 Vercel／Netlify（見 [docs/PWA_BETA_DEPLOY.md](docs/PWA_BETA_DEPLOY.md)）
+- 離線 ZIP 封測：`npm run build:offline`（見 [docs/ALPHA_OFFLINE_CHECKLIST.md](docs/ALPHA_OFFLINE_CHECKLIST.md)）
+- 試用者轉貼文案：[docs/BETA_TESTER_HANDOUT.md](docs/BETA_TESTER_HANDOUT.md)
+- 上雲子路徑：`npm run build:cloud`（`/bible_journey/`）
+- 日後 Electron：包 `dist/` 成 `.exe`（尚未接線）
 
 ## MVP 驗收
 

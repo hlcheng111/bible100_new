@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>团契的圈 · Fellowship Circles | Church Ministry</title>
+    <link rel="stylesheet" href="../../css/ae_pastoral_landing_tour.css">
+    <style>
+        body { margin: 0; font-family: "Microsoft JhengHei", system-ui, sans-serif; background: #f0f9ff; font-size: 12px; }
+        .fc-wrap { max-width: 920px; margin: 0 auto; padding: 16px; }
+        .fc-hero { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; padding: 14px 18px; border-radius: 12px; margin-bottom: 14px; }
+        .fc-hero h1 { margin: 0 0 6px; font-size: 18px; }
+        .fc-nav { font-size: 11px; margin-bottom: 12px; }
+        .fc-nav a { color: #0284c7; }
+        .circle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+        .circle-home {
+            background: #fff; border: 1px solid #bae6fd; border-radius: 12px; padding: 14px;
+            box-shadow: 0 2px 8px rgba(2,132,199,0.08);
+        }
+        .circle-home h2 { margin: 0 0 6px; font-size: 14px; color: #0369a1; }
+        .circle-home .tags { margin: 8px 0; }
+        .circle-home .tags span { display: inline-block; background: #e0f2fe; color: #0369a1; font-size: 10px; padding: 2px 8px; border-radius: 999px; margin: 2px 4px 2px 0; }
+        .circle-home p { margin: 0 0 10px; color: #64748b; line-height: 1.55; font-size: 11px; }
+        .circle-home a { font-size: 11px; color: #fff; background: #0284c7; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; margin-right: 6px; }
+        .ai-note { margin-top: 16px; }
+    </style>
+    <script src="../../../js/page_capability_badge.js" data-status="live"></script>
+</head>
+<body data-b100-module="church_ministry" data-b100-ae-chrome="minimal" data-b100-ae-zone="b" data-b100-pattern="P-AE-PRIMARY" data-b100-ae-prefix="../..">
+    <div class="fc-wrap">
+        <p class="fc-nav">
+            <a href="index.html">团契总览</a> ·
+            <a href="../../_landing/fellowship.html">牧羊小径</a> ·
+            <a href="../support/visitation_index.html">探访事工</a>
+        </p>
+        <div class="fc-hero">
+            <h1>👥 团契的圈 · 找你的家</h1>
+            <p style="margin:0;font-size:12px;line-height:1.6;opacity:0.95;">
+                团契不是打卡群，是同阶段、同地区、同职业的朋友相聚。点进一个「圈」参加活动或请人带你进小组。
+            </p>
+        </div>
+        <div style="padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#ecfdf5;border-radius:8px;margin-bottom:12px;border:1px solid #a7f3d0;">
+            <strong>B-10 報告</strong>
+            <button type="button" onclick="exportFellowshipCirclesCsv()" data-w5-report="fellowship-circles-csv">⬇ CSV</button>
+            <button type="button" onclick="printFellowshipCircles()" data-w5-report="fellowship-circles-print">🖨 列印</button>
+        </div>
+        <div class="circle-grid" id="circle-grid"></div>
+        <div class="sg-card" style="background:#fff;border:1px solid #bae6fd;border-radius:12px;padding:14px;margin-top:12px" id="circle-hub-stats"></div>
+        <p class="ai-note">
+            <strong>🤖 CRM 怎样帮？</strong>依标签推荐团契与活动<strong>草稿</strong>，同工确认后再联系；减重复登记。
+        </p>
+    </div>
+    <script src="../../../js/cloud_config.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
+    <script src="../../js/pastoral_data_hub.js"></script>
+    <script>
+    (function () {
+        var H = window.PastoralDataHub;
+        if (H) H.ensurePastoralSeed(false);
+        var CIRCLES = [
+            { title: '青年团契', tags: ['青年', '大专'], ageZone: 'youth', desc: '周五敬拜、营会、校园福音。活动见青年页。', links: [{ label: '青年团契活动', href: '../development/youth-ministry-dev.html?crm_from=b_youth&step=3' }] },
+            { title: '社青职场圈', tags: ['社青', '职场科技'], ageZone: 'career', desc: '工作节奏快，需要同路人祷告与减压。', links: [{ label: '小组工作桌', href: 'small-groups-integrated.html?crm_from=b_pastoral' }] },
+            { title: '夫妇团契', tags: ['夫妇'], ageZone: 'family', desc: '家庭祭坛、育儿同路人。', links: [{ label: '小组工作桌', href: 'small-groups-integrated.html?crm_from=b_pastoral' }] },
+            { title: '北区邻里圈', tags: ['北区'], geoZone: '北区', desc: '同社区吃饭、探访长者。', links: [{ label: '探访事工', href: '../support/visitation_index.html?crm_from=b_pastoral' }] },
+            { title: '长青关怀圈', tags: ['长青'], ageZone: 'senior', desc: '长者关怀、陪诊代祷。', links: [{ label: '探访事工', href: '../support/visitation_index.html?crm_from=b_pastoral' }] }
+        ];
+        function exportFellowshipCirclesCsv() {
+            var H = window.PastoralDataHub, U = window.CmReportUtils;
+            if (!U) return;
+            var esc = U.csvEsc;
+            var stats = H && H.getFellowshipCircleStats ? H.getFellowshipCircleStats() : [];
+            var lines = [['圈別', '標籤', '說明', 'Hub人數', 'Hub小組數'].map(esc).join(',')];
+            CIRCLES.forEach(function (c) {
+                var st = stats.find(function (s) { return c.ageZone && s.ageZone === c.ageZone; });
+                lines.push([c.title, (c.tags || []).join('、'), c.desc, st ? st.memberCount : '', st ? st.groupCount : ''].map(esc).join(','));
+            });
+            U.downloadCsv('fellowship_circles_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+        }
+        function printFellowshipCircles() {
+            var H = window.PastoralDataHub, U = window.CmReportUtils;
+            if (!U) return;
+            var stats = H && H.getFellowshipCircleStats ? H.getFellowshipCircleStats() : [];
+            var rows = CIRCLES.map(function (c) {
+                var st = stats.find(function (s) { return c.ageZone && s.ageZone === c.ageZone; });
+                return [c.title, (c.tags || []).join('、'), st ? st.memberCount + '人' : ''];
+            });
+            U.printTable('團契的圈', ['圈別', '標籤', 'Hub人數'], rows);
+        }
+        window.exportFellowshipCirclesCsv = exportFellowshipCirclesCsv;
+        window.printFellowshipCircles = printFellowshipCircles;
+        var stats = H && H.getFellowshipCircleStats ? H.getFellowshipCircleStats() : [];
+        var host = document.getElementById('circle-grid');
+        if (!host) return;
+        host.innerHTML = CIRCLES.map(function (c) {
+            var st = stats.find(function (s) {
+                return c.ageZone && s.ageZone === c.ageZone;
+            });
+            var cnt = st ? ' · 名册约 ' + st.memberCount + ' 人 / ' + st.groupCount + ' 组' : '';
+            return '<article class="circle-home"><h2>' + c.title + cnt + '</h2><div class="tags">' +
+                c.tags.map(function (t) { return '<span>' + t + '</span>'; }).join('') +
+                '</div><p>' + c.desc + '</p>' +
+                c.links.map(function (l) { return '<a href="' + l.href + '">' + l.label + '</a>'; }).join('') +
+                '</article>';
+        }).join('');
+        var sh = document.getElementById('circle-hub-stats');
+        if (sh && stats.length) {
+            sh.innerHTML = '<h3 style="margin:0 0 8px;color:#0369a1;font-size:14px">📊 Hub 矩阵统计（pastoral_org_v1）</h3><p class="muted" style="margin:0;font-size:11px">' +
+                stats.map(function (s) { return s.label + ' ' + s.memberCount + ' 人'; }).join(' · ') +
+                ' · <a href="pastoral-org-roster.html?crm_from=b_pastoral#tab-roster">组织名册矩阵</a></p>';
+        }
+    })();
+    </script>
+    <link rel="stylesheet" href="../../css/ae_pastoral_story_head.css" />
+    <script src="../../js/ae_pastoral_story_nav.js"></script>
+    <script src="../../js/ae_subpage_shell.js"></script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
+</body>
+</html>

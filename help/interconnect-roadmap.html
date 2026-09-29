@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>全站游客手册 · 教会大楼导览（小白版）</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+      margin: 0; padding: 16px 20px 48px;
+      background: #f5f0e8 url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 39h40v1H0z' fill='%23e8dfd0'/%3E%3C/svg%3E");
+      color: #2c2416; line-height: 1.8; font-size: 15px; max-width: 880px;
+    }
+    .cover {
+      text-align: center; padding: 28px 20px 24px;
+      background: linear-gradient(160deg, #1e3a5f 0%, #2d5a87 50%, #3d7ab5 100%);
+      color: #fff; border-radius: 16px; margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(30,58,95,0.25);
+    }
+    .cover h1 { margin: 0 0 8px; font-size: 1.65rem; font-weight: 800; }
+    .cover .sub { opacity: 0.92; font-size: 14px; max-width: 520px; margin: 0 auto; }
+    .cover .stamp {
+      display: inline-block; margin-top: 14px; padding: 6px 16px;
+      background: rgba(255,255,255,0.2); border: 2px dashed rgba(255,255,255,0.5);
+      border-radius: 8px; font-size: 12px; letter-spacing: 0.05em;
+    }
+    h2 {
+      font-size: 1.2rem; color: #1e3a5f; margin: 28px 0 12px;
+      padding: 8px 12px; background: #fff; border-radius: 8px;
+      border-left: 5px solid #c9a227; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    h3 { font-size: 1rem; color: #5c4a32; margin: 14px 0 8px; }
+    .card {
+      background: #fff; border-radius: 12px; padding: 18px 20px;
+      margin: 12px 0; border: 1px solid #e8dfd0;
+      box-shadow: 0 3px 12px rgba(44,36,22,0.06);
+    }
+    .nav-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .nav-chips a {
+      padding: 7px 14px; background: #fff; border: 1px solid #c9d4e8;
+      border-radius: 20px; color: #1e4d8b; text-decoration: none; font-size: 13px;
+    }
+    .nav-chips a:hover { background: #e8f0fa; }
+
+    /* 大楼剖面图 */
+    .building {
+      display: flex; flex-direction: column; gap: 6px; margin: 16px 0;
+      padding: 16px; background: #faf8f5; border-radius: 12px; border: 2px solid #d4c4a8;
+    }
+    .b-floor {
+      display: grid; grid-template-columns: 72px 1fr auto; gap: 12px; align-items: center;
+      padding: 12px 14px; border-radius: 10px; color: #fff; font-size: 14px;
+    }
+    .b-floor .num { font-size: 1.4rem; font-weight: 800; text-align: center; opacity: 0.9; }
+    .b-floor .who { font-size: 11px; opacity: 0.85; white-space: nowrap; }
+    .f5 { background: linear-gradient(90deg, #4a3f6b, #6b5b95); }
+    .f4a { background: linear-gradient(90deg, #2d6a4f, #40916c); }
+    .f4b { background: linear-gradient(90deg, #1d6a8a, #2a9d8f); }
+    .f-top { background: linear-gradient(90deg, #b45309, #d97706); color: #fff; }
+    .b-lobby {
+      text-align: center; padding: 14px; background: #1e3a5f; color: #fff;
+      border-radius: 10px; font-weight: 700; font-size: 14px; margin-top: 4px;
+    }
+    .b-lobby small { display: block; font-weight: normal; opacity: 0.85; font-size: 12px; margin-top: 4px; }
+
+    /* 三扇门三角图 */
+    .triangle-wrap {
+      margin: 20px 0; padding: 20px; background: #fffbeb;
+      border: 2px solid #fbbf24; border-radius: 14px; text-align: center;
+    }
+    .triangle-title { font-weight: 800; color: #92400e; margin-bottom: 16px; font-size: 1.05rem; }
+    .triangle {
+      position: relative; width: 100%; max-width: 420px; height: 200px; margin: 0 auto 12px;
+    }
+    .tri-node {
+      position: absolute; width: 118px; padding: 10px 8px; background: #fff;
+      border: 2px solid #3b82f6; border-radius: 10px; font-size: 12px; font-weight: 600;
+      color: #1e40af; box-shadow: 0 4px 10px rgba(0,0,0,0.08); line-height: 1.35;
+    }
+    button.tri-node {
+      cursor: pointer; font-family: inherit; text-align: center;
+      transition: box-shadow 0.15s, transform 0.15s, border-color 0.15s;
+    }
+    button.tri-node:hover, button.tri-node:focus-visible {
+      box-shadow: 0 6px 16px rgba(0,0,0,0.14);
+      outline: 2px solid #f59e0b; outline-offset: 2px;
+    }
+    button.tri-node.tri-a:hover, button.tri-node.tri-a:focus-visible {
+      transform: translateX(-50%) scale(1.03);
+    }
+    button.tri-node.tri-b:hover, button.tri-node.tri-b:focus-visible,
+    button.tri-node.tri-c:hover, button.tri-node.tri-c:focus-visible {
+      transform: scale(1.03);
+    }
+    .triangle-hint-click {
+      font-size: 12px; color: #b45309; margin: 0 0 10px; font-weight: 600;
+    }
+    .tri-node small { display: block; font-weight: normal; color: #64748b; font-size: 10px; margin-top: 4px; }
+    .tri-a { top: 0; left: 50%; transform: translateX(-50%); border-color: #6b5b95; color: #4a3f6b; }
+    .tri-b { bottom: 0; left: 0; border-color: #2d6a4f; color: #166534; }
+    .tri-c { bottom: 0; right: 0; border-color: #1d6a8a; color: #0e7490; }
+    .tri-arrows {
+      position: absolute; inset: 0; pointer-events: none;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 200'%3E%3Cpath d='M210 55 L80 155 M210 55 L340 155 M80 155 L340 155' fill='none' stroke='%23f59e0b' stroke-width='2' stroke-dasharray='6 4'/%3E%3Cpolygon points='205,62 215,62 210,72' fill='%23f59e0b'/%3E%3C/svg%3E") center/contain no-repeat;
+    }
+    .triangle-plain {
+      text-align: left; font-size: 14px; color: #78350f; margin: 0;
+      padding: 12px 14px; background: #fff; border-radius: 8px;
+    }
+
+    /* 游客类型 */
+    .tourist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .tourist-card {
+      padding: 14px; border-radius: 10px; border: 2px solid #e2e8f0; background: #fafafa;
+    }
+    .tourist-card strong { display: block; font-size: 1rem; margin-bottom: 6px; }
+    .tourist-card .go { color: #1d4ed8; font-size: 13px; }
+
+    /* 体检表 */
+    .checklist { list-style: none; padding: 0; margin: 0; }
+    .check-item {
+      display: grid; grid-template-columns: 36px 1fr; gap: 12px;
+      padding: 14px; margin: 8px 0; background: #f8fafc; border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+    .check-num {
+      width: 36px; height: 36px; border-radius: 50%; background: #1e3a5f; color: #fff;
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px;
+    }
+    .check-item p { margin: 4px 0 0; font-size: 13px; color: #64748b; }
+
+    /* 状态区 */
+    .status-panel { border: 3px solid #6366f1; background: #eef2ff; border-radius: 12px; padding: 16px 18px; margin: 16px 0; }
+    .status-panel h2 { margin: 0 0 8px; border: none; box-shadow: none; padding: 0; background: none; font-size: 1.1rem; }
+    .badge { font-size: 12px; padding: 3px 12px; border-radius: 999px; margin-left: 8px; }
+    .badge.ok { background: #dcfce7; color: #166534; }
+    .badge.fail { background: #fee2e2; color: #991b1b; }
+    .status-list { list-style: none; padding: 0; margin: 12px 0 0; }
+    .status-row { padding: 10px 12px; margin: 5px 0; border-radius: 8px; background: #fff; font-size: 14px; }
+    .status-row.ok { border-left: 5px solid #22c55e; }
+    .status-row.fail { border-left: 5px solid #ef4444; }
+    .status-detail { color: #64748b; font-size: 12px; display: block; margin-top: 3px; }
+    .status-meta, .status-hint { font-size: 13px; color: #475569; }
+
+    details.maintainer {
+      margin-top: 28px; padding: 14px 16px; background: #f1f5f9;
+      border-radius: 10px; border: 1px dashed #94a3b8; font-size: 13px;
+    }
+    details.maintainer summary { cursor: pointer; font-weight: 700; color: #475569; }
+    .cmd {
+      display: block; background: #1e293b; color: #a7f3d0; padding: 10px 12px;
+      border-radius: 6px; font-size: 11px; margin: 8px 0; overflow-x: auto;
+    }
+    .glossary dt { font-weight: 700; color: #334155; margin-top: 10px; }
+    .glossary dd { margin: 4px 0 0 1rem; color: #64748b; }
+  </style>
+  <script src="../js/shell_nav.js"></script>
+  <script src="../js/church_triangle_nav.js"></script>
+</head>
+<body data-b100-module="nav_hub" data-b100-pattern="P-MOD-STANDALONE">
+
+  <div class="nav-chips">
+    <a href="../index_v5.html" target="_top">🏠 回网站大门</a>
+    <a href="../tools/tools-overview-sidebar.html" target="_parent">工具总览</a>
+    <a href="site-navigation-guide.html" target="contentFrame">导览宪法</a>
+  </div>
+
+  <header class="cover">
+    <h1>📖 全站游客手册</h1>
+    <p class="sub">把整站想成<strong>一间教会大楼</strong>。本页是柜台拿到的导览图——告诉你去哪一层、三扇门怎么互走、改完后怎么「体检」。</p>
+    <span class="stamp">Bible100 · 小白不迷路版 · 2026</span>
+  </header>
+
+  <!-- INTERCONNECT_STATUS_AUTO -->
+  <section class="status-panel" id="interconnect-auto-status">
+    <h2>🩺 全楼体检报告 <span class="badge ok">体检全过</span></h2>
+    <p class="status-meta">体检时间：<time datetime="2026-06-09 03:40 UTC">2026-06-09 03:40 UTC</time></p>
+    <ul class="status-list">
+<li class="status-row ok">✅ <strong>Tier 1 · ① 路标与三扇门</strong> <span class="status-detail">RESULT: OK � church interconnect tier 1: 3/3 subtests green.</span></li>
+<li class="status-row ok">✅ <strong>Tier 2 · ② 资料有没有通</strong> <span class="status-detail">RESULT: OK � church interconnect tier 2: 2/2 subtests green.</span></li>
+<li class="status-row ok">✅ <strong>Tier 3 · ③ 问卷与配搭工具</strong> <span class="status-detail">RESULT: OK � church interconnect tier 3: 2/2 subtests green.</span></li>
+<li class="status-row ok">✅ <strong>Tier 4 · ④ 圣经/AI/学校等馆区</strong> <span class="status-detail">RESULT: OK � church interconnect tier 4: 1/1 subtests green.</span></li>
+<li class="status-row ok">✅ <strong>Tier 5 · ⑤ 牧者看到的画面</strong> <span class="status-detail">RESULT: OK � church interconnect tier 5: 1/1 subtests green.</span></li>
+<li class="status-row ok">✅ <strong>⑥ 全站连结有没有断</strong> <span class="status-detail">MISSING: 0</span></li>
+    </ul>
+    <p class="status-hint">维护者刷新体检：在专案目录执行 <code>python scripts/refresh_interconnect_dashboard.py</code>（小白只看 ✅❌ 即可）</p>
+  </section>
+<!-- /INTERCONNECT_STATUS_AUTO -->
+
+  <h2>🗺️ 图一 · 教会大楼剖面（您在哪一层？）</h2>
+  <div class="card">
+    <p style="margin-top:0;">打开网站后，您会先站在<strong>一楼大厅</strong>（总站首页）。顶栏按钮 = 电梯，带您上不同楼层。</p>
+    <div class="building">
+      <div class="b-floor f5">
+        <span class="num">5F</span>
+        <div><strong>长执决策区</strong>（五年计划、健康问卷、SWOT）<br><small>按钮：🧭 教会规划 OS</small></div>
+        <span class="who">牧长／长执</span>
+      </div>
+      <div class="b-floor f4a">
+        <span class="num">4F</span>
+        <div><strong>事奉旅程地图</strong>（我的旅程、媒合、试玩）<br><small>按钮：🗺️ CRM 旅程</small></div>
+        <span class="who">同工</span>
+      </div>
+      <div class="b-floor f4b">
+        <span class="num">4F</span>
+        <div><strong>日常手活区</strong>（探访、会友、志工、财务…）<br><small>按钮：A～E、E 行政支援</small></div>
+        <span class="who">一线同工</span>
+      </div>
+      <div class="b-floor f-top">
+        <span class="num">↗</span>
+        <div><strong>其他馆区</strong>：圣经研读 · AI 备课 · 学校 · 工具总览<br><small>顶栏各自独立入口</small></div>
+        <span class="who">老师／行政</span>
+      </div>
+      <div class="b-lobby">🏛️ 一楼大厅 · index_v5 总站<small>请先从这里进（建议用本机 HTTP 开，不要只双击档案）</small></div>
+    </div>
+  </div>
+
+  <h2>🚪 图二 ·「三扇门」为什么要能互走？</h2>
+  <div class="card">
+    <p style="margin-top:0;">工程师说的「三角导航」，白话就是下面这件事：</p>
+    <div class="triangle-wrap">
+      <div class="triangle-title">三扇门 · 都要能走回去（不能走进死巷）</div>
+      <p class="triangle-hint-click">👆 點任一扇門即可前往（總站殼內會同時切換側欄與內容）</p>
+      <div class="triangle" role="group" aria-label="三扇門快捷導航">
+        <div class="tri-arrows" aria-hidden="true"></div>
+        <button type="button" class="tri-node tri-a" onclick="return B100TriangleNav.goDoor('planning', event);">⑤ 长执决策区<small>做计划、看健康度</small></button>
+        <button type="button" class="tri-node tri-b" onclick="return B100TriangleNav.goDoor('journey', event);">🗺️ 事奉旅程<small>同工看自己的路程</small></button>
+        <button type="button" class="tri-node tri-c" onclick="return B100TriangleNav.goDoor('daily', event);">👥 日常手活<small>探访、会友、志工</small></button>
+      </div>
+      <p class="triangle-plain">
+        <strong>举例：</strong>同工在「探访工作桌」忙完，侧栏要能一键<strong>回旅程地图</strong>，也能<strong>回长执区</strong>看计划——不必退回大厅再找。<br>
+        若「回教会规划」「回 CRM 旅程」钮不见了或点下去空白，就是<strong>迷路</strong>了。机器体检第 ① 项就是在查这个。
+      </p>
+    </div>
+    <p><strong>CRM</strong> 在这里不是商业软件，就是<strong>「会友与事奉关系管理」</strong>——谁需要关怀、谁适合哪岗位，帮教会记得人。</p>
+  </div>
+
+  <h2>👤 图三 · 您是哪种游客？</h2>
+  <div class="card">
+    <div class="tourist-grid">
+      <div class="tourist-card">
+        <strong>🙏 牧长／长执</strong>
+        看全局、做决定<br>
+        <span class="go">→ 顶栏「🧭 教会规划 OS」</span>
+      </div>
+      <div class="tourist-card">
+        <strong>🙋 事工同工</strong>
+        探访、排班、会友<br>
+        <span class="go">→「🗺️ CRM 旅程」或 A～E 区</span>
+      </div>
+      <div class="tourist-card">
+        <strong>👩‍🏫 老师</strong>
+        备课、圣经、AI<br>
+        <span class="go">→「圣经研读」「AI 辅助」</span>
+      </div>
+      <div class="tourist-card">
+        <strong>🏫 学校行政</strong>
+        学籍、选课<br>
+        <span class="go">→「学校管理」</span>
+      </div>
+      <div class="tourist-card">
+        <strong>🔧 改网站的人</strong>
+        怕改坏连结<br>
+        <span class="go">→ 看本页上方「体检报告」</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>🩺 图四 · 全楼体检表（改完网站后看）</h2>
+  <div class="card">
+    <p style="margin-top:0;">工程师说的 <strong>Tier 1～5</strong>，就是下面 <strong>五张检查表</strong>。您不必记英文，记「查什么」即可。</p>
+    <ul class="checklist">
+      <li class="check-item">
+        <span class="check-num">①</span>
+        <div>
+          <strong>路标与三扇门</strong>
+          <p>菜单能互点吗？连结会不会点下去 404？</p>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-num">②</span>
+        <div>
+          <strong>资料有没有通</strong>
+          <p>例如：问卷结果能不能流到事工仪表板？（给维护者查）</p>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-num">③</span>
+        <div>
+          <strong>恩赐问卷与配搭</strong>
+          <p>规划区 18 个工具是否还能用？</p>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-num">④</span>
+        <div>
+          <strong>其他馆区</strong>
+          <p>圣经研读、AI、学校、目录搜索、工具总览入口是否完好？</p>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-num">⑤</span>
+        <div>
+          <strong>画面上给牧者看的字</strong>
+          <p>页籤、承诺语（只预填、不自动存）有没有被改乱？</p>
+        </div>
+      </li>
+    </ul>
+    <p style="margin-top:16px;padding:12px;background:#ecfdf5;border-radius:8px;border:1px solid #86efac;">
+      <strong>给您的一句话：</strong>改完若不确定，请维护者跑<strong>「全楼体检」</strong>，本页上方会变绿或变红。全绿 = 游客暂时不会迷路。
+    </p>
+  </div>
+
+  <h2>✨ 2026-06 已帮您做好的事</h2>
+  <div class="card" style="background:#fffbeb;border-color:#fcd34d;">
+    <ul style="margin:0;padding-left:1.2rem;">
+      <li>三扇门能互走 —— 机器会自动查；三角图按钮可<strong>直接点选</strong>跳转</li>
+      <li>左下<strong>「🏛️ 大楼导览」</strong>浮钮：三扇门 + 本游客手册 + 工具总览</li>
+      <li><strong>CRM 旅程侧栏</strong>依角色优先（会友／老师／同工／牧者），A–E 各一个主工作桌 + 子页捷径</li>
+      <li><strong>A–E 子页</strong>自动顶条 + 底部同区路线图格子；连结带 <code>crm_from=sidebar</code></li>
+      <li><strong>CRM Hub</strong>四页签内链带 <code>crm_from=hub</code>；页脚「日常手活 A–E」与侧栏 registry 同步</li>
+      <li>坏连结会抓出来（像地图标出断头路）</li>
+      <li>五张体检表合成<strong>一条命令</strong>（维护者用）；本页体检区可脚本刷新</li>
+    </ul>
+    <p style="margin:12px 0 0;font-size:13px;color:#78350f;">
+      <strong>小白怎么走：</strong>总站 → 🗺️ CRM 旅程 → 选身份 → 点步骤或页脚 A–E 格子；同工日常可从 A～E 侧栏进，顶条随时<strong>回 CRM 旅程</strong>。
+    </p>
+  </div>
+
+  <details class="maintainer">
+    <summary>🔧 维护者专区（小白可略过）— 名词对照与命令</summary>
+    <dl class="glossary">
+      <dt>三角导航</dt>
+      <dd>= 长执区、旅程地图、日常手活 — 三扇门侧栏要能互点回去（见「图二」）</dd>
+      <dt>Tier 1～5</dt>
+      <dd>= 体检表 ①～⑤（见「图四」）</dd>
+      <dt>连结链检</dt>
+      <dd>= 全站连结逐条点一遍，看有没有断掉的</dd>
+      <dt>发版前全测（一条命令）</dt>
+      <dd>五张表一次跑完：</dd>
+    </dl>
+    <code class="cmd">python tests/test_church_interconnect_smoke.py --tier all</code>
+    <p>刷新本页上方体检报告（推荐每次改完跑）：</p>
+    <code class="cmd">python scripts/refresh_interconnect_dashboard.py</code>
+    <p style="font-size:11px;color:#94a3b8;margin-bottom:0;">
+      清单原文：config/interconnect_roadmap.json · 上次记录：config/interconnect_last_run.json
+    </p>
+  </details>
+
+</body>
+</html>

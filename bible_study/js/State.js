@@ -123,12 +123,17 @@
      */
     function parseFromUrl() {
         var params = new URLSearchParams(location.search);
-        var book = parseInt(params.get('book'), 10);
+        var bookName = params.get('book');
+        if (bookName && !params.get('book_id')) {
+            setBookByName(decodeURIComponent(bookName));
+        }
+        var book = parseInt(params.get('book_id') || params.get('book'), 10);
         var chapter = parseInt(params.get('ch') || params.get('chapter'), 10);
         var verse = parseInt(params.get('v') || params.get('verse'), 10);
         var mode = params.get('mode') || 'read';
         var q = params.get('q') || params.get('search') || '';
-        if (!isNaN(book) && book >= 1 && book <= 66) change({ book: book });
+        if (!isNaN(book) && book >= 1 && book <= 66 && !bookName) change({ book: book });
+        if (!isNaN(book) && book >= 1 && book <= 66 && params.get('book_id')) change({ book: book });
         if (!isNaN(chapter) && chapter >= 1) change({ chapter: chapter });
         if (!isNaN(verse) && verse >= 1) change({ verse: verse });
         if (mode) change({ mode: mode });

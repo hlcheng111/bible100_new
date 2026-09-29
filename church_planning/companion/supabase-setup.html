@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Supabase Setup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <main class="max-w-3xl mx-auto p-4 md:p-6">
+    <header class="bg-white border border-slate-200 rounded-xl p-4 mb-4">
+      <h1 class="text-xl font-bold">Supabase 雲端設定</h1>
+      <p class="text-sm text-slate-600 mt-2">設定後將自動套用至 PersistenceProvider（local / hybrid / cloud）。</p>
+    </header>
+    <section class="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+      <label class="block text-sm font-semibold">模式</label>
+      <select id="mode" class="w-full border rounded px-3 py-2 text-sm">
+        <option value="local">local（只本機）</option>
+        <option value="hybrid">hybrid（推薦：本機 + 雲端）</option>
+        <option value="cloud">cloud（強制雲端）</option>
+      </select>
+
+      <label class="block text-sm font-semibold">Supabase URL</label>
+      <input id="url" class="w-full border rounded px-3 py-2 text-sm" placeholder="https://xxx.supabase.co">
+
+      <label class="block text-sm font-semibold">Supabase anon key</label>
+      <textarea id="anon" rows="3" class="w-full border rounded px-3 py-2 text-sm" placeholder="eyJ..."></textarea>
+
+      <label class="block text-sm font-semibold">KV Table</label>
+      <input id="table" class="w-full border rounded px-3 py-2 text-sm" value="church_kv_store">
+
+      <div class="flex gap-2 flex-wrap">
+        <button id="save" class="px-3 py-2 rounded bg-violet-600 text-white text-sm font-semibold">儲存設定</button>
+        <button id="test" class="px-3 py-2 rounded bg-emerald-600 text-white text-sm font-semibold">測試連線</button>
+        <a href="../dashboard.html" class="px-3 py-2 rounded border text-sm">回戰情室</a>
+      </div>
+      <pre id="out" class="bg-slate-900 text-slate-100 rounded p-3 text-xs whitespace-pre-wrap"></pre>
+    </section>
+  </main>
+
+  <script src="../js/persistence_provider.js"></script>
+  <script>
+    (function () {
+      function esc(v) {
+        return String(v == null ? "" : v);
+      }
+      function current() {
+        if (!window.PersistenceProvider) return {};
+        var c = window.PersistenceProvider.getConfig ? window.PersistenceProvider.getConfig() : {};
+        return c || {};
+      }
+      function fill() {
+        var c = current();
+        document.getElementById("mode").value = c.mode || "local";
+        document.getElementById("url").value = c.supabaseUrl || "";
+        document.getElementById("anon").value = c.supabaseAnonKey || "";
+        document.getElementById("table").value = c.tableName || "church_kv_store";
+      }
+      function output(msg) {
+        document.getElementById("out").textContent = msg;
+      }
+      document.getElementById("save").addEventListener("click", function () {
+        var cfg = {
+          mode: document.getElementById("mode").value,
+          supabaseUrl: document.getElementById("url").value.trim(),
+          supabaseAnonKey: document.getElementById("anon").value.trim(),
+          tableName: document.getElementById("table").value.trim() || "church_kv_store"
+        };
+        if (!window.PersistenceProvider || !window.PersistenceProvider.configure) {
+          output("PersistenceProvider not found.");
+          return;
+        }
+        window.PersistenceProvider.configure(cfg);
+        output("已儲存設定：\nmode=" + cfg.mode + "\nurl=" + esc(cfg.supabaseUrl) + "\ntable=" + esc(cfg.tableName));
+      });
+      document.getElementById("test").addEventListener("click", async function () {
+        var cfg = current();
+        if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) {
+          output("請先填入 URL/anon key 並儲存。");
+          return;
+        }
+        try {
+          var client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+          var q = await client.from(cfg.tableName || "church_kv_store").select("id", { count: "exact", head: true });
+          if (q && q.error) throw q.error;
+          output("連線成功。\nTable: " + (cfg.tableName || "church_kv_store") + "\nRows(count): " + (q.count == null ? "n/a" : q.count));
+        } catch (e) {
+          output("連線失敗：\n" + esc(e && e.message ? e.message : e));
+        }
+      });
+      fill();
+    })();
+  </script>
+</body>
+</html>
+

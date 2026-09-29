@@ -124,8 +124,19 @@
         .empty-state-text { font-size: 14px; }
     </style>
     <script src="../../../js/page_capability_badge.js" data-status="trial"></script>
+    <link rel="stylesheet" href="../../css/crm_context_bar.css">
+    <link rel="stylesheet" href="../../css/cm_four_pages_roadmap.css" />
+    <script src="../../../js/shell_nav.js"></script>
+    <script src="../../js/crm_context_bar.js"></script>
+    <script src="../../js/cm_four_pages_roadmap.js"></script>
+    <script src="../../../js/g_do_admin_menu_ssot.js"></script>
+    <script src="../../../church_planning/js/planning_nav.js"></script>
+    <link rel="stylesheet" href="../../css/g_do_admin_nav.css">
+    <script src="../../js/g_do_admin_nav.js"></script>
+    <script src="../../js/g_do_admin_page_chrome.js"></script>
 </head>
-<body>
+<body data-cm-four-page="finance" data-g-do-cm-prefix="../../">
+    <div id="cmFourPagesRoadmapMount"></div>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
         <div class="header-nav"><a href="../../dashboard.html">⛪ 教會事工中心</a></div>
         <h1>💰 財務事工完整系統</h1>
@@ -220,7 +231,9 @@
                     </label>
                     <button class="btn btn-success" onclick="showAddIncomeModal()">➕ 收入</button>
                     <button class="btn btn-danger" onclick="showAddExpenseModal()">➕ 支出</button>
-                    <button class="btn btn-info" onclick="exportTransactions()">📤 导出</button>
+                    <button class="btn btn-info" onclick="exportTransactions()">📤 导出 JSON</button>
+                    <button type="button" class="btn btn-success" onclick="exportTransactionsCsv()" data-w4-report="tx-csv">⬇ 交易 CSV</button>
+                    <button type="button" class="btn btn-secondary" onclick="printFinanceSummary()" data-w4-report="finance-print">🖨 列印摘要</button>
                 </div>
                 <table id="transactionsTable">
                     <thead>
@@ -251,7 +264,8 @@
             <div class="card">
                 <div class="card-title">📋 年度預算规划</div>
                 <button class="btn btn-primary" onclick="showAddBudgetModal()">➕ 新增预算类别</button>
-                <button class="btn btn-info" onclick="exportBudget()">📤 导出预算</button>
+                <button class="btn btn-info" onclick="exportBudget()">📤 导出 JSON</button>
+                <button type="button" class="btn btn-success" onclick="exportBudgetCsv()" data-w4-report="budget-csv">⬇ 預算 CSV</button>
                 <div id="budgetsList"></div>
             </div>
         </div>
@@ -321,12 +335,15 @@
                 </div>
             </div>
             <div class="card">
-                <div class="card-title">📄 导出格式</div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-success" onclick="exportExcel()">📊 Excel格式</button>
-                    <button class="btn btn-danger" onclick="exportPDF()">📄 PDF格式</button>
+                <div class="card-title">📄 导出格式（W4 長執報告）</div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-success" onclick="exportExcel()" data-w4-report="excel-csv">📊 Excel／CSV</button>
+                    <button type="button" class="btn btn-danger" onclick="exportPDF()" data-w4-report="finance-print">🖨 列印摘要</button>
                     <button class="btn btn-info" onclick="exportJSON()">💾 JSON格式</button>
+                    <button type="button" class="btn btn-success" onclick="exportTransactionsCsv()" data-w4-report="tx-csv">⬇ 交易 CSV</button>
+                    <button type="button" class="btn btn-success" onclick="exportBudgetCsv()" data-w4-report="budget-csv">⬇ 預算 CSV</button>
                 </div>
+                <p style="font-size:10px;color:#64748b;margin-top:10px;">正式主路徑＝本頁 <code>financeSystemData</code>（Bridge）。側欄「財務管理」F-05 為舊頁，請合併至此。</p>
             </div>
         </div>
     </div>
@@ -342,6 +359,7 @@
     <script src="../../../js/cloud_config.js"></script>
     <script src="../../../js/cloud_api.js"></script>
     <script src="../../../js/church_data_bridge.js"></script>
+    <script src="../../js/cm_member_picker.js"></script>
     <script>
         // ========================================
         // 核心数据结构（父子数据库设计）
@@ -764,6 +782,10 @@
                     <input type="date" id="incomeDate" class="form-input" value="${new Date().toISOString().split('T')[0]}">
                 </div>
                 <div class="form-group">
+                    <label class="form-label">奉献会友（可选 · member_id）</label>
+                    <select id="incomeMemberId" class="form-select"></select>
+                </div>
+                <div class="form-group">
                     <label class="form-label">类别 *</label>
                     <select id="incomeCategory" class="form-select">
                         <option value="tithe">十一奉献</option>
@@ -783,11 +805,18 @@
                 <button class="btn btn-primary" onclick="saveIncome()">保存</button>
                 <button class="btn" onclick="closeModal()">取消</button>
             `);
+            var sel = document.getElementById('incomeMemberId');
+            if (sel && window.CmMemberPicker) {
+                CmMemberPicker.fillMemberSelect(sel, null, { placeholder: '— 不指定会友 —' });
+            }
         }
         
         function saveIncome() {
             const category = document.getElementById('incomeCategory').value;
             const categoryNames = {tithe: '十一奉献', offering: '感恩奉献', donation: '特别奉献', other: '其他收入'};
+            const memberIdEl = document.getElementById('incomeMemberId');
+            const memberId = memberIdEl && memberIdEl.value ? memberIdEl.value.trim() : '';
+            const person = memberId && window.CmMemberPicker ? CmMemberPicker.memberNameById(memberId) : '';
             
             const newTransaction = {
                 id: data.transactions.length + 1,
@@ -798,7 +827,9 @@
                 date: document.getElementById('incomeDate').value,
                 description: document.getElementById('incomeDesc').value || categoryNames[category],
                 handler: '财务组',
-                status: 'approved'
+                status: 'approved',
+                memberId: memberId || null,
+                person: person || null
             };
             
             if (!newTransaction.amount || newTransaction.amount <= 0) {
@@ -1243,11 +1274,12 @@
         }
         
         function exportExcel() {
-            showMessage('📊 Excel导出功能开发中...', 'info');
+            // Excel 可開 UTF-8 CSV（BOM）
+            exportTransactionsCsv();
         }
         
         function exportPDF() {
-            showMessage('📄 PDF导出功能开发中...', 'info');
+            printFinanceSummary();
         }
         
         function exportJSON() {
@@ -1259,6 +1291,96 @@
             a.download = `财务完整数据_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             showMessage('✅ JSON数据已导出', 'success');
+        }
+
+        function csvEsc(v) {
+            var s = v == null ? '' : String(v);
+            if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+            return s;
+        }
+
+        function downloadCsv(filename, lines) {
+            var blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+        }
+
+        /** W4 · 交易／預算長執報告 */
+        function exportTransactionsCsv() {
+            var list = (data.transactions || []).filter(function (t) {
+                return showDeletedTransactions ? true : !t.is_deleted;
+            });
+            var lines = [['id', 'date', 'type', 'category', 'categoryName', 'amount', 'description', 'person', 'approval', 'is_deleted'].join(',')];
+            list.forEach(function (t) {
+                lines.push([
+                    t.id || t.txn_id || '',
+                    t.date || '',
+                    t.type || '',
+                    t.category || '',
+                    t.categoryName || '',
+                    t.amount != null ? t.amount : '',
+                    t.description || '',
+                    t.donor || t.handler || t.person || '',
+                    t.status || t.approval || '',
+                    t.is_deleted ? 'yes' : 'no'
+                ].map(csvEsc).join(','));
+            });
+            downloadCsv('finance_transactions_' + new Date().toISOString().split('T')[0] + '.csv', lines);
+            showMessage('✅ 已匯出交易 CSV（' + list.length + ' 筆）', 'success');
+        }
+
+        function exportBudgetCsv() {
+            var lines = [['id', 'year', 'category', 'budgetAmount', 'used', 'remaining', 'rate_pct', 'responsible'].join(',')];
+            (data.budgets || []).forEach(function (b) {
+                var used = (data.transactions || [])
+                    .filter(function (t) { return t.type === 'expense' && !t.is_deleted && t.category === b.category; })
+                    .reduce(function (sum, t) { return sum + (Number(t.amount) || 0); }, 0);
+                var budget = Number(b.budgetAmount) || 0;
+                var rate = budget > 0 ? Math.round((used / budget) * 100) : 0;
+                lines.push([
+                    b.id,
+                    b.year || '',
+                    b.category || '',
+                    budget,
+                    used,
+                    budget - used,
+                    rate,
+                    b.responsible || ''
+                ].map(csvEsc).join(','));
+            });
+            downloadCsv('finance_budget_' + new Date().toISOString().split('T')[0] + '.csv', lines);
+            showMessage('✅ 已匯出預算 CSV（' + (data.budgets || []).length + '）', 'success');
+        }
+
+        function printFinanceSummary() {
+            var txs = (data.transactions || []).filter(function (t) { return !t.is_deleted; });
+            var income = txs.filter(function (t) { return t.type === 'income'; }).reduce(function (s, t) { return s + (Number(t.amount) || 0); }, 0);
+            var expense = txs.filter(function (t) { return t.type === 'expense'; }).reduce(function (s, t) { return s + (Number(t.amount) || 0); }, 0);
+            var budgetTotal = (data.budgets || []).reduce(function (s, b) { return s + (Number(b.budgetAmount) || 0); }, 0);
+            var rows = txs.slice(0, 50).map(function (t) {
+                return '<tr><td>' + (t.date || '') + '</td><td>' + (t.type || '') + '</td><td>' +
+                    (t.categoryName || t.category || '') + '</td><td>' + (t.amount != null ? t.amount : '') +
+                    '</td><td>' + (t.description || '') + '</td></tr>';
+            }).join('');
+            var w = window.open('', '_blank');
+            if (!w) { showMessage('無法開啟列印視窗', 'error'); return; }
+            w.document.write(
+                '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>財務摘要</title>' +
+                '<style>body{font-family:Microsoft JhengHei,sans-serif;font-size:12px;padding:16px}' +
+                'table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}' +
+                'h1{font-size:16px}.kpi{margin:8px 0}</style></head><body>' +
+                '<h1>財務事工摘要 · ' + new Date().toLocaleDateString() + '</h1>' +
+                '<p class="kpi">收入：' + income.toLocaleString() + ' · 支出：' + expense.toLocaleString() +
+                ' · 結餘：' + (income - expense).toLocaleString() + ' · 預算合計：' + budgetTotal.toLocaleString() +
+                ' · 交易筆數：' + txs.length + '</p>' +
+                '<p style="font-size:10px;color:#666">下列最多列出最近／前 50 筆；完整請用 CSV。</p>' +
+                '<table><thead><tr><th>日期</th><th>類型</th><th>類別</th><th>金額</th><th>描述</th></tr></thead><tbody>' +
+                (rows || '<tr><td colspan="5">無交易</td></tr>') +
+                '</tbody></table><script>window.onload=function(){window.print();}</' + 'script></body></html>'
+            );
+            w.document.close();
         }
         
         // ========================================
@@ -1291,6 +1413,15 @@
             if (e.target.id === 'modal') closeModal();
         };
     </script>
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (window.CmFourPagesRoadmap) CmFourPagesRoadmap.mount("#cmFourPagesRoadmapMount");
+});
+</script>
 </body>
 </html>
 

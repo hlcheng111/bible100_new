@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hub Base · 審計日誌檢視</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft YaHei", sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 16px 18px 32px; }
+    header {
+      background: linear-gradient(135deg, #312e81 0%, #4338ca 100%);
+      color: #fff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+    header h1 { margin: 0 0 6px; font-size: 1.25rem; }
+    header p { margin: 0; font-size: 0.85rem; opacity: 0.92; }
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .filters label { display: block; font-size: 0.72rem; color: #64748b; margin-bottom: 4px; }
+    .filters input, .filters select {
+      width: 100%;
+      padding: 7px 9px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
+    button, .btn-link {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      background: #4338ca;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    button.secondary { background: #64748b; }
+    button.outline { background: #fff; color: #4338ca; border: 1px solid #c7d2fe; }
+    .stat { font-size: 0.82rem; color: #475569; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 0.8rem;
+    }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    th { background: #f8fafc; color: #475569; font-size: 0.75rem; }
+    tr:hover td { background: #fafafa; }
+    .mono { font-family: ui-monospace, Consolas, monospace; font-size: 0.72rem; word-break: break-all; }
+    .detail pre {
+      margin: 6px 0 0;
+      padding: 8px;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      max-height: 160px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+    .empty { padding: 24px; text-align: center; color: #64748b; background: #fff; border-radius: 10px; }
+    .links { margin-top: 12px; font-size: 0.82rem; }
+    .links a { color: #4338ca; font-weight: 600; margin-right: 12px; }
+  </style>
+  <script src="js/hub_base/hub_base_constant.js"></script>
+  <script src="js/hub_base/hub_base_schema.js"></script>
+  <script src="js/hub_base/hub_base_utils.js"></script>
+  <script src="js/hub_base/hub_base_ops.js"></script>
+</head>
+<body data-b100-page-tier="canonical">
+  <div class="wrap">
+    <header>
+      <h1>📋 Hub Base · 審計日誌檢視</h1>
+      <p>追查「誰改了什麼」· 支援 PDCA Act 還原前後對照 · 本機 <code>bible100_audit_log</code></p>
+    </header>
+
+    <div class="filters">
+      <div>
+        <label for="fMember">member_id / target</label>
+        <input id="fMember" type="text" placeholder="例：123 或 talent_id">
+      </div>
+      <div>
+        <label for="fMinistry">ministry_id（可選）</label>
+        <input id="fMinistry" type="text" placeholder="崗位 ID">
+      </div>
+      <div>
+        <label for="fDomain">domain</label>
+        <select id="fDomain">
+          <option value="">全部</option>
+          <option value="talent_pool">talent_pool</option>
+          <option value="member_crm">member_crm</option>
+          <option value="pdca_run">pdca_run</option>
+          <option value="hub_base">hub_base</option>
+        </select>
+      </div>
+      <div>
+        <label for="fAction">action</label>
+        <input id="fAction" type="text" placeholder="assignment_reject…">
+      </div>
+      <div>
+        <label for="fSince">since（ISO）</label>
+        <input id="fSince" type="datetime-local">
+      </div>
+      <div>
+        <label for="fKeyword">關鍵字</label>
+        <input id="fKeyword" type="text" placeholder="備註／來源">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button type="button" id="btnRefresh">重新載入</button>
+      <button type="button" class="secondary" id="btnExport">匯出 JSON</button>
+      <button type="button" class="outline" id="btnRoleAdmin">切換管理員角色</button>
+      <span class="stat" id="statLine">—</span>
+    </div>
+
+    <div id="tableHost"></div>
+
+    <p class="links">
+      <a href="hub-data-health.html">數據健康快照</a>
+      <a href="church_planning/Church_Governance_PDCA_cycle.html">PDCA 檢討</a>
+      <a href="smart_ministry/talent_ministry_matching.html">配對工作台</a>
+      <a href="index_v5.html">返回總站</a>
+    </p>
+  </div>
+
+  <script>
+    (function () {
+      function esc(s) {
+        return String(s == null ? "" : s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function fmtJson(obj) {
+        if (obj == null) return "—";
+        try {
+          return JSON.stringify(obj, null, 2);
+        } catch (e) {
+          return String(obj);
+        }
+      }
+
+      function readFilters() {
+        var sinceEl = document.getElementById("fSince");
+        var since = sinceEl && sinceEl.value ? new Date(sinceEl.value).toISOString() : "";
+        return {
+          member_id: (document.getElementById("fMember").value || "").trim(),
+          ministry_id: (document.getElementById("fMinistry").value || "").trim(),
+          domain: (document.getElementById("fDomain").value || "").trim(),
+          action: (document.getElementById("fAction").value || "").trim(),
+          since: since,
+          keyword: (document.getElementById("fKeyword").value || "").trim(),
+          spaceId: HubBase.getSpaceId(),
+        };
+      }
+
+      function render() {
+        var rows = HubBase.filterAuditEntries(readFilters());
+        var host = document.getElementById("tableHost");
+        document.getElementById("statLine").textContent =
+          "spaceId=" + HubBase.getSpaceId() + " · 顯示 " + rows.length + " 筆 · 角色=" + HubBase.getSimulatedRole();
+
+        if (!rows.length) {
+          host.innerHTML = '<div class="empty">尚無符合條件的審計紀錄。請先在配對／PDCA／匯出等操作後再查。</div>';
+          return;
+        }
+
+        host.innerHTML =
+          "<table><thead><tr>" +
+          "<th>時間</th><th>角色</th><th>domain</th><th>action</th><th>target</th><th>變更前後</th><th>備註</th>" +
+          "</tr></thead><tbody>" +
+          rows
+            .map(function (r, i) {
+              return (
+                "<tr>" +
+                "<td class='mono'>" +
+                esc((r.timestamp || "").slice(0, 19).replace("T", " ")) +
+                "</td>" +
+                "<td>" +
+                esc(r.role) +
+                "</td>" +
+                "<td>" +
+                esc(r.domain) +
+                "</td>" +
+                "<td><strong>" +
+                esc(r.action) +
+                "</strong><div class='mono'>" +
+                esc(r.source) +
+                "</div></td>" +
+                "<td class='mono'>" +
+                esc(r.target_id) +
+                "<br>space:" +
+                esc(r.spaceId) +
+                "</td>" +
+                "<td class='detail'><details><summary>檢視</summary><div><small>before</small><pre>" +
+                esc(fmtJson(r.before)) +
+                "</pre><small>after</small><pre>" +
+                esc(fmtJson(r.after)) +
+                "</pre></details></td>" +
+                "<td>" +
+                esc(r.note) +
+                "</td>" +
+                "</tr>"
+              );
+            })
+            .join("") +
+          "</tbody></table>";
+      }
+
+      document.getElementById("btnRefresh").addEventListener("click", render);
+      ["fMember", "fMinistry", "fDomain", "fAction", "fSince", "fKeyword"].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener("change", render);
+        if (el && el.tagName === "INPUT") el.addEventListener("keyup", render);
+      });
+
+      document.getElementById("btnExport").addEventListener("click", function () {
+        var rows = HubBase.filterAuditEntries(readFilters());
+        var blob = new Blob(
+          [
+            JSON.stringify(
+              { exported_at: new Date().toISOString(), spaceId: HubBase.getSpaceId(), entries: rows },
+              null,
+              2
+            ),
+          ],
+          { type: "application/json" }
+        );
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "bible100_audit_export_" + Date.now() + ".json";
+        a.click();
+      });
+
+      document.getElementById("btnRoleAdmin").addEventListener("click", function () {
+        HubBase.setSimulatedRole("admin");
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

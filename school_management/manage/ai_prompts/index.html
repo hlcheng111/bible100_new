@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>学校 · AI 草稿助手</title>
+  <link rel="stylesheet" href="../css/module_common.css">
+  <script src="../../js/school-master-database.js"></script>
+  <script src="../../../js/b100_prompt_guardrails.js"></script>
+  <script src="../../../js/ai_scenario_ssot.js"></script>
+  <style>
+    .sch-ai-card { background:#faf5ff;border:1px solid #c4b5fd;border-radius:10px;padding:12px;margin-bottom:10px; }
+    .sch-ai-card h3 { font-size:13px;color:#5b21b6;margin:0 0 6px; }
+    .sch-ai-card p { font-size:11px;color:#64748b;margin:0 0 8px;line-height:1.55; }
+    .sch-ai-result { background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:11px;line-height:1.6;white-space:pre-wrap;min-height:80px; }
+  </style>
+</head>
+<body>
+  <div class="module-header">
+    <h1>✨ 学校 · AI 草稿助手</h1>
+    <p>招生／评语／通知文字 · 复制 Prompt → 外部 AI 人审 · <strong>不嵌入外站</strong>（加快打开）</p>
+  </div>
+
+  <div class="module-card">
+    <div class="module-card-title">🎯 学校情境（一键生成 Prompt）</div>
+    <div id="sch-ai-scenarios"></div>
+  </div>
+
+  <div class="module-card">
+    <div class="module-card-title">📋 生成结果（含 B100 护栏）</div>
+    <div id="sch-ai-result" class="sch-ai-result">点上方情境…</div>
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;">
+      <button type="button" class="module-btn" id="sch-ai-copy">📋 复制 Prompt</button>
+      <a href="../../../ai_tools/tools/ai_workbench_integrated.html?crm_from=school_ai#tab-prompt" target="contentFrame" class="module-btn module-btn-secondary" style="text-decoration:none;">→ 打开 AI 备课工作台</a>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var SCENARIOS = [
+        { id: 'enroll', label: '📋 招生简章邀请信', prompt: '请草拟教会学校招生邀请信（200字内），含开课日期占位、欢迎非信徒家长、语气温暖。须注明：草稿须人工审核。' },
+        { id: 'grade', label: '📊 学期评语草稿', prompt: '请为初中学生写一段学期评语草稿（80字），强调圣经品格与课堂参与，避免夸张。须注明：草稿须人工审核。' },
+        { id: 'parent', label: '💬 家长缴费提醒', prompt: '请草拟学校学费缴纳提醒短讯（100字内），含学期与金额占位，语气礼貌。须注明：草稿须人工审核后发送。' },
+        { id: 'quiz', label: '📝 主日学小测 5 题', prompt: '请为 8–10 岁儿童主日学设计 5 道圣经测验题，主题：好 Samaritan。每题附参考经文（和合本）。须注明：草稿须人工审核。' }
+      ];
+      var host = document.getElementById('sch-ai-scenarios');
+      host.innerHTML = SCENARIOS.map(function (s) {
+        return '<div class="sch-ai-card"><h3>' + s.label + '</h3><p>点击生成 → 复制 → 贴到 ChatGPT/Gemini/Kimi</p><button type="button" class="module-btn sch-ai-gen" data-id="' + s.id + '">生成 Prompt</button></div>';
+      }).join('');
+      var lastText = '';
+      host.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('sch-ai-gen')) return;
+        var sc = SCENARIOS.find(function (x) { return x.id === e.target.getAttribute('data-id'); });
+        if (!sc) return;
+        lastText = sc.prompt;
+        if (window.B100PromptGuardrails && window.B100PromptGuardrails.wrap) {
+          lastText = window.B100PromptGuardrails.wrap(lastText, { module: 'school_management', task: sc.id });
+        }
+        document.getElementById('sch-ai-result').textContent = lastText;
+      });
+      document.getElementById('sch-ai-copy').onclick = function () {
+        if (!lastText) return alert('请先生成 Prompt');
+        navigator.clipboard.writeText(lastText).then(function () { alert('已复制'); }).catch(function () { prompt('复制以下内容：', lastText); });
+      };
+    })();
+  </script>
+</body>
+</html>

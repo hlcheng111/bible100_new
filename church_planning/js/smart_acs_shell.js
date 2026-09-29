@@ -52,13 +52,19 @@
     el.classList.remove("hidden");
   }
 
+  function likertLbl(s) {
+    return global.AcsSurveyStandard ? AcsSurveyStandard.likertLabel(s, "agree") : String(s);
+  }
+
   function renderQuickSurvey() {
     var host = document.getElementById("smart-quick-survey-wrap");
     if (!host || !global.SmartPack) return;
     var lastSec = "";
+    var legend = global.AcsSurveyStandard ? AcsSurveyStandard.likertLegendHtml("agree") : "";
     var html =
       '<h2 class="font-black text-emerald-900 text-lg mb-1">15 題 SMART+Care 快評</h2>' +
-      '<p class="text-sm text-slate-600 mb-3">約 15 分鐘 · 一次評<strong>一個計畫</strong> · 非人事考核 · 完成後前往【3. 目標漏斗儀表】。</p>' +
+      '<p class="text-sm text-slate-600 mb-2">約 15 分鐘 · 一次評<strong>一個計畫</strong> · 非人事考核。</p>' +
+      legend +
       '<form id="smart-quick-form" onsubmit="return SmartAcsShell.submitQuick(event)">' +
       '<label class="block text-sm font-bold mb-2">計畫名稱<input name="plan_name" class="w-full mt-1 border rounded p-2" placeholder="探訪久未出席會友"/></label>' +
       '<label class="block text-sm font-bold mb-2">季別／試行期<input name="season_label" class="w-full mt-1 border rounded p-2" placeholder="2026 Q2"/></label>';
@@ -70,13 +76,18 @@
       html +=
         '<fieldset class="acs-fieldset"><legend class="text-xs font-bold">第 ' + (i + 1) + "/15 題</legend><p class=\"text-sm mb-2\">" +
         esc(q.label) +
-        '</p><div class="acs-likert-row">';
-      for (var s = 1; s <= 5; s++) html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + s + "</label>";
+        '</p><div class="acs-likert-row acs-likert-row--anchored">';
+      for (var s = 1; s <= 5; s++) {
+        html += '<label><input type="radio" name="' + q.id + '" value="' + s + '" required> ' + likertLbl(s) + "</label>";
+      }
       html += "</div></fieldset>";
     });
     html +=
       '<p id="smart-quick-error" class="text-red-600 text-xs mt-2 hidden"></p>' +
-      '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">✓ 提交 → 目標漏斗儀表</button></form>';
+      (global.AcsSurveyStandard
+        ? AcsSurveyStandard.submitButtonHtml("→ Tab ③ 目標漏斗儀表")
+        : '<button type="submit" class="acs-btn acs-btn--primary mt-3 w-full py-3">提交並生成報告</button>') +
+      "</form>";
     host.innerHTML = html;
   }
 
@@ -142,6 +153,9 @@
         summary.innerHTML +=
           '<p class="text-rose-800 font-bold mt-2">⚠️ 負載偏高：請開啟【4. SMART 守門決策桌】宣讀「加一砍一」模板</p>';
       }
+    }
+    if (summary && global.AcsReportGold && AcsReportGold.mountAfterSummary) {
+      AcsReportGold.mountAfterSummary(summary, run, "smart");
     }
     var viz = document.getElementById("smart-report-viz");
     if (viz && global.SmartFunnelViz) {

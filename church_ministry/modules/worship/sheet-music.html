@@ -38,7 +38,8 @@
         details summary { cursor: pointer; font-weight: 600; }
     </style>
 </head>
-<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a">
+<body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a">
+    <div style="padding:8px 20px;"><button type="button" onclick="exportSheetMusicCsv()" data-w5-report="sheet-music-csv">⬇ 樂譜 CSV</button> <button type="button" onclick="printSheetMusic()" data-w5-report="sheet-music-print">🖨 列印</button></div>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
     <div class="container">
         <div class="header">
@@ -430,6 +431,31 @@
     </script>
 
 
+<script>
+
+        function exportSheetMusicCsv() {
+            var list = [];
+            try { list = JSON.parse(localStorage.getItem('sheet_music_data') || '[]'); } catch (e) {}
+            var lines = ['title,composer,key,notes'];
+            (list || []).forEach(function (s) {
+                var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+                lines.push([s.title || s.name, s.composer, s.key, s.notes || s.note].map(esc).join(','));
+            });
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('sheet_music.csv', lines);
+        }
+        function printSheetMusic() {
+            var list = [];
+            try { list = JSON.parse(localStorage.getItem('sheet_music_data') || '[]'); } catch (e) {}
+            var rows = (list || []).map(function (s) {
+                return [s.title || s.name, s.composer || '', s.key || '', s.notes || s.note || ''];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('樂譜索引', ['曲名','作曲','調','備註'], rows);
+            else window.print();
+        }
+
+</script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
 <!-- b100-ae-worship-w1-shell -->
 <link rel="stylesheet" href="../../css/ae_worship_six_section.css" />
 <script src="../../js/church-master-database.js"></script>
@@ -456,5 +482,10 @@
 <script src="../../js/crm_context_bar.js"></script>
 <script src="../../js/ae_primary_nav.js"></script>
 <script src="../../js/ae_subpage_shell.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

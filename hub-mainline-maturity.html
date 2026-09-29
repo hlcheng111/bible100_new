@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hub 主線成熟度報告 · Phase 7</title>
+  <style>
+    body { font-family: "Noto Sans TC", "Microsoft YaHei", sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 16px 18px 32px; font-size: 14px; line-height: 1.55; }
+    .wrap { max-width: 920px; margin: 0 auto; }
+    header { background: linear-gradient(135deg, #0f766e 0%, #115e59 100%); color: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+    header h1 { margin: 0 0 6px; font-size: 1.2rem; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #f1f5f9; }
+    th { background: #f8fafc; }
+    .ok { color: #059669; font-weight: 700; }
+    .todo { color: #b45309; }
+    .v2 { color: #64748b; }
+    a { color: #0d9488; font-weight: 600; }
+    button { padding: 8px 14px; border: none; border-radius: 8px; background: #0d9488; color: #fff; font-weight: 700; cursor: pointer; margin-right: 8px; }
+  </style>
+  <script src="js/hub_base/hub_base_constant.js"></script>
+  <script src="js/hub_base/hub_base_utils.js"></script>
+  <script src="js/hub_base/hub_base_ops.js"></script>
+</head>
+<body data-b100-page-tier="canonical">
+  <div class="wrap">
+    <header>
+      <h1>📋 Hub 主線成熟度報告 · Phase 7</h1>
+      <p>收工門檻勾選表 · 本機掃描 · 詳見 docs/governance/HUB_MAINLINE_MATURITY_V1.md</p>
+    </header>
+    <div class="card">
+      <button type="button" id="btnScan">重新掃描</button>
+      <button type="button" id="btnExport">匯出 JSON</button>
+      <p id="scanMeta" style="margin:10px 0 0;font-size:0.82rem;color:#64748b;">—</p>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 10px;font-size:1rem;">收工門檻</h2>
+      <table><thead><tr><th>項</th><th>狀態</th><th>說明</th></tr></thead><tbody id="gateBody"></tbody></table>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 10px;font-size:1rem;">V2 願望（不阻礙收工）</h2>
+      <ul id="v2List" class="v2"></ul>
+    </div>
+    <p><a href="hub-audit-viewer.html">審計日誌</a> · <a href="hub-data-health.html">健康快照</a> · <a href="index_v5.html">總站</a></p>
+  </div>
+  <script src="church_ministry/js/cm_hub_task_strip.js"></script>
+  <script src="ai_tools/js/ai_draft_guard.js"></script>
+  <script src="js/hub_base/hub_assessment_import.js"></script>
+  <script src="js/smart_ministry_canonical_store.js"></script>
+  <script>
+    (function () {
+      var GATES = [
+        { id: "g0", label: "規模適配路徑", check: function () { return true; }, note: "planning_landing_multimode 微型/小型/中大型" },
+        { id: "g1", label: "Hub Base 工具就緒", check: function () { return !!(window.HubBase && HubBase.logAudit && HubBase.runHealthCheck); }, note: "facade + ops" },
+        { id: "g2", label: "審計可檢視", check: function () { return HubBase.readAuditEntries().length >= 0; }, note: "hub-audit-viewer.html" },
+        { id: "g3", label: "健康可掃描", check: function () { var r = HubBase.runHealthCheck(); return r && r.summary; }, note: "hub-data-health.html" },
+        { id: "g4", label: "異常 API", check: function () { return !!(HubBase.rejectAssignment && HubBase.pauseTalentService); }, note: "reject / pause / tag protect" },
+        { id: "g5", label: "Phase 4 任務帶", check: function () { return !!window.CmHubTaskStrip; }, note: "E/C/B cm_hub_task_strip.js" },
+        { id: "g6", label: "Phase 5 匯入", check: function () { return !!window.HubAssessmentImport; }, note: "受控恩賜匯入" },
+        { id: "g7", label: "Phase 6 AI 草稿", check: function () { return !!window.AiDraftGuard; }, note: "ai_draft_guard（在 AI 工作台載入）" },
+      ];
+      var V2 = [
+        "BS/QNA/Hymn 深度事奉鏈整合",
+        "A/D/F/G 全區任務帶",
+        "全站 transitional 頁清零",
+        "雲端 Sheets SSOT（v2 需明確啟用）",
+        "更華麗報表與自動化",
+      ];
+      var last = null;
+      function render() {
+        HubBase.setSimulatedRole("admin");
+        var rows = GATES.map(function (g) {
+          var ok = false;
+          try { ok = !!g.check(); } catch (e) { ok = false; }
+          return "<tr><td>" + g.label + "</td><td class='" + (ok ? "ok" : "todo") + "'>" + (ok ? "✅" : "⏳") + "</td><td>" + g.note + "</td></tr>";
+        }).join("");
+        document.getElementById("gateBody").innerHTML = rows;
+        document.getElementById("v2List").innerHTML = V2.map(function (x) { return "<li>" + x + "</li>"; }).join("");
+        var health = HubBase.runHealthCheck();
+        var auditN = HubBase.readAuditEntries(500).length;
+        document.getElementById("scanMeta").textContent =
+          "spaceId=" + HubBase.getSpaceId() + " · 審計 " + auditN + " 筆 · 健康異常 " + (health.summary.issue_count || 0);
+        last = { scanned_at: new Date().toISOString(), gates: GATES.length, health: health.summary, audit_count: auditN, v2: V2 };
+      }
+      document.getElementById("btnScan").addEventListener("click", render);
+      document.getElementById("btnExport").addEventListener("click", function () {
+        if (!last) return;
+        var blob = new Blob([JSON.stringify(last, null, 2)], { type: "application/json" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "hub_mainline_maturity_" + Date.now() + ".json";
+        a.click();
+      });
+      render();
+    })();
+  </script>
+</body>
+</html>

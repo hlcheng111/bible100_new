@@ -34,6 +34,76 @@
     return (prefix || "intent") + "_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
   }
 
+  function loadMembersForResolve() {
+    try {
+      if (global.CentralMemberDB && global.CentralMemberDB.get) {
+        var d = global.CentralMemberDB.get();
+        if (d && Array.isArray(d.members)) return d.members;
+      }
+    } catch (eC) {}
+    try {
+      var raw = global.localStorage.getItem("memberSystemData");
+      if (raw) {
+        var ms = JSON.parse(raw);
+        if (ms && Array.isArray(ms.members)) return ms.members;
+      }
+    } catch (eM) {}
+    return [];
+  }
+
+  /** 從口述文字解析「王弟兄／李姊妹」等 → member_id（HITL 仍須人工核對） */
+  function resolveMemberIdsFromText(text) {
+    var t = String(text || "");
+    var members = loadMembersForResolve();
+    if (!members.length) return { member_id: null, candidates: [] };
+    var candidates = [];
+    members.forEach(function (m) {
+      var name = String(m.name || m.fullName || "").trim();
+      if (!name || name.length < 2) return;
+      var short = name.length >= 2 ? name.slice(0, 2) : name;
+      if (t.indexOf(name) >= 0 || t.indexOf(short) >= 0) {
+        candidates.push({
+          member_id: String(m.memberId != null ? m.memberId : m.id),
+          name: name
+        });
+      }
+    });
+    var uniq = [];
+    var seen = {};
+    candidates.forEach(function (c) {
+      if (seen[c.member_id]) return;
+      seen[c.member_id] = true;
+      uniq.push(c);
+    });
+    return {
+      member_id: uniq.length === 1 ? uniq[0].member_id : (uniq[0] ? uniq[0].member_id : null),
+      candidates: uniq.slice(0, 5)
+    };
+  }
+
+  function applyMemberContext(intents, text, opts) {
+    opts = opts || {};
+    var fromText = resolveMemberIdsFromText(text);
+    var explicit = opts.member_id || opts.operator_member_id || null;
+    var mid = explicit || fromText.member_id || null;
+    return (intents || []).map(function (it) {
+      if (!it) return it;
+      if (!it.member_id && mid) it.member_id = String(mid);
+      if (!it.person_id && it.member_id) it.person_id = it.member_id;
+      if (fromText.candidates && fromText.candidates.length > 1) {
+        it.risk_flags = (it.risk_flags || []).concat(["member_ambiguous"]);
+        it.suggested_next_actions = (it.suggested_next_actions || []).concat([
+          "候選會友：" + fromText.candidates.map(function (c) { return c.name; }).join("、")
+        ]);
+      }
+      if (opts.from_tool) {
+        it.payload = it.payload || {};
+        it.payload.context_from = opts.from_tool;
+      }
+      return it;
+    });
+  }
+
   function normalizeIntent(raw) {
     if (!raw || typeof raw !== "object") return null;
     var target = raw.target_tool || raw.tool_id || "";
@@ -138,13 +208,14 @@
 
   function parseTextOffline(rawText, opts) {
     opts = opts || {};
-    var intents = detectIntentsFromText(rawText);
+    var intents = applyMemberContext(detectIntentsFromText(rawText), rawText, opts);
     return buildEnvelope({
       channel: opts.channel || "text",
       raw_text: rawText,
       locale: opts.locale || "zh-Hant",
-      operator_member_id: opts.operator_member_id || null,
-      church_id: opts.church_id || "default"
+      operator_member_id: opts.operator_member_id || opts.member_id || null,
+      church_id: opts.church_id || "default",
+      from_tool: opts.from_tool || null
     }, intents);
   }
 
@@ -247,6 +318,8 @@
     TOOL_FORM_PATHS: TOOL_FORM_PATHS,
     TOOL_INDEX_PATHS: TOOL_INDEX_PATHS,
     listAvailableTools: listAvailableTools,
+    resolveMemberIdsFromText: resolveMemberIdsFromText,
+    applyMemberContext: applyMemberContext,
     normalizeIntent: normalizeIntent,
     buildEnvelope: buildEnvelope,
     parseTextOffline: parseTextOffline,

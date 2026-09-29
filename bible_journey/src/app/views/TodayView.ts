@@ -1,6 +1,7 @@
-import { navigate } from '../router';
+import { navigate, navigateToUnit } from '../router';
 import { getLocale } from '../stores/locale';
 import { t } from '../i18n/strings';
+import { resolveToday } from '../coach/resolveToday';
 
 export function renderToday(root: HTMLElement) {
   const loc = getLocale();
@@ -13,7 +14,7 @@ export function renderToday(root: HTMLElement) {
     </div>
   `;
   root.querySelector('#btnRead')?.addEventListener('click', () => {
-    navigate({ view: 'reader', bookId: 1, chapter: 1 });
+    void resolveToday().then((unit) => navigateToUnit(unit));
   });
   root.querySelector('#btnBack')?.addEventListener('click', () => navigate({ view: 'home' }));
 }

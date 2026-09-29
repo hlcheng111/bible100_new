@@ -8,7 +8,13 @@
     <link href="../../assets/css/fontawesome.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50">
-    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="container mx-auto px-4 py-6">
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div id="w5dReportBar" style="padding:8px 20px;background:#ecfdf5;border-bottom:1px solid #a7f3d0;font-size:12px;">
+        <strong>F-15 報告</strong>
+        <button type="button" onclick="exportChatHistoryCsv()" data-w5-report="ai-chat-csv" style="margin-left:8px;padding:4px 10px;background:#059669;color:#fff;border:none;border-radius:4px;cursor:pointer;">⬇ 對話 CSV</button>
+        <button type="button" onclick="printChatHistory()" data-w5-report="ai-chat-print" style="margin-left:4px;padding:4px 10px;background:#4b5563;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨 列印</button>
+    </div>
+    <div class="container mx-auto px-4 py-6">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">AI 智能助手</h1>
         <details class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
             <summary class="cursor-pointer font-semibold text-amber-800">📋 功能說明／計畫願景</summary>
@@ -452,6 +458,21 @@
             storageSet('aiChatHistory', JSON.stringify(chatHistory));
         }
 
+        function exportChatHistoryCsv() {
+            var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+            var lines = [[ '角色', '內容', '時間', '來源' ].map(esc).join(',')];
+            chatHistory.forEach(function (msg) {
+                lines.push([msg.type, (msg.content || '').replace(/\n/g, ' '), msg.timestamp, msg.source || ''].map(esc).join(','));
+            });
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('ai_chat_history.csv', lines);
+        }
+        function printChatHistory() {
+            var rows = chatHistory.map(function (msg) {
+                return [msg.type, (msg.content || '').slice(0, 120), msg.timestamp, msg.source || ''];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('AI 對話紀錄（草稿）', ['角色', '內容', '時間', '來源'], rows);
+        }
+
         // 按Enter鍵發送消息
         document.getElementById('messageInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
@@ -459,5 +480,12 @@
             }
         });
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

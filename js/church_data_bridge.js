@@ -545,6 +545,41 @@
         memberHealth: {},
         smartAlerts: []
     };
+
+    function invalidateBridgeAsyncCaches(domain) {
+        var d = domain || 'all';
+        if (d === 'all' || d === 'members' || d === 'visitation' || d === 'volunteer' || d === 'finance') {
+            _asyncCache.dashboardKpiSummary = null;
+        }
+        if (d === 'all' || d === 'finance') {
+            _asyncCache.financeData = null;
+        }
+        if (d === 'all' || d === 'volunteer') {
+            _asyncCache.volunteerRsvpSummary = {};
+        }
+        if (d === 'all' || d === 'members' || d === 'visitation' || d === 'volunteer') {
+            _asyncCache.memberHealth = {};
+            _asyncCache.smartAlerts = [];
+        }
+    }
+
+    function notifyCmDomainChanged(domain) {
+        var d = domain || 'all';
+        invalidateBridgeAsyncCaches(d);
+        try {
+            if (typeof global.dispatchEvent === 'function') {
+                global.dispatchEvent(new CustomEvent('b100-cm-data-changed', {
+                    detail: { domain: d, at: new Date().toISOString() }
+                }));
+            }
+        } catch (e1) {}
+        try {
+            if (global.parent && global.parent !== global) {
+                global.parent.postMessage({ type: 'SYNC_OBSERVER_UPDATED', module: 'cm_bridge', domain: d }, '*');
+            }
+        } catch (e2) {}
+    }
+
     var AUDIT_KEY = 'churchAuditLog';
     var RSVP_KEY = 'volunteerRsvpEvents';
 
@@ -883,6 +918,18 @@
         out.deleted_by = out.deleted_by || defaults.deleted_by || null;
         out.delete_reason = out.delete_reason || defaults.delete_reason || null;
         if (out.id == null) out.id = Date.now();
+        var mid = out.memberId != null ? out.memberId : out.member_id;
+        if (mid != null && String(mid).trim() !== '') {
+            out.memberId = String(mid);
+            out.member_id = String(mid);
+            if (!out.person && global.ChurchDataBridge && typeof global.ChurchDataBridge.getMemberById === 'function') {
+                var mem = global.ChurchDataBridge.getMemberById(out.memberId);
+                if (mem) out.person = mem.name || mem.fullName || '';
+            }
+        } else {
+            out.memberId = null;
+            out.member_id = null;
+        }
         return out;
     }
 
@@ -979,6 +1026,47 @@
         }
     }
 
+    /** financialData → financeSystemData（C-05 / 契約 §2 別名收斂） */
+    function tryMigrateFinanceFromLegacyLocalStorage() {
+        try {
+            if (typeof localStorage === 'undefined') return;
+            var cur = getJson(FIN_KEY);
+            if (cur && Array.isArray(cur.transactions) && cur.transactions.length) return;
+            var alt = getJson(FIN_ALT);
+            if (!alt) {
+                var raw = localStorage.getItem(FIN_ALT);
+                if (raw) alt = JSON.parse(raw);
+            }
+            if (!alt || typeof alt !== 'object') return;
+            setJson(FIN_KEY, alt);
+            var cm = getJson(CM_KEY) || {};
+            cm.financeModule = alt;
+            cm.financeModuleSyncedAt = new Date().toISOString();
+            setJson(CM_KEY, cm);
+            try { localStorage.removeItem(FIN_ALT); } catch (rm) {}
+            console.info('[ChurchDataBridge] migrated legacy financialData → financeSystemData');
+        } catch (e) {
+            console.warn('[ChurchDataBridge] finance migrate skipped', e);
+        }
+    }
+
+    /** churchMasterDatabase.members → memberSystemData（僅 MS 空、CM 有資料時） */
+    function tryMigrateMemberSystemFromChurchMaster() {
+        try {
+            var ms = getJson(MS_KEY);
+            if (ms && Array.isArray(ms.members) && ms.members.length) return;
+            var cm = getJson(CM_KEY);
+            if (!cm || !Array.isArray(cm.members) || !cm.members.length) return;
+            var rebuilt = getRawMemberSystemPayload();
+            var normalized = normalizeMemberSystemData(rebuilt);
+            if (!normalized.members || !normalized.members.length) return;
+            setJson(MS_KEY, normalized);
+            console.info('[ChurchDataBridge] migrated churchMasterDatabase → memberSystemData');
+        } catch (e) {
+            console.warn('[ChurchDataBridge] memberSystem migrate skipped', e);
+        }
+    }
+
     var ChurchDataBridge = {
         SCHEMA_VERSION_MEMBER_SYSTEM: SCHEMA_VERSION_MEMBER_SYSTEM,
         PERSISTENCE_PROVIDER_VERSION: 'v1',
@@ -1012,6 +1100,17 @@
             return createLocalStorageProvider();
         },
 
+        invalidateAsyncCaches: function (domain) {
+            invalidateBridgeAsyncCaches(domain);
+            return true;
+        },
+
+        /** 四页 save 后通知仪表板与其它监听方刷新 KPI */
+        notifyDomainChanged: function (domain) {
+            notifyCmDomainChanged(domain);
+            return true;
+        },
+
         isBridgeInitialized: function () {
             return !!_bridgeInitialized;
         },
@@ -1025,6 +1124,11 @@
             if (_bridgeInitPromise) return _bridgeInitPromise;
             var self = this;
             _bridgeInitPromise = Promise.resolve().then(function () {
+                tryMigrateEducationSystemFromLegacyLocalStorage();
+                tryMigrateEducationAModuleFromLegacyLocalStorage();
+                tryMigrateDiscipleDataFromLegacyLocalStorage();
+                tryMigrateFinanceFromLegacyLocalStorage();
+                tryMigrateMemberSystemFromChurchMaster();
                 var jobs = [];
                 if (useApi() && typeof self.hydrateFromApi === 'function') {
                     jobs.push(self.hydrateFromApi().catch(function (e) {
@@ -1104,7 +1208,9 @@
 
         applyCrmMaturitySeed: function () {
             if (global.ChurchCrmMaturitySeed && typeof global.ChurchCrmMaturitySeed.apply === 'function') {
-                return global.ChurchCrmMaturitySeed.apply(this);
+                var r = global.ChurchCrmMaturitySeed.apply(this);
+                if (r && r.ok) notifyCmDomainChanged('all');
+                return r;
             }
             return { ok: false, reason: 'ChurchCrmMaturitySeed not loaded' };
         },
@@ -1575,6 +1681,7 @@
                 });
             }
             this.logActivity('save_visitation_data', { missions: (normalized.missions || []).length }, 'bridge');
+            notifyCmDomainChanged('visitation');
             return true;
         },
 
@@ -2266,6 +2373,7 @@
                 });
             }
             this.logActivity('save_member_system_data', { members: (normalized.members || []).length }, 'bridge');
+            notifyCmDomainChanged('members');
             return true;
         },
 
@@ -2306,6 +2414,7 @@
                     });
                 }
                 this.logActivity('save_member_system_data', { members: (normalized.members || []).length }, 'bridge');
+                notifyCmDomainChanged('members');
                 finishTx(true);
                 return true;
             } catch (e) {
@@ -2672,6 +2781,7 @@
                 }
             }
             this.logActivity('save_volunteer_system_data', { schedules: (copy.schedules || []).length }, 'bridge');
+            notifyCmDomainChanged('volunteer');
             return true;
         },
 
@@ -2730,6 +2840,9 @@
                 upcoming: inWindow.length,
                 pending_confirm: inWindow.filter(function (s) { return !s.confirmed; }).length,
                 confirmed: inWindow.filter(function (s) { return !!s.confirmed; }).length,
+                leave_gaps: inWindow.filter(function (s) {
+                    return String(s.leaveStatus || '').toLowerCase() === 'leave_only';
+                }).length,
                 pending_ctv_suggestions: (this.listPendingMinistrySuggestions() || []).length
             };
         },
@@ -2996,6 +3109,7 @@
                     console.warn('[ChurchDataBridge] Sheets appendPastoralEvent', e);
                 });
             }
+            notifyCmDomainChanged('visitation');
             return rec;
         },
 
@@ -3112,6 +3226,10 @@
             var dueToday = pending.filter(function (t) {
                 return String(t.due_date || '').slice(0, 10) === todayStr;
             });
+            var overdue = pending.filter(function (t) {
+                var d = String(t.due_date || '').slice(0, 10);
+                return d && d < todayStr;
+            });
             var high = list.filter(function (t) {
                 var pr = String(t.priority || '').toLowerCase();
                 return pr === 'high' || pr === 'urgent';
@@ -3123,6 +3241,7 @@
                 total: list.length,
                 pending: pending.length,
                 due_today: dueToday.length,
+                overdue: overdue.length,
                 due_in_window: dueInWindow.length,
                 window_days: days,
                 high_priority: high.length,
@@ -3196,6 +3315,9 @@
                 store.tasks.push(task);
             }
             this.savePastoralFollowupData(store);
+            try {
+                notifyCmDomainChanged('visitation');
+            } catch (eNotify) { /* ignore */ }
             var snippet = this.buildPastoralFollowupSnippet(task);
             this.logActivity('save_pastoral_followup', { task_id: task.id, member_id: mid }, 'visitation_followup');
             return {
@@ -4269,6 +4391,7 @@
             cm.financeModuleSyncedAt = new Date().toISOString();
             setJson(CM_KEY, cm);
             this.logActivity('save_finance_system_data', { transactions: (copy.transactions || []).length }, 'bridge');
+            notifyCmDomainChanged('finance');
             return true;
         },
 

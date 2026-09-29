@@ -51,6 +51,10 @@
 </head>
 <body>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+    <div id="w5dReportBar" style="padding:8px 16px;background:#ecfdf5;border-bottom:1px solid #a7f3d0;font-size:12px;"><strong>F-14 報告</strong>
+        <button type="button" class="btn btn-sm btn-success" onclick="exportProjectsCsv()" data-w5-report="video-projects-csv">⬇ 專案 CSV</button>
+        <button type="button" class="btn btn-sm" style="background:#4b5563;color:#fff;margin-left:4px;" onclick="printVideoProjects()" data-w5-report="video-print">🖨 列印</button>
+    </div>
     <div class="header">
         <h1>🎬 影片制作管理系统</h1>
         <div class="tabs">
@@ -92,7 +96,7 @@
             <div class="card">
                 <div class="card-title">🎬 制作项目管理</div>
                 <button class="btn btn-primary" onclick="showAddProjectModal()">➕ 新增项目</button>
-                <button class="btn btn-success" onclick="exportProjects()">📤 导出</button>
+                <button class="btn btn-success" onclick="exportProjectsCsv()" data-w5-report="video-projects-csv">📤 导出</button>
                 <table id="projectsTable">
                     <thead>
                         <tr>
@@ -503,15 +507,31 @@
             }
         }
         
-        function exportProjects() {
-            const csv = '项目名称,类型,负责人,状态,进度,开始日期,预计完成\n' + 
-                data.projects.map(p => `${p.name},${p.type},${p.director},${getStatusText(p.status)},${p.progress}%,${p.startDate},${p.deadline}`).join('\n');
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'}));
-            a.download = '影片制作项目.csv';
-            a.click();
-            alert('✅ 已导出！');
+        function csvLine(fields) {
+            var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+            return (fields || []).map(esc).join(',');
+        }
+        function exportProjectsCsv() {
+            var lines = [csvLine(['项目名称', '类型', '负责人', '状态', '进度', '开始日期', '预计完成'])];
+            data.projects.forEach(function (p) {
+                lines.push(csvLine([p.name, p.type, p.director, getStatusText(p.status), p.progress + '%', p.startDate, p.deadline]));
+            });
+            if (window.CmReportUtils) CmReportUtils.downloadCsv('video_projects.csv', lines);
+        }
+        function printVideoProjects() {
+            var headers = ['项目名称', '类型', '负责人', '状态', '进度', '开始日期', '预计完成'];
+            var rows = data.projects.map(function (p) {
+                return [p.name, p.type, p.director, getStatusText(p.status), p.progress + '%', p.startDate, p.deadline];
+            });
+            if (window.CmReportUtils) CmReportUtils.printTable('影片制作项目', headers, rows);
         }
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>

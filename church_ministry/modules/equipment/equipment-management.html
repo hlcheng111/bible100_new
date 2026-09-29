@@ -29,6 +29,11 @@ table th { background: #f8f9fa; }
 .form-input, .form-select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }</style></head>
 <body>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>
+<div id="w5dReportBar" style="padding:8px 16px;background:#ecfdf5;border-bottom:1px solid #a7f3d0;font-size:12px;"><strong>F-06 報告</strong>
+    <button type="button" class="btn btn-sm" style="background:#059669;margin-left:8px;" onclick="exportEquipCsv()" data-w5-report="equipment-inventory-csv">⬇ 設備 CSV</button>
+    <button type="button" class="btn btn-sm" style="background:#4b5563;margin-left:4px;" onclick="exportMaintenanceCsv()" data-w5-report="equipment-maintenance-csv">⬇ 維護 CSV</button>
+    <button type="button" class="btn btn-sm" style="background:#4b5563;margin-left:4px;" onclick="printEquipInventory()" data-w5-report="equipment-print">🖨 列印</button>
+</div>
 <div class="header">
     <h1>🏢 设备管理系统</h1>
     <div class="tabs">
@@ -56,7 +61,7 @@ table th { background: #f8f9fa; }
         <div class="card">
             <h3 style="margin-bottom:15px;">📦 设备清单</h3>
             <button class="btn" onclick="showAddEquipModal()">➕ 新增设备</button>
-            <button class="btn" style="background:#27ae60;" onclick="exportEquip()">📤 导出</button>
+            <button class="btn" style="background:#27ae60;" onclick="exportEquipCsv()" data-w5-report="equipment-inventory-csv">📤 导出</button>
             <table id="equipTable"><thead><tr><th>设备名称</th><th>类别</th><th>购买日期</th><th>价值</th><th>状态</th><th>位置</th><th>操作</th></tr></thead><tbody></tbody></table>
         </div>
     </div>
@@ -135,14 +140,38 @@ function delEquip(id) {
 }
 function showAddMaintenanceModal() { alert('功能：新增维护记录'); }
 function showBorrowModal() { alert('功能：登记借用'); }
-function exportEquip() {
-    const csv = '设备名称,类别,购买日期,价值,状态,位置\n' + data.equipment.map(e=>`${e.name},${e.category},${e.purchaseDate},${e.value},${e.status},${e.location}`).join('\n');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
-    a.download = '设备清单.csv';
-    a.click();
-    alert('✅ 已导出！');
-        }
+function csvLine(fields) {
+    var esc = window.CmReportUtils ? CmReportUtils.csvEsc : function (v) { return v; };
+    return (fields || []).map(esc).join(',');
+}
+function exportEquipCsv() {
+    var lines = [csvLine(['设备名称', '类别', '购买日期', '价值', '状态', '位置'])];
+    data.equipment.forEach(function (e) {
+        lines.push(csvLine([e.name, e.category, e.purchaseDate, e.value, e.status, e.location]));
+    });
+    if (window.CmReportUtils) CmReportUtils.downloadCsv('equipment_inventory.csv', lines);
+}
+function exportMaintenanceCsv() {
+    var lines = [csvLine(['日期', '设备', '问题', '处理', '费用'])];
+    data.maintenance.forEach(function (m) {
+        lines.push(csvLine([m.date, m.equipment, m.issue, m.solution, m.cost]));
+    });
+    if (window.CmReportUtils) CmReportUtils.downloadCsv('equipment_maintenance.csv', lines);
+}
+function printEquipInventory() {
+    var headers = ['设备名称', '类别', '购买日期', '价值', '状态', '位置'];
+    var rows = data.equipment.map(function (e) {
+        return [e.name, e.category, e.purchaseDate, e.value, e.status, e.location];
+    });
+    if (window.CmReportUtils) CmReportUtils.printTable('设备清单', headers, rows);
+}
     </script>
+<!-- b100-w5-report-utils -->
+<script src="../../js/cm_report_utils.js"></script>
+
+<!-- b100-cm-desk-kit -->
+<link rel="stylesheet" href="../../css/cm_desk.css" />
+<script src="../../js/cm_desk_registry.js"></script>
+<script src="../../js/cm_desk_kit.js"></script>
 </body>
 </html>
