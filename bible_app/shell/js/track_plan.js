@@ -35,14 +35,14 @@
       rulesSummary: '操作說明',
       rules: [
         '① 按「開始今日關卡」或下方彩色格選一天',
-        '② 依序讀完当日全部章节（按书卷顺序）',
-        '③ 读完后点「读完打卡」→ +1 金星，已读章计入进度',
-        '🔥 连续天：有打卡的日历连续天数；断更欢迎回来',
+        '② 依序讀完當日全部章節（按書卷順序）',
+        '③ 讀完後點「讀完打卡」→ +1 金星，已讀章計入進度',
+        '🔥 連續天：有打卡的日曆連續天數。斷更沒關係——落後可續，從今天那一格接著走就好',
       ],
-      loadFail: '资料加载失败。请双击 <strong>打开圣经跑道.bat</strong>。',
+      loadFail: '資料載入失敗。請用本機 HTTP 或雙擊啟動腳本再開一次。',
       month: '第 {m} 月',
-      calHint: '点选日期可看当日应读经卷；窄屏以列表显示。',
-      journeyHint: '小图标 = 最近几天：✅ 已打卡 · 🔥 今天 · 📖 未读',
+      calHint: '點選日期可看當日應讀經卷；窄屏以列表顯示。落後了就點今天，不必從第 1 天重來。',
+      journeyHint: '小圖示 = 最近幾天：✅ 已打卡 · 🔥 今天 · 📖 未讀',
       freeExplore: '進階：譯本對照 / 釋經參讀 →',
     },
     en: {
@@ -99,7 +99,7 @@
     if (global.B100PageLinks) {
       return global.B100PageLinks.bibleReadUrl({ bookId: bookId, chapter: chapter, track: cfg.track, day: day });
     }
-    return 'bible66.html?book=' + bookId + '&chapter=' + chapter + '&track=' + cfg.track + '&day=' + day;
+    return 'reader-multilang.html?book=' + bookId + '&chapter=' + chapter + '&track=' + cfg.track + '&day=' + day;
   }
 
   function doneLink(day, bookId, chapter, title) {

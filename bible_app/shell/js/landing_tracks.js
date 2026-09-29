@@ -109,15 +109,22 @@
         '</div>' +
         '<p class="landing-guide__nudge">同一關可用 <strong>繁中／English／越／印</strong> 並排。不知道選哪條？看下面最短的——三十日。AI 草稿須老師／牧者審核。</p>',
       howHtml:
-        '<p class="landing-guide__lead">今天只要三步：<strong>選路 → 讀一小段 → 打卡</strong>。打卡後可往這五站繼續：</p>' +
-        '<ol class="landing-guide__steps landing-forward">' +
-        '<li><a class="landing-fwd" href="../../../ai_tools/tools/creative_tools_landing.html"><strong>🎨 讀後創意</strong></a> — 畫圖／朗讀／音樂／短片 <em>After-read</em></li>' +
-        '<li><a class="landing-fwd" href="ai-qna.html"><strong>💬 牧養問答</strong></a> — 複製 Prompt · 或查難題題庫 <em>Q&amp;A</em></li>' +
-        '<li><a class="landing-fwd" href="ai-tutor.html"><strong>🎓 智慧導師</strong></a> — 三鏡導讀 <em>Go deeper</em></li>' +
-        '<li><a class="landing-fwd" href="reader-multilang.html"><strong>🌐 多語查經</strong></a> — 四語並排再讀 <em>Versions</em></li>' +
-        '<li><a class="landing-fwd" href="../../../bible_study/comprehensive_exegesis_reader.html?book=創世記&amp;chapter=1"><strong>📚 釋經參讀</strong></a> — 懂這章在說什麼 <em>Commentary</em></li>' +
+        '<p class="landing-guide__lead">今天只要三步：</p>' +
+        '<ol class="landing-guide__steps">' +
+        '<li><strong>選一條路</strong>（不會選就點「先走三十日」）</li>' +
+        '<li><strong>讀一小段</strong>，不用自己找章節</li>' +
+        '<li><strong>打卡</strong>。斷更了也沒關係，回來接著走</li>' +
         '</ol>' +
-        '<p class="landing-guide__nudge">讀完頁會寫「✅ 這關打過卡了 · 再看讀後創意 →」。備課台在總站「AI 輔助」，這裡不預設進去。</p>',
+        '<p class="landing-guide__lead">讀完想再深一點？先這兩站：</p>' +
+        '<ol class="landing-guide__steps landing-forward">' +
+        '<li><a class="landing-fwd" href="../../../bible_study/oia/index.html"><strong>📖 研經法 · OIA</strong></a> — 觀察／解釋／應用 <em>Read method</em></li>' +
+        '<li><a class="landing-fwd" href="../../../qna/index.html?panel=ask"><strong>💬 聖經難題</strong></a> — 題庫桌裡問一句 <em>Q&amp;A</em></li>' +
+        '</ol>' +
+        '<p class="landing-guide__nudge">還可選：' +
+        '<a class="landing-fwd" href="../../../ai_tools/tools/creative_tools_landing.html">讀後創意</a> · ' +
+        '<a class="landing-fwd" href="reader-multilang.html">多語查經</a> · ' +
+        '<a class="landing-fwd" href="../../../bible_study/comprehensive_exegesis_reader.html?book=創世記&amp;chapter=1">釋經參讀</a>。' +
+        'AI 草稿須老師／牧者審核。</p>',
       whyHtml: '',
       progressTrackTitle: '各線進度',
       progressLast: '最近打卡',

@@ -2,60 +2,87 @@
  * 聖經地理歷史 · 連結 SSOT
  * embed:true → 侧栏/landing 经 geo_external_frame（右栏，autoload=1）
  * embed:false → 仅 ↗ 新分页（YouTube、圣光等）
+ * local:true → 本站页（timeline_viewer 等）
+ * door: place | map | timeline → 三扇門主路徑；more:true →「更多」
  */
 window.GEOGRAPHY_HISTORY_DATA = {
-  categories: [
-    {
-      id: 'timeline',
-      icon: '📅',
-      nameZh: '時間軸',
-      nameEn: 'Timeline',
-      links: [
-        { label: '本站時間軸', url: 'timeline_viewer.html', local: true },
-        { label: 'Bible Timeline (共享)', url: 'https://bibleeveryone.com/bible-timeline.php', embed: true },
-        { label: 'Bible Timeline (cnbible)', url: 'https://cnbible.com/timeline/', embed: true }
-      ]
-    },
+  doors: [
     {
       id: 'place',
+      title: '這卷發生在哪',
+      desc: '查地名、背景與聖光地理索引。外站會新分頁開啟，看完可回來。',
+      cta: '打開地名索引'
+    },
+    {
+      id: 'map',
+      title: '看總圖',
+      desc: '先看一張總覽地圖，把人物行走的路線放進眼前。',
+      cta: '打開聖經地圖'
+    },
+    {
+      id: 'timeline',
+      title: '看大故事時間',
+      desc: '從創造到使徒時代，先抓「發生在什麼時候」。',
+      cta: '打開時間軸'
+    }
+  ],
+  categories: [
+    {
+      id: 'place',
+      door: 'place',
       icon: '📍',
-      nameZh: '地理地名',
+      nameZh: '這卷發生在哪',
       nameEn: 'Place',
       links: [
-        { label: 'Place Index (Holy Light) ↗', url: 'https://biblegeography.holylight.org.tw/index/condensedbible_list', embed: false },
-        { label: 'Place Search (Holy Light) ↗', url: 'https://biblegeography.holylight.org.tw/index/list_queries', embed: false },
-        { label: 'Geo Intro (Holy Light) ↗', url: 'https://biblegeography.holylight.org.tw/index/introduction_list', embed: false }
+        { label: '地名索引（聖光）↗', url: 'https://biblegeography.holylight.org.tw/index/condensedbible_list', embed: false },
+        { label: '地名搜尋（聖光）↗', url: 'https://biblegeography.holylight.org.tw/index/list_queries', embed: false },
+        { label: '地理導讀（聖光）↗', url: 'https://biblegeography.holylight.org.tw/index/introduction_list', embed: false }
       ]
     },
     {
       id: 'map',
+      door: 'map',
       icon: '🗺️',
-      nameZh: '地圖',
+      nameZh: '看總圖',
       nameEn: 'Map',
       links: [
-        { label: 'Bible Maps (LDS)', url: 'https://www.churchofjesuschrist.org/study/scriptures/bible-maps/index?lang=yue', embed: true },
-        { label: 'Bible Atlas (cnbible)', url: 'https://cnbible.com/atlas/a.htm', embed: true },
-        { label: 'Bible Atlas (OpenBible)', url: 'https://www.openbible.info/geo/atlas/a', embed: true }
+        { label: '聖經地圖（耶穌基督後期聖徒教會）', url: 'https://www.churchofjesuschrist.org/study/scriptures/bible-maps/index?lang=yue', embed: true },
+        { label: '聖經地圖集（cnbible）', url: 'https://cnbible.com/atlas/a.htm', embed: true },
+        { label: '聖經地圖集（OpenBible）', url: 'https://www.openbible.info/geo/atlas/a', embed: true }
+      ]
+    },
+    {
+      id: 'timeline',
+      door: 'timeline',
+      icon: '📅',
+      nameZh: '看大故事時間',
+      nameEn: 'Timeline',
+      links: [
+        { label: '本站時間軸', url: 'timeline_viewer.html', local: true },
+        { label: '聖經時間軸（bibleeveryone）', url: 'https://bibleeveryone.com/bible-timeline.php', embed: true },
+        { label: '聖經時間軸（cnbible）', url: 'https://cnbible.com/timeline/', embed: true }
       ]
     },
     {
       id: 'bibleproject',
       icon: '📺',
-      nameZh: 'BibleProject YouTube',
+      nameZh: '影音導覽',
       nameEn: 'Video',
+      more: true,
       links: [
-        { label: 'Cantonese ↗', url: 'https://www.youtube.com/@BibleProjectCantonese', embed: false },
-        { label: 'Mandarin ↗', url: 'https://www.youtube.com/@BibleProjectMandarinSimplified', embed: false },
-        { label: 'English ↗', url: 'https://www.youtube.com/@bibleproject', embed: false }
+        { label: 'BibleProject 粵語 ↗', url: 'https://www.youtube.com/@BibleProjectCantonese', embed: false },
+        { label: 'BibleProject 普通話 ↗', url: 'https://www.youtube.com/@BibleProjectMandarinSimplified', embed: false },
+        { label: 'BibleProject 英語 ↗', url: 'https://www.youtube.com/@bibleproject', embed: false }
       ]
     },
     {
       id: 'archaeology',
       icon: '🏛️',
-      nameZh: '考古學',
+      nameZh: '考古學入門',
       nameEn: 'Archaeology',
+      more: true,
       links: [
-        { label: 'Archaeology Intro', url: 'https://www.chineseapologetics.net/archaeology/book/main.htm', embed: true }
+        { label: '考古學導讀', url: 'https://www.chineseapologetics.net/archaeology/book/main.htm', embed: true }
       ]
     }
   ]
