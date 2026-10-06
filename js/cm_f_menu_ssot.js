@@ -1,31 +1,34 @@
 /**
- * CM F 区侧栏 SSOT — 4 层 IA（跨模块 hymn）
+ * CM F 区侧栏 SSOT — 转回曲库双栏（playlist + catalog_sort）
  */
 (function (global) {
   "use strict";
 
-  var ZONE_BUILD = "20260805e";
+  var ZONE_BUILD = "20260930a";
 
   var ZONE = {
     id: "f",
-    label: "F 詩歌應用",
-    en: "Hymns · 2000+ scores",
+    label: "F 樂以載道",
+    en: "Practical Hymnology",
     i18nKey: "cm.sb.sec.fhymn",
     theme: "cm",
     focusZone: "f",
     sbGroup: "併",
-    headHref: "_landing/hymns.html",
+    headHref: "../hymn_management/practical_hymnology/landing.html?crm_from=f_hymns",
+    headNav: "module",
+    headModuleSidebar: "hymn_management/sidebar_lexidao.html",
+    headModuleContent: "hymn_management/practical_hymnology/landing.html?crm_from=f_hymns",
     primary: [
       {
         id: "f_hymn_main",
-        label: "詩歌曲庫",
-        en: "Full hymn library",
+        label: "樂以載道",
+        en: "Practical Hymnology",
         i18nKey: "cm.sb.f.hymn.main",
-        href: "../hymn_management/dashboard.html",
+        href: "../hymn_management/practical_hymnology/landing.html",
         primary: true,
         nav: "module",
-        moduleSidebar: "hymn_management/sidebar_playlist.html",
-        moduleContent: "hymn_management/dashboard.html",
+        moduleSidebar: "hymn_management/sidebar_lexidao.html",
+        moduleContent: "hymn_management/practical_hymnology/landing.html",
       },
     ],
     categories: [
@@ -38,12 +41,21 @@
         items: [
           {
             id: "f_lib",
-            label: "曲庫 Dashboard",
-            en: "Hymn dashboard",
-            href: "../hymn_management/dashboard.html",
+            label: "曲譜表選歌",
+            en: "Sortable hymn table",
+            href: "../hymn_management/hymn_catalog_sort.html",
             nav: "module",
-            moduleSidebar: "hymn_management/sidebar_playlist.html",
-            moduleContent: "hymn_management/dashboard.html",
+            moduleSidebar: "hymn_management/sidebar_lexidao.html",
+            moduleContent: "hymn_management/hymn_catalog_sort.html",
+          },
+          {
+            id: "f_lexidao",
+            label: "樂以載道（換模組）",
+            en: "Practical Hymnology module",
+            href: "../hymn_management/practical_hymnology/landing.html",
+            nav: "module",
+            moduleSidebar: "hymn_management/sidebar_lexidao.html",
+            moduleContent: "hymn_management/practical_hymnology/landing.html",
           },
           {
             id: "f_index",

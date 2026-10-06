@@ -47,7 +47,7 @@
       { id: "c", focus: "c", label: "C 聖經門訓" },
       { id: "d", focus: "d", label: "D 外展差傳" },
       { id: "e", focus: "e", label: "E 社會服務" },
-      { id: "f", focus: "f", label: "F 詩歌應用" },
+      { id: "f", focus: "f", label: "F 樂以載道" },
       { id: "g", focus: "g", label: "G 規劃行政" },
     ],
 

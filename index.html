@@ -355,6 +355,21 @@
     body.mode-module-shell-embed table.layout td.left { display: none; }
     body.mode-module-shell-embed table.layout td.right { width: 100%; }
     iframe { border: 0; width: 100%; height: 100%; }
+    #phShellBar { display: none; }
+    body.mode-ph td.right { display: flex; flex-direction: column; height: 100%; }
+    body.mode-ph #phShellBar {
+      display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+      background: #020617; color: #f3e5ab; padding: 8px 12px; border-bottom: 2px solid #d4af37;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    }
+    body.mode-ph #phShellBar .ph-brand { color: #fff; font-weight: 800; text-decoration: none; font-size: 1.05rem; }
+    body.mode-ph #phShellBar .ph-zones { display: flex; flex-wrap: wrap; gap: 6px; }
+    body.mode-ph #phShellBar .ph-zones a {
+      color: #f3e5ab; text-decoration: none; background: #0c4a6e; border-radius: 8px;
+      padding: 4px 8px; font-size: 13px; font-weight: 700;
+    }
+    body.mode-ph #phShellBar .ph-zones a.on { background: #fbbf24; color: #082f49; }
+    body.mode-ph #contentFrame { flex: 1 1 auto; height: auto; min-height: 0; }
     #fileProtocolBanner { display: none !important; }
     #surveyUiBanner { display: none; }
     body.show-survey-banner #surveyUiBanner { display: block; }
@@ -756,7 +771,19 @@
     <table class="layout">
       <tr>
         <td class="left"><iframe id="sidebarFrame" name="sidebarFrame" title="側欄 · 目錄與模組捷徑" src="about:blank"></iframe></td>
-        <td class="right"><iframe id="contentFrame" name="contentFrame" title="內容區 · 教材與工具主畫面" src="about:blank"></iframe></td>
+        <td class="right">
+          <nav id="phShellBar" aria-label="樂以載道">
+            <a class="ph-brand" href="hymn_management/practical_hymnology/landing.html" target="contentFrame">樂以載道</a>
+            <div class="ph-zones">
+              <a data-zone="find" href="hymn_management/practical_hymnology/landing.html#find" target="contentFrame">找聖詩</a>
+              <a data-zone="learn" href="hymn_management/practical_hymnology/landing.html#learn-A" target="contentFrame">學聖詩</a>
+              <a data-zone="research" href="hymn_management/practical_hymnology/landing.html#research" target="contentFrame">研究聖詩</a>
+              <a data-zone="use" href="hymn_management/practical_hymnology/landing.html#use" target="contentFrame">使用聖詩</a>
+              <a data-zone="workshop" href="hymn_management/practical_hymnology/Applied-Hymnology/index.html" target="contentFrame">聖詩工作坊</a>
+            </div>
+          </nav>
+          <iframe id="contentFrame" name="contentFrame" title="內容區 · 教材與工具主畫面" src="about:blank"></iframe>
+        </td>
       </tr>
     </table>
     <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
@@ -990,6 +1017,7 @@
   function clearHymnEmbedLayout() {
     document.body.classList.remove('mode-hymn-embed');
     document.body.classList.remove('mode-module-shell-embed');
+    document.body.classList.remove('mode-ph');
   }
 
   function enableModuleShellEmbedLayout() {
@@ -1795,6 +1823,7 @@
       : false;
     setContextOpen(!hideSecondary);
     clearHymnEmbedLayout();
+    document.body.classList.toggle('mode-ph', mode === 'hymn');
 
     if (window.Bible100Shell && typeof window.Bible100Shell.loadMode === 'function') {
       window.Bible100Shell.loadMode(mode);
@@ -1813,13 +1842,45 @@
     requestAnimationFrame(syncTopOffset);
   }
 
+  (function () {
+    var frame = document.getElementById("contentFrame");
+    var bar = document.getElementById("phShellBar");
+    function markPh(zone) {
+      if (!bar) return;
+      var links = bar.querySelectorAll("[data-zone]");
+      for (var i = 0; i < links.length; i++) {
+        links[i].classList.toggle("on", links[i].getAttribute("data-zone") === zone);
+      }
+    }
+    window.addEventListener("message", function (e) {
+      if (!e.data || e.data.type !== "ph-zone") return;
+      if (!document.body.classList.contains("mode-ph")) return;
+      markPh(e.data.zone);
+    });
+    if (bar) {
+      bar.addEventListener("click", function (e) {
+        var a = e.target.closest("[data-zone]");
+        if (a) markPh(a.getAttribute("data-zone"));
+      });
+    }
+    if (frame) {
+      frame.addEventListener("load", function () {
+        if (!document.body.classList.contains("mode-ph")) return;
+        try {
+          var inner = frame.contentDocument && frame.contentDocument.querySelector(".ph-bar");
+          if (inner) inner.style.display = "none";
+        } catch (err) {}
+      });
+    }
+  })();
+
   /** 全站 L0：左欄全站地圖 + 右欄代码路线图首頁 */
   function loadSiteHome() {
     clearHymnEmbedLayout();
     selectedMode = null;
     setModeButtonActive(null);
     setContextOpen(false);
-    document.body.classList.remove('mode-qna', 'mode-hymn-embed', 'mode-module-shell-embed');
+    document.body.classList.remove('mode-qna', 'mode-hymn-embed', 'mode-module-shell-embed', 'mode-ph');
     var el = document.getElementById('contextBar');
     if (el) {
       el.innerHTML = '';

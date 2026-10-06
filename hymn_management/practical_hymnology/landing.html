@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>樂以載道 · 總地圖</title>
+  <link rel="stylesheet" href="door.css" />
+  <style>
+    #tasks { display: none; }
+    .walk { margin-top: 18px; background: #fffaf3; border-radius: 12px; padding: 12px 14px; }
+    .walk h2 { margin: 0 0 4px; font-size: 1rem; color: #3f2e22; }
+    .walk-lead { margin: 8px 0 6px; font-size: 13px; color: #44403c; line-height: 1.45; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 4px; }
+    .chip {
+      display: inline-block; text-decoration: none; color: #fff;
+      border-radius: 8px; padding: 4px 8px; font-size: 13px; font-weight: 700;
+    }
+    .chip.meet { background: #c9892d; }
+    .chip.see { background: #2f7d4f; }
+    .chip.ask { background: #2a6f97; }
+    .chip.verify { background: #3d3a6b; }
+    .chip.back { background: #b85c38; }
+    .chip.go { background: #1c1917; color: #f3e5ab; }
+    .samples a { font-size: 13px; padding: 3px 0; }
+    .kind { font-style: normal; font-size: 11px; font-weight: 800; margin-right: 6px; }
+    .kind.lesson { color: #166534; }
+    .kind.ask { color: #9a3412; }
+  </style>
+  <script src="../data/ph_search_index.js"></script>
+  <script src="data/disciplines_index.js"></script>
+  <script src="../js/ph_search.js"></script>
+  <script src="../../js/shell_nav.js"></script>
+</head>
+<body data-b100-module="hymn_management" data-b100-pattern="P-LANDING">
+  <script src="ph_module_bar.js" data-root="" data-here="map"></script>
+  <div class="wrap">
+    <section class="hero">
+      <h1>樂以載道</h1>
+      <p>你今天想做什麼？選一項，下面就展開。不用先跳去另一頁。</p>
+    </section>
+    <p class="where" id="where">總地圖</p>
+    <div class="tasks" id="tasks">
+      <button type="button" data-zone="find">找聖詩<small class="en">Explore Hymns</small></button>
+      <button type="button" data-zone="learn">學聖詩<small class="en">Learn Through Hymns</small></button>
+      <button type="button" data-zone="research">研究聖詩<small class="en">Research Hymns</small></button>
+      <button type="button" data-zone="use">使用聖詩<small class="en">Use Hymns</small></button>
+      <button type="button" data-zone="workshop">聖詩工作坊<small class="en">Hymn Workshop</small></button>
+    </div>
+    <div id="panel"></div>
+    <section class="walk" id="walk" aria-labelledby="walk-title">
+      <h2 id="walk-title">一首歌，也可以這樣看</h2>
+      <p class="walk-lead">五站是看一首歌的順序。點一站，進前言。</p>
+      <p class="chip-row">
+        <a class="chip meet" data-b100-nav="content" href="journey_intro.html#meet">遇見</a>
+        <a class="chip see" data-b100-nav="content" href="journey_intro.html#see">看見</a>
+        <a class="chip ask" data-b100-nav="content" href="journey_intro.html#ask">追問</a>
+        <a class="chip verify" data-b100-nav="content" href="journey_intro.html#verify">查證</a>
+        <a class="chip back" data-b100-nav="content" href="journey_intro.html#return">回來</a>
+      </p>
+      <p class="walk-lead">奇異恩典，先走一趟。其餘二十四首課文未寫。</p>
+      <p class="chip-row">
+        <a class="chip meet" data-b100-nav="content" href="lessons/lesson_amazing_grace.html#s1">遇見 · 第一節</a>
+        <a class="chip see" data-b100-nav="content" href="lessons/lesson_amazing_grace.html">看見</a>
+        <a class="chip ask" data-b100-nav="content" href="lessons/lesson_amazing_grace.html">追問</a>
+        <a class="chip verify" data-b100-nav="content" href="lessons/lesson_amazing_grace.html">查證</a>
+        <a class="chip back" data-b100-nav="content" href="lessons/lesson_amazing_grace.html">回來</a>
+      </p>
+      <p class="chip-row">
+        <a class="chip go" data-b100-nav="content" href="lessons/lesson_amazing_grace.html">這一課</a>
+        <a class="chip go" data-b100-nav="content" href="Applied-Hymnology/week1.html">工作坊第 1 週</a>
+        <a class="chip go" data-b100-nav="content" href="core_hymns.html">二十六首裡的這一首</a>
+      </p>
+    </section>
+  </div>
+  <script>
+  (function () {
+    var ZONES = {
+      find: { zh: "找聖詩", en: "Explore Hymns" },
+      learn: { zh: "學聖詩", en: "Learn Through Hymns" },
+      research: { zh: "研究聖詩", en: "Research Hymns" },
+      use: { zh: "使用聖詩", en: "Use Hymns" }
+    };
+    var GATES = [
+      { id: "intro", label: "導論", en: "Introduction", blurb: "先知道實用聖詩學是什麼、怎樣學。" },
+      { id: "A", label: "音樂", en: "Music", blurb: "從讀譜、歌唱，到編成能用的詩。" },
+      { id: "B", label: "文字", en: "Text & Poetry", blurb: "看歌詞怎麼寫、怎麼譯、怎麼配曲。" },
+      { id: "C", label: "信仰", en: "Faith & Theology", blurb: "聖經、神學，和唱出來的禱告。" },
+      { id: "D", label: "教會", en: "Church & Worship", blurb: "崇拜裡怎樣選詩、領詩、帶會眾。" },
+      { id: "E", label: "人生", en: "Life", blurb: "歷史、文化，和日子裡用得上的詩。" },
+      { id: "F", label: "綜合", en: "Integration", blurb: "把一首詩做成工作坊或教會用的資源。" }
+    ];
+    var zone = "map";
+    var gate = "A";
+    var where = document.getElementById("where");
+    var panel = document.getElementById("panel");
+
+    function esc(s) {
+      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+    }
+    function zhTitle(t) {
+      var s = String(t || "");
+      var cut = s.search(/\s+[A-Za-z]/);
+      return cut > 0 ? s.slice(0, cut) : s;
+    }
+    function lensName(lens) {
+      return String(lens || "").replace(/^\d+\.\s*/, "") || "課題";
+    }
+    function discs() {
+      return (window.PH_DISCIPLINES_INDEX && window.PH_DISCIPLINES_INDEX.disciplines) || [];
+    }
+    function inShell() {
+      try { return window.parent && window.parent !== window && window.parent.document.getElementById("sidebarFrame"); }
+      catch (e) { return false; }
+    }
+    function goHash(h) {
+      if (location.hash === "#" + h) render();
+      else location.hash = h;
+    }
+    function readHash() {
+      var h = (location.hash || "").replace(/^#/, "");
+      var amp = h.indexOf("&");
+      if (amp >= 0) h = h.slice(0, amp);
+      if (h === "find" || h === "research" || h === "use") {
+        zone = h;
+        return;
+      }
+      if (h.indexOf("learn") === 0) {
+        zone = "learn";
+        gate = h.split("-")[1] || "A";
+        return;
+      }
+      var z = "";
+      var g = "";
+      try {
+        var qs = new URLSearchParams(location.search);
+        z = qs.get("zone") || "";
+        g = qs.get("gate") || "";
+      } catch (e) {}
+      if (z === "find" || z === "research" || z === "use") {
+        zone = z;
+        return;
+      }
+      if (z === "learn") {
+        zone = "learn";
+        gate = g || "A";
+        return;
+      }
+      zone = "map";
+    }
+    function markTasks() {
+      Array.prototype.forEach.call(document.querySelectorAll("#tasks button"), function (b) {
+        b.classList.toggle("on", b.getAttribute("data-zone") === zone);
+      });
+    }
+    function groupsFor(cat) {
+      var rows = discs().filter(function (d) { return d.cat === cat; });
+      var order = [];
+      var map = {};
+      rows.forEach(function (d) {
+        var k = lensName(d.lens);
+        if (!map[k]) {
+          map[k] = { name: k, items: [] };
+          order.push(map[k]);
+        }
+        map[k].items.push(d);
+      });
+      return order;
+    }
+    function learnHtml() {
+      var g = GATES.filter(function (x) { return x.id === gate; })[0] || GATES[1];
+      var tabs = GATES.map(function (x) {
+        return "<button type='button' data-gate='" + x.id + "'" + (x.id === g.id ? " class='on'" : "") + ">" + esc(x.label) + "<small class='en'>" + esc(x.en) + "</small></button>";
+      }).join("");
+      var cols = groupsFor(g.id).map(function (gr) {
+        var links = gr.items.map(function (d) {
+          return "<a data-b100-nav='content' href='" + esc(d.filepath) + "'>" + esc(d.code) + " " + esc(zhTitle(d.title_zh)) + "</a>";
+        }).join("");
+        return "<section class='col'><h3>" + esc(gr.name) + "</h3>" + links + "</section>";
+      }).join("");
+      return "<p class='lead'>" + esc(g.blurb) + " 想先走路、不先看科目，打開 <a data-b100-nav='content' href='journey_intro.html'>前言：踏上聖詩的探險路</a>。點下面的課題才離開這一頁。</p>" +
+        "<div class='gates'>" + tabs + "</div>" +
+        "<div class='cols'>" + cols + "</div>" +
+        "<p class='quiet'>一百一十一科全表：<a data-b100-nav='content' href='disciplines/index.html#c'>名錄 · C 學科山脈</a>。十五個方向與六條小路也在同一頁。<a data-b100-nav='content' href='resource_selector.html#sets'>課題選歌</a>仍在工作台。</p>";
+    }
+    function findHtml() {
+      return "<p class='lead'>找一首歌：在框裡打歌名、編號或作者。要瀏覽整本，打開全部聖詩。</p>" +
+        "<div class='search'><input id='q' type='search' placeholder='歌名、編號或作者' autocomplete='off' /></div>" +
+        "<div class='local' id='local' hidden></div>" +
+        "<div class='grid'><a class='card' data-b100-nav='content' href='../hymn_catalog_sort.html'><strong>全部聖詩</strong><span>打開現有曲譜表，點一列進入那一頁。</span></a>" +
+        "<a class='card' data-b100-nav='content' href='explore/index.html'><strong>外站詩集索引</strong><span>十一本目錄都能點去 Hymnary。其中生命聖詩、聖徒詩歌已有前 25 首。詞和譜在外站，不下載。</span></a></div>" +
+        "<p class='quiet'>上面的框搜本站曲庫。外站詩集請開「外站詩集索引」。作者若本站歌頁上有寫，打在上面那個框就會出現。</p>";
+    }
+    function lessonOf(s) {
+      if (s.id === "hymn_most_0001") return { href: "lessons/lesson_01_all_people.html", kind: "lesson", tag: "有課", name: "普天之下萬民萬族" };
+      if (s.id === "hymn_most_0121") return { href: "lessons/lesson_amazing_grace.html", kind: "lesson", tag: "有課", name: "奇異恩典" };
+      var names = {
+        hymn_00_0001: "主耶和華，求祢引領",
+        hymn_most_0122: "怎能如此",
+        hymn_most_0025: "平安夜",
+        hymn_00_0004: "索塞克斯聖誕頌",
+        hymn_chi_0001: "大秦景教三威蒙度讚",
+        hymn_pwc_0001: "祂是主",
+        hymn_world_0001: "咱著對主唱歌",
+        hymn_22_0001: "輕輕觸摸大地"
+      };
+      return { href: "analyze.html?id=" + encodeURIComponent(s.id), kind: "ask", tag: "提問", name: names[s.id] || s.zh || s.id };
+    }
+    function researchHtml() {
+      var samples = (window.PH_SEARCH_INDEX && window.PH_SEARCH_INDEX.samples) || [];
+      var list = samples.map(function (s) {
+        var item = lessonOf(s);
+        return "<a data-b100-nav='content' href='" + item.href + "'><em class='kind " + item.kind + "'>" + item.tag + "</em>" + esc(item.name) + "</a>";
+      }).join("") || "<span>目前沒有已載入的名單。</span>";
+      return "<p class='lead'>按一首歌深讀，看下面。「有課」是已經寫好的課。「提問」只是複製一段話去問外面的 AI，還不是研究庫。按科目學，請到「學聖詩」，這裡沒有另一套科目庫。</p>" +
+        "<h2>這一列</h2><div class='card samples'>" + list + "</div>" +
+        "<p class='quiet'>聖經、神學、音樂、文學、歷史：到 <a data-b100-nav='content' href='#learn-C'>學聖詩</a>。這裡不另開。其餘二十四首深研：課文未寫。</p>";
+    }
+    function useHtml() {
+      return "<p class='lead'>我現在要用這一首：做成投影、改一頁，或複製一段話去問外面的 AI。本站不代為生成。帶一班上課，用上面的「聖詩工作坊」。</p>" +
+        "<div class='grid'>" +
+        "<a class='card' data-b100-nav='content' href='../hymn_ai_tools.html'><strong>AI 工具</strong><span>六段現成的提問。複製後貼到你用的 AI。</span></a>" +
+        "<a class='card' href='http://127.0.0.1:3000' target='_blank' rel='noopener noreferrer'><strong>分析這份印刷譜（草稿）</strong><span>這台電腦要另開工具才有。沒開那台機器，這裡是空的。把 MusicXML 放進去，看五線譜和音程草稿。報告要人看過，才自己抄進聖詩頁。</span></a>" +
+        "<a class='card' data-b100-nav='content' href='../hymn_editor.html'><strong>編輯歌詞</strong><span>改本站某一頁。存的是本機稿。</span></a>" +
+        "<a class='card' data-b100-nav='content' href='../ppt_generator.html'><strong>投影歌詞</strong><span>做成大字，可列印或存 PDF。</span></a>" +
+        "<div class='later'><strong>崇拜歌單</strong><span>未來。主日程序還沒有這一頁。</span></div>" +
+        "</div>" +
+        "<p class='quiet'>工作空間：<a data-b100-nav='content' href='resource_selector.html#guide'>怎樣使用？</a>。課題選歌在「學聖詩」。</p>";
+    }
+    function mapHtml() {
+      return "<div class='map4'>" +
+        "<button type='button' data-jump='find'><strong>找聖詩</strong><small class='en'>Explore Hymns</small><span>搜歌名，或打開全部聖詩。</span></button>" +
+        "<button type='button' data-jump='learn'><strong>學聖詩</strong><small class='en'>Learn Through Hymns</small><span>七門展開在這一頁：導論、音樂、文字、信仰、教會、人生、綜合。</span></button>" +
+        "<button type='button' data-jump='research'><strong>研究聖詩</strong><small class='en'>Research Hymns</small><span>兩首有課。其餘是提問，還不是研究庫。</span></button>" +
+        "<button type='button' data-jump='use'><strong>使用聖詩</strong><small class='en'>Use Hymns</small><span>提問、改頁、投影。</span></button>" +
+        "</div>" +
+        "<p class='quiet'>想先走路、不先看科目：<a data-b100-nav='content' href='journey_intro.html'>前言 · 踏上聖詩的探險路</a>。找歌請用「找聖詩」：歌名、編號或作者，或打開全部聖詩。</p>";
+    }
+    function bindFind() {
+      var qEl = document.getElementById("q");
+      var local = document.getElementById("local");
+      if (!qEl) return;
+      qEl.addEventListener("input", function () {
+        var q = qEl.value.trim();
+        if (inShell()) {
+          try { window.parent.frames.sidebarFrame.postMessage({ type: "ph-search", q: q, scope: "hymns" }, "*"); } catch (e) {}
+          local.hidden = true;
+          return;
+        }
+        var S = window.PhSearch;
+        if (!S || !q) { local.hidden = true; return; }
+        var rows = S.search(q, "hymns").hymns;
+        local.innerHTML = rows.map(function (h) {
+          return "<a href='../" + S.hymnUrl(h.path) + "'>" + esc(h.zh || h.en || h.id) + "</a>";
+        }).join("") || "<span>這幾個字沒有對到。</span>";
+        local.hidden = false;
+      });
+    }
+    function render() {
+      readHash();
+      markTasks();
+      function trail(item) {
+        if (!item) return "";
+        return esc(item.zh) + " <small class='en'>" + esc(item.en) + "</small>";
+      }
+      if (zone === "find") {
+        where.innerHTML = trail(ZONES.find);
+        panel.innerHTML = findHtml();
+        bindFind();
+      } else if (zone === "learn") {
+        var g = GATES.filter(function (x) { return x.id === gate; })[0];
+        where.innerHTML = trail(ZONES.learn) + (g ? " → " + esc(g.label) + " <small class='en'>" + esc(g.en) + "</small>" : "");
+        panel.innerHTML = learnHtml();
+      } else if (zone === "research") {
+        where.innerHTML = trail(ZONES.research);
+        panel.innerHTML = researchHtml();
+      } else if (zone === "use") {
+        where.innerHTML = trail(ZONES.use);
+        panel.innerHTML = useHtml();
+      } else {
+        where.textContent = "總地圖 · 選一件事，下面展開";
+        panel.innerHTML = mapHtml();
+      }
+    }
+    document.getElementById("tasks").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-zone]");
+      if (!b) return;
+      var z = b.getAttribute("data-zone");
+      if (z === "workshop") {
+        location.href = "Applied-Hymnology/index.html";
+        return;
+      }
+      goHash(z === "learn" ? "learn-" + gate : z);
+    });
+    panel.addEventListener("click", function (e) {
+      var jump = e.target.closest("[data-jump]");
+      if (jump) {
+        var z = jump.getAttribute("data-jump");
+        goHash(z === "learn" ? "learn-A" : z);
+        return;
+      }
+      var gb = e.target.closest("[data-gate]");
+      if (!gb) return;
+      gate = gb.getAttribute("data-gate");
+      goHash("learn-" + gate);
+    });
+    var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function bootRoute(root) {
+      if (!root) return;
+      var svg = root.querySelector(".route-line");
+      var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      svg.appendChild(path);
+      var played = false;
+      function geom() {
+        var box = root.getBoundingClientRect();
+        var dots = root.querySelectorAll(".dot");
+        var pts = [];
+        for (var i = 0; i < dots.length; i++) {
+          var r = dots[i].getBoundingClientRect();
+          pts.push([r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top]);
+        }
+        return { w: root.clientWidth, h: root.clientHeight, pts: pts };
+      }
+      function showDotted() {
+        path.style.transition = "none";
+        path.style.strokeDasharray = "2 9";
+        path.style.strokeDashoffset = "0";
+      }
+      function redraw(animate) {
+        var g = geom();
+        if (g.w < 2 || g.pts.length < 2) return;
+        svg.setAttribute("viewBox", "0 0 " + g.w + " " + g.h);
+        svg.setAttribute("width", String(g.w));
+        svg.setAttribute("height", String(g.h));
+        var d = "M " + g.pts[0][0].toFixed(1) + " " + g.pts[0][1].toFixed(1);
+        for (var i = 0; i < g.pts.length - 1; i++) {
+          var p = g.pts[i];
+          var q = g.pts[i + 1];
+          var c1y = p[1] + (q[1] - p[1]) * 0.5;
+          var c2y = q[1] - (q[1] - p[1]) * 0.5;
+          d += " C " + p[0].toFixed(1) + " " + c1y.toFixed(1) + " " + q[0].toFixed(1) + " " + c2y.toFixed(1) + " " + q[0].toFixed(1) + " " + q[1].toFixed(1);
+        }
+        path.setAttribute("d", d);
+        if (!animate || reduceMotion || played) {
+          showDotted();
+          return;
+        }
+        var len = path.getTotalLength();
+        path.style.transition = "none";
+        path.style.strokeDasharray = len + " " + len;
+        path.style.strokeDashoffset = String(len);
+        path.getBoundingClientRect();
+        path.style.transition = "stroke-dashoffset 2.8s ease";
+        path.style.strokeDashoffset = "0";
+        played = true;
+        window.setTimeout(showDotted, 2900);
+      }
+      function lightNodes() {
+        var stops = root.querySelectorAll(".stop, .dest");
+        if (reduceMotion) {
+          for (var i = 0; i < stops.length; i++) stops[i].classList.add("lit");
+          return;
+        }
+        for (var j = 0; j < stops.length; j++) {
+          (function (el, n) {
+            window.setTimeout(function () { el.classList.add("lit"); }, 420 + n * 480);
+          })(stops[j], j);
+        }
+      }
+      function markHere() {
+        var stops = root.querySelectorAll(".stop");
+        var best = null;
+        var bestDist = 1e9;
+        var mid = window.innerHeight * 0.42;
+        for (var i = 0; i < stops.length; i++) {
+          var dot = stops[i].querySelector(".dot");
+          if (!dot) continue;
+          var y = dot.getBoundingClientRect().top + dot.getBoundingClientRect().height / 2;
+          var dist = Math.abs(y - mid);
+          if (dist < bestDist) { bestDist = dist; best = stops[i]; }
+        }
+        for (var k = 0; k < stops.length; k++) {
+          var on = stops[k] === best && bestDist < window.innerHeight * 0.55;
+          stops[k].classList.toggle("here", on);
+          var btn = stops[k].querySelector("button");
+          if (btn) {
+            if (on) btn.setAttribute("aria-current", "step");
+            else btn.removeAttribute("aria-current");
+          }
+        }
+      }
+      root.addEventListener("click", function (e) {
+        var btn = e.target.closest(".stop button");
+        if (!btn || !root.contains(btn)) return;
+        var open = btn.getAttribute("aria-expanded") === "true";
+        var all = root.querySelectorAll(".stop button");
+        for (var i = 0; i < all.length; i++) {
+          if (all[i] !== btn) all[i].setAttribute("aria-expanded", "false");
+        }
+        btn.setAttribute("aria-expanded", open ? "false" : "true");
+        window.requestAnimationFrame(function () { redraw(false); });
+      });
+      function arm() {
+        root.classList.add("play");
+        redraw(true);
+        lightNodes();
+        markHere();
+      }
+      if ("IntersectionObserver" in window) {
+        var io = new IntersectionObserver(function (entries) {
+          for (var i = 0; i < entries.length; i++) {
+            if (!entries[i].isIntersecting) continue;
+            arm();
+            io.disconnect();
+            break;
+          }
+        }, { threshold: 0.2 });
+        io.observe(root);
+      } else arm();
+      window.addEventListener("scroll", markHere, { passive: true });
+      window.addEventListener("resize", function () { redraw(false); markHere(); });
+      redraw(false);
+    }
+    bootRoute(document.getElementById("route-main"));
+    bootRoute(document.getElementById("route-ag"));
+    window.addEventListener("hashchange", render);
+    render();
+  })();
+  </script>
+</body>
+</html>

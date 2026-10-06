@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>樂以載道 · 聖詩工作台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body { font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif; background: #f6f1e8; }
+        details.gate > summary, details.grp > summary { cursor: pointer; font-weight: 700; }
+        ul.tree, ul.tree ul { list-style: disc; margin: 8px 0 8px 1.25rem; padding: 0; }
+        ul.tree li { margin: 4px 0; }
+        ul.tree a { color: #1d4ed8; font-weight: 650; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+<script src="ph_module_bar.js" data-root=""></script>
+    <div style="max-width:80rem;margin:16px auto 0;padding:0 16px;">
+        <div style="background:#fffbeb;border:1px solid #f3e5ab;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.55;color:#1c1917;">
+            <strong>你只要做三步。</strong>
+            一、選題目，複製黑底那段話，貼給 Kimi、ChatGPT、豆包或 Gemini。
+            二、把對方給的網址貼進
+            <a href="inbox/延伸閱讀_候選.xlsx">這份 Excel</a>，自己點開，好用的把狀態改成「採用」，然後存檔。
+            三、回到對話說：請把 Excel 裡「採用」的連結，放進那一科頁面最下面。
+        </div>
+    </div>
+    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-full mb-2">樂以載道 · Hymn desk</span>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-stone-900">聖詩工作台</h1>
+                    <p class="text-stone-500 text-xs">Hymn desk</p>
+                    <p class="text-stone-600 text-sm mt-1">這裡幫你準備要問外面 AI 的話。問到的網址先放進 Excel。你點頭採用之後，才會出現在那一科頁面的最下面。</p>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button type="button" @click="exportJSON" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium">匯出採用 JSON</button>
+                    <button type="button" @click="exportMarkdown" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium">匯出 Markdown</button>
+                    <button type="button" @click="clearAll" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-medium">清空右表</button>
+                </div>
+            </div>
+            <div class="flex mt-6 gap-2 flex-wrap">
+                <button type="button" @click="currentTab = 'selector'" :class="currentTab === 'selector' ? 'bg-amber-800 text-white' : 'bg-amber-50 text-amber-900'" class="px-4 py-2 rounded-full text-sm font-semibold text-left"><span class="block">1. 聖詩學習</span><span class="block text-[10px] font-normal opacity-80">Learn a subject</span></button>
+                <button type="button" @click="currentTab = 'songSearch'" :class="currentTab === 'songSearch' ? 'bg-emerald-800 text-white' : 'bg-emerald-50 text-emerald-900'" class="px-4 py-2 rounded-full text-sm font-semibold text-left"><span class="block">2. 聖詩分析</span><span class="block text-[10px] font-normal opacity-80">Read one hymn</span></button>
+                <button type="button" @click="currentTab = 'guide'" :class="currentTab === 'guide' ? 'bg-blue-800 text-white' : 'bg-blue-50 text-blue-900'" class="px-4 py-2 rounded-full text-sm font-semibold text-left"><span class="block">3. 怎樣使用？</span><span class="block text-[10px] font-normal opacity-80">How to use this desk</span></button>
+                <button type="button" @click="openSets" :class="currentTab === 'sets' ? 'bg-rose-800 text-white' : 'bg-rose-50 text-rose-900'" class="px-4 py-2 rounded-full text-sm font-semibold text-left"><span class="block">4. 課題選歌</span><span class="block text-[10px] font-normal opacity-80">Hymns for a subject</span></button>
+            </div>
+        </header>
+
+        <div v-show="currentTab === 'selector'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="space-y-6">
+                <div class="bg-amber-50 rounded-2xl shadow-sm border border-amber-200 p-5">
+                    <h2 class="text-lg font-semibold text-amber-950 mb-1">聖詩學習</h2>
+                    <p class="text-[11px] text-amber-800 mb-1">Learn a subject</p>
+                    <p class="text-xs text-amber-900 mb-3">選了音樂、文字或信仰，下面只剩這一門。黑底的話會立刻改成這一科，不用再按別的鈕。</p>
+                    <label class="block text-xs font-medium text-amber-800 mb-1">哪一門</label>
+                    <select v-model="selectedGateway" @change="syncGateway" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm mb-3">
+                        <option v-for="g in gateways" :key="g.id" :value="g.id">{{ g.label }}（{{ countCat(g.id) }}）</option>
+                    </select>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">這一門的學科</label>
+                    <select v-model="selectedCode" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm mb-3">
+                        <option v-for="d in filtered" :key="d.code" :value="d.code">{{ d.code }} {{ d.title_zh }}</option>
+                    </select>
+                    <p v-if="currentDisc" class="text-xs text-slate-600 mb-3">{{ currentDisc.lens }} · {{ currentDisc.desc }}</p>
+                    <p class="text-sm mb-3">你現在選的是 <strong>{{ topicLabel }}</strong>。111 科都有自己的一頁，這裡只打開你選中的這一頁：<a class="text-amber-900 font-semibold underline" :href="discHref(currentDisc)">去看這一頁最下面的延伸閱讀</a></p>
+                    <div class="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-[10px] text-slate-500 block">候選數量</span>
+                            <select v-model="promptSettings.count" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-1.5">
+                                <option value="10">10 條</option>
+                                <option value="15">15 條</option>
+                                <option value="20">20 條</option>
+                            </select>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-500 block">語言</span>
+                            <select v-model="promptSettings.lang" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-1.5">
+                                <option value="繁中與英文">繁中 + 英文</option>
+                                <option value="繁中、英文，並可含越南文、印尼文">含越南文、印尼文</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-stone-900 rounded-2xl shadow-sm border border-stone-700 p-5">
+                    <h2 class="text-lg font-semibold text-amber-100 mb-1">這段話可以貼去問 AI</h2>
+                    <p class="text-xs text-amber-200 mb-2">現在問的是：{{ topicLabel }} · 要 {{ promptSettings.count }} 條 · {{ promptSettings.lang }}。你一改上面，這裡就改。</p>
+                    <textarea readonly class="w-full h-40 bg-stone-950 text-amber-200 font-mono text-xs p-3 rounded-xl" :value="generatedPrompt"></textarea>
+                    <button type="button" @click="copyPrompt" class="mt-3 w-full bg-amber-500 hover:bg-amber-400 text-stone-900 py-2 rounded-xl text-sm font-semibold">複製這段話</button>
+                    <p class="text-[11px] text-amber-100 mt-3 mb-1">複製後可另開這些平台，到新頁按 Ctrl+V。中文、英文都有。Copilot 常常不用另開帳號；其餘多半登入一次。</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button v-for="p in aiPlatforms" :key="'a-' + p.en" type="button" @click="openAi(generatedPrompt, p.href)" class="bg-amber-100 text-stone-900 px-2.5 py-1 rounded-lg text-xs font-semibold">{{ p.name }} {{ p.en }}</button>
+                    </div>
+                    <p v-if="copyHint" class="text-xs text-amber-200 mt-2">{{ copyHint }}</p>
+                </div>
+            </div>
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-orange-50 rounded-2xl shadow-sm border border-orange-200 p-5">
+                    <div class="flex flex-col sm:flex-row justify-between gap-3 mb-3">
+                        <div>
+                            <h2 class="text-lg font-semibold text-orange-950">練習用，可略過</h2>
+                            <p class="text-sm text-orange-900 mt-1">Kimi 回你的網址不會自動出現在這裡。請貼進 Excel。你採用之後，連結會出現在那一科頁面最下面，不是出現在這張練習表。</p>
+                            <p class="text-xs text-orange-800 mt-1">「新增一筆」只是加一行空格讓你手打。「載入音程範例」讓你看三條示範長什麼樣。兩顆都可以不用按。</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="button" @click="loadSampleData" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-xl text-xs font-semibold">載入音程範例</button>
+                            <button type="button" @click="addEmptyCandidate" class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold">新增一筆</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 text-xs">
+                                    <th class="p-3">狀態</th>
+                                    <th class="p-3">標題與網址</th>
+                                    <th class="p-3">語言 / 類型</th>
+                                    <th class="p-3">說明</th>
+                                    <th class="p-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(item, index) in candidates" :key="index" :class="{'bg-emerald-50/50': item.status === '採用'}">
+                                    <td class="p-3">
+                                        <button type="button" @click="toggleStatus(index)" :class="item.status === '採用' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'" class="px-2.5 py-1 rounded-lg text-xs font-semibold">{{ item.status }}</button>
+                                    </td>
+                                    <td class="p-3">
+                                        <input v-model="item.title" class="w-full text-xs border-b border-transparent focus:border-indigo-500 outline-none" placeholder="標題">
+                                        <div class="flex gap-2 items-center">
+                                            <input v-model="item.url" class="w-full text-xs text-blue-700 font-mono border-b border-transparent focus:border-indigo-500 outline-none" placeholder="https://">
+                                            <a v-if="item.url && item.url.startsWith('http')" :href="item.url" target="_blank" rel="noopener" class="text-xs text-indigo-600">開</a>
+                                        </div>
+                                    </td>
+                                    <td class="p-3">
+                                        <input v-model="item.lang" class="w-14 text-xs bg-slate-100 rounded px-1" placeholder="語言">
+                                        <input v-model="item.type" class="w-14 text-xs bg-slate-100 rounded px-1" placeholder="類型">
+                                    </td>
+                                    <td class="p-3"><input v-model="item.reason" class="w-full text-xs border-b border-transparent focus:border-indigo-500 outline-none" placeholder="一句說明"></td>
+                                    <td class="p-3"><button type="button" @click="removeCandidate(index)" class="text-xs text-red-600">刪</button></td>
+                                </tr>
+                                <tr v-if="candidates.length === 0">
+                                    <td colspan="5" class="p-8 text-center text-orange-800 text-sm">練習表是空的，這是正常的。請用上面的 Excel。</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-orange-200 p-5">
+                    <h2 class="text-lg font-semibold text-orange-950 mb-1">你在練習表點成「採用」的，才會出現在下面</h2>
+                    <p class="text-xs text-orange-800 mb-2">練習表是空的，這裡就會說還沒有。這不代表 Excel 是空的。寫進網頁時，以 Excel 裡的「採用」為準。</p>
+                    <textarea readonly class="w-full h-28 bg-orange-50/40 border border-orange-100 font-mono text-xs p-3 rounded-xl" :value="adoptedMarkdown"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div v-show="currentTab === 'songSearch'" id="lenses" class="space-y-6">
+            <div class="bg-emerald-50 rounded-2xl shadow-sm border border-emerald-200 p-6">
+                <h2 class="text-xl font-bold text-emerald-950">聖詩分析</h2>
+                <p class="text-[11px] text-emerald-800">Read one hymn · 十五個角度</p>
+                <p class="text-emerald-900 text-sm mt-2 leading-relaxed">歌名可以改。《奇異恩典》只是例子。你換角度，下面的說明、學科和要問 AI 的話都會跟著換。長文還在各科頁裡，這一輪先教你怎麼看。</p>
+                <p class="text-sm mt-2"><a class="text-emerald-900 font-semibold underline" href="disciplines/0-2-learning-map-15-lenses.html">先讀：什麼是十五個角度</a></p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">歌名（可改成任何一首）</label>
+                        <input v-model="songName" type="text" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm" placeholder="例如：奇異恩典">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-emerald-800 mb-1">選一個角度（共 15 個）</label>
+                        <select v-model="lensId" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm">
+                            <option v-for="lens in lenses" :key="lens.id" :value="lens.id">{{ lens.id }} {{ lens.name }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div v-if="currentLens" class="mt-4 p-4 rounded-2xl bg-white border border-emerald-300 text-sm leading-relaxed">
+                    <p class="font-semibold text-emerald-950 mb-1">{{ currentLens.id }} {{ currentLens.name }}：這個角度在問什麼</p>
+                    <p>{{ currentLens.ask }}</p>
+                    <p class="mt-2">{{ currentLens.do }}</p>
+                    <p class="mt-2">聽到演唱時，把起點寫進 <a class="text-emerald-900 font-semibold underline" href="inbox/延伸閱讀_候選.xlsx">Excel</a> 的「歌名」和「影片起點」，例如 <code>0:02:12</code>。可以先打開 <a class="text-emerald-900 font-semibold underline" href="../../ai_tools/tools/youtube_media_embed_tool.html">YouTube 時間點工具</a> 看清楚再抄。</p>
+                </div>
+                <div class="mt-4 bg-white rounded-xl border border-emerald-200 p-4">
+                    <h3 class="text-sm font-semibold text-emerald-950 mb-1">曲庫裡對到的原頁（最多 8 首）</h3>
+                    <p class="text-xs text-emerald-800 mb-2">全庫約有 2000 首。這裡只列出歌名對得上的幾首，不是把全部攤開。</p>
+                    <p v-if="songHymns.length === 0" class="text-sm text-emerald-800">這一首在曲庫裡還沒對上。你仍可複製下面的話，到外面找文字和演唱。</p>
+                    <ul class="tree">
+                        <li v-for="h in songHymns" :key="h.id"><a :href="hymnHref(h)">{{ h.zh || h.en }}</a></li>
+                    </ul>
+                </div>
+                <div class="mt-4 bg-white rounded-xl border border-emerald-200 p-4">
+                    <h3 class="text-sm font-semibold text-emerald-950 mb-1">這個角度底下的學科</h3>
+                    <p class="text-xs text-emerald-800 mb-2">先點開一組，再點其中一科。進去之後，頁面最下面是延伸閱讀，也可以再回到這裡。</p>
+                    <p v-if="lensDiscs.length === 0" class="text-sm text-emerald-800">這個角度暫時沒有學科。</p>
+                    <ul class="tree">
+                        <li v-for="grp in groupDiscs(lensDiscs)" :key="grp.key">
+                            <a v-if="grp.items.length === 1" :href="discHref(grp.items[0])">{{ grp.items[0].code }} {{ grp.items[0].title_zh }}</a>
+                            <details v-else class="grp" open>
+                                <summary>{{ grp.key }}（{{ grp.items.length }}）</summary>
+                                <ul>
+                                    <li v-for="d in grp.items" :key="d.code"><a :href="discHref(d)">{{ d.code }} {{ d.title_zh }}</a></li>
+                                </ul>
+                            </details>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mt-4 bg-emerald-900 rounded-xl p-4">
+                    <p class="text-xs text-emerald-100 mb-2">現在問的是：{{ songName }} · {{ currentLens ? currentLens.name : '' }}。你一改歌名或角度，下面就改。</p>
+                    <textarea readonly class="w-full h-36 bg-emerald-950 text-emerald-100 font-mono text-xs p-3 rounded-xl" :value="songPrompt"></textarea>
+                    <button type="button" @click="copySongPrompt" class="mt-2 bg-emerald-300 text-emerald-950 px-4 py-2 rounded-xl text-sm font-semibold">複製這段話</button>
+                    <p class="text-[11px] text-emerald-100 mt-3 mb-1">複製後可另開這些平台，到新頁按 Ctrl+V。Copilot 常常不用另開帳號；其餘多半登入一次。</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button v-for="p in aiPlatforms" :key="'s-' + p.en" type="button" @click="openAi(songPrompt, p.href)" class="bg-emerald-100 text-emerald-950 px-2.5 py-1 rounded-lg text-xs font-semibold">{{ p.name }} {{ p.en }}</button>
+                    </div>
+                    <p v-if="copyHint" class="text-xs text-emerald-100 mt-2">{{ copyHint }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div v-show="currentTab === 'sets'" id="sets" class="space-y-6">
+            <div class="bg-rose-50 rounded-2xl shadow-sm border border-rose-200 p-6">
+                <h2 class="text-xl font-bold text-rose-950">課題選歌</h2>
+                <p class="text-[11px] text-rose-800">Hymns for a subject</p>
+                <p class="text-rose-900 text-sm mt-2 leading-relaxed">選法和聖詩學習一樣：先選一科，再選要幾首。問到的是歌名和編號。調號、拍號、經文要在詩本或 hymnary 上看到才算。整首詞和整頁譜留在原檔，你選定之後自己去存。</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label class="block text-xs font-medium text-rose-800 mb-1">哪一門</label>
+                        <select v-model="setGateway" @change="syncSetGateway" class="w-full bg-white border border-rose-200 rounded-xl px-3 py-2 text-sm">
+                            <option v-for="g in gateways" :key="'set-' + g.id" :value="g.id">{{ g.label }}（{{ countCat(g.id) }}）</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-rose-800 mb-1">這一門的學科</label>
+                        <select v-model="setCode" class="w-full bg-white border border-rose-200 rounded-xl px-3 py-2 text-sm">
+                            <option v-for="d in setFiltered" :key="'setd-' + d.code" :value="d.code">{{ d.code }} {{ d.title_zh }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-3 max-w-xs">
+                    <label class="block text-xs font-medium text-rose-800 mb-1">要多少首</label>
+                    <select v-model="setCount" class="w-full bg-white border border-rose-200 rounded-xl px-3 py-2 text-sm">
+                        <option value="10">10 首</option>
+                        <option value="15">15 首</option>
+                        <option value="20">20 首</option>
+                    </select>
+                </div>
+                <p v-if="setDisc" class="text-sm mt-3">你現在選的是 <strong>{{ setLabel }}</strong>。要 {{ setCount }} 首。</p>
+                <div class="mt-4 p-4 rounded-2xl bg-white border border-rose-300 text-sm leading-relaxed">
+                    <p class="font-semibold text-rose-950">固定去這三處找</p>
+                    <ul class="tree">
+                        <li><a href="../hymn/頌主新歌%20evangel-hymnal.pdf">頌主新歌</a> — 本機詩本。用編號打開譜。</li>
+                        <li><a href="../hymn/sources/赞美诗补充本%20index.doc">赞美诗补充本目錄</a> — 先看編號和歌名。詞譜仍在這份原檔。</li>
+                        <li><a href="https://hymnary.org/" target="_blank" rel="noopener">hymnary.org</a> — 英文歌名、調名、經文、作者生卒。</li>
+                    </ul>
+                    <p class="mt-2">選定的詩記在 <a class="text-rose-900 font-semibold underline" href="inbox/選定詩歌.xlsx">選定詩歌.xlsx</a>。第 1 行是欄名，第 2 行是例子。你的詩從第 3 行貼上。對得上才把狀態改成「選用」。</p>
+                </div>
+                <div class="mt-4 bg-white rounded-xl border border-rose-200 p-4">
+                    <h3 class="text-sm font-semibold text-rose-950 mb-1">站內歌名對得上的（最多 8 首）</h3>
+                    <p class="text-xs text-rose-800 mb-2">這只是歌名裡有「{{ setDisc ? setDisc.title_zh : '' }}」的幾首，用來對站內原頁。調號不在這裡。</p>
+                    <p v-if="setHymns.length === 0" class="text-sm text-rose-800">這一題在歌名裡對不上。請用下面的話，請 AI 提議約 20 首，再回來用歌名搜。</p>
+                    <ul class="tree">
+                        <li v-for="h in setHymns" :key="h.id">
+                            <a :href="hymnHref(h)">{{ h.zh || h.en }}</a>
+                            <button type="button" class="ml-2 text-xs text-rose-800 underline" @click="useHymn(h)">拿到聖詩分析</button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mt-4 bg-rose-950 rounded-xl p-4">
+                    <p class="text-xs text-rose-100 mb-2">現在問的是：{{ setLabel }} · {{ setCount }} 首。你一改科目或首數，下面就改。</p>
+                    <textarea readonly class="w-full h-40 bg-rose-900 text-rose-50 font-mono text-xs p-3 rounded-xl" :value="setPrompt"></textarea>
+                    <button type="button" @click="copySetPrompt" class="mt-2 bg-rose-200 text-rose-950 px-4 py-2 rounded-xl text-sm font-semibold">複製這段話</button>
+                    <p class="text-[11px] text-rose-100 mt-3 mb-1">複製後可另開這些平台，到新頁按 Ctrl+V。Copilot 常常不用另開帳號；其餘多半登入一次。</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button v-for="p in aiPlatforms" :key="'t-' + p.en" type="button" @click="openAi(setPrompt, p.href)" class="bg-rose-100 text-rose-950 px-2.5 py-1 rounded-lg text-xs font-semibold">{{ p.name }} {{ p.en }}</button>
+                    </div>
+                    <p v-if="copyHint" class="text-xs text-rose-100 mt-2">{{ copyHint }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div v-show="currentTab === 'guide'" class="space-y-4">
+            <div class="bg-blue-50 rounded-2xl border border-blue-200 p-4">
+                <h2 class="text-xl font-bold text-blue-950">怎樣使用？</h2>
+                <p class="text-[11px] text-blue-800">How to use this desk</p>
+                <p class="text-sm text-blue-900 mt-2">下面四張卡，就是這一組頁面各做什麼。</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <button type="button" @click="currentTab = 'selector'" class="text-left bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                    <p class="text-xs font-semibold text-amber-800">Learn a subject</p>
+                    <h2 class="font-bold text-amber-950 mt-1">聖詩學習</h2>
+                    <p class="text-sm text-amber-900 mt-2">你會得到一段可以貼去 Kimi 的話。問到的網址放進 Excel，以後出現在那一科頁面最下面。</p>
+                </button>
+                <button type="button" @click="currentTab = 'songSearch'" class="text-left bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+                    <p class="text-xs font-semibold text-emerald-800">Read one hymn</p>
+                    <h2 class="font-bold text-emerald-950 mt-1">聖詩分析</h2>
+                    <p class="text-sm text-emerald-900 mt-2">你會對到曲庫裡的原頁，並知道這個角度在問什麼。演唱的時間點同樣記入 Excel。</p>
+                </button>
+                <button type="button" @click="openSets" class="text-left bg-rose-50 border border-rose-200 rounded-2xl p-4">
+                    <p class="text-xs font-semibold text-rose-800">Hymns for a subject</p>
+                    <h2 class="font-bold text-rose-950 mt-1">課題選歌</h2>
+                    <p class="text-sm text-rose-900 mt-2">先選 111 科裡的一科，再選 10、15 或 20 首。歌名記在選定詩歌表。調號要打開詩本或 hymnary 才算。</p>
+                </button>
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                    <p class="text-xs font-semibold text-blue-800">做完以後</p>
+                    <h2 class="font-bold text-blue-950 mt-1">連結進到學科頁</h2>
+                    <p class="text-sm text-blue-900 mt-2">打開 <a class="underline font-semibold" href="inbox/延伸閱讀_候選.xlsx">Excel</a>，把好的改成「採用」。回來告訴我，我就寫進那一頁最下面。</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-blue-200 p-6 text-sm leading-relaxed">
+                <h2 class="text-lg font-bold text-blue-950 mb-2">十五個角度，各問一件事</h2>
+                <p class="text-blue-900 mb-3">點任何一條，會去聖詩分析，並帶上這個角度。</p>
+                <ul class="tree">
+                    <li v-for="lens in lenses" :key="lens.id">
+                        <button type="button" class="text-blue-800 font-semibold underline" @click="openLens(lens.id)">{{ lens.id }} {{ lens.name }}</button>
+                        <span class="text-slate-700"> — {{ lens.ask }}</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="bg-blue-50 rounded-2xl border border-blue-200 p-6 text-sm leading-relaxed">
+                <h2 class="text-lg font-bold text-blue-950 mb-2">旁邊還有一間備課工具房</h2>
+                <p class="text-blue-900 mb-3">那裡是幫你讀經、備課、做圖和看影片時間的。它不會把聖詩連結存進學科頁。選聖詩資料，仍用這一頁和 Excel。</p>
+                <ul class="tree">
+                    <li><a href="../../ai_tools/ai_lab_landing.html">工具房總覽</a> — 全部入口在這裡。</li>
+                    <li><a href="../../ai_tools/pages/guide_reading_hub.html">聖經導讀</a> — 讀一段經文，整理你想問的問題。</li>
+                    <li><a href="../../ai_tools/functions/ai_lesson_design.html">備課：課程設計</a> — 準備怎麼教、怎麼測。</li>
+                    <li><a href="../../ai_tools/tools/bible_prompt_generator.html">聖經提問稿</a> — 做出可以貼去 AI 的讀經問題。</li>
+                    <li><a href="../../ai_tools/tools/youtube_media_embed_tool.html">YouTube 時間點</a> — 看到某首詩從第幾秒開始唱，再抄進 Excel。</li>
+                </ul>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-blue-200 p-6">
+                <h2 class="text-lg font-bold text-blue-950 mb-1">111 科，一層層點開</h2>
+                <p class="text-xs text-slate-600 mb-3">先點一門，再點一組，才看到每一科。點進去是那一科的頁。最下面的表還是空的，等你採用的連結寫進去。也可以看 <a class="text-blue-800 font-semibold underline" href="disciplines/index.html">整張目錄</a>。</p>
+                <details v-for="g in gateways" :key="g.id" class="gate mb-2 border border-blue-100 rounded-xl p-3 bg-blue-50/40" :open="g.id === selectedGateway">
+                    <summary>{{ g.label }}（{{ countCat(g.id) }}）</summary>
+                    <ul class="tree">
+                        <li v-for="grp in groupDiscs(byCat(g.id))" :key="g.id + grp.key">
+                            <a v-if="grp.items.length === 1" :href="discHref(grp.items[0])">{{ grp.items[0].code }} {{ grp.items[0].title_zh }}</a>
+                            <details v-else class="grp">
+                                <summary>{{ grp.key }}（{{ grp.items.length }}）</summary>
+                                <ul>
+                                    <li v-for="d in grp.items" :key="d.code"><a :href="discHref(d)">{{ d.code }} {{ d.title_zh }}</a></li>
+                                </ul>
+                            </details>
+                        </li>
+                    </ul>
+                </details>
+            </div>
+        </div>
+    </div>
+    <script src="data/disciplines_index.js"></script>
+    <script src="../data/ph_search_index.js"></script>
+    <script src="../js/ph_search.js"></script>
+    <script>
+        const { createApp, ref, computed } = Vue
+        const AI_PLATFORMS = [
+            { name: "Copilot", en: "Copilot", href: "https://copilot.microsoft.com/" },
+            { name: "Kimi", en: "Kimi", href: "https://kimi.moonshot.cn/" },
+            { name: "豆包", en: "Doubao", href: "https://www.doubao.com/chat/" },
+            { name: "DeepSeek", en: "DeepSeek", href: "https://chat.deepseek.com/" },
+            { name: "ChatGPT", en: "ChatGPT", href: "https://chatgpt.com/" },
+            { name: "Gemini", en: "Gemini", href: "https://gemini.google.com/app" }
+        ]
+        const ALL = (window.PH_DISCIPLINES_INDEX && window.PH_DISCIPLINES_INDEX.disciplines) || []
+        const LENSES = [
+            { id: "01", name: "讀它", ask: "看這首的譜：音準、拍子、音程、曲式。問自己：不會樂理的人，要先看哪三個記號才唱得準？", do: "找到的樂理解說，課題代號可填這一稜鏡底下的學科，例如讀譜、音程。" },
+            { id: "02", name: "唱它", ask: "聽人怎麼唱：氣息、咬字、合唱是否齊。問：會眾跟得上嗎？", do: "找得到演唱影片就記下起點。這是音頻最常用的一稜鏡。" },
+            { id: "03", name: "編它", ask: "看伴奏和編曲：鋼琴、風琴、樂隊怎樣托著會眾。問：下主日司琴可以怎樣配，而不蓋過唱歌的人？", do: "連結寫成伴奏示範或編曲說明，不要把未核對的樂譜檔當成已有。" },
+            { id: "04", name: "賞它", ask: "把歌詞當一首詩來讀。問：哪一句最好記，它為什麼動人？", do: "找文學或詩歌賞析。先對站內原頁的詞，再找外站說明。" },
+            { id: "05", name: "析它", ask: "找出修辭和圖畫：對偶、隱喻、磐石、羔羊、黑夜。問：這個圖畫在說什麼，不要硬套別首的解釋。", do: "說明要貼著這一首的詞，不寫成通用修辭課。" },
+            { id: "06", name: "譯它", ask: "對一下原文和我們唱的詞。問：有沒有為了押韻而唱不順，或意思被改輕了？", do: "可找繁中、英文，也可以找越南文、印尼文譯詞來對照。" },
+            { id: "07", name: "溯它", ask: "歌詞用了哪段聖經。問：經文本身在說什麼，這首有沒有唱偏？", do: "請外部 AI 引用經文並註明出處。它沒有打開的經文，不要寫進採用。" },
+            { id: "08", name: "想它", ask: "這首在認信什麼：神、基督、聖靈、救恩、教會。問：哪一句是這首獨有的，不是每首都能套的話？", do: "信仰說明要人審過再採用。AI 草稿不能當教義。" },
+            { id: "09", name: "禱它", ask: "把這首當禱告唱。問：我可以在哪一個安靜時刻，只默想其中兩句？", do: "找靈修用法，不要找表演版當唯一材料。" },
+            { id: "10", name: "拜它", ask: "放進主日哪一段才合適：宣召、講道之後、聖餐、差遣。問：換一個位置會不會唱錯場合？", do: "選詩理由寫一句就好，給領詩的人看得懂。" },
+            { id: "11", name: "用它", ask: "誰來領、詩班或敬拜團要練什麼。問：下主日具體誰做哪一件？", do: "這是事奉做法，不是再寫一篇音樂史。" },
+            { id: "12", name: "傳它", ask: "未信的朋友聽不聽得懂。問：有沒有一句可以變成見證，而不是只有會內術語？", do: "佈道用法要溫和，不把一首詩說成唯一的福音。" },
+            { id: "13", name: "追它", ask: "誰寫的、約在什麼年代、當時發生什麼。問：這個年份是資料上有的，還是猜的？", do: "沒有出處的年份不要採用。寧可不填日期。" },
+            { id: "14", name: "聽它", ask: "這是哪一種教會、哪一種語言的唱法。問：華人、亞洲或其他傳統，唱起來差在哪？", do: "找得到不同語言的演唱，各自記一條，並寫明語言。" },
+            { id: "15", name: "活它", ask: "這首碰到人生哪一件事：苦難、家庭、工作、年老。問：小組可以怎樣用它，而不是只再解釋一次神學？", do: "寫一個可做的場景即可。" }
+        ]
+
+        createApp({
+            setup() {
+                const currentTab = ref(location.hash === "#lenses" ? "songSearch" : (location.hash === "#sets" ? "sets" : (location.hash === "#guide" ? "guide" : "selector")))
+                const copyHint = ref("")
+                const aiPlatforms = AI_PLATFORMS
+                const setGateway = ref("C")
+                const setCode = ref("C02.2")
+                const setCount = ref("20")
+                const gateways = [
+                    { id: "intro", label: "0 導論 Introduction" },
+                    { id: "A", label: "A 音樂（唱）" },
+                    { id: "B", label: "B 文字（讀）" },
+                    { id: "C", label: "C 信仰（想）" },
+                    { id: "D", label: "D 教會（行）" },
+                    { id: "E", label: "E 世界與人生（活）" },
+                    { id: "F", label: "F 綜合（創）" }
+                ]
+                const selectedGateway = ref("A")
+                const selectedCode = ref("A01.1")
+                const promptSettings = ref({ count: "10", lang: "繁中與英文" })
+                const candidates = ref([])
+                const songName = ref("奇異恩典")
+                const lensId = ref("04")
+                const lenses = LENSES
+
+                function byCat(cat) { return ALL.filter(function (d) { return d.cat === cat }) }
+                function groupDiscs(list) {
+                    var map = {}
+                    var order = []
+                    ;(list || []).forEach(function (d) {
+                        var code = String(d.code || "")
+                        var key = code
+                        var m = code.match(/^([A-F]\d+)/)
+                        if (m) key = m[1]
+                        else if (code.indexOf("0.") === 0) key = "0"
+                        if (!map[key]) { map[key] = []; order.push(key) }
+                        map[key].push(d)
+                    })
+                    return order.map(function (k) { return { key: k, items: map[k] } })
+                }
+                function openLens(id) {
+                    lensId.value = id
+                    currentTab.value = "songSearch"
+                    if (history.replaceState) history.replaceState(null, "", "#lenses")
+                }
+                function openSets() {
+                    currentTab.value = "sets"
+                    if (history.replaceState) history.replaceState(null, "", "#sets")
+                }
+                const setFiltered = computed(function () { return byCat(setGateway.value) })
+                const setDisc = computed(function () {
+                    return ALL.filter(function (d) { return d.code === setCode.value })[0] || setFiltered.value[0] || null
+                })
+                const setLabel = computed(function () {
+                    var d = setDisc.value
+                    return d ? (d.code + " " + d.title_zh) : ""
+                })
+                function syncSetGateway() {
+                    var list = setFiltered.value
+                    var ok = list.some(function (d) { return d.code === setCode.value })
+                    if (!ok && list[0]) setCode.value = list[0].code
+                }
+                function setFocus(d) {
+                    var lens = String((d && d.lens) || "")
+                    if (lens.indexOf("01.") === 0) return "這一科在學讀譜。請按拍號、調號由易到難：先穩拍和沒有升降號的調，再附點、切分、較多升降號。教會調式不確定就寫待核對。"
+                    if (lens.indexOf("08.") === 0) return "這一科在學信仰。每首要引用該首裡的一句詞，並寫它對準這一科的哪一點。"
+                    return "每首用「一句詞」說明它為什麼能教這一科。"
+                }
+                const setHymns = computed(function () {
+                    var d = setDisc.value
+                    if (!window.PhSearch || !d || !d.title_zh) return []
+                    return window.PhSearch.search(d.title_zh, "hymns").hymns.slice(0, 8)
+                })
+                const setPrompt = computed(function () {
+                    var d = setDisc.value
+                    var code = d ? d.code : ""
+                    var n = Number(setCount.value) || 10
+                    return "課題：【" + setLabel.value + "】\n請找 " + n + " 首能用來教這一科的聖詩，由淺到深。\n" + setFocus(d) + "\n只准用這次附上的詩本或目錄，以及你這次打開過的 hymnary.org 頁。\n本機固定來源：頌主新歌 evangel-hymnal.pdf、赞美诗补充本 index.doc。\n每一首只寫你實際看到的資料。看不到的寫待核對。不要猜調號，不要編詩本編號，不要抄整首詞，不要抄整頁譜。\n用 Tab 分隔，不要用 Markdown 表格。第一行是欄名，其後每首一行：\n選用\t課題代號\t詩本\t編號\t中文歌名\t英文歌名\t調名\t調號\t拍號\t譜式\t經文\t作詞\t作曲\t一句詞\t去哪裡看\t狀態\n選用先留空。課題代號一律填「" + code + "」。詩本填頌主新歌、赞美诗补充本或 hymnary。去哪裡看填頁碼，或這次打開過的 hymnary 網址。狀態一律先寫候選。\n貼進選定詩歌表。不要寫進網頁。"
+                })
+                function useHymn(h) {
+                    songName.value = (h && (h.zh || h.en)) || songName.value
+                    currentTab.value = "songSearch"
+                    if (history.replaceState) history.replaceState(null, "", "#lenses")
+                }
+                function countCat(cat) { return byCat(cat).length }
+                const filtered = computed(function () { return byCat(selectedGateway.value) })
+                const currentDisc = computed(function () {
+                    return ALL.filter(function (d) { return d.code === selectedCode.value })[0] || filtered.value[0] || null
+                })
+                const topicLabel = computed(function () {
+                    var d = currentDisc.value
+                    return d ? (d.code + " " + d.title_zh) : ""
+                })
+                function syncGateway() {
+                    var list = filtered.value
+                    var ok = list.some(function (d) { return d.code === selectedCode.value })
+                    if (!ok && list[0]) selectedCode.value = list[0].code
+                }
+                function discHref(d) {
+                    if (!d || !d.filepath) return "disciplines/index.html"
+                    return d.filepath
+                }
+                const generatedPrompt = computed(function () {
+                    var d = currentDisc.value
+                    var code = d ? d.code : ""
+                    var title = topicLabel.value
+                    var n = Number(promptSettings.value.count) || 10
+                    var wiki = Math.round(n * 0.6)
+                    var yt = n - wiki
+                    return "課題：【" + title + "】\n只找候選，不要寫進網頁。\n請提供 " + n + " 條：百科約 " + wiki + " 條、YouTube 約 " + yt + " 條。語言：" + promptSettings.value.lang + "。\n每條必須是你這次打開過的真實網址。打不開、要付費、文不對題的不要。\n不要編造網址，不要抄正文。\n用 Tab 分隔，不要用 Markdown 表格。第一行是欄名，其後每條一行：\n課題代號\t歌名\t標題\t網址\t語言\t類型\t一句說明\t狀態\t影片起點\t備註\n課題代號一律填「" + code + "」。歌名可空。狀態一律先寫候選。影片起點用 0:02:12，沒有就留空。"
+                })
+                const currentLens = computed(function () {
+                    return LENSES.filter(function (x) { return x.id === lensId.value })[0] || null
+                })
+                const lensDiscs = computed(function () {
+                    var id = lensId.value
+                    return ALL.filter(function (d) { return String(d.lens || "").indexOf(id + ".") === 0 })
+                })
+                const songHymns = computed(function () {
+                    if (!window.PhSearch || !songName.value.trim()) return []
+                    return window.PhSearch.search(songName.value.trim(), "hymns").hymns.slice(0, 8)
+                })
+                const songPrompt = computed(function () {
+                    var lens = currentLens.value
+                    var lensName = lens ? (lens.id + " " + lens.name) : ""
+                    return "請針對聖詩【" + songName.value + "】，只用「" + lensName + "」這一稜鏡找 5 條候選。\n其中約 2 條是文字或歷史背景，約 3 條是可點開的演唱或音頻。\n每條必須是你這次打開過的真實網址。不要編造年份，不要抄正文。\n用 Tab 分隔，欄序：課題代號、歌名、標題、網址、語言、類型、一句說明、狀態、影片起點、備註。\n課題代號可空。歌名一律填「" + songName.value + "」。狀態先寫候選。影片起點用 0:02:12，沒有就留空。\n貼進 Excel，不要寫進網頁。\n這一稜鏡要看的是：" + (lens ? lens.ask : "")
+                })
+                function hymnHref(h) {
+                    if (!window.PhSearch || !h || !h.path) return "../hymn_catalog_sort.html"
+                    return "../" + window.PhSearch.hymnUrl(h.path)
+                }
+                function copyText(text, okMsg) {
+                    copyHint.value = okMsg
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(text).then(function () {
+                            copyHint.value = okMsg
+                        }).catch(function () {
+                            window.prompt("請手動複製：", text)
+                        })
+                    } else {
+                        window.prompt("請手動複製：", text)
+                    }
+                }
+                function openAi(text, url) {
+                    var page = window.open(url, "_blank", "noopener")
+                    copyText(text, page ? "已複製。請到新開的那一頁按 Ctrl+V。" : "已複製。若沒有跳出新頁，請允許彈出視窗後再按一次。")
+                }
+                function loadSampleData() {
+                    selectedGateway.value = "A"
+                    selectedCode.value = "A01.4"
+                    candidates.value = [
+                        { title: "音程 - 維基百科，自由的百科全書", url: "https://zh.wikipedia.org/wiki/%E9%9F%B3%E7%A8%8B", lang: "繁中", type: "百科", reason: "示範：請先點開，確認後才改採用。", status: "候選" },
+                        { title: "Interval (music) - Wikipedia", url: "https://en.wikipedia.org/wiki/Interval_(music)", lang: "英文", type: "百科", reason: "示範：請先點開，確認後才改採用。", status: "候選" },
+                        { title: "How to Name Intervals Fast (For Beginners too)", url: "https://www.youtube.com/watch?v=yA2piro8ypI", lang: "英文", type: "影片", reason: "示範：請先點開，確認後才改採用。", status: "候選" }
+                    ]
+                }
+                function addEmptyCandidate() {
+                    candidates.value.push({ title: "", url: "", lang: "繁中", type: "百科", reason: "", status: "候選" })
+                }
+                function toggleStatus(index) {
+                    candidates.value[index].status = candidates.value[index].status === "採用" ? "候選" : "採用"
+                }
+                function removeCandidate(index) { candidates.value.splice(index, 1) }
+                function clearAll() { candidates.value = [] }
+                const adoptedMarkdown = computed(function () {
+                    var adopted = candidates.value.filter(function (c) { return c.status === "採用" })
+                    if (!adopted.length) return "練習表裡還沒有點成「採用」。請以 Excel 裡的「採用」為準。"
+                    var md = "### 延伸閱讀：" + topicLabel.value + "\n\n| 標題 | 網址 | 語言 | 類型 | 說明 |\n| :--- | :--- | :--- | :--- | :--- |\n"
+                    adopted.forEach(function (item) {
+                        md += "| [" + item.title + "](" + item.url + ") | " + item.url + " | " + item.lang + " | " + item.type + " | " + item.reason + " |\n"
+                    })
+                    return md
+                })
+                function download(filename, href) {
+                    var a = document.createElement("a")
+                    a.href = href
+                    a.download = filename
+                    document.body.appendChild(a)
+                    a.click()
+                    a.remove()
+                }
+                function exportJSON() {
+                    var adopted = candidates.value.filter(function (c) { return c.status === "採用" })
+                    var name = (topicLabel.value || "adopted").replace(/[^\w\u4e00-\u9fa5]+/g, "_")
+                    download(name + "_adopted.json", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ topic: topicLabel.value, adoptedResources: adopted }, null, 2)))
+                }
+                function exportMarkdown() {
+                    var name = (topicLabel.value || "adopted").replace(/[^\w\u4e00-\u9fa5]+/g, "_")
+                    var blob = new Blob([adoptedMarkdown.value], { type: "text/markdown;charset=utf-8" })
+                    download(name + "_adopted.md", URL.createObjectURL(blob))
+                }
+                return {
+                    currentTab, gateways, selectedGateway, selectedCode, promptSettings, candidates,
+                    songName, lensId, lenses, filtered, currentDisc, topicLabel, syncGateway, discHref,
+                    generatedPrompt, currentLens, lensDiscs, songHymns, songPrompt, hymnHref,
+                    loadSampleData, addEmptyCandidate, toggleStatus, removeCandidate, clearAll,
+                    adoptedMarkdown, exportJSON, exportMarkdown, byCat, countCat, groupDiscs, openLens, openSets,
+                    aiPlatforms, copyHint, openAi,
+                    setGateway, setCode, setCount, setFiltered, setDisc, setLabel, syncSetGateway,
+                    setHymns, setPrompt, useHymn,
+                    copyPrompt: function () { copyText(generatedPrompt.value, "已複製。可點下面的平台，到新頁按 Ctrl+V。") },
+                    copySongPrompt: function () { copyText(songPrompt.value, "已複製。可點下面的平台，到新頁按 Ctrl+V。") },
+                    copySetPrompt: function () { copyText(setPrompt.value, "已複製。請貼進選定詩歌.xlsx，從第 3 行開始。") }
+                }
+            }
+        }).mount("#app")
+    </script>
+</body>
+</html>

@@ -45,7 +45,7 @@
     'hub.sec.c': row('C 聖經門訓', 'C Bible & Discipleship', 'C Kinh Thánh & Môn đồ', 'C Alkitab & Pemuridan'),
     'hub.sec.d': row('D 外展差傳', 'D Outreach & Mission', 'D Truyền giáo', 'D Penginjilan'),
     'hub.sec.e': row('E 社會服務', 'E Social Service', 'E Phục vụ xã hội', 'E Pelayanan sosial'),
-    'hub.sec.f': row('F 詩歌應用', 'F Hymns', 'F Thánh ca', 'F Pujian'),
+    'hub.sec.f': row('F 樂以載道', 'F Hymnology', 'F Thánh ca', 'F Pujian'),
     'hub.sec.g': row('G 規劃行政', 'G Plan & Admin', 'G Quy hoạch & Hành chính', 'G Rencana & Admin'),
     'hub.sec.knowledge': row('📚 文集', '📚 Knowledge', '📚 Tri thức', '📚 Pengetahuan'),
     'hub.sec.guide': row('❓ 導覽憲法', '❓ Site Guide', '❓ Hiến pháp điều hướng', '❓ Panduan situs'),

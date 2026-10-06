@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>外站詩集索引 · 樂以載道</title>
+  <link rel="stylesheet" href="../door.css" />
+  <style>
+    .bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+    .bar button, .sorts button {
+      border: 1px solid #e7e5e4; background: #fff; border-radius: 999px;
+      padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer;
+    }
+    .bar button.on, .sorts button.on { background: #1a1412; color: #f3e5ab; border-color: #1a1412; }
+    .sorts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 10px; }
+    .sorts span { font-size: 12px; color: #78716c; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #f5f5f4; font-size: 13px; vertical-align: top; }
+    th button { background: none; border: 0; font: inherit; font-weight: 700; color: #8b5a2b; cursor: pointer; padding: 0; }
+    a.rowlink, a.out { color: #0b5fa5; font-weight: 700; text-decoration: none; }
+    .plan { font-size: 14px; line-height: 1.6; color: #44403c; }
+    .cols { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 0 0 10px; font-size: 12px; color: #57534e; }
+    .cols label { display: inline-flex; align-items: center; gap: 4px; }
+    .en { color: #78716c; font-size: 12px; }
+    .badge { display: inline-block; font-size: 11px; color: #92400e; background: #fff7ed; border-radius: 999px; padding: 1px 8px; }
+    .empty { color: #78716c; font-size: 14px; }
+  </style>
+</head>
+<body>
+<script src="../ph_module_bar.js" data-root="../"></script>
+  <div class="wrap">
+    <p class="back"><a data-b100-nav="content" href="../landing.html?zone=find">← 找聖詩</a></p>
+    <h1>外站詩集索引</h1>
+    <p class="lead">先收兩本、各 25 首。詩集名連到該本目錄，歌號連到 Hymnary 那一首，歌名進本站卡片。作詞、作曲分開；作曲多數還沒有名字。歌詞和樂譜仍在外站。</p>
+    <h2>詩集進度</h2>
+    <p class="note">目錄都可以點去 Hymnary。逐首歌目仍只有生命聖詩、聖徒詩歌各 25 首。譜不下載。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>詩集</th>
+          <th>年份</th>
+          <th>目錄</th>
+          <th>逐首</th>
+          <th>Hymnary 上的譜</th>
+          <th>下一步</th>
+        </tr>
+      </thead>
+      <tbody id="progress"></tbody>
+    </table>
+    <div class="bar" id="books"></div>
+    <div class="search"><input id="q" type="search" placeholder="歌名、首句、曲調、作詞、作曲、詩集、歌號（試試 聖哉、NICEA、31 不在這 50 首）" autocomplete="off" /></div>
+    <div class="cols" id="cols"><span>顯示欄</span></div>
+    <div class="sorts" id="sorts">
+      <span>排序</span>
+      <button type="button" data-sort="number">歌號</button>
+      <button type="button" data-sort="title">歌名</button>
+      <button type="button" data-sort="hymnal">詩集</button>
+      <button type="button" data-sort="lyricist">作詞</button>
+      <button type="button" data-sort="composer">作曲</button>
+      <button type="button" data-sort="year">詩集年份</button>
+    </div>
+    <p class="quiet" id="count"></p>
+    <table>
+      <thead><tr id="head"></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p class="quiet">這不是本站 2000 頁曲庫。沒有歌詞、沒有樂譜、沒有分析。外站資料可能不完整。</p>
+  </div>
+  <script src="hymn_index_data.js"></script>
+  <script src="../../../js/shell_nav.js"></script>
+  <script>
+  (function () {
+    var DATA = window.PH_HYMNARY_INDEX;
+    var COLS = [
+      { id: "hymnal", label: "詩集", on: true },
+      { id: "number", label: "號", on: true },
+      { id: "title", label: "歌名", on: true },
+      { id: "tune", label: "曲調", on: true },
+      { id: "lyricist", label: "作詞", on: true },
+      { id: "year", label: "詩集年份", on: true },
+      { id: "composer", label: "作曲", on: false }
+    ];
+    var book = "";
+    var sortKey = "number";
+    var q = "";
+    var booksEl = document.getElementById("books");
+    var rowsEl = document.getElementById("rows");
+    var countEl = document.getElementById("count");
+    var qEl = document.getElementById("q");
+
+    function esc(s) {
+      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+    }
+    function fold(s) {
+      return String(s || "")
+        .toLowerCase()
+        .replace(/[，。！？、；：「」『』（）()!?,.\s]/g, "");
+    }
+    function hymnalOf(id) {
+      return (DATA.hymnals || []).filter(function (h) { return h.hymnalId === id; })[0] || {};
+    }
+    function paintBooks() {
+      var all = "<button type='button' data-book=''" + (book === "" ? " class='on'" : "") + ">兩本一起</button>";
+      var rest = DATA.hymnals.map(function (h) {
+        return "<button type='button' data-book='" + esc(h.hymnalId) + "'" + (book === h.hymnalId ? " class='on'" : "") + ">" + esc(h.titleZh) + "</button>";
+      }).join("");
+      booksEl.innerHTML = all + rest;
+    }
+    function matches(row) {
+      if (book && row.hymnalId !== book) return false;
+      if (!q) return true;
+      var bag = fold([row.titleZh, row.tuneName, row.lyricist, row.author, row.composer, row.hymnalTitle, row.hymnNumber, row.hymnalId].join(" "));
+      return bag.indexOf(fold(q)) >= 0;
+    }
+    function cmp(a, b) {
+      if (sortKey === "title") return String(a.titleZh).localeCompare(String(b.titleZh), "zh");
+      if (sortKey === "hymnal") return String(a.hymnalTitle).localeCompare(String(b.hymnalTitle), "zh") || num(a) - num(b);
+      if (sortKey === "lyricist" || sortKey === "author") return byText(a.lyricist || a.author, b.lyricist || b.author);
+      if (sortKey === "composer") return byText(a.composer, b.composer);
+      if (sortKey === "year") return (b.hymnalYear || 0) - (a.hymnalYear || 0) || num(a) - num(b);
+      return num(a) - num(b) || String(a.hymnalId).localeCompare(b.hymnalId);
+    }
+    function byText(a, b) {
+      if (!a && b) return 1;
+      if (a && !b) return -1;
+      return String(a || "").localeCompare(String(b || ""), "zh");
+    }
+    function num(row) {
+      var n = parseInt(row.hymnNumber, 10);
+      return isNaN(n) ? 0 : n;
+    }
+    function activeCols() {
+      var on = COLS.filter(function (col) { return col.on; });
+      return on.length ? on : [COLS[2]];
+    }
+    function cell(row, id) {
+      if (id === "hymnal") return "<a class='out' href='" + esc(row.hymnalUrl) + "' target='_blank' rel='noopener noreferrer'>" + esc(row.hymnalTitle) + "</a>";
+      if (id === "number") return "<a class='out' href='" + esc(row.sourceUrl) + "' target='_blank' rel='noopener noreferrer' title='" + esc(row.hymnalTitle) + "第 " + esc(row.hymnNumber) + " 首'>" + esc(row.hymnNumber) + "</a>";
+      if (id === "title") return "<a class='rowlink' data-b100-nav='content' href='hymn.html?id=" + encodeURIComponent(row.instanceId) + "'>" + esc(row.titleZh) + "</a>";
+      if (id === "tune") return esc(row.tuneName);
+      if (id === "lyricist") return esc(row.lyricist || row.author || "—");
+      if (id === "composer") return esc(row.composer || "—");
+      if (id === "year") return esc(row.hymnalYear);
+      return "";
+    }
+    function paintCols() {
+      var box = document.getElementById("cols");
+      box.innerHTML = "<span>顯示欄</span>" + COLS.map(function (col) {
+        return "<label><input type='checkbox' data-col='" + col.id + "'" + (col.on ? " checked" : "") + "> " + esc(col.label) + "</label>";
+      }).join("");
+    }
+    function paintProgress() {
+      var box = document.getElementById("progress");
+      if (!box) return;
+      box.innerHTML = (DATA.catalogLinks || []).map(function (bookRow) {
+        var name = "<a class='out' href='" + esc(bookRow.sourceUrl) + "' target='_blank' rel='noopener noreferrer'>" + esc(bookRow.titleZh) + "</a>";
+        if (bookRow.titleEn) name += "<div class='en'>" + esc(bookRow.titleEn) + "</div>";
+        return "<tr><td>" + name + "</td><td>" + esc(bookRow.year) + "</td><td>" + esc(bookRow.catalog) + "</td><td>" + esc(bookRow.hymns) + "</td><td>" + esc(bookRow.score) + "</td><td>" + esc(bookRow.next) + "</td></tr>";
+      }).join("");
+    }
+    function paint() {
+      var cols = activeCols();
+      var list = DATA.instances.filter(matches).slice().sort(cmp);
+      countEl.textContent = "看到 " + list.length + " 首。外站索引，未由本站核對。";
+      document.getElementById("head").innerHTML = cols.map(function (col) { return "<th>" + esc(col.label) + "</th>"; }).join("");
+      rowsEl.innerHTML = list.map(function (row) {
+        return "<tr>" + cols.map(function (col) { return "<td>" + cell(row, col.id) + "</td>"; }).join("") + "</tr>";
+      }).join("") || "<tr><td colspan='" + cols.length + "' class='empty'>這幾個字沒有對到。這批只有兩本各 25 首。</td></tr>";
+      Array.prototype.forEach.call(document.querySelectorAll("#sorts button"), function (btn) {
+        btn.classList.toggle("on", btn.getAttribute("data-sort") === sortKey);
+      });
+    }
+    booksEl.addEventListener("click", function (event) {
+      var btn = event.target.closest("button");
+      if (!btn) return;
+      book = btn.getAttribute("data-book") || "";
+      paintBooks();
+      paint();
+    });
+    document.getElementById("sorts").addEventListener("click", function (event) {
+      var btn = event.target.closest("button");
+      if (!btn) return;
+      sortKey = btn.getAttribute("data-sort") || "number";
+      paint();
+    });
+    qEl.addEventListener("input", function () {
+      q = qEl.value.trim();
+      paint();
+    });
+    var params = new URLSearchParams(location.search);
+    book = params.get("hymnal") || "";
+    document.getElementById("cols").addEventListener("change", function (event) {
+      var input = event.target;
+      if (!input || !input.getAttribute) return;
+      var id = input.getAttribute("data-col");
+      COLS.forEach(function (col) { if (col.id === id) col.on = !!input.checked; });
+      if (!COLS.some(function (col) { return col.on; })) {
+        COLS.forEach(function (col) { if (col.id === "title") col.on = true; });
+        paintCols();
+      }
+      paint();
+    });
+    paintBooks();
+    paintCols();
+    paintProgress();
+    paint();
+  })();
+  </script>
+</body>
+</html>

@@ -22,7 +22,7 @@ def test_modes_church_full_labels():
     labels = [x["labelZh"] for x in church["secondaryNav"]]
     for want in (
         "A 敬拜音樂", "B 牧養小組", "C 聖經門訓", "D 外展差傳",
-        "E 社會服務", "F 詩歌應用", "G 規劃行政",
+        "E 社會服務", "F 樂以載道", "G 規劃行政",
     ):
         assert want in labels, f"modes.json missing {want!r}"
 

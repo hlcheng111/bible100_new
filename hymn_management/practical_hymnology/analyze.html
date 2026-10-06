@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>分析草稿 · 樂以載道</title>
+  <style>
+    body { margin:0; font-family:"Microsoft JhengHei",sans-serif; background:#f8f6f0; color:#1c1917; padding:16px; }
+    .wrap { max-width:860px; margin:0 auto; }
+    h1 { font-size:1.35rem; margin:0 0 6px; }
+    .meta { color:#78716c; font-size:12px; margin-bottom:12px; }
+    .card { background:#fff; border:1px solid #e7e5e4; border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+    textarea { width:100%; min-height:180px; font-size:12px; font-family:inherit; }
+    a { color:#0b5fa5; font-weight:650; }
+    button { background:#d4af37; border:0; border-radius:8px; padding:8px 12px; font-weight:700; cursor:pointer; }
+    .row a { margin-right:12px; font-size:13px; }
+    li { margin:4px 0; }
+  </style>
+  <script src="../data/ph_search_index.js"></script>
+  <script src="data/disciplines_index.js"></script>
+  <script src="../js/ph_search.js"></script>
+</head>
+<body>
+<script src="ph_module_bar.js" data-root=""></script>
+  <div class="wrap">
+    <p class="meta"><a href="landing.html">← 樂以載道</a></p>
+    <h1 id="title">分析草稿</h1>
+    <p class="meta" id="badge"></p>
+    <div class="card" id="local"></div>
+    <div class="card">
+      <strong>對上的學科（粗對，可點進知識庫）</strong>
+      <ul id="discs"></ul>
+    </div>
+    <div class="card">
+      <strong>外連深研 Prompt</strong>
+      <p class="meta">複製後貼到 Kimi／ChatGPT／Claude。本站不代呼叫。草稿須人審。</p>
+      <textarea id="prompt" readonly></textarea>
+      <p><button type="button" id="copy">複製 Prompt</button></p>
+      <p class="row">
+        <a href="https://kimi.moonshot.cn/" target="_blank" rel="noopener">Kimi</a>
+        <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a>
+        <a href="https://claude.ai/" target="_blank" rel="noopener">Claude</a>
+        <a href="../hymn_ai_tools.html">聖詩 AI 應用</a>
+        <a href="../ppt_generator.html">投影歌詞</a>
+      </p>
+    </div>
+  </div>
+  <script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var id = params.get("id") || "";
+    var q = params.get("q") || "";
+    var idx = window.PH_SEARCH_INDEX || { hymns: [], samples: [] };
+    var sample = (idx.samples || []).filter(function (s) { return s.id === id; })[0];
+    var hymn = (idx.hymns || []).filter(function (h) { return h.id === id; })[0];
+    if (!q && sample) q = sample.zh || sample.en;
+    if (!q && hymn) q = hymn.zh || hymn.en;
+    document.getElementById("title").textContent = q || "分析草稿";
+    var known = !!(sample || hymn);
+    document.getElementById("badge").textContent = known
+      ? (sample ? "本站已有分析稿（種子）。" : "曲庫有這首，尚無分析稿。")
+      : "本站曲庫未對上這歌名，仍可外連深研。";
+    var local = document.getElementById("local");
+    var S = window.PhSearch;
+    if (hymn && S && S.hymnUrl(hymn.path)) {
+      local.innerHTML = "<a href='../" + S.hymnUrl(hymn.path) + "'>開啟原頁曲譜</a>";
+    } else {
+      local.innerHTML = "<span>沒有對應原頁。可把歌名、作者、歌詞貼進下方 Prompt 的補充。</span>";
+    }
+    var discs = S ? S.matchDisciplines(q, 8) : [];
+    document.getElementById("discs").innerHTML = discs.map(function (d) {
+      return "<li><a href='" + d.filepath + "'>" + d.code + " " + d.title_zh + "</a> · " + (d.lens || "") + "</li>";
+    }).join("") || "<li>未對上關鍵字。仍可複製完整學科清單給外界 AI。</li>";
+    document.getElementById("prompt").value = S ? S.promptText(q, "") : "";
+    document.getElementById("copy").onclick = function () {
+      var t = document.getElementById("prompt");
+      t.select();
+      navigator.clipboard && navigator.clipboard.writeText(t.value);
+    };
+  })();
+  </script>
+</body>
+</html>

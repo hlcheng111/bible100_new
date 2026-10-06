@@ -22,8 +22,8 @@
       };
       if (z.id === "f") {
         row.moduleNav = {
-          sidebar: "hymn_management/sidebar_playlist.html",
-          content: "hymn_management/dashboard.html",
+          sidebar: "hymn_management/sidebar_lexidao.html",
+          content: "hymn_management/practical_hymnology/landing.html",
         };
       }
       return row;

@@ -226,7 +226,7 @@
         { stationLabel: "C", title: "聖經門訓", desc: "Discipleship · 主日學", label: "C 聖經門訓", tone: "church-admin", highlight: true, nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=c", contentUrl: "church_ministry/modules/education/education-integrated.html" } },
         { stationLabel: "D", title: "外展差傳", desc: "Outreach · 使命", label: "D 外展差傳", tone: "church-mission", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=d", contentUrl: "church_ministry/modules/expansion/outreach-integrated.html#tab-needs" } },
         { stationLabel: "E", title: "社會服務", desc: "Social · 義工排班", label: "E 社會服務", tone: "church-admin", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=e", contentUrl: "church_ministry/tools/volunteer_shift/index.html" } },
-        { stationLabel: "F", title: "詩歌應用", desc: "Hymns · 2000+ 曲譜", label: "F 詩歌應用", tone: "tools", nav: { sidebarUrl: "hymn_management/sidebar_playlist.html", contentUrl: "hymn_management/dashboard.html" } },
+        { stationLabel: "F", title: "樂以載道", desc: "Hymnology · 搜尋／學科／分析", label: "F 樂以載道", tone: "tools", nav: { sidebarUrl: "hymn_management/sidebar_lexidao.html", contentUrl: "hymn_management/practical_hymnology/landing.html" } },
         { stationLabel: "G", title: "規劃行政", desc: "Plan · Do · 量表", label: "G 規劃行政", tone: "church-plan", nav: { sidebarUrl: "church_planning/sidebar_plan_v5_preview.html", contentUrl: "church_planning/index_plan.html" } },
         { stationLabel: "👤", title: "會友主檔", desc: "Member registry · 6 tabs", label: "👤 會友主檔", tone: "church-admin", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html", contentUrl: "church_ministry/modules/members/member-integrated.html#tab=overview" } }
       ],

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>奇異恩典 · 這一首</title>
+  <link rel="stylesheet" href="door.css" />
+  <script src="data/disciplines_index.js"></script>
+</head>
+<body class="hub">
+<script src="ph_module_bar.js" data-root=""></script>
+  <div class="wrap" id="top">
+    <p class="where crumb" id="crumb"></p>
+    <p class="now">目前這首：奇異恩典<small class="en">Amazing Grace</small></p>
+    <section class="who">
+      <h1>奇異恩典</h1>
+      <span class="title-en">Amazing Grace, How Sweet the Sound</span>
+      <p>John Newton · 1779 · Tune: NEW BRITAIN</p>
+    </section>
+    <nav class="jumps" aria-label="頁內">
+      <a href="#read">頌讀<small class="en">Read</small></a>
+      <a href="#learn">學習<small class="en">Learn</small></a>
+      <a href="#research">研究<small class="en">Research</small></a>
+      <a href="#use">使用<small class="en">Use</small></a>
+    </nav>
+
+    <section id="read">
+      <h2>頌讀<small class="en">Read</small></h2>
+      <p class="lead">先知道這是什麼歌。歌詞和簡介仍在原頁。</p>
+      <ul class="plain" id="read-list"></ul>
+    </section>
+
+    <section id="learn">
+      <h2>學習<small class="en">Learn</small></h2>
+      <p class="lead">用這一首去學。下面每一行打開原來的課題頁，課文不搬到這裡。</p>
+      <div id="gates"></div>
+    </section>
+
+    <section id="research">
+      <h2>研究<small class="en">Research</small></h2>
+      <p class="lead">原頁裡的長文算研究材料。提問模板另外一條，不是已寫好的文章。</p>
+      <ul class="plain" id="research-list"></ul>
+    </section>
+
+    <section id="use">
+      <h2>使用<small class="en">Use</small></h2>
+      <p class="lead">拿這一首去做事。工具頁還沒有自動打開奇異恩典。</p>
+      <ul class="plain">
+        <li><a href="../hymn_ai_tools.html?hymn=hymn_most_0121">提問工具<small class="en">AI Tools</small></a></li>
+        <li><a href="../hymn_editor.html?hymn=hymn_most_0121">編輯歌詞<small class="en">Edit</small></a></li>
+        <li><a href="../ppt_generator.html?hymn=hymn_most_0121">投影歌詞<small class="en">Slides</small></a></li>
+      </ul>
+      <p class="note">課題選歌在學習區。崇拜歌單以後才做。</p>
+    </section>
+  </div>
+  <script>
+  (function () {
+    var HYMN_FILE = "0691 0649 Amazing Grace, How Sweet the Sound _John Newton   奇異恩典  ▲.htm";
+    var ORIG = "../hymn/hymn_most/" + encodeURI(HYMN_FILE);
+    var GATES = [
+      { id: "intro", label: "導論", en: "Introduction" },
+      { id: "A", label: "音樂", en: "Music" },
+      { id: "B", label: "文字", en: "Text & Poetry" },
+      { id: "C", label: "信仰", en: "Faith & Theology" },
+      { id: "D", label: "教會", en: "Church & Worship" },
+      { id: "E", label: "人生", en: "Life" },
+      { id: "F", label: "綜合", en: "Integration" }
+    ];
+    function esc(s) {
+      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+    }
+    function zhTitle(t) {
+      var s = String(t || "");
+      var cut = s.search(/\s+[A-Za-z]/);
+      return cut > 0 ? s.slice(0, cut) : s;
+    }
+    function row(href, zh, en) {
+      return "<li><a href='" + href + "'>" + esc(zh) + "<small class='en'>" + esc(en) + "</small></a></li>";
+    }
+    function fromName() {
+      var f = "find";
+      try { f = new URLSearchParams(location.search).get("from") || "find"; } catch (e) {}
+      if (f === "learn") return { zh: "學聖詩", en: "Learn Through Hymns", href: "landing.html#learn-A" };
+      if (f === "research") return { zh: "研究聖詩", en: "Research Hymns", href: "landing.html#research" };
+      if (f === "use") return { zh: "使用聖詩", en: "Use Hymns", href: "landing.html#use" };
+      return { zh: "找聖詩", en: "Explore Hymns", href: "landing.html#find" };
+    }
+    var mid = fromName();
+    var here = "hymn_amazing_grace.html" + location.search + "#top";
+    document.getElementById("crumb").innerHTML =
+      "<a href='landing.html'>樂以載道</a> › " +
+      "<a href='" + mid.href + "'>" + esc(mid.zh) + " <small class='en'>" + esc(mid.en) + "</small></a> › " +
+      "<a href='" + here + "'>奇異恩典 <small class='en'>Amazing Grace</small></a>";
+    document.getElementById("read-list").innerHTML =
+      row(ORIG, "查看歌詞", "Lyrics") +
+      row(ORIG, "查看簡介", "Intro");
+    document.getElementById("research-list").innerHTML =
+      row(ORIG, "作者研究", "Author") +
+      row(ORIG, "歌詞研究", "Text") +
+      row(ORIG, "神學研究", "Theology") +
+      row(ORIG, "曲調研究", "Tune") +
+      row("analyze.html?id=hymn_most_0121", "提問模板", "Prompts");
+    var discs = (window.PH_DISCIPLINES_INDEX && window.PH_DISCIPLINES_INDEX.disciplines) || [];
+    var html = "";
+    GATES.forEach(function (g) {
+      var rows = discs.filter(function (d) { return d.cat === g.id; });
+      html += "<h3 id='gate-" + g.id + "'>" + esc(g.label) + "<small class='en'>" + esc(g.en) + "</small></h3><ul class='plain'>";
+      rows.forEach(function (d) {
+        var zh = zhTitle(d.title_zh);
+        var en = d.title_en || "";
+        html += row(esc(d.filepath), zh, en);
+      });
+      html += "</ul>";
+    });
+    document.getElementById("gates").innerHTML = html || "<p class='note'>課題清單沒有載入。</p>";
+  })();
+  </script>
+</body>
+</html>

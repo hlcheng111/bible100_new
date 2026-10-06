@@ -63,7 +63,7 @@
           { label: "C 兒童門訓", path: "church_ministry/modules/education/education-integrated.html", sidebar: "church_ministry/sidebar_church_layout_v1.html?focus=c" },
           { label: "D 外展差傳", path: "church_ministry/modules/expansion/outreach-strategy.html", sidebar: "church_ministry/sidebar_church_layout_v1.html?focus=d" },
           { label: "E 社會服務", path: "church_ministry/tools/volunteer_shift/index.html", sidebar: "church_ministry/sidebar_church_layout_v1.html?focus=e" },
-          { label: "F 詩歌應用", path: "hymn_management/index.html", sidebar: "hymn_management/sidebar_playlist.html" },
+          { label: "F 樂以載道", path: "hymn_management/practical_hymnology/landing.html", sidebar: "hymn_management/sidebar_lexidao.html" },
           { label: "G 規劃行政", path: "church_planning/index_plan.html", sidebar: "church_planning/sidebar_plan_v5_preview.html" }
         ]
       },

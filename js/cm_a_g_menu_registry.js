@@ -56,8 +56,8 @@
     },
     {
       id: "f",
-      label: "F 詩歌應用",
-      en: "Hymns",
+      label: "F 樂以載道",
+      en: "Hymnology",
       status: "kit",
       ssot: "js/cm_f_menu_ssot.js",
       render: "js/cm_sidebar_zone_render.js",

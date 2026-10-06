@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>聖詩管理系統 - 主頁面</title>
+  <title>樂以載道 · Practical Hymnology</title>
   <style type="text/css">
     body {
       margin: 0;
@@ -46,7 +46,19 @@
       font-size: 9px;
     }
     .back-link a:hover { filter:brightness(1.1); }
-    .main { margin-top: 55px; }
+    .nav-toggle {
+      display: none;
+      margin-right: 6px;
+      border: 0;
+      background: #083e6b;
+      color: #fff;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .nav-scrim { display: none; }
+    .main { margin-top: var(--hymn-bar-h, 55px); }
     table.layout {
       width: 100%;
       height: calc(100vh - 55px);
@@ -64,37 +76,68 @@
     #sidebarFrame { background: #eef6ff; }
     #contentFrame { background: #ffffff; }
     @media (max-width: 768px) {
-      td.left { width: 200px; }
-      .topbar, .topbar-inner { height: 45px; }
-      .main { margin-top: 45px; }
-      table.layout { height: calc(100vh - 45px); }
+      .nav-toggle { display: inline-block; }
+      .topbar, .topbar-inner { height: auto; min-height: 45px; }
+      .brand, .back-link { display: block; text-align: left; padding: 6px 10px; }
+      .back-link { white-space: nowrap; overflow-x: auto; }
+      .main { margin-top: var(--hymn-bar-h, 72px); }
+      table.layout { height: calc(100vh - var(--hymn-bar-h, 72px)); }
+      td.left {
+        width: 0;
+        border-right: 0;
+        overflow: visible;
+      }
+      #sidebarFrame {
+        position: fixed;
+        z-index: 40;
+        top: var(--hymn-bar-h, 72px);
+        left: 0;
+        width: min(320px, 88vw);
+        height: calc(100vh - var(--hymn-bar-h, 72px));
+        transform: translateX(-110%);
+        background: #eef6ff;
+        box-shadow: 4px 0 16px rgba(0,0,0,.18);
+      }
+      body.nav-open #sidebarFrame { transform: translateX(0); }
+      body.nav-open .nav-scrim {
+        display: block;
+        position: fixed;
+        z-index: 35;
+        top: var(--hymn-bar-h, 72px);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 0;
+        background: rgba(0,0,0,.35);
+      }
     }
   </style>
 </head>
 <body>
   <div class="topbar">
     <div class="topbar-inner">
-      <div class="brand">🎵 聖詩管理系統 - 5本詩集智能整合 <small style="color: #ccc; font-size: 9px;">Hymn Management · 2015 首</small></div>
+      <div class="brand">🎵 樂以載道 <small style="color: #ccc; font-size: 9px;">Practical Hymnology · 曲庫 2000+</small></div>
       <div class="back-link">
-        <a href="../index_v5.html" id="backHomeLink">返回主頁</a>
-        <a href="landing.html" target="contentFrame">首頁</a>
-        <a href="temp_hymn.html" target="contentFrame">2015 首預覽</a>
-        <a href="dashboard.html" target="contentFrame">儀表板</a>
-        <a href="sidebar_playlist.html" target="sidebarFrame">☰ 播放列表</a>
-        <a href="hymn_ai_tools.html" target="contentFrame">AI 外連</a>
-        <a href="hymn/default.htm" target="contentFrame">舊總索引</a>
+        <button type="button" class="nav-toggle" id="navToggle">目錄</button>
+        <a href="../index.html" id="backHomeLink">返回主頁</a>
+        <a href="practical_hymnology/landing.html" target="contentFrame">首頁</a>
+        <a href="practical_hymnology/landing.html#find" target="contentFrame">找聖詩</a>
+        <a href="practical_hymnology/landing.html#learn-A" target="contentFrame">學聖詩</a>
+        <a href="practical_hymnology/landing.html#research" target="contentFrame">研究聖詩</a>
+        <a href="practical_hymnology/landing.html#use" target="contentFrame">使用聖詩</a>
       </div>
     </div>
   </div>
 
   <div class="main">
+    <button type="button" class="nav-scrim" id="navScrim" aria-label="關閉目錄"></button>
     <table class="layout">
       <tr>
         <td class="left">
-          <iframe id="sidebarFrame" name="sidebarFrame" title="Sidebar" src="sidebar_playlist.html?v=fullhtm2"></iframe>
+          <iframe id="sidebarFrame" name="sidebarFrame" title="Sidebar" src="sidebar_lexidao.html"></iframe>
         </td>
         <td class="right">
-          <iframe id="contentFrame" name="contentFrame" title="Content" src="playlist_placeholder.html"></iframe>
+          <iframe id="contentFrame" name="contentFrame" title="Content" src="practical_hymnology/landing.html"></iframe>
         </td>
       </tr>
     </table>
@@ -105,7 +148,25 @@
       constructor() { this.init(); }
       init() {
         window.addEventListener('message', (event) => {
-          if (event.data && event.data.type === 'navigate' && event.data.url) {
+          if (!event.data) return;
+          if (event.data.type === 'hymn-nav-close') {
+            document.body.classList.remove('nav-open');
+            return;
+          }
+          if (event.data.type === 'bible100-shell' && event.data.sidebarUrl && event.data.contentUrl) {
+            var sb = document.getElementById('sidebarFrame');
+            var cf = document.getElementById('contentFrame');
+            if (sb) sb.src = event.data.sidebarUrl.indexOf('hymn_management/') === 0
+              ? event.data.sidebarUrl.replace(/^hymn_management\//, '')
+              : event.data.sidebarUrl;
+            if (cf) this.navigateContentFrame(
+              event.data.contentUrl.indexOf('hymn_management/') === 0
+                ? event.data.contentUrl.replace(/^hymn_management\//, '')
+                : event.data.contentUrl
+            );
+            return;
+          }
+          if (event.data.type === 'navigate' && event.data.url) {
             this.navigateContentFrame(event.data.url);
           }
         });
@@ -117,10 +178,23 @@
           contentFrame.src = url;
           return;
         }
-        var enc = String(url).split('/').map(function (part, i) {
+        var raw = String(url);
+        var hash = '';
+        var query = '';
+        var hashAt = raw.indexOf('#');
+        if (hashAt >= 0) {
+          hash = raw.slice(hashAt);
+          raw = raw.slice(0, hashAt);
+        }
+        var queryAt = raw.indexOf('?');
+        if (queryAt >= 0) {
+          query = raw.slice(queryAt);
+          raw = raw.slice(0, queryAt);
+        }
+        var enc = raw.split('/').map(function (part, i) {
           return i === 0 ? part : encodeURIComponent(part);
         }).join('/');
-        contentFrame.src = enc;
+        contentFrame.src = enc + query + hash;
       }
     }
 
@@ -128,6 +202,29 @@
       var backLink = document.getElementById('backHomeLink');
       if (backLink && window.location.protocol === 'file:') {
         backLink.href = '../index_v5.html';
+      }
+      function fitBar() {
+        var bar = document.querySelector('.topbar');
+        if (!bar) return;
+        var h = Math.ceil(bar.getBoundingClientRect().height);
+        document.documentElement.style.setProperty('--hymn-bar-h', h + 'px');
+      }
+      fitBar();
+      window.addEventListener('resize', fitBar);
+      var toggle = document.getElementById('navToggle');
+      var scrim = document.getElementById('navScrim');
+      function closeNav() { document.body.classList.remove('nav-open'); }
+      if (toggle) {
+        toggle.addEventListener('click', function () {
+          document.body.classList.toggle('nav-open');
+        });
+      }
+      if (scrim) scrim.addEventListener('click', closeNav);
+      var bar = document.querySelector('.back-link');
+      if (bar) {
+        bar.addEventListener('click', function (ev) {
+          if (ev.target.closest('a')) closeNav();
+        });
       }
       new HymnFrameManager();
     }

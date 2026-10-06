@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>分析範本 · 二十六首</title>
+  <style>
+    :root { --meet:#c9892d; --see:#2f7d4f; --ask:#2a6f97; --verify:#3d3a6b; --return:#b85c38; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+      color: #f6efe4;
+      background: #1c2430;
+      line-height: 1.55;
+    }
+    a { color: #f6d48a; }
+    .en { font-family: Palatino, Georgia, serif; font-style: italic; font-weight: 400; color: #cbbba6; }
+    .dock { padding: 12px 16px; font-size: 14px; }
+    .dock a { margin-right: 14px; text-decoration: none; border-bottom: 1px solid rgba(246,212,138,.45); }
+    header { max-width: 980px; margin: 0 auto; padding: 8px 18px 6px; }
+    h1 { margin: 0; font-size: 1.7rem; font-weight: 800; }
+    .human { max-width: 40em; }
+    .note-map { font-size: 13px; color: #d9c7ae; max-width: 40em; }
+    .clusters {
+      max-width: 980px; margin: 8px auto 0; padding: 0 18px 12px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;
+    }
+    .cluster { padding: 4px 0 8px 14px; border-left: 3px solid var(--meet); }
+    .cluster[data-tone="see"] { border-color: #7dcea0; }
+    .cluster[data-tone="ask"] { border-color: #7eb6d6; }
+    .cluster[data-tone="verify"] { border-color: #b7b3d6; }
+    .cluster[data-tone="return"] { border-color: #e0a090; }
+    .cluster[data-tone="lab"] { border-color: #e2c27a; }
+    .q { display: block; font-size: 1.05rem; font-weight: 700; }
+    .hymns { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; }
+    .hymn-node {
+      background: none; border: 0; padding: 0; text-align: left; cursor: pointer;
+      color: #f3e6d4; max-width: 16em; text-decoration: none; font: inherit;
+    }
+    .hymn-node .num { font-weight: 800; margin-right: 4px; color: #f0d48a; }
+    .hymn-node.on .num { color: #fff; }
+    .hymn-node .en { font-size: 11px; display: block; }
+    #core-go { max-width: 980px; margin: 0 auto; padding: 4px 18px 40px; min-height: 3em; }
+    @media (max-width: 720px) { .clusters { grid-template-columns: 1fr; } }
+  </style>
+  <script src="../../js/shell_nav.js"></script>
+</head>
+<body data-b100-module="hymn_management" data-b100-pattern="P-LANDING">
+<script src="ph_module_bar.js" data-root=""></script>
+  <div class="dock">
+    <a data-b100-nav="content" href="journey_intro.html">回到前言</a>
+    <a data-b100-nav="content" href="prisms/index.html">十五種看法</a>
+  </div>
+  <header>
+    <h1>分析範本</h1>
+    <span class="en">Twenty-six hymn studies</span>
+    <p class="human">二十六首是拿來學會怎樣看的範本。編號留著。中間的字只是這一頁走路時的相鄰，不是新的學科。</p>
+    <p class="note-map">奇異恩典與普天之下萬民萬族連到課文。其餘寫著「課文未寫」。第 26 首仍是空位。</p>
+  </header>
+  <div class="clusters" id="clusters"></div>
+  <p id="core-go"></p>
+  <script>
+    var CORES = [
+      ["01", "普天之下萬民萬族", "All People That on Earth Do Dwell", "把詩篇唱出來，是什麼意思", "live"],
+      ["02", "主耶和華，求祢引領", "Guide Me, O Thou Great Jehovah", "一首歌怎樣陪人走路", "planned"],
+      ["03", "奇異恩典", "Amazing Grace", "恩典怎樣被寫成一首可以唱的歌", "live"],
+      ["04", "怎能如此", "And Can It Be", "一個問句怎樣承載整個福音", "planned"],
+      ["05", "平安夜", "Silent Night", "一首節期的歌怎樣進入全世界", "planned"],
+      ["06", "索塞克斯聖誕頌", "On Christmas Night", "民間旋律怎樣唱出聖誕", "planned"],
+      ["07", "大秦景教三威蒙度讚", "Jingjiao Hymn of the Three Majesties", "一首很早的中文讚美怎樣開口", "planned"],
+      ["08", "祂是主", "He Is Lord", "短歌怎樣宣認耶穌是主", "planned"],
+      ["09", "咱著對主唱歌", "Cantemos al Señor", "另一種語言怎樣一起唱", "planned"],
+      ["10", "輕輕觸摸大地", "Touch the Earth Lightly", "受造界與節期可以怎樣同唱", "planned"],
+      ["11", "懇求以馬內利", "O Come, O Come, Emmanuel", "將臨期在等什麼。中文題仍暫定", "planned"],
+      ["12", "中文題未定", "Of the Father's Love Begotten", "道成肉身的古老詩行", "planned"],
+      ["13", "堅固保障", "A Mighty Fortress Is Our God", "一首信理的歌怎樣被唱成堡壘", "planned"],
+      ["14", "神聖的愛", "Love Divine, All Loves Excelling", "愛怎樣被唱成成聖的路", "planned"],
+      ["15", "主是我牧者", "The Lord's My Shepherd", "詩篇二十三怎樣變成會眾的歌", "planned"],
+      ["16", "與主同住", "Abide with Me", "黃昏與臨終的祈禱", "planned"],
+      ["17", "中文題未定", "Were You There", "受苦怎樣被一問句唱出來", "planned"],
+      ["18", "中文題未定", "Let All Mortal Flesh Keep Silence", "聖餐前的靜默", "planned"],
+      ["19", "聖哉三一", "Holy, Holy, Holy", "三一怎樣被會眾開口", "planned"],
+      ["20", "中文題未定", "Christ the Lord Is Risen Today", "復活日怎樣被唱出來", "planned"],
+      ["21", "求聖靈垂聽", "Spirit Divine, Attend Our Prayers", "祈求聖靈，不是形容感覺", "planned"],
+      ["22", "Jesu, tawa pano", "Jesu, tawa pano", "非洲會眾怎樣一起唱", "planned"],
+      ["23", "祢真偉大", "How Great Thou Art", "一首譯詩怎樣進到華人教會。中文題仍暫定", "planned"],
+      ["24", "我在這裡", "Here I Am, Lord", "蒙召與差遣。中文題仍暫定", "planned"],
+      ["25", "中文題未定", "Lift Every Voice and Sing", "一個群體的歷史記憶與公共聲音", "planned"],
+      ["26", "華語新歌（空位）", "Chinese Contemporary Worship Slot", "指定授權清楚的歌之前，不寫課", "empty"]
+    ];
+    var CLUSTERS = [
+      { tone: "meet", zh: "詩篇被唱出來", en: "Psalms sung together", ids: [0, 14] },
+      { tone: "see", zh: "路上與宣認", en: "The road and what we confess", ids: [1, 12, 7, 18] },
+      { tone: "ask", zh: "恩典", en: "Grace", ids: [2, 3, 13] },
+      { tone: "return", zh: "節期", en: "The church year", ids: [4, 5, 10, 11, 16, 19] },
+      { tone: "verify", zh: "另一種語言", en: "Another language", ids: [6, 8, 21, 22, 25] },
+      { tone: "lab", zh: "祈禱、受苦、世界", en: "Prayer, sorrow, the world", ids: [9, 15, 17, 20, 23, 24] }
+    ];
+    var LESSONS = {
+      "01": "lessons/lesson_01_all_people.html",
+      "03": "lessons/lesson_amazing_grace.html"
+    };
+    function esc(s) {
+      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+    }
+    var box = document.getElementById("clusters");
+    var coreGo = document.getElementById("core-go");
+    function showCore(i) {
+      var c = CORES[i];
+      var marks = box.querySelectorAll(".hymn-node");
+      for (var k = 0; k < marks.length; k++) marks[k].classList.toggle("on", Number(marks[k].getAttribute("data-i")) === i);
+      var href = LESSONS[c[0]] || "";
+      var extra = c[0] === "03" ? " <a data-b100-nav='content' href='Applied-Hymnology/week1.html'>工作坊第 1 週 →</a>" : "";
+      var tail = href
+        ? " <a data-b100-nav='content' href='" + href + "'>進入這一課 →</a>" + extra
+        : " " + (c[4] === "empty" ? "空位。指定授權清楚的歌之前，不寫課。" : "課文未寫。這一首還沒有專頁。");
+      coreGo.innerHTML = "<strong>" + esc(c[0]) + " " + esc(c[1]) + "</strong> <span class='en'>" + esc(c[2]) + "</span><br>" + esc(c[3]) + tail;
+    }
+    CLUSTERS.forEach(function (g) {
+      var el = document.createElement("div");
+      el.className = "cluster";
+      el.setAttribute("data-tone", g.tone);
+      var hymns = g.ids.map(function (i) {
+        var c = CORES[i];
+        if (LESSONS[c[0]]) {
+          return "<a class='hymn-node' data-i='" + i + "' data-b100-nav='content' href='" + LESSONS[c[0]] + "'><span class='num'>" + esc(c[0]) + "</span><strong>" + esc(c[1]) + "</strong><span class='en'>" + esc(c[2]) + "</span></a>";
+        }
+        return "<button type='button' class='hymn-node' data-i='" + i + "'><span class='num'>" + esc(c[0]) + "</span><strong>" + esc(c[1]) + "</strong><span class='en'>" + esc(c[2]) + "</span></button>";
+      }).join("");
+      el.innerHTML = "<span class='q'>" + esc(g.zh) + "</span><span class='en'>" + esc(g.en) + "</span><div class='hymns'>" + hymns + "</div>";
+      box.appendChild(el);
+    });
+    box.addEventListener("click", function (e) {
+      var n = e.target.closest(".hymn-node");
+      if (!n) return;
+      showCore(Number(n.getAttribute("data-i")));
+    });
+    showCore(2);
+  </script>
+</body>
+</html>

@@ -154,8 +154,8 @@
       id: 'E Pelayanan sosial',
     },
     'cm.sb.sec.fhymn': {
-      'zh-Hant': 'F 詩歌應用',
-      en: 'F Hymn app',
+      'zh-Hant': 'F 樂以載道',
+      en: 'F Hymnology',
       vi: 'F Thánh ca',
       id: 'F Aplikasi hymne',
     },
