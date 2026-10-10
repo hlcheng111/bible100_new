@@ -28,6 +28,8 @@
     a:hover, button.linkish:hover { background:#fef3c7; color:#92400e; }
     details[data-zone] details a:hover, a.ph-line:hover { background:#fef3c7; color:#92400e; }
     .hit small { display:block; color:#78716c; font-size:10px; }
+    .hit .listen { display:block; margin-top:2px; color:#166534; font-size:10px; font-weight:700; }
+    .hit .listen a { display:inline; width:auto; padding:2px 6px; margin:0 2px 0 0; background:#dcfce7; color:#14532d; border-radius:999px; font-size:10px; }
     .group { font-size:10px; color:#92400e; font-weight:700; margin:8px 0 2px; }
     .empty { color:#78716c; font-size:11px; padding:4px; }
     .hint { font-size:10px; color:#78716c; margin:0 0 4px; }
@@ -45,6 +47,7 @@
   <script src="data/ph_search_index.js"></script>
   <script src="practical_hymnology/data/disciplines_index.js"></script>
   <script src="js/ph_search.js"></script>
+  <script src="practical_hymnology/js/yt_sacred_store.js"></script>
   <base target="contentFrame" />
 </head>
 <body data-b100-module="hymn_management">
@@ -67,7 +70,7 @@
     </div>
   </div>
   <div class="sec" id="results">
-    <p class="hint">輸入後，結果留在左欄；點一筆只換右欄。</p>
+    <p class="hint">這裡只搜站內曲庫（約兩千首）。結果留在左欄，一次最多 12 筆；點一筆只換右欄。外站詩集不在這裡。</p>
     <div id="hits"></div>
   </div>
   <div class="sec" id="tree">
@@ -84,16 +87,50 @@
     var scope = "all";
     var qEl = document.getElementById("q");
     var hits = document.getElementById("hits");
+    var confirmedMap = null;
+    var confirmedLoading = false;
 
     function esc(s) {
-      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
     }
 
-    function render(q) {
+    function ensureConfirmed(done) {
+      if (confirmedMap) { done(confirmedMap); return; }
+      if (!window.YtSacredStore || !YtSacredStore.loadConfirmedIndex) {
+        confirmedMap = {};
+        done(confirmedMap);
+        return;
+      }
+      if (confirmedLoading) { done(confirmedMap || {}); return; }
+      confirmedLoading = true;
+      YtSacredStore.loadConfirmedIndex().then(function (map) {
+        confirmedMap = map || {};
+        confirmedLoading = false;
+        done(confirmedMap);
+      }).catch(function () {
+        confirmedMap = {};
+        confirmedLoading = false;
+        done(confirmedMap);
+      });
+    }
+
+    function listenHtml(hymnId) {
+      var rows = (confirmedMap && confirmedMap[String(hymnId)]) || [];
+      if (!rows.length) return "";
+      var first = rows[0];
+      var url = (window.YtSacredStore && YtSacredStore.watchUrl)
+        ? YtSacredStore.watchUrl(first.videoId, first.seconds)
+        : ("https://www.youtube.com/watch?v=" + encodeURIComponent(first.videoId || "") + (first.seconds ? "&t=" + Math.floor(first.seconds) + "s" : ""));
+      var more = rows.length > 1 ? ("等 " + rows.length + " 處") : esc(first.time || "0:00");
+      return "<span class='listen'>也可聽 · <a href='" + esc(url) + "' target='_blank' rel='noopener noreferrer'>" + more + "</a>" +
+        " <a data-b100-nav='content' href='practical_hymnology/ai_youtube_music_library_ai_parser_ironclad_153_proof_edition.html'>影音庫</a></span>";
+    }
+
+    function paint(q) {
       var S = window.PhSearch;
       if (!S) { hits.innerHTML = "<p class='empty'>索引未載入</p>"; return; }
       if (!q) {
-        hits.innerHTML = "<p class='empty'>可搜 2000+ 曲名、10 首已有分析、111 學科。</p>";
+        hits.innerHTML = "<p class='empty'>可搜站內約兩千首曲名、已有分析、111 學科。已確認的影音會顯示「也可聽」。</p>";
         return;
       }
       var r = S.search(q, scope);
@@ -107,12 +144,15 @@
         block("聖詩", r.hymns, function (h) {
           var href = S.hymnUrl(h.path) || "hymn_catalog_sort.html";
           var label = (h.zh || h.en || h.id);
-          return "<a class='hit' data-b100-nav='content' href='" + href + "'><strong>" + esc(label) + "</strong><small>" + esc(h.en || h.num || h.id) + "</small></a>";
+          return "<a class='hit' data-b100-nav='content' href='" + href + "'><strong>" + esc(label) + "</strong><small>" + esc(h.en || h.num || h.id) + "</small>" + listenHtml(h.id) + "</a>";
         });
+        if (r.moreHymns) {
+          html += "<a class='hit' data-b100-nav='content' href='hymn_catalog_sort.html?q=" + encodeURIComponent(q) + "'><strong>還有很多</strong><small>到右欄看全部聖詩</small></a>";
+        }
       }
       if (scope === "all" || scope === "samples") {
         block("分析範例（現有 " + ((window.PH_SEARCH_INDEX && window.PH_SEARCH_INDEX.sample_count) || 0) + "，目標 100）", r.samples, function (s) {
-          return "<a class='hit' data-b100-nav='content' href='practical_hymnology/analyze.html?id=" + encodeURIComponent(s.id) + "'><strong>" + esc(s.zh) + "</strong><small>已有分析稿 · " + esc(s.en) + "</small></a>";
+          return "<a class='hit' data-b100-nav='content' href='practical_hymnology/analyze.html?id=" + encodeURIComponent(s.id) + "'><strong>" + esc(s.zh) + "</strong><small>已有分析稿 · " + esc(s.en) + "</small>" + listenHtml(s.id) + "</a>";
         });
       }
       if (scope === "all" || scope === "disciplines") {
@@ -126,6 +166,10 @@
         html += "<a class='hit' data-b100-nav='content' href='practical_hymnology/analyze.html?q=" + encodeURIComponent(q) + "'><strong>用「" + esc(q) + "」做分析草稿</strong><small>對學科＋複製外連 Prompt</small></a>";
       }
       hits.innerHTML = html;
+    }
+
+    function render(q) {
+      ensureConfirmed(function () { paint(q); });
     }
 
     qEl.addEventListener("input", function () { render(qEl.value.trim()); });
@@ -148,8 +192,10 @@
         });
       }
       qEl.value = d.q || "";
+      confirmedMap = null;
       render(qEl.value.trim());
     });
+    window.addEventListener("focus", function () { confirmedMap = null; });
     render("");
   })();
   (function () {
@@ -238,10 +284,20 @@
     });
     html += "<p class='soon-note'>按科目請到學聖詩。這裡沒有另一套庫。</p></details>";
     html += "<details data-zone='workshop'>" + sum("聖詩工作坊", "Hymn Workshop") +
-      link("practical_hymnology/Applied-Hymnology/index.html", "八週清單") + "</details>";
+      link("practical_hymnology/Applied-Hymnology/index.html", "八週清單") +
+      link("practical_hymnology/Applied-Hymnology/week1.html", "第1週 · 奇妙恩典") +
+      link("practical_hymnology/Applied-Hymnology/week2.html", "第2週 · 聖哉三一") +
+      link("practical_hymnology/Applied-Hymnology/week3.html", "第3週 · 堅固保障") +
+      link("practical_hymnology/Applied-Hymnology/week4.html", "第4週 · 心靈安寧") +
+      link("practical_hymnology/Applied-Hymnology/week5.html", "第5週 · 教會年曆") +
+      link("practical_hymnology/Applied-Hymnology/week6.html", "第6週 · 耶穌恩友") +
+      link("practical_hymnology/Applied-Hymnology/week7.html", "第7週 · 我心獻曲") +
+      link("practical_hymnology/Applied-Hymnology/week8.html", "第8週 · 綜合敬拜") +
+      "</details>";
     html += "<details data-zone='use'>" + sum("使用聖詩", "Use Hymns") +
       link("practical_hymnology/landing.html#use", "這一區的地圖") +
       link("hymn_ai_tools.html", "AI 工具") +
+      link("practical_hymnology/ai_youtube_music_library_ai_parser_ironclad_153_proof_edition.html", "影音庫（貼章節聽歌）") +
       link("hymn_editor.html", "編輯歌詞") +
       link("ppt_generator.html", "投影歌詞") +
       link("practical_hymnology/resource_selector.html#guide", "怎樣使用？") +
@@ -259,17 +315,29 @@
     function zoneFromHref(href) {
       var path = href || "";
       var hash = "";
+      var query = "";
       var hi = path.indexOf("#");
       if (hi >= 0) { hash = path.slice(hi + 1); path = path.slice(0, hi); }
+      var qi = path.indexOf("?");
+      if (qi >= 0) { query = path.slice(qi + 1); path = path.slice(0, qi); }
+      var zq = "";
+      query.split("&").forEach(function (pair) {
+        var bits = pair.split("=");
+        var key = "";
+        var val = "";
+        try { key = decodeURIComponent(bits[0] || ""); val = decodeURIComponent(bits[1] || ""); } catch (e) {}
+        if (key === "zone") zq = val;
+      });
       if (/Applied-Hymnology/i.test(path)) return "workshop";
       if (/hymn_catalog_sort|\/explore\//i.test(path)) return "find";
-      if (/hymn_ai_tools|hymn_editor|ppt_generator/i.test(path)) return "use";
+      if (/hymn_ai_tools|hymn_editor|ppt_generator|ai_youtube_music_library/i.test(path)) return "use";
       if (/resource_selector/i.test(path)) return hash.indexOf("sets") === 0 ? "learn" : "use";
       if (/analyze\.html|core_hymns|\/lessons\/|hymn_amazing_grace/i.test(path)) return "research";
       if (/journey_intro|\/disciplines\/|learn_catalog|\/prisms\//i.test(path)) return "learn";
       if (/landing\.html/i.test(path)) {
-        if (hash.indexOf("learn") === 0) return "learn";
+        if (hash.indexOf("learn") === 0 || zq === "learn") return "learn";
         if (hash === "find" || hash === "research" || hash === "use") return hash;
+        if (zq === "find" || zq === "research" || zq === "use") return zq;
       }
       return "";
     }
@@ -285,6 +353,7 @@
       if (!e.data || e.data.type !== "ph-zone") return;
       openZone(e.data.zone);
     });
+    try { window.parent.postMessage({ type: "ph-zone-ready" }, "*"); } catch (eReady) {}
     tree.addEventListener("click", function (e) {
       if (!e.target.closest("a[href]")) return;
       try { window.parent.postMessage({ type: "hymn-nav-close" }, "*"); } catch (err) {}

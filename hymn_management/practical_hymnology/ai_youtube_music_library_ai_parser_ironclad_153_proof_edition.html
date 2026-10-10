@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖詩影音庫 · 本機知識庫 Phase B</title>
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <script src="js/yt_sacred_match.js"></script>
+    <script src="js/yt_sacred_store.js"></script>
+    <script src="js/yt_verified_tracklists.js"></script>
+    <script src="js/hymn_main_meta_bridge.js"></script>
+    <script src="../js/hymn_liturgical_calendar.js"></script>
+    <script src="../data/hymn_axes_seed.js"></script>
+    <script src="../data/ph_search_index.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', "Microsoft JhengHei", "Noto Sans TC", sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .touch-btn {
+            min-width: 44px; min-height: 44px;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .track-cards { display: none; }
+        @media (max-width: 767px) {
+            .track-table-wrap { display: none !important; }
+            .track-cards { display: block; }
+        }
+        @media (min-width: 768px) {
+            .track-cards { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-md">🎵</div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold text-slate-900">聖詩影音庫 <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-normal">章節為準 · 字典已關</span></h1>
+                    <p class="hidden sm:block text-xs text-slate-500">主路徑＝章節 bulk／yt-dlp。網址批次只建整片占位。示範字典預設關閉。</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 flex-wrap justify-end gap-1">
+                <button type="button" onclick="switchTab('database')" id="navDatabaseBtn" class="px-3 py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white transition shadow-sm">總曲目 (<span id="totalTracksCount">0</span>)</button>
+                <button type="button" onclick="switchTab('match')" id="navMatchBtn" class="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition">對歌名 (<span id="totalMatchPending">0</span>)</button>
+                <button type="button" onclick="switchTab('dupes')" id="navDupesBtn" class="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition">同曲異聽 (<span id="totalDupeCount">0</span>)</button>
+                <button type="button" onclick="switchTab('sources')" id="navSourcesBtn" class="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition">來源片 (<span id="totalSourcesCount">0</span>)</button>
+                <button type="button" onclick="switchTab('favorites')" id="navFavoritesBtn" class="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition">收藏 (<span id="totalFavCount">0</span>)</button>
+                <button type="button" onclick="exportJSON()" class="px-2.5 py-2 text-xs font-semibold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition" title="匯出契約 JSON">匯出</button>
+                <label class="px-2.5 py-2 text-xs font-semibold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer" title="匯入契約 JSON">
+                    匯入 <input type="file" accept=".json" class="hidden" onchange="importJSON(event)">
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- 左欄：批次匯入、即時日誌與 OCR -->
+        <div class="lg:col-span-4 space-y-6">
+            
+            <!-- 小白兩步入庫 -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                <h2 class="text-sm font-bold text-slate-800 mb-1">怎樣把歌放進來</h2>
+                <p class="text-xs text-slate-500 mb-4">兩步就好。假曲目會自動清掉一次，你貼過的真章節會留下。</p>
+
+                <ol class="space-y-4 text-xs list-none p-0 m-0">
+                    <li class="rounded-xl border border-indigo-100 bg-indigo-50/40 p-3">
+                        <div class="font-bold text-indigo-900 mb-1">第 1 步 · 從 YouTube 複製曲目表</div>
+                        <p class="text-slate-600 mb-2 leading-relaxed">打開影片 → 說明欄找到像 <code class="bg-white px-1 rounded">0:00 歌名</code> 的列表 → 全選複製。多支片可中間空一行或寫 <code class="bg-white px-1 rounded">===</code>。</p>
+                        <textarea id="chapterPasteInput" rows="5" placeholder="https://youtu.be/真實網址&#10;0:00 第一首歌名&#10;3:56 第二首歌名" class="w-full p-3 bg-white border border-indigo-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        <button type="button" onclick="importChapterPaste()" class="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-xl text-xs">貼上並加入總表</button>
+                        <div class="mt-3 rounded-xl border border-teal-200 bg-teal-50/60 p-3">
+                            <div class="font-bold text-teal-900 mb-1">快捷 · 已核對真 TRACKLIST（10 址）</div>
+                            <p class="text-slate-600 mb-2 leading-relaxed">內建 yt-dlp 核對過的真實章節／片名（不是舊假字典）。無章節的片只建整片 00:00，連結仍是真 YouTube。</p>
+                            <div class="flex flex-col gap-1.5">
+                                <button type="button" onclick="importVerifiedTracklists()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold py-2.5 rounded-xl text-xs">一鍵填入並分析入庫（10 址）</button>
+                                <button type="button" onclick="fillVerifiedTracklistsOnly()" class="w-full bg-white border border-teal-300 text-teal-900 font-semibold py-2 rounded-xl text-xs">只填入文字框（先看再按上面「貼上」）</button>
+                            </div>
+                            <p id="verifiedPackMeta" class="text-[10px] text-slate-500 mt-2"></p>
+                        </div>
+                    </li>
+                    <li class="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3">
+                        <div class="font-bold text-emerald-900 mb-1">第 2 步 · 在總表點歌名或「聽／看」</div>
+                        <p class="text-slate-600 leading-relaxed">會開 YouTube 並跳到那一秒。對了就收藏；不對就回到第 1 步重貼該片。</p>
+                        <button type="button" onclick="exportCSV()" class="mt-2 w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2 rounded-xl text-xs">匯出 Excel 用表（含可點連結）</button>
+                    </li>
+                </ol>
+
+                <details class="mt-4 text-xs border border-slate-200 rounded-xl p-3">
+                    <summary class="cursor-pointer font-semibold text-slate-700">進階（通常不用開）</summary>
+                    <div class="mt-3 space-y-3">
+                        <div>
+                            <div class="font-medium text-slate-700 mb-1">用 yt-dlp 的 JSON 檔</div>
+                            <label class="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-xl cursor-pointer hover:bg-slate-200">
+                                選擇 .json
+                                <input type="file" accept=".json,application/json" class="hidden" onchange="importYtDlpJson(event)">
+                            </label>
+                        </div>
+                        <div>
+                            <div class="font-medium text-slate-700 mb-1">只登記網址（整片，尚未拆歌）</div>
+                            <textarea id="batchUrlInput" rows="2" placeholder="每行一個 https://youtu.be/..." class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-mono"></textarea>
+                            <div class="flex flex-wrap gap-2 mt-1 items-center">
+                                <button type="button" onclick="loadUser10Batch()" class="text-indigo-600 underline">填入 10 址</button>
+                                <label class="text-rose-700 flex items-center gap-1"><input type="checkbox" id="useDemoDictionary"> 假示範（勿勾）</label>
+                            </div>
+                            <button type="button" onclick="processBatchImport()" id="batchAnalyzeBtn" class="mt-2 w-full bg-slate-700 text-white py-2 rounded-xl">登記網址</button>
+                        </div>
+                        <button type="button" onclick="purgeUntrustedTracks()" class="w-full bg-rose-50 text-rose-800 border border-rose-200 py-2 rounded-xl">再清一次假資料</button>
+                        <div>
+                            <div class="font-medium text-slate-700 mb-1">備忘（無影片）· OCR <span class="text-rose-600 font-bold">未接</span></div>
+                            <p class="text-[10px] text-slate-500 mb-1">只存預覽圖＋手填歌名，沒有自動認字，不要以為「選圖＝辨識成功」。</p>
+                            <input type="file" id="ocrFileInput" accept="image/*" class="hidden" onchange="handleOCRUpload(event)">
+                            <button type="button" onclick="document.getElementById('ocrFileInput').click()" class="w-full bg-slate-100 py-2 rounded-xl mb-1">選一張圖（僅預覽）</button>
+                            <input type="text" id="ocrTitleNote" placeholder="手填歌名備忘" class="w-full p-2 border border-slate-300 rounded-xl mb-1">
+                            <button type="button" onclick="saveOcrMemo()" class="w-full bg-amber-600 text-white py-2 rounded-xl">存進總表（備忘）</button>
+                            <div id="ocrPreviewImageContainer" class="hidden mt-2">
+                                <img id="ocrThumb" src="" alt="" class="w-full h-20 object-cover rounded-lg">
+                                <div id="ocrStatusText" class="text-rose-700 mt-1 font-semibold">OCR 未接 — 不會自動認字</div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <div id="batchStatusPanel" class="hidden mt-3 bg-slate-900 text-slate-100 rounded-xl p-3 text-[11px] font-mono max-h-32 overflow-y-auto">
+                    <div class="flex justify-between mb-1 pb-1 border-b border-slate-700">
+                        <span class="text-emerald-400 font-bold">日誌</span>
+                        <button type="button" onclick="cancelBatchImport()" class="text-rose-400">中斷</button>
+                    </div>
+                    <div id="batchLogContent" class="space-y-1"></div>
+                </div>
+                <div id="batchProgressBar" class="hidden mt-2">
+                    <div class="flex justify-between text-[10px] text-slate-500 mb-1">
+                        <span id="batchProgressLabel">…</span>
+                        <span id="batchProgressPercent">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2"><div id="batchProgressFill" class="bg-indigo-500 h-2 rounded-full" style="width:0%"></div></div>
+                </div>
+
+                <div class="mt-4 rounded-xl border border-violet-200 bg-violet-50/50 p-3 text-xs">
+                    <div class="font-bold text-violet-900 mb-1">AI 草稿（僅已確認曲目）</div>
+                    <p class="text-slate-600 mb-2 leading-relaxed">複製 Prompt → 貼到你用的 AI。草稿須人審，不寫進正式教材。</p>
+                    <p id="aiPromptMeta" class="text-[10px] text-slate-500 mb-2"></p>
+                    <div class="flex flex-col gap-1.5">
+                        <button type="button" onclick="copyAiPrompt('medley')" class="touch-btn w-full bg-violet-700 hover:bg-violet-800 text-white font-semibold py-2 rounded-xl text-xs">複製「智慧組曲」Prompt</button>
+                        <button type="button" onclick="copyAiPrompt('story')" class="touch-btn w-full bg-white border border-violet-300 text-violet-900 font-semibold py-2 rounded-xl text-xs">複製「詩歌故事／靈修」Prompt</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="lg:col-span-8 space-y-6">
+            
+            <!-- 外連導聆（避開嵌入 Error 153） -->
+            <div id="playerContainer" class="bg-slate-900 rounded-2xl overflow-hidden shadow-xl border border-slate-800 text-white p-4 hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span id="playerStatusBadge" class="text-xs font-semibold text-emerald-400">已在新分頁打開 YouTube</span>
+                    </div>
+                    <button type="button" onclick="closePlayer()" class="text-slate-400 hover:text-white text-xs bg-slate-800 px-3 py-1.5 rounded-lg">關閉</button>
+                </div>
+                
+                <div class="bg-gradient-to-br from-indigo-950 to-slate-900 border border-indigo-500/40 rounded-2xl p-6 text-center shadow-inner">
+                    <div class="text-4xl mb-3">🎧</div>
+                    <div id="nowPlayingTitle" class="font-bold text-lg text-white mb-1">--</div>
+                    <div id="nowPlayingSub" class="text-slate-300 text-xs mb-3">--</div>
+                    <div id="nowPlayingMeta" class="text-indigo-400 font-mono text-xs bg-slate-800/80 px-3 py-1.5 rounded-lg inline-block mb-5">--</div>
+                    
+                    <div class="flex flex-col sm:flex-row justify-center items-center gap-3">
+                        <a id="fallbackExternalPlayBtn" href="#" target="_blank" rel="noopener noreferrer" 
+                           class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition text-xs">
+                            <span>再開一次 YouTube（精準時間軸）</span>
+                        </a>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-3">本機 file:// 不嵌播放器（易出 Error 153）。點「聽／看」會直接開官方頁並跳到該秒。</p>
+                </div>
+            </div>
+
+            <!-- 主檢視面版 1：總曲目資料庫 -->
+            <div id="databasePanel" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">總曲目表</h2>
+                        <p class="text-xs text-slate-500">點<strong>曲名</strong>或「聽／看」→ YouTube 該秒。⚠＝資料不可信（請清掉重貼）。Excel 用「匯出」。</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="exportCSV()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition">匯出 Excel</button>
+                        <button type="button" onclick="resetToDefaultData()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold px-3 py-2 rounded-xl transition">清空全部</button>
+                    </div>
+                </div>
+                <div id="untrustedBanner" class="hidden mb-4 text-xs text-rose-900 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2"></div>
+
+                <!-- 搜尋與篩選 -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4 pb-4 border-b border-slate-100 text-xs">
+                    <div class="sm:col-span-2 lg:col-span-2">
+                        <label class="block font-medium text-slate-600 mb-1">搜尋（曲名／演出／來源／特色）</label>
+                        <input type="text" id="searchInput" oninput="handleSearchInput()" placeholder="例：Amazing Grace、鋼琴、gospel..." class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-600 mb-1">資料來源</label>
+                        <select id="filterSourceKind" onchange="filterDatabase()" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl">
+                            <option value="all">全部</option>
+                            <option value="trusted">僅可信（章節／yt-dlp／匯入）</option>
+                            <option value="chapter">章節</option>
+                            <option value="ytdlp">yt-dlp</option>
+                            <option value="untrusted">字典／舊示範</option>
+                            <option value="url_stub">整片占位</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-600 mb-1">主分類</label>
+                        <select id="filterMainCat" onchange="filterDatabase()" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl">
+                            <option value="all">全部</option>
+                            <option value="音樂">音樂</option>
+                            <option value="靈修講道">靈修講道</option>
+                            <option value="備忘">備忘</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-600 mb-1">子分類</label>
+                        <select id="filterSubCat" onchange="filterDatabase()" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl">
+                            <option value="all">全部</option>
+                            <option value="古典交響與合唱">古典交響與合唱</option>
+                            <option value="器樂演奏與管風琴">器樂演奏與管風琴</option>
+                            <option value="基督教福音詩歌">基督教福音詩歌</option>
+                            <option value="心靈輕音樂">心靈輕音樂</option>
+                            <option value="譜圖備忘">譜圖備忘</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-600 mb-1">排序</label>
+                        <select id="sortBy" onchange="filterDatabase()" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl">
+                            <option value="newest">匯入時間（新→舊）</option>
+                            <option value="title">曲名 A→Z</option>
+                            <option value="artist">演出者</option>
+                            <option value="video">來源影片</option>
+                            <option value="category">分類</option>
+                            <option value="time">片內秒數</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-600 mb-1">每頁筆數</label>
+                        <select id="pageSizeSelect" onchange="changePageSize()" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl">
+                            <option value="10">10</option>
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-3 lg:col-span-2">
+                        <label class="block font-medium text-slate-600 mb-1">節期（主資料）</label>
+                        <select id="filterSeason" onchange="filterDatabase()" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl">
+                            <option value="all">全部</option>
+                            <option value="current">本週節期（已確認＋主資料有標）</option>
+                        </select>
+                        <p id="seasonHint" class="text-[10px] text-slate-400 mt-1"></p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto track-table-wrap">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs font-semibold border-b border-slate-200">
+                                <th class="p-3.5 rounded-l-xl">三層分類與特色</th>
+                                <th class="p-3.5">曲名 / 演出者</th>
+                                <th class="p-3.5">來源視頻與時間軸</th>
+                                <th class="p-3.5 text-right rounded-r-xl">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="databaseTableBody" class="text-xs divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+                <div id="databaseCards" class="track-cards space-y-3" aria-label="手機卡片曲目表"></div>
+
+                <div class="mt-4 flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 pt-4">
+                    <div id="paginationInfo">顯示第 1 - 20 筆，共 0 筆</div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="changePage(-1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium text-slate-700">上一頁</button>
+                        <span id="pageNumDisplay" class="font-bold text-slate-800">1 / 1</span>
+                        <button type="button" onclick="changePage(1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium text-slate-700">下一頁</button>
+                    </div>
+                </div>
+
+                <div id="emptyState" class="hidden text-center py-12">
+                    <div class="text-4xl mb-2">📭</div>
+                    <p class="text-slate-500 text-xs">找不到符合條件的曲目，請嘗試變更篩選或匯入新影片。</p>
+                </div>
+            </div>
+
+            <!-- 對站內歌名 -->
+            <div id="matchPanel" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hidden">
+                <div class="mb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">對站內歌名（建議＋你確認）</h2>
+                        <p class="text-xs text-slate-500">只處理<strong>章節／yt-dlp／匯入／整片占位</strong>。字典與舊示範<strong>不進</strong>對名。建議≠確認。</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="runSuggestBatch()" class="px-3 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-xl">批次寫入建議</button>
+                        <button type="button" onclick="confirmAllSuggested()" class="px-3 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-xl">確認庫內全部「建議」</button>
+                    </div>
+                </div>
+                <div class="mb-3 flex flex-wrap gap-2 text-xs">
+                    <select id="matchStatusFilter" onchange="renderMatchPanel()" class="p-2 bg-slate-50 border border-slate-300 rounded-xl">
+                        <option value="needs">待處理（無／僅建議）</option>
+                        <option value="suggested">僅建議</option>
+                        <option value="confirmed">已確認</option>
+                        <option value="rejected">已略過</option>
+                        <option value="all">全部</option>
+                    </select>
+                    <input type="text" id="matchSearchInput" oninput="renderMatchPanel()" placeholder="篩曲名…" class="p-2 bg-slate-50 border border-slate-300 rounded-xl min-w-[12rem]">
+                </div>
+                <div id="matchIndexStatus" class="text-[11px] text-slate-500 mb-3"></div>
+                <div id="matchList" class="space-y-3 max-h-[28rem] overflow-y-auto"></div>
+                <div id="matchEmpty" class="hidden text-center py-12 text-xs text-slate-500">這一篩沒有曲目。</div>
+            </div>
+
+            <!-- 同名詩跨片對照 -->
+            <div id="dupesPanel" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hidden">
+                <div class="mb-4">
+                    <h2 class="text-base font-bold text-slate-900">同曲異聽 · 影音層對照</h2>
+                    <p class="text-xs text-slate-500">依歌名分組＝同一首在不同來源片的聽法。真正「版本／譯本」掛站內主資料（hymn_id）；這裡只消費已確認連結。</p>
+                </div>
+                <div class="mb-3">
+                    <input type="text" id="dupeSearchInput" oninput="renderDupesPanel()" placeholder="篩同名組…" class="w-full max-w-md p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs">
+                </div>
+                <div id="dupesList" class="space-y-4"></div>
+                <div id="dupesEmpty" class="hidden text-center py-12 text-xs text-slate-500">目前沒有重複歌名。多匯幾支片後再來看。</div>
+            </div>
+
+            <!-- 主檢視面版 2：來源影片管理面板 -->
+            <div id="sourcesPanel" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hidden">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">📂 來源影片與 Playlist 批次管理面板</h2>
+                        <p class="text-xs text-slate-500">檢視所有已匯入系統的 YouTube 原始連結、全量 Playlist 解析狀態與單曲計數</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs font-semibold border-b border-slate-200">
+                                <th class="p-3.5 rounded-l-xl">視頻標題與創作者</th>
+                                <th class="p-3.5">三層分類架構</th>
+                                <th class="p-3.5">Playlist 完整解析狀態</th>
+                                <th class="p-3.5 text-right rounded-r-xl">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sourcesTableBody" class="text-xs divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 主檢視面版 3：我的最愛與自訂播放清單 -->
+            <div id="favoritesPanel" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hidden">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">❤️ 我的最愛與自訂播放清單</h2>
+                        <p class="text-xs text-slate-500">您收藏的所有精選曲目，支援一鍵直連導聆</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs font-semibold border-b border-slate-200">
+                                <th class="p-3.5 rounded-l-xl">分類</th>
+                                <th class="p-3.5">曲名</th>
+                                <th class="p-3.5">時間點</th>
+                                <th class="p-3.5 text-right rounded-r-xl">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="favoritesTableBody" class="text-xs divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+                <div id="favEmptyState" class="hidden text-center py-12">
+                    <div class="text-4xl mb-2">🤍</div>
+                    <p class="text-slate-500 text-xs">您尚未收藏任何曲目。點擊曲目右側的「🤍 收藏」即可加入此清單。</p>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        const user10Urls = [
+            "https://youtu.be/S9UUN3ISMp4?si=-pBytxRLuzHZ-lGZ",
+            "https://youtu.be/Th5qBm6JP2c?si=5EYzxK7wmVEhDB3s",
+            "https://youtu.be/1utkFVmrkb4?is=0nunfiaUkizHMcOl",
+            "https://youtu.be/SkGU3fmmCaw?si=da3EhFNLcumErdDi",
+            "https://youtu.be/iuhACryJ0OU?si=pdkl0i3X7lFRI0wb",
+            "https://youtu.be/3aAaXWmwPnU?si=Z5lpZDphnfSmMBKe",
+            "https://youtu.be/ydQxlY5kKNc?si=0aTdc_f98nZyYwev",
+            "https://youtu.be/HC1ZKp_kFn4?si=vDZk6E1ykhZBMr_m",
+            "https://youtu.be/QvADCJuzZsA?is=Za7XU0YhTcOm0w2L",
+            "https://youtu.be/Evxx8iO86x8?is=N_zM-GTfV7lHvEu3"
+        ];
+
+        const videoThemeDictionary = {
+            "S9UUN3ISMp4": { title: "Traditional Brass Hymns & Organ Masterpieces", author: "Brass & Pipe Organ", main: "音樂", sub: "器樂演奏與管風琴", style: "銅管與管風琴", tracks: [
+                { time: "00:00", seconds: 0, title: "Trumpet Tune in D Major", artist: "Brass Ensemble" },
+                { time: "03:45", seconds: 225, title: "Prince of Denmark's March", artist: "Pipe Organ" },
+                { time: "07:30", seconds: 450, title: "The Trumpet Shall Sound", artist: "Orchestra" },
+                { time: "11:20", seconds: 680, title: "Jerusalem the Golden", artist: "Brass Choir" },
+                { time: "15:05", seconds: 905, title: "Praise My Soul the King of Heaven", artist: "Organ & Brass" },
+                { time: "18:45", seconds: 1125, title: "Crown Him with Many Crowns", artist: "Brass Ensemble" },
+                { time: "22:30", seconds: 1350, title: "All Creatures of Our God and King", artist: "Cathedral Organ" },
+                { time: "26:15", seconds: 1575, title: "Guide Me O Thou Great Jehovah", artist: "Brass & Timpani" },
+                { time: "30:00", seconds: 1800, title: "Holy Holy Holy", artist: "Brass Quintet" },
+                { time: "33:45", seconds: 2025, title: "Now Thank We All Our God", artist: "Full Orchestra" }
+            ]},
+            "Th5qBm6JP2c": { title: "Piano & Trumpet Classical Duets Collection", author: "Classical Duo Series", main: "音樂", sub: "器樂演奏與管風琴", style: "鋼琴與小號", tracks: [
+                { time: "00:00", seconds: 0, title: "Clarke: Trumpet Voluntary", artist: "Piano & Trumpet" },
+                { time: "04:12", seconds: 252, title: "Purcell: Sonata in D", artist: "Baroque Duo" },
+                { time: "08:35", seconds: 515, title: "Handel: Water Music Suite", artist: "Chamber Ensemble" },
+                { time: "12:50", seconds: 770, title: "Bach: Jesu Joy of Man's Desiring", artist: "Classical Duo" },
+                { time: "17:10", seconds: 1030, title: "Vivaldi: Concerto for Two Trumpets", artist: "Baroque Players" },
+                { time: "21:30", seconds: 1290, title: "Mouret: Rondeau", artist: "Piano & Trumpet" },
+                { time: "25:55", seconds: 1555, title: "Telemann: Heroic Marches", artist: "Duo Virtuoso" },
+                { time: "30:20", seconds: 1820, title: "Pachelbel: Canon in D", artist: "Baroque Ensemble" },
+                { time: "34:40", seconds: 2080, title: "Albinoni: Adagio", artist: "Piano & Trumpet" },
+                { time: "39:05", seconds: 2345, title: "Corelli: Christmas Concerto", artist: "Classical Duo" }
+            ]},
+            "1utkFVmrkb4": { title: "Sacred Piano Meditation Vol.1", author: "PianistJin Official", main: "音樂", sub: "心靈輕音樂", style: "鋼琴獨奏", tracks: [
+                { time: "00:00", seconds: 0, title: "Be Still My Soul", artist: "PianistJin" },
+                { time: "05:20", seconds: 320, title: "It Is Well With My Soul", artist: "PianistJin" },
+                { time: "10:45", seconds: 645, title: "Great Is Thy Faithfulness", artist: "PianistJin" },
+                { time: "16:10", seconds: 970, title: "How Great Thou Art", artist: "PianistJin" },
+                { time: "21:35", seconds: 1295, title: "Amazing Grace", artist: "PianistJin" },
+                { time: "27:00", seconds: 1620, title: "Blessed Assurance", artist: "PianistJin" },
+                { time: "32:25", seconds: 1945, title: "Come Thou Fount", artist: "PianistJin" },
+                { time: "37:50", seconds: 2270, title: "Nearer My God to Thee", artist: "PianistJin" },
+                { time: "43:15", seconds: 2595, title: "What a Friend We Have in Jesus", artist: "PianistJin" },
+                { time: "48:40", seconds: 2920, title: "Rock of Ages", artist: "PianistJin" }
+            ]},
+            "SkGU3fmmCaw": { title: "Symphonic Hymns for Orchestra & Choir", author: "Sacred Symphony Orchestra", main: "音樂", sub: "古典交響與合唱", style: "交響與合唱", tracks: [
+                { time: "00:00", seconds: 0, title: "Overture: Hymn of Triumph", artist: "Full Orchestra" },
+                { time: "06:15", seconds: 375, title: "Choral: Holy Holy Holy", artist: "Mass Choir" },
+                { time: "12:40", seconds: 760, title: "Symphonic Suite: Redemption", artist: "Orchestra & Choir" },
+                { time: "19:05", seconds: 1145, title: "Aria: My Shepherd Will Supply", artist: "Solo Soprano" },
+                { time: "25:30", seconds: 1530, title: "Interlude: Prayer in G", artist: "String Orchestra" },
+                { time: "31:55", seconds: 1915, title: "Finale: Praise the Lord", artist: "Full Ensemble" },
+                { time: "38:20", seconds: 2300, title: "Postlude: Recessional March", artist: "Brass & Organ" },
+                { time: "44:45", seconds: 2685, title: "Benediction: Amen in D", artist: "Choir & Orchestra" },
+                { time: "51:10", seconds: 3070, title: "Reflection: Agnus Dei", artist: "Chamber Choir" },
+                { time: "57:35", seconds: 3455, title: "Doxology: Praise God from Whom", artist: "Full Chorus" }
+            ]},
+            "iuhACryJ0OU": { title: "Gentle Organ Hymns for Quiet Reflection", author: "Cathedral Organist", main: "音樂", sub: "器樂演奏與管風琴", style: "管風琴獨奏", tracks: [
+                { time: "00:00", seconds: 0, title: "Prelude in E-flat: Adagio", artist: "Cathedral Organ" },
+                { time: "05:45", seconds: 345, title: "Chorale: Wachet Auf", artist: "Pipe Organ" },
+                { time: "11:30", seconds: 690, title: "Fugue in G Minor (BWV 578)", artist: "Baroque Organ" },
+                { time: "17:15", seconds: 1035, title: "Toccata & Fugue in D Minor", artist: "Cathedral Organ" },
+                { time: "23:00", seconds: 1380, title: "Ave Maria (Schubert)", artist: "Organ Transcription" },
+                { time: "28:45", seconds: 1725, title: "Chorale Prelude: Nun Danket", artist: "Pipe Organ" },
+                { time: "34:30", seconds: 2070, title: "Adagio in G Minor (Albinoni)", artist: "Organ Solo" },
+                { time: "40:15", seconds: 2415, title: "Variations: Herzlich Tut Mich", artist: "Concert Organ" },
+                { time: "46:00", seconds: 2760, title: "Prelude & Fugue in C Major", artist: "Bach Organ" },
+                { time: "51:45", seconds: 3105, title: "Postlude: Trumpet Tune", artist: "Cathedral Organ" }
+            ]},
+            "3aAaXWmwPnU": { title: "Strings & Piano Contemporary Worship", author: "Modern Worship Collective", main: "音樂", sub: "心靈輕音樂", style: "弦樂與鋼琴", tracks: [
+                { time: "00:00", seconds: 0, title: "Way Maker (Instrumental)", artist: "String Quartet" },
+                { time: "05:30", seconds: 330, title: "Goodness of God", artist: "Piano & Strings" },
+                { time: "11:00", seconds: 660, title: "What a Beautiful Name", artist: "Chamber Ensemble" },
+                { time: "16:30", seconds: 990, title: "Oceans (Where Feet May Fail)", artist: "Cello & Piano" },
+                { time: "22:00", seconds: 1320, title: "King of Kings", artist: "String Orchestra" },
+                { time: "27:30", seconds: 1650, title: "Great Are You Lord", artist: "Instrumental Ensemble" },
+                { time: "33:00", seconds: 1980, title: "Build My Life", artist: "Piano Solo" },
+                { time: "38:30", seconds: 2310, title: "Holy Spirit", artist: "Chamber Strings" },
+                { time: "44:00", seconds: 2640, title: "Cornerstone", artist: "String & Piano" },
+                { time: "49:30", seconds: 2970, title: "10,000 Reasons", artist: "Modern Ensemble" }
+            ]},
+            "ydQxlY5kKNc": { title: "PianistJin: Hymns for Healing", author: "PianistJin Official", main: "音樂", sub: "心靈輕音樂", style: "療癒鋼琴", tracks: [
+                { time: "00:00", seconds: 0, title: "Healing Waters", artist: "PianistJin" },
+                { time: "04:50", seconds: 290, title: "Peaceful Moments", artist: "PianistJin" },
+                { time: "09:40", seconds: 580, title: "Sanctuary", artist: "PianistJin" },
+                { time: "14:30", seconds: 870, title: "Stillness", artist: "PianistJin" },
+                { time: "19:20", seconds: 1160, title: "Reflection", artist: "PianistJin" },
+                { time: "24:10", seconds: 1450, title: "Grace Abounds", artist: "PianistJin" },
+                { time: "29:00", seconds: 1740, title: "Morning Prayer", artist: "PianistJin" },
+                { time: "33:50", seconds: 2030, title: "Evening Meditation", artist: "PianistJin" },
+                { time: "38:40", seconds: 2320, title: "Sacred Rest", artist: "PianistJin" },
+                { time: "43:30", seconds: 2610, title: "Divine Comfort", artist: "PianistJin" },
+                { time: "48:20", seconds: 2900, title: "Serenity in C", artist: "PianistJin" }
+            ]},
+            "HC1ZKp_kFn4": { title: "Traditional Country Gospel Songs & Hymns Collection", author: "Lifebreakthrough", main: "音樂", sub: "基督教福音詩歌", style: "鄉村民謠結他", tracks: [
+                { time: "00:00", seconds: 0, title: "Pass Me Not, O Gentle Savior", artist: "Lifebreakthrough" },
+                { time: "03:56", seconds: 236, title: "Shall We Gather At The River", artist: "Lifebreakthrough" },
+                { time: "07:20", seconds: 440, title: "Count Your Blessings", artist: "Lifebreakthrough" },
+                { time: "11:05", seconds: 665, title: "Blessed Assurance", artist: "Lifebreakthrough" },
+                { time: "14:45", seconds: 885, title: "I'll Fly Away", artist: "Lifebreakthrough" },
+                { time: "18:30", seconds: 1110, title: "Just As I Am", artist: "Lifebreakthrough" },
+                { time: "22:15", seconds: 1335, title: "The Old Rugged Cross", artist: "Lifebreakthrough" },
+                { time: "26:00", seconds: 1560, title: "Precious Memories", artist: "Lifebreakthrough" },
+                { time: "29:45", seconds: 1785, title: "In the Sweet By and By", artist: "Lifebreakthrough" },
+                { time: "33:30", seconds: 2010, title: "When the Roll Is Called Up Yonder", artist: "Lifebreakthrough" },
+                { time: "37:15", seconds: 2235, title: "Leaning on the Everlasting Arms", artist: "Lifebreakthrough" },
+                { time: "41:00", seconds: 2460, title: "Standing on the Promises", artist: "Lifebreakthrough" }
+            ]},
+            "QvADCJuzZsA": { title: "Cello & Piano Sacred Classics", author: "Chamber Sacred Music", main: "音樂", sub: "器樂演奏與管風琴", style: "大提琴與鋼琴", tracks: [
+                { time: "00:00", seconds: 0, title: "Bach: Cello Suite No.1 Prelude", artist: "Cello Solo" },
+                { time: "05:15", seconds: 315, title: "Saint-Saëns: The Swan", artist: "Cello & Piano" },
+                { time: "10:30", seconds: 630, title: "Fauré: Après un Rêve", artist: "Chamber Duo" },
+                { time: "15:45", seconds: 945, title: "Elgar: Salut d'Amour", artist: "Cello & Piano" },
+                { time: "21:00", seconds: 1260, title: "Schubert: Ave Maria", artist: "Cello Transcription" },
+                { time: "26:15", seconds: 1575, title: "Dvořák: Songs My Mother Taught Me", artist: "Chamber Duo" },
+                { time: "31:30", seconds: 1890, title: "Rachmaninoff: Vocalise", artist: "Cello & Piano" },
+                { time: "36:45", seconds: 2205, title: "Massenet: Meditation from Thaïs", artist: "Violin & Cello" },
+                { time: "42:00", seconds: 2520, title: "Brahms: Lullaby", artist: "Cello & Piano" },
+                { time: "47:15", seconds: 2835, title: "Piazzolla: Oblivion", artist: "Chamber Ensemble" }
+            ]},
+            "Evxx8iO86x8": { title: "Global Sacred Music: Choral Masterworks", author: "Global Sacred Music", main: "音樂", sub: "古典交響與合唱", style: "合唱與管弦樂", tracks: [
+                { time: "00:00", seconds: 0, title: "Handel: Hallelujah Chorus", artist: "Mass Choir & Orchestra" },
+                { time: "04:30", seconds: 270, title: "Mozart: Ave Verum Corpus", artist: "Chamber Choir" },
+                { time: "09:00", seconds: 540, title: "Fauré: Requiem - Pie Jesu", artist: "Soprano & Choir" },
+                { time: "13:30", seconds: 810, title: "Verdi: Requiem - Dies Irae", artist: "Full Orchestra" },
+                { time: "18:00", seconds: 1080, title: "Bach: Mass in B Minor - Kyrie", artist: "Baroque Choir" },
+                { time: "22:30", seconds: 1350, title: "Beethoven: Missa Solemnis - Gloria", artist: "Symphony Chorus" },
+                { time: "27:00", seconds: 1620, title: "Brahms: German Requiem - How Lovely", artist: "Full Choir" },
+                { time: "31:30", seconds: 1890, title: "Poulenc: Gloria - Laudamus Te", artist: "Choral Society" },
+                { time: "36:00", seconds: 2160, title: "Rutter: Gloria - Movement I", artist: "Modern Choir" },
+                { time: "40:30", seconds: 2430, title: "Tavener: Song for Athene", artist: "Cathedral Choir" },
+                { time: "45:00", seconds: 2700, title: "Pärt: Spiegel im Spiegel", artist: "Sacred Ensemble" },
+                { time: "49:30", seconds: 2970, title: "Whitacre: Lux Aurumque", artist: "Chamber Choir" }
+            ]}
+        };
+
+        const defaultSources = [];
+        const defaultTracks = [];
+
+        function trackSourceOf(t) {
+            return (window.YtSacredStore && YtSacredStore.normalizeSourceKind)
+                ? YtSacredStore.normalizeSourceKind(t)
+                : String((t && t.source) || 'legacy');
+        }
+
+        function isUntrustedSource(src) {
+            return src === 'dictionary' || src === 'legacy';
+        }
+
+        function isTrustedSource(src) {
+            return window.YtSacredStore && YtSacredStore.isTrustedSource
+                ? YtSacredStore.isTrustedSource(src)
+                : (src === 'chapter' || src === 'ytdlp' || src === 'import');
+        }
+
+        function sourceBadgeHtml(src) {
+            const map = {
+                chapter: ['✓', 'bg-emerald-50 text-emerald-800 border-emerald-200', '來自你貼的章節'],
+                ytdlp: ['✓', 'bg-emerald-50 text-emerald-800 border-emerald-200', '來自 yt-dlp'],
+                import: ['✓', 'bg-emerald-50 text-emerald-800 border-emerald-200', '匯入備份'],
+                url_stub: ['○', 'bg-slate-100 text-slate-600 border-slate-200', '整片占位，尚未拆歌'],
+                dictionary: ['⚠', 'bg-rose-50 text-rose-800 border-rose-200', '假資料，勿用'],
+                legacy: ['⚠', 'bg-amber-50 text-amber-900 border-amber-200', '舊假資料，勿用'],
+                memo: ['✎', 'bg-slate-100 text-slate-600 border-slate-200', '備忘（無影片）']
+            };
+            const m = map[src] || map.legacy;
+            return `<span class="text-[10px] px-1.5 py-0.5 rounded border ${m[1]}" title="${m[2]}">${m[0]}</span>`;
+        }
+
+        function refreshUntrustedBanner() {
+            const el = document.getElementById('untrustedBanner');
+            if (!el) return;
+            const n = masterDatabase.filter(t => isUntrustedSource(trackSourceOf(t))).length;
+            if (!n) {
+                el.classList.add('hidden');
+                el.innerHTML = '';
+                return;
+            }
+            el.classList.remove('hidden');
+            el.innerHTML = `還有 <strong>${n}</strong> 筆 ⚠ 假／舊資料。可點「再清一次假資料」，或等下次開啟自動再清。真歌請用左欄第 1 步重貼。`;
+        }
+
+        /** 只刪假／舊資料；不會把章節 bulk 歸零。回傳刪除筆數 */
+        function purgeUntrustedTracksCore() {
+            const before = masterDatabase.length;
+            const badVids = {};
+            masterDatabase.forEach(t => {
+                if (isUntrustedSource(trackSourceOf(t)) && t.videoId) badVids[t.videoId] = 1;
+            });
+            masterDatabase = masterDatabase.filter(t => !isUntrustedSource(trackSourceOf(t)));
+            const still = {};
+            masterDatabase.forEach(t => { if (t.videoId) still[t.videoId] = 1; });
+            sourceVideos = sourceVideos.filter(s => still[s.id] || !badVids[s.id]);
+            return before - masterDatabase.length;
+        }
+
+        let sourceVideos = [];
+        let masterDatabase = [];
+        let storeReady = false;
+        let persistTimer = null;
+
+        let currentPage = 1;
+        let pageSize = 20;
+        let filteredDatabase = [];
+        let batchAbortFlag = false;
+        let lastOcrDataUrl = '';
+
+        function escHtml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function normalizeTitle(t) {
+            if (window.YtSacredMatch && YtSacredMatch.normalizeTitle) return YtSacredMatch.normalizeTitle(t);
+            return String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        }
+
+        function persistData() {
+            if (!window.YtSacredStore) return;
+            if (persistTimer) clearTimeout(persistTimer);
+            persistTimer = setTimeout(function () {
+                YtSacredStore.saveAll(sourceVideos, masterDatabase).catch(function (e) {
+                    console.error('IndexedDB save failed:', e);
+                    alert('儲存失敗（IndexedDB）。請立刻用「匯出」備份。');
+                });
+            }, 120);
+        }
+
+        function persistDataNow() {
+            if (!window.YtSacredStore) return Promise.resolve();
+            if (persistTimer) clearTimeout(persistTimer);
+            return YtSacredStore.saveAll(sourceVideos, masterDatabase);
+        }
+
+        function watchUrl(videoId, seconds) {
+            const id = String(videoId || '').trim();
+            const sec = Math.max(0, Number(seconds) || 0);
+            if (!id || id.indexOf('_') >= 0 || id.length < 5) {
+                return 'https://www.youtube.com/';
+            }
+            return `https://www.youtube.com/watch?v=${encodeURIComponent(id)}&t=${sec}s`;
+        }
+
+        function parseTimeToSeconds(tok) {
+            const parts = String(tok || '').split(':').map(n => parseInt(n, 10));
+            if (parts.some(isNaN)) return 0;
+            if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+            if (parts.length === 2) return parts[0] * 60 + parts[1];
+            return parts[0] || 0;
+        }
+
+        function parseChapterLines(text) {
+            const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            const tracks = [];
+            const timeRe = /^((?:\d{1,2}:)?\d{1,2}:\d{2})\s+(.+)$/;
+            for (const line of lines) {
+                const m = line.match(timeRe);
+                if (!m) continue;
+                const time = m[1];
+                const title = m[2].replace(/\s+[-–—]\s+.*$/, '').trim();
+                tracks.push({ time, seconds: parseTimeToSeconds(time), title, artist: '' });
+            }
+            return tracks;
+        }
+
+        function buildDupeGroups() {
+            const map = new Map();
+            masterDatabase.forEach(item => {
+                if (!item || !item.title) return;
+                const key = normalizeTitle(item.title);
+                if (!key) return;
+                if (!map.has(key)) map.set(key, []);
+                map.get(key).push(item);
+            });
+            return [...map.entries()]
+                .map(([key, items]) => ({ key, items, title: items[0].title, count: items.length }))
+                .filter(g => g.count > 1)
+                .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title));
+        }
+
+        function loadUser10Batch() {
+            document.getElementById('batchUrlInput').value = user10Urls.join('\n');
+        }
+
+        function getVerifiedPack() {
+            return (window.YtVerifiedTracklists && YtVerifiedTracklists.videos)
+                ? YtVerifiedTracklists
+                : null;
+        }
+
+        function buildVerifiedPasteText() {
+            const pack = getVerifiedPack();
+            if (!pack) return '';
+            const order = user10Urls.map(u => extractVideoId(u)).filter(Boolean);
+            const blocks = [];
+            order.forEach(vid => {
+                const v = pack.videos[vid];
+                if (!v) return;
+                const lines = [v.url || `https://www.youtube.com/watch?v=${vid}`];
+                (v.tracks || []).forEach(t => {
+                    lines.push(`${t.time || '00:00'} ${t.title || ''}`.trim());
+                });
+                blocks.push(lines.join('\n'));
+            });
+            return blocks.join('\n\n');
+        }
+
+        function refreshVerifiedPackMeta() {
+            const el = document.getElementById('verifiedPackMeta');
+            if (!el) return;
+            const pack = getVerifiedPack();
+            if (!pack) {
+                el.textContent = '未載入 yt_verified_tracklists.js';
+                return;
+            }
+            const vids = Object.keys(pack.videos || {});
+            let tracks = 0, stubs = 0, chapters = 0;
+            vids.forEach(id => {
+                const v = pack.videos[id];
+                const n = (v.tracks || []).length;
+                tracks += n;
+                if (v.source === 'url_stub') stubs++;
+                else chapters++;
+            });
+            el.textContent = `核對日 ${pack.verified_at || '?'} · ${vids.length} 片 · ${tracks} 列（章節片 ${chapters}／整片占位 ${stubs}）`;
+        }
+
+        function fillVerifiedTracklistsOnly() {
+            const text = buildVerifiedPasteText();
+            if (!text) {
+                alert('找不到已核對 TRACKLIST 資料。');
+                return;
+            }
+            document.getElementById('chapterPasteInput').value = text;
+            refreshVerifiedPackMeta();
+            alert('已填入文字框。可先看內容，再按「貼上並加入總表」。');
+        }
+
+        function importVerifiedTracklists() {
+            const pack = getVerifiedPack();
+            if (!pack) {
+                alert('找不到已核對 TRACKLIST 資料（yt_verified_tracklists.js）。');
+                return;
+            }
+            const order = user10Urls.map(u => extractVideoId(u)).filter(Boolean);
+            const baseTs = Date.now();
+            let okN = 0, trackN = 0, stubN = 0;
+            order.forEach((vid, i) => {
+                const v = pack.videos[vid];
+                if (!v) return;
+                const tracks = (v.tracks && v.tracks.length)
+                    ? v.tracks
+                    : [{ time: '00:00', seconds: 0, title: `整片起播 · ${v.title || vid}` }];
+                const finalKind = (v.source === 'chapter') ? 'chapter' : 'url_stub';
+                const videoTitle = v.title || `YouTube [${vid}]`;
+                sourceVideos = sourceVideos.filter(s => s.id !== vid);
+                masterDatabase = masterDatabase.filter(t => t.videoId !== vid);
+                sourceVideos.unshift({
+                    id: vid,
+                    title: videoTitle,
+                    author: v.author || '已核對章節',
+                    url: v.url || `https://www.youtube.com/watch?v=${vid}`,
+                    mainCategory: '音樂',
+                    subCategory: '基督教福音詩歌',
+                    styleCat: finalKind === 'chapter' ? '已核對章節' : '整片占位',
+                    hasPlaylist: tracks.length > 1,
+                    trackCount: tracks.length
+                });
+                const newTracks = tracks.map((st, tIdx) => ({
+                    id: `${vid}_ver_${tIdx}_${baseTs}_${i}`,
+                    mainCategory: '音樂',
+                    subCategory: '基督教福音詩歌',
+                    styleCat: finalKind === 'chapter' ? '已核對章節' : '整片占位',
+                    title: st.title,
+                    artist: v.author || '已核對章節',
+                    videoTitle,
+                    videoId: vid,
+                    time: st.time || '00:00',
+                    seconds: typeof st.seconds === 'number' ? st.seconds : 0,
+                    isFav: false,
+                    timestamp: baseTs + i * 1000 + tIdx,
+                    titleNorm: normalizeTitle(st.title),
+                    hymn_match_status: 'none',
+                    source: finalKind
+                }));
+                masterDatabase = [...newTracks, ...masterDatabase];
+                okN++;
+                trackN += tracks.length;
+                if (finalKind === 'url_stub') stubN++;
+            });
+            document.getElementById('chapterPasteInput').value = buildVerifiedPasteText();
+            persistData();
+            currentPage = 1;
+            updateCounters();
+            filterDatabase();
+            renderSourcesTable();
+            refreshVerifiedPackMeta();
+            let suggestN = 0;
+            if (window.YtSacredMatch && typeof YtSacredMatch.suggestBatch === 'function') {
+                suggestN = YtSacredMatch.suggestBatch(masterDatabase) || 0;
+                persistData();
+                updateCounters();
+            }
+            alert(`已核對真 TRACKLIST：${okN} 片入庫、共 ${trackN} 列（整片占位 ${stubN}）。` +
+                (suggestN ? `已自動寫入 ${suggestN} 條對名建議——請到「對歌名」確認，確認後找聖詩會顯示「也可聽」。` : '點歌名／聽看＝真 YouTube。可再到「對歌名」批次建議。'));
+            switchTab(suggestN ? 'match' : 'database');
+        }
+
+        function refreshAiPromptMeta() {
+            const el = document.getElementById('aiPromptMeta');
+            if (!el) return;
+            const n = masterDatabase.filter(t => t && t.hymn_match_status === 'confirmed' && t.hymn_id).length;
+            el.textContent = n ? (`目前已確認 ${n} 首可進 Prompt`) : '尚無已確認曲目——先到「對歌名」確認';
+        }
+
+        function copyAiPrompt(kind) {
+            if (!window.HymnMainMetaBridge) {
+                alert('未載入 hymn_main_meta_bridge.js');
+                return;
+            }
+            const pack = HymnMainMetaBridge.buildAiPrompts(masterDatabase);
+            if (!pack.count) {
+                alert('請先在「對歌名」確認至少一首站內 id。');
+                switchTab('match');
+                return;
+            }
+            const text = kind === 'story' ? pack.story : pack.medley;
+            const done = () => alert('已複製（' + pack.count + ' 首已確認）。貼到你用的 AI；草稿須人審。');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done).catch(() => {
+                    window.prompt('請手動複製：', text);
+                });
+            } else {
+                window.prompt('請手動複製：', text);
+            }
+        }
+
+        function updateCounters() {
+            document.getElementById('totalTracksCount').textContent = masterDatabase.length;
+            document.getElementById('totalSourcesCount').textContent = sourceVideos.length;
+            document.getElementById('totalFavCount').textContent = masterDatabase.filter(i => i.isFav).length;
+            refreshAiPromptMeta();
+            const dupeEl = document.getElementById('totalDupeCount');
+            if (dupeEl) dupeEl.textContent = String(buildDupeGroups().length);
+            const pend = document.getElementById('totalMatchPending');
+            if (pend) {
+                pend.textContent = String(masterDatabase.filter(t => {
+                    if (window.YtSacredMatch && !YtSacredMatch.isMatchEligible(t)) return false;
+                    const s = t.hymn_match_status || 'none';
+                    return s === 'none' || s === 'suggested';
+                }).length);
+            }
+            refreshUntrustedBanner();
+        }
+
+        function changePageSize() {
+            const sel = document.getElementById('pageSizeSelect');
+            pageSize = parseInt(sel && sel.value, 10) || 20;
+            currentPage = 1;
+            renderDatabaseTable();
+        }
+
+        function splitChapterBlocks(raw) {
+            const text = String(raw || '').replace(/\r\n/g, '\n').trim();
+            if (!text) return [];
+            let parts = text.split(/\n\s*===\s*\n/);
+            if (parts.length === 1) {
+                parts = text.split(/\n{2,}/);
+            }
+            return parts.map(p => p.trim()).filter(Boolean);
+        }
+
+        function ingestChapterBlock(block, baseTs, offset) {
+            const lines = block.split(/\n/).map(l => l.trim()).filter(Boolean);
+            const urlLine = lines.find(l => /youtu\.?be|youtube\.com/i.test(l)) || '';
+            const videoId = urlLine ? extractVideoId(urlLine) : null;
+            if (!videoId) return { ok: false, reason: '無網址', tracks: 0 };
+
+            const chapterText = lines.filter(l => l !== urlLine && !/^===+$/.test(l)).join('\n');
+            let tracks = parseChapterLines(chapterText);
+            let sourceKind = 'chapter';
+            if (tracks.length === 0) {
+                tracks = [{ time: '00:00', seconds: 0, title: `整片起播 [${videoId}]（尚無章節列）`, artist: '' }];
+                sourceKind = 'url_stub';
+            }
+            const titleGuess = tracks.length > 1
+                ? `章節匯入 [${videoId}]（${tracks.length} 首）`
+                : `待補章節 [${videoId}]`;
+            sourceVideos = sourceVideos.filter(s => s.id !== videoId);
+            masterDatabase = masterDatabase.filter(t => t.videoId !== videoId);
+            sourceVideos.unshift({
+                id: videoId,
+                title: titleGuess,
+                author: '章節貼上',
+                url: urlLine.startsWith('http') ? urlLine : `https://www.youtube.com/watch?v=${videoId}`,
+                mainCategory: '音樂',
+                subCategory: '基督教福音詩歌',
+                styleCat: sourceKind === 'chapter' ? '章節表' : '整片占位',
+                hasPlaylist: tracks.length > 1,
+                trackCount: tracks.length
+            });
+            const newTracks = tracks.map((st, tIdx) => ({
+                id: `${videoId}_ch_${tIdx}_${baseTs}_${offset}`,
+                mainCategory: '音樂',
+                subCategory: '基督教福音詩歌',
+                styleCat: sourceKind === 'chapter' ? '章節表' : '整片占位',
+                title: st.title,
+                artist: st.artist || '章節貼上',
+                videoTitle: titleGuess,
+                videoId,
+                time: st.time,
+                seconds: st.seconds,
+                isFav: false,
+                timestamp: baseTs + offset * 1000 + tIdx,
+                titleNorm: normalizeTitle(st.title),
+                hymn_match_status: 'none',
+                source: sourceKind
+            }));
+            masterDatabase = [...newTracks, ...masterDatabase];
+            return { ok: true, videoId, tracks: tracks.length, source: sourceKind };
+        }
+
+        function importChapterPaste() {
+            const raw = (document.getElementById('chapterPasteInput').value || '').trim();
+            if (!raw) {
+                alert('請先貼上網址＋章節時間軸（可多片）。');
+                return;
+            }
+            const blocks = splitChapterBlocks(raw);
+            const baseTs = Date.now();
+            let okN = 0, trackN = 0, fail = 0;
+            blocks.forEach((b, i) => {
+                const r = ingestChapterBlock(b, baseTs, i);
+                if (r.ok) { okN++; trackN += r.tracks; }
+                else fail++;
+            });
+            if (!okN) {
+                alert('找不到有效區塊（每塊需含 YouTube 網址）。');
+                return;
+            }
+            persistData();
+            currentPage = 1;
+            updateCounters();
+            filterDatabase();
+            renderSourcesTable();
+            alert(`章節 bulk：成功 ${okN} 片、共 ${trackN} 首` + (fail ? `；略過 ${fail} 塊` : '') + '。');
+            document.getElementById('chapterPasteInput').value = '';
+            switchTab('database');
+        }
+
+        function yieldToMain() {
+            return new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+        }
+
+        function logBatch(msg, type = 'info') {
+            const content = document.getElementById('batchLogContent');
+            if (!content) return;
+            const colors = {
+                info: 'text-slate-300',
+                success: 'text-emerald-400',
+                warn: 'text-amber-400',
+                error: 'text-rose-400',
+                highlight: 'text-indigo-300 font-bold'
+            };
+            const time = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+            const line = document.createElement('div');
+            line.className = colors[type] || colors.info;
+            line.innerHTML = `<span class="text-slate-500">[${time}]</span> ${msg}`;
+            content.appendChild(line);
+            content.scrollTop = content.scrollHeight;
+        }
+
+        function updateProgress(current, total, extraText = '') {
+            const percent = Math.round((current / total) * 100);
+            document.getElementById('batchProgressFill').style.width = percent + '%';
+            document.getElementById('batchProgressPercent').innerText = percent + '%';
+            document.getElementById('batchProgressLabel').innerText = `已分析 ${current}/${total} 址 ${extraText}`;
+        }
+
+        function cancelBatchImport() {
+            batchAbortFlag = true;
+            logBatch('⏹️ 使用者手動中斷', 'warn');
+        }
+
+        function extractVideoId(url) {
+            if (url.includes('youtu.be/')) return url.split('youtu.be/')[1].split('?')[0];
+            if (url.includes('watch?v=')) return url.split('watch?v=')[1].split('&')[0];
+            if (url.includes('embed/')) return url.split('embed/')[1].split('?')[0];
+            return null;
+        }
+
+        async function processBatchImport() {
+            const rawText = document.getElementById('batchUrlInput').value.trim();
+            if (!rawText) {
+                alert('請先貼上 YouTube 網址！');
+                return;
+            }
+
+            let urls = rawText.split('\n').map(u => u.trim()).filter(u => u.length > 0);
+            if (urls.length === 0) return;
+
+            const useDemo = !!(document.getElementById('useDemoDictionary') || {}).checked;
+            if (useDemo && !confirm('示範字典會灌入假時間軸（與 YouTube 真實曲目不符）。確定仍要開啟？')) {
+                return;
+            }
+
+            batchAbortFlag = false;
+            const btn = document.getElementById('batchAnalyzeBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<span>處理中…</span>`;
+
+            document.getElementById('batchStatusPanel').classList.remove('hidden');
+            document.getElementById('batchProgressBar').classList.remove('hidden');
+            document.getElementById('batchLogContent').innerHTML = '';
+            updateProgress(0, urls.length);
+
+            logBatch(useDemo
+                ? `⚠ 示範字典模式（勿當真，非 YT 章節），共 ${urls.length} 址`
+                : `登記網址＝整片 00:00 占位（不拆假曲目），共 ${urls.length} 址`, 'highlight');
+            await yieldToMain();
+
+            let addedSourceCount = 0;
+            let addedTrackCount = 0;
+            const baseTs = Date.now();
+
+            try {
+                for (let i = 0; i < urls.length; i++) {
+                    if (batchAbortFlag) break;
+
+                    const url = urls[i];
+                    const videoId = extractVideoId(url);
+                    if (!videoId) continue;
+
+                    if (sourceVideos.some(s => s.id === videoId)) {
+                        logBatch(`⏭️ [${i+1}/${urls.length}] 跳過重複來源：${videoId}`, 'warn');
+                        updateProgress(i + 1, urls.length, `(${addedTrackCount} 首入庫)`);
+                        await yieldToMain();
+                        continue;
+                    }
+
+                    let themeData;
+                    let sourceKind;
+                    if (useDemo && videoThemeDictionary[videoId]) {
+                        themeData = videoThemeDictionary[videoId];
+                        sourceKind = 'dictionary';
+                    } else {
+                        themeData = {
+                            title: `待補章節 [${videoId}]`,
+                            author: '網址登記',
+                            main: '音樂',
+                            sub: '基督教福音詩歌',
+                            style: '整片占位',
+                            tracks: [
+                                { time: '00:00', seconds: 0, title: `整片起播 [${videoId}]`, artist: '網址登記' }
+                            ]
+                        };
+                        sourceKind = 'url_stub';
+                    }
+
+                    sourceVideos.unshift({
+                        id: videoId,
+                        title: themeData.title,
+                        author: themeData.author,
+                        url: url,
+                        mainCategory: themeData.main,
+                        subCategory: themeData.sub,
+                        styleCat: themeData.style,
+                        hasPlaylist: themeData.tracks.length > 1,
+                        trackCount: themeData.tracks.length
+                    });
+                    addedSourceCount++;
+
+                    const newTracks = themeData.tracks.map((st, tIdx) => ({
+                        id: `${videoId}_tr_${tIdx}_${baseTs}`,
+                        mainCategory: themeData.main,
+                        subCategory: themeData.sub,
+                        styleCat: themeData.style,
+                        title: st.title,
+                        artist: st.artist || themeData.author,
+                        videoTitle: themeData.title,
+                        videoId: videoId,
+                        time: st.time,
+                        seconds: st.seconds,
+                        isFav: false,
+                        timestamp: baseTs + (i * 100) + tIdx,
+                        titleNorm: normalizeTitle(st.title),
+                        hymn_match_status: 'none',
+                        source: sourceKind
+                    }));
+
+                    masterDatabase = [...newTracks, ...masterDatabase];
+                    addedTrackCount += themeData.tracks.length;
+
+                    if (sourceKind === 'dictionary') {
+                        logBatch(`⚠ [${i+1}/${urls.length}] 示範資料，非 YT 章節：${themeData.title} (${themeData.tracks.length} 首)`, 'warn');
+                    } else {
+                        logBatch(`✅ [${i+1}/${urls.length}] 整片占位：${videoId}（請再貼章節 bulk）`, 'success');
+                    }
+                    updateProgress(i + 1, urls.length, `(${addedTrackCount} 首入庫)`);
+                    await yieldToMain();
+                }
+
+                persistData();
+                document.getElementById('searchInput').value = '';
+                document.getElementById('filterMainCat').value = 'all';
+                document.getElementById('filterSubCat').value = 'all';
+                currentPage = 1;
+
+                updateCounters();
+                filterDatabase();
+                renderSourcesTable();
+
+                logBatch(`完成：新增來源 ${addedSourceCount}｜曲目 ${addedTrackCount}` + (useDemo ? '（含示範字典）' : '（皆為占位，請貼章節）'), 'highlight');
+
+                setTimeout(() => {
+                    if (!batchAbortFlag) {
+                        switchTab('database');
+                    }
+                }, 1000);
+
+            } catch (err) {
+                console.error("Batch import error:", err);
+                logBatch(`❌ 異常：${err.message}`, 'error');
+                persistData();
+                updateCounters();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>登記網址（整片占位）</span>`;
+            }
+        }
+
+        function purgeUntrustedTracks(silent) {
+            const removed = purgeUntrustedTracksCore();
+            if (!removed) {
+                if (!silent) alert('沒有 ⚠ 假資料可清。你貼過的真章節都還在。');
+                return 0;
+            }
+            persistData();
+            updateCounters();
+            filterDatabase();
+            renderSourcesTable();
+            if (!silent) {
+                alert(`已清掉 ${removed} 筆假資料。真章節仍保留。請用左欄第 1 步貼歌。`);
+                switchTab('database');
+            }
+            return removed;
+        }
+
+        function importYtDlpJson(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    let data = JSON.parse(e.target.result);
+                    const list = Array.isArray(data) ? data : [data];
+                    let okN = 0, trackN = 0;
+                    const baseTs = Date.now();
+                    list.forEach(function (item, idx) {
+                        if (!item || typeof item !== 'object') return;
+                        const videoId = item.id || item.display_id || extractVideoId(item.webpage_url || item.original_url || '') || '';
+                        if (!videoId) return;
+                        const chapters = Array.isArray(item.chapters) ? item.chapters : [];
+                        let tracks;
+                        if (chapters.length) {
+                            tracks = chapters.map(function (ch, i) {
+                                const start = Math.floor(Number(ch.start_time) || 0);
+                                const mm = String(Math.floor(start / 60)).padStart(2, '0');
+                                const ss = String(start % 60).padStart(2, '0');
+                                return {
+                                    time: (start >= 3600
+                                        ? String(Math.floor(start / 3600)).padStart(2, '0') + ':' + String(Math.floor((start % 3600) / 60)).padStart(2, '0') + ':' + ss
+                                        : mm + ':' + ss),
+                                    seconds: start,
+                                    title: ch.title || ('Chapter ' + (i + 1)),
+                                    artist: item.uploader || item.channel || 'yt-dlp'
+                                };
+                            });
+                        } else {
+                            tracks = [{
+                                time: '00:00', seconds: 0,
+                                title: item.title || ('整片起播 [' + videoId + ']'),
+                                artist: item.uploader || 'yt-dlp'
+                            }];
+                        }
+                        sourceVideos = sourceVideos.filter(s => s.id !== videoId);
+                        masterDatabase = masterDatabase.filter(t => t.videoId !== videoId);
+                        const vTitle = item.title || ('yt-dlp [' + videoId + ']');
+                        sourceVideos.unshift({
+                            id: videoId,
+                            title: vTitle,
+                            author: item.uploader || item.channel || 'yt-dlp',
+                            url: item.webpage_url || ('https://www.youtube.com/watch?v=' + videoId),
+                            mainCategory: '音樂',
+                            subCategory: '基督教福音詩歌',
+                            styleCat: 'yt-dlp',
+                            hasPlaylist: tracks.length > 1,
+                            trackCount: tracks.length
+                        });
+                        const srcKind = chapters.length ? 'ytdlp' : 'url_stub';
+                        const newTracks = tracks.map((st, tIdx) => ({
+                            id: videoId + '_yt_' + tIdx + '_' + baseTs,
+                            mainCategory: '音樂',
+                            subCategory: '基督教福音詩歌',
+                            styleCat: 'yt-dlp',
+                            title: st.title,
+                            artist: st.artist,
+                            videoTitle: vTitle,
+                            videoId: videoId,
+                            time: st.time,
+                            seconds: st.seconds,
+                            isFav: false,
+                            timestamp: baseTs + idx * 100 + tIdx,
+                            titleNorm: normalizeTitle(st.title),
+                            hymn_match_status: 'none',
+                            source: srcKind
+                        }));
+                        masterDatabase = newTracks.concat(masterDatabase);
+                        okN++;
+                        trackN += tracks.length;
+                    });
+                    if (!okN) {
+                        alert('JSON 裡找不到可辨識的 yt-dlp 影片（需含 id 或 webpage_url）。');
+                        return;
+                    }
+                    persistData();
+                    updateCounters();
+                    filterDatabase();
+                    renderSourcesTable();
+                    alert('yt-dlp 匯入：' + okN + ' 片、' + trackN + ' 首。');
+                    switchTab('database');
+                } catch (err) {
+                    alert('yt-dlp JSON 解析失敗：' + err.message);
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function handleSearchInput() {
+            currentPage = 1;
+            filterDatabase();
+        }
+
+        function filterDatabase() {
+            const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+            const qNorm = normalizeTitle(query);
+            const mainCatFilter = document.getElementById('filterMainCat').value;
+            const subCatFilter = document.getElementById('filterSubCat').value;
+            const srcFilter = ((document.getElementById('filterSourceKind') || {}).value) || 'all';
+            const seasonFilter = ((document.getElementById('filterSeason') || {}).value) || 'all';
+            const sortBy = document.getElementById('sortBy').value;
+            const safe = (v) => (v == null ? '' : String(v).toLowerCase());
+            let seasonIdSet = null;
+            if (seasonFilter === 'current' && window.HymnMainMetaBridge) {
+                const pack = HymnMainMetaBridge.filterTracksByCurrentSeason(masterDatabase);
+                seasonIdSet = new Set((pack.tracks || []).map(x => x.id));
+                const hint = document.getElementById('seasonHint');
+                if (hint && pack.season) {
+                    hint.textContent = '本週：' + (pack.season.zh || pack.season.code) + '（主資料 seasons；僅已確認）';
+                }
+            } else {
+                const hint = document.getElementById('seasonHint');
+                if (hint && window.HymnMainMetaBridge) {
+                    const s = HymnMainMetaBridge.currentSeason();
+                    hint.textContent = s ? ('今日節期參考：' + (s.zh || s.code)) : '';
+                }
+            }
+
+            filteredDatabase = masterDatabase.filter(item => {
+                if (!item) return false;
+                const src = trackSourceOf(item);
+                let matchesSrc = true;
+                if (srcFilter === 'trusted') matchesSrc = isTrustedSource(src);
+                else if (srcFilter === 'untrusted') matchesSrc = isUntrustedSource(src);
+                else if (srcFilter !== 'all') matchesSrc = src === srcFilter;
+                const matchesMain = (mainCatFilter === 'all' || item.mainCategory === mainCatFilter);
+                const matchesSub = (subCatFilter === 'all' || item.subCategory === subCatFilter);
+                const hay = [item.title, item.artist, item.videoTitle, item.styleCat, item.mainCategory, item.subCategory, item.videoId, src]
+                    .map(safe).join(' ');
+                const matchesQuery = !query || hay.includes(query) || (qNorm && normalizeTitle(item.title).includes(qNorm));
+                const matchesSeason = !seasonIdSet || seasonIdSet.has(item.id);
+                return matchesSrc && matchesMain && matchesSub && matchesQuery && matchesSeason;
+            });
+
+            if (sortBy === 'newest') {
+                filteredDatabase.sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
+            } else if (sortBy === 'title') {
+                filteredDatabase.sort((a, b) => String(a.title || '').localeCompare(String(b.title || ''), 'en', { sensitivity: 'base' }));
+            } else if (sortBy === 'artist') {
+                filteredDatabase.sort((a, b) => String(a.artist || '').localeCompare(String(b.artist || '')) || String(a.title || '').localeCompare(String(b.title || '')));
+            } else if (sortBy === 'video') {
+                filteredDatabase.sort((a, b) => String(a.videoTitle || '').localeCompare(String(b.videoTitle || '')) || (Number(a.seconds) || 0) - (Number(b.seconds) || 0));
+            } else if (sortBy === 'category') {
+                filteredDatabase.sort((a, b) => String(a.mainCategory || '').localeCompare(String(b.mainCategory || '')) || String(a.subCategory || '').localeCompare(String(b.subCategory || '')) || String(a.title || '').localeCompare(String(b.title || '')));
+            } else if (sortBy === 'time') {
+                filteredDatabase.sort((a, b) => (Number(a.seconds) || 0) - (Number(b.seconds) || 0));
+            }
+
+            renderDatabaseTable();
+        }
+
+        function renderDatabaseTable() {
+            const tbody = document.getElementById('databaseTableBody');
+            const cards = document.getElementById('databaseCards');
+            const emptyState = document.getElementById('emptyState');
+            const total = filteredDatabase.length;
+
+            if (total === 0) {
+                tbody.innerHTML = '';
+                if (cards) cards.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                document.getElementById('paginationInfo').innerText = "顯示 0 - 0 筆，共 0 筆";
+                document.getElementById('pageNumDisplay').innerText = "1 / 1";
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            const totalPages = Math.ceil(total / pageSize) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const startIdx = (currentPage - 1) * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, total);
+            const pageItems = filteredDatabase.slice(startIdx, endIdx);
+
+            document.getElementById('paginationInfo').innerText = `顯示第 ${startIdx + 1} - ${endIdx} 筆，共 ${total} 筆（庫內 ${masterDatabase.length}）`;
+            document.getElementById('pageNumDisplay').innerText = `${currentPage} / ${totalPages}`;
+
+            function confirmedBits(item) {
+                if (item.hymn_match_status !== 'confirmed') return '';
+                const vg = (window.HymnMainMetaBridge && item.hymn_id)
+                    ? HymnMainMetaBridge.variantGroupForHymnId(item.hymn_id) : null;
+                const seasons = (window.HymnMainMetaBridge && item.hymn_id)
+                    ? HymnMainMetaBridge.seasonsOfHymn(item.hymn_id) : [];
+                let extra = '<div class="text-[10px] text-emerald-700 mt-0.5">已對站內 · 找聖詩可聽</div>';
+                if (item.hymn_path) {
+                    extra += `<button type="button" data-action="open-hymn" data-path="${escHtml(item.hymn_path)}" class="mt-1 text-[10px] text-indigo-700 underline">開站內詩頁</button>`;
+                }
+                if (vg) extra += `<div class="text-[10px] text-slate-500">異本群：${escHtml(vg.label)}</div>`;
+                if (seasons && seasons.length) extra += `<div class="text-[10px] text-slate-500">節期：${escHtml(seasons.join('、'))}</div>`;
+                return extra;
+            }
+
+            function actionBtns(item) {
+                return `
+                    <button type="button" data-action="fav" data-id="${escHtml(item.id)}" class="touch-btn px-3 rounded-xl text-sm font-medium transition ${item.isFav ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">${item.isFav ? '♥' : '♡'}</button>
+                    <button type="button" data-action="play" data-video="${escHtml(item.videoId)}" data-seconds="${escHtml(item.seconds)}" data-title="${escHtml(item.title)}" data-artist="${escHtml(item.artist)}" class="touch-btn bg-indigo-600 hover:bg-indigo-700 text-white px-4 rounded-xl text-xs font-semibold transition shadow-sm">聽／看</button>`;
+            }
+
+            tbody.innerHTML = pageItems.map(item => {
+                const src = trackSourceOf(item);
+                const untrusted = isUntrustedSource(src);
+                const rowCls = untrusted ? 'bg-rose-50/70 hover:bg-rose-50' : 'hover:bg-slate-50/80';
+                return `
+                <tr class="${rowCls} transition" data-track-id="${escHtml(item.id)}">
+                    <td class="p-3.5">
+                        <div class="font-bold text-slate-800">${escHtml(item.mainCategory)}</div>
+                        <button type="button" class="text-[11px] text-indigo-600 bg-indigo-50 inline-block px-1.5 py-0.5 rounded mt-0.5 hover:bg-indigo-100 transition" data-action="filter-sub" data-value="${escHtml(item.subCategory)}">${escHtml(item.subCategory)}</button>
+                        <div class="text-[10px] text-slate-500 mt-0.5">特色: ${escHtml(item.styleCat)}</div>
+                        <div class="mt-1">${sourceBadgeHtml(src)}</div>
+                    </td>
+                    <td class="p-3.5">
+                        <button type="button" class="font-bold ${untrusted ? 'text-rose-800' : 'text-indigo-700'} text-xs hover:underline text-left" data-action="play" data-video="${escHtml(item.videoId)}" data-seconds="${escHtml(item.seconds)}" data-title="${escHtml(item.title)}" data-artist="${escHtml(item.artist)}" title="開 YouTube 該秒">${escHtml(item.title)}</button>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${escHtml(item.artist)}</div>
+                        ${confirmedBits(item)}
+                    </td>
+                    <td class="p-3.5">
+                        <a href="${escHtml(watchUrl(item.videoId, item.seconds))}" target="_blank" rel="noopener noreferrer" class="text-xs text-indigo-600 hover:underline truncate max-w-xs block font-medium" title="開 YouTube 該秒">${escHtml(item.videoTitle || item.videoId)}</a>
+                        <div class="text-[11px] text-slate-400 font-mono mt-0.5">${escHtml(item.time)}</div>
+                    </td>
+                    <td class="p-3.5 text-right whitespace-nowrap"><div class="inline-flex items-center gap-2">${actionBtns(item)}</div></td>
+                </tr>`;
+            }).join('');
+
+            if (cards) {
+                cards.innerHTML = pageItems.map(item => {
+                    const src = trackSourceOf(item);
+                    const untrusted = isUntrustedSource(src);
+                    return `
+                    <article class="rounded-2xl border ${untrusted ? 'border-rose-200 bg-rose-50/60' : 'border-slate-200 bg-white'} p-4 shadow-sm" data-track-id="${escHtml(item.id)}">
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                            <div class="min-w-0">
+                                <button type="button" class="font-bold text-base ${untrusted ? 'text-rose-800' : 'text-indigo-700'} text-left hover:underline leading-snug" data-action="play" data-video="${escHtml(item.videoId)}" data-seconds="${escHtml(item.seconds)}" data-title="${escHtml(item.title)}" data-artist="${escHtml(item.artist)}">${escHtml(item.title)}</button>
+                                <div class="text-xs text-slate-500 mt-1">${escHtml(item.artist)}</div>
+                            </div>
+                            ${sourceBadgeHtml(src)}
+                        </div>
+                        <div class="text-[11px] text-slate-600 mb-1">${escHtml(item.mainCategory)} · ${escHtml(item.subCategory)} · ${escHtml(item.styleCat)}</div>
+                        <a href="${escHtml(watchUrl(item.videoId, item.seconds))}" target="_blank" rel="noopener noreferrer" class="text-xs text-indigo-600 underline break-all">${escHtml(item.videoTitle || item.videoId)}</a>
+                        <div class="text-[11px] text-slate-400 font-mono mt-0.5 mb-2">${escHtml(item.time)}</div>
+                        ${confirmedBits(item)}
+                        <div class="mt-3 flex gap-2">${actionBtns(item)}</div>
+                    </article>`;
+                }).join('');
+            }
+        }
+
+        function quickFilter(type, value) {
+            if (type === 'search') document.getElementById('searchInput').value = value;
+            if (type === 'sub') document.getElementById('filterSubCat').value = value;
+            currentPage = 1;
+            filterDatabase();
+            document.getElementById('databasePanel').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredDatabase.length / pageSize) || 1;
+            currentPage += direction;
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            renderDatabaseTable();
+        }
+
+        function playTrack(videoId, seconds, title, artist) {
+            const container = document.getElementById('playerContainer');
+            const titleEl = document.getElementById('nowPlayingTitle');
+            const subEl = document.getElementById('nowPlayingSub');
+            const metaEl = document.getElementById('nowPlayingMeta');
+            const externalBtn = document.getElementById('fallbackExternalPlayBtn');
+            const directUrl = watchUrl(videoId, seconds);
+
+            titleEl.innerText = title || '--';
+            subEl.innerText = artist || '';
+            metaEl.innerText = (seconds || 0) + ' 秒';
+            externalBtn.href = directUrl;
+
+            try {
+                const w = window.open(directUrl, '_blank', 'noopener,noreferrer');
+                if (!w) {
+                    container.classList.remove('hidden');
+                    document.getElementById('playerStatusBadge').textContent = '瀏覽器擋了新分頁：請點下方再開';
+                } else {
+                    container.classList.add('hidden');
+                }
+            } catch (e) {
+                container.classList.remove('hidden');
+                document.getElementById('playerStatusBadge').textContent = '請點下方再開 YouTube';
+            }
+        }
+
+        function closePlayer() {
+            document.getElementById('playerContainer').classList.add('hidden');
+        }
+
+        function renderDupesPanel() {
+            const list = document.getElementById('dupesList');
+            const empty = document.getElementById('dupesEmpty');
+            const q = normalizeTitle((document.getElementById('dupeSearchInput') || {}).value || '');
+            let groups = buildDupeGroups();
+            if (q) groups = groups.filter(g => normalizeTitle(g.title).includes(q) || g.key.includes(q));
+            if (!groups.length) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            list.innerHTML = groups.map(g => `
+                <div class="border border-slate-200 rounded-xl p-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+                        <h3 class="font-bold text-slate-900 text-sm">${escHtml(g.title)}</h3>
+                        <span class="text-[11px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">${g.count} 個版本</span>
+                    </div>
+                    <ul class="space-y-2">
+                        ${g.items.map(item => `
+                            <li class="flex flex-wrap items-center justify-between gap-2 text-xs bg-slate-50 rounded-lg px-3 py-2">
+                                <div>
+                                    <div class="font-medium text-slate-800">${escHtml(item.artist)} · ${escHtml(item.styleCat || '')}</div>
+                                    <div class="text-slate-500">${escHtml(item.videoTitle)} · ${escHtml(item.time)}</div>
+                                </div>
+                                <button type="button" data-action="play" data-video="${escHtml(item.videoId)}" data-seconds="${escHtml(item.seconds)}" data-title="${escHtml(item.title)}" data-artist="${escHtml(item.artist)}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-semibold">聽／看</button>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `).join('');
+        }
+
+        function onLibraryClick(e) {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.getAttribute('data-action');
+            if (action === 'play') {
+                playTrack(btn.getAttribute('data-video'), btn.getAttribute('data-seconds'), btn.getAttribute('data-title'), btn.getAttribute('data-artist'));
+            } else if (action === 'fav') {
+                toggleFavorite(btn.getAttribute('data-id'));
+            } else if (action === 'filter-sub') {
+                quickFilter('sub', btn.getAttribute('data-value'));
+            } else if (action === 'filter-search') {
+                quickFilter('search', btn.getAttribute('data-value'));
+            } else if (action === 'match-confirm') {
+                confirmOneMatch(btn.getAttribute('data-id'), btn.getAttribute('data-hymn'), btn.getAttribute('data-label'), btn.getAttribute('data-path'));
+            } else if (action === 'match-reject') {
+                rejectOneMatch(btn.getAttribute('data-id'));
+            } else if (action === 'match-pick') {
+                confirmOneMatch(btn.getAttribute('data-id'), btn.getAttribute('data-hymn'), btn.getAttribute('data-label'), btn.getAttribute('data-path'));
+            } else if (action === 'open-hymn') {
+                let p = (btn.getAttribute('data-path') || '').replace(/\\/g, '/').replace(/^\.\.\//, '');
+                if (!p) return;
+                if (p.indexOf('hymn/') !== 0) p = 'hymn/' + p;
+                const parts = p.split('/');
+                const url = '../' + parts.map(function (part, i) {
+                    return i === parts.length - 1 ? encodeURIComponent(part) : part;
+                }).join('/');
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
+        }
+
+        function renderMatchPanel() {
+            const list = document.getElementById('matchList');
+            const empty = document.getElementById('matchEmpty');
+            const statusEl = document.getElementById('matchIndexStatus');
+            const idxN = (window.PH_SEARCH_INDEX && PH_SEARCH_INDEX.hymns) ? PH_SEARCH_INDEX.hymns.length : 0;
+            statusEl.textContent = idxN
+                ? `站內索引已載入 ${idxN} 首。建議≠確認；確認後才可供找／研究捷徑讀取。`
+                : '尚未載入站內索引（ph_search_index.js）。仍可手動匯出／聽看，但無法建議對歌名。';
+
+            const filt = (document.getElementById('matchStatusFilter') || {}).value || 'needs';
+            const q = normalizeTitle((document.getElementById('matchSearchInput') || {}).value || '');
+            let rows = masterDatabase.slice().filter(t => {
+                if (window.YtSacredMatch) return YtSacredMatch.isMatchEligible(t);
+                return isTrustedSource(trackSourceOf(t)) || trackSourceOf(t) === 'url_stub';
+            });
+            rows = rows.filter(t => {
+                const s = t.hymn_match_status || 'none';
+                if (filt === 'needs') return s === 'none' || s === 'suggested';
+                if (filt === 'suggested') return s === 'suggested';
+                if (filt === 'confirmed') return s === 'confirmed';
+                if (filt === 'rejected') return s === 'rejected';
+                return true;
+            });
+            if (q) rows = rows.filter(t => normalizeTitle(t.title).includes(q));
+            rows.sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
+            rows = rows.slice(0, 80);
+
+            if (!rows.length) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            const M = window.YtSacredMatch;
+            list.innerHTML = rows.map(t => {
+                const cands = (M && idxN) ? M.suggestForTitle(t.title, 4) : [];
+                const status = t.hymn_match_status || 'none';
+                const badge = status === 'confirmed' ? '已確認' : (status === 'suggested' ? '建議待確認' : (status === 'rejected' ? '已略過' : '未對'));
+                const candHtml = cands.map(c => `
+                    <button type="button" data-action="match-pick" data-id="${escHtml(t.id)}" data-hymn="${escHtml(c.id)}" data-label="${escHtml(M.labelOf(c))}" data-path="${escHtml(c.path || '')}"
+                        class="block w-full text-left text-[11px] px-2 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-indigo-400 mb-1">
+                        <span class="font-semibold text-indigo-700">分數 ${c.score}</span> · ${escHtml(M.labelOf(c))}
+                    </button>`).join('') || '<div class="text-[11px] text-slate-400">無高分建議（可改歌名或略過）</div>';
+                return `
+                <div class="border border-slate-200 rounded-xl p-3 bg-slate-50/80">
+                    <div class="flex flex-wrap justify-between gap-2 mb-2">
+                        <div>
+                            <div class="font-bold text-sm text-slate-900">${escHtml(t.title)}</div>
+                            <div class="text-[11px] text-slate-500">${escHtml(t.artist)} · ${escHtml(t.videoTitle)} · ${escHtml(t.time)}</div>
+                            <div class="text-[10px] mt-0.5 ${status === 'confirmed' ? 'text-emerald-700' : 'text-amber-700'}">${badge}${t.hymn_label ? ' · ' + escHtml(t.hymn_label) : ''}</div>
+                        </div>
+                        <div class="flex flex-wrap gap-1">
+                            <button type="button" data-action="play" data-video="${escHtml(t.videoId)}" data-seconds="${escHtml(t.seconds)}" data-title="${escHtml(t.title)}" data-artist="${escHtml(t.artist)}" class="touch-btn px-3 bg-indigo-600 text-white rounded-lg text-[11px] font-semibold">聽／看</button>
+                            ${t.hymn_path ? `<button type="button" data-action="open-hymn" data-path="${escHtml(t.hymn_path)}" class="px-2 py-1 bg-slate-200 text-slate-800 rounded-lg text-[11px]">開站內詩頁</button>` : ''}
+                            <button type="button" data-action="match-reject" data-id="${escHtml(t.id)}" class="px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-[11px]">略過</button>
+                        </div>
+                    </div>
+                    <div class="mt-1">${candHtml}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function confirmOneMatch(trackId, hymnId, label, path) {
+            const t = masterDatabase.find(x => String(x.id) === String(trackId));
+            if (!t) return;
+            if (window.YtSacredMatch) {
+                YtSacredMatch.confirmMatch(t, hymnId ? { id: hymnId, zh: label, path: path } : null);
+            } else {
+                t.hymn_id = hymnId; t.hymn_label = label; t.hymn_path = path; t.hymn_match_status = 'confirmed';
+            }
+            persistData();
+            updateCounters();
+            renderMatchPanel();
+            filterDatabase();
+            refreshAiPromptMeta();
+            const note = document.getElementById('matchIndexStatus');
+            if (note) {
+                note.textContent = (note.textContent || '') + ' · 剛確認的曲目已可供找聖詩「也可聽」（側欄搜該詩）。';
+            }
+        }
+
+        function rejectOneMatch(trackId) {
+            const t = masterDatabase.find(x => String(x.id) === String(trackId));
+            if (!t) return;
+            if (window.YtSacredMatch) YtSacredMatch.rejectMatch(t);
+            else { t.hymn_match_status = 'rejected'; t.hymn_id = null; }
+            persistData();
+            updateCounters();
+            renderMatchPanel();
+        }
+
+        function runSuggestBatch() {
+            if (!window.YtSacredMatch) { alert('對歌名模組未載入'); return; }
+            if (!(window.PH_SEARCH_INDEX && PH_SEARCH_INDEX.hymns && PH_SEARCH_INDEX.hymns.length)) {
+                alert('站內索引未載入，無法建議。');
+                return;
+            }
+            const n = YtSacredMatch.suggestBatch(masterDatabase, { minScore: 45, onlyUnset: true });
+            persistData();
+            updateCounters();
+            renderMatchPanel();
+            alert(`已寫入 ${n} 筆「建議」（尚未確認）。請在列表逐筆或「確認本頁全部建議」。`);
+        }
+
+        function confirmAllSuggested() {
+            const filt = (document.getElementById('matchStatusFilter') || {}).value || 'needs';
+            let n = 0;
+            masterDatabase.forEach(t => {
+                if ((t.hymn_match_status || '') !== 'suggested' || !t.hymn_id) return;
+                if (filt === 'confirmed' || filt === 'rejected') return;
+                if (window.YtSacredMatch) YtSacredMatch.confirmMatch(t, null);
+                else t.hymn_match_status = 'confirmed';
+                n++;
+            });
+            persistData();
+            updateCounters();
+            renderMatchPanel();
+            filterDatabase();
+            alert(n ? `已確認 ${n} 筆建議。` : '沒有可確認的建議。');
+        }
+
+        function renderSourcesTable() {
+            const tbody = document.getElementById('sourcesTableBody');
+            tbody.innerHTML = sourceVideos.map(src => `
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="p-3.5">
+                        <div class="font-bold text-slate-900">${src.title}</div>
+                        <div class="text-[11px] text-slate-500">創作者: ${src.author}</div>
+                    </td>
+                    <td class="p-3.5">
+                        <span class="text-[11px] bg-slate-100 text-slate-700 px-2 py-1 rounded-md font-medium">${src.mainCategory} > ${src.subCategory}</span>
+                    </td>
+                    <td class="p-3.5">
+                        <span class="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-md font-semibold">
+                            ${src.trackCount || 0} 首曲目
+                        </span>
+                    </td>
+                    <td class="p-3.5 text-right">
+                        <a href="${src.url && src.url.startsWith('http') ? src.url : 'https://www.youtube.com/watch?v=' + src.id}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium transition">
+                            <span>🔗 前往 YouTube</span>
+                        </a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderFavoritesTable() {
+            const favs = masterDatabase.filter(i => i.isFav);
+            const tbody = document.getElementById('favoritesTableBody');
+            const emptyState = document.getElementById('favEmptyState');
+
+            if (favs.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            tbody.innerHTML = favs.map(item => `
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="p-3.5 font-medium text-slate-700">${escHtml(item.mainCategory)} > ${escHtml(item.subCategory)}</td>
+                    <td class="p-3.5 font-bold text-slate-900">${escHtml(item.title)} <span class="text-slate-400 font-normal">(${escHtml(item.artist)})</span></td>
+                    <td class="p-3.5 font-mono text-indigo-600">${escHtml(item.time)}</td>
+                    <td class="p-3.5 text-right space-x-1">
+                        <button type="button" data-action="fav" data-id="${escHtml(item.id)}" class="px-2.5 py-1.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-xs font-medium">移除</button>
+                        <button type="button" data-action="play" data-video="${escHtml(item.videoId)}" data-seconds="${escHtml(item.seconds)}" data-title="${escHtml(item.title)}" data-artist="${escHtml(item.artist)}" class="bg-indigo-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold">聽／看</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleFavorite(id) {
+            const item = masterDatabase.find(i => String(i.id) === String(id));
+            if (item) {
+                item.isFav = !item.isFav;
+                persistData();
+                updateCounters();
+                filterDatabase();
+                if (item.isFav) {
+                    switchTab('favorites');
+                } else if (!document.getElementById('favoritesPanel').classList.contains('hidden')) {
+                    renderFavoritesTable();
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            const panels = {
+                database: document.getElementById('databasePanel'),
+                match: document.getElementById('matchPanel'),
+                dupes: document.getElementById('dupesPanel'),
+                sources: document.getElementById('sourcesPanel'),
+                favorites: document.getElementById('favoritesPanel')
+            };
+            const btns = {
+                database: document.getElementById('navDatabaseBtn'),
+                match: document.getElementById('navMatchBtn'),
+                dupes: document.getElementById('navDupesBtn'),
+                sources: document.getElementById('navSourcesBtn'),
+                favorites: document.getElementById('navFavoritesBtn')
+            };
+            const idle = "px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition";
+            const on = "px-3 py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white transition shadow-sm";
+
+            Object.keys(panels).forEach(k => { if (panels[k]) panels[k].classList.add('hidden'); });
+            Object.keys(btns).forEach(k => { if (btns[k]) btns[k].className = idle; });
+
+            if (tab === 'database') {
+                panels.database.classList.remove('hidden');
+                btns.database.className = on;
+                updateCounters();
+                filterDatabase();
+            } else if (tab === 'match') {
+                panels.match.classList.remove('hidden');
+                btns.match.className = on;
+                updateCounters();
+                renderMatchPanel();
+            } else if (tab === 'dupes') {
+                panels.dupes.classList.remove('hidden');
+                btns.dupes.className = on;
+                updateCounters();
+                renderDupesPanel();
+            } else if (tab === 'sources') {
+                panels.sources.classList.remove('hidden');
+                btns.sources.className = on;
+                renderSourcesTable();
+            } else if (tab === 'favorites') {
+                panels.favorites.classList.remove('hidden');
+                btns.favorites.className = on;
+                renderFavoritesTable();
+            }
+        }
+
+        function resetToDefaultData() {
+            if (!confirm('確定清空本影音庫（IndexedDB）？不會清掉全站其他資料。清空後請用章節 bulk 重貼。')) return;
+            if (window.YtSacredStore) YtSacredStore.clearLegacyLocalStorage();
+            sourceVideos = [];
+            masterDatabase = [];
+            persistDataNow().then(function () {
+                updateCounters();
+                filterDatabase();
+                renderSourcesTable();
+                alert('本影音庫已清空。請貼章節 bulk 或匯入 yt-dlp JSON。');
+            });
+        }
+
+        function csvEsc(s) {
+            return '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"';
+        }
+
+        function exportCSV() {
+            const BOM = '\uFEFF';
+            // Excel 可開；「聽看連結」欄可點（或複製到瀏覽器）
+            let csvContent = '可信,曲名,演出者,時間,秒數,影片標題,videoId,聽看連結,來源標記,站內hymn_id\n';
+            masterDatabase.forEach(item => {
+                const src = trackSourceOf(item);
+                const ok = isTrustedSource(src) ? '是' : (src === 'url_stub' ? '占位' : '否');
+                const link = watchUrl(item.videoId, item.seconds);
+                csvContent += [
+                    csvEsc(ok),
+                    csvEsc(item.title),
+                    csvEsc(item.artist),
+                    csvEsc(item.time),
+                    item.seconds || 0,
+                    csvEsc(item.videoTitle),
+                    csvEsc(item.videoId),
+                    csvEsc(link),
+                    csvEsc(src),
+                    csvEsc(item.hymn_id || '')
+                ].join(',') + '\r\n';
+            });
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = '聖詩影音庫_' + new Date().toISOString().slice(0, 10) + '.csv';
+            link.click();
+            setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+        }
+
+        function exportJSON() {
+            if (!window.YtSacredStore) {
+                alert('儲存模組未載入');
+                return;
+            }
+            const pack = YtSacredStore.buildExport(sourceVideos, masterDatabase);
+            YtSacredStore.downloadBlob(pack, `yt_sacred_library_v${YtSacredStore.SCHEMA_VERSION}_${new Date().toISOString().slice(0,10)}.json`);
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = YtSacredStore.parseImport(JSON.parse(e.target.result));
+                    sourceVideos = parsed.sources;
+                    masterDatabase = parsed.tracks;
+                    persistDataNow().then(function () {
+                        updateCounters();
+                        filterDatabase();
+                        renderSourcesTable();
+                        alert(`已匯入契約 v${parsed.schema_version || '?'}：${masterDatabase.length} 首、${sourceVideos.length} 片。`);
+                    });
+                } catch(err) {
+                    alert('匯入失敗：' + err.message);
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function handleOCRUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                lastOcrDataUrl = e.target.result || '';
+                document.getElementById('ocrThumb').src = lastOcrDataUrl;
+                document.getElementById('ocrPreviewImageContainer').classList.remove('hidden');
+                document.getElementById('ocrStatusText').innerHTML = 'OCR 未接 — 僅預覽圖，不會自動認字。請手填歌名後存備忘。';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveOcrMemo() {
+            const title = (document.getElementById('ocrTitleNote').value || '').trim() || '譜圖備忘（未命名）';
+            const ts = Date.now();
+            masterDatabase.unshift({
+                id: `ocr_memo_${ts}`,
+                mainCategory: '備忘',
+                subCategory: '譜圖備忘',
+                styleCat: '手填備忘',
+                title,
+                artist: '本機備忘',
+                videoTitle: lastOcrDataUrl ? '有預覽圖（本機）' : '無圖',
+                videoId: '',
+                time: '00:00',
+                seconds: 0,
+                isFav: false,
+                timestamp: ts,
+                titleNorm: normalizeTitle(title),
+                memoImage: lastOcrDataUrl ? 1 : 0,
+                hymn_match_status: 'none',
+                source: 'memo'
+            });
+            persistData();
+            updateCounters();
+            filterDatabase();
+            alert('已存備忘曲目到總表（尚無 YouTube）。');
+            switchTab('database');
+        }
+
+        window.YtSacredLibrary = {
+            getTracks: function () { return masterDatabase; },
+            getSources: function () { return sourceVideos; },
+            getConfirmedForHymnId: function (hymnId) {
+                return window.YtSacredStore
+                    ? YtSacredStore.getConfirmedForHymnId(hymnId, masterDatabase)
+                    : [];
+            }
+        };
+
+        window.onload = async function() {
+            const sel = document.getElementById('pageSizeSelect');
+            if (sel) pageSize = parseInt(sel.value, 10) || 20;
+            document.body.addEventListener('click', onLibraryClick);
+            refreshVerifiedPackMeta();
+            refreshAiPromptMeta();
+            if (window.HymnMainMetaBridge) {
+                const hint = document.getElementById('seasonHint');
+                const s = HymnMainMetaBridge.currentSeason();
+                if (hint && s) hint.textContent = '今日節期參考：' + (s.zh || s.code);
+            }
+
+            try {
+                if (!window.YtSacredStore) throw new Error('YtSacredStore 未載入');
+                const loaded = await YtSacredStore.loadAll();
+                sourceVideos = loaded.sources;
+                masterDatabase = loaded.tracks.map(function (t) {
+                    if (!t.source) t.source = 'legacy';
+                    return t;
+                });
+                storeReady = true;
+                // 每次開啟：只清 ⚠ 假／舊資料，不會把章節 bulk 歸零
+                const purged = purgeUntrustedTracksCore();
+                if (purged > 0) {
+                    await YtSacredStore.saveAll(sourceVideos, masterDatabase);
+                    console.info('已自動清除假資料 ' + purged + ' 筆');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('IndexedDB 啟動失敗，暫用空庫（請盡快匯出備份）：' + err.message);
+                sourceVideos = [];
+                masterDatabase = [];
+            }
+
+            updateCounters();
+            filterDatabase();
+            renderSourcesTable();
+        };
+    </script>
+</body>
+</html>

@@ -36,9 +36,15 @@
   });
   nav.appendChild(group);
 
+  function queryZone() {
+    var z = "";
+    try { z = new URLSearchParams(location.search).get("zone") || ""; } catch (e) {}
+    return z;
+  }
   function zoneNow() {
     var path = location.pathname || location.href || "";
     var h = (location.hash || "").replace(/^#/, "");
+    var zq = queryZone();
     if (/Applied-Hymnology/i.test(path)) return "workshop";
     if (/hymn_catalog_sort|\/explore\//i.test(path)) return "find";
     if (/hymn_ai_tools|hymn_editor|ppt_generator/i.test(path)) return "use";
@@ -46,11 +52,12 @@
     if (/analyze\.html|core_hymns|\/lessons\/|hymn_amazing_grace/i.test(path)) return "research";
     if (/journey_intro|\/disciplines\/|learn_catalog|\/prisms\//i.test(path)) return "learn";
     if (/landing\.html/i.test(path)) {
-      if (h.indexOf("learn") === 0) return "learn";
+      if (h.indexOf("learn") === 0 || zq === "learn") return "learn";
       if (h === "find" || h === "research" || h === "use") return h;
-      return here || "";
+      if (zq === "find" || zq === "research" || zq === "use") return zq;
+      return "";
     }
-    return here || "";
+    return here && here !== "map" ? here : "";
   }
   function tell(zone) {
     if (!zone) return;
@@ -64,17 +71,93 @@
     }
     tell(z);
     var dock = document.querySelector(".dock");
-    if (dock) dock.style.top = nav.parentNode ? ((nav.offsetHeight || 46) + "px") : "0px";
-  }
-  function inPhShell() {
-    try {
-      var p = window.parent;
-      return !!(p && p !== window && p.document.body.classList.contains("mode-ph"));
-    } catch (e) {
-      return false;
+    if (dock) {
+      var barH = nav.parentNode ? (nav.offsetHeight || 46) : 0;
+      var noteEl = document.querySelector(".ph-door-note");
+      if (noteEl) barH += noteEl.offsetHeight || 0;
+      dock.style.top = barH ? (barH + "px") : "0px";
     }
   }
-  if (!inPhShell()) document.body.insertBefore(nav, document.body.firstChild);
+  function inOuterFrame() {
+    try {
+      return !!(window.parent && window.parent !== window);
+    } catch (e) {
+      return true;
+    }
+  }
+  function wantSide() {
+    var q = location.search || "";
+    if (/[?&]in_shell=1/.test(q)) return false;
+    try { return window.parent === window; } catch (e) { return false; }
+  }
+  /* file:// 讀不到外層頁面。人已在總站右欄時，不再畫第二條黑條。 */
+  if (!inOuterFrame()) document.body.insertBefore(nav, document.body.firstChild);
+
+  function keepEmbed(href) {
+    if (!/[?&]embed_side=1/.test(location.search || "")) return href;
+    if (!href || href.indexOf("embed_side=1") >= 0 || href.indexOf("://") >= 0 || href.charAt(0) === "#") return href;
+    var hash = "";
+    var hi = href.indexOf("#");
+    if (hi >= 0) { hash = href.slice(hi); href = href.slice(0, hi); }
+    return href + (href.indexOf("?") >= 0 ? "&" : "?") + "embed_side=1" + hash;
+  }
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("a[href]");
+    if (!a || !wantSide()) return;
+    var next = keepEmbed(a.getAttribute("href"));
+    if (!next || next === a.getAttribute("href")) return;
+    e.preventDefault();
+    location.href = next;
+  });
+
+  function chain(list, i, done) {
+    if (i >= list.length) { done(); return; }
+    if (list[i].check()) { chain(list, i + 1, done); return; }
+    var s = document.createElement("script");
+    s.src = list[i].src;
+    s.onload = function () { chain(list, i + 1, done); };
+    s.onerror = function () { chain(list, i + 1, done); };
+    document.head.appendChild(s);
+  }
+  function armSide() {
+    if (!wantSide()) return;
+    var split = document.createElement("div");
+    split.className = "ph-split";
+    var aside = document.createElement("aside");
+    aside.className = "ph-inline-side";
+    var main = document.createElement("div");
+    main.className = "ph-inline-main";
+    var nodes = [];
+    var n = document.body.firstChild;
+    while (n) { nodes.push(n); n = n.nextSibling; }
+    document.body.appendChild(split);
+    split.appendChild(aside);
+    split.appendChild(main);
+    nodes.forEach(function (node) {
+      if (node === split) return;
+      if (node.nodeType === 1 && node.classList && (node.classList.contains("ph-bar") || node.classList.contains("ph-door-note"))) return;
+      main.appendChild(node);
+    });
+    document.body.classList.add("ph-with-side");
+    var up = root ? root + "../" : "../";
+    chain([
+      { src: up + "data/ph_search_index.js", check: function () { return !!window.PH_SEARCH_INDEX; } },
+      { src: (root || "") + "data/disciplines_index.js", check: function () { return !!window.PH_DISCIPLINES_INDEX; } },
+      { src: up + "js/ph_search.js", check: function () { return !!window.PhSearch; } },
+      { src: (root || "") + "js/yt_sacred_store.js", check: function () { return !!window.YtSacredStore; } },
+      { src: up + "js/ph_side_panel.js", check: function () { return !!window.PhSidePanel; } }
+    ], 0, function () {
+      if (window.PhSidePanel) {
+        window.PhSidePanel.mount(aside, {
+          place: "inline",
+          root: root,
+          keepFlag: /[?&]embed_side=1/.test(location.search || "")
+        });
+      }
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", armSide);
+  else armSide();
   window.addEventListener("hashchange", mark);
   window.addEventListener("load", mark);
   mark();
