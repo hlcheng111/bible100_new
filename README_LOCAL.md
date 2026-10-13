@@ -34,4 +34,8 @@ python scripts/check_phase_tool_and_nav_links.py
 
 ## 本地語言精簡
 
-見 `config/local-languages.json`（預設僅啟用 cn、en）。
+見 `config/local-languages.json`（預設啟用 **cn、en、vi、id**）。
+
+- **file:// 驗收**：改 `local-languages.json` 後必跑 `node scripts/generate_config_embedded.js`，再 Ctrl+F5。
+- **只要中英**：複製為 `local-languages.override.json`（已 gitignore），設 `"enabledOnly": ["cn","en"]`（HTTP 立刻生效；file:// 仍以 embedded 為準）。
+- 頂欄若看不到越南／印尼：先查本檔與 override，不是缺資料夾。
