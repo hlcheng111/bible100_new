@@ -84,7 +84,7 @@
           label: "④ 教會事工", tone: "church-plan", enterLabel: "→ 进入模块",
           nav: { mode: "church" },
           children: [
-            { label: "A–G 路線圖", tone: "church-plan", level: 2, nav: { mode: "church", contentUrl: "church_ministry/_landing/gateway.html" } },
+            { label: "A–H 路線圖", tone: "church-plan", level: 2, nav: { mode: "church", contentUrl: "church_ministry/_landing/gateway.html" } },
             { label: "G 規劃行政", tone: "church-plan", level: 3, nav: { sidebarUrl: "church_planning/sidebar_plan_v5_preview.html", contentUrl: "church_planning/index_plan.html" } },
             { label: "數據儀表", tone: "church-admin", level: 3, nav: { sidebarUrl: "church_planning/sidebar_plan_v5_preview.html", contentUrl: "church_ministry/dashboard.html?crm_from=planning_step6" } },
             { label: "🎙️ 口述預填 5F", tone: "ai", level: 3, nav: { sidebarUrl: "church_planning/sidebar_plan_v5_preview.html", contentUrl: "ai_tools/pages/crm_automation_console.html" } }
@@ -218,17 +218,18 @@
     },
 
     church: {
-      route: { title: "⛪ 教會事工 A–G", lead: "頂欄第二列即 A–G；右欄路線圖含會友主檔入口。" },
-      home: { label: "🏠 路線首頁", tone: "church-plan", nav: { mode: "church", contentUrl: "church_ministry/_landing/gateway.html" } },
+      route: { title: "⛪ 教會總羅盤 A–H", lead: "Compass · 頂欄／側欄／本頁同名。" },
+      home: { label: "🏠 教會總羅盤", tone: "church-plan", nav: { mode: "church", contentUrl: "church_ministry/_landing/gateway.html" } },
       modules: [
-        { stationLabel: "A", title: "敬拜音樂", desc: "Worship · 主日聚會", label: "A 敬拜音樂", tone: "church-admin", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=a", contentUrl: "church_ministry/modules/worship/worship-sunday-desk.html" } },
-        { stationLabel: "B", title: "牧養小組", desc: "Pastoral · 探訪事工", label: "B 牧養小組", tone: "church-admin", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=b", contentUrl: "church_ministry/modules/fellowship/small-groups-integrated.html" } },
-        { stationLabel: "C", title: "聖經門訓", desc: "Discipleship · 主日學", label: "C 聖經門訓", tone: "church-admin", highlight: true, nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=c", contentUrl: "church_ministry/modules/education/education-integrated.html" } },
-        { stationLabel: "D", title: "外展差傳", desc: "Outreach · 使命", label: "D 外展差傳", tone: "church-mission", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=d", contentUrl: "church_ministry/modules/expansion/outreach-integrated.html#tab-needs" } },
-        { stationLabel: "E", title: "社會服務", desc: "Social · 義工排班", label: "E 社會服務", tone: "church-admin", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=e", contentUrl: "church_ministry/tools/volunteer_shift/index.html" } },
-        { stationLabel: "F", title: "樂以載道", desc: "Hymnology · 搜尋／學科／分析", label: "F 樂以載道", tone: "tools", nav: { sidebarUrl: "hymn_management/sidebar_lexidao.html", contentUrl: "hymn_management/practical_hymnology/landing.html" } },
-        { stationLabel: "G", title: "規劃行政", desc: "Plan · Do · 量表", label: "G 規劃行政", tone: "church-plan", nav: { sidebarUrl: "church_planning/sidebar_plan_v5_preview.html", contentUrl: "church_planning/index_plan.html" } },
-        { stationLabel: "👤", title: "會友主檔", desc: "Member registry · 6 tabs", label: "👤 會友主檔", tone: "church-admin", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html", contentUrl: "church_ministry/modules/members/member-integrated.html#tab=overview" } }
+        { stationLabel: "A", title: "敬拜音樂", desc: "A Worship", label: "A 敬拜音樂", tone: "church-admin", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=a", contentUrl: "church_ministry/_landing/worship.html" } },
+        { stationLabel: "B", title: "牧養小組", desc: "B Care", label: "B 牧養小組", tone: "church-admin", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=b", contentUrl: "church_ministry/_landing/pastoral.html" } },
+        { stationLabel: "C", title: "聖經門訓", desc: "C Teach", label: "C 聖經門訓", tone: "church-admin", highlight: true, nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=c", contentUrl: "church_ministry/_landing/education.html" } },
+        { stationLabel: "D", title: "外展差傳", desc: "D Outreach", label: "D 外展差傳", tone: "church-mission", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=d", contentUrl: "church_ministry/_landing/outreach.html" } },
+        { stationLabel: "E", title: "社會服務", desc: "E Social", label: "E 社會服務", tone: "church-admin", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=e", contentUrl: "church_ministry/_landing/social.html" } },
+        { stationLabel: "F", title: "樂以載道", desc: "F Hymns", label: "F 樂以載道", tone: "tools", nav: { sidebarUrl: "hymn_management/sidebar_lexidao.html", contentUrl: "hymn_management/practical_hymnology/landing.html" } },
+        { stationLabel: "G", title: "規劃行政", desc: "G Plan", label: "G 規劃行政", tone: "church-plan", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=g", contentUrl: "church_ministry/_landing/planning.html" } },
+        { stationLabel: "H", title: "出席系統", desc: "H Attend", label: "H 出席系統", tone: "church-admin", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html?focus=h", contentUrl: "church_ministry/_landing/attendance.html" } },
+        { stationLabel: "👤", title: "會友主檔", desc: "Member registry", label: "👤 會友主檔", tone: "church-admin", nav: { sidebarUrl: "church_ministry/sidebar_church_layout_v1.html", contentUrl: "church_ministry/modules/members/member-integrated.html#tab=overview" } }
       ],
       footer: [{ label: "🏠 回全站", tone: "site", level: 2, nav: { action: "siteHome" } }]
     },

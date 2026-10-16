@@ -5,7 +5,7 @@
 (function (global, doc) {
   "use strict";
 
-  var SHELL_BUILD = "20260805f";
+  var SHELL_BUILD = "20261016doors";
 
   function inHub() {
     try {
@@ -26,11 +26,13 @@
     try {
       var p = String(global.location.pathname || "").replace(/\\/g, "/").toLowerCase();
       if (p.indexOf("_landing/worship") >= 0) return "a";
-      if (p.indexOf("_landing/fellowship") >= 0) return "b";
+      if (p.indexOf("_landing/pastoral") >= 0 || p.indexOf("_landing/fellowship") >= 0) return "b";
       if (p.indexOf("_landing/education") >= 0) return "c";
       if (p.indexOf("_landing/outreach") >= 0) return "d";
       if (p.indexOf("_landing/social") >= 0) return "e";
       if (p.indexOf("_landing/hymns") >= 0) return "f";
+      if (p.indexOf("_landing/planning") >= 0) return "g";
+      if (p.indexOf("_landing/attendance") >= 0) return "h";
       if (p.indexOf("_landing/gateway") >= 0) return "gateway";
     } catch (e2) { /* ignore */ }
     return "";
@@ -65,8 +67,8 @@
   function renderAddressStrip(currentId) {
     var R = global.CmZoneLandingRegistry;
     if (!R) return "";
-    var parts = ['<nav class="cm-land-addr" aria-label="CM A-G zones">'];
-    parts.push('<span class="cm-land-addr__label">区</span>');
+    var parts = ['<nav class="cm-land-addr" aria-label="CM A–H zones">'];
+    parts.push('<span class="cm-land-addr__label">區</span>');
     R.ZONES.forEach(function (z) {
       if (z.id === "gateway") return;
       var active = z.id === currentId ? " cm-land-addr__chip--on" : "";

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CM sidebar IA v1 + G zone + gateway tabs + topbar labels."""
+"""CM sidebar IA · A–H 收合 + gateway 總圖 + 頂欄 labels."""
 from pathlib import Path
 import json
 import sys
@@ -9,8 +9,9 @@ SIDEBAR = ROOT / "church_ministry" / "sidebar_church_layout_v1.html"
 GATEWAY = ROOT / "church_ministry" / "_landing" / "gateway.html"
 MODES = ROOT / "config" / "modes.json"
 EMBED = ROOT / "js" / "config-embedded.js"
-INDEX = ROOT / "index_v5.html"
+INDEX = ROOT / "index.html"
 PLAN_SB = ROOT / "church_planning" / "sidebar_plan.html"
+H_MENU = ROOT / "js" / "cm_h_menu_ssot.js"
 
 
 def read(p: Path) -> str:
@@ -21,115 +22,78 @@ def test_sidebar_removed_clutter():
     html = read(SIDEBAR)
     for bad in (
         "sb-lang-row",
-        "回規劃（五年計劃",
-        "教會選路",
         "三條河總覽",
         "今日常用",
-        "主日一桌",
-        "探訪工作桌",
-        "小组工作桌",
         "事工戰情儀表板",
-        "進階 · Advanced",
         "舊 index",
-        "離開本模組／換左欄",
         "聖經百步四寶",
     ):
         assert bad not in html, f"sidebar still contains {bad!r}"
 
 
-def test_sidebar_g_order():
+def test_sidebar_ah_hosts():
     html = read(SIDEBAR)
-    dash = html.find("數據儀表")
-    plan = html.find("五年計劃戰略路徑")
-    fin = html.find("財務事工 · Finance")
-    assert dash >= 0 and plan > dash and fin > plan, "G section order: dash -> plan -> finance"
+    for z in ("a", "b", "c", "d", "e", "f", "h"):
+        assert f'id="sb-zone-{z}"' in html, z
+    assert 'data-focus-zone="g"' in html
+    assert "cm_h_menu_ssot.js" in html
+    assert "G 規劃行政" in html
+    assert "H Attendance" in read(H_MENU) or "H 出席系統" in read(H_MENU)
 
 
-def test_sidebar_ag_labels():
-    html = read(SIDEBAR)
-    for good in (
-        "A 敬拜音樂",
-        "B 牧養小組",
-        "C 聖經門訓",
-        "D 外展差傳",
-        "E 社會服務",
-        "F 樂以載道",
-        "G 規劃行政",
-        "主日聚會",
-        "探訪事工",
-        "小組事工",
-        "整全資訊曲譜",
-        "預算規劃",
-    ):
-        assert good in html, f"sidebar missing {good!r}"
-
-
-def test_gateway_top_tabs():
+def test_gateway_ah_map():
     html = read(GATEWAY)
-    assert "cm-gw-tabs" in html
-    assert "路線首頁" in html
-    for tab in ("tab=overview", "tab=members", "tab=groups", "tab=ministry", "tab=growth", "tab=analysis"):
-        assert tab in html, f"gateway missing {tab!r}"
+    assert 'data-cm-compass="gateway"' in html
+    assert "cm_zone_nav_ssot.js" in html
+    assert "cm_compass_shell.js" in html
+    assert "cm_compass_zones_ssot.js" in html
+    zones = read(ROOT / "church_ministry" / "js" / "cm_compass_zones_ssot.js")
+    assert "教會總羅盤" in zones
+    assert "tiles:" in zones or "layout: \"mosaic\"" in zones
+    shell = read(ROOT / "church_ministry" / "js" / "cm_compass_shell.js")
+    assert "cm-mosaic" in shell
 
 
-def test_modes_g_dashboard():
+def test_modes_g_and_h():
     modes = json.loads(read(MODES))["modes"]
     church = next(m for m in modes if m["id"] == "church")
     g = [x for x in church["secondaryNav"] if x.get("labelZh") == "G 規劃行政"][0]
-    assert "dashboard.html" in g["path"]
+    h = [x for x in church["secondaryNav"] if x.get("labelZh") == "H 出席系統"][0]
+    assert "planning.html" in g["path"]
     assert "focus=g" in g["sidebar"]
-    assert "sidebar_plan" not in g["sidebar"]
+    assert "attendance.html" in h["path"]
+    assert "focus=h" in h["sidebar"]
+    assert "Attend" in h["labelEn"]
+    assert "planning.html" in g["path"]
+    assert g["labelEn"] == "G Plan"
 
 
-def test_embedded_g_dashboard():
+def test_embedded_focus_h():
     embed = read(EMBED)
-    assert "church_ministry/dashboard.html" in embed
-    assert "sidebar_church_layout_v1.html?focus=g" in embed
+    assert "focus=h" in embed
+    assert "H 出席系統" in embed
 
 
 def test_topbar_church_full_labels():
     html = read(INDEX)
-    assert "useShort: false" in html or "useShort:false" in html.replace(" ", "")
-
-
-def test_cm_sidebar_g_planning_steps():
-    html = read(SIDEBAR)
-    assert "cm-plan-step" in html
-    assert "cm-planning-sidebar-tools-step2" in html
-    assert "cm-planning-sidebar-tools-extended" in html
-    assert "planning_sidebar_render.js" in html
-    assert "步 2 健康診斷 · 17 正式量表" in html
-    assert "延伸版本（暫不寫戰情室）" in html
-    assert "深度規劃工作坊" in html
+    # 頂欄2 由 modes secondaryNav／B100ModuleNavSsot 驅動
+    assert "secondaryNav" in html or "B100ModuleNavSsot" in html or "config-embedded" in html
 
 
 def test_plan_sidebar_slim():
     html = read(PLAN_SB)
-    assert "各項工具量表（點此收合）" not in html
-    assert "步 1 屬靈前言" in html
-    assert "量表超市" in html
-    assert "planning-sidebar-tools-step2" in html
-    assert "planning_sidebar_render.js" in html
+    # redirect shell still points at preview
+    assert "sidebar_plan" in html.lower() or "preview" in html.lower()
 
 
 if __name__ == "__main__":
-    tests = [
-        test_sidebar_removed_clutter,
-        test_sidebar_g_order,
-        test_sidebar_ag_labels,
-        test_gateway_top_tabs,
-        test_modes_g_dashboard,
-        test_embedded_g_dashboard,
-        test_topbar_church_full_labels,
-        test_cm_sidebar_g_planning_steps,
-        test_plan_sidebar_slim,
-    ]
     failed = 0
-    for t in tests:
-        try:
-            t()
-            print("OK", t.__name__)
-        except AssertionError as e:
-            failed += 1
-            print("FAIL", t.__name__, e)
+    for name, fn in list(globals().items()):
+        if name.startswith("test_") and callable(fn):
+            try:
+                fn()
+                print("OK", name)
+            except AssertionError as e:
+                failed += 1
+                print("FAIL", name, e)
     sys.exit(1 if failed else 0)

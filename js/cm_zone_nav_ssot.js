@@ -1,19 +1,20 @@
 /**
- * CM A–G · 顶栏2 / Hub / Standalone 导航 SSOT（与侧栏 focus + landing 对齐）
+ * CM A–H · 頂欄1/2／側欄／gateway EN 一本帳（與 focus + landing 對齊）
  */
 (function (global) {
   "use strict";
 
-  var NAV_BUILD = "20260806cm";
+  var NAV_BUILD = "20261016doors";
 
   var SIDEBAR_LAYOUT_RE = /(^|[/?#])sidebar_church_layout_v1\.html/i;
 
+  /** 字母區正式名：頂欄2 · 側欄層1 · gateway 同字 */
   var ZONES = [
     {
       id: "gateway",
-      labelZh: "路線總覽",
+      labelZh: "教會總羅盤",
       labelShort: "總覽",
-      labelEn: "Gateway",
+      labelEn: "Compass",
       landing: "church_ministry/_landing/gateway.html",
       sidebar: "church_ministry/sidebar_church_layout_v1.html",
       focus: "",
@@ -23,7 +24,7 @@
       labelZh: "A 敬拜音樂",
       labelShort: "A",
       labelEn: "A Worship",
-      landing: "church_ministry/modules/worship/worship-sunday-desk.html?crm_from=zone_a",
+      landing: "church_ministry/_landing/worship.html",
       sidebar: "church_ministry/sidebar_church_layout_v1.html?focus=a",
       focus: "a",
     },
@@ -31,9 +32,8 @@
       id: "b",
       labelZh: "B 牧養小組",
       labelShort: "B",
-      labelEn: "B Pastoral",
-      landing:
-        "church_ministry/modules/fellowship/pastoral-integrated.html?crm_from=zone_b&role=leader#tab-groups",
+      labelEn: "B Care",
+      landing: "church_ministry/_landing/pastoral.html",
       sidebar: "church_ministry/sidebar_church_layout_v1.html?focus=b",
       focus: "b",
     },
@@ -41,9 +41,8 @@
       id: "c",
       labelZh: "C 聖經門訓",
       labelShort: "C",
-      labelEn: "C Discipleship",
-      landing:
-        "church_ministry/modules/education/education-integrated.html?crm_from=zone_c&role=teacher#tab-guide",
+      labelEn: "C Teach",
+      landing: "church_ministry/_landing/education.html",
       sidebar: "church_ministry/sidebar_church_layout_v1.html?focus=c",
       focus: "c",
     },
@@ -52,8 +51,7 @@
       labelZh: "D 外展差傳",
       labelShort: "D",
       labelEn: "D Outreach",
-      landing:
-        "church_ministry/modules/expansion/outreach-integrated.html?crm_from=zone_d&role=staff#tab-needs",
+      landing: "church_ministry/_landing/outreach.html",
       sidebar: "church_ministry/sidebar_church_layout_v1.html?focus=d",
       focus: "d",
     },
@@ -70,7 +68,7 @@
       id: "f",
       labelZh: "F 樂以載道",
       labelShort: "F",
-      labelEn: "F Hymnology",
+      labelEn: "F Hymns",
       landing: "hymn_management/practical_hymnology/landing.html",
       sidebar: "hymn_management/sidebar_lexidao.html",
       focus: "f",
@@ -80,11 +78,19 @@
       id: "g",
       labelZh: "G 規劃行政",
       labelShort: "G",
-      labelEn: "G Plan & Admin",
-      landing:
-        "church_ministry/modules/admin/admin-integrated.html?crm_from=zone_g#tab-dashboard",
+      labelEn: "G Plan",
+      landing: "church_ministry/_landing/planning.html",
       sidebar: "church_ministry/sidebar_church_layout_v1.html?focus=g",
       focus: "g",
+    },
+    {
+      id: "h",
+      labelZh: "H 出席系統",
+      labelShort: "H",
+      labelEn: "H Attend",
+      landing: "church_ministry/_landing/attendance.html",
+      sidebar: "church_ministry/sidebar_church_layout_v1.html?focus=h",
+      focus: "h",
     },
   ];
 
@@ -179,9 +185,16 @@
       labelShort: zone.labelShort,
       labelEn: zone.labelEn,
       navGroup: "desks",
-      path: zone.moduleNav ? zone.landing : zone.landing,
+      path: zone.landing,
       sidebar: zone.sidebar,
     };
+  }
+
+  /** 頂欄2 用：僅 A–H（不含 gateway） */
+  function letterZones() {
+    return ZONES.filter(function (z) {
+      return z.focus;
+    });
   }
 
   function cmRelativeLanding(zone) {
@@ -213,6 +226,7 @@
     NAV_BUILD: NAV_BUILD,
     ZONES: ZONES,
     zoneById: zoneById,
+    letterZones: letterZones,
     hubNavItem: hubNavItem,
     isSidebarLayoutUrl: isSidebarLayoutUrl,
     parseFocusFromUrl: parseFocusFromUrl,

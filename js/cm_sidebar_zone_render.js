@@ -1,10 +1,10 @@
 /**
- * CM A–G · 区域侧栏渲染（Kit + 各区 SSOT + focus 模式）
+ * CM A–H · 區域側欄渲染（Kit + 各區 SSOT + focus；全圖預設 ▶ 收合）
  */
 (function (global) {
   "use strict";
 
-  var RENDER_BUILD = "20260811f";
+  var RENDER_BUILD = "20261016ah";
 
   function shellNavPair(sidebarUrl, contentUrl) {
     if (typeof global.bible100ShellNav === "function") {
@@ -84,6 +84,9 @@
     },
     f: function () {
       return global.CmFMenu && global.CmFMenu.ZONE;
+    },
+    h: function () {
+      return global.CmHMenu && global.CmHMenu.ZONE;
     }
   };
 
@@ -93,7 +96,8 @@
     { hostId: "sb-zone-c", zoneId: "c", globalKey: "CmCMenu" },
     { hostId: "sb-zone-d", zoneId: "d", globalKey: "CmDMenu" },
     { hostId: "sb-zone-e", zoneId: "e", globalKey: "CmEMenu" },
-    { hostId: "sb-zone-f", zoneId: "f", globalKey: "CmFMenu" }
+    { hostId: "sb-zone-f", zoneId: "f", globalKey: "CmFMenu" },
+    { hostId: "sb-zone-h", zoneId: "h", globalKey: "CmHMenu" }
   ];
 
   function getFocusZone() {
@@ -102,6 +106,7 @@
       focus = (new URLSearchParams(global.location.search).get("focus") || "").toLowerCase();
     } catch (e) {}
     if (focus === "admin") focus = "g";
+    if (focus === "g") return "g";
     if (focus && !ZONE_SSOTS[focus]) return "";
     return focus;
   }
@@ -152,20 +157,21 @@
     el.hidden = false;
     el.innerHTML =
       '<a class="sb-kit-focus-expand" href="sidebar_church_layout_v1.html" target="_self" data-cm-focus-expand="1" ' +
-      'title="Show all A-G zones">📋 展開 A–G 全地圖<small class="sb-kit-en"> · All zones</small></a>';
+      'title="Show all A–H zones">📋 展開 A–H 全地圖<small class="sb-kit-en"> · All zones</small></a>';
   }
 
   function focusBannerBody(focus) {
     var bodies = {
-      a: "只顯示本區 · 右欄 landing · 下方可展開 A–G",
-      b: "只顯示本區 · 右欄小組工作桌 · 下方可展開 A–G",
-      c: "只顯示本區 · 右欄主日學 5 Tab · 下方可展開 A–G",
-      d: "只顯示本區 · 右欄 landing · 下方可展開 A–G",
-      e: "只顯示本區 · 右欄 landing · 下方可展開 A–G",
-      f: "只顯示本區 · 右欄詩歌模組 · 下方可展開 A–G",
-      g: "只顯示本區 · 右欄規劃行政 · 下方可展開 A–G",
+      a: "只顯示本區 · 右欄崇拜 landing · This zone only · worship landing",
+      b: "只顯示本區 · 右欄牧養 landing · Pastoral landing",
+      c: "只顯示本區 · 右欄教育 Tab 桌 · Education desk",
+      d: "只顯示本區 · 右欄外展 landing · Outreach landing",
+      e: "只顯示本區 · 右欄社關 landing · Social landing",
+      f: "只顯示本區 · 右欄樂以載道 · Hymnology module",
+      g: "只顯示本區 · 右欄規劃 landing · Planning landing",
+      h: "只顯示本區 · 右欄出席系統 · Attendance System",
     };
-    return bodies[focus] || "只顯示本區 · 下方可展開 A–G 全地圖";
+    return bodies[focus] || "只顯示本區 · This zone only · expand A–H below";
   }
 
   function applyFocusChrome(focus, useFocus) {
@@ -193,25 +199,53 @@
       var host = global.document.getElementById(row.hostId);
       if (!host) return;
       if (useFocus && row.zoneId !== focus) {
-        host.innerHTML = "";
-        host.style.display = "none";
-        host.classList.remove("sb-kit-zone-host--active");
+        /* focus 模式：其他區只留 ▶ 一列，可切換 */
+        host.style.display = "";
         host.setAttribute("data-sb-zone-collapsed", "1");
+        renderZoneHost(row.hostId, row.zoneId, {
+          collapsed: true,
+          activeFocus: false,
+        });
         return;
       }
       host.style.display = "";
+      host.removeAttribute("data-sb-zone-collapsed");
+      /* 全地圖：全部 ▶ 收合；focus 本區：展開子選單 */
       renderZoneHost(row.hostId, row.zoneId, {
-        collapsed: false,
+        collapsed: !useFocus,
         activeFocus: useFocus && row.zoneId === focus,
       });
     });
     var gSec = global.document.querySelector('.sidebar-section[data-focus-zone="g"]');
-    if (gSec) gSec.style.display = useFocus && focus !== "g" ? "none" : "";
+    if (gSec) {
+      if (useFocus && focus !== "g") {
+        gSec.classList.add("sb-kit-zone--rail-only");
+        gSec.setAttribute("data-sb-zone-collapsed", "1");
+      } else if (useFocus && focus === "g") {
+        gSec.classList.remove("sb-kit-zone--rail-only");
+        gSec.removeAttribute("data-sb-zone-collapsed");
+      } else {
+        /* 全地圖：G 亦收合，只見標題 ▶ */
+        gSec.classList.add("sb-kit-zone--rail-only");
+        gSec.setAttribute("data-sb-zone-collapsed", "1");
+      }
+      gSec.style.display = "";
+    }
     var banner = global.document.getElementById("sb-focus-banner");
     if (banner) {
-      banner.hidden = true;
-      banner.innerHTML = "";
-      banner.setAttribute("aria-hidden", "true");
+      if (useFocus && focus) {
+        banner.hidden = false;
+        banner.setAttribute("aria-hidden", "false");
+        banner.innerHTML =
+          "<strong>" +
+          (focus.toUpperCase()) +
+          " 區</strong>" +
+          focusBannerBody(focus);
+      } else {
+        banner.hidden = true;
+        banner.innerHTML = "";
+        banner.setAttribute("aria-hidden", "true");
+      }
     }
     renderFocusFooter(focus);
   }
