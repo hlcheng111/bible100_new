@@ -1,5 +1,5 @@
 /**
- * Page 1 · 小组工作桌 UI
+ * Page 1 · 小組工作桌 UI
  */
 (function (win, doc) {
   "use strict";
@@ -64,21 +64,21 @@
       '<div class="sg-stat-grid">' +
       '<div class="sg-stat"><span class="n">' +
       dash.rosterCount +
-      '</span><span class="l">本组成员</span></div>' +
+      '</span><span class="l">本組成員</span></div>' +
       '<div class="sg-stat"><span class="n">' +
       dash.goals.length +
-      '</span><span class="l">本季目标</span></div>' +
+      '</span><span class="l">本季目標</span></div>' +
       '<div class="sg-stat warn"><span class="n">' +
       dash.absenceAlerts.length +
-      '</span><span class="l">缺席预警</span></div>' +
+      '</span><span class="l">缺席預警</span></div>' +
       '<div class="sg-stat"><span class="n">' +
       dash.birthdays.length +
-      '</span><span class="l">本周生日</span></div>' +
+      '</span><span class="l">本週生日</span></div>' +
       "</div>";
 
     var inbox = H.getPastoralTaskInbox({ groupId: state.groupId, limit: 12 });
     if (inbox.length) {
-      html += '<div class="sg-card alert"><h3>📥 牧养待办 Inbox（' + inbox.length + "）</h3><ul class=\"alert-list\">";
+      html += '<div class="sg-card alert"><h3>📥 牧養待辦 Inbox（' + inbox.length + "）</h3><ul class=\"alert-list\">";
       inbox.forEach(function (t) {
         html +=
           '<li class="' +
@@ -89,7 +89,7 @@
           H.esc(t.summary) +
           ' <a href="' +
           H.esc(t.link) +
-          '">处理</a>' +
+          '">處理</a>' +
           (t.taskId || t.draftId
             ? ' <button type="button" class="sg-btn sm sg-inbox-done" data-tid="' + H.esc(t.id) + '">完成</button>'
             : "") +
@@ -98,24 +98,24 @@
       html += "</ul></div>";
     }
 
-    html += '<div class="sg-card"><h3>牧职架构</h3><p class="muted">';
+    html += '<div class="sg-card"><h3>牧職架構</h3><p class="muted">';
     html +=
       "牧者：" +
       H.esc(g.pastor || "—") +
-      " · 区长：" +
+      " · 區長：" +
       H.esc(g.districtLeader || "—") +
-      " · 组长：" +
+      " · 組長：" +
       H.esc(g.leader || "—");
-    html += "<br>分区：" + H.esc(g.region || "—") + " · 聚会：" + H.esc(g.meetingDay || "—") + "</p>";
+    html += "<br>分區：" + H.esc(g.region || "—") + " · 聚會：" + H.esc(g.meetingDay || "—") + "</p>";
     html +=
-      '<p><a href="pastoral-org-roster.html?crm_from=b_pastoral#tab-tree">→ 全教会牧职架构</a> · ' +
+      '<p><a href="pastoral-org-roster.html?crm_from=b_pastoral#tab-tree">→ 全教會牧職架構</a> · ' +
       '<a href="pastoral-attendance.html?crm_from=b_pastoral&groupId=' +
       state.groupId +
-      '">聚会出席统计</a> · ' +
-      '<a href="../members/member-integrated.html?crm_from=b_pastoral#tab=groups">会友小组归属</a></p></div>';
+      '">聚會出席統計</a> · ' +
+      '<a href="../members/member-integrated.html?crm_from=b_pastoral#tab=groups">會友小組歸屬</a></p></div>';
 
     if (dash.birthdays.length) {
-      html += '<div class="sg-card"><h3>🎂 本周生日</h3><ul>';
+      html += '<div class="sg-card"><h3>🎂 本週生日</h3><ul>';
       dash.birthdays.forEach(function (m) {
         html += "<li>" + H.memberLinkHtml(m.id, m.name) + "</li>";
       });
@@ -123,48 +123,48 @@
     }
 
     if (dash.absenceAlerts.length) {
-      html += '<div class="sg-card alert"><h3>⚠️ 缺席预警（≥' + H.ABSENCE_ALERT_WEEKS + " 周）</h3><ul>";
+      html += '<div class="sg-card alert"><h3>⚠️ 缺席預警（≥' + H.ABSENCE_ALERT_WEEKS + " 周）</h3><ul>";
       dash.absenceAlerts.forEach(function (a) {
         html +=
           "<li>" +
           H.memberLinkHtml(a.memberId, a.name) +
-          " · 连续 " +
+          " · 連續 " +
           a.streak +
-          ' 周 <a href="../support/visitation_index.html?crm_from=b_pastoral">探访事工</a></li>';
+          ' 周 <a href="../support/visitation_index.html?crm_from=b_pastoral">探訪事工</a></li>';
       });
       html += "</ul></div>";
     }
 
     if (dash.checkinPending) {
       html +=
-        '<p class="sg-todo">📌 待办：本周快评尚未完成 · <button type="button" class="sg-btn sm" data-goto-tab="checkin">去快评</button></p>';
+        '<p class="sg-todo">📌 待辦：本週快評尚未完成 · <button type="button" class="sg-btn sm" data-goto-tab="checkin">去快評</button></p>';
     }
 
     if (dash.prayerAlerts && dash.prayerAlerts.length) {
-      html += '<div class="sg-card alert"><h3>🔴 战略桌紧急代祷</h3><ul class="alert-list">';
+      html += '<div class="sg-card alert"><h3>🔴 戰略桌緊急代禱</h3><ul class="alert-list">';
       dash.prayerAlerts.forEach(function (p) {
         if (p.urgency !== "high") return;
         html +=
           '<li class="hot">' +
           H.esc(p.request) +
-          ' <a href="pastoral-strategy.html?crm_from=b_pastoral#tab-prayer">战略桌</a></li>';
+          ' <a href="pastoral-strategy.html?crm_from=b_pastoral#tab-prayer">戰略桌</a></li>';
       });
       html += "</ul></div>";
     }
 
     if (dash.pendingAnnouncementRelays && dash.pendingAnnouncementRelays.length) {
       html +=
-        '<div class="sg-card"><h3>📣 待转发教会通告</h3><ul>';
+        '<div class="sg-card"><h3>📣 待轉發教會通告</h3><ul>';
       dash.pendingAnnouncementRelays.forEach(function (r) {
         html +=
           "<li>" +
           H.esc(r.title) +
-          ' · <a href="pastoral-events.html?crm_from=b_pastoral#tab-announce">去确认传递</a></li>';
+          ' · <a href="pastoral-events.html?crm_from=b_pastoral#tab-announce">去確認傳遞</a></li>';
       });
       html += "</ul></div>";
     }
 
-    html += '<div class="sg-card"><h3>本组成员（点姓名 → 会友主档）</h3><div class="sg-roster">';
+    html += '<div class="sg-card"><h3>本組成員（點姓名 → 會友主檔）</h3><div class="sg-roster">';
     H.membersInGroup(state.groupId).forEach(function (m) {
       html +=
         '<span class="sg-chip">' +
@@ -195,26 +195,26 @@
     var wk = H.isoWeekKey(H.todayISO());
     var mtg = H.getMeetingForWeek(state.groupId, wk) || { scripture: "", icebreaker: "", prayers: [] };
     host.innerHTML =
-      '<p class="muted">本周 ' +
+      '<p class="muted">本週 ' +
       H.esc(wk) +
-      " · 查经材料、破冰与代祷（储存后组员可在出席页对照）</p>" +
-      '<label>查经／材料<br><textarea id="sg-scripture" rows="2" class="sg-input">' +
+      " · 查經材料、破冰與代禱（儲存後組員可在出席頁對照）</p>" +
+      '<label>查經／材料<br><textarea id="sg-scripture" rows="2" class="sg-input">' +
       H.esc(mtg.scripture || "") +
       "</textarea></label>" +
       '<label>破冰<br><textarea id="sg-icebreaker" rows="2" class="sg-input">' +
       H.esc(mtg.icebreaker || "") +
       "</textarea></label>" +
-      '<label>代祷事项（每行一项）<br><textarea id="sg-prayers" rows="3" class="sg-input">' +
+      '<label>代禱事項（每行一項）<br><textarea id="sg-prayers" rows="3" class="sg-input">' +
       H.esc((mtg.prayers || []).join("\n")) +
       "</textarea></label>" +
-      '<button type="button" class="sg-btn" id="sg-save-meeting">储存本周开组</button>';
+      '<button type="button" class="sg-btn" id="sg-save-meeting">儲存本週開組</button>';
     $("sg-save-meeting").onclick = function () {
       H.saveWeeklyMeeting(state.groupId, {
         scripture: $("sg-scripture").value,
         icebreaker: $("sg-icebreaker").value,
         prayers: $("sg-prayers").value
       });
-      win.alert("已储存本周开组动态");
+      win.alert("已儲存本週開組動態");
     };
   }
 
@@ -233,7 +233,7 @@
               H.esc(g.title) +
               "</strong> · " +
               H.esc(g.period) +
-              " · 进度 " +
+              " · 進度 " +
               (g.pct || 0) +
               "%" +
               (g.gospelFriends != null ? " · 福音朋友 " + g.gospelFriends : "") +
@@ -241,15 +241,15 @@
             );
           })
           .join("")
-      : "<p>尚无目标。</p>";
+      : "<p>尚無目標。</p>";
     html +=
-      '<button type="button" class="sg-btn" id="sg-add-goal">新增目标（示范）</button>';
+      '<button type="button" class="sg-btn" id="sg-add-goal">新增目標（示範）</button>';
     host.innerHTML = html;
     $("sg-add-goal").onclick = function () {
       w.goals.push({
         id: "goal_" + Date.now(),
         groupId: state.groupId,
-        title: "新目标（请编辑）",
+        title: "新目標（請編輯）",
         period: "本季",
         pct: 0,
         gospelFriends: 0
@@ -275,17 +275,17 @@
       })
       .join("");
     host.innerHTML =
-      "<p>约 5 分钟 · 勾选缺席会联动出席统计与探访预警规则</p>" +
-      '<label>微小胜利<br><textarea id="sg-micro-win" rows="3" class="sg-input"></textarea></label>' +
-      '<div class="sg-card"><h3>本周出席快选</h3>' +
+      "<p>約 5 分鐘 · 勾選缺席會聯動出席統計與探訪預警規則</p>" +
+      '<label>微小勝利<br><textarea id="sg-micro-win" rows="3" class="sg-input"></textarea></label>' +
+      '<div class="sg-card"><h3>本週出席快選</h3>' +
       absentHtml +
       "</div>" +
-      '<label><input type="checkbox" id="sg-need-visit"> 需要探访跟进（另写探访草稿）</label>' +
-      '<p><button type="button" class="sg-btn" id="sg-save-checkin">储存快评</button> ' +
-      '<a href="../support/visitation_index.html?crm_from=b_pastoral" id="sg-goto-visitation" style="display:none">→ 探访事工</a> ' +
+      '<label><input type="checkbox" id="sg-need-visit"> 需要探訪跟進（另寫探訪草稿）</label>' +
+      '<p><button type="button" class="sg-btn" id="sg-save-checkin">儲存快評</button> ' +
+      '<a href="../support/visitation_index.html?crm_from=b_pastoral" id="sg-goto-visitation" style="display:none">→ 探訪事工</a> ' +
       '<a href="pastoral-attendance.html?crm_from=b_pastoral&groupId=' +
       state.groupId +
-      '">完整出席汇报</a></p>';
+      '">完整出席彙報</a></p>';
 
     $("sg-save-checkin").onclick = function () {
       var absent = [];
@@ -309,8 +309,8 @@
       if (gv && $("sg-need-visit").checked) gv.style.display = "inline";
       win.alert(
         absent.length
-          ? "快评已存；已写入出席。缺席 " + absent.length + " 人，若达 3 周将自动进探访清单。"
-          : "快评已存，全员出席已记录。"
+          ? "快評已存；已寫入出席。缺席 " + absent.length + " 人，若達 3 周將自動進探訪清單。"
+          : "快評已存，全員出席已記錄。"
       );
       renderOverview();
     };
@@ -348,7 +348,7 @@
       H.ensurePastoralSeed(true);
       renderGroupSelect();
       renderAll();
-      win.alert("已载入示范数据（会友、小组、牧职树、目标）");
+      win.alert("已載入示範數據（會友、小組、牧職樹、目標）");
     };
     renderAll();
   }

@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head><meta charset="UTF-8"><title>财务管理系统 · Financial Management | Church Ministry</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<html lang="zh-Hant">
+<head><meta charset="UTF-8"><title>財務管理（舊頁）· Financial Management | Church Ministry</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
+body { font-family: 'Microsoft JhengHei','Microsoft YaHei',sans-serif; background: #f5f6fa; font-size: 12px; }
 .header { background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; padding: 15px 20px; }
 .tabs { display: flex; gap: 5px; margin-top: 10px; }
 .tab { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; }
@@ -18,6 +17,7 @@ body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
 .stat-num { font-size: 28px; font-weight: bold; }
 .stat-label { font-size: 10px; color: #7f8c8d; margin-top: 5px; }
 .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; background: #27ae60; color: white; margin: 5px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn-danger { background: #e74c3c; }
 table { width: 100%; border-collapse: collapse; }
 table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
@@ -27,145 +27,248 @@ table th { background: #f8f9fa; }
 .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; position: relative; }
 .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
 .form-group { margin-bottom: 12px; }
-.form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+.form-group label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
 .form-input, .form-select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+.fm-msg { padding: 8px 12px; margin: 10px 16px 0; border-radius: 8px; background: #f1f5f9; font-size: 12px; }
+.fm-msg--ok { background: #ecfdf5; color: #065f46; }
+.fm-msg--warn { background: #fffbeb; color: #92400e; }
 </style></head>
 <body>
     <div style="padding:10px 16px;background:#fef3c7;border-bottom:2px solid #f59e0b;font-size:12px;line-height:1.5;">
       <strong>W4 合併提示：</strong>正式財務主路徑為
       <a href="../finance/finance-integrated.html?crm_from=f_merge" style="color:#0b5fa5;font-weight:700;">財務事工工作台（F-04）</a>
-      （<code>financeSystemData</code>／Bridge）。本頁 <code>financialData</code> 為舊獨立桶，請勿雙帳；長執報告請在 F-04 匯出 CSV／列印。
+      。本頁為舊介面，<strong>現在和 F-04 共用同一份帳（<code>financeSystemData</code>／Bridge）</strong>，不再有獨立的舊帳；新增與作廢都會留下操作紀錄，並受財務權限管制。長執報告請在 F-04 匯出 CSV／列印。
     </div>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div><div class="header">
-    <h1>💰 财务管理系统 <small style="font-size:11px;opacity:.85;">（舊頁 · 請改用 F-04）</small></h1>
+    <h1>💰 財務管理 <small style="font-size:11px;opacity:.85;">（舊頁 · 請改用 F-04）</small></h1>
     <div class="tabs">
-        <button class="tab active" onclick="switchTab('overview')">📊 总览</button>
-        <button class="tab" onclick="switchTab('income')">💵 收入</button>
-        <button class="tab" onclick="switchTab('expense')">💸 支出</button>
-        <button class="tab" onclick="switchTab('reports')">📈 报表</button>
+        <button class="tab active" data-tab="overview">📊 總覽</button>
+        <button class="tab" data-tab="income">💵 收入</button>
+        <button class="tab" data-tab="expense">💸 支出</button>
+        <button class="tab" data-tab="reports">📈 報表</button>
     </div>
+</div>
+<div id="fm-msg" class="fm-msg" role="status" hidden></div>
+<div id="fm-legacy" class="fm-msg fm-msg--warn" hidden>
+    偵測到本機還留有<strong>舊版獨立帳</strong>（<span id="fm-legacy-count">0</span> 筆）。
+    <button class="btn" id="fm-legacy-import" style="padding:6px 12px;margin:0 0 0 8px;">匯入到正式財務帳</button>
+    <span style="color:#64748b;">匯入前請先到「備份與還原」備份；舊資料不會被刪除，只會匯入一次。</span>
 </div>
 <div class="container">
     <div id="tab-overview" class="tab-content active">
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-num" id="s1">$0</div><div class="stat-label">总收入</div></div>
-            <div class="stat-card"><div class="stat-num" id="s2">$0</div><div class="stat-label">总支出</div></div>
-            <div class="stat-card"><div class="stat-num" id="s3">$0</div><div class="stat-label">结余</div></div>
-            <div class="stat-card"><div class="stat-num" id="s4">0</div><div class="stat-label">本月交易</div></div>
+            <div class="stat-card"><div class="stat-num" id="s1">$0</div><div class="stat-label">總收入</div></div>
+            <div class="stat-card"><div class="stat-num" id="s2">$0</div><div class="stat-label">總支出</div></div>
+            <div class="stat-card"><div class="stat-num" id="s3">$0</div><div class="stat-label">結餘</div></div>
+            <div class="stat-card"><div class="stat-num" id="s4">0</div><div class="stat-label">有效交易筆數</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
-            <div class="card"><h3>📊 收支对比</h3><canvas id="pieChart"></canvas></div>
-            <div class="card"><h3>📈 月度趋势</h3><canvas id="lineChart"></canvas></div>
-        </div>
+        <div class="card"><p style="line-height:1.8;">這裡的數字與 F-04 相同（已作廢的交易不計入）。圖表與預算請到 F-04 查看。</p></div>
     </div>
     <div id="tab-income" class="tab-content">
         <div class="card">
-            <h3 style="margin-bottom:15px;">💵 收入记录</h3>
-            <button class="btn" onclick="showAddIncomeModal()">➕ 新增收入</button>
-            <table id="incomeTable"><thead><tr><th>日期</th><th>类别</th><th>金额</th><th>说明</th><th>操作</th></tr></thead><tbody></tbody></table>
+            <h3 style="margin-bottom:15px;">💵 收入記錄</h3>
+            <button class="btn" id="btn-add-income">➕ 新增收入</button>
+            <table id="incomeTable"><thead><tr><th>日期</th><th>類別</th><th>金額</th><th>說明</th><th>操作</th></tr></thead><tbody></tbody></table>
         </div>
     </div>
     <div id="tab-expense" class="tab-content">
         <div class="card">
-            <h3 style="margin-bottom:15px;">💸 支出记录</h3>
-            <button class="btn" onclick="showAddExpenseModal()">➕ 新增支出</button>
-            <table id="expenseTable"><thead><tr><th>日期</th><th>类别</th><th>金额</th><th>说明</th><th>操作</th></tr></thead><tbody></tbody></table>
+            <h3 style="margin-bottom:15px;">💸 支出記錄</h3>
+            <button class="btn" id="btn-add-expense">➕ 新增支出</button>
+            <table id="expenseTable"><thead><tr><th>日期</th><th>類別</th><th>金額</th><th>說明</th><th>操作</th></tr></thead><tbody></tbody></table>
         </div>
     </div>
     <div id="tab-reports" class="tab-content">
         <div class="card">
-            <h3>📈 财务报表</h3>
-            <button class="btn" onclick="generateReport('month')">月度报表</button>
-            <button class="btn" onclick="generateReport('quarter')">季度报表</button>
-            <button class="btn" onclick="exportData()">📤 导出Excel</button>
+            <h3>📈 財務報表</h3>
+            <p style="margin:10px 0;line-height:1.8;">月度／季度報表與列印請到 <a href="../finance/finance-integrated.html?crm_from=f_merge" style="color:#0b5fa5;font-weight:700;">F-04 財務事工工作台</a>。這裡只提供交易明細匯出。</p>
+            <button class="btn" id="btn-export">📤 匯出交易明細（CSV，Excel 可開）</button>
         </div>
     </div>
 </div>
-<div id="modal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+<div id="modal" class="modal"><div class="modal-content"><span class="modal-close" id="modal-close" role="button" aria-label="關閉">&times;</span><div id="modalContent"></div></div></div>
+
+<script src="../../../js/cloud_config.js"></script>
+<script src="../../../js/church_auth.js"></script>
+<script src="../../../js/church_crm_constants.js"></script>
+<script src="../../../js/church_data_bridge.js"></script>
+<script src="../../js/cm_finance_legacy.js?v=20261124p7"></script>
 <script>
-let data = { income: [], expense: [] };
-document.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('financialData');
-    if (saved) data = JSON.parse(saved);
-    if (data.income.length === 0) loadDemo();
-    renderAll();
-});
-function loadDemo() {
-    data.income = [{id:1,date:'2025-10-01',category:'奉献',amount:50000,note:'主日奉献'},{id:2,date:'2025-10-08',category:'奉献',amount:48000,note:'主日奉献'}];
-    data.expense = [{id:1,date:'2025-10-05',category:'水电',amount:5000,note:'10月水电费'},{id:2,date:'2025-10-07',category:'薪资',amount:30000,note:'同工薪资'}];
-    localStorage.setItem('financialData', JSON.stringify(data));
-    renderAll();
-}
-function switchTab(tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-    event.target.classList.add('active');
-    document.getElementById('tab-' + tab).classList.add('active');
-    if (tab === 'overview') renderOverview();
-}
-function renderAll() {
-    renderOverview();
-    document.querySelector('#incomeTable tbody').innerHTML = data.income.map(i => `<tr><td>${i.date}</td><td>${i.category}</td><td>$${i.amount.toLocaleString()}</td><td>${i.note}</td><td><button class="btn btn-danger" style="padding:6px 12px;" onclick="deleteIncome(${i.id})">删除</button></td></tr>`).join('');
-    document.querySelector('#expenseTable tbody').innerHTML = data.expense.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td>$${e.amount.toLocaleString()}</td><td>${e.note}</td><td><button class="btn btn-danger" style="padding:6px 12px;" onclick="deleteExpense(${e.id})">删除</button></td></tr>`).join('');
-}
-function renderOverview() {
-    const totalIncome = data.income.reduce((sum,i)=>sum+i.amount,0);
-    const totalExpense = data.expense.reduce((sum,e)=>sum+e.amount,0);
-    document.getElementById('s1').textContent = '$' + totalIncome.toLocaleString();
-    document.getElementById('s2').textContent = '$' + totalExpense.toLocaleString();
-    document.getElementById('s3').textContent = '$' + (totalIncome-totalExpense).toLocaleString();
-    document.getElementById('s4').textContent = data.income.length + data.expense.length;
-}
-function showModal(title, content) {
-    document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;margin-bottom:20px;">${title}</div>${content}`;
-    document.getElementById('modal').classList.add('active');
-}
-function closeModal() { document.getElementById('modal').classList.remove('active'); }
-function showAddIncomeModal() {
-    showModal('➕ 新增收入', `<div class="form-group"><label>日期</label><input type="date" id="date" class="form-input"></div><div class="form-group"><label>类别</label><select id="cat" class="form-select"><option>奉献</option><option>特别奉献</option><option>其他</option></select></div><div class="form-group"><label>金额</label><input type="number" id="amt" class="form-input"></div><div class="form-group"><label>说明</label><input type="text" id="note" class="form-input"></div><button class="btn" onclick="addIncome()">确定</button>`);
-}
-function addIncome() {
-    data.income.push({id:Date.now(),date:document.getElementById('date').value,category:document.getElementById('cat').value,amount:parseInt(document.getElementById('amt').value),note:document.getElementById('note').value});
-    localStorage.setItem('financialData', JSON.stringify(data));
-    renderAll();
-    closeModal();
-    alert('✅ 已添加！');
-}
-function deleteIncome(id) {
-    if (confirm('删除？')) {
-        data.income = data.income.filter(i => i.id !== id);
-        localStorage.setItem('financialData', JSON.stringify(data));
-        renderAll();
+/**
+ * 舊財務頁（只負責畫面）。
+ * 讀寫一律經 ChurchDataBridge：getFinanceDataAsync / saveFinanceTransaction / softDeleteFinanceTransaction。
+ * 本頁不直接讀寫瀏覽器儲存（舊獨立帳只透過 cm_finance_legacy.js 讀取、供「匯入」用）。
+ */
+(function () {
+    'use strict';
+    var L = window.CmFinanceLegacy;
+    var B = window.ChurchDataBridge;
+    var rows = [];
+    var OPERATOR = 'finance_legacy_page';
+
+    function $(id) { return document.getElementById(id); }
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
     }
-}
-function showAddExpenseModal() {
-    showModal('➕ 新增支出', `<div class="form-group"><label>日期</label><input type="date" id="date" class="form-input"></div><div class="form-group"><label>类别</label><select id="cat" class="form-select"><option>薪资</option><option>水电</option><option>维修</option><option>其他</option></select></div><div class="form-group"><label>金额</label><input type="number" id="amt" class="form-input"></div><div class="form-group"><label>说明</label><input type="text" id="note" class="form-input"></div><button class="btn" onclick="addExpense()">确定</button>`);
-}
-function addExpense() {
-    data.expense.push({id:Date.now(),date:document.getElementById('date').value,category:document.getElementById('cat').value,amount:parseInt(document.getElementById('amt').value),note:document.getElementById('note').value});
-    localStorage.setItem('financialData', JSON.stringify(data));
-    renderAll();
-    closeModal();
-    alert('✅ 已添加！');
-}
-function deleteExpense(id) {
-    if (confirm('删除？')) {
-        data.expense = data.expense.filter(e => e.id !== id);
-        localStorage.setItem('financialData', JSON.stringify(data));
-        renderAll();
+    function money(n) { return '$' + (Number(n) || 0).toLocaleString(); }
+
+    function setMsg(text, kind) {
+        var el = $('fm-msg');
+        el.textContent = text || '';
+        el.hidden = !text;
+        el.className = 'fm-msg' + (kind ? ' fm-msg--' + kind : '');
     }
-}
-function generateReport(type) { alert(`📊 ${type==='month'?'月度':'季度'}财务报表已生成！`); }
-function exportData() {
-    const csv = '类型,日期,类别,金额,说明\n' + 
-        data.income.map(i=>`收入,${i.date},${i.category},${i.amount},${i.note}`).join('\n') + '\n' +
-        data.expense.map(e=>`支出,${e.date},${e.category},${e.amount},${e.note}`).join('\n');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
-    a.download = '财务记录.csv';
-    a.click();
-    alert('✅ 已导出！');
-}
+
+    function bridgeOk() {
+        return !!(B && typeof B.saveFinanceTransaction === 'function' && typeof B.getFinanceDataAsync === 'function');
+    }
+
+    function load() {
+        if (!bridgeOk()) {
+            setMsg('找不到資料橋接層（ChurchDataBridge），本頁暫時無法讀寫財務帳。請改用 F-04。', 'warn');
+            ['btn-add-income', 'btn-add-expense', 'btn-export'].forEach(function (id) { $(id).disabled = true; });
+            return Promise.resolve();
+        }
+        return B.getFinanceDataAsync().then(function (fin) {
+            rows = (fin.transactions || []).filter(function (t) { return !t.is_deleted; });
+            render();
+        }).catch(function (e) {
+            rows = [];
+            render();
+            setMsg('讀取財務帳失敗：' + (e && e.message ? e.message : '未知錯誤'), 'warn');
+        });
+    }
+
+    function sum(type) {
+        return rows.filter(function (t) { return t.type === type; }).reduce(function (s, t) { return s + (Number(t.amount) || 0); }, 0);
+    }
+
+    function rowHtml(t) {
+        return '<tr><td>' + esc(t.date) + '</td><td>' + esc(t.categoryName || t.category) + '</td><td>' + money(t.amount) +
+            '</td><td>' + esc(t.description) + '</td><td><button class="btn btn-danger" style="padding:6px 12px;" data-void="' +
+            esc(t.txn_id) + '">作廢</button></td></tr>';
+    }
+
+    function render() {
+        var inc = sum('income');
+        var exp = sum('expense');
+        $('s1').textContent = money(inc);
+        $('s2').textContent = money(exp);
+        $('s3').textContent = money(inc - exp);
+        $('s4').textContent = rows.length;
+        $('incomeTable').querySelector('tbody').innerHTML = rows.filter(function (t) { return t.type === 'income'; }).map(rowHtml).join('');
+        $('expenseTable').querySelector('tbody').innerHTML = rows.filter(function (t) { return t.type === 'expense'; }).map(rowHtml).join('');
+    }
+
+    function showModal(title, html) {
+        $('modalContent').innerHTML = '<div style="font-size:18px;margin-bottom:20px;">' + esc(title) + '</div>' + html;
+        $('modal').classList.add('active');
+    }
+    function closeModal() { $('modal').classList.remove('active'); }
+
+    function addForm(type) {
+        var cats = type === 'income' ? ['奉獻', '特別奉獻', '其他'] : ['薪資', '水電', '維修', '其他'];
+        var today = new Date().toISOString().slice(0, 10);
+        showModal(type === 'income' ? '➕ 新增收入' : '➕ 新增支出',
+            '<div class="form-group"><label>日期</label><input type="date" id="f-date" class="form-input" value="' + today + '"></div>' +
+            '<div class="form-group"><label>類別</label><select id="f-cat" class="form-select">' +
+            cats.map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('') + '</select></div>' +
+            '<div class="form-group"><label>金額</label><input type="number" id="f-amt" class="form-input" min="0" step="0.01"></div>' +
+            '<div class="form-group"><label>說明</label><input type="text" id="f-note" class="form-input"></div>' +
+            '<button class="btn" id="f-ok" data-type="' + type + '">確定</button><button class="btn" style="background:#94a3b8" id="f-cancel">取消</button>');
+    }
+
+    function submitForm(type) {
+        var check = L.validateEntry({ date: $('f-date').value, amount: $('f-amt').value });
+        if (!check.ok) { setMsg(check.errors.join(' '), 'warn'); return; }
+        var cat = $('f-cat').value;
+        try {
+            B.saveFinanceTransaction({
+                type: type, category: cat, categoryName: cat,
+                amount: check.amount, date: check.date,
+                description: $('f-note').value || cat
+            }, { operator_id: OPERATOR });
+        } catch (e) {
+            setMsg(L.errorText(e), 'warn');
+            return;
+        }
+        closeModal();
+        setMsg('✅ 已新增，並記入操作紀錄。', 'ok');
+        load();
+    }
+
+    function voidTxn(id) {
+        var reason = window.prompt('請輸入作廢原因（會記入操作紀錄；帳目不會真的刪除，只標記作廢）：', '錄入錯誤');
+        if (!reason) return;
+        try {
+            if (!B.softDeleteFinanceTransaction(id, reason, { operator_id: OPERATOR })) throw new Error('找不到這筆交易');
+        } catch (e) {
+            setMsg(L.errorText(e), 'warn');
+            return;
+        }
+        setMsg('✅ 已作廢（帳目保留紀錄）。', 'ok');
+        load();
+    }
+
+    function exportCsv() {
+        var csv = L.toCsv(rows);
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        a.download = 'finance_transactions.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setMsg('✅ 已匯出 ' + rows.length + ' 筆（檔案含財務資料，請妥善保管）。', 'ok');
+    }
+
+    function checkLegacy() {
+        var legacy = L.readLegacy();
+        if (!legacy.offer) return;
+        $('fm-legacy-count').textContent = legacy.count;
+        $('fm-legacy').hidden = false;
+        $('fm-legacy-import').addEventListener('click', function () {
+            if (!window.confirm('要把舊版獨立帳的 ' + legacy.count + ' 筆匯入正式財務帳嗎？\n（只會匯入一次，舊資料不會被刪除。建議先備份。）')) return;
+            var done = 0;
+            try {
+                legacy.entries.forEach(function (e) { B.saveFinanceTransaction(e, { operator_id: OPERATOR }); done++; });
+                L.markImported();
+            } catch (err) {
+                setMsg('匯入到第 ' + (done + 1) + ' 筆時中斷：' + L.errorText(err) + '（已匯入 ' + done + ' 筆；請先到 F-04 確認，不要重複匯入）', 'warn');
+                if (done) L.markImported();
+                $('fm-legacy').hidden = true;
+                load();
+                return;
+            }
+            $('fm-legacy').hidden = true;
+            setMsg('✅ 已匯入 ' + done + ' 筆舊帳。', 'ok');
+            load();
+        });
+    }
+
+    document.addEventListener('click', function (ev) {
+        var t = ev.target;
+        if (!t || !t.closest) return;
+        var tab = t.closest('[data-tab]');
+        if (tab) {
+            document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('active'); });
+            document.querySelectorAll('.tab-content').forEach(function (x) { x.classList.remove('active'); });
+            tab.classList.add('active');
+            $('tab-' + tab.getAttribute('data-tab')).classList.add('active');
+            return;
+        }
+        var v = t.closest('[data-void]');
+        if (v) { voidTxn(v.getAttribute('data-void')); return; }
+        if (t.id === 'f-ok') { submitForm(t.getAttribute('data-type')); return; }
+        if (t.id === 'f-cancel' || t.id === 'modal-close') closeModal();
+    });
+    $('btn-add-income').addEventListener('click', function () { addForm('income'); });
+    $('btn-add-expense').addEventListener('click', function () { addForm('expense'); });
+    $('btn-export').addEventListener('click', exportCsv);
+
+    load().then(checkLegacy);
+})();
 </script>
 
 <!-- b100-cm-desk-kit -->

@@ -1,108 +1,117 @@
 /**
- * B 区牧养 · 故事头 + 三步路线（SSOT）
+ * B 區牧養 · 故事頭 + 三步路線（SSOT）
  */
 (function (win, doc) {
   "use strict";
 
   var STORIES = {
     "modules/support/visitation_index.html": {
-      title: "💬 探访事工",
-      what: "探访与关怀执行终端（牧养的手）",
-      do: "接敬拜缺席草稿 · 安排本周探访 · 填写记录",
-      from: "侧栏主入口 · 敬拜缺席 · 小组预警",
-      to: "储存后写入会友主档 · 成长追踪时间轴",
-      prev: { path: "_landing/fellowship.html", label: "牧羊导览", hint: "认路入门" },
-      next: { path: "modules/members/member-integrated.html", label: "会友主档", hint: "查看关怀历史" }
+      title: "💬 探訪事工",
+      what: "探訪與關懷執行終端（牧養的手）",
+      do: "接敬拜缺席草稿 · 安排本週探訪 · 填寫記錄",
+      from: "側欄主入口 · 敬拜缺席 · 小組預警",
+      to: "儲存後寫入會友主檔 · 成長追蹤時間軸",
+      prev: { path: "_landing/fellowship.html", label: "牧羊導覽", hint: "認路入門" },
+      next: { path: "modules/members/member-integrated.html", label: "會友主檔", hint: "查看關懷歷史" }
     },
     "modules/fellowship/index.html": {
-      title: "👥 团契事工总览",
-      what: "小组（家）与团契（圈）的入口地图",
-      do: "按组织需要选入口 · 不重复填表",
-      from: "牧羊导览 · 侧栏团契总览",
-      to: "进入小组工作桌或团契的圈",
-      prev: { path: "_landing/fellowship.html", label: "牧羊导览", hint: "总地图" },
-      next: { path: "modules/fellowship/small-groups-integrated.html", label: "小组工作桌", hint: "名册与目标" }
+      title: "👥 團契事工總覽",
+      what: "小組（家）與團契（圈）的入口地圖",
+      do: "按組織需要選入口 · 不重複填表",
+      from: "牧羊導覽 · 側欄團契總覽",
+      to: "進入小組工作桌或團契的圈",
+      prev: { path: "_landing/fellowship.html", label: "牧羊導覽", hint: "總地圖" },
+      next: { path: "modules/fellowship/small-groups-integrated.html", label: "小組工作桌", hint: "名冊與目標" }
     },
     "modules/fellowship/small-groups-integrated.html": {
-      title: "🏠 小组工作桌",
-      what: "组长每日核心 — 4 Tab 工作桌（非全教会组织树）",
-      do: "总览看板 · 每周开组 · 目标成果 · 快评与出席快选",
-      from: "团契总览 · 侧栏小组工作桌",
-      to: "出席联动 → 聚会统计页 · 3 周缺席 → 探访事工",
-      prev: { path: "modules/fellowship/index.html", label: "团契总览", hint: "选入口" },
-      next: { path: "modules/fellowship/pastoral-attendance.html", label: "聚会出席", hint: "周报与走势" }
+      title: "🏠 小組工作桌",
+      what: "組長每日核心 — 4 Tab 工作桌（非全教會組織樹）",
+      do: "總覽看板 · 每週開組 · 目標成果 · 快評與出席快選",
+      from: "團契總覽 · 側欄小組工作桌",
+      to: "出席聯動 → 聚會統計頁 · 3 周缺席 → 探訪事工",
+      prev: { path: "modules/fellowship/index.html", label: "團契總覽", hint: "選入口" },
+      next: { path: "modules/fellowship/attendance-checkin.html", label: "現場點名", hint: "簽到台" }
+    },
+    "modules/fellowship/attendance-checkin.html": {
+      title: "✅ 現場點名 · 簽到台",
+      what: "手動編號／電話簽到 · 組長批量 · 防重複打卡",
+      do: "建場次 · 開始聚會 · 手輸或批量勾選 · 匯出 CSV",
+      from: "小組工作桌 · 牧養 Tab② · 側欄現場點名",
+      to: "出席統計趨勢 · 缺席預警 → 探訪（人確認）",
+      prev: { path: "modules/fellowship/small-groups-integrated.html", label: "小組工作桌", hint: "快評" },
+      next: { path: "modules/fellowship/pastoral-attendance.html", label: "出席統計", hint: "週報與走勢" }
     },
     "modules/fellowship/pastoral-attendance.html": {
-      title: "📊 聚会与出席统计",
-      what: "组长汇报 · 牧区出席走势 · 漏网预警",
-      do: "勾选出席 · 看趋势图 · 处理连续缺席预警",
-      from: "小组工作桌 · 侧栏聚会出席",
-      to: "预警联动组织名册生命周期 · 牧养战略桌",
-      prev: { path: "modules/fellowship/small-groups-integrated.html", label: "小组工作桌", hint: "快评" },
-      next: { path: "modules/fellowship/pastoral-org-roster.html", label: "组织名册", hint: "生命周期" }
+      title: "📊 聚會與出席統計",
+      what: "組長彙報 · 牧區出席走勢 · 漏網預警",
+      do: "勾選出席 · 看趨勢圖 · 處理連續缺席預警",
+      from: "現場點名 · 小組工作桌 · 側欄聚會出席統計",
+      to: "預警聯動組織名冊生命週期 · 牧養戰略桌",
+      prev: { path: "modules/fellowship/attendance-checkin.html", label: "現場點名", hint: "簽到台" },
+      next: { path: "modules/fellowship/pastoral-org-roster.html", label: "組織名冊", hint: "生命週期" }
     },
     "modules/fellowship/pastoral-org-roster.html": {
-      title: "👥 组织与名册中心",
-      what: "牧职树+组长健康度 · 多维标签矩阵 · 生命周期状态机 · 360履历",
-      do: "耗尽预警推战略桌 · 交叉筛选名册 · 新朋友落户 · 全景档案",
-      from: "团契总览 · 侧栏组织名册",
-      to: "点 memberId → 会友主档 · 出席率链出席页",
-      prev: { path: "modules/fellowship/pastoral-attendance.html", label: "聚会出席", hint: "出席数据" },
-      next: { path: "modules/fellowship/pastoral-events.html", label: "活动通告", hint: "跨组协作" }
+      title: "👥 組織與名冊中心",
+      what: "牧職樹+組長健康度 · 多維標籤矩陣 · 生命週期狀態機 · 360履歷",
+      do: "耗盡預警推戰略桌 · 交叉篩選名冊 · 新朋友落戶 · 全景檔案",
+      from: "團契總覽 · 側欄組織名冊",
+      to: "點 memberId → 會友主檔 · 出席率鏈出席頁",
+      prev: { path: "modules/fellowship/pastoral-attendance.html", label: "聚會出席", hint: "出席數據" },
+      next: { path: "modules/fellowship/pastoral-events.html", label: "活動通告", hint: "跨組協作" }
     },
     "modules/fellowship/pastoral-events.html": {
-      title: "📣 圣工与活动通告",
-      what: "小组传递率 · PK 报名 · 服侍冲突校验 · 复盘物资库",
-      do: "确认组长转发 · 批量报名 · 轮值冲突警示 · 归档 Lessons Learned",
-      from: "组织名册 · 小组工作桌通知",
-      to: "报名 memberId 联动会友主档",
-      prev: { path: "modules/fellowship/pastoral-org-roster.html", label: "组织名册", hint: "名册" },
-      next: { path: "modules/fellowship/pastoral-training.html", label: "门徒训练", hint: "装备" }
+      title: "📣 聖工與活動通告",
+      what: "小組傳遞率 · PK 報名 · 服侍衝突校驗 · 覆盤物資庫",
+      do: "確認組長轉發 · 批量報名 · 輪值衝突警示 · 歸檔 Lessons Learned",
+      from: "組織名冊 · 小組工作桌通知",
+      to: "報名 memberId 聯動會友主檔",
+      prev: { path: "modules/fellowship/pastoral-org-roster.html", label: "組織名冊", hint: "名冊" },
+      next: { path: "modules/fellowship/pastoral-training.html", label: "門徒訓練", hint: "裝備" }
     },
     "modules/fellowship/pastoral-training.html": {
-      title: "🎓 门徒装备与训练",
-      what: "属灵阶梯 · 修课补课 · 提摩太筛选 · Planning 恩赐同步",
-      do: "看成长阶梯 · 登记补课 · 筛选准组长 · 同步 SHAPE 恩赐",
-      from: "组织名册 360 · C 区主日学 · church_planning SHAPE",
-      to: "结业写入 growth 时间轴 · 提摩太池推生命周期",
-      prev: { path: "modules/fellowship/pastoral-events.html", label: "活动通告", hint: "营会" },
-      next: { path: "modules/fellowship/pastoral-strategy.html", label: "牧养战略桌", hint: "决策" }
+      title: "🎓 門徒裝備與訓練",
+      what: "屬靈階梯 · 修課補課 · 提摩太篩選 · Planning 恩賜同步",
+      do: "看成長階梯 · 登記補課 · 篩選準組長 · 同步 SHAPE 恩賜",
+      from: "組織名冊 360 · C 區主日學 · church_planning SHAPE",
+      to: "結業寫入 growth 時間軸 · 提摩太池推生命週期",
+      prev: { path: "modules/fellowship/pastoral-events.html", label: "活動通告", hint: "營會" },
+      next: { path: "modules/fellowship/pastoral-strategy.html", label: "牧養戰略桌", hint: "決策" }
     },
     "modules/fellowship/pastoral-strategy.html": {
-      title: "🎯 牧养策略与关怀",
-      what: "痛点分类探访 · 提案效益模拟 · 代祷红绿灯 · 教会健康指数 · RBAC",
-      do: "统一 Inbox · 写提案模拟 · 紧急代祷推工作桌 · 导出 JSON 备份",
-      from: "出席预警 · 探访回写 · 组织生命周期",
-      to: "探访事工执行 · 教会规划 OS",
-      prev: { path: "modules/fellowship/pastoral-training.html", label: "门徒训练", hint: "提摩太" },
-      next: { path: "modules/support/visitation_index.html", label: "探访事工", hint: "执行关怀" }
+      title: "🎯 牧養策略與關懷",
+      what: "痛點分類探訪 · 提案效益模擬 · 代禱紅綠燈 · 教會健康指數 · RBAC",
+      do: "統一 Inbox · 寫提案模擬 · 緊急代禱推工作桌 · 導出 JSON 備份",
+      from: "出席預警 · 探訪回寫 · 組織生命週期",
+      to: "探訪事工執行 · 教會規劃 OS",
+      prev: { path: "modules/fellowship/pastoral-training.html", label: "門徒訓練", hint: "提摩太" },
+      next: { path: "modules/support/visitation_index.html", label: "探訪事工", hint: "執行關懷" }
     },
     "modules/members/member-integrated.html": {
-      title: "📇 会友主档",
-      what: "全会友数据中枢（memberId 对齐）",
-      do: "查档案 · 小组归属 · 成长与关怀时间轴",
-      from: "探访记录 · 侧栏会友主档",
-      to: "回到探访事工继续跟进",
-      prev: { path: "modules/support/visitation_index.html", label: "探访事工", hint: "填写记录" },
-      next: { path: "modules/fellowship/small-groups-integrated.html", label: "小组工作桌", hint: "看归属" }
+      title: "📇 會友主檔",
+      what: "全會友數據中樞（memberId 對齊）",
+      do: "查檔案 · 小組歸屬 · 成長與關懷時間軸",
+      from: "探訪記錄 · 側欄會友主檔",
+      to: "回到探訪事工繼續跟進",
+      prev: { path: "modules/support/visitation_index.html", label: "探訪事工", hint: "填寫記錄" },
+      next: { path: "modules/fellowship/small-groups-integrated.html", label: "小組工作桌", hint: "看歸屬" }
     },
     "modules/development/youth-ministry-dev.html": {
-      title: "🎯 青年团契活动",
-      what: "迎新与外展活动橱窗（迎新人之路）",
-      do: "浏览营会／周五敬拜 · 登记新朋友",
-      from: "团契的圈 · 牧羊导览迎新人之路",
-      to: "新朋友转会友主档或探访事工",
-      prev: { path: "modules/fellowship/fellowship-circles.html", label: "团契的圈", hint: "青年团契" },
-      next: { path: "modules/support/visitation_index.html", label: "探访事工", hint: "初信跟进" }
+      title: "🎯 青年團契活動",
+      what: "迎新與外展活動櫥窗（迎新人之路）",
+      do: "瀏覽營會／週五敬拜 · 登記新朋友",
+      from: "團契的圈 · 牧羊導覽迎新人之路",
+      to: "新朋友轉會友主檔或探訪事工",
+      prev: { path: "modules/fellowship/fellowship-circles.html", label: "團契的圈", hint: "青年團契" },
+      next: { path: "modules/support/visitation_index.html", label: "探訪事工", hint: "初信跟進" }
     },
     "modules/fellowship/fellowship-circles.html": {
-      title: "⭕ 团契的圈",
-      what: "同阶段、同地区、同职业的朋友相聚",
-      do: "点进适合的圈 · 参加活动",
-      from: "牧羊导览 · 团契总览",
-      to: "青年活动 · 小组 · 探访",
-      prev: { path: "modules/fellowship/index.html", label: "团契总览", hint: "入口" },
-      next: { path: "modules/development/youth-ministry-dev.html", label: "青年团契", hint: "活动" }
+      title: "⭕ 團契的圈",
+      what: "同階段、同地區、同職業的朋友相聚",
+      do: "點進適合的圈 · 參加活動",
+      from: "牧羊導覽 · 團契總覽",
+      to: "青年活動 · 小組 · 探訪",
+      prev: { path: "modules/fellowship/index.html", label: "團契總覽", hint: "入口" },
+      next: { path: "modules/development/youth-ministry-dev.html", label: "青年團契", hint: "活動" }
     }
   };
 
@@ -171,13 +180,13 @@
     var el = doc.createElement("section");
     el.id = "pastoral-story-head";
     el.className = "pastoral-story-head";
-    el.setAttribute("aria-label", "本页说明");
+    el.setAttribute("aria-label", "本頁說明");
     el.innerHTML =
       "<h2>" + story.title + "</h2>" +
       '<dl class="pastoral-story-grid">' +
-      "<dt>是什么</dt><dd>" + story.what + "</dd>" +
-      "<dt>做什么</dt><dd>" + story.do + "</dd>" +
-      "<dt>从哪来</dt><dd>" + story.from + "</dd>" +
+      "<dt>是什麼</dt><dd>" + story.what + "</dd>" +
+      "<dt>做什麼</dt><dd>" + story.do + "</dd>" +
+      "<dt>從哪來</dt><dd>" + story.from + "</dd>" +
       "<dt>去哪</dt><dd>" + story.to + "</dd>" +
       "</dl>";
 
@@ -199,23 +208,23 @@
     var nav = doc.createElement("nav");
     nav.id = "pastoral-trail-nav";
     nav.className = "pastoral-trail-nav";
-    nav.setAttribute("aria-label", "牧养路线三步");
+    nav.setAttribute("aria-label", "牧養路線三步");
 
     var prevHref = cmPre + story.prev.path + "?crm_from=b_pastoral";
     var nextHref = cmPre + story.next.path + "?crm_from=b_pastoral";
 
     nav.innerHTML =
-      '<p class="pastoral-trail-nav__title">🛤️ 牧羊小径 · 这一步怎么走</p>' +
+      '<p class="pastoral-trail-nav__title">🛤️ 牧羊小徑 · 這一步怎麼走</p>' +
       '<div class="pastoral-trail-nav__steps">' +
       '<a class="pastoral-trail-nav__step" href="' + prevHref + '">⬅ 上一步<br><strong>' + story.prev.label + "</strong><small>" + story.prev.hint + "</small></a>" +
-      '<span class="pastoral-trail-nav__step is-current">📍 当前<br><strong>' + story.title.replace(/^[^\s]+\s/, "") + "</strong><small>就是这一页</small></span>" +
+      '<span class="pastoral-trail-nav__step is-current">📍 當前<br><strong>' + story.title.replace(/^[^\s]+\s/, "") + "</strong><small>就是這一頁</small></span>" +
       '<a class="pastoral-trail-nav__step" href="' + nextHref + '">下一步 ➡<br><strong>' + story.next.label + "</strong><small>" + story.next.hint + "</small></a>" +
       "</div>" +
       '<p class="pastoral-trail-nav__more">' +
-      '<a href="' + cmPre + '_landing/fellowship.html">🌾 牧羊导览</a>' +
+      '<a href="' + cmPre + '_landing/fellowship.html">🌾 牧羊導覽</a>' +
       (typeof win.bible100ShellNav === "function"
-        ? '<a href="#" id="pastoralTrailFullSidebar">📂 完整侧栏</a>'
-        : '<a href="' + cmPre + 'sidebar_church_layout_v1.html?focus=b" target="_parent">📂 完整侧栏</a>') +
+        ? '<a href="#" id="pastoralTrailFullSidebar">📂 完整側欄</a>'
+        : '<a href="' + cmPre + 'sidebar_church_layout_v1.html?focus=b" target="_parent">📂 完整側欄</a>') +
       "</p>";
 
     doc.body.appendChild(nav);
@@ -239,15 +248,15 @@
     bar.id = "pastoral-ctx-bar";
     bar.className = "pastoral-ctx-bar";
     bar.setAttribute("role", "navigation");
-    bar.setAttribute("aria-label", "牧羊小径导航");
-    var title = story ? story.title : "🌾 牧羊小径";
+    bar.setAttribute("aria-label", "牧羊小徑導航");
+    var title = story ? story.title : "🌾 牧羊小徑";
     bar.innerHTML =
       '<span class="pastoral-ctx-bar__zone">' + title + "</span>" +
-      '<a class="is-primary" href="' + cmPre + '_landing/fellowship.html">🧭 牧羊导览</a>' +
-      '<a href="' + cmPre + 'modules/support/visitation_index.html?crm_from=b_pastoral">💬 探访事工</a>' +
+      '<a class="is-primary" href="' + cmPre + '_landing/fellowship.html">🧭 牧羊導覽</a>' +
+      '<a href="' + cmPre + 'modules/support/visitation_index.html?crm_from=b_pastoral">💬 探訪事工</a>' +
       (typeof win.bible100ShellNav === "function"
-        ? '<a href="#" id="pastoralCtxSidebar">📂 完整侧栏</a>'
-        : '<a href="' + cmPre + 'sidebar_church_layout_v1.html?focus=b">📂 完整侧栏</a>');
+        ? '<a href="#" id="pastoralCtxSidebar">📂 完整側欄</a>'
+        : '<a href="' + cmPre + 'sidebar_church_layout_v1.html?focus=b">📂 完整側欄</a>');
     doc.body.insertBefore(bar, doc.body.firstChild);
     var side = doc.getElementById("pastoralCtxSidebar");
     if (side) {

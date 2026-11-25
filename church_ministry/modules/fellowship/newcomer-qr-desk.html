@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>新人發碼臺 · 審核出 QR | Church Ministry</title>
+  <style>
+    :root { --teal: #0d9488; --ink: #0f172a; --bg: #f1f5f9; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(1000px 360px at 0% 0%, #ccfbf1, transparent 55%),
+        var(--bg);
+      color: var(--ink);
+      font-size: 14px;
+      padding: 12px 14px 40px;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    .hero {
+      background: linear-gradient(135deg, #0f766e, #0369a1);
+      color: #fff; border-radius: 16px; padding: 16px 18px; margin-bottom: 12px;
+    }
+    .hero h1 { margin: 0 0 4px; font-size: 1.3rem; }
+    .hero p { margin: 0; font-size: 12px; line-height: 1.5; opacity: 0.95; }
+    .stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .stat {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 10px 14px; min-width: 110px;
+    }
+    .stat b { display: block; font-size: 1.4rem; color: var(--teal); }
+    .stat span { font-size: 11px; color: #64748b; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 800px) { .row { grid-template-columns: 1fr; } }
+    .card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+      padding: 12px 14px; margin-bottom: 10px;
+    }
+    .card h2 { margin: 0 0 8px; font-size: 15px; }
+    .item {
+      border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px;
+      margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      justify-content: space-between;
+    }
+    .item .meta { font-size: 12px; color: #64748b; }
+    .btn {
+      min-height: 40px; padding: 8px 12px; border: none; border-radius: 8px;
+      background: var(--teal); color: #fff; font-weight: 700; cursor: pointer; font-size: 13px;
+    }
+    .btn.ghost { background: #e2e8f0; color: #0f172a; }
+    .btn.rose { background: #e11d48; }
+    .role {
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      font-size: 12px; margin: 8px 0;
+    }
+    .role select { min-height: 36px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 4px 8px; }
+    #print-card {
+      display: none; position: fixed; inset: 0; background: rgba(15,23,42,.55);
+      z-index: 50; align-items: center; justify-content: center; padding: 16px;
+    }
+    #print-card.show { display: flex; }
+    #print-inner {
+      background: #fff; border-radius: 16px; padding: 20px; max-width: 360px; width: 100%;
+      text-align: center;
+    }
+    #qr-host { display: flex; justify-content: center; margin: 12px 0; }
+    #qr-host img, #qr-host canvas, #qr-host table { margin: 0 auto; }
+    .code-big {
+      font-size: 28px; letter-spacing: 0.2em; font-weight: 800; color: #0f766e;
+      background: #ecfdf5; border-radius: 10px; padding: 10px; margin: 8px 0;
+    }
+    .links a { color: #0f766e; font-weight: 700; margin-right: 10px; font-size: 12px; }
+    .muted { color: #64748b; font-size: 12px; }
+    .ven-chk { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <link rel="stylesheet" href="../../css/attendance_process_strip.css" />
+  <div class="wrap">
+    <header class="hero">
+      <h1>幫新人出一張入場票</h1>
+      <p>核對排隊中的人 →「發 QR」→ 截圖或列印交給對方。之後門口點名會用到呢個短碼。</p>
+    </header>
+
+    <details style="margin-bottom:10px;font-size:12px;color:#64748b;">
+      <summary style="cursor:pointer;font-weight:700;">進階：流程位置（可唔開）</summary>
+      <div data-att-line="issue" data-att-line-base="../../" style="margin-top:8px;"></div>
+    </details>
+
+    <div id="nc-empty-warm" class="card" style="display:none;background:#ecfdf5;border:2px solid #6ee7b7;padding:16px;">
+      <h2 style="margin:0 0 8px;font-size:1.1rem;">而家未有新人排隊</h2>
+      <p class="muted" style="margin:0 0 12px;line-height:1.55;">唔緊要。想先睇下「出碼」係點樣？可以試發一張示範票（本機試用，唔會打擾真人）。</p>
+      <button type="button" class="btn" id="nc-btn-demo-issue" style="min-height:48px;font-size:15px;">試發一張示範碼 →</button>
+      <p class="muted" style="margin:10px 0 0;">或者開 <a href="newcomer-self-register.html" target="_blank" rel="noopener">新人登記頁</a> 自己填一筆，再返嚟發碼。</p>
+    </div>
+
+    <div class="role">
+      <span>我係：</span>
+      <select id="desk-role">
+        <option value="admin">可以發碼（負責人）</option>
+        <option value="usher">只睇唔發（招待）</option>
+      </select>
+      <a class="links" href="../../docs/ATTENDANCE_OPS_HANDBOOK.html">出席系統說明</a>
+    </div>
+
+    <div class="stats" id="nc-stats"></div>
+
+    <div class="row">
+      <section class="card">
+        <h2>排隊等你出票</h2>
+        <p class="muted">確認係今日要接待嘅人，就撳「發 QR」。</p>
+        <div id="pending-list"></div>
+      </section>
+      <section class="card">
+        <h2>已經出咗票</h2>
+        <p class="muted">可重印；短碼畀門口手輸簽到用。</p>
+        <div id="issued-list"></div>
+      </section>
+    </div>
+  </div>
+
+  <div id="print-card">
+    <div id="print-inner">
+      <p style="margin:0 0 6px;font-size:14px;font-weight:800;color:#0d9488;" id="pc-praise">好嘢！票已準備好</p>
+      <h3 id="pc-name">—</h3>
+      <p class="muted" id="pc-venues"></p>
+      <div id="qr-host"></div>
+      <div class="code-big" id="pc-code">————</div>
+      <p class="muted" style="word-break:break-all;font-size:11px;" id="pc-payload"></p>
+      <p style="font-size:13px;color:#134e4a;line-height:1.5;margin:8px 0;">
+        可以截圖或列印，傳畀呢位新人。到場時門口用手輸上面短碼就得。
+      </p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
+        <button type="button" class="btn" id="pc-print">列印／存圖</button>
+        <a class="btn" id="pc-next-checkin" href="attendance-checkin.html?crm_from=qr_done" style="text-decoration:none;display:inline-flex;align-items:center;">去開始今晚點名 →</a>
+        <button type="button" class="btn ghost" id="pc-close">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../js/pastoral_data_hub.js"></script>
+  <script src="../../js/attendance_checkin_store.js"></script>
+  <script src="../../js/newcomer_qr_store.js"></script>
+  <script src="../../js/attendance_process_strip.js"></script>
+  <script src="../../js/lib/qrcode.min.js"></script>
+  <script>
+  (function () {
+    var N = window.NewcomerQrStore;
+    var currentCard = null;
+
+    function role() {
+      return document.getElementById("desk-role").value;
+    }
+
+    function canIssue() {
+      return role() === "admin";
+    }
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function venueText(venues) {
+      return (venues || []).map(function (v) {
+        return N.venueLabel(v);
+      }).join(" · ");
+    }
+
+    function renderStats() {
+      var st = N.getStats();
+      document.getElementById("nc-stats").innerHTML =
+        '<div class="stat"><b>' + st.pending + '</b><span>待審核</span></div>' +
+        '<div class="stat"><b>' + st.appsToday + '</b><span>今日新申請</span></div>' +
+        '<div class="stat"><b>' + st.issuedToday + '</b><span>今日已發碼</span></div>' +
+        '<div class="stat"><b>' + st.issued + '</b><span>累計已發</span></div>';
+    }
+
+    function renderPending() {
+      var host = document.getElementById("pending-list");
+      var warm = document.getElementById("nc-empty-warm");
+      var rows = N.listPending();
+      if (!rows.length) {
+        host.innerHTML = "";
+        if (warm) warm.style.display = "block";
+        return;
+      }
+      if (warm) warm.style.display = "none";
+      host.innerHTML = rows.map(function (a) {
+        return (
+          '<div class="item" data-id="' + esc(a.id) + '">' +
+          "<div><strong>" + esc(a.name) + "</strong>" +
+          '<div class="meta">#' + esc(a.memberId) + " · " + esc(a.phone) + "<br>" +
+          esc(venueText(a.venues)) + (a.note ? " · " + esc(a.note) : "") +
+          "</div></div>" +
+          '<button type="button" class="btn btn-issue" data-id="' + esc(a.id) + '"' +
+          (canIssue() ? "" : " disabled") + ">發 QR</button></div>"
+        );
+      }).join("");
+      host.querySelectorAll(".btn-issue").forEach(function (btn) {
+        btn.onclick = function () {
+          if (!canIssue()) {
+            alert("招待角色只讀；請切換為「負責人」。");
+            return;
+          }
+          var res = N.approveAndIssue(btn.getAttribute("data-id"), { operator: "desk_" + role() });
+          if (!res.ok) {
+            alert(res.error || "發碼失敗");
+            return;
+          }
+          showCard(res.card);
+          refresh();
+        };
+      });
+    }
+
+    function renderIssued() {
+      var host = document.getElementById("issued-list");
+      var rows = N.listIssued(12);
+      if (!rows.length) {
+        host.innerHTML = '<p class="muted">尚未發碼。</p>';
+        return;
+      }
+      host.innerHTML = rows.map(function (c) {
+        return (
+          '<div class="item">' +
+          "<div><strong>" + esc(c.name) + "</strong>" +
+          '<div class="meta">短碼 <b>' + esc(c.checkinCode) + "</b> · " +
+          esc(venueText(c.venues)) + "<br>" + esc(String(c.issuedAt || "").replace("T", " ").slice(0, 16)) +
+          "</div></div>" +
+          '<button type="button" class="btn ghost btn-reprint" data-mid="' + esc(c.memberId) + '">重印</button></div>'
+        );
+      }).join("");
+      host.querySelectorAll(".btn-reprint").forEach(function (btn) {
+        btn.onclick = function () {
+          var mid = btn.getAttribute("data-mid");
+          var card = N.listIssued().find(function (c) {
+            return String(c.memberId) === String(mid);
+          });
+          if (card) showCard(card);
+        };
+      });
+    }
+
+    function showCard(card) {
+      currentCard = card;
+      var praise = document.getElementById("pc-praise");
+      if (praise) {
+        praise.textContent = "好嘢！呢張長期票已經準備好，可以截圖傳畀新人喇！";
+      }
+      document.getElementById("pc-name").textContent = card.name || "新人";
+      document.getElementById("pc-venues").textContent = venueText(card.venues);
+      document.getElementById("pc-code").textContent = card.checkinCode;
+      document.getElementById("pc-payload").textContent = card.qrPayload;
+      var host = document.getElementById("qr-host");
+      host.innerHTML = "";
+      if (window.QRCode) {
+        try {
+          new QRCode(host, {
+            text: card.qrPayload,
+            width: 180,
+            height: 180,
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        } catch (eQ) {
+          host.textContent = "（QR 繪製失敗，請用短碼）";
+        }
+      } else {
+        host.innerHTML = '<p class="muted">QR 庫未載入；請用手輸短碼。</p>';
+      }
+      document.getElementById("print-card").classList.add("show");
+    }
+
+    document.getElementById("pc-close").onclick = function () {
+      document.getElementById("print-card").classList.remove("show");
+    };
+    document.getElementById("pc-print").onclick = function () {
+      window.print();
+    };
+    document.getElementById("desk-role").onchange = refresh;
+
+    var demoBtn = document.getElementById("nc-btn-demo-issue");
+    if (demoBtn) {
+      demoBtn.onclick = function () {
+        if (!canIssue()) {
+          alert("請先將「我係」改為「可以發碼」。");
+          return;
+        }
+        var phone = "0900" + String(Date.now()).slice(-6);
+        var reg = N.submitSelfRegister({
+          name: "示範新人",
+          phone: phone,
+          venues: ["worship", "cell"],
+          note: "本機示範出票"
+        });
+        if (!reg.ok) {
+          alert(reg.error || "示範登記失敗");
+          return;
+        }
+        var res = N.approveAndIssue(reg.application.id, { operator: "desk_demo" });
+        if (!res.ok) {
+          alert(res.error || "示範發碼失敗");
+          return;
+        }
+        showCard(res.card);
+        refresh();
+      };
+    }
+
+    function refresh() {
+      renderStats();
+      renderPending();
+      renderIssued();
+    }
+
+    refresh();
+    window.addEventListener("bible100-newcomer-updated", refresh);
+    window.addEventListener("storage", function (ev) {
+      if (ev.key === N.STORE_KEY || ev.key === "memberSystemData") refresh();
+    });
+  })();
+  </script>
+</body>
+</html>

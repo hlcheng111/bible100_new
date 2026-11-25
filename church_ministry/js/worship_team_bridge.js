@@ -1,5 +1,5 @@
 /**
- * W2 · worshipTeamData 嵌套结构 memberId 对齐
+ * W2 · worshipTeamData 嵌套結構 memberId 對齊
  * { members[], schedules[{lead,keyboard,...}], songs[] }
  */
 (function (win) {
@@ -74,9 +74,9 @@
     if (!win.churchDB || !win.churchDB.data || !win.churchDB.data.worship) return;
     var w = win.churchDB.data.worship;
     if (!Array.isArray(w.teams)) w.teams = [];
-    var team = w.teams.find(function (t) { return t.category === "worship" || t.name === "敬拜团"; });
+    var team = w.teams.find(function (t) { return t.category === "worship" || t.name === "敬拜團"; });
     if (!team) {
-      team = { id: Date.now(), name: "敬拜团", category: "worship", leaderId: null };
+      team = { id: Date.now(), name: "敬拜團", category: "worship", leaderId: null };
       w.teams.push(team);
     }
     if (!Array.isArray(w.teamMembers)) w.teamMembers = [];

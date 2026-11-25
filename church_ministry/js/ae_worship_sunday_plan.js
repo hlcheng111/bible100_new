@@ -1,5 +1,5 @@
 /**
- * W5 · 主日崇拜策划 SSOT（worship_sunday_plan_v1）
+ * W5 · 主日崇拜策劃 SSOT（worship_sunday_plan_v1）
  */
 (function (win) {
   "use strict";
@@ -111,10 +111,10 @@
     plan.pipeline = pipe;
     plan.alerts = [];
     if (pipe.teams === "blocked") {
-      plan.alerts.push("影音或招待人力未齐，请调整排班或启动简约模式");
+      plan.alerts.push("影音或招待人力未齊，請調整排班或啟動簡約模式");
     }
     if (pipe.songs === "draft" && pipe.pulpit === "done") {
-      plan.alerts.push("讲题已定，请完成选歌");
+      plan.alerts.push("講題已定，請完成選歌");
     }
     return plan;
   }
@@ -123,26 +123,26 @@
     var plan = {
       id: "plan-demo-pentecost-2026",
       date: "2026-06-14",
-      liturgySeason: "圣灵降临期",
+      liturgySeason: "聖靈降臨期",
       liturgyColor: "green",
-      theme: "圣灵同工，差遣教会",
+      theme: "聖靈同工，差遣教會",
       pulpit: {
-        speaker: "张牧师",
-        sermonTitle: "风起的日子",
+        speaker: "張牧師",
+        sermonTitle: "風起的日子",
         scripture: "徒 2:1-21",
         status: "done"
       },
       songs: [
-        { slot: "宣召", title: "赞美之泉", status: "done" },
-        { slot: "敬拜", title: "圣灵降临在这里", status: "done" },
-        { slot: "回应", title: "差遣我", status: "draft" }
+        { slot: "宣召", title: "讚美之泉", status: "done" },
+        { slot: "敬拜", title: "聖靈降臨在這裡", status: "done" },
+        { slot: "回應", title: "差遣我", status: "draft" }
       ],
       teams: {
         worship_lead: "王姊妹",
-        choir: "诗班联合献诗（SATB）",
+        choir: "詩班聯合獻詩（SATB）",
         sound: "李弟兄",
-        stream: "陈弟兄 · 单机直播",
-        hospitality: "赵姊妹、周弟兄"
+        stream: "陳弟兄 · 單機直播",
+        hospitality: "趙姊妹、周弟兄"
       },
       rehearsal: { date: "2026-06-12", time: "19:30", place: "副堂", done: false },
       pipeline: {},

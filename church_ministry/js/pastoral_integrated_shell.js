@@ -6,7 +6,7 @@
 
   var TAB_SRC = {
     groups: "small-groups-integrated.html",
-    attendance: "pastoral-attendance.html",
+    attendance: "attendance-checkin.html",
     alerts: "pastoral_alerts_panel.html",
     visitation: "pastoral_visitation_panel.html"
   };
@@ -24,7 +24,7 @@
 
   function buildFrameSrc(tab) {
     var base = TAB_SRC[tab] || TAB_SRC.groups;
-    var q = [];
+    var q = ["embed=pastoral"];
     try {
       var sp = new URLSearchParams(global.location.search || "");
       var crm = sp.get("crm_from");
@@ -113,10 +113,7 @@
 
   function notifyParentTab(tab) {
     try {
-      if (global.parent && global.parent !== global && global.parent.PastoralIntegratedShell) {
-        global.parent.PastoralIntegratedShell.switchTab(tab);
-        return;
-      }
+      /* file:// 下不可讀 parent 屬性（SecurityError），一律用 postMessage */
       if (global.parent && global.parent !== global) {
         global.parent.postMessage({ type: "pastoral-integrated", action: "switchTab", tab: tab }, "*");
       }
@@ -178,13 +175,7 @@
         switchTab("visitation");
         alert(n ? "佇列中有 " + n + " 筆待處理交接" : "已開啟探訪佇列 Tab");
       });
-    if (window.CmAiCareHelper && $("past-nlq-chips")) {
-      CmAiCareHelper.renderNlqChips("past-nlq-chips", function (chip) {
-        if (chip.filter === "handover_pending") switchTab("visitation");
-        else if (chip.filter === "absence_streak_ge_2") switchTab("alerts");
-        else switchTab("groups");
-      });
-    }
+    /* 快速查詢結果面板由 pastoral_nlq_panel.js 綁定 */
   }
 
   function syncSidebarFocusB() {
@@ -192,12 +183,18 @@
       var p = global.parent;
       if (!p || p === global) return;
       var sidebarUrl = "church_ministry/sidebar_church_layout_v1.html?focus=b";
-      if (global.CmShellPaths && global.CmShellPaths.isCmIndexShell && global.CmShellPaths.isCmIndexShell(p)) {
-        sidebarUrl = "sidebar_church_layout_v1.html?focus=b";
-      }
-      if (typeof p.bible100ShellNav === "function") {
-        p.bible100ShellNav(null, { sidebarUrl: sidebarUrl });
-        return;
+      try {
+        if (global.CmShellPaths && global.CmShellPaths.isCmIndexShell && global.CmShellPaths.isCmIndexShell(p)) {
+          sidebarUrl = "sidebar_church_layout_v1.html?focus=b";
+        }
+      } catch (eC) {}
+      try {
+        if (typeof p.bible100ShellNav === "function") {
+          p.bible100ShellNav(null, { sidebarUrl: sidebarUrl });
+          return;
+        }
+      } catch (eX) {
+        /* file:// 跨 origin 讀不到 → 改用 postMessage */
       }
       p.postMessage({ type: "bible100-shell", sidebarUrl: sidebarUrl }, "*");
     } catch (eS) {}
@@ -213,11 +210,34 @@
         }
       } catch (eW) {}
       if (H.migratePastoralStores) H.migratePastoralStores();
+      try {
+        /* 不再自動塞 40 人試用教會：空庫就老實顯示「尚無資料」，由使用者按鈕才載入示範 */
+        var n = (H.getMembers && H.getMembers()) || [];
+        if (global.CmDemoGate && global.PastoralTrialPack && global.PastoralTrialPack.ensureTrialChurch) {
+          global.CmDemoGate.offer(
+            n.length < 8,
+            function () {
+              global.PastoralTrialPack.ensureTrialChurch(true);
+              renderOverview();
+              if (global.PastoralNlqPanel) global.PastoralNlqPanel.renderGuide();
+            },
+            {
+              id: "pastoral/trial_church",
+              what: "會友與小組",
+              isDemo: function () {
+                return !!global.localStorage.getItem("bible100_pastoral_trial_meta");
+              }
+            }
+          );
+        }
+      } catch (eT) {}
     }
     bindToolbar();
     bindOverviewClicks();
     bindPostMessage();
+    if (global.PastoralNlqPanel) global.PastoralNlqPanel.boot();
     switchTab(resolveInitialTab());
+    renderOverview();
   }
 
   global.PastoralIntegratedShell = {

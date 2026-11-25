@@ -1,5 +1,5 @@
 /**
- * CM Standalone · 顶栏 A–G（与 index_v5 顶栏2 同款 sub-btn）
+ * CM Standalone · 頂欄 A–G（與 index_v5 頂欄2 同款 sub-btn）
  */
 (function (global, doc) {
   "use strict";

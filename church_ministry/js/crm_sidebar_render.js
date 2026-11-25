@@ -222,14 +222,14 @@
     html += linkRow({
       mode: "shell",
       path: "tools/tools-overview-sidebar.html|help/interconnect-roadmap.html",
-      label: "📖 全站游客手冊",
-      blurb: "大楼导览与互联体检"
+      label: "📖 全站遊客手冊",
+      blurb: "大樓導覽與互聯體檢"
     });
     html += linkRow({
       mode: "shell",
       path: "tools/tools-overview-sidebar.html|help/site-navigation-guide.html",
       label: "🧭 導覽憲法",
-      blurb: "4F/5F 楼层说明"
+      blurb: "4F/5F 樓層說明"
     });
 
     host.innerHTML = html;

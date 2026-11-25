@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""B 牧养 · 牧羊小径 B0 静态检查"""
+"""B 牧養 · 牧羊小徑 B0 靜態檢查"""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,24 +17,24 @@ REQUIRED = [
 ]
 
 SNIPPETS = {
-    "_landing/fellowship.html": ["牧羊小径", "三面镜子", "六件事", "mirror-grid"],
-    "js/ae_pastoral_journey_registry.js": ["我是谁", "我在哪里", "我去哪里", "MIRRORS", "SIX_QUESTIONS"],
+    "_landing/fellowship.html": ["牧羊小徑", "三面鏡子", "六件事", "mirror-grid"],
+    "js/ae_pastoral_journey_registry.js": ["我是誰", "我在哪裡", "我去哪裡", "MIRRORS", "SIX_QUESTIONS"],
     "js/ae_primary_nav.js": ["sidebar_pastoral_journey.html"],
     "sidebar_church_layout_v1.html": [
-        "探访事工", "牧羊导览", "团契总览", "小组工作桌",
+        "探訪事工", "牧羊導覽", "團契總覽", "小組工作桌",
         "pastoral-org-roster.html", "pastoral-attendance.html",
         "pastoral-events.html", "pastoral-training.html", "pastoral-strategy.html",
     ],
     "js/crm_journey_registry.js": [
-        "探访事工", "member-integrated.html", "small-groups-integrated.html",
+        "探訪事工", "member-integrated.html", "small-groups-integrated.html",
         "pastoral-org-roster.html", "pastoral-strategy.html",
     ],
-    "js/ae_pastoral_story_nav.js": ["是什么", "从哪来", "visitation_index.html"],
+    "js/ae_pastoral_story_nav.js": ["是什麼", "從哪來", "visitation_index.html"],
     "js/ae_subpage_shell.js": ["bootPastoralShell", "isPastoralBZone"],
     "js/crm_context_bar.js": ["isPastoralBPage", "b_pastoral"],
-    "modules/support/visitation_index.html": ["探访事工", "本週探訪清單", "成長追蹤"],
-    "modules/fellowship/small-groups.html": ["小组之家", "memberId"],
-    "modules/fellowship/fellowship-circles.html": ["团契的圈", "青年"],
+    "modules/support/visitation_index.html": ["探訪事工", "本週探訪清單", "成長追蹤"],
+    "modules/fellowship/small-groups.html": ["小組之家", "memberId"],
+    "modules/fellowship/fellowship-circles.html": ["團契的圈", "青年"],
 }
 
 

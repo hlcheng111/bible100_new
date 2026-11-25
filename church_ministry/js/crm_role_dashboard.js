@@ -132,7 +132,7 @@
       );
     }
     if (!shifts.length) {
-      html += card("📅 我的服事", "近期沒有排班紀錄。", link("tools/volunteer_shift/index.html", "了解排班工具"));
+      html += card("📅 我的服事", "近期沒有排班紀錄。", link("tools/volunteer_shift/index.html", "瞭解排班工具"));
     } else {
       html += card(
         "📅 我的服事",

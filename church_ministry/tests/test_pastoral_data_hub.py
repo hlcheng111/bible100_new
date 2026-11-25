@@ -38,7 +38,7 @@ def test_pastoral_attendance_page():
     html = read("church_ministry/modules/fellowship/pastoral-attendance.html")
     assert "pastoral_data_hub.js" in html
     assert "pastoral_attendance_ui.js" in html
-    assert "att-tab-weekly" in html or "每周汇报" in html
+    assert "att-tab-weekly" in html or "每週彙報" in html
 
 
 def test_member_id_link_pattern():
@@ -48,21 +48,25 @@ def test_member_id_link_pattern():
 
 
 def test_nav_links_to_attendance():
-    sidebar = read("church_ministry/sidebar_church_layout_v1.html")
     journey = read("church_ministry/sidebar_pastoral_journey.html")
-    assert "pastoral-attendance.html" in sidebar
+    assert "attendance-checkin.html" in journey
     assert "pastoral-attendance.html" in journey
+    # B 區主路徑經 pastoral-integrated Tab②（layout 側欄未必直連出席頁）
+    layout = read("church_ministry/sidebar_church_layout_v1.html")
+    assert "pastoral-integrated" in layout
 
 
 def test_story_nav_attendance_story():
     nav = read("church_ministry/js/ae_pastoral_story_nav.js")
     assert "pastoral-attendance.html" in nav
-    assert "聚会" in nav or "出席" in nav
+    assert "attendance-checkin.html" in nav
+    assert "聚会" in nav or "出席" in nav or "點名" in nav
 
 
 def test_registry_attendance():
-    reg = read("church_ministry/js/crm_journey_registry.js")
-    assert "pastoral-attendance.html" in reg
+    # 出席主路徑在牧養 shell／story nav；registry 可無硬編碼
+    shell = read("church_ministry/js/pastoral_integrated_shell.js")
+    assert "attendance-checkin.html" in shell
 
 
 def test_pages_2_4_5_6_exist():
@@ -191,16 +195,18 @@ def test_b_waves_b1_b5():
 
 
 def test_sidebar_all_six_pages():
-    sidebar = read("church_ministry/sidebar_church_layout_v1.html")
+    # 六頁主連在牧羊小徑側欄；layout_v1 以 pastoral-integrated 為 B 區殼
+    sidebar = read("church_ministry/sidebar_pastoral_journey.html")
     for slug in (
         "pastoral-org-roster.html",
         "pastoral-attendance.html",
+        "attendance-checkin.html",
         "pastoral-events.html",
         "pastoral-training.html",
         "pastoral-strategy.html",
         "small-groups-integrated.html",
     ):
-        assert slug in sidebar
+        assert slug in sidebar, f"missing {slug} in sidebar_pastoral_journey"
 
 
 if __name__ == "__main__":

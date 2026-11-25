@@ -1,6 +1,6 @@
 /**
- * 中央会友库 · memberSystemData（父档 SSOT）
- * 与 churchMasterDatabase 双向同步 memberId / member_id
+ * 中央會友庫 · memberSystemData（父檔 SSOT）
+ * 與 churchMasterDatabase 雙向同步 memberId / member_id
  */
 (function (win) {
   "use strict";
@@ -56,8 +56,8 @@
   }
 
   function buildSeedMembers(count) {
-    var surnames = ["王", "李", "张", "陈", "林", "黄", "刘", "周", "吴", "郑"];
-    var given = ["弟兄", "姊妹", "信友", "恩友", "义人", "善人", "牧友", "传友"];
+    var surnames = ["王", "李", "張", "陳", "林", "黃", "劉", "周", "吳", "鄭"];
+    var given = ["弟兄", "姊妹", "信友", "恩友", "義人", "善人", "牧友", "傳友"];
     var out = [];
     for (var i = 1; i <= count; i++) {
       out.push(normalizeMemberId({
@@ -71,8 +71,8 @@
         baptized: i % 3 !== 0,
         membershipDate: "2024-" + String((i % 12) + 1).padStart(2, "0") + "-15",
         status: "active",
-        gifts: i % 4 === 0 ? "音乐" : "服事",
-        skills: i % 5 === 0 ? "诗班,主领" : ""
+        gifts: i % 4 === 0 ? "音樂" : "服事",
+        skills: i % 5 === 0 ? "詩班,主領" : ""
       }));
     }
     return out;
@@ -125,18 +125,18 @@
       var data = this.get();
       var force = !!opts.force;
       if (!force && data.members && data.members.length) {
-        return { loaded: false, message: "已有 " + data.members.length + " 笔会友，未覆写。勾选「强制覆写」可重载示范。" };
+        return { loaded: false, message: "已有 " + data.members.length + " 筆會友，未覆寫。勾選「強制覆寫」可重載示範。" };
       }
       data.members = buildSeedMembers(220);
       this.set(data);
-      return { loaded: true, message: "已载入 220 笔示范会友（memberSystemData）。" };
+      return { loaded: true, message: "已載入 220 筆示範會友（memberSystemData）。" };
     },
 
     loadFromPeopleJson: function (url, cb) {
       var self = this;
       var fetchUrl = url || "../data/people.json";
       if (typeof fetch !== "function") {
-        if (cb) cb({ ok: false, message: "file:// 下请用「载入 200+ 笔」；people.json 需 HTTP 服务器。" });
+        if (cb) cb({ ok: false, message: "file:// 下請用「載入 200+ 筆」；people.json 需 HTTP 服務器。" });
         return;
       }
       fetch(fetchUrl)
@@ -147,17 +147,17 @@
         .then(function (json) {
           var data = self.get();
           var incoming = json.members || (Array.isArray(json) ? json : []);
-          if (!incoming.length) throw new Error("JSON 无 members");
+          if (!incoming.length) throw new Error("JSON 無 members");
           var nextId = 1;
           data.members = incoming.map(function (m, idx) {
             var id = m.id != null ? m.id : nextId++;
             return normalizeMemberId(Object.assign({}, m, { id: id, memberId: m.memberId != null ? m.memberId : id }));
           });
           self.set(data);
-          if (cb) cb({ ok: true, message: "已从 people.json 汇入 " + data.members.length + " 人。" });
+          if (cb) cb({ ok: true, message: "已從 people.json 匯入 " + data.members.length + " 人。" });
         })
         .catch(function (err) {
-          if (cb) cb({ ok: false, message: "汇入失败：" + err.message });
+          if (cb) cb({ ok: false, message: "匯入失敗：" + err.message });
         });
     }
   };

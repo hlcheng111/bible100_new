@@ -203,6 +203,10 @@
         </div>
     </div>
     
+    <script src="../../../js/cloud_config.js"></script>
+    <script src="../../../js/church_auth.js"></script>
+    <script src="../../../js/church_crm_constants.js"></script>
+    <script src="../../../js/church_data_bridge.js"></script>
     <script>
         let data = {
             goals: [],
@@ -218,18 +222,42 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
             if (data.goals.length === 0) {
-                if (confirm('👋 欢迎！是否载入示例数据？')) loadDemo();
+                if (confirm('👋 歡迎！是否載入示例資料？\n\n注意：這個頁面和「教會事工」共用同一份探訪資料，示例資料會混進去。正式使用請選「取消」。')) loadDemo();
             }
             renderAll();
         });
-        
+
+        /* 讀寫一律經 ChurchDataBridge（與「教會事工」共用同一份探訪資料，有權限檢查與操作紀錄） */
         function loadData() {
-            const saved = localStorage.getItem('visitationData');
-            if (saved) data = JSON.parse(saved);
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.getVisitationData) return;
+            const saved = ChurchDataBridge.getVisitationData();
+            if (saved && typeof saved === 'object') {
+                data = {
+                    goals: saved.goals || [],
+                    plans: saved.plans || [],
+                    zones: saved.zones || [],
+                    teams: saved.teams || [],
+                    missions: saved.missions || [],
+                    trainings: saved.trainings || [],
+                    workers: saved.workers || []
+                };
+            }
         }
-        
+
         function saveData() {
-            localStorage.setItem('visitationData', JSON.stringify(data));
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.saveVisitationData) {
+                alert('資料橋接層沒有載入，這次沒有儲存。請重新整理頁面再試。');
+                return false;
+            }
+            try {
+                ChurchDataBridge.saveVisitationData(data);
+                return true;
+            } catch (e) {
+                alert(e && e.code === 'RBAC_DENIED'
+                    ? '你的角色沒有探訪寫入權限，這次沒有儲存。'
+                    : '儲存失敗：' + (e && e.message ? e.message : '未知錯誤'));
+                return false;
+            }
         }
         
         function loadDemo() {

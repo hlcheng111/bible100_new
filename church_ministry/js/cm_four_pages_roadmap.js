@@ -1,5 +1,5 @@
 /**
- * CM 基本四页 · 小白路線圖橫幅（SITE-5a / CM-F2）
+ * CM 基本四頁 · 小白路線圖橫幅（SITE-5a / CM-F2）
  * 用法：<body data-cm-four-page="member|visit|shift|finance"> + mount('#id')
  */
 (function (global) {

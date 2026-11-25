@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>備份與還原 · 行政 | Church Ministry</title>
+  <style>
+    body { margin:0; font-family:"Microsoft JhengHei","PingFang TC",system-ui,sans-serif; background:#f8fafc; color:#0f172a; font-size:14px; }
+    main { max-width:820px; margin:0 auto; padding:12px; }
+    .bk-box { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin:10px 0; }
+    .bk-guide { background:#eff6ff; border:2px solid #93c5fd; }
+    .bk-guide h2 { margin:0 0 6px; font-size:15px; color:#1e3a8a; }
+    .bk-guide ol { margin:6px 0; padding-left:20px; line-height:1.9; }
+    h3 { margin:0 0 8px; font-size:14px; }
+    .bk-btn { min-height:40px; padding:6px 14px; border:1px solid #94a3b8; background:#fff; border-radius:8px; cursor:pointer; font-size:14px; }
+    .bk-btn--primary { background:#1d4ed8; color:#fff; border-color:#1d4ed8; }
+    .bk-btn--danger { background:#b91c1c; color:#fff; border-color:#b91c1c; }
+    .bk-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .bk-muted { color:#64748b; font-size:13px; }
+    .bk-remind { padding:8px 10px; border-radius:8px; font-weight:600; }
+    .bk-remind--ok { background:#ecfdf5; color:#065f46; }
+    .bk-remind--warn { background:#fffbeb; color:#92400e; border:1px solid #fcd34d; }
+    .bk-msg { padding:8px 10px; border-radius:8px; background:#f1f5f9; margin:8px 0; }
+    .bk-msg--ok { background:#ecfdf5; color:#065f46; }
+    .bk-msg--warn { background:#fffbeb; color:#92400e; }
+    .bk-list { margin:4px 0; padding-left:18px; line-height:1.8; font-size:13px; }
+    .bk-warn { background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; border-radius:8px; padding:8px 10px; margin:8px 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <p style="margin:0 0 8px"><a href="admin-integrated.html">← 回「行政」</a></p>
+    <h1 style="font-size:18px;margin:0 0 4px">備份與還原</h1>
+    <p class="bk-muted" style="margin:0 0 8px">教會的名冊、排班、探訪紀錄，都存在這臺電腦的瀏覽器裡。備份＝複製一份帶走，電腦壞了、換電腦都不怕。</p>
+
+    <div id="bk-reminder" class="bk-remind bk-remind--ok" role="status"></div>
+
+    <section class="bk-box bk-guide" aria-labelledby="bk-guide-title">
+      <h2 id="bk-guide-title">這一頁怎麼用？（30 秒看懂）</h2>
+      <ol>
+        <li><strong>備份</strong>：按下面「下載備份檔」，檔案會存到「下載」資料夾。</li>
+        <li>把檔案<strong>複製到 USB 或雲端硬碟</strong>（建議一個月一次；改了很多資料後也做一次）。</li>
+        <li><strong>換電腦或資料不見</strong>：打開新電腦的這一頁，選回備份檔，按「還原」。</li>
+      </ol>
+      <p class="bk-muted">資料<strong>只存在你開啟的位置</strong>：用「檔案方式」和用「網址」開啟，是兩份各自獨立的資料，要備份／還原請在<strong>同一種開啟方式</strong>操作。<span id="bk-origin"></span></p>
+    </section>
+
+    <div id="bk-msg" class="bk-msg" role="status" hidden></div>
+
+    <section class="bk-box" aria-labelledby="bk-ex-title">
+      <h3 id="bk-ex-title">① 備份（下載）</h3>
+      <div class="bk-warn">備份檔<strong>含會友、牧養、奉獻等個人資料</strong>。請像名冊一樣保管：不要用公開群組、不要放公開雲端連結、不要寄給不需要的人。</div>
+      <p style="margin:6px 0"><label><input type="checkbox" id="bk-enc"> 用密碼加密這份備份（可選）<span id="bk-enc-why" class="bk-muted"></span></label></p>
+      <div id="bk-enc-box" class="bk-box" hidden style="background:#fffbeb;border-color:#fcd34d">
+        <p style="margin:0 0 6px">會友資料多、或要放在雲端硬碟／寄給別人保管時，建議加密。加密後<strong>沒有密碼就打不開</strong>。</p>
+        <p style="margin:4px 0"><label>密碼（至少 8 個字） <input type="password" id="bk-pw" autocomplete="new-password"></label></p>
+        <p style="margin:4px 0"><label>再輸入一次 <input type="password" id="bk-pw2" autocomplete="new-password"></label></p>
+        <div class="bk-warn" style="margin:6px 0 0"><strong>忘記密碼就永遠打不開，沒有任何補救方法。</strong>請把密碼寫在安全的地方，不要和備份檔放在一起。密碼不會被儲存，也不會上傳。</div>
+      </div>
+      <p style="margin:6px 0"><button type="button" class="bk-btn bk-btn--primary" id="bk-export">下載備份檔</button></p>
+      <p class="bk-muted" style="margin:6px 0 2px">備份涵蓋（目前有資料的才會進檔）：</p>
+      <ul class="bk-list" id="bk-included"></ul>
+    </section>
+
+    <section class="bk-box" aria-labelledby="bk-rs-title">
+      <h3 id="bk-rs-title">② 還原（從備份檔）</h3>
+      <p class="bk-muted" style="margin:0 0 6px">還原會<strong>覆蓋</strong>這臺電腦目前的資料。按下「還原」前，系統會自動再下載一份「還原前備份」當保險。</p>
+      <p style="margin:6px 0"><input type="file" id="bk-file" accept=".json,application/json" /></p>
+      <div id="bk-dec-box" class="bk-box" hidden style="background:#fffbeb;border-color:#fcd34d">
+        <p style="margin:0 0 6px"><strong>這是加密備份。</strong>請輸入備份時設定的密碼。</p>
+        <p style="margin:4px 0"><input type="password" id="bk-dec-pw" autocomplete="off" aria-label="備份密碼"> <button type="button" class="bk-btn" id="bk-dec-go">解密</button></p>
+      </div>
+      <div id="bk-restore-box" hidden>
+        <p style="margin:6px 0 2px"><strong>這個備份檔包含：</strong> <span class="bk-muted" id="bk-restore-when"></span></p>
+        <ul class="bk-list" id="bk-restore-list"></ul>
+        <p style="margin:8px 0"><button type="button" class="bk-btn bk-btn--danger" id="bk-restore-go" disabled>還原（覆蓋現有資料）</button></p>
+      </div>
+      <p><button type="button" class="bk-btn" id="bk-reload" hidden>重新整理頁面</button></p>
+    </section>
+
+    <section class="bk-box">
+      <h3>常見問題</h3>
+      <ul class="bk-list">
+        <li><strong>多久備份一次？</strong> 一個月一次；大量更新名冊後再多做一次。</li>
+        <li><strong>備份檔能用 Excel 開嗎？</strong> 不能，它是給網站還原用的。要給人看，請用各頁的匯出功能。</li>
+        <li><strong>還原錯了怎麼辦？</strong> 用「還原前備份」那個檔，再還原一次即可回到原樣。</li>
+        <li><strong>要不要加密？</strong> 備份只放自己的 USB、保險櫃時，可以不加密；要放雲端硬碟或交給別人保管，請加密。<strong>忘記密碼無法補救</strong>，請另外記好。</li>
+        <li><strong>這會上傳到網路嗎？</strong> 不會。整個過程只在你的電腦進行。</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/church_auth.js"></script>
+  <script src="../../../js/church_crm_constants.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../js/cm_backup_config.js?v=20261124p6"></script>
+  <script src="../../js/cm_backup.js?v=20261124p7"></script>
+  <script src="../../js/cm_backup_crypto.js?v=20261124p7"></script>
+  <script src="../../js/cm_backup_panel.js?v=20261124p7"></script>
+</body>
+</html>

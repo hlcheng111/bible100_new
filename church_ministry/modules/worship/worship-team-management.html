@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>敬拜团队管理 · Worship Team Management | Church Ministry</title>
+    <title>敬拜團隊管理 · Worship Team Management | Church Ministry</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,12 +33,13 @@
         .w2-toolbar { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 11px; }
         .w2-toolbar button { margin-right: 6px; margin-bottom: 4px; padding: 6px 10px; border-radius: 6px; border: 1px solid #9b59b6; background: #fff; color: #6b21a8; cursor: pointer; font-size: 10px; }
     </style>
+    <script src="../../js/cm_demo_gate.js"></script>
 </head>
 <body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a">
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
-        <h1>🎵 敬拜团队管理</h1>
+        <h1>🎵 敬拜團隊管理</h1>
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('members')">👥 成员</button>
+            <button class="tab active" onclick="switchTab('members')">👥 成員</button>
             <button class="tab" onclick="switchTab('schedule')">📅 排班</button>
             <button class="tab" onclick="switchTab('songs')">🎵 曲目</button>
         </div>
@@ -46,7 +47,7 @@
     <div class="container">
         <div class="w2-toolbar" id="w2Toolbar">
             <strong>W2</strong>
-            <button type="button" id="btnLinkMembers">🔗 对齐 memberId（成员+排班）</button>
+            <button type="button" id="btnLinkMembers">🔗 對齊 memberId（成員+排班）</button>
             <button type="button" id="btnSyncMaster">↗ 同步 churchMasterDatabase</button>
             <button type="button" onclick="exportTeamMembersCsv()" data-w5-report="worship-team-members-csv">⬇ 成員 CSV</button>
             <button type="button" onclick="exportTeamScheduleCsv()" data-w5-report="worship-team-schedule-csv">⬇ 排班 CSV</button>
@@ -55,23 +56,23 @@
         </div>
         <div id="tab-members" class="tab-content active">
             <div class="card">
-                <div class="card-title">👥 团队成员</div>
-                <button class="btn" onclick="showAddMemberModal()">➕ 新增成员</button>
-                <table id="membersTable"><thead><tr><th>姓名</th><th>职位</th><th>memberId</th><th>服事次数</th><th>操作</th></tr></thead><tbody></tbody></table>
+                <div class="card-title">👥 團隊成員</div>
+                <button class="btn" onclick="showAddMemberModal()">➕ 新增成員</button>
+                <table id="membersTable"><thead><tr><th>姓名</th><th>職位</th><th>memberId</th><th>服事次數</th><th>操作</th></tr></thead><tbody></tbody></table>
             </div>
         </div>
         <div id="tab-schedule" class="tab-content">
             <div class="card">
                 <div class="card-title">📅 本月排班</div>
                 <button class="btn" onclick="showAddScheduleModal()">➕ 新增排班</button>
-                <table id="scheduleTable"><thead><tr><th>日期</th><th>主领</th><th>键盘</th><th>吉他</th><th>鼓手</th><th>memberId 槽位</th></tr></thead><tbody></tbody></table>
+                <table id="scheduleTable"><thead><tr><th>日期</th><th>主領</th><th>鍵盤</th><th>吉他</th><th>鼓手</th><th>memberId 槽位</th></tr></thead><tbody></tbody></table>
             </div>
         </div>
         <div id="tab-songs" class="tab-content">
             <div class="card">
-                <div class="card-title">🎵 曲目库</div>
+                <div class="card-title">🎵 曲目庫</div>
                 <button class="btn" onclick="showAddSongModal()">➕ 新增曲目</button>
-                <table id="songsTable"><thead><tr><th>歌名</th><th>调号</th><th>速度</th><th>使用次数</th></tr></thead><tbody></tbody></table>
+                <table id="songsTable"><thead><tr><th>歌名</th><th>調號</th><th>速度</th><th>使用次數</th></tr></thead><tbody></tbody></table>
             </div>
         </div>
     </div>
@@ -91,15 +92,14 @@
                 const saved = localStorage.getItem('worshipTeamData');
                 if (saved) data = JSON.parse(saved);
             }
-            if (data.members.length === 0) loadDemo();
-            renderAll();
+            CmDemoGate.offer(data.members.length === 0, loadDemo, { what: '敬拜團隊成員' });renderAll();
             document.getElementById('btnLinkMembers').onclick = function () {
-                if (!window.WorshipTeamBridge) { alert('请先载入 W2 脚本'); return; }
+                if (!window.WorshipTeamBridge) { alert('請先載入 W2 腳本'); return; }
                 var stats = WorshipTeamBridge.autoLinkAll(data);
                 data = WorshipTeamBridge.load();
                 renderAll();
                 document.getElementById('w2Status').textContent =
-                    '成员 ' + stats.membersLinked + '/' + stats.membersTotal + ' · 排班槽 ' + stats.scheduleSlots;
+                    '成員 ' + stats.membersLinked + '/' + stats.membersTotal + ' · 排班槽 ' + stats.scheduleSlots;
             };
             document.getElementById('btnSyncMaster').onclick = function () {
                 if (window.WorshipTeamBridge) WorshipTeamBridge.syncToMaster(data);
@@ -111,9 +111,9 @@
             });
         });
         function loadDemo() {
-            data.members = [{id:1,name:'王弟兄',position:'主领',count:15},{id:2,name:'李姊妹',position:'键盘',count:12}];
-            data.schedules = [{id:1,date:'2025-10-13',lead:'王弟兄',keyboard:'李姊妹',guitar:'张弟兄',drums:'陈弟兄'}];
-            data.songs = [{id:1,name:'赞美之泉',key:'G',tempo:'中速',count:20}];
+            data.members = [{id:1,name:'王弟兄',position:'主領',count:15},{id:2,name:'李姊妹',position:'鍵盤',count:12}];
+            data.schedules = [{id:1,date:'2025-10-13',lead:'王弟兄',keyboard:'李姊妹',guitar:'張弟兄',drums:'陳弟兄'}];
+            data.songs = [{id:1,name:'讚美之泉',key:'G',tempo:'中速',count:20}];
             persist();
             renderAll();
         }
@@ -124,7 +124,7 @@
             document.getElementById('tab-' + tab).classList.add('active');
         }
         function renderAll() {
-            document.querySelector('#membersTable tbody').innerHTML = data.members.map(m => `<tr><td>${m.name}</td><td>${m.position}</td><td>${m.memberId != null ? '<span class="member-id-badge">' + m.memberId + '</span>' : '—'}</td><td>${m.count}次</td><td><button class="btn btn-sm" onclick="deleteMember(${m.id})">删除</button></td></tr>`).join('');
+            document.querySelector('#membersTable tbody').innerHTML = data.members.map(m => `<tr><td>${m.name}</td><td>${m.position}</td><td>${m.memberId != null ? '<span class="member-id-badge">' + m.memberId + '</span>' : '—'}</td><td>${m.count}次</td><td><button class="btn btn-sm" onclick="deleteMember(${m.id})">刪除</button></td></tr>`).join('');
             document.querySelector('#scheduleTable tbody').innerHTML = data.schedules.map(s => {
                 var slots = ['lead','keyboard','guitar','drums'].map(function(f) {
                     return s[f + 'MemberId'] != null ? f + ':' + s[f + 'MemberId'] : '';
@@ -139,7 +139,7 @@
         }
         function closeModal() { document.getElementById('modal').classList.remove('active'); }
         function showAddMemberModal() {
-            showModal('➕ 新增成员', `<div class="form-group"><label class="form-label">姓名</label><input type="text" id="mname" class="form-input"></div><div class="form-group"><label class="form-label">职位</label><select id="mposition" class="form-select"><option>主领</option><option>键盘</option><option>吉他</option><option>贝斯</option><option>鼓手</option></select></div><button class="btn" onclick="addMember()">确定</button>`);
+            showModal('➕ 新增成員', `<div class="form-group"><label class="form-label">姓名</label><input type="text" id="mname" class="form-input"></div><div class="form-group"><label class="form-label">職位</label><select id="mposition" class="form-select"><option>主領</option><option>鍵盤</option><option>吉他</option><option>貝斯</option><option>鼓手</option></select></div><button class="btn" onclick="addMember()">確定</button>`);
         }
         function addMember() {
             data.members.push({id:Date.now(),name:document.getElementById('mname').value,position:document.getElementById('mposition').value,count:0});
@@ -149,7 +149,7 @@
             alert('✅ 已添加！');
         }
         function deleteMember(id) {
-            if (confirm('删除？')) {
+            if (confirm('刪除？')) {
                 data.members = data.members.filter(m => m.id !== id);
                 persist();
                 renderAll();
@@ -157,11 +157,11 @@
         }
         function showAddScheduleModal() {
             showModal('➕ 新增排班', `<div class="form-group"><label>日期</label><input type="date" id="sdate" class="form-input"></div>
-                <div class="form-group"><label>主领</label><input type="text" id="slead" class="form-input"></div>
-                <div class="form-group"><label>键盘</label><input type="text" id="skeyboard" class="form-input"></div>
+                <div class="form-group"><label>主領</label><input type="text" id="slead" class="form-input"></div>
+                <div class="form-group"><label>鍵盤</label><input type="text" id="skeyboard" class="form-input"></div>
                 <div class="form-group"><label>吉他</label><input type="text" id="sguitar" class="form-input"></div>
                 <div class="form-group"><label>鼓手</label><input type="text" id="sdrums" class="form-input"></div>
-                <button class="btn" onclick="addSchedule()">确定</button>`);
+                <button class="btn" onclick="addSchedule()">確定</button>`);
         }
         function addSchedule() {
             data.schedules.push({
@@ -178,7 +178,7 @@
             renderAll();
             closeModal();
         }
-        function showAddSongModal() { showModal('➕ 新增曲目', `<div class="form-group"><label>歌名</label><input type="text" id="sname" class="form-input"></div><button class="btn" onclick="addSong()">确定</button>`); }
+        function showAddSongModal() { showModal('➕ 新增曲目', `<div class="form-group"><label>歌名</label><input type="text" id="sname" class="form-input"></div><button class="btn" onclick="addSong()">確定</button>`); }
         function addSong() { alert('功能完成中'); closeModal(); }
         function csvEsc(v) {
             if (window.CmReportUtils) return CmReportUtils.csvEsc(v);
@@ -229,6 +229,7 @@
 <script src="../../js/ae_worship_crm_bridge.js"></script>
 <script src="../../js/ae_worship_ai_draft.js"></script>
 <!-- b100-ae-worship-w3 -->
+<script src="../../js/attendance_ledger.js"></script>
 <script src="../../js/ae_worship_data_hub.js"></script>
 <script src="../../js/ae_worship_hub_panel.js"></script>
 <script src="../../js/ae_worship_page_registry.js"></script>

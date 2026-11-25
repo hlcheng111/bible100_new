@@ -1,5 +1,5 @@
 /**
- * Page 3 · 聚会与出席统计 UI
+ * Page 3 · 聚會與出席統計 UI
  */
 (function (win, doc) {
   "use strict";
@@ -54,10 +54,10 @@
     var roster = H.membersInGroup(state.groupId);
     var wk = H.isoWeekKey(H.todayISO());
     var html =
-      "<p>本周 <strong>" +
+      "<p>本週 <strong>" +
       H.esc(wk) +
-      '</strong> · 勾选出席状态后储存（写入 <code>group_attendance_v1</code> + 会友主档 attendance）</p>';
-    html += '<table class="pa-table"><thead><tr><th>会友</th><th>出席</th><th>请假</th><th>缺席</th></tr></thead><tbody>';
+      '</strong> · 勾選出席狀態後儲存（寫入 <code>group_attendance_v1</code> + 會友主檔 attendance）</p>';
+    html += '<table class="pa-table"><thead><tr><th>會友</th><th>出席</th><th>請假</th><th>缺席</th></tr></thead><tbody>';
     roster.forEach(function (m) {
       html +=
         "<tr><td>" +
@@ -71,7 +71,7 @@
         '" value="absent"></td></tr>';
     });
     html += "</tbody></table>";
-    html += '<p><button type="button" class="pa-btn" id="pa-save-report">提交本周出席</button></p>';
+    html += '<p><button type="button" class="pa-btn" id="pa-save-report">提交本週出席</button></p>';
     host.innerHTML = html;
     $("pa-save-report").onclick = function () {
       var records = roster.map(function (m) {
@@ -79,10 +79,10 @@
         return { memberId: m.id, status: picked ? picked.value : "present" };
       });
       var res = H.recordGroupAttendanceSession(state.groupId, H.todayISO(), records);
-      var msg = "出席已储存。";
+      var msg = "出席已儲存。";
       if (res.alerts && res.alerts.length) {
         msg +=
-          "\n\n已触发探访预警：" +
+          "\n\n已觸發探訪預警：" +
           res.alerts.map(function (a) {
             return a.name + "(" + a.streak + "周)";
           }).join("、");
@@ -143,7 +143,7 @@
               );
             })
             .join("")
-        : "<li>尚无出席记录，请先在「每周汇报」提交。</li>";
+        : "<li>尚無出席記錄，請先在「每週彙報」提交。</li>";
     }
   }
 
@@ -159,19 +159,19 @@
     });
     if (!filtered.length) {
       host.innerHTML =
-        '<p class="ok">✅ 目前没有连续 ' + H.ABSENCE_ALERT_WEEKS + " 周缺席预警。</p>";
+        '<p class="ok">✅ 目前沒有連續 ' + H.ABSENCE_ALERT_WEEKS + " 周缺席預警。</p>";
       return;
     }
     host.innerHTML =
-      '<p>以下会友已触发联动规则 → 探访事工待办 + 牧养事件流</p><ul class="alert-list">' +
+      '<p>以下會友已觸發聯動規則 → 探訪事工待辦 + 牧養事件流</p><ul class="alert-list">' +
       filtered
         .map(function (a) {
           return (
             '<li class="hot"><strong>' +
             H.memberLinkHtml(a.memberId, a.name) +
-            "</strong> · 连续缺席 " +
+            "</strong> · 連續缺席 " +
             a.streak +
-            ' 周 · <a href="../support/visitation_index.html?crm_from=b_pastoral">探访事工</a></li>'
+            ' 周 · <a href="../support/visitation_index.html?crm_from=b_pastoral">探訪事工</a></li>'
           );
         })
         .join("") +
@@ -187,7 +187,7 @@
         ? B.getFinanceSummary()
         : { income: 0, expense: 0, balance: 0 };
     host.innerHTML =
-      "<p>小组／牧区财务摘要（只读，详细编目在 E 区财务事工）</p>" +
+      "<p>小組／牧區財務摘要（只讀，詳細編目在 E 區財務事工）</p>" +
       '<div class="pa-stat-grid">' +
       '<div class="pa-stat"><span class="n">' +
       fin.income +
@@ -197,8 +197,8 @@
       '</span><span class="l">支出示意</span></div>' +
       '<div class="pa-stat"><span class="n">' +
       fin.balance +
-      '</span><span class="l">结余示意</span></div></div>' +
-      '<p><a href="../finance/finance-integrated.html?crm_from=b_pastoral">→ 财务事工完整系统</a></p>';
+      '</span><span class="l">結餘示意</span></div></div>' +
+      '<p><a href="../finance/finance-integrated.html?crm_from=b_pastoral">→ 財務事工完整系統</a></p>';
   }
 
   function renderAll() {

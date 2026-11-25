@@ -1,6 +1,6 @@
 /**
- * Page 4 · 圣工与活动通告（深度业务 UI）
- * Tab1 小组传递率 · Tab2 小组 PK 报名 · Tab3 服侍冲突校验 · Tab4 复盘物资库
+ * Page 4 · 聖工與活動通告（深度業務 UI）
+ * Tab1 小組傳遞率 · Tab2 小組 PK 報名 · Tab3 服侍衝突校驗 · Tab4 覆盤物資庫
  */
 (function (win, doc) {
   "use strict";
@@ -30,9 +30,9 @@
   }
 
   function relayStatusLabel(st) {
-    if (st === "prayed") return '<span class="pev-signal green">已入组祷告</span>';
-    if (st === "relayed") return '<span class="pev-signal amber">已转发</span>';
-    return '<span class="pev-signal red">未回应</span>';
+    if (st === "prayed") return '<span class="pev-signal green">已入組禱告</span>';
+    if (st === "relayed") return '<span class="pev-signal amber">已轉發</span>';
+    return '<span class="pev-signal red">未回應</span>';
   }
 
   function renderAnnounce() {
@@ -41,14 +41,14 @@
     var board = H.getEventsBoard();
     var groups = H.getGroups();
     var html =
-      '<div class="sg-card"><h3>发布新通告</h3>' +
-      '<input id="pev-ann-title" class="sg-input" placeholder="标题">' +
-      '<textarea id="pev-ann-body" class="sg-input" rows="2" placeholder="内容 · 发布后各组长需确认转发／入组祷告"></textarea>' +
-      '<label>层级 <select id="pev-ann-level" class="sg-select"><option value="church">全教会</option><option value="district">牧区</option></select></label> ' +
-      '<button type="button" class="sg-btn pev-btn" id="pev-ann-save">发布</button></div>';
+      '<div class="sg-card"><h3>發佈新通告</h3>' +
+      '<input id="pev-ann-title" class="sg-input" placeholder="標題">' +
+      '<textarea id="pev-ann-body" class="sg-input" rows="2" placeholder="內容 · 發佈後各組長需確認轉發／入組禱告"></textarea>' +
+      '<label>層級 <select id="pev-ann-level" class="sg-select"><option value="church">全教會</option><option value="district">牧區</option></select></label> ' +
+      '<button type="button" class="sg-btn pev-btn" id="pev-ann-save">發佈</button></div>';
 
     if (!board.announcements.length) {
-      html += '<p class="muted">暂无通告 · 可点「载入示范数据」</p>';
+      html += '<p class="muted">暫無通告 · 可點「載入示範數據」</p>';
     }
 
     board.announcements.forEach(function (a) {
@@ -70,15 +70,15 @@
           '<div class="pev-relay-kpi">' +
           '<div class="sg-stat"><span class="n">' +
           stats.relayRate +
-          '%</span><span class="l">传递率</span></div>' +
+          '%</span><span class="l">傳遞率</span></div>' +
           '<div class="sg-stat"><span class="n">' +
           stats.prayRate +
-          '%</span><span class="l">入组祷告率</span></div>' +
+          '%</span><span class="l">入組禱告率</span></div>' +
           '<div class="sg-stat warn"><span class="n">' +
           stats.pending +
-          '</span><span class="l">零回应小组</span></div></div>';
+          '</span><span class="l">零回應小組</span></div></div>';
         html += '<div class="pev-kpi-bar"><span style="width:' + stats.relayRate + '%"></span></div>';
-        html += '<table class="pa-table pev-relay-table"><thead><tr><th>小组</th><th>组长</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+        html += '<table class="pa-table pev-relay-table"><thead><tr><th>小組</th><th>組長</th><th>狀態</th><th>操作</th></tr></thead><tbody>';
         groups.forEach(function (g) {
           var ack = (a.groupAcks && a.groupAcks[String(g.id)]) || { status: "pending" };
           var leaderLink = g.leaderMemberId ? H.memberLinkHtml(g.leaderMemberId, g.leader) : H.esc(g.leader || "—");
@@ -95,18 +95,18 @@
                 a.id +
                 '" data-gid="' +
                 g.id +
-                '" data-st="relayed">确认转发</button> ' +
+                '" data-st="relayed">確認轉發</button> ' +
                 '<button type="button" class="sg-btn sm pev-relay-btn" data-aid="' +
                 a.id +
                 '" data-gid="' +
                 g.id +
-                '" data-st="prayed">已入组祷告</button>'
+                '" data-st="prayed">已入組禱告</button>'
               : "—") +
             "</td></tr>";
         });
         html += "</tbody></table>";
         if (stats.zeroResponse.length) {
-          html += '<p class="sg-todo">📌 零回应：' + stats.zeroResponse.map(function (z) {
+          html += '<p class="sg-todo">📌 零回應：' + stats.zeroResponse.map(function (z) {
             return H.esc(z.groupName);
           }).join("、") + "</p>";
         }
@@ -149,12 +149,12 @@
     if (!state.selectedReg && board.registrations.length) state.selectedReg = board.registrations[0].id;
 
     var html =
-      '<div class="sg-card"><h3>新建联合活动（可开启小组 PK 报名）</h3>' +
-      '<input id="pev-reg-title" class="sg-input" placeholder="活动名称">' +
+      '<div class="sg-card"><h3>新建聯合活動（可開啟小組 PK 報名）</h3>' +
+      '<input id="pev-reg-title" class="sg-input" placeholder="活動名稱">' +
       '<input id="pev-reg-date" type="date" class="sg-input">' +
-      '<input id="pev-reg-cap" type="number" class="sg-input" placeholder="名额" value="30">' +
-      '<label><input type="checkbox" id="pev-reg-pk" checked> 小组 PK 报名排行</label> ' +
-      '<button type="button" class="sg-btn pev-btn" id="pev-reg-save">建立报名</button></div>';
+      '<input id="pev-reg-cap" type="number" class="sg-input" placeholder="名額" value="30">' +
+      '<label><input type="checkbox" id="pev-reg-pk" checked> 小組 PK 報名排行</label> ' +
+      '<button type="button" class="sg-btn pev-btn" id="pev-reg-save">建立報名</button></div>';
 
     board.registrations.forEach(function (reg) {
       var enrolled = (reg.enrolled || []).length;
@@ -164,21 +164,21 @@
         (active ? " pev-reg-active" : "") +
         '"><h3>' +
         H.esc(reg.eventTitle) +
-        (reg.pkMode ? ' <span class="pev-pk-badge">小组 PK</span>' : "") +
+        (reg.pkMode ? ' <span class="pev-pk-badge">小組 PK</span>' : "") +
         '</h3><p class="muted">' +
         H.esc(reg.date) +
-        " · 已报 " +
+        " · 已報 " +
         enrolled +
         "/" +
         (reg.capacity || "—") +
-        (reg.fee ? " · 费用 $" + reg.fee : "") +
+        (reg.fee ? " · 費用 $" + reg.fee : "") +
         '</p><button type="button" class="sg-btn sm pev-pick-reg" data-reg="' +
         reg.id +
         '">查看排行</button>';
 
       if (active) {
         var lb = H.getRegistrationLeaderboard(reg.id);
-        html += '<table class="pa-table"><thead><tr><th>排名</th><th>小组</th><th>报名率</th><th>已报/名册</th><th>批量报名</th></tr></thead><tbody>';
+        html += '<table class="pa-table"><thead><tr><th>排名</th><th>小組</th><th>報名率</th><th>已報/名冊</th><th>批量報名</th></tr></thead><tbody>';
         lb.forEach(function (row, idx) {
           html +=
             "<tr><td>" +
@@ -199,30 +199,30 @@
             reg.id +
             '" data-gid="' +
             row.groupId +
-            '">组长批量勾选</button></td></tr>';
+            '">組長批量勾選</button></td></tr>';
         });
         html += "</tbody></table>";
 
-        html += "<p><strong>个别报名</strong></p>";
+        html += "<p><strong>個別報名</strong></p>";
         (reg.enrolled || []).forEach(function (e) {
           html += (e.memberId ? H.memberLinkHtml(e.memberId, e.name) : H.esc(e.name)) + " ";
           if (e.memberId && reg.fee) {
             if (e.feeStatus === "paid") {
-              html += '<span class="ok">已缴费</span> ';
+              html += '<span class="ok">已繳費</span> ';
             } else {
               html +=
                 '<button type="button" class="sg-btn sm pev-pay-btn" data-reg="' +
                 reg.id +
                 '" data-mid="' +
                 e.memberId +
-                '">登记缴费</button> ';
+                '">登記繳費</button> ';
             }
           }
         });
         html +=
           '<br><select class="pev-enroll-sel sg-select" data-reg="' +
           reg.id +
-          '"><option value="">帮组员报名</option>' +
+          '"><option value="">幫組員報名</option>' +
           members
             .map(function (m) {
               return '<option value="' + m.id + '">' + H.esc(m.name) + "</option>";
@@ -274,10 +274,10 @@
         if (!X || !X.recordActivityRegistrationFee) return;
         var res = X.recordActivityRegistrationFee(btn.getAttribute("data-mid"), btn.getAttribute("data-reg"));
         if (res && res.ok) {
-          alert("已写入财务模块 · " + (res.txn && res.txn.txn_id ? res.txn.txn_id : ""));
+          alert("已寫入財務模塊 · " + (res.txn && res.txn.txn_id ? res.txn.txn_id : ""));
           renderRegister();
         } else {
-          alert("缴费登记失败：" + (res && res.error ? res.error : "未知"));
+          alert("繳費登記失敗：" + (res && res.error ? res.error : "未知"));
         }
       };
     });
@@ -289,12 +289,12 @@
     var board = H.getEventsBoard();
     var members = H.getMembers();
     var html =
-      '<div class="sg-card"><h3>新增轮值（自动校验小组聚会冲突 + 近 ' +
+      '<div class="sg-card"><h3>新增輪值（自動校驗小組聚會衝突 + 近 ' +
       H.ROTA_LOOKBACK_WEEKS +
-      " 周频次）</h3>" +
-      '<input id="pev-rot-slot" class="sg-input" placeholder="岗位（如：主日招待）">' +
-      '<input id="pev-rot-time" class="sg-input" placeholder="时段（如：周六 15:00）">' +
-      '<select id="pev-rot-member" class="sg-select" multiple size="4"><option value="">选择同工（可多选）</option>' +
+      " 周頻次）</h3>" +
+      '<input id="pev-rot-slot" class="sg-input" placeholder="崗位（如：主日招待）">' +
+      '<input id="pev-rot-time" class="sg-input" placeholder="時段（如：週六 15:00）">' +
+      '<select id="pev-rot-member" class="sg-select" multiple size="4"><option value="">選擇同工（可多選）</option>' +
       members
         .map(function (m) {
           return '<option value="' + m.id + '">' + H.esc(m.name) + "</option>";
@@ -304,11 +304,11 @@
       H.ROTA_LOOKBACK_WEEKS +
       " 周服侍 ≥ " +
       H.ROTA_FREQ_WARN +
-      " 次将爆红警示</p>" +
-      '<button type="button" class="sg-btn pev-btn" id="pev-rot-save">储存并校验</button></div>';
+      " 次將爆紅警示</p>" +
+      '<button type="button" class="sg-btn pev-btn" id="pev-rot-save">儲存並校驗</button></div>';
 
-    html += '<div class="sg-card"><h3>服侍轮值表 · ' + H.esc(H.isoWeekKey(H.todayISO())) + "</h3>";
-    if (!board.rotas.length) html += '<p class="muted">暂无轮值</p>';
+    html += '<div class="sg-card"><h3>服侍輪值表 · ' + H.esc(H.isoWeekKey(H.todayISO())) + "</h3>";
+    if (!board.rotas.length) html += '<p class="muted">暫無輪值</p>';
     board.rotas.forEach(function (r) {
       var warnHtml = "";
       (r.warnings || []).forEach(function (w) {
@@ -368,9 +368,9 @@
         });
         if (res.warnings.length) {
           alert(
-            "已储存，但有 " +
+            "已儲存，但有 " +
               res.warnings.length +
-              " 条警示：\n" +
+              " 條警示：\n" +
               res.warnings
                 .map(function (w) {
                   return w.name + " — " + w.message;
@@ -388,46 +388,46 @@
     if (!host) return;
     var board = H.getEventsBoard();
     var html =
-      '<div class="sg-card"><h3>归档大型活动 · 复盘物资库</h3>' +
-      '<input id="pev-arc-title" class="sg-input" placeholder="活动名称">' +
-      '<textarea id="pev-arc-vision" class="sg-input" rows="2" placeholder="异象／目标"></textarea>' +
-      '<input id="pev-arc-budget-p" type="number" class="sg-input" placeholder="预算计划 $">' +
-      '<input id="pev-arc-budget-a" type="number" class="sg-input" placeholder="实际支出 $">' +
-      '<input id="pev-arc-vendor" class="sg-input" placeholder="供应商（名称:项目:金额，逗号分隔）">' +
-      '<textarea id="pev-arc-materials" class="sg-input" rows="2" placeholder="可复用物资／文档（每行一项）"></textarea>' +
+      '<div class="sg-card"><h3>歸檔大型活動 · 覆盤物資庫</h3>' +
+      '<input id="pev-arc-title" class="sg-input" placeholder="活動名稱">' +
+      '<textarea id="pev-arc-vision" class="sg-input" rows="2" placeholder="異象／目標"></textarea>' +
+      '<input id="pev-arc-budget-p" type="number" class="sg-input" placeholder="預算計劃 $">' +
+      '<input id="pev-arc-budget-a" type="number" class="sg-input" placeholder="實際支出 $">' +
+      '<input id="pev-arc-vendor" class="sg-input" placeholder="供應商（名稱:項目:金額，逗號分隔）">' +
+      '<textarea id="pev-arc-materials" class="sg-input" rows="2" placeholder="可複用物資／文檔（每行一項）"></textarea>' +
       '<textarea id="pev-arc-lessons" class="sg-input" rows="2" placeholder="Lessons Learned"></textarea>' +
-      '<button type="button" class="sg-btn pev-btn" id="pev-arc-save">归档入库</button></div>';
+      '<button type="button" class="sg-btn pev-btn" id="pev-arc-save">歸檔入庫</button></div>';
 
-    html += '<div class="sg-card"><h3>历年事工复盘知识库</h3>';
+    html += '<div class="sg-card"><h3>歷年事工覆盤知識庫</h3>';
     board.archives.forEach(function (a) {
       html +=
         '<div class="sg-list-item pev-archive-item"><strong>' +
         H.esc(a.title) +
         "</strong> · " +
         a.year;
-      if (a.vision) html += "<br><em>异象：</em>" + H.esc(a.vision);
+      if (a.vision) html += "<br><em>異象：</em>" + H.esc(a.vision);
       if (a.budgetPlanned != null || a.budgetActual != null) {
         html +=
-          "<br>预算：计划 $" +
+          "<br>預算：計劃 $" +
           (a.budgetPlanned != null ? a.budgetPlanned : "—") +
-          " / 实际 $" +
+          " / 實際 $" +
           (a.budgetActual != null ? a.budgetActual : "—");
         if (a.budgetPlanned && a.budgetActual) {
           var diff = a.budgetActual - a.budgetPlanned;
-          html += diff > 0 ? ' <span class="pev-signal red">超支 $' + diff + "</span>" : ' <span class="ok">节余</span>';
+          html += diff > 0 ? ' <span class="pev-signal red">超支 $' + diff + "</span>" : ' <span class="ok">節餘</span>';
         }
       }
       if (a.vendors && a.vendors.length) {
-        html += "<br>供应商：" + a.vendors.map(function (v) {
+        html += "<br>供應商：" + a.vendors.map(function (v) {
           return H.esc(v.name) + "（" + H.esc(v.item) + " $" + v.cost + "）";
         }).join("；");
       }
       if (a.materials && a.materials.length) {
-        html += "<br>物资库：" + a.materials.map(H.esc).join(" · ");
+        html += "<br>物資庫：" + a.materials.map(H.esc).join(" · ");
       }
-      if (a.lessonsLearned) html += "<br><strong>复盘：</strong>" + H.esc(a.lessonsLearned);
+      if (a.lessonsLearned) html += "<br><strong>覆盤：</strong>" + H.esc(a.lessonsLearned);
       if (a.summary) html += "<br>" + H.esc(a.summary);
-      if (a.tags && a.tags.length) html += "<br><small>标签：" + a.tags.map(H.esc).join("、") + "</small>";
+      if (a.tags && a.tags.length) html += "<br><small>標籤：" + a.tags.map(H.esc).join("、") + "</small>";
       html += "</div>";
     });
     html += "</div>";
@@ -487,7 +487,7 @@
       seed.onclick = function () {
         H.ensurePastoralSeed(true);
         renderAll();
-        seed.textContent = "已载入示范";
+        seed.textContent = "已載入示範";
       };
     }
     var hash = (win.location.hash || "").replace("#tab-", "");

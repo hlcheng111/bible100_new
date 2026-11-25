@@ -1,5 +1,5 @@
 /**
- * W4 · 事奉同工「今日祭坛」只读聚合
+ * W4 · 事奉同工「今日祭壇」只讀聚合
  */
 (function (win, doc) {
   "use strict";
@@ -91,17 +91,17 @@
     if (!host) return;
     var d = collectCardData();
     var perfLine = d.nextPerformance
-      ? esc(d.nextPerformance.date) + " · " + esc(d.nextPerformance.title || d.nextPerformance.theme || "献诗")
-      : "暂无排定的献诗场次";
+      ? esc(d.nextPerformance.date) + " · " + esc(d.nextPerformance.title || d.nextPerformance.theme || "獻詩")
+      : "暫無排定的獻詩場次";
     var practiceLine = d.nextPractice
-      ? esc(d.nextPractice.date) + " " + esc(d.nextPractice.time || "") + " @ " + esc(d.nextPractice.place || "教会")
-      : "请留意诗班微信群通知，或请团长在诗班页填写练习表。";
+      ? esc(d.nextPractice.date) + " " + esc(d.nextPractice.time || "") + " @ " + esc(d.nextPractice.place || "教會")
+      : "請留意詩班微信群通知，或請團長在詩班頁填寫練習表。";
     var songsHtml =
       d.scores.length > 0
         ? '<ul class="volunteer-song-list">' +
           d.scores
             .map(function (s) {
-              var link = s.link ? '<a href="' + esc(s.link) + '">乐谱</a>' : "";
+              var link = s.link ? '<a href="' + esc(s.link) + '">樂譜</a>' : "";
               return (
                 "<li><strong>" +
                 esc(s.title || "曲目") +
@@ -114,54 +114,54 @@
             })
             .join("") +
           "</ul>"
-        : '<p class="volunteer-muted">曲目表尚空 · <a href="choir-team.html#choir-scores">诗班乐谱区</a> · <a href="sheet-music.html">乐谱管理</a></p>';
+        : '<p class="volunteer-muted">曲目表尚空 · <a href="choir-team.html#choir-scores">詩班樂譜區</a> · <a href="sheet-music.html">樂譜管理</a></p>';
     host.innerHTML =
       '<div class="worship-volunteer-card">' +
       '<p class="volunteer-greeting">🎵 <strong>' +
       esc(d.name) +
-      "</strong>，愿主赐你平安！</p>" +
-      '<p class="volunteer-lead">本页只显示<strong>与你服事相关</strong>的信息，不会改动全教会行政数据。</p>' +
+      "</strong>，願主賜你平安！</p>" +
+      '<p class="volunteer-lead">本頁只顯示<strong>與你服事相關</strong>的信息，不會改動全教會行政數據。</p>' +
       '<div class="volunteer-block">' +
-      "<h3>🕯️ 本周主日</h3>" +
+      "<h3>🕯️ 本週主日</h3>" +
       "<p>" +
       perfLine +
       "</p>" +
       (d.activePlan && d.activePlan.theme
-        ? "<p>主日主题：" + esc(d.activePlan.theme) + " <span style=\"opacity:0.8\">(" + esc(d.activePlan.liturgySeason || "") + ")</span></p>"
+        ? "<p>主日主題：" + esc(d.activePlan.theme) + " <span style=\"opacity:0.8\">(" + esc(d.activePlan.liturgySeason || "") + ")</span></p>"
         : d.nextService
-          ? "<p>主日主题：" + esc(d.nextService.theme || "—") + "</p>"
+          ? "<p>主日主題：" + esc(d.nextService.theme || "—") + "</p>"
           : "") +
       (d.activePlan && d.activePlan.songs && d.activePlan.songs.length
-        ? "<p>诗歌：" + d.activePlan.songs.map(function(s){ return esc(s.title); }).join(" · ") + "</p>"
+        ? "<p>詩歌：" + d.activePlan.songs.map(function(s){ return esc(s.title); }).join(" · ") + "</p>"
         : "") +
       "</div>" +
       '<div class="volunteer-block">' +
-      "<h3>🎼 下次排练</h3>" +
+      "<h3>🎼 下次排練</h3>" +
       "<p>" +
       practiceLine +
       "</p>" +
-      '<p><a href="choir-team.html#choir-flow">打开诗班流程表 →</a></p>' +
+      '<p><a href="choir-team.html#choir-flow">打開詩班流程表 →</a></p>' +
       "</div>" +
       '<div class="volunteer-block">' +
-      "<h3>📄 本周曲目与乐谱</h3>" +
+      "<h3>📄 本週曲目與樂譜</h3>" +
       songsHtml +
       "</div>" +
       (d.nextTeamSchedule
-        ? '<div class="volunteer-block"><h3>🎸 敬拜团排班</h3><p>' +
+        ? '<div class="volunteer-block"><h3>🎸 敬拜團排班</h3><p>' +
           esc(d.nextTeamSchedule.date) +
-          " · 主领 " +
+          " · 主領 " +
           esc(d.nextTeamSchedule.lead || "—") +
           "</p></div>"
         : "") +
       '<div class="volunteer-actions">' +
-      '<button type="button" class="volunteer-btn" id="volunteerSetName">设置显示姓名</button>' +
-      '<a class="volunteer-btn" href="choir-team.html">诗班团队</a>' +
-      '<a class="volunteer-btn" href="sheet-music.html">乐谱</a>' +
+      '<button type="button" class="volunteer-btn" id="volunteerSetName">設置顯示姓名</button>' +
+      '<a class="volunteer-btn" href="choir-team.html">詩班團隊</a>' +
+      '<a class="volunteer-btn" href="sheet-music.html">樂譜</a>' +
       "</div></div>";
     var btn = doc.getElementById("volunteerSetName");
     if (btn) {
       btn.addEventListener("click", function () {
-        var nn = prompt("请输入您的姓名（仅本机显示）", getDisplayName());
+        var nn = prompt("請輸入您的姓名（僅本機顯示）", getDisplayName());
         if (nn) {
           setDisplayName(nn);
           render(hostId);

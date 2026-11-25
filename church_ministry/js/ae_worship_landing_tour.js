@@ -1,23 +1,23 @@
 /**
- * 敬拜花园 landing · 导游互动
+ * 敬拜花園 landing · 導遊互動
  */
 (function (win, doc) {
   "use strict";
 
   var GUIDE_SPEECH = {
-    meili: "欢迎来园！我是美莉。你若只想知道「这周练什么歌、谱在哪」，跟我走<strong>同工服事径</strong>就好，不用碰报表。",
-    yixuan: "我是园长以轩。主日策划、人力与礼仪要在同一张图上看见——请走<strong>部长总控径</strong>。",
-    jiahe: "我是家禾。敬拜的灵魂在礼仪与圣言，不是器材清单。请先走<strong>圣言礼仪径</strong>。",
-    xinyi: "我是欣怡。你若只是会众，这里不点名、不统计，只有<strong>会众筑坛径</strong>让你预备心灵。"
+    meili: "歡迎來園！我是美莉。你若只想知道「這周練什麼歌、譜在哪」，跟我走<strong>同工服事徑</strong>就好，不用碰報表。",
+    yixuan: "我是園長以軒。主日策劃、人力與禮儀要在同一張圖上看見——請走<strong>部長總控徑</strong>。",
+    jiahe: "我是家禾。敬拜的靈魂在禮儀與聖言，不是器材清單。請先走<strong>聖言禮儀徑</strong>。",
+    xinyi: "我是欣怡。你若只是會眾，這裡不點名、不統計，只有<strong>會眾築壇徑</strong>讓你預備心靈。"
   };
 
   var ROUTE_SPEECH = {
-    congregation: "这径适合每一位来崇拜的人：看主题、经文、诗歌，像领受周报，不是被建档。",
-    volunteer: "诗班、乐手、招待同工：只看与你有关的排练与乐谱，温暖、防呆。",
-    leader: "部长与牧者：主日策划五步、人力全景、探访守望，一屏决策。",
-    liturgy: "讲台、礼仪、讲道笔记——让信息与敬拜在同一条故事线上。",
-    priesthood: "敬拜团、诗班、器乐、诗歌库与影音，是祭司手中的兵器，要与主日歌单同频。",
-    hospitality: "门厅与出席：微笑迎客，缺席则启动关怀，不是冷冰冰打卡。"
+    congregation: "這徑適合每一位來崇拜的人：看主題、經文、詩歌，像領受週報，不是被建檔。",
+    volunteer: "詩班、樂手、招待同工：只看與你有關的排練與樂譜，溫暖、防呆。",
+    leader: "部長與牧者：主日策劃五步、人力全景、探訪守望，一屏決策。",
+    liturgy: "講台、禮儀、講道筆記——讓信息與敬拜在同一條故事線上。",
+    priesthood: "敬拜團、詩班、器樂、詩歌庫與影音，是祭司手中的兵器，要與主日歌單同頻。",
+    hospitality: "門廳與出席：微笑迎客，缺席則啟動關懷，不是冷冰冰打卡。"
   };
 
   function esc(s) {
@@ -75,12 +75,12 @@
           '<p class="route-blurb">' +
           esc(route.blurb) +
           "</p>" +
-          (guide ? '<p class="route-blurb">导游：' + guide.emoji + " " + esc(guide.name) + "</p>" : "") +
+          (guide ? '<p class="route-blurb">導遊：' + guide.emoji + " " + esc(guide.name) + "</p>" : "") +
           stops +
           '<a class="route-start" href="' +
           pre +
           route.start +
-          '">从此径入园 →</a>' +
+          '">從此徑入園 →</a>' +
           "</article>"
         );
       })
@@ -90,16 +90,16 @@
   function renderMap(host) {
     host.innerHTML =
       '<div class="park-map">' +
-      "<p><strong>🗺️ 花园示意图</strong>（服事旅程，非行政菜单）</p>" +
+      "<p><strong>🗺️ 花園示意圖</strong>（服事旅程，非行政菜單）</p>" +
       '<svg viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
       '<path d="M20 60 Q100 20 200 60 T380 60" fill="none" stroke="#86efac" stroke-width="4"/>' +
-      '<circle cx="40" cy="60" r="8" fill="#22c55e"/><text x="28" y="85" font-size="9" fill="#166534">筑坛</text>' +
+      '<circle cx="40" cy="60" r="8" fill="#22c55e"/><text x="28" y="85" font-size="9" fill="#166534">築壇</text>' +
       '<circle cx="120" cy="45" r="8" fill="#a78bfa"/><text x="100" y="30" font-size="9" fill="#5b21b6">同工</text>' +
-      '<circle cx="200" cy="60" r="8" fill="#f59e0b"/><text x="185" y="85" font-size="9" fill="#92400e">部长</text>' +
-      '<circle cx="280" cy="45" r="8" fill="#3b82f6"/><text x="265" y="30" font-size="9" fill="#1d4ed8">礼仪</text>' +
+      '<circle cx="200" cy="60" r="8" fill="#f59e0b"/><text x="185" y="85" font-size="9" fill="#92400e">部長</text>' +
+      '<circle cx="280" cy="45" r="8" fill="#3b82f6"/><text x="265" y="30" font-size="9" fill="#1d4ed8">禮儀</text>' +
       '<circle cx="360" cy="60" r="8" fill="#ec4899"/><text x="345" y="85" font-size="9" fill="#9d174d">兵器</text>' +
       "</svg>" +
-      "<p>沿小径赏花，需要时再「买花」带回你的服事（排练、乐谱、排班）。</p></div>";
+      "<p>沿小徑賞花，需要時再「買花」帶回你的服事（排練、樂譜、排班）。</p></div>";
   }
 
   function boot() {

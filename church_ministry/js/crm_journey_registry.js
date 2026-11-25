@@ -52,12 +52,12 @@
       forWhom: "敬拜統籌、團隊負責人",
       landing: {
         path: "_landing/worship.html",
-        label: "敬拜花园 · 选导游",
-        blurb: "服事旅程公园导览"
+        label: "敬拜花園 · 選導遊",
+        blurb: "服事旅程公園導覽"
       },
       primary: {
         path: "modules/worship/worship-integrated.html?view=leader",
-        label: "部长 · 主日策划",
+        label: "部長 · 主日策劃",
         role: "leader",
         step: 0
       }
@@ -245,14 +245,14 @@
 
   /** 波 2c · A–E 子頁 SSOT（與 layout_v1 側欄對齊） */
   var AE_SUBPAGES = [
-    { zone: "a", group: "🌳 服事旅程·公园", path: "_landing/worship.html", label: "敬拜花园导览", blurb: "选导游·路线", primary: true, role: "member", step: 0 },
-    { zone: "a", group: "🌳 服事旅程·公园", path: "modules/worship/worship-together.html", label: "会众筑坛", blurb: "只读预备", role: "member", step: 1 },
-    { zone: "a", group: "🌳 服事旅程·公园", path: "modules/worship/worship-integrated.html?view=volunteer", label: "同工·今日祭坛", blurb: "我的服事", role: "staff", step: 2 },
-    { zone: "a", group: "🌳 服事旅程·公园", path: "modules/worship/worship-integrated.html?view=leader", label: "部长·主日策划", blurb: "一键策划", role: "leader", step: 0 },
+    { zone: "a", group: "🌳 服事旅程·公園", path: "_landing/worship.html", label: "敬拜花園導覽", blurb: "選導遊·路線", primary: true, role: "member", step: 0 },
+    { zone: "a", group: "🌳 服事旅程·公園", path: "modules/worship/worship-together.html", label: "會眾築壇", blurb: "只讀預備", role: "member", step: 1 },
+    { zone: "a", group: "🌳 服事旅程·公園", path: "modules/worship/worship-integrated.html?view=volunteer", label: "同工·今日祭壇", blurb: "我的服事", role: "staff", step: 2 },
+    { zone: "a", group: "🌳 服事旅程·公園", path: "modules/worship/worship-integrated.html?view=leader", label: "部長·主日策劃", blurb: "一鍵策劃", role: "leader", step: 0 },
     { zone: "a", group: "敬拜管理", path: "modules/worship/pulpit-ministry.html", label: "講壇事奉", blurb: "講員排期" },
     { zone: "a", group: "敬拜管理", path: "modules/worship/sermon-notes-admin.html", label: "講道筆記模板", blurb: "預備存檔" },
     { zone: "a", group: "敬拜管理", path: "modules/worship/hospitality.html", label: "招待事奉", blurb: "現場接待" },
-    { zone: "a", group: "音樂與詩歌", path: "modules/worship/worship-integrated.html", label: "敬拜工作台", blurb: "部长全功能", role: "leader", step: 0 },
+    { zone: "a", group: "音樂與詩歌", path: "modules/worship/worship-integrated.html", label: "敬拜工作台", blurb: "部長全功能", role: "leader", step: 0 },
     { zone: "a", group: "音樂與詩歌", path: "modules/worship/worship-team-management.html", label: "敬拜團隊", blurb: "團隊行政" },
     { zone: "a", group: "音樂與詩歌", path: "modules/worship/choir-team.html", label: "詩班團隊", blurb: "聲部練習" },
     { zone: "a", group: "音樂與詩歌", path: "modules/worship/instrument-team.html", label: "器樂團隊", blurb: "樂手編配" },

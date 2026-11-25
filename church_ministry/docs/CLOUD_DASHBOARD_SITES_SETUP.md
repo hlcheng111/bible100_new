@@ -6,7 +6,7 @@
 
 ## 1) 前端頁面（已建立）
 
-- 檔案：`church_ministry/dashboard_cloud.html`
+- 檔案：`church_ministry/_archive/root_noise_20261017/dashboard_cloud.html`
 - 已預留 3 個 iframe：
   - 會友總覽
   - 報名與參與率

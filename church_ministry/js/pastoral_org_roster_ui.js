@@ -1,5 +1,5 @@
 /**
- * Page 2 · 组织与名册中心（深度业务 UI）
+ * Page 2 · 組織與名冊中心（深度業務 UI）
  */
 (function (win, doc) {
   "use strict";
@@ -42,11 +42,11 @@
 
     var html =
       '<div class="por-layout-2">' +
-      '<div class="sg-card"><h3>牧养覆盖树 · 牧者 ➔ 区长 ➔ 组长</h3>' +
+      '<div class="sg-card"><h3>牧養覆蓋樹 · 牧者 ➔ 區長 ➔ 組長</h3>' +
       (burnout.length
-        ? '<p class="sg-card alert" style="padding:8px;font-size:11px;">⚠️ ' + burnout.length + " 个小组组长处于<strong>耗尽预警</strong>，需区长导师面谈</p>"
+        ? '<p class="sg-card alert" style="padding:8px;font-size:11px;">⚠️ ' + burnout.length + " 個小組組長處於<strong>耗盡預警</strong>，需區長導師面談</p>"
         : "") +
-      '<p class="muted">字段：服侍年期 · 最后区长面谈 · 健康度 · 小组出席率</p>';
+      '<p class="muted">字段：服侍年期 · 最後區長面談 · 健康度 · 小組出席率</p>';
 
     var lastPastor = "";
     var lastDistrict = "";
@@ -56,7 +56,7 @@
         html +=
           '<div class="por-tree-zone" style="border-left:none;margin-left:0;padding-left:0"><strong>✝ ' +
           H.esc(n.pastor) +
-          " 牧区</strong>";
+          " 牧區</strong>";
         lastPastor = n.pastor;
         lastDistrict = "";
       }
@@ -76,7 +76,7 @@
         n.group.id +
         '">' +
         H.esc(n.group.name) +
-        "</a> · 组长 " +
+        "</a> · 組長 " +
         leaderLink +
         "</span>" +
         '<span class="por-health-' +
@@ -85,45 +85,45 @@
         (hst === "burnout_risk" ? "💔 " : hst === "hot" ? "🔥 " : "") +
         H.healthLabel(hst) +
         "</span></div>" +
-        "<p class=\"muted\" style=\"margin:4px 0 0\">人数 " +
+        "<p class=\"muted\" style=\"margin:4px 0 0\">人數 " +
         n.memberCount +
-        " · 出席约 " +
+        " · 出席約 " +
         (n.groupAttendanceRate != null ? n.groupAttendanceRate + "%" : "—") +
         " · 服侍 " +
         (lh.serviceYears != null ? lh.serviceYears + " 年" : "—") +
-        (lh.lastMentorMeetingDate ? " · 面谈 " + lh.lastMentorMeetingDate : "") +
+        (lh.lastMentorMeetingDate ? " · 面談 " + lh.lastMentorMeetingDate : "") +
         "</p>";
       if (lh.burnoutReason) html += '<p style="margin:4px 0 0;color:#b91c1c;font-size:10px">' + H.esc(lh.burnoutReason) + "</p>";
       if (hst === "burnout_risk" && n.leaderId) {
         html +=
           '<button type="button" class="sg-btn sm por-burnout-btn" data-lid="' +
           n.leaderId +
-          '" style="margin-top:6px;background:#be123c">推至战略桌 · 组长关怀</button>';
+          '" style="margin-top:6px;background:#be123c">推至戰略桌 · 組長關懷</button>';
       }
       html += "</div>";
     });
     if (nodes.length) html += "</div></div>";
 
     html +=
-      '</div><div class="sg-card"><h3>梯队健康度 KPI</h3>' +
-      '<p class="muted" style="margin-bottom:10px">非行政点名 · 生命陪伴指标</p>' +
-      kpiRow("本周组长快评汇报率", kpis.weeklyReportRate) +
-      kpiRow("组长平稳/火热（无需介入）", kpis.stablePct + kpis.hotPct, "emerald") +
-      '<p style="font-size:11px;margin:8px 0"><span class="por-health-burnout">耗尽预警 ' +
+      '</div><div class="sg-card"><h3>梯隊健康度 KPI</h3>' +
+      '<p class="muted" style="margin-bottom:10px">非行政點名 · 生命陪伴指標</p>' +
+      kpiRow("本週組長快評彙報率", kpis.weeklyReportRate) +
+      kpiRow("組長平穩/火熱（無需介入）", kpis.stablePct + kpis.hotPct, "emerald") +
+      '<p style="font-size:11px;margin:8px 0"><span class="por-health-burnout">耗盡預警 ' +
       kpis.burnoutCount +
-      " 人</span> · 火热 " +
+      " 人</span> · 火熱 " +
       kpis.hotCount +
-      " · 平稳 " +
+      " · 平穩 " +
       kpis.stableCount +
       "</p>" +
-      '<div class="sg-card alert" style="margin-top:8px;padding:10px;font-size:10px">战略提示：复活节季后 15% 核心组长出现疲态时，建议战略桌审议「合并聚会/安息周」提案。</div>' +
+      '<div class="sg-card alert" style="margin-top:8px;padding:10px;font-size:10px">戰略提示：復活節季後 15% 核心組長出現疲態時，建議戰略桌審議「合併聚會/安息周」提案。</div>' +
       "</div></div>";
 
     host.innerHTML = html;
     host.querySelectorAll(".por-burnout-btn").forEach(function (btn) {
       btn.onclick = function () {
         H.pushLeaderBurnoutToStrategy(parseInt(btn.getAttribute("data-lid"), 10));
-        alert("已建立组长关怀专案并写入战略桌待办 · 请至牧养战略桌 Tab1 跟进");
+        alert("已建立組長關懷專案並寫入戰略桌待辦 · 請至牧養戰略桌 Tab1 跟進");
         renderTree();
       };
     });
@@ -182,10 +182,10 @@
     }).join("");
     return (
       '<div class="por-filter sg-card" style="margin-bottom:12px">' +
-      '<label>分龄牧区 <select id="por-mx-age" class="sg-select"><option value="">全部</option>' +
+      '<label>分齡牧區 <select id="por-mx-age" class="sg-select"><option value="">全部</option>' +
       ageOpts +
       "</select></label> " +
-      '<label>地理分区 <select id="por-mx-geo" class="sg-select"><option value="">全部</option>' +
+      '<label>地理分區 <select id="por-mx-geo" class="sg-select"><option value="">全部</option>' +
       geoOpts +
       "</select></label> " +
       '<label>事工身份 <select id="por-mx-min" class="sg-select"><option value="">全部</option>' +
@@ -194,7 +194,7 @@
       '<label>姓名 <input type="search" id="por-mx-q" class="sg-input" style="width:120px;display:inline-block" value="' +
       H.esc(state.matrix.q) +
       '"></label> ' +
-      '<button type="button" class="sg-btn sm" id="por-mx-apply">交叉筛选</button></div>'
+      '<button type="button" class="sg-btn sm" id="por-mx-apply">交叉篩選</button></div>'
     );
   }
 
@@ -216,11 +216,11 @@
     var rows = H.getMembersMatrixFiltered(state.matrix);
     var html =
       matrixFilterBar() +
-      '<div class="sg-card"><h3>多维标签矩阵名册（' +
+      '<div class="sg-card"><h3>多維標籤矩陣名冊（' +
       rows.length +
       " 人）</h3>" +
-      '<p class="muted">【属灵身份】/【分龄】/【地理】/【跨界事工】— 一人多维度，非单一归类</p>' +
-      '<table class="pa-table"><thead><tr><th>会友</th><th>属灵身份</th><th>分龄</th><th>地理</th><th>事工标签</th><th>小组</th><th>出席</th></tr></thead><tbody>';
+      '<p class="muted">【屬靈身份】/【分齡】/【地理】/【跨界事工】— 一人多維度，非單一歸類</p>' +
+      '<table class="pa-table"><thead><tr><th>會友</th><th>屬靈身份</th><th>分齡</th><th>地理</th><th>事工標籤</th><th>小組</th><th>出席</th></tr></thead><tbody>';
     rows.forEach(function (row) {
       var m = row.member;
       var mx = row.matrix;
@@ -271,14 +271,14 @@
     var groups = H.getGroups();
 
     var html =
-      '<div class="sg-card"><h3>生命周期状态机 · 转接引擎</h3>' +
-      "<p class=\"muted\">新朋友满 " +
+      '<div class="sg-card"><h3>生命週期狀態機 · 轉接引擎</h3>' +
+      "<p class=\"muted\">新朋友滿 " +
       H.NEWCOMER_PLACEMENT_WEEKS +
-      " 周未落户 → 指派任务 · 稳定满 " +
+      " 周未落戶 → 指派任務 · 穩定滿 " +
       H.BAPTISM_REFERRAL_MONTHS +
-      " 月 → 受浸推介池 · 连续 " +
+      " 月 → 受浸推介池 · 連續 " +
       H.ABSENCE_ALERT_WEEKS +
-      " 周缺席 → 战略桌探访</p>" +
+      " 周缺席 → 戰略桌探訪</p>" +
       '<div class="por-lifecycle-grid">';
 
     html += lifecycleCol(
@@ -288,23 +288,23 @@
       pools.newcomers
         .slice(0, 5)
         .map(function (row) {
-          return memberTaskRow(row.member, "落户跟进", "newcomer");
+          return memberTaskRow(row.member, "落戶跟進", "newcomer");
         })
-        .join("") || "<p class=\"muted\">暂无</p>"
+        .join("") || "<p class=\"muted\">暫無</p>"
     );
 
     html += lifecycleCol(
       "pool-stable",
-      "🏡 稳定落户",
+      "🏡 穩定落戶",
       pools.stable.length,
-      "<p class=\"muted\">满 " +
+      "<p class=\"muted\">滿 " +
         H.BAPTISM_REFERRAL_MONTHS +
-        " 个月且未受浸者 → 自动进入受浸推介池（见待办）</p>"
+        " 個月且未受浸者 → 自動進入受浸推介池（見待辦）</p>"
     );
 
     html += lifecycleCol(
       "pool-risk",
-      "⚠️ 流失预警",
+      "⚠️ 流失預警",
       pools.atRisk.length,
       pools.atRisk
         .map(function (row) {
@@ -312,33 +312,33 @@
           return (
             '<div class="sg-list-item" style="margin-bottom:6px">' +
             H.memberLinkHtml(row.member.id, row.member.name) +
-            ' <span class="stage-chip risk">连续 ' +
+            ' <span class="stage-chip risk">連續 ' +
             streak +
             " 周缺席</span><br>" +
             '<button type="button" class="sg-btn sm por-strategy-btn" data-mid="' +
             row.member.id +
-            '" style="margin-top:4px;background:#be123c">推战略桌 Tab1</button></div>'
+            '" style="margin-top:4px;background:#be123c">推戰略桌 Tab1</button></div>'
           );
         })
-        .join("") || "<p class=\"muted\">暂无预警</p>"
+        .join("") || "<p class=\"muted\">暫無預警</p>"
     );
 
     html += lifecycleCol(
       "pool-leader",
-      "👑 领袖梯队",
+      "👑 領袖梯隊",
       pools.leaderPipeline.length,
       pools.leaderPipeline
         .slice(0, 6)
         .map(function (p) {
           return "<div>" + H.memberLinkHtml(p.memberId, p.name) + " · " + H.enrollmentStatusLabel(p.status) + "</div>";
         })
-        .join("") || "<p class=\"muted\">见门徒训练 Tab3</p>"
+        .join("") || "<p class=\"muted\">見門徒訓練 Tab3</p>"
     );
 
     html += "</div></div>";
 
     if (pools.handoverTasks.length) {
-      html += '<div class="sg-card"><h3>待办转接任务</h3><ul class="alert-list">';
+      html += '<div class="sg-card"><h3>待辦轉接任務</h3><ul class="alert-list">';
       pools.handoverTasks.slice(0, 12).forEach(function (t) {
         html +=
           "<li><strong>" +
@@ -352,8 +352,8 @@
       html += "</ul></div>";
     }
 
-    html += '<div class="sg-card"><h3>强制落户（新朋友 handover）</h3><p class="muted">区长/组长人工确认，写入 groupMemberships + pastoral_events</p>';
-    html += '<select id="por-place-member" class="sg-select"><option value="">选择新朋友</option>';
+    html += '<div class="sg-card"><h3>強制落戶（新朋友 handover）</h3><p class="muted">區長/組長人工確認，寫入 groupMemberships + pastoral_events</p>';
+    html += '<select id="por-place-member" class="sg-select"><option value="">選擇新朋友</option>';
     pools.newcomers.forEach(function (row) {
       html += '<option value="' + row.member.id + '">' + H.esc(row.member.name) + "</option>";
     });
@@ -361,15 +361,15 @@
     groups.forEach(function (g) {
       html += '<option value="' + g.id + '">' + H.esc(g.name) + "</option>";
     });
-    html += '</select> <button type="button" class="sg-btn sm" id="por-place-save">确认落户</button></div>';
+    html += '</select> <button type="button" class="sg-btn sm" id="por-place-save">確認落戶</button></div>';
 
     host.innerHTML = html;
 
     host.querySelectorAll(".por-strategy-btn").forEach(function (btn) {
       btn.onclick = function () {
         var mid = btn.getAttribute("data-mid");
-        H.pushToStrategyDesk(mid, "连续缺席流失预警 · 需深度探访", { type: "absence_followup", taskType: "absence_followup" });
-        alert("已写入牧养战略桌探访日志 + 探访事工草稿");
+        H.pushToStrategyDesk(mid, "連續缺席流失預警 · 需深度探訪", { type: "absence_followup", taskType: "absence_followup" });
+        alert("已寫入牧養戰略桌探訪日誌 + 探訪事工草稿");
         renderLifecycle();
       };
     });
@@ -381,7 +381,7 @@
         var gid = $("por-place-group") && $("por-place-group").value;
         if (!mid || !gid) return;
         H.assignMemberToGroup(mid, gid);
-        alert("已落户小组并关闭转接任务");
+        alert("已落戶小組並關閉轉接任務");
         renderLifecycle();
         renderRoster();
       };
@@ -420,7 +420,7 @@
     var members = H.getMembers();
     if (state.profileId == null && members[0]) state.profileId = members[0].id;
 
-    var html = '<div class="por-360-layout"><div class="por-360-side sg-card"><h3>检索档案</h3>';
+    var html = '<div class="por-360-layout"><div class="por-360-side sg-card"><h3>檢索檔案</h3>';
     html += '<input type="search" id="por-360-q" class="sg-input" placeholder="姓名…">';
     html += '<div id="por-360-list" style="margin-top:8px">';
     members.forEach(function (m) {
@@ -465,28 +465,28 @@
     if (!detail || state.profileId == null) return;
     var p = H.getProfile360(state.profileId);
     if (!p.member) {
-      detail.innerHTML = "<p class=\"muted\">未找到会友</p>";
+      detail.innerHTML = "<p class=\"muted\">未找到會友</p>";
       return;
     }
     var m = p.member;
     var html =
       '<div class="sg-card"><h3>' +
       H.esc(m.name) +
-      " · 360° 牧养全景</h3>" +
-      "<p class=\"muted\">生命周期：<span class=\"stage-chip " +
+      " · 360° 牧養全景</h3>" +
+      "<p class=\"muted\">生命週期：<span class=\"stage-chip " +
       (p.lifecycle === "at_risk" ? "risk" : "") +
       '">' +
       H.lifecycleLabel(p.lifecycle) +
-      "</span> · 小组：" +
+      "</span> · 小組：" +
       (p.group ? H.esc(p.group.name) : "—") +
       "</p></div>";
 
-    html += '<div class="por-360-block"><strong>📋 探访痛点与关怀摘要</strong>';
+    html += '<div class="por-360-block"><strong>📋 探訪痛點與關懷摘要</strong>';
     if (p.visitNotes.length) {
       p.visitNotes.forEach(function (v) {
         var note = v;
         if (v.sensitivity === "high" && H.filterVisitLogForViewer && !H.canViewSensitive()) {
-          note = Object.assign({}, v, { summary: "（高敏记录 · 仅牧者/区长可见）", redacted: true });
+          note = Object.assign({}, v, { summary: "（高敏記錄 · 僅牧者/區長可見）", redacted: true });
         }
         html +=
           '<div style="margin-top:8px;padding:8px;background:#fff;border-radius:6px;border:1px solid #e2e8f0">' +
@@ -496,30 +496,30 @@
           H.esc(note.visitor) +
           (note.sensitivity === "high" ? ' <span class="por-sens-high">高敏感</span>' : "") +
           "</small><br><strong>" +
-          H.esc(note.painCategory || "关怀") +
+          H.esc(note.painCategory || "關懷") +
           "</strong><br>" +
           H.esc(note.summary) +
           "</div>";
       });
-    } else html += '<p class="muted" style="margin-top:6px">尚无结构化探访摘要 · <a href="../support/visitation_index.html?crm_from=b_pastoral&memberId=' + m.id + '">探访事工</a></p>';
+    } else html += '<p class="muted" style="margin-top:6px">尚無結構化探訪摘要 · <a href="../support/visitation_index.html?crm_from=b_pastoral&memberId=' + m.id + '">探訪事工</a></p>';
     html += "</div>";
 
     if (p.giftAssessment) {
       var g = p.giftAssessment;
       html +=
-        '<div class="por-360-block" style="background:#fffbeb"><strong>✨ 恩赐测验</strong><br>核心：<strong>' +
+        '<div class="por-360-block" style="background:#fffbeb"><strong>✨ 恩賜測驗</strong><br>核心：<strong>' +
         H.esc(g.primary) +
         "</strong>" +
         (g.secondary ? " + " + H.esc(g.secondary) : "") +
-        (g.scores ? "（教导 " + (g.scores.教导 || g.scores["教导"]) + "%）" : "") +
+        (g.scores ? "（教導 " + (g.scores.教導 || g.scores["教導"]) + "%）" : "") +
         "<br>" +
         H.esc(g.pastorComment || "") +
         "</div>";
     }
 
-    html += '<div class="por-360-block"><strong>🎓 门训轨迹</strong><br>' + (p.trainingPath.length ? H.esc(p.trainingPath.join(" ➔ ")) : "—") + "</div>";
+    html += '<div class="por-360-block"><strong>🎓 門訓軌跡</strong><br>' + (p.trainingPath.length ? H.esc(p.trainingPath.join(" ➔ ")) : "—") + "</div>";
 
-    html += '<div class="por-360-block"><strong>🙏 代祷链</strong>';
+    html += '<div class="por-360-block"><strong>🙏 代禱鏈</strong>';
     if (p.prayerChain.length) {
       p.prayerChain.forEach(function (pw) {
         html +=
@@ -527,14 +527,14 @@
           H.esc(pw.date) +
           " · " +
           H.esc(pw.request) +
-          (pw.status === "answered" ? ' <span class="ok">✓ 已蒙应允</span>' : "") +
+          (pw.status === "answered" ? ' <span class="ok">✓ 已蒙應允</span>' : "") +
           (pw.note ? " — " + H.esc(pw.note) : "") +
           "</div>";
       });
-    } else html += '<p class="muted">见战略桌代祷网络</p>';
+    } else html += '<p class="muted">見戰略桌代禱網絡</p>';
     html += "</div>";
 
-    html += '<div class="por-360-block"><strong>🛤️ 近期牧养事件轴</strong><ul style="margin:6px 0 0;padding-left:16px">';
+    html += '<div class="por-360-block"><strong>🛤️ 近期牧養事件軸</strong><ul style="margin:6px 0 0;padding-left:16px">';
     (p.timeline || []).slice(0, 8).forEach(function (ev) {
       html +=
         "<li style=\"margin-bottom:4px\"><small>" +
@@ -569,7 +569,7 @@
         H.ensurePastoralSeed(true);
         H.evaluateLifecycleRules();
         renderAll();
-        seed.textContent = "已载入深度示范";
+        seed.textContent = "已載入深度示範";
       };
     }
     doc.addEventListener("click", function (ev) {

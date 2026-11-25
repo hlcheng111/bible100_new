@@ -1,46 +1,46 @@
 /**
  * ========================================
  * Church Core Systems Data Linking
- * 教会核心系统数据联动
+ * 教會核心系統數據聯動
  * ========================================
  * 
- * 功能：实现6大核心系统的数据互联
- * 理念：一个父资料库（会友），多个子系统通过关键欄位（memberId）互联互动
+ * 功能：實現6大核心繫統的數據互聯
+ * 理念：一個父資料庫（會友），多個子系統通過關鍵欄位（memberId）互聯互動
  * 版本：v1.0
- * 创建：2025-10-11
- * 基于：visitation.html 标准
+ * 創建：2025-10-11
+ * 基於：visitation.html 標準
  */
 
 (function(window) {
     'use strict';
 
     /**
-     * 核心系统数据联动管理器
+     * 核心系統數據聯動管理器
      */
     class ChurchCoreLinking {
         constructor() {
             this.systems = {
-                member: 'memberSystemData',         // 会友系统（父）
-                worship: 'worshipSystemData',       // 敬拜系统（子）
-                smallGroups: 'smallGroupsSystemData', // 小组系统（子）
-                volunteer: 'volunteerSystemData',   // 志工系统（子）
-                education: 'educationSystemData',   // 教育系统（子）
-                finance: 'financeSystemData'        // 财务系统（子）
+                member: 'memberSystemData',         // 會友系統（父）
+                worship: 'worshipSystemData',       // 敬拜系統（子）
+                smallGroups: 'smallGroupsSystemData', // 小組系統（子）
+                volunteer: 'volunteerSystemData',   // 志工系統（子）
+                education: 'educationSystemData',   // 教育系統（子）
+                finance: 'financeSystemData'        // 財務系統（子）
             };
             
             console.log('✅ Church Core Systems Data Linking 已初始化');
-            console.log('   核心理念：一个父资料库，多个子系统通过 memberId 互联');
+            console.log('   核心理念：一個父資料庫，多個子系統通過 memberId 互聯');
         }
 
         /**
-         * 从localStorage加载指定系统数据
-         * @param {string} systemName - 系统名称 (member, worship, etc.)
-         * @returns {object} 系统数据
+         * 從localStorage加載指定系統數據
+         * @param {string} systemName - 系統名稱 (member, worship, etc.)
+         * @returns {object} 系統數據
          */
         loadSystem(systemName) {
             const storageKey = this.systems[systemName];
             if (!storageKey) {
-                console.error(`❌ 未知系统：${systemName}`);
+                console.error(`❌ 未知系統：${systemName}`);
                 return null;
             }
             
@@ -50,39 +50,39 @@
                     return JSON.parse(data);
                 }
             } catch (e) {
-                console.error(`❌ 加载 ${systemName} 数据失败:`, e);
+                console.error(`❌ 加載 ${systemName} 數據失敗:`, e);
             }
             
             return null;
         }
 
         /**
-         * 保存系统数据到localStorage
-         * @param {string} systemName - 系统名称
-         * @param {object} data - 数据对象
+         * 保存系統數據到localStorage
+         * @param {string} systemName - 系統名稱
+         * @param {object} data - 數據對象
          * @returns {boolean} 是否成功
          */
         saveSystem(systemName, data) {
             const storageKey = this.systems[systemName];
             if (!storageKey) {
-                console.error(`❌ 未知系统：${systemName}`);
+                console.error(`❌ 未知系統：${systemName}`);
                 return false;
             }
             
             try {
                 localStorage.setItem(storageKey, JSON.stringify(data));
-                console.log(`💾 ${systemName} 数据已保存`);
+                console.log(`💾 ${systemName} 數據已保存`);
                 return true;
             } catch (e) {
-                console.error(`❌ 保存 ${systemName} 数据失败:`, e);
+                console.error(`❌ 保存 ${systemName} 數據失敗:`, e);
                 return false;
             }
         }
 
         /**
-         * 获取会友的完整档案（跨系统关联）
-         * @param {number} memberId - 会友ID
-         * @returns {object} 完整档案
+         * 獲取會友的完整檔案（跨系統關聯）
+         * @param {number} memberId - 會友ID
+         * @returns {object} 完整檔案
          */
         getMemberFullProfile(memberId) {
             const profile = {
@@ -96,12 +96,12 @@
                 donations: []
             };
             
-            // 1. 会友基本信息
+            // 1. 會友基本信息
             const memberData = this.loadSystem('member');
             if (memberData) {
                 profile.basicInfo = memberData.members?.find(m => m.id === memberId);
                 
-                // 小组归属
+                // 小組歸屬
                 profile.groups = memberData.groupMemberships
                     ?.filter(gm => gm.memberId === memberId)
                     .map(gm => {
@@ -114,12 +114,12 @@
                         };
                     }) || [];
                 
-                // 培训记录
+                // 培訓記錄
                 profile.trainings = memberData.trainings
                     ?.filter(t => t.memberId === memberId) || [];
             }
             
-            // 2. 敬拜团队
+            // 2. 敬拜團隊
             const worshipData = this.loadSystem('worship');
             if (worshipData) {
                 profile.worshipTeams = worshipData.teamMembers
@@ -135,12 +135,12 @@
                     }) || [];
             }
             
-            // 3. 小组参与
+            // 3. 小組參與
             const groupData = this.loadSystem('smallGroups');
             if (groupData) {
                 const groupMemberships = groupData.groupMembers
                     ?.filter(gm => gm.memberId === memberId) || [];
-                // 合并到 profile.groups（如果还没有）
+                // 合併到 profile.groups（如果還沒有）
             }
             
             // 4. 志工事工
@@ -175,7 +175,7 @@
                     }) || [];
             }
             
-            // 6. 财务记录（奉献）
+            // 6. 財務記錄（奉獻）
             const financeData = this.loadSystem('finance');
             if (financeData) {
                 profile.donations = financeData.transactions
@@ -191,8 +191,8 @@
         }
 
         /**
-         * 获取所有系统的统计摘要
-         * @returns {object} 统计摘要
+         * 獲取所有系統的統計摘要
+         * @returns {object} 統計摘要
          */
         getGlobalStatistics() {
             const stats = {
@@ -206,7 +206,7 @@
                 systems: {}
             };
             
-            // 会友系统
+            // 會友系統
             const memberData = this.loadSystem('member');
             if (memberData) {
                 stats.totalMembers = memberData.members?.length || 0;
@@ -218,7 +218,7 @@
                 };
             }
             
-            // 敬拜系统
+            // 敬拜系統
             const worshipData = this.loadSystem('worship');
             if (worshipData) {
                 stats.inWorship = [...new Set(worshipData.teamMembers?.map(tm => tm.memberId))].length || 0;
@@ -229,7 +229,7 @@
                 };
             }
             
-            // 小组系统
+            // 小組系統
             const groupData = this.loadSystem('smallGroups');
             if (groupData) {
                 stats.inGroups = [...new Set(groupData.groupMembers?.map(gm => gm.memberId))].length || 0;
@@ -240,7 +240,7 @@
                 };
             }
             
-            // 志工系统
+            // 志工系統
             const volunteerData = this.loadSystem('volunteer');
             if (volunteerData) {
                 stats.inMinistry = [...new Set(volunteerData.assignments?.map(a => a.memberId))].length || 0;
@@ -250,7 +250,7 @@
                 };
             }
             
-            // 教育系统
+            // 教育系統
             const educationData = this.loadSystem('education');
             if (educationData) {
                 stats.students = educationData.students?.length || 0;
@@ -261,7 +261,7 @@
                 };
             }
             
-            // 财务系统
+            // 財務系統
             const financeData = this.loadSystem('finance');
             if (financeData) {
                 stats.totalDonations = financeData.transactions
@@ -278,8 +278,8 @@
         }
 
         /**
-         * 验证数据完整性（检查孤立记录）
-         * @returns {object} 验证结果
+         * 驗證數據完整性（檢查孤立記錄）
+         * @returns {object} 驗證結果
          */
         validateDataIntegrity() {
             const issues = {
@@ -290,41 +290,41 @@
             
             const memberData = this.loadSystem('member');
             if (!memberData || !memberData.members) {
-                issues.warnings.push('会友系统数据为空，这是所有系统的基础！');
+                issues.warnings.push('會友系統數據為空，這是所有系統的基礎！');
                 return issues;
             }
             
             const memberIds = memberData.members.map(m => m.id);
             
-            // 检查敬拜系统
+            // 檢查敬拜系統
             const worshipData = this.loadSystem('worship');
             if (worshipData && worshipData.teamMembers) {
                 worshipData.teamMembers.forEach(tm => {
                     if (!memberIds.includes(tm.memberId)) {
                         issues.orphanRecords.push({
                             system: 'worship',
-                            record: `团队成员 ${tm.memberName} (ID: ${tm.memberId})`,
-                            issue: '关联的会友ID不存在'
+                            record: `團隊成員 ${tm.memberName} (ID: ${tm.memberId})`,
+                            issue: '關聯的會友ID不存在'
                         });
                     }
                 });
             }
             
-            // 检查小组系统
+            // 檢查小組系統
             const groupData = this.loadSystem('smallGroups');
             if (groupData && groupData.groupMembers) {
                 groupData.groupMembers.forEach(gm => {
                     if (!memberIds.includes(gm.memberId)) {
                         issues.orphanRecords.push({
                             system: 'smallGroups',
-                            record: `小组成员 ${gm.memberName} (ID: ${gm.memberId})`,
-                            issue: '关联的会友ID不存在'
+                            record: `小組成員 ${gm.memberName} (ID: ${gm.memberId})`,
+                            issue: '關聯的會友ID不存在'
                         });
                     }
                 });
             }
             
-            // 检查志工系统
+            // 檢查志工系統
             const volunteerData = this.loadSystem('volunteer');
             if (volunteerData && volunteerData.assignments) {
                 volunteerData.assignments.forEach(a => {
@@ -332,13 +332,13 @@
                         issues.orphanRecords.push({
                             system: 'volunteer',
                             record: `志工分配 ${a.memberName} (ID: ${a.memberId})`,
-                            issue: '关联的会友ID不存在'
+                            issue: '關聯的會友ID不存在'
                         });
                     }
                 });
             }
             
-            // 检查教育系统
+            // 檢查教育系統
             const educationData = this.loadSystem('education');
             if (educationData) {
                 if (educationData.teachers) {
@@ -346,8 +346,8 @@
                         if (!memberIds.includes(t.memberId)) {
                             issues.orphanRecords.push({
                                 system: 'education',
-                                record: `教师 ${t.memberName} (ID: ${t.memberId})`,
-                                issue: '关联的会友ID不存在'
+                                record: `教師 ${t.memberName} (ID: ${t.memberId})`,
+                                issue: '關聯的會友ID不存在'
                             });
                         }
                     });
@@ -358,23 +358,23 @@
                         if (s.parentMemberId && !memberIds.includes(s.parentMemberId)) {
                             issues.missingLinks.push({
                                 system: 'education',
-                                record: `学生 ${s.name} (家长ID: ${s.parentMemberId})`,
-                                issue: '家长会友ID不存在'
+                                record: `學生 ${s.name} (家長ID: ${s.parentMemberId})`,
+                                issue: '家長會友ID不存在'
                             });
                         }
                     });
                 }
             }
             
-            // 检查财务系统
+            // 檢查財務系統
             const financeData = this.loadSystem('finance');
             if (financeData && financeData.transactions) {
                 financeData.transactions.forEach(t => {
                     if (t.memberId && !memberIds.includes(t.memberId)) {
                         issues.missingLinks.push({
                             system: 'finance',
-                            record: `奉献记录 ${t.description} (会友ID: ${t.memberId})`,
-                            issue: '奉献者会友ID不存在'
+                            record: `奉獻記錄 ${t.description} (會友ID: ${t.memberId})`,
+                            issue: '奉獻者會友ID不存在'
                         });
                     }
                 });
@@ -384,8 +384,8 @@
         }
 
         /**
-         * 同步会友信息到所有子系统
-         * @param {number} memberId - 会友ID
+         * 同步會友信息到所有子系統
+         * @param {number} memberId - 會友ID
          * @param {object} updates - 更新的字段
          */
         syncMemberInfoToAllSystems(memberId, updates) {
@@ -398,7 +398,7 @@
                 
                 let updated = false;
                 
-                // 根据不同系统更新对应字段
+                // 根據不同系統更新對應字段
                 if (systemName === 'worship' && data.teamMembers) {
                     data.teamMembers.forEach(tm => {
                         if (tm.memberId === memberId && updates.name) {
@@ -441,14 +441,14 @@
                 }
             });
             
-            console.log(`✅ 同步会友信息到 ${synced} 个系统`);
+            console.log(`✅ 同步會友信息到 ${synced} 個系統`);
             return synced;
         }
 
         /**
-         * 删除会友时清理所有关联数据
-         * @param {number} memberId - 会友ID
-         * @returns {object} 清理统计
+         * 刪除會友時清理所有關聯數據
+         * @param {number} memberId - 會友ID
+         * @returns {object} 清理統計
          */
         cascadeDeleteMember(memberId) {
             const deleted = {
@@ -460,7 +460,7 @@
                 finance: 0
             };
             
-            // 1. 会友系统
+            // 1. 會友系統
             const memberData = this.loadSystem('member');
             if (memberData) {
                 memberData.members = memberData.members?.filter(m => m.id !== memberId) || [];
@@ -472,7 +472,7 @@
                 deleted.member = true;
             }
             
-            // 2. 敬拜系统
+            // 2. 敬拜系統
             const worshipData = this.loadSystem('worship');
             if (worshipData) {
                 const before = worshipData.teamMembers?.length || 0;
@@ -482,7 +482,7 @@
                 this.saveSystem('worship', worshipData);
             }
             
-            // 3. 小组系统
+            // 3. 小組系統
             const groupData = this.loadSystem('smallGroups');
             if (groupData) {
                 const before = groupData.groupMembers?.length || 0;
@@ -491,7 +491,7 @@
                 this.saveSystem('smallGroups', groupData);
             }
             
-            // 4. 志工系统
+            // 4. 志工系統
             const volunteerData = this.loadSystem('volunteer');
             if (volunteerData) {
                 const before = volunteerData.assignments?.length || 0;
@@ -502,7 +502,7 @@
                 this.saveSystem('volunteer', volunteerData);
             }
             
-            // 5. 教育系统（作为家长）
+            // 5. 教育系統（作為家長）
             const educationData = this.loadSystem('education');
             if (educationData) {
                 const beforeStudents = educationData.students?.length || 0;
@@ -514,7 +514,7 @@
                 this.saveSystem('education', educationData);
             }
             
-            // 6. 财务系统（匿名化奉献记录，不删除）
+            // 6. 財務系統（匿名化奉獻記錄，不刪除）
             const financeData = this.loadSystem('finance');
             if (financeData && financeData.transactions) {
                 financeData.transactions.forEach(t => {
@@ -527,13 +527,13 @@
                 this.saveSystem('finance', financeData);
             }
             
-            console.log('✅ 级联删除完成:', deleted);
+            console.log('✅ 級聯刪除完成:', deleted);
             return deleted;
         }
 
         /**
-         * 导出所有系统数据（用于备份）
-         * @returns {object} 所有系统数据
+         * 導出所有系統數據（用於備份）
+         * @returns {object} 所有系統數據
          */
         exportAllSystems() {
             const allData = {};
@@ -550,13 +550,13 @@
         }
 
         /**
-         * 导入所有系统数据（用于恢复）
-         * @param {object} backupData - 备份数据
+         * 導入所有系統數據（用於恢復）
+         * @param {object} backupData - 備份數據
          * @returns {boolean} 是否成功
          */
         importAllSystems(backupData) {
             if (!backupData || !backupData.systems) {
-                console.error('❌ 无效的备份数据');
+                console.error('❌ 無效的備份數據');
                 return false;
             }
             
@@ -567,22 +567,22 @@
                     }
                 });
                 
-                console.log('✅ 所有系统数据导入成功');
+                console.log('✅ 所有系統數據導入成功');
                 return true;
             } catch (e) {
-                console.error('❌ 导入数据失败:', e);
+                console.error('❌ 導入數據失敗:', e);
                 return false;
             }
         }
 
         /**
-         * 清空所有系统数据（危险操作）
-         * @param {boolean} confirm - 是否确认
+         * 清空所有系統數據（危險操作）
+         * @param {boolean} confirm - 是否確認
          * @returns {boolean} 是否成功
          */
         clearAllSystems(confirm = false) {
             if (!confirm) {
-                console.error('❌ 未确认，操作取消');
+                console.error('❌ 未確認，操作取消');
                 return false;
             }
             
@@ -590,13 +590,13 @@
                 localStorage.removeItem(this.systems[systemName]);
             });
             
-            console.log('⚠️ 所有系统数据已清空');
+            console.log('⚠️ 所有系統數據已清空');
             return true;
         }
 
         /**
-         * 生成数据互联报告
-         * @returns {object} 互联报告
+         * 生成數據互聯報告
+         * @returns {object} 互聯報告
          */
         generateLinkingReport() {
             const report = {
@@ -606,21 +606,21 @@
                 recommendations: []
             };
             
-            // 分析并给出建议
+            // 分析並給出建議
             if (report.summary.totalMembers === 0) {
-                report.recommendations.push('建议先在会友系统中添加会友数据，这是所有系统的基础');
+                report.recommendations.push('建議先在會友系統中添加會友數據，這是所有系統的基礎');
             }
             
             if (report.summary.inGroups < report.summary.activeMembers * 0.5) {
-                report.recommendations.push('小组覆盖率偏低，建议加强小组事工');
+                report.recommendations.push('小組覆蓋率偏低，建議加強小組事工');
             }
             
             if (report.summary.inMinistry < report.summary.activeMembers * 0.3) {
-                report.recommendations.push('志工参与率偏低，建议动员更多会友参与服事');
+                report.recommendations.push('志工參與率偏低，建議動員更多會友參與服事');
             }
             
             if (report.integrity.orphanRecords.length > 0) {
-                report.recommendations.push(`发现 ${report.integrity.orphanRecords.length} 条孤立记录，建议清理数据`);
+                report.recommendations.push(`發現 ${report.integrity.orphanRecords.length} 條孤立記錄，建議清理數據`);
             }
             
             return report;
@@ -628,7 +628,7 @@
     }
 
     // ========================================
-    // 创建全局实例
+    // 創建全局實例
     // ========================================
     window.ChurchCoreLinking = ChurchCoreLinking;
     window.churchCoreLinking = new ChurchCoreLinking();

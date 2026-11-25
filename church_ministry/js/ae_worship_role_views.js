@@ -1,5 +1,5 @@
 /**
- * W4 · 敬拜主桌双视角（同工 / 部长）
+ * W4 · 敬拜主桌雙視角（同工 / 部長）
  */
 (function (win, doc) {
   "use strict";
@@ -38,16 +38,16 @@
     host.style.display = "block";
     host.className = hints.simplify ? "worship-strategy-banner warn" : "worship-strategy-banner info";
     host.innerHTML =
-      (hints.simplify ? "⚠️ <strong>圣灵修剪防线</strong> · " : "💡 ") +
+      (hints.simplify ? "⚠️ <strong>聖靈脩剪防線</strong> · " : "💡 ") +
       hints.message +
       (hints.simplify
-        ? ' <button type="button" class="volunteer-btn" id="strategyAckBtn">记入意向草稿</button>'
+        ? ' <button type="button" class="volunteer-btn" id="strategyAckBtn">記入意向草稿</button>'
         : "");
     var ack = doc.getElementById("strategyAckBtn");
     if (ack && win.AeWorshipCrmBridge) {
       ack.addEventListener("click", function () {
-        win.AeWorshipCrmBridge.pushIntent("simplify", "简约崇拜模式（规划提示）", { from: "strategy_bridge" });
-        ack.textContent = "已记录";
+        win.AeWorshipCrmBridge.pushIntent("simplify", "簡約崇拜模式（規劃提示）", { from: "strategy_bridge" });
+        ack.textContent = "已記錄";
       });
     }
   }
@@ -66,7 +66,7 @@
     var cm = "../../";
     host.innerHTML =
       '<div class="worship-watch-panel">' +
-      "<h3>⚠️ 同工守望（连续缺席预警）</h3>" +
+      "<h3>⚠️ 同工守望（連續缺席預警）</h3>" +
       "<ul>" +
       signals
         .slice(0, 5)
@@ -82,7 +82,7 @@
             cm +
             "modules/support/visitation_index.html?crm_from=worship&draft_member=" +
             encodeURIComponent(s.memberName) +
-            '">→ 探访桌</a></li>'
+            '">→ 探訪桌</a></li>'
           );
         })
         .join("") +
@@ -128,9 +128,9 @@
     nav.id = "worship-role-switcher";
     nav.className = "worship-role-switcher";
     nav.innerHTML =
-      '<span class="worship-role-label">我是谁：</span>' +
+      '<span class="worship-role-label">我是誰：</span>' +
       '<button type="button" data-role="volunteer" class="worship-role-btn">🙋 事奉同工</button>' +
-      '<button type="button" data-role="leader" class="worship-role-btn">👑 敬拜部长</button>';
+      '<button type="button" data-role="leader" class="worship-role-btn">👑 敬拜部長</button>';
     header.parentNode.insertBefore(nav, header.nextSibling);
     nav.querySelectorAll("[data-role]").forEach(function (btn) {
       btn.addEventListener("click", function () {

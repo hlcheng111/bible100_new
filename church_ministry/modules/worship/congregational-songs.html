@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><title>会众诗歌管理 · Congregational Songs | Church Ministry</title>
+<head><meta charset="UTF-8"><title>會眾詩歌管理 · Congregational Songs | Church Ministry</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Microsoft YaHei'; background: #f5f6fa; font-size: 12px; }
@@ -18,20 +18,21 @@ table th { background: #f8f9fa; }
 .form-group { margin-bottom: 12px; }
 .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
 .form-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
-</style></head>
+</style>    <script src="../../js/cm_demo_gate.js"></script>
+</head>
 <body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-chrome="minimal" data-b100-ae-zone="a">
     <div style="padding:8px 20px;"><button type="button" onclick="exportCongSongsCsv()" data-w5-report="cong-songs-csv">⬇ 詩歌 CSV</button> <button type="button" onclick="printCongSongs()" data-w5-report="cong-songs-print">🖨 列印</button></div>
-    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header"><h1>🎵 会众诗歌管理</h1>
+    <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header"><h1>🎵 會眾詩歌管理</h1>
     <details style="margin-top:10px;font-size:11px;opacity:0.95;">
         <summary style="cursor:pointer;font-weight:600;">📋 角色說明</summary>
         <p style="margin-top:6px;line-height:1.5;">主日<strong>選歌與使用次數</strong>；採購／贈送／借用與「主日唱詩紀錄」見下方。全教會索引請用 <a href="song-library.html" style="color:#fff;text-decoration:underline;">詩歌庫</a>；樂譜檔請用 <a href="sheet-music.html" style="color:#fff;text-decoration:underline;">樂譜管理</a>。</p>
     </details></div>
 <div class="container">
     <div class="card">
-        <h3 style="margin-bottom:15px;">📚 诗歌库</h3>
-        <button class="btn" onclick="showAddModal()">➕ 新增诗歌</button>
+        <h3 style="margin-bottom:15px;">📚 詩歌庫</h3>
+        <button class="btn" onclick="showAddModal()">➕ 新增詩歌</button>
         <input type="text" placeholder="🔍 搜索..." onkeyup="render()" id="search" style="width:100%;padding:8px;margin:10px 0;border:1px solid #ddd;border-radius:4px;">
-        <table id="table"><thead><tr><th>歌名</th><th>分类</th><th>调号</th><th>使用次数</th><th>操作</th></tr></thead><tbody></tbody></table>
+        <table id="table"><thead><tr><th>歌名</th><th>分類</th><th>調號</th><th>使用次數</th><th>操作</th></tr></thead><tbody></tbody></table>
     </div>
     <div class="card" style="margin-top:15px;">
         <h3 style="margin-bottom:10px;">📦 採購／贈送／借用紀錄</h3>
@@ -52,8 +53,7 @@ var congUsage = [];
 document.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('songsData');
     if (saved) songs = JSON.parse(saved);
-    if (songs.length === 0) loadDemo();
-    congPurchases = JSON.parse(localStorage.getItem('church_ministry_cong_purchase_v1') || '[]');
+    CmDemoGate.offer(songs.length === 0, loadDemo, { what: '會眾詩歌' });congPurchases = JSON.parse(localStorage.getItem('church_ministry_cong_purchase_v1') || '[]');
     congUsage = JSON.parse(localStorage.getItem('church_ministry_cong_usage_v1') || '[]');
     render();
     renderPurchase();
@@ -97,7 +97,7 @@ function loadDemo() {
 function render() {
     const search = document.getElementById('search').value.toLowerCase();
     const filtered = songs.filter(s => s.name.toLowerCase().includes(search));
-    document.querySelector('#table tbody').innerHTML = filtered.map(s => `<tr><td>${s.name}</td><td>${s.category}</td><td>${s.key}</td><td>${s.count}次</td><td><button class="btn" style="padding:6px 12px;" onclick="del(${s.id})">删除</button></td></tr>`).join('');
+    document.querySelector('#table tbody').innerHTML = filtered.map(s => `<tr><td>${s.name}</td><td>${s.category}</td><td>${s.key}</td><td>${s.count}次</td><td><button class="btn" style="padding:6px 12px;" onclick="del(${s.id})">刪除</button></td></tr>`).join('');
 }
 function showModal(title, content) {
     document.getElementById('modalContent').innerHTML = `<div style="font-size:18px;margin-bottom:20px;">${title}</div>${content}`;
@@ -105,7 +105,7 @@ function showModal(title, content) {
 }
 function closeModal() { document.getElementById('modal').classList.remove('active'); }
 function showAddModal() {
-    showModal('➕ 新增诗歌', `<div class="form-group"><label>歌名</label><input id="name" class="form-input"></div><div class="form-group"><label>分类</label><select id="cat" class="form-input"><option>传统</option><option>现代</option><option>敬拜</option></select></div><div class="form-group"><label>调号</label><input id="key" class="form-input" value="G"></div><button class="btn" onclick="add()">确定</button>`);
+    showModal('➕ 新增詩歌', `<div class="form-group"><label>歌名</label><input id="name" class="form-input"></div><div class="form-group"><label>分類</label><select id="cat" class="form-input"><option>傳統</option><option>現代</option><option>敬拜</option></select></div><div class="form-group"><label>調號</label><input id="key" class="form-input" value="G"></div><button class="btn" onclick="add()">確定</button>`);
 }
 function add() {
     songs.push({id:Date.now(),name:document.getElementById('name').value,category:document.getElementById('cat').value,key:document.getElementById('key').value,count:0});
@@ -115,7 +115,7 @@ function add() {
     alert('✅ 已添加！');
 }
 function del(id) {
-    if (confirm('删除？')) {
+    if (confirm('刪除？')) {
         songs = songs.filter(s => s.id !== id);
         localStorage.setItem('songsData', JSON.stringify(songs));
         render();
@@ -159,6 +159,7 @@ function del(id) {
 <script src="../../js/ae_worship_crm_bridge.js"></script>
 <script src="../../js/ae_worship_ai_draft.js"></script>
 <!-- b100-ae-worship-w3 -->
+<script src="../../js/attendance_ledger.js"></script>
 <script src="../../js/ae_worship_data_hub.js"></script>
 <script src="../../js/ae_worship_hub_panel.js"></script>
 <script src="../../js/ae_worship_page_registry.js"></script>

@@ -102,6 +102,7 @@
         .page-guide-block { font-size: 11px; color: #475569; line-height: 1.55; margin-bottom: 12px; padding: 12px 14px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
         .page-guide-block strong { color: #334155; }
     </style>
+    <script src="../../js/cm_demo_gate.js"></script>
 </head>
 <body>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
@@ -188,7 +189,7 @@
                     <p class="stat-next-hint" style="border-top:none;padding-top:0;margin-top:4px;">查看完整月／季／年：請到 <a href="#" class="ux-mini-link" onclick="switchTab('reports');return false;">📈 報表</a></p>
                 </div>
                 <div class="card">
-                    <div class="card-title">⏱️ 任務狀態分布</div>
+                    <div class="card-title">⏱️ 任務狀態分佈</div>
                     <canvas id="chartStatusCompare" height="200"></canvas>
                     <p class="chart-foot">計劃中／逾期／已完成。</p>
                     <p class="stat-next-hint" style="border-top:none;padding-top:0;margin-top:4px;">與完成率相關的明細：請到 <a href="#" class="ux-mini-link" onclick="switchTab('reports');return false;">📈 報表</a></p>
@@ -559,7 +560,7 @@
             const useApi = cfg.USE_API === true && cfg.API_BASE_URL && String(cfg.API_BASE_URL).trim();
             const runInit = () => {
                 loadData();
-                if (data.goals.length === 0) loadDemo();
+                CmDemoGate.offer(data.goals.length === 0, function () { loadDemo(); initReportMonthSelect(); renderAll(); }, { what: '探訪目標與任務' });
                 initReportMonthSelect();
                 renderAll();
             };
@@ -600,24 +601,25 @@
             }
         }
         
+        /* 唯一寫入路徑：ChurchDataBridge.saveVisitationData（有權限檢查與操作紀錄）；不再直接寫瀏覽器儲存 */
         function saveData() {
-            if (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.saveVisitationData) {
+            if (typeof ChurchDataBridge === 'undefined' || !ChurchDataBridge.saveVisitationData) {
+                alert('資料橋接層沒有載入，這次沒有儲存。請重新整理頁面再試。');
+                return false;
+            }
+            try {
                 ChurchDataBridge.saveVisitationData(data);
                 data = ChurchDataBridge.getVisitationData();
-            } else {
-                try {
-                    localStorage.setItem('visitationData', JSON.stringify(data));
-                    var cm = JSON.parse(localStorage.getItem('churchMasterDatabase') || '{}');
-                    if (!cm.pastoral) cm.pastoral = {};
-                    cm.pastoral.visitation = data;
-                    localStorage.setItem('churchMasterDatabase', JSON.stringify(cm));
-                } catch (e) {
-                    localStorage.setItem('visitationData', JSON.stringify(data));
-                }
+                return true;
+            } catch (e) {
+                alert(e && e.code === 'RBAC_DENIED'
+                    ? '你的角色沒有探訪寫入權限，這次沒有儲存。'
+                    : '儲存失敗：' + (e && e.message ? e.message : '未知錯誤'));
+                return false;
             }
         }
 
-        /** 依日期將「计划中」且已過預定日的任務標為逾期；若有變更則回傳 true 以便存檔 */
+        /** 依日期將「計劃中」且已過預定日的任務標為逾期；若有變更則回傳 true 以便存檔 */
         function recomputeOverdueStatuses() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -642,21 +644,21 @@
                 {id:3, category:'新人性', target:'新會友', annual:100, current:68, responsible:'張姊妹'}
             ];
             data.plans = [
-                {id:1, type:'regular', name:'长者定期探访', desc:'每月探访65岁以上长者', freq:'每月', targets:50, fiscalYear:new Date().getFullYear()},
-                {id:2, type:'crisis', name:'住院紧急关怀', desc:'会友住院24小时内探访', freq:'随时', targets:20, fiscalYear:new Date().getFullYear()},
-                {id:3, type:'newcomer', name:'新会友首访', desc:'新会友1周内首次探访', freq:'每周', targets:30, fiscalYear:new Date().getFullYear()}
+                {id:1, type:'regular', name:'長者定期探訪', desc:'每月探訪65歲以上長者', freq:'每月', targets:50, fiscalYear:new Date().getFullYear()},
+                {id:2, type:'crisis', name:'住院緊急關懷', desc:'會友住院24小時內探訪', freq:'隨時', targets:20, fiscalYear:new Date().getFullYear()},
+                {id:3, type:'newcomer', name:'新會友首訪', desc:'新會友1周內首次探訪', freq:'每週', targets:30, fiscalYear:new Date().getFullYear()}
             ];
             data.zones = [
-                {id:1, name:'东区', families:45, memberCount:120, team:'东区小组'},
-                {id:2, name:'西区', families:38, memberCount:95, team:'西区小组'},
-                {id:3, name:'南区', families:52, memberCount:140, team:'南区小组'}
+                {id:1, name:'東區', families:45, memberCount:120, team:'東區小組'},
+                {id:2, name:'西區', families:38, memberCount:95, team:'西區小組'},
+                {id:3, name:'南區', families:52, memberCount:140, team:'南區小組'}
             ];
             data.teams = [
-                {id:1, name:'东区小组', leader:'王弟兄', members:8},
-                {id:2, name:'西区小组', leader:'李姊妹', members:6},
-                {id:3, name:'南区小组', leader:'张长老', members:10}
+                {id:1, name:'東區小組', leader:'王弟兄', members:8},
+                {id:2, name:'西區小組', leader:'李姊妹', members:6},
+                {id:3, name:'南區小組', leader:'張長老', members:10}
             ];
-            const teamRot = ['东区小组','西区小组','南区小组'];
+            const teamRot = ['東區小組','西區小組','南區小組'];
             const zids = [1, 2, 3];
             for (let i = 0; i < 15; i++) {
                 const date = new Date();
@@ -686,8 +688,8 @@
             migrateVisitationPayload(data);
             const y = new Date().getFullYear();
             data.trainings = [
-                {id:1, name:'探访技巧', date:y + '-01-15', students:15, trainer:'李牧师', status:'completed', location:'副堂', audience:'探訪同工', objectives:'建立基礎技巧', outline:'破冰、聆聽、禱告', homework:'實習一次', signupMethod:'事工窗口', materialsUrl:''},
-                {id:2, name:'危机关怀', date:y + '-06-20', students:12, trainer:'王传道', status:'planned', location:'主日學教室', audience:'小組長', objectives:'辨識與轉介', outline:'危機類型與資源', homework:'案例討論', signupMethod:'線上表單', materialsUrl:''}
+                {id:1, name:'探訪技巧', date:y + '-01-15', students:15, trainer:'李牧師', status:'completed', location:'副堂', audience:'探訪同工', objectives:'建立基礎技巧', outline:'破冰、聆聽、禱告', homework:'實習一次', signupMethod:'事工窗口', materialsUrl:''},
+                {id:2, name:'危機關懷', date:y + '-06-20', students:12, trainer:'王傳道', status:'planned', location:'主日學教室', audience:'小組長', objectives:'辨識與轉介', outline:'危機類型與資源', homework:'案例討論', signupMethod:'線上表單', materialsUrl:''}
             ];
             data.workers = [
                 {id:1, name:'王弟兄', trainings:3, visits:28, level:'高級'},
@@ -1272,7 +1274,7 @@
             data.plans.push(copy);
             saveData();
             renderStrategy();
-            alert('已複製為新年度計劃（可再編修名稱與次數）。');
+            alert('已複製為新年度計劃（可再編脩名稱與次數）。');
         }
 
         function exportPlanJson(id) {
@@ -1459,13 +1461,13 @@
         }
         
         function showAddGoalModal() {
-            showModal('➕ 新增年度目标', `
-                <div class="form-group"><label class="form-label">目标类别</label><select id="goalCategory" class="form-select"><option>经常性</option><option>危机性</option><option>新人性</option></select></div>
-                <div class="form-group"><label class="form-label">具体目标</label><input type="text" id="goalTarget" class="form-input" placeholder="例如：长者关怀"></div>
-                <div class="form-group"><label class="form-label">年度指标（次数）</label><input type="number" id="goalAnnual" class="form-input" value="100"></div>
-                <div class="form-group"><label class="form-label">当前进度</label><input type="number" id="goalCurrent" class="form-input" value="0"></div>
-                <div class="form-group"><label class="form-label">负责人</label><input type="text" id="goalResponsible" class="form-input" placeholder="例如：李长老"></div>
-                <button class="btn btn-primary" onclick="addGoal()">确定添加</button>
+            showModal('➕ 新增年度目標', `
+                <div class="form-group"><label class="form-label">目標類別</label><select id="goalCategory" class="form-select"><option>經常性</option><option>危機性</option><option>新人性</option></select></div>
+                <div class="form-group"><label class="form-label">具體目標</label><input type="text" id="goalTarget" class="form-input" placeholder="例如：長者關懷"></div>
+                <div class="form-group"><label class="form-label">年度指標（次數）</label><input type="number" id="goalAnnual" class="form-input" value="100"></div>
+                <div class="form-group"><label class="form-label">當前進度</label><input type="number" id="goalCurrent" class="form-input" value="0"></div>
+                <div class="form-group"><label class="form-label">負責人</label><input type="text" id="goalResponsible" class="form-input" placeholder="例如：李長老"></div>
+                <button class="btn btn-primary" onclick="addGoal()">確定添加</button>
                 <button class="btn" onclick="closeModal()">取消</button>
             `);
         }
@@ -1479,16 +1481,16 @@
                 current: parseInt(document.getElementById('goalCurrent').value),
                 responsible: document.getElementById('goalResponsible').value
             };
-            if (!goal.target) return alert('请填写具体目标');
+            if (!goal.target) return alert('請填寫具體目標');
             data.goals.push(goal);
             saveData();
             renderStrategy();
             closeModal();
-            alert('✅ 年度目标已添加！');
+            alert('✅ 年度目標已添加！');
         }
         
         function deleteGoal(id) {
-            if (confirm('确定删除此目标？')) {
+            if (confirm('確定刪除此目標？')) {
                 data.goals = data.goals.filter(g => g.id !== id);
                 saveData();
                 renderStrategy();
@@ -1496,12 +1498,12 @@
         }
         
         function showAddPlanModal(type) {
-            showModal(`➕ 新增${getTypeText(type)}探访计划`, `
-                <div class="form-group"><label class="form-label">计划名称</label><input type="text" id="planName" class="form-input" placeholder="例如：长者定期探访"></div>
-                <div class="form-group"><label class="form-label">计划描述</label><textarea id="planDesc" class="form-textarea" placeholder="详细说明探访对象和内容"></textarea></div>
-                <div class="form-group"><label class="form-label">频率</label><select id="planFreq" class="form-select"><option>每周</option><option>每月</option><option>每季</option><option>随时</option></select></div>
-                <div class="form-group"><label class="form-label">年度目标次数</label><input type="number" id="planTargets" class="form-input" value="50"></div>
-                <button class="btn btn-primary" onclick="addPlan('${type}')">确定添加</button>
+            showModal(`➕ 新增${getTypeText(type)}探訪計劃`, `
+                <div class="form-group"><label class="form-label">計劃名稱</label><input type="text" id="planName" class="form-input" placeholder="例如：長者定期探訪"></div>
+                <div class="form-group"><label class="form-label">計劃描述</label><textarea id="planDesc" class="form-textarea" placeholder="詳細說明探訪對象和內容"></textarea></div>
+                <div class="form-group"><label class="form-label">頻率</label><select id="planFreq" class="form-select"><option>每週</option><option>每月</option><option>每季</option><option>隨時</option></select></div>
+                <div class="form-group"><label class="form-label">年度目標次數</label><input type="number" id="planTargets" class="form-input" value="50"></div>
+                <button class="btn btn-primary" onclick="addPlan('${type}')">確定添加</button>
                 <button class="btn" onclick="closeModal()">取消</button>
             `);
         }
@@ -1515,12 +1517,12 @@
                 freq: document.getElementById('planFreq').value,
                 targets: parseInt(document.getElementById('planTargets').value)
             };
-            if (!plan.name) return alert('请填写计划名称');
+            if (!plan.name) return alert('請填寫計劃名稱');
             data.plans.push(plan);
             saveData();
             renderStrategy();
             closeModal();
-            alert('✅ 探访计划已添加！');
+            alert('✅ 探訪計劃已添加！');
         }
         
         function deletePlan(id) {
@@ -1532,11 +1534,11 @@
         }
         
         function showAddZoneModal() {
-            showModal('➕ 新增区域', `
-                <div class="form-group"><label class="form-label">区域名称</label><input type="text" id="zoneName" class="form-input" placeholder="例如：东区"></div>
-                <div class="form-group"><label class="form-label">家庭数量</label><input type="number" id="zoneFamilies" class="form-input" value="50"></div>
-                <div class="form-group"><label class="form-label">负责小组</label><select id="zoneTeam" class="form-select">${data.teams.map(t => `<option>${t.name}</option>`).join('')}</select></div>
-                <button class="btn btn-primary" onclick="addZone()">确定添加</button>
+            showModal('➕ 新增區域', `
+                <div class="form-group"><label class="form-label">區域名稱</label><input type="text" id="zoneName" class="form-input" placeholder="例如：東區"></div>
+                <div class="form-group"><label class="form-label">家庭數量</label><input type="number" id="zoneFamilies" class="form-input" value="50"></div>
+                <div class="form-group"><label class="form-label">負責小組</label><select id="zoneTeam" class="form-select">${data.teams.map(t => `<option>${t.name}</option>`).join('')}</select></div>
+                <button class="btn btn-primary" onclick="addZone()">確定添加</button>
                 <button class="btn" onclick="closeModal()">取消</button>
             `);
         }
@@ -1548,16 +1550,16 @@
                 families: parseInt(document.getElementById('zoneFamilies').value),
                 team: document.getElementById('zoneTeam').value
             };
-            if (!zone.name) return alert('请填写区域名称');
+            if (!zone.name) return alert('請填寫區域名稱');
             data.zones.push(zone);
             saveData();
             renderSchedule();
             closeModal();
-            alert('✅ 区域已添加！');
+            alert('✅ 區域已添加！');
         }
         
         function deleteZone(id) {
-            if (confirm('确定删除此区域？')) {
+            if (confirm('確定刪除此區域？')) {
                 data.zones = data.zones.filter(z => z.id !== id);
                 saveData();
                 renderSchedule();
@@ -1565,11 +1567,11 @@
         }
         
         function showAddTeamModal() {
-            showModal('➕ 新增小组', `
-                <div class="form-group"><label class="form-label">小组名称</label><input type="text" id="teamName" class="form-input" placeholder="例如：东区小组"></div>
-                <div class="form-group"><label class="form-label">组长</label><input type="text" id="teamLeader" class="form-input" placeholder="例如：王弟兄"></div>
-                <div class="form-group"><label class="form-label">成员数量</label><input type="number" id="teamMembers" class="form-input" value="8"></div>
-                <button class="btn btn-primary" onclick="addTeam()">确定添加</button>
+            showModal('➕ 新增小組', `
+                <div class="form-group"><label class="form-label">小組名稱</label><input type="text" id="teamName" class="form-input" placeholder="例如：東區小組"></div>
+                <div class="form-group"><label class="form-label">組長</label><input type="text" id="teamLeader" class="form-input" placeholder="例如：王弟兄"></div>
+                <div class="form-group"><label class="form-label">成員數量</label><input type="number" id="teamMembers" class="form-input" value="8"></div>
+                <button class="btn btn-primary" onclick="addTeam()">確定添加</button>
                 <button class="btn" onclick="closeModal()">取消</button>
             `);
         }
@@ -1581,16 +1583,16 @@
                 leader: document.getElementById('teamLeader').value,
                 members: parseInt(document.getElementById('teamMembers').value)
             };
-            if (!team.name) return alert('请填写小组名称');
+            if (!team.name) return alert('請填寫小組名稱');
             data.teams.push(team);
             saveData();
             renderSchedule();
             closeModal();
-            alert('✅ 小组已添加！');
+            alert('✅ 小組已添加！');
         }
         
         function deleteTeam(id) {
-            if (confirm('确定删除此小组？')) {
+            if (confirm('確定刪除此小組？')) {
                 data.teams = data.teams.filter(t => t.id !== id);
                 saveData();
                 renderSchedule();
@@ -1601,10 +1603,10 @@
             const members = (typeof ChurchDataBridge !== 'undefined' && ChurchDataBridge.getMembers) ? ChurchDataBridge.getMembers() : [];
             const memberOpts = members.map(m => `<option value="${m.id}">${(m.name||'')} ${m.gender ? '('+m.gender+')' : ''}</option>`).join('');
             const teamOpts = data.teams.map(t => `<option>${t.name}</option>`).join('');
-            showModal('➕ 新增出动计划', `
-                <div class="form-group"><label class="form-label">出动日期</label><input type="date" id="missionDate" class="form-input"></div>
-                <div class="form-group"><label class="form-label">探访类型</label><select id="missionType" class="form-select"><option value="regular">经常性</option><option value="crisis">危机性</option><option value="newcomer">新人性</option></select></div>
-                <div class="form-group"><label class="form-label">探访对象</label>
+            showModal('➕ 新增出動計劃', `
+                <div class="form-group"><label class="form-label">出動日期</label><input type="date" id="missionDate" class="form-input"></div>
+                <div class="form-group"><label class="form-label">探訪類型</label><select id="missionType" class="form-select"><option value="regular">經常性</option><option value="crisis">危機性</option><option value="newcomer">新人性</option></select></div>
+                <div class="form-group"><label class="form-label">探訪對象</label>
                     <select id="missionTargetSelect" class="form-select" onchange="toggleMissionTargetCustom(this)">
                         <option value="">— 請選擇會友 —</option>
                         ${memberOpts}
@@ -1612,8 +1614,8 @@
                     </select>
                     <input type="text" id="missionTarget" class="form-input" placeholder="例如：王姊妹" style="margin-top:6px;display:none;">
                 </div>
-                <div class="form-group"><label class="form-label">负责小组</label><select id="missionTeam" class="form-select">${teamOpts || '<option>（尚無小組）</option>'}</select></div>
-                <button class="btn btn-primary" onclick="addMission()">确定添加</button>
+                <div class="form-group"><label class="form-label">負責小組</label><select id="missionTeam" class="form-select">${teamOpts || '<option>（尚無小組）</option>'}</select></div>
+                <button class="btn btn-primary" onclick="addMission()">確定添加</button>
                 <button class="btn" onclick="closeModal()">取消</button>
             `);
         }
@@ -1646,7 +1648,7 @@
                 zoneId: resolveZoneIdForTeam(teamName) || undefined,
                 status: 'planned'
             };
-            if (!mission.date || !mission.target) return alert('请填写完整信息（请选择或输入探访对象）');
+            if (!mission.date || !mission.target) return alert('請填寫完整信息（請選擇或輸入探訪對象）');
             data.missions.push(mission);
             saveData();
             renderMissions();
@@ -1711,12 +1713,12 @@
         }
         
         function showAddTrainingModal() {
-            showModal('➕ 新增培训课程', `
-                <div class="form-group"><label class="form-label">课程名称</label><input type="text" id="trainingName" class="form-input" placeholder="例如：探访技巧基础"></div>
-                <div class="form-group"><label class="form-label">培训日期</label><input type="date" id="trainingDate" class="form-input"></div>
-                <div class="form-group"><label class="form-label">学员人数</label><input type="number" id="trainingStudents" class="form-input" value="15"></div>
-                <div class="form-group"><label class="form-label">讲师</label><input type="text" id="trainingTrainer" class="form-input" placeholder="例如：李牧师"></div>
-                <button class="btn btn-primary" onclick="addTraining()">确定添加</button>
+            showModal('➕ 新增培訓課程', `
+                <div class="form-group"><label class="form-label">課程名稱</label><input type="text" id="trainingName" class="form-input" placeholder="例如：探訪技巧基礎"></div>
+                <div class="form-group"><label class="form-label">培訓日期</label><input type="date" id="trainingDate" class="form-input"></div>
+                <div class="form-group"><label class="form-label">學員人數</label><input type="number" id="trainingStudents" class="form-input" value="15"></div>
+                <div class="form-group"><label class="form-label">講師</label><input type="text" id="trainingTrainer" class="form-input" placeholder="例如：李牧師"></div>
+                <button class="btn btn-primary" onclick="addTraining()">確定添加</button>
                 <button class="btn" onclick="closeModal()">取消</button>
             `);
         }
@@ -1730,16 +1732,16 @@
                 trainer: document.getElementById('trainingTrainer').value,
                 status: 'planned'
             };
-            if (!training.name || !training.date) return alert('请填写完整信息');
+            if (!training.name || !training.date) return alert('請填寫完整信息');
             data.trainings.push(training);
             saveData();
             renderTraining();
             closeModal();
-            alert('✅ 培训课程已添加！');
+            alert('✅ 培訓課程已添加！');
         }
         
         function deleteTraining(id) {
-            if (confirm('确定删除此培训？')) {
+            if (confirm('確定刪除此培訓？')) {
                 data.trainings = data.trainings.filter(t => t.id !== id);
                 saveData();
                 renderTraining();
@@ -1755,7 +1757,7 @@
 
         function autoSchedule() {
             if (data.zones.length === 0 || data.teams.length === 0) {
-                return alert('⚠️ 请先添加区域和小组！');
+                return alert('⚠️ 請先添加區域和小組！');
             }
             if (confirm('智慧排程（示範）將在未來 4 週為每個小組各補一筆「經常性」任務；若該週該小組已有任務則略過。\n\n是否繼續？')) {
                 const today = new Date();

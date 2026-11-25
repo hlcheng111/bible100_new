@@ -1,6 +1,6 @@
 /**
- * CM 四页共用 · 会友下拉（member_id SSOT）
- * 依赖 ChurchDataBridge.getMembers()
+ * CM 四頁共用 · 會友下拉（member_id SSOT）
+ * 依賴 ChurchDataBridge.getMembers()
  */
 (function (global) {
     'use strict';

@@ -1,6 +1,6 @@
 /**
- * CM · 统一 Landing 顶壳（A–G 地址条 + 区标题 + 语言列）
- * 契约：docs/governance/B100_SHELL_UNIFIED_V1.md Step 5
+ * CM · 統一 Landing 頂殼（A–G 地址條 + 區標題 + 語言列）
+ * 契約：docs/governance/B100_SHELL_UNIFIED_V1.md Step 5
  */
 (function (global, doc) {
   "use strict";
@@ -98,7 +98,7 @@
     if (inHub()) return "";
     return (
       '<div class="cm-land-lang" role="group" aria-label="Language">' +
-      '<span class="cm-land-lang__label" data-i18n="cm.lang.label">语言</span>' +
+      '<span class="cm-land-lang__label" data-i18n="cm.lang.label">語言</span>' +
       '<button type="button" class="cm-land-lang__btn" data-locale="zh-Hant">中</button>' +
       '<button type="button" class="cm-land-lang__btn" data-locale="en">EN</button>' +
       '<button type="button" class="cm-land-lang__btn" data-locale="vi">VI</button>' +

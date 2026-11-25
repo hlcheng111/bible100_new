@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>崗位交接／SOP · 傳承紅燈</title>
+  <link rel="stylesheet" href="../../../css/unified_module_styles.css">
+  <link rel="stylesheet" href="../../css/church_ministry_ui.css">
+  <script src="../../../js/shell_nav.js"></script>
+  <script src="../../../js/smart_ministry_canonical_store.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../volunteer_shift/tool.js"></script>
+  <style>
+    body { margin: 0; font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; background: #f8fafc; color: #0f172a; font-size: 14px; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 14px 16px 40px; }
+    .back { font-size: 12px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .back a, .back button.linkish { color: #4338ca; font-weight: 700; text-decoration: none; background: none; border: none; cursor: pointer; font: inherit; padding: 0; }
+    .hero { background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
+    .hero h1 { margin: 0 0 6px; font-size: 1.25rem; }
+    .hero p { margin: 0; font-size: 12px; opacity: 0.95; line-height: 1.5; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+    .card h2 { margin: 0 0 8px; font-size: 14px; }
+    .gap { border-left: 4px solid #dc2626; }
+    .ok { border-left: 4px solid #059669; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; justify-content: space-between; }
+    .meta { font-size: 11px; color: #64748b; }
+    textarea { width: 100%; min-height: 110px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; font: inherit; box-sizing: border-box; }
+    .btn { display: inline-block; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: none; font-family: inherit; }
+    .btn-primary { background: #4338ca; color: #fff; }
+    .btn-secondary { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+    .btn-success { background: #059669; color: #fff; }
+    .chip { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #fee2e2; color: #991b1b; }
+    .chip-ok { background: #d1fae5; color: #065f46; }
+    .empty { color: #64748b; font-size: 12px; line-height: 1.55; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    #flash { font-size: 12px; margin-top: 8px; min-height: 1.2em; }
+    #saveSuccess {
+      display: none; margin: 0 0 12px; padding: 12px 14px; border-radius: 12px;
+      border: 1px solid #86efac; background: #ecfdf5; color: #14532d; font-size: 13px; line-height: 1.5;
+    }
+    #saveSuccess.is-on { display: block; }
+    #saveSuccess strong { display: block; margin-bottom: 4px; font-size: 14px; }
+    #saveSuccess .actions { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="back">
+      <button type="button" class="linkish" data-go="church_ministry/dashboard.html" data-rel="../../dashboard.html">← 回今日視線</button>
+      <span>·</span>
+      <button type="button" class="linkish" data-go="church_ministry/tools/volunteer_shift/index.html" data-rel="../volunteer_shift/index.html">義工排班</button>
+    </div>
+    <header class="hero">
+      <h1>📜 崗位交接／SOP（傳承）</h1>
+      <p>有人在任或需要人，卻沒有交接備註 → 今日視線紅燈。寫下「代理人要知道的事」；可用 AI 產草稿，須人審後才貼上儲存。</p>
+    </header>
+
+    <div id="saveSuccess" role="status" aria-live="polite"></div>
+
+    <section class="card">
+      <h2>紅燈摘要</h2>
+      <p id="gapSummary" class="meta">讀取中…</p>
+      <div class="actions">
+        <button type="button" class="btn btn-success" id="btnLoadA1">📥 一鍵載入試用崗位（示範排班資料）</button>
+        <button type="button" class="btn btn-secondary" id="btnAiDraft"
+          data-go="ai_tools/tools/ai_workbench_integrated.html?scenario=post_handover_sop#tab-prompt"
+          data-rel="../../../ai_tools/tools/ai_workbench_integrated.html?scenario=post_handover_sop#tab-prompt">✨ AI 產交接草稿（須人審）</button>
+        <button type="button" class="btn btn-secondary" data-go="church_ministry/tools/volunteer_shift/load_a1_demo.html" data-rel="../volunteer_shift/load_a1_demo.html">試用資料說明</button>
+      </div>
+      <div id="flash"></div>
+    </section>
+
+    <div id="listRoot"><p class="empty">載入崗位…</p></div>
+  </div>
+
+  <script>
+    (function () {
+      function qs(name) {
+        try { return new URLSearchParams(location.search).get(name); } catch (e) { return null; }
+      }
+
+      function flash(msg, ok) {
+        var el = document.getElementById('flash');
+        if (!el) return;
+        el.textContent = msg || '';
+        el.style.color = ok === false ? '#b91c1c' : '#047857';
+      }
+
+      /** 殼內換右欄；失敗則同框相對路徑（修「點了沒反應」） */
+      function go(hubPath, relFallback) {
+        try {
+          if (typeof bible100OpenContent === 'function') {
+            var fake = { preventDefault: function () {}, stopPropagation: function () {} };
+            var ok = bible100OpenContent(fake, hubPath);
+            if (ok) return true;
+          }
+        } catch (e1) {}
+        try {
+          if (relFallback) {
+            location.href = relFallback;
+            return true;
+          }
+        } catch (e2) {}
+        try {
+          location.href = hubPath;
+          return true;
+        } catch (e3) {}
+        return false;
+      }
+
+      document.querySelectorAll('[data-go]').forEach(function (btn) {
+        btn.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          go(btn.getAttribute('data-go'), btn.getAttribute('data-rel'));
+        });
+      });
+
+      document.getElementById('btnLoadA1').addEventListener('click', function () {
+        try {
+          if (!window.VolunteerShiftTool || !VolunteerShiftTool.loadA1DemoData) {
+            flash('載入腳本未就緒，請點「開 A1 說明頁」', false);
+            return;
+          }
+          var r = VolunteerShiftTool.loadA1DemoData();
+          flash(r && r.ok
+            ? ('已載入試用：崗位 ' + (r.ministries || 0) + ' · 排班 ' + (r.schedules || 0) + '。下方應出現紅燈崗位。')
+            : ('載入失敗：' + (r && r.error || 'unknown')), r && r.ok);
+          render();
+        } catch (e) {
+          flash(String(e.message || e), false);
+        }
+      });
+
+      function render() {
+        var root = document.getElementById('listRoot');
+        var sum = document.getElementById('gapSummary');
+        if (!window.ChurchDataBridge || !ChurchDataBridge.listMinistryHandoverStatus) {
+          root.innerHTML = '<p class="empty">ChurchDataBridge 未載入</p>';
+          return;
+        }
+        var rows = ChurchDataBridge.listMinistryHandoverStatus() || [];
+        var gaps = rows.filter(function (r) { return r.in_service && !r.has_handover; });
+        sum.textContent = '崗位 ' + rows.length + ' · 傳承紅燈 ' + gaps.length +
+          '（在任／需人但無備註）。';
+
+        if (!rows.length) {
+          root.innerHTML =
+            '<section class="card">' +
+            '<p class="empty"><strong>尚無志工崗位。</strong>請按上方綠色鍵「一鍵載入 A1 試用崗位」，或先到義工排班建立崗位。</p>' +
+            '<div class="actions">' +
+            '<button type="button" class="btn btn-success" id="btnLoadA1b">📥 一鍵載入 A1 試用崗位</button>' +
+            '</div></section>';
+          var b = document.getElementById('btnLoadA1b');
+          if (b) b.addEventListener('click', function () {
+            document.getElementById('btnLoadA1').click();
+          });
+          return;
+        }
+
+        var focus = qs('ministryId');
+        var html = '';
+        rows.forEach(function (r) {
+          var isGap = r.in_service && !r.has_handover;
+          var open = focus && String(focus) === String(r.ministry_id);
+          html += '<section class="card ' + (isGap ? 'gap' : 'ok') + '" id="m-' + r.ministry_id + '">';
+          html += '<div class="row"><div><strong>' + escapeHtml(r.name) + '</strong> ';
+          html += isGap
+            ? '<span class="chip">紅燈 · 缺交接</span>'
+            : (r.has_handover ? '<span class="chip chip-ok">已有備註</span>' : '<span class="chip chip-ok">未在任</span>');
+          html += '<div class="meta">id ' + escapeHtml(r.ministry_id) +
+            (r.handover_updated_at ? ' · 更新 ' + escapeHtml(r.handover_updated_at) : '') +
+            (r.in_service ? ' · 在任／需人' : '') + '</div></div></div>';
+          html += '<label class="meta" for="note-' + r.ministry_id + '">交接／SOP 備註（代理人要知道的事）</label>';
+          html += '<textarea id="note-' + r.ministry_id + '"' + (open ? ' autofocus' : '') + '>' +
+            escapeHtml(r.handover_note || '') + '</textarea>';
+          html += '<p style="margin:8px 0 0;"><button type="button" class="btn btn-primary" data-save="' +
+            escapeHtml(r.ministry_id) + '">儲存備註</button></p>';
+          html += '<div class="meta" id="msg-' + r.ministry_id + '"></div>';
+          html += '</section>';
+        });
+        root.innerHTML = html;
+
+        root.querySelectorAll('[data-save]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-save');
+            var ta = document.getElementById('note-' + id);
+            var res = ChurchDataBridge.saveMinistryHandoverNote({
+              ministry_id: id,
+              handover_note: ta ? ta.value : ''
+            });
+            render();
+            var gapsLeft = 0;
+            try {
+              gapsLeft = (ChurchDataBridge.evaluateHandoverGaps() || []).length;
+            } catch (eG) {}
+            var msg = document.getElementById('msg-' + id);
+            if (msg) {
+              msg.textContent = res && res.ok
+                ? (res.has_handover
+                  ? ('已儲存 · 本崗紅燈已關（尚餘紅燈 ' + gapsLeft + '）')
+                  : '已清空備註 · 若在任將再亮紅燈')
+                : ('失敗：' + (res && res.reason || 'unknown'));
+              msg.style.color = res && res.ok ? '#047857' : '#b91c1c';
+            }
+            var box = document.getElementById('saveSuccess');
+            if (box && res && res.ok && res.has_handover) {
+              box.className = 'is-on';
+              box.innerHTML =
+                '<strong>✅ 任務達成：交接備註已寫入</strong>' +
+                '本崗位紅燈已關閉。尚餘傳承紅燈 <b>' + gapsLeft + '</b>。' +
+                '回今日視線刷新後，① 待辦會少一項。' +
+                '<div class="actions">' +
+                '<button type="button" class="btn btn-success" id="btnBackSight">← 回今日視線</button>' +
+                (gapsLeft > 0
+                  ? '<button type="button" class="btn btn-secondary" id="btnStayMore">繼續寫下一崗</button>'
+                  : '') +
+                '</div>';
+              var back = document.getElementById('btnBackSight');
+              if (back) {
+                back.addEventListener('click', function () {
+                  go('church_ministry/dashboard.html', '../../dashboard.html');
+                });
+              }
+              var stay = document.getElementById('btnStayMore');
+              if (stay) {
+                stay.addEventListener('click', function () {
+                  box.className = '';
+                  box.innerHTML = '';
+                });
+              }
+              try { box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (eSc) {}
+            }
+          });
+        });
+
+        if (focus) {
+          var el = document.getElementById('m-' + focus);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

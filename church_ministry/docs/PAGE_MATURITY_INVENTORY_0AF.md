@@ -196,7 +196,7 @@
 | F-05 | 財務管理 / Fin. admin | 舊頁 | PARTIAL | — | **合併**→F-04 | **合併** | 側欄改連 F-04；勿雙帳 | `…/administration/financial-management.html` |
 | F-06 | 設備 / Equipment | 設備 | DEMO | 0→3 | 折叠 DEMO | **下架**營運／折叠 DEMO | 台帳僅 DEMO | `…/equipment/equipment-management.html` |
 | F-07 | 圖書 / Library | 圖書 | DEMO | 0→3 | 折叠 DEMO | **下架**營運／折叠 DEMO | 借還僅 DEMO | `…/library/library-management.html` |
-| F-08 | 社群捐款人 / Donors | 捐款人 | DEMO | — | **合併**→F-04（交費／捐款走財務） | **合併** | 側欄改連 F-04；舊頁待刪 | `church_ministry/community-overview.html` |
+| F-08 | 社群捐款人 / Donors | 捐款人 | DEMO | — | **合併**→F-04（交費／捐款走財務） | **合併** | 側欄改連 F-04；舊頁待刪 | `church_ministry/_archive/root_noise_20261017/community-overview.html` |
 | F-09 | 研究索引 / Research index | KPI 索引 | DEMO | 0→2 | 進階 DEMO；營運看 F-01 | **合併**→F-01（營運） | 側欄主連戰情 | `…/research/index.html` |
 | F-10 | 會眾統計 / Stats | 統計 | DEMO | — | 合併→F-01 | **合併** | 側欄不下掛獨立島 | `…/member-statistics.html` |
 | F-11 | 事工成效 / Perf. | 成效 | DEMO | — | 合併→F-01 | **合併** | 同上 | `…/ministry-performance.html` |
@@ -208,17 +208,17 @@
 | F-17 | 數位化轉型 / Transform | 說明 | DEMO | — | **下架**工具／改文件 | **下架** | 側欄改幫助文檔 | `…/digital-transformation.html` |
 | F-18 | 智能提醒 / Reminders | 提醒 | DEMO | 0→3 | 做滿或下架 | | 觸發紀錄 | `…/smart-reminders.html` |
 | F-19 | Workflow / Workflow | 流程 | DEMO | 0→3 | 做滿（接探訪）或下架 | | 案件狀態 | `…/workflow.html` |
-| F-20 | 主題設定 / Theme | 主題 | PARTIAL | 1→2 | 做滿或下架 | | 設定可存 | `church_ministry/theme-settings.html` |
-| F-21 | 自訂頁編輯 / Custom page | 編輯器 | PARTIAL | 1→3 | 做滿（接 E-03） | | 發佈＋版本 | `church_ministry/custom-page-editor.html` |
+| F-20 | 主題設定 / Theme | 主題 | PARTIAL | 1→2 | 做滿或下架 | | 設定可存 | `church_ministry/_archive/root_noise_20261017/theme-settings.html` |
+| F-21 | 自訂頁編輯 / Custom page | 編輯器 | PARTIAL | 1→3 | 做滿（接 E-03） | | 發佈＋版本 | `church_ministry/_archive/root_noise_20261017/custom-page-editor.html` |
 | F-22 | 新技術應用 / Tech apps | 示意 | DEMO | — | **下架** | **下架** | 側欄已移除 | `…/technology-apps.html` |
 | F-23 | 智能工具開發 / Smart tools | 示意 | DEMO | — | **下架** | **下架** | 側欄已移除 | `…/smart-tools-dev.html` |
 | F-24 | 最佳實踐 / Best practices | 示意 | DEMO | — | **下架**或改文件庫 | **下架** | 側欄已移除 | `…/best-practices.html` |
 | F-25 | 技術支援 / Support | 支援 | DEMO | 0→3 | 做滿或下架 | | 工單 | `…/technical-support.html` |
 | F-26 | 幫助文檔 / Help | 幫助 | PARTIAL | 2→3 | **做滿**（隨頁更新） | | 與現況同步 | `…/help-documentation.html` |
-| F-27 | 願景藍圖 / Vision | 文件 | PARTIAL | 1→2 | 做滿（文件向） | | 版本＋負責人 | `church_ministry/vision_and_plan.html` |
-| F-28 | 路線圖 / Roadmap | 文件 | PARTIAL | 1→2 | 合併→F-27 或做滿 | | 同上 | `church_ministry/roadmap-overview.html` |
-| F-29 | 事工總覽 / Core | 總覽 | PARTIAL | 1→2 | 合併→F-01／CRM | | 連真入口 | `church_ministry/ministry_core.html` |
-| F-30 | AI 合規 / Compliance | 規劃 | DEMO | 0→2 | 做滿（政策文件）或下架 | | 審核紀錄 | `church_ministry/ai-and-compliance.html` |
+| F-27 | 願景藍圖 / Vision | 文件 | PARTIAL | 1→2 | 做滿（文件向） | | 版本＋負責人 | `church_ministry/_archive/root_noise_20261017/vision_and_plan.html` |
+| F-28 | 路線圖 / Roadmap | 文件 | PARTIAL | 1→2 | 合併→F-27 或做滿 | | 同上 | `church_ministry/_archive/root_noise_20261017/roadmap-overview.html` |
+| F-29 | 事工總覽 / Core | 總覽 | PARTIAL | 1→2 | 合併→F-01／CRM | | 連真入口 | `church_ministry/_archive/root_noise_20261017/ministry_core.html` |
+| F-30 | AI 合規 / Compliance | 規劃 | DEMO | 0→2 | 做滿（政策文件）或下架 | | 審核紀錄 | `church_ministry/_archive/root_noise_20261017/ai-and-compliance.html` |
 
 ---
 

@@ -57,7 +57,7 @@
       esc(node.nameEn || node.id) +
       "</div><h2>" +
       esc(node.title || node.name) +
-      " <span class=\"cm-en-inline\" style=\"display:inline;font-weight:500\">" +
+      " <span class=\"cm-en-inline\">" +
       esc(node.titleEn || node.nameEn || "") +
       "</span></h2>" +
       '<p class="blurb">' +
@@ -67,38 +67,32 @@
       "</div>";
   }
 
+  /** "A 崇拜聖樂" -> { code:"A", name:"崇拜聖樂" }；總羅盤沒有區碼 */
+  function splitTitle(z) {
+    var m = /^([A-H])\s+(.+)$/.exec(String(z.titleZh || ""));
+    return m ? { code: m[1], name: m[2] } : { code: "", name: z.titleZh };
+  }
+
   function chromeTop(z) {
     var isGate = z.id === "gateway";
+    var t = splitTitle(z);
     return (
       '<div class="cm-where">' +
       '<a href="../../index_v5.html?mode=church">教會</a><span class="sep">/</span>' +
       (isGate
         ? "<span>總羅盤</span>"
         : '<a href="gateway.html">總羅盤</a><span class="sep">/</span><span>' + esc(z.titleZh) + "</span>") +
-      '<span class="cm-en">' +
-      esc(z.titleEn) +
-      "</span></div>" +
+      "</div>" +
       '<header class="cm-hero">' +
-      '<div class="cm-kicker">' +
-      esc(z.kicker) +
-      "</div><h1>" +
-      esc(z.titleZh) +
-      '</h1><p class="hero-en">' +
-      esc(z.titleEn) +
-      '</p><p class="lead">' +
-      esc(z.lead) +
-      '</p><div class="cm-hero-actions">' +
-      '<a class="cm-btn cm-btn-primary" href="' +
-      esc(z.primaryHref) +
-      '">' +
-      esc(z.primaryLabel) +
-      (z.primaryLabelEn ? '<span class="en">' + esc(z.primaryLabelEn) + "</span>" : "") +
-      '</a><a class="cm-btn cm-btn-ghost" href="' +
-      esc(z.ghostHref) +
-      '">' +
-      esc(z.ghostLabel) +
-      (z.ghostLabelEn ? '<span class="en">' + esc(z.ghostLabelEn) + "</span>" : "") +
-      "</a></div></header>" +
+      '<div class="cm-hero-main">' +
+      (t.code ? '<span class="cm-code">' + esc(t.code) + "</span>" : "") +
+      "<h1>" + esc(t.name) + '<small class="hero-en">' + esc(z.titleEn) + "</small></h1>" +
+      "</div>" +
+      '<p class="lead">' + esc(z.lead) + "</p>" +
+      '<div class="cm-hero-actions">' +
+      '<a class="cm-btn cm-btn-primary" href="' + esc(z.primaryHref) + '">' + esc(z.primaryLabel) + "</a>" +
+      '<a class="cm-btn cm-btn-ghost" href="' + esc(z.ghostHref) + '">' + esc(z.ghostLabel) + "</a>" +
+      "</div></header>" +
       (z.preface ? '<p class="cm-preface">' + esc(z.preface) + "</p>" : "")
     );
   }
@@ -124,21 +118,23 @@
     if (nodes && nodes[0] && btns[0]) btns[0].click();
   }
 
+  var NUMS = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"];
+
   function nodesHtml(nodes) {
     return (nodes || [])
-      .map(function (n) {
+      .map(function (n, i) {
         return (
           '<button type="button" class="cm-node" data-node="' +
           esc(n.id) +
-          '"><span class="code">' +
-          esc(n.nameEn || n.id) +
+          '"><span class="num">' +
+          (NUMS[i] || i + 1) +
           '</span><span class="name">' +
           esc(n.name) +
           '</span><span class="en">' +
           esc(n.nameEn) +
           '</span><span class="hint">' +
           esc(n.hint) +
-          "</span></button>"
+          '</span><span class="go" aria-hidden="true">›</span></button>'
         );
       })
       .join("");
@@ -161,6 +157,26 @@
     return '<div class="cm-panel-empty">' + esc(msg) + "</div>";
   }
 
+  /** 有出席／點名主線的區：在標題列下面放「角色＋步驟＋資料何來何去」路線圖（同一個元件，各區一致） */
+  var ROUTE_BY_ZONE = { a: "a_worship", b: "b_pastoral", h: "b_checkin" };
+
+  function mountRouteKit(zoneId) {
+    var routeId = ROUTE_BY_ZONE[zoneId];
+    var hero = document.querySelector(".cm-hero");
+    if (!routeId || !hero) return;
+    var host = document.createElement("div");
+    host.setAttribute("data-att-route", routeId);
+    host.className = "cm-routekit";
+    hero.parentNode.insertBefore(host, hero.nextSibling);
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = "../css/attendance_route_kit.css";
+    document.head.appendChild(css);
+    var js = document.createElement("script");
+    js.src = "../js/attendance_route_kit.js";
+    document.body.appendChild(js);
+  }
+
   function renderZonePage(zoneId) {
     var api = window.CmCompassZones;
     if (!api) return;
@@ -178,10 +194,10 @@
       chromeTop(z) +
       '<h2 class="cm-section-title">' +
       esc(lt.zh) +
-      ' <span class="cm-en-inline" style="display:inline">' +
+      ' <span class="cm-en-inline">' +
       esc(lt.en) +
       "</span></h2>" +
-      '<p class="cm-section-hint">點一項 → 下方出現可進的頁面。</p>' +
+      '<p class="cm-section-hint">按順序做；點任何一步，下方列出可進的頁面。</p>' +
       '<div class="cm-stage cm-layout-' +
       esc(z.layout) +
       '" id="cm-stage">' +
@@ -193,6 +209,7 @@
       '<p class="cm-foot"><a href="gateway.html">總羅盤</a> · <a href="../../hymn_management/practical_hymnology/landing.html">F 樂以載道</a></p>';
 
     bindNodes(root, z.nodes, document.getElementById("cm-panel"));
+    mountRouteKit(zoneId);
   }
 
   function renderGateway() {
@@ -213,17 +230,35 @@
       return {};
     }
 
+    var TODAY = (z.ghostHref || "../dashboard_church_layout_v1_content.html");
+    var STEP2 = "../tools/ministry_handover/index.html";
+    var STEP3 = "../modules/members/member-integrated.html?tab=growth&path=next";
+
     root.innerHTML =
       chromeTop(z) +
+      '<section class="cm-today-steps" id="cm-today-steps" aria-label="今日三步">' +
+      '<a class="cm-step-card cm-step-card--1" href="' +
+      esc(TODAY) +
+      '"><span class="n">1</span><strong>今日進度</strong><span class="d">待辦 · 視線一覽</span></a>' +
+      '<a class="cm-step-card cm-step-card--2" href="' +
+      esc(STEP2) +
+      '"><span class="n">2</span><strong>待辦／交接</strong><span class="d">崗位 · 跟進</span></a>' +
+      '<a class="cm-step-card cm-step-card--3" href="' +
+      esc(STEP3) +
+      '"><span class="n">3</span><strong>同工配對</strong><span class="d">成長路徑 · 事奉</span></a>' +
+      '<p class="cm-today-steps__more">' +
+      '<a href="../../smart_ministry/talent_ministry_matching.html">事奉配對</a>' +
+      '<a href="../_archive/root_noise_20261017/demand-form.html">事工需求單</a>' +
+      "</p>" +
+      "</section>" +
       '<div class="cm-flow" id="cm-flow"></div>' +
-      '<h2 class="cm-section-title">八區 · Zones</h2>' +
-      '<p class="cm-section-hint">每區一色。點色塊 → 下方看路線 → 進入。</p>' +
+      '<h2 class="cm-section-title">八區入口</h2>' +
+      '<p class="cm-section-hint">點色塊 → 下方進站。左欄地圖也可換區。</p>' +
       '<div class="cm-mosaic" id="cm-mosaic">' +
       (z.tiles || [])
         .map(function (t) {
           var meta = zoneMeta(t.id);
           var en = (meta.labelEn || t.nameEn || "").replace(/^[A-H]\s+/, "");
-          /* shorten display EN to first word-ish */
           if (en.indexOf("&") >= 0) en = en.split("&")[0].trim();
           if (en.indexOf(" ") >= 0 && en.length > 14) en = t.nameEn || en.split(" ")[0];
           return (
@@ -231,13 +266,13 @@
             esc(t.id) +
             '"><span class="code">' +
             esc((t.id || "").toUpperCase()) +
-            '</span><span class="name">' +
+            '</span><span class="txt"><span class="name">' +
             esc(t.name) +
             '</span><span class="en">' +
             esc(t.nameEn) +
             '</span><span class="hint">' +
             esc(t.hint) +
-            "</span></button>"
+            "</span></span></button>"
           );
         })
         .join("") +
@@ -245,7 +280,7 @@
       '<aside class="cm-panel" id="cm-panel" aria-live="polite">' +
       emptyPanel("點上方一區，這裡出現入口。") +
       "</aside>" +
-      '<p class="cm-foot">F 聖詩已完整；其餘區引導進正式工作頁。</p>';
+      '<p class="cm-foot">其餘細節在左欄地圖。</p>';
 
     var panel = document.getElementById("cm-panel");
     var tiles = root.querySelectorAll(".cm-tile");
@@ -327,7 +362,7 @@
         esc((id || "").toUpperCase()) +
         "</div><h2>" +
         esc(label) +
-        ' <span class="cm-en-inline" style="display:inline;font-weight:500">' +
+        ' <span class="cm-en-inline">' +
         esc(en) +
         "</span></h2>" +
         '<p class="blurb">' +

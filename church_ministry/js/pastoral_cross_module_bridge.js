@@ -1,6 +1,6 @@
 /**
- * B 牧养 · 跨模块互联（会友 growth 时间轴 · 活动报名费 · C 区学籍）
- * 依赖 ChurchDataBridge + PastoralDataHub
+ * B 牧養 · 跨模塊互聯（會友 growth 時間軸 · 活動報名費 · C 區學籍）
+ * 依賴 ChurchDataBridge + PastoralDataHub
  */
 (function (global) {
   "use strict";
@@ -51,23 +51,23 @@
 
   function eventTypeLabel(t) {
     var map = {
-      profile: "档案",
-      gift_assessment: "恩赐评估",
-      small_group_report: "小组回报",
-      care_mission: "关怀任务",
-      ministry_assignment: "事奉配岗",
-      pastoral_event: "牧养事件",
-      absence_alert: "缺席预警",
+      profile: "檔案",
+      gift_assessment: "恩賜評估",
+      small_group_report: "小組回報",
+      care_mission: "關懷任務",
+      ministry_assignment: "事奉配崗",
+      pastoral_event: "牧養事件",
+      absence_alert: "缺席預警",
       absence: "缺席",
       attendance: "出席",
-      activity_registration: "活动报名",
-      event_fee_paid: "活动缴费",
-      event_fee_pending: "待缴费",
-      training_enrollment: "训练修课",
-      pastor_visit_log: "牧者探访",
-      care_call: "关怀"
+      activity_registration: "活動報名",
+      event_fee_paid: "活動繳費",
+      event_fee_pending: "待繳費",
+      training_enrollment: "訓練修課",
+      pastor_visit_log: "牧者探訪",
+      care_call: "關懷"
     };
-    return map[t] || t || "记录";
+    return map[t] || t || "記錄";
   }
 
   function hubTimelineExtras(memberId) {
@@ -86,7 +86,7 @@
           ts: v.date || nowIso(),
           member_id: id,
           source: "pastoral_strategy_v1",
-          summary: (v.author ? v.author + " · " : "") + (v.summary || "牧者探访日志"),
+          summary: (v.author ? v.author + " · " : "") + (v.summary || "牧者探訪日誌"),
           link: "../fellowship/pastoral-strategy.html?crm_from=b_pastoral#tab-visits"
         });
       });
@@ -97,14 +97,14 @@
       (board.registrations || []).forEach(function (reg) {
         (reg.enrolled || []).forEach(function (e) {
           if (e.memberId == null || String(e.memberId) !== id) return;
-          var feeNote = reg.fee ? " · 费用 $" + reg.fee + (e.feeStatus === "paid" ? "（已缴）" : "（待缴）") : "";
+          var feeNote = reg.fee ? " · 費用 $" + reg.fee + (e.feeStatus === "paid" ? "（已繳）" : "（待繳）") : "";
           out.push({
             event_id: "reg_" + reg.id + "_" + id,
             event_type: e.feeStatus === "paid" ? "event_fee_paid" : "activity_registration",
             ts: reg.date || nowIso(),
             member_id: id,
             source: "pastoral_events_board_v1",
-            summary: "报名 · " + (reg.eventTitle || "活动") + feeNote,
+            summary: "報名 · " + (reg.eventTitle || "活動") + feeNote,
             link: "../fellowship/pastoral-events.html?crm_from=b_pastoral#tab-register",
             metadata: { regId: reg.id, feeStatus: e.feeStatus, txnId: e.txnId }
           });
@@ -196,8 +196,8 @@
           type: "income",
           amount: fee,
           category: "event_fee",
-          categoryName: "活动报名费",
-          description: (reg.eventTitle || "教会活动") + " · " + (m ? m.name : "会友") + " (memberId " + memberId + ")",
+          categoryName: "活動報名費",
+          description: (reg.eventTitle || "教會活動") + " · " + (m ? m.name : "會友") + " (memberId " + memberId + ")",
           memberId: memberId,
           memberName: m ? m.name : "",
           status: "approved",
@@ -217,7 +217,7 @@
       safePastoralEvent({
         member_id: memberId,
         event_type: "event_fee_paid",
-        summary: "活动报名缴费 $" + fee + " · " + (reg.eventTitle || ""),
+        summary: "活動報名繳費 $" + fee + " · " + (reg.eventTitle || ""),
         source_module: "pastoral_events",
         metadata: { regId: regId, txnId: tx.txn_id }
       });
@@ -244,7 +244,7 @@
     safePastoralEvent({
       member_id: memberId,
       event_type: "event_fee_pending",
-      summary: "活动报名待缴费 $" + reg.fee + " · " + (reg.eventTitle || ""),
+      summary: "活動報名待繳費 $" + reg.fee + " · " + (reg.eventTitle || ""),
       source_module: "pastoral_events",
       metadata: { regId: regId, amount: reg.fee }
     });
@@ -283,7 +283,7 @@
     safePastoralEvent({
       member_id: memberId,
       event_type: "training_enrollment",
-      summary: (course ? course.title : courseId) + " · " + H.enrollmentStatusLabel(status) + "（已同步主日学学籍）",
+      summary: (course ? course.title : courseId) + " · " + H.enrollmentStatusLabel(status) + "（已同步主日學學籍）",
       source_module: "pastoral_training",
       metadata: { courseId: courseId, status: status }
     });
@@ -308,7 +308,7 @@
         completedDate: t.completedDate || "—",
         instructor: t.instructor || "—",
         grade: t.grade || "—",
-        source: "会友主档",
+        source: "會友主檔",
         id: t.id
       });
     });
@@ -319,10 +319,10 @@
         });
         rows.push({
           courseName: c ? c.title : enr.courseId,
-          completedDate: enr.status === "completed" ? "已结业" : H.enrollmentStatusLabel(enr.status),
+          completedDate: enr.status === "completed" ? "已結業" : H.enrollmentStatusLabel(enr.status),
           instructor: c ? c.instructor : "—",
           grade: H.enrollmentStatusLabel(enr.status),
-          source: "B · 门徒训练",
+          source: "B · 門徒訓練",
           link: "../fellowship/pastoral-training.html?crm_from=b_pastoral&memberId=" + memberId
         });
       });
@@ -331,9 +331,9 @@
       rows.push({
         courseName: d.courseTitle,
         completedDate: d.syncedAt ? String(d.syncedAt).slice(0, 10) : "—",
-        instructor: "主日学/C区",
+        instructor: "主日學/C區",
         grade: d.statusLabel || d.status,
-        source: "C · 学籍同步",
+        source: "C · 學籍同步",
         link: "../education/education-integrated.html?crm_from=b_pastoral"
       });
     });
@@ -405,7 +405,7 @@
     safePastoralEvent({
       member_id: id,
       event_type: "gift_assessment",
-      summary: "SHAPE 恩赐同步 · " + gift.primary,
+      summary: "SHAPE 恩賜同步 · " + gift.primary,
       source_module: "church_planning",
       metadata: { toolId: "shape" }
     });
@@ -426,7 +426,7 @@
     var H = hub();
     if (!H || memberId == null) return;
     var name = (formValues && formValues.person) || "";
-    var summary = (formValues && formValues.summary) || "探访完成";
+    var summary = (formValues && formValues.summary) || "探訪完成";
     H.completePastoralTask("draft_abs_" + memberId);
     try {
       var drafts = JSON.parse(global.localStorage.getItem("worship_visitation_drafts_v1") || "[]");
@@ -443,17 +443,17 @@
     H.addVisitLog({
       targetMemberId: memberId,
       targetName: name || memberId,
-      author: (formValues && formValues.worker) || "探访同工",
+      author: (formValues && formValues.worker) || "探訪同工",
       summary: summary,
       painCategory: "",
       sensitivity: "normal",
-      followupCycle: "1周内",
+      followupCycle: "1周內",
       source: "visitation_index_writeback"
     });
     safePastoralEvent({
       member_id: memberId,
       event_type: "care_call",
-      summary: "探访完成 · " + summary.slice(0, 120),
+      summary: "探訪完成 · " + summary.slice(0, 120),
       source_module: "visitation_index",
       metadata: { writeback: "pastoral_strategy_v1" }
     });

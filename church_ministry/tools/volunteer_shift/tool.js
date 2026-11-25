@@ -341,7 +341,8 @@
       { id: 'form', href: 'form.html', label: '③ 新增排班' },
       { id: 'list', href: 'list.html', label: '④ 排班清單' },
       { id: 'leave_swap', href: 'leave_swap.html', label: '⑤ 請假調班' },
-      { id: 'setting', href: 'setting.html', label: '⑥ 設定' }
+      { id: 'setting', href: 'setting.html', label: '⑥ 設定' },
+      { id: 'rules_check', href: 'rules_check.html', label: '⑦ 排班檢查' }
     ];
     return pages.map(function (p) {
       var cur = p.id === activePage ? ' aria-current="page"' : '';

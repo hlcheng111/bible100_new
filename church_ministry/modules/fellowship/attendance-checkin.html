@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>現場點名 · 簽到臺 | Church Ministry</title>
+  <link rel="stylesheet" href="../../css/pastoral_workspace.css" />
+  <link rel="stylesheet" href="../../css/attendance_route_kit.css" />
+  <style>
+    .ac-wrap .sg-header { background: linear-gradient(135deg, #0f766e, #0d9488); }
+    .ac-msg { margin: 10px 0; padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; background: #f1f5f9; }
+    .ac-msg--ok { background: #d1fae5; color: #065f46; }
+    .ac-msg--warn { background: #fef3c7; color: #92400e; }
+    .ac-msg--err { background: #fee2e2; color: #991b1b; }
+    .ac-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+    @media (max-width: 640px) { .ac-stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    .ac-stat { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; }
+    .ac-stat .n { display: block; font-size: 22px; font-weight: 700; color: #0f766e; }
+    .ac-stat .l { font-size: 10px; color: #64748b; }
+    .ac-panels .sg-panel { display: none; }
+    .ac-panels .sg-panel.active { display: block; }
+    .ac-hit {
+      display: block; width: 100%; text-align: left; margin: 6px 0; padding: 12px 14px;
+      border: 1px solid #99f6e4; border-radius: 8px; background: #f0fdfa; cursor: pointer; font-size: 14px;
+      min-height: 44px;
+    }
+    .ac-hit:hover { border-color: #0d9488; background: #ccfbf1; }
+    .ac-kiosk-hint { font-size: 11px; line-height: 1.55; color: #334155; background: #ecfeff; border: 1px solid #a5f3fc; border-radius: 8px; padding: 10px 12px; }
+    .ac-create-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 640px) { .ac-create-grid { grid-template-columns: 1fr; } }
+    #ac-manual-q { font-size: 18px; padding: 14px; min-height: 48px; }
+  </style>
+  <script src="../../../js/page_capability_badge.js" data-status="live"></script>
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../js/pastoral_shell_bridge.js"></script>
+  <script>
+    PastoralShellBridge.installTabNav([
+      { tab: "groups", label: "← 小組 Tab" },
+      { tab: "alerts", label: "缺席預警 Tab" },
+      { tab: "visitation", label: "探訪佇列 Tab" }
+    ]);
+  </script>
+</head>
+<body data-b100-module="church_ministry" data-b100-ae-chrome="minimal" data-b100-ae-zone="b" data-b100-pattern="P-AE-PRIMARY" data-b100-ae-prefix="../..">
+  <div class="sg-wrap ac-wrap pa-wrap">
+    <header class="sg-header">
+      <nav class="sg-nav">
+        <a href="pastoral-integrated.html?crm_from=b_pastoral&amp;role=leader#tab-attendance">牧養工作桌</a>
+        <a href="pastoral-attendance.html?crm_from=b_pastoral">出席統計／趨勢</a>
+        <a href="pastoral-integrated.html?crm_from=b_pastoral&amp;role=leader#tab-alerts">缺席預警</a>
+      </nav>
+      <h1>今晚現場點名</h1>
+      <p class="sg-tagline">一次一件事：先開始聚會，再幫人簽到。唔使一次睇曬所有掣。</p>
+      <div class="sg-toolbar">
+        <button type="button" class="sg-btn outline" id="ac-btn-seed">載入示範會友／場次</button>
+        <button type="button" class="sg-btn outline" id="ac-btn-csv">匯出本場 CSV</button>
+        <a class="sg-btn outline" href="../../docs/ATTENDANCE_OPS_HANDBOOK.html" style="text-decoration:none;display:inline-flex;align-items:center;">出席系統說明</a>
+      </div>
+    </header>
+
+    <main class="sg-main">
+      <div id="ac-gate" class="sg-card" style="background:linear-gradient(135deg,#ecfdf5,#fff);border:2px solid #6ee7b7;text-align:center;padding:28px 18px;">
+        <p style="margin:0 0 8px;font-size:13px;color:#0f766e;font-weight:800;">第一步（淨係呢一件）</p>
+        <h2 style="margin:0 0 10px;font-size:1.35rem;color:#134e4a;">開始今晚嘅聚會</h2>
+        <p class="muted" style="margin:0 0 16px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.55;">
+          撳大掣之後，先會見到輸入短碼／電話嘅地方。若未有名單，可先「載入示範」。
+        </p>
+        <button type="button" class="pa-btn" id="ac-btn-begin-tonight" style="min-height:52px;font-size:17px;padding:12px 28px;">
+          撳呢度開始今晚嘅聚會 →
+        </button>
+        <p class="muted" style="margin:14px 0 0;font-size:12px;">
+          未有新人短碼？可先去
+          <a href="newcomer-qr-desk.html">發碼出票</a>。
+        </p>
+      </div>
+
+      <div id="ac-work" hidden>
+      <details style="margin-bottom:10px;font-size:12px;color:#64748b;">
+        <summary style="cursor:pointer;font-weight:700;">進階說明／路線圖（可唔開）</summary>
+        <link rel="stylesheet" href="../../css/attendance_process_strip.css" />
+        <div data-att-line="checkin" data-att-line-base="../../" style="margin-top:8px;"></div>
+        <div data-att-route="b_checkin" style="margin:8px 0;"></div>
+        <link rel="stylesheet" href="../../css/newcomer_dash.css" />
+        <div data-newcomer-dash data-nc-base="../../"></div>
+      </details>
+
+      <div class="sg-card ac-kiosk-hint" style="background:#ecfdf5;border-color:#6ee7b7;">
+        <strong>聚會已開始。</strong>下面輸入短碼、電話或姓名，按 Enter 就得。重複簽到會友善提示「已打卡」。
+      </div>
+
+      <div class="sg-card">
+        <h3>場次</h3>
+        <label>選擇場次
+          <select id="ac-event-select" class="sg-select" style="display:block;width:100%;max-width:100%;margin-top:4px;"></select>
+        </label>
+        <p style="margin:10px 0 0;display:flex;flex-wrap:wrap;gap:8px;">
+          <button type="button" class="pa-btn" id="ac-btn-start">開始聚會</button>
+          <button type="button" class="pa-btn" id="ac-btn-close" style="background:#64748b;">結束聚會</button>
+        </p>
+        <details style="margin-top:12px;">
+          <summary style="cursor:pointer;font-weight:600;">新建場次</summary>
+          <div class="ac-create-grid" style="margin-top:8px;">
+            <label>類型
+              <select id="ac-new-type" class="sg-input">
+                <option value="worship">主日崇拜</option>
+                <option value="cell" selected>小組聚會</option>
+                <option value="fellowship">團契</option>
+                <option value="choir">詩班／練習</option>
+                <option value="other">其他</option>
+              </select>
+            </label>
+            <label>小組（小組／團契建議填）
+              <select id="ac-new-group" class="sg-input"></select>
+            </label>
+            <label style="grid-column:1/-1;">標題（可留空）
+              <input type="text" id="ac-new-title" class="sg-input" placeholder="例：週三青年小組" />
+            </label>
+          </div>
+          <button type="button" class="pa-btn" id="ac-btn-create">建立場次</button>
+        </details>
+        <div id="ac-stats" style="margin-top:12px;"></div>
+      </div>
+
+      <div id="ac-msg" class="ac-msg" role="status">準備就緒。</div>
+
+      <div class="sg-tabs">
+        <button type="button" class="sg-tab ac-mode-tab active" data-mode="manual">手動簽到（編號／電話）</button>
+        <button type="button" class="sg-tab ac-mode-tab" data-mode="batch">組長批量點名</button>
+      </div>
+
+      <div class="ac-panels">
+        <div id="ac-panel-manual" class="sg-panel active">
+          <div class="sg-card">
+            <h3>輸入短碼或電話</h3>
+            <p class="muted">輸入<strong>新人短碼</strong>、電話或姓名，按 Enter 就得。</p>
+            <input type="text" id="ac-manual-q" class="sg-input" autocomplete="off" placeholder="短碼／電話／姓名" />
+            <button type="button" class="pa-btn" id="ac-btn-search">搜尋並簽到</button>
+            <div id="ac-manual-hits" style="margin-top:10px;"></div>
+            <details style="margin-top:10px;font-size:12px;color:#64748b;">
+              <summary style="cursor:pointer;">進階：掃碼槍／完整 QR 文字</summary>
+              <p class="muted" style="margin:6px 0 0;">可貼完整字串 <code>B100|編號|短碼</code>；掃碼槍當鍵盤打字入上面框即可。</p>
+            </details>
+          </div>
+        </div>
+        <div id="ac-panel-batch" class="sg-panel">
+          <div class="sg-card">
+            <h3>2b. 組長批量</h3>
+            <div id="ac-batch-roster"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-card">
+        <h3>本場已登記</h3>
+        <div id="ac-checked-list"></div>
+      </div>
+      </div><!-- /ac-work -->
+    </main>
+  </div>
+
+  <script src="../../js/attendance_route_kit.js"></script>
+  <script src="../../js/attendance_process_strip.js"></script>
+  <script src="../../js/pastoral_data_hub.js"></script>
+  <script src="../../js/newcomer_qr_store.js"></script>
+  <script src="../../js/newcomer_dash_widget.js"></script>
+  <script src="../../js/attendance_checkin_store.js"></script>
+  <script src="../../js/attendance_checkin_ui.js"></script>
+  <link rel="stylesheet" href="../../css/ae_pastoral_story_head.css" />
+  <script src="../../../js/shell_nav.js"></script>
+  <script src="../../js/ae_pastoral_story_nav.js"></script>
+  <script src="../../js/ae_subpage_shell.js"></script>
+  <link rel="stylesheet" href="../../css/cm_desk.css" />
+  <script src="../../js/cm_desk_registry.js"></script>
+  <script src="../../js/cm_desk_kit.js"></script>
+</body>
+</html>

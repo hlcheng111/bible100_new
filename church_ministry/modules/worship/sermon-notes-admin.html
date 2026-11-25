@@ -78,6 +78,29 @@
             alert('模板已儲存！會眾可至 會眾入口 → 講道筆記 填寫。');
         }
 
+        /* 報表鈕：之前按鈕存在但函式沒寫（按了報 ReferenceError）。用共用的 CmReportUtils。 */
+        function templateRows() {
+            return [
+                ['標題', document.getElementById('title').value],
+                ['日期', document.getElementById('date').value],
+                ['大綱', document.getElementById('outline').value]
+            ];
+        }
+
+        function exportTemplateCsv() {
+            var U = window.CmReportUtils;
+            if (!U) { alert('報表工具尚未載入，請稍後再按一次。'); return; }
+            var lines = [['欄位', '內容'].map(U.csvEsc).join(',')];
+            templateRows().forEach(function (r) { lines.push(r.map(U.csvEsc).join(',')); });
+            U.downloadCsv('sermon_notes_template_' + new Date().toISOString().slice(0, 10) + '.csv', lines);
+        }
+
+        function printTemplate() {
+            var U = window.CmReportUtils;
+            if (!U) { alert('報表工具尚未載入，請稍後再按一次。'); return; }
+            U.printTable('講道筆記模板', ['欄位', '內容'], templateRows());
+        }
+
         loadTemplate();
     </script>
 
@@ -94,6 +117,7 @@
 <script src="../../js/ae_worship_crm_bridge.js"></script>
 <script src="../../js/ae_worship_ai_draft.js"></script>
 <!-- b100-ae-worship-w3 -->
+<script src="../../js/attendance_ledger.js"></script>
 <script src="../../js/ae_worship_data_hub.js"></script>
 <script src="../../js/ae_worship_hub_panel.js"></script>
 <script src="../../js/ae_worship_page_registry.js"></script>

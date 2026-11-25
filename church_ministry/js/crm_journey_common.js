@@ -811,7 +811,7 @@
         emoji: "🌱",
         shortZh: "回饋",
         titleZh: "靈命回饋",
-        descZh: "偶爾停下來，看見神在您身上的作為：研讀、聚會、禱告中的亮點與软弱。記錄只是幫您記得恩典；真正溫暖您的，仍是主日後那句「最近好嗎」——科技只當僕人，不當替身。",
+        descZh: "偶爾停下來，看見神在您身上的作為：研讀、聚會、禱告中的亮點與軟弱。記錄只是幫您記得恩典；真正溫暖您的，仍是主日後那句「最近好嗎」——科技只當僕人，不當替身。",
         links: [
           { zh: "📊 研讀進度", href: "../bible_study/dashboard.html" },
           { zh: "📝 小組週報 Copilot", href: "modules/fellowship/group-report-copilot.html", gate: "staff" }
@@ -1437,7 +1437,7 @@
       scrollIdPrefix: "crm-principle-",
       stages: CRM_EIGHT_PRINCIPLES,
       metaHtml:
-        '<a class="crm-journey-link crm-intro-inline-link" href="roadmap-overview.html" target="' + tgt + '">📍 完整工程路線圖</a>' +
+        '<a class="crm-journey-link crm-intro-inline-link" href="_archive/root_noise_20261017/roadmap-overview.html" target="' + tgt + '">📍 完整工程路線圖</a>' +
         '<span class="crm-intro-inline-sep" aria-hidden="true">·</span>' +
         '<a class="crm-journey-link crm-intro-inline-link" href="dashboard.html" target="' + tgt + '" data-gate="staff">📊 成熟度儀表板</a>' +
         '<span class="crm-intro-inline-sep" aria-hidden="true">·</span>' +

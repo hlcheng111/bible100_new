@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>失敗指標／停損 · 豐盛金齡</title>
+  <link rel="stylesheet" href="../../css/golden_age_kit.css" />
+</head>
+<body class="ga-kit">
+  <div class="ga-wrap">
+    <header class="ga-hero">
+      <div class="ga-badge">W0 · 第 8.4 章</div>
+      <h1>失敗指標與停損檢討</h1>
+      <p>不只數人數與活動。觸發警報 → 降速、縮減，甚至暫停。負面回饋優先於見證。</p>
+    </header>
+
+    <div class="ga-card">
+      <h2>本次檢討（建議每兩個月）</h2>
+      <form id="ga-fs-form">
+        <label class="ga-check"><input type="checkbox" id="f1" /> 核心同工持續過勞</label>
+        <label class="ga-check"><input type="checkbox" id="f2" /> 多位參加者感到屬靈壓力</label>
+        <label class="ga-check"><input type="checkbox" id="f3" /> 高危個案無法有效轉介／跟進</label>
+        <label class="ga-check"><input type="checkbox" id="f4" /> 私隱或安全風險事件</label>
+        <label class="ga-check"><input type="checkbox" id="f5" /> 有人因制度壓力退出</label>
+        <label class="ga-lab" for="ga-action">建議動作</label>
+        <select id="ga-action">
+          <option value="continue">繼續現行規模</option>
+          <option value="slow">降速／減聚會頻率</option>
+          <option value="shrink">縮減（關崗位／活動模塊）</option>
+          <option value="pause">暫停擴張模塊，只留小組＋轉介</option>
+        </select>
+        <label class="ga-lab" for="ga-note">備註</label>
+        <textarea id="ga-note" maxlength="400" placeholder="例：兩位同工連續加班；三人反映「結果子」話術有壓力"></textarea>
+        <button type="submit" class="ga-btn block">儲存本次檢討</button>
+      </form>
+      <div id="ga-fs-alert" class="ga-warn" style="display:none;"></div>
+    </div>
+
+    <div class="ga-card">
+      <h2>近期紀錄</h2>
+      <div id="ga-fs-list" class="ga-muted">尚無紀錄。</div>
+    </div>
+
+    <div class="ga-nav">
+      <a href="golden-age-hub.html">← 回安全門</a>
+      <a href="golden-age-referral.html">轉介資源</a>
+      <a href="golden-age-rest.html">退場祝福</a>
+    </div>
+    <p class="ga-foot">連續兩次觸發嚴重項 → 產品／事工應關閉 W2 崗位與活動模塊。</p>
+  </div>
+  <script src="../../js/golden_age_kit_store.js"></script>
+  <script>
+  (function () {
+    function render() {
+      var s = window.GoldenAgeKit.load();
+      var box = document.getElementById("ga-fs-list");
+      var rows = s.failsafe_checks || [];
+      if (!rows.length) { box.textContent = "尚無紀錄。"; return; }
+      box.innerHTML = rows.slice(0, 8).map(function (r) {
+        var flags = [];
+        if (r.overload) flags.push("過勞");
+        if (r.spiritual_pressure) flags.push("屬靈壓力");
+        if (r.referral_stuck) flags.push("轉介卡住");
+        if (r.privacy_incident) flags.push("私隱");
+        if (r.exit_by_pressure) flags.push("壓力退出");
+        return "<p><strong>" + (r.at || "").slice(0, 16).replace("T", " ") + "</strong> · " +
+          (flags.join("／") || "無旗標") + " → <em>" + r.action + "</em><br>" +
+          "<span class='ga-muted'>" + (r.note || "") + "</span></p>";
+      }).join("");
+      var last = rows[0];
+      var bad = last && (last.overload || last.spiritual_pressure || last.referral_stuck || last.privacy_incident || last.exit_by_pressure);
+      var alert = document.getElementById("ga-fs-alert");
+      if (bad && (last.action === "pause" || last.action === "shrink")) {
+        alert.style.display = "block";
+        alert.innerHTML = "<strong>停損建議已記錄：</strong>請關閉崗位／大型活動入口，安全門只保留小組＋轉介＋安息線。";
+      } else {
+        alert.style.display = "none";
+      }
+    }
+    render();
+    document.getElementById("ga-fs-form").onsubmit = function (ev) {
+      ev.preventDefault();
+      window.GoldenAgeKit.pushFailsafe({
+        overload: document.getElementById("f1").checked,
+        spiritual_pressure: document.getElementById("f2").checked,
+        referral_stuck: document.getElementById("f3").checked,
+        privacy_incident: document.getElementById("f4").checked,
+        exit_by_pressure: document.getElementById("f5").checked,
+        action: document.getElementById("ga-action").value,
+        note: document.getElementById("ga-note").value
+      });
+      render();
+      alert("已儲存本機檢討紀錄。");
+    };
+  })();
+  </script>
+</body>
+</html>

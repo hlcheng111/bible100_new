@@ -1,5 +1,5 @@
 /**
- * A 敬拜 16 档 · 六项内容注册表（W1）
+ * A 敬拜 16 檔 · 六項內容註冊表（W1）
  * pageId = 文件名不含 .html
  */
 (function (win) {
@@ -8,25 +8,25 @@
   var NEXT_DEFAULT = [
     { href: "worship-integrated.html", label: "🎵 敬拜主桌" },
     { href: "worship-management.html", label: "📋 崇拜流程" },
-    { href: "worship-reports.html", label: "📊 崇拜报表" },
-    { href: "modules/support/visitation_index.html", label: "💬 CRM 探访" }
+    { href: "worship-reports.html", label: "📊 崇拜報表" },
+    { href: "modules/support/visitation_index.html", label: "💬 CRM 探訪" }
   ];
 
   var BRIDGE_HTML =
     '<div class="bridge-grid">' +
-    '<div class="bridge-item"><strong>会友主档</strong>memberId ↔ memberSystemData</div>' +
-    '<div class="bridge-item"><strong>注册报名</strong>新同工试岗 · CRM 旅程</div>' +
-    '<div class="bridge-item"><strong>活动交费</strong>外出／退修占位</div>' +
-    '<div class="bridge-item"><strong>乐谱库</strong><a href="sheet-music.html">sheet-music</a></div>' +
+    '<div class="bridge-item"><strong>會友主檔</strong>memberId ↔ memberSystemData</div>' +
+    '<div class="bridge-item"><strong>註冊報名</strong>新同工試崗 · CRM 旅程</div>' +
+    '<div class="bridge-item"><strong>活動交費</strong>外出／退修佔位</div>' +
+    '<div class="bridge-item"><strong>樂譜庫</strong><a href="sheet-music.html">sheet-music</a></div>' +
     '<div class="bridge-item"><strong>人才媒合</strong>guide_crm_journey_hub</div>' +
-    '<div class="bridge-item"><strong>AI</strong>只预填草稿，人审核后写入</div>' +
+    '<div class="bridge-item"><strong>AI</strong>只預填草稿，人審核後寫入</div>' +
     "</div>";
 
   function p(cfg) {
     return Object.assign(
       {
         mode: "full",
-        toolLabel: "⑦ 本页工具",
+        toolLabel: "⑦ 本頁工具",
         rosterKey: "",
         bridgeHtml: BRIDGE_HTML,
         nextLinks: NEXT_DEFAULT.slice()
@@ -41,120 +41,120 @@
       title: "敬拜事工工作台",
       emoji: "🎵",
       meaning:
-        "敬拜主桌统筹本周服事：团队、场次、曲目与出席。与诗班、器乐、礼仪、报表同一数据脉络。",
-      org: "敬拜总监 · 主领 · 各团队负责人；人员以 memberId 对齐会友主档。",
-      training: "新同工 4 周融入；年度敬拜培训与礼仪对齐。",
-      performance: "主日、节期、联合崇拜场次见「崇拜礼仪」与本周战情。",
-      activities: "退修、敬拜营、联合练习等活动报名（W1+ 对接 CRM）。",
-      scores: "曲目与乐谱链 <a href=\"sheet-music.html\">乐谱管理</a>、<a href=\"song-library.html\">诗歌库</a>。"
+        "敬拜主桌統籌本週服事：團隊、場次、曲目與出席。與詩班、器樂、禮儀、報表同一數據脈絡。",
+      org: "敬拜總監 · 主領 · 各團隊負責人；人員以 memberId 對齊會友主檔。",
+      training: "新同工 4 周融入；年度敬拜培訓與禮儀對齊。",
+      performance: "主日、節期、聯合崇拜場次見「崇拜禮儀」與本週戰情。",
+      activities: "退修、敬拜營、聯合練習等活動報名（W1+ 對接 CRM）。",
+      scores: "曲目與樂譜鏈 <a href=\"sheet-music.html\">樂譜管理</a>、<a href=\"song-library.html\">詩歌庫</a>。"
     }),
     "pulpit-ministry": p({
       mode: "tool",
-      title: "讲台事奉",
+      title: "講台事奉",
       emoji: "📖",
-      meaning: "讲道是敬拜核心信息；本页管理讲员档案、全年讲道计划与服事统计。",
-      org: "主任牧师／讲道协调 · 讲员池（内聘、客席）；讲员 memberId 对齐会友。",
-      training: "讲道培训、进深课程、新讲员陪练计划。",
-      performance: "主日讲道、节期信息、外出讲道日期表。",
-      activities: "讲员退修、同工会、教材研读小组。",
-      scores: "讲道提纲、系列大纲（可链资料库占位）。",
+      meaning: "講道是敬拜核心信息；本頁管理講員檔案、全年講道計劃與服事統計。",
+      org: "主任牧師／講道協調 · 講員池（內聘、客席）；講員 memberId 對齊會友。",
+      training: "講道培訓、進深課程、新講員陪練計劃。",
+      performance: "主日講道、節期信息、外出講道日期表。",
+      activities: "講員退修、同工會、教材研讀小組。",
+      scores: "講道提綱、系列大綱（可鏈資料庫佔位）。",
       rosterKey: "pulpit_speakers"
     }),
     "sermon-notes-admin": p({
       mode: "tool",
-      title: "讲道笔记模板",
+      title: "講道筆記模板",
       emoji: "📝",
-      meaning: "统一会众笔记格式，帮助跟讲、复习与小组分享。",
-      org: "文宣／教育同工维护模板；与讲台事奉系列对齐。",
-      training: "教导会众如何做笔记；新模板培训。",
-      performance: "按主日周次发布对应模板。",
-      activities: "笔记分享会、小组讨论题配套。",
-      scores: "模板文件、系列 PDF 占位。"
+      meaning: "統一會眾筆記格式，幫助跟講、複習與小組分享。",
+      org: "文宣／教育同工維護模板；與講台事奉系列對齊。",
+      training: "教導會眾如何做筆記；新模板培訓。",
+      performance: "按主日周次發佈對應模板。",
+      activities: "筆記分享會、小組討論題配套。",
+      scores: "模板文件、系列 PDF 佔位。"
     }),
     hospitality: p({
       mode: "tool",
       title: "招待事奉",
       emoji: "🤝",
-      meaning: "以微笑迎接，帮助会众与访客在崇拜中安心专注。",
-      org: "招待组长 · 门厅／停车位／儿童引导岗位。",
-      training: "礼仪、安全、特殊需要接待培训。",
-      performance: "主日各场招待排班。",
-      activities: "招待退修、联合外展接待。",
-      scores: "接待流程表、应急联络单。",
+      meaning: "以微笑迎接，幫助會眾與訪客在崇拜中安心專注。",
+      org: "招待組長 · 門廳／停車位／兒童引導崗位。",
+      training: "禮儀、安全、特殊需要接待培訓。",
+      performance: "主日各場招待排班。",
+      activities: "招待退修、聯合外展接待。",
+      scores: "接待流程表、應急聯絡單。",
       rosterKey: "hospitality_volunteers"
     }),
     "worship-team-management": p({
       mode: "tool",
-      title: "敬拜团队",
+      title: "敬拜團隊",
       emoji: "🎸",
-      meaning: "主领、键盘、吉他、鼓等敬拜团排班与曲目管理。",
-      org: "敬拜团长 · 各岗位负责人；与诗班、音响对齐。",
-      training: "每周排练、新乐手融入、礼仪培训。",
-      performance: "主日敬拜排班、节期特别场。",
-      activities: "敬拜退修、联合排练。",
-      scores: "曲目库、和弦谱链 sheet-music。",
+      meaning: "主領、鍵盤、吉他、鼓等敬拜團排班與曲目管理。",
+      org: "敬拜團長 · 各崗位負責人；與詩班、音響對齊。",
+      training: "每週排練、新樂手融入、禮儀培訓。",
+      performance: "主日敬拜排班、節期特別場。",
+      activities: "敬拜退修、聯合排練。",
+      scores: "曲目庫、和絃譜鏈 sheet-music。",
       rosterKey: "worshipTeamData"
     }),
-    "choir-team": p({ mode: "skip", title: "诗班团队", emoji: "🎵" }),
+    "choir-team": p({ mode: "skip", title: "詩班團隊", emoji: "🎵" }),
     "instrument-team": p({
       mode: "tool",
-      title: "器乐团队",
+      title: "器樂團隊",
       emoji: "🎻",
-      meaning: "弦乐、管乐等器乐献奏与排练管理。",
-      org: "器乐团长 · 声部／乐器组负责人。",
-      training: "分声部排练、读谱与合奏训练。",
-      performance: "主日、节期器乐献奏场次。",
-      activities: "器乐联谊、联合诗班练习。",
-      scores: "器乐乐谱、分谱管理。",
+      meaning: "絃樂、管樂等器樂獻奏與排練管理。",
+      org: "器樂團長 · 聲部／樂器組負責人。",
+      training: "分聲部排練、讀譜與合奏訓練。",
+      performance: "主日、節期器樂獻奏場次。",
+      activities: "器樂聯誼、聯合詩班練習。",
+      scores: "器樂樂譜、分譜管理。",
       rosterKey: "instrument_team_members"
     }),
     "congregational-songs": p({
       mode: "tool",
-      title: "会众诗歌",
+      title: "會眾詩歌",
       emoji: "🎶",
-      meaning: "会众诗歌选择与敬拜流程中的会众参与环节。",
-      org: "敬拜团／诗班协同选择会众诗。",
-      training: "会众学歌、新歌教唱计划。",
-      performance: "主日会众诗单与节期诗歌。",
-      activities: "诗歌工作坊、社区学歌。",
-      scores: "歌词、歌谱链诗歌库。"
+      meaning: "會眾詩歌選擇與敬拜流程中的會眾參與環節。",
+      org: "敬拜團／詩班協同選擇會眾詩。",
+      training: "會眾學歌、新歌教唱計劃。",
+      performance: "主日會眾詩單與節期詩歌。",
+      activities: "詩歌工作坊、社區學歌。",
+      scores: "歌詞、歌譜鏈詩歌庫。"
     }),
     "sheet-music": p({
       mode: "tool",
-      title: "乐谱管理",
+      title: "樂譜管理",
       emoji: "📄",
-      meaning: "乐谱资产入库、声部分配与借阅追踪。",
-      org: "乐谱管理员 · 各团队声部负责人。",
-      training: "版权与扫描规范、分类培训。",
-      performance: "主日曲目乐谱备齐检查。",
-      activities: "乐谱整理义工日。",
-      scores: "本页即乐谱 SSOT；链 hymn_management。"
+      meaning: "樂譜資產入庫、聲部分配與借閱追蹤。",
+      org: "樂譜管理員 · 各團隊聲部負責人。",
+      training: "版權與掃描規範、分類培訓。",
+      performance: "主日曲目樂譜備齊檢查。",
+      activities: "樂譜整理義工日。",
+      scores: "本頁即樂譜 SSOT；鏈 hymn_management。"
     }),
     "song-library": p({
       mode: "tool",
-      title: "诗歌库",
+      title: "詩歌庫",
       emoji: "📚",
-      meaning: "全库诗歌索引：主题、调性、版权与使用记录。",
-      org: "敬拜统筹维护索引；团队按权限选用。",
-      training: "新歌评估、神学审核流程。",
-      performance: "主日／节期歌单引用本库。",
-      activities: "诗歌征集、翻译协作。",
-      scores: "与 sheet-music、会众诗歌互联。"
+      meaning: "全庫詩歌索引：主題、調性、版權與使用記錄。",
+      org: "敬拜統籌維護索引；團隊按權限選用。",
+      training: "新歌評估、神學審核流程。",
+      performance: "主日／節期歌單引用本庫。",
+      activities: "詩歌徵集、翻譯協作。",
+      scores: "與 sheet-music、會眾詩歌互聯。"
     }),
     "worship-management": p({
       mode: "tool",
-      title: "崇拜礼仪",
+      title: "崇拜禮儀",
       emoji: "📋",
-      meaning: "主日流程：进堂、敬拜、信息、回应、差遣。",
-      org: "崇拜总监 · 与讲台、敬拜团、诗班、招待对齐。",
-      training: "礼仪培训、节期崇拜模式。",
-      performance: "各场崇拜流程表与日期。",
-      activities: "联合崇拜、外出崇拜流程适配。",
-      scores: "流程单、曲目与经文对照。"
+      meaning: "主日流程：進堂、敬拜、信息、回應、差遣。",
+      org: "崇拜總監 · 與講台、敬拜團、詩班、招待對齊。",
+      training: "禮儀培訓、節期崇拜模式。",
+      performance: "各場崇拜流程表與日期。",
+      activities: "聯合崇拜、外出崇拜流程適配。",
+      scores: "流程單、曲目與經文對照。"
     }),
     "worship-reports": p({
       mode: "skip",
-      title: "崇拜统计报表",
+      title: "崇拜統計報表",
       emoji: "📊"
     }),
     "attendance-management": p({
@@ -163,32 +163,32 @@
       emoji: "✅",
       nextLinks: [
         { href: "worship-integrated.html", label: "🎵 敬拜主桌" },
-        { href: "modules/support/visitation_index.html", label: "💬 缺席探访" },
-        { href: "worship-reports.html", label: "📊 报表" }
+        { href: "modules/support/visitation_index.html", label: "💬 缺席探訪" },
+        { href: "worship-reports.html", label: "📊 報表" }
       ]
     }),
     "audio-team": p({
       mode: "tool",
-      title: "音响团队",
+      title: "音響團隊",
       emoji: "🔊",
-      meaning: "主日音响、录音与设备运维。",
-      org: "音响组长 · 调音师轮值；与直播组配合。",
-      training: "设备操作、应急演练。",
-      performance: "主日、节期、外出音响排班。",
-      activities: "设备保养日、技术培训。",
-      scores: "设备清单、场景预设。",
+      meaning: "主日音響、錄音與設備運維。",
+      org: "音響組長 · 調音師輪值；與直播組配合。",
+      training: "設備操作、應急演練。",
+      performance: "主日、節期、外出音響排班。",
+      activities: "設備保養日、技術培訓。",
+      scores: "設備清單、場景預設。",
       nextLinks: NEXT_DEFAULT
     }),
     "live-streaming": p({
       mode: "tool",
-      title: "视频直播",
+      title: "視頻直播",
       emoji: "📹",
-      meaning: "崇拜直播、多平台推流与录像归档。",
-      org: "直播组长 · 摄像／导播／字幕岗位。",
-      training: "直播 SOP、版权与隐私。",
-      performance: "主日直播场次与回放链接。",
-      activities: "设备测试、联合彩排。",
-      scores: "片头片尾、流媒体资产。",
+      meaning: "崇拜直播、多平台推流與錄像歸檔。",
+      org: "直播組長 · 攝像／導播／字幕崗位。",
+      training: "直播 SOP、版權與隱私。",
+      performance: "主日直播場次與回放鏈接。",
+      activities: "設備測試、聯合彩排。",
+      scores: "片頭片尾、流媒體資產。",
       nextLinks: NEXT_DEFAULT
     })
   };

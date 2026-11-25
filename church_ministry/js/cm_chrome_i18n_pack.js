@@ -964,7 +964,147 @@
       vi: 'Bàn việc chăm sóc',
       id: 'Meja tugas peduli',
     },
+
+    /* —— P4（2026-11）：排班檢查／見習帶領包。zh-Hant、en 為正式；vi、id 為機器草稿，待人工校對 —— */
+    'cm.p4.guide.title': {
+      'zh-Hant': '這一頁怎麼用？（30 秒看懂）',
+      en: 'How to use this page (30 seconds)',
+      vi: 'Cách dùng trang này (30 giây)',
+      id: 'Cara memakai halaman ini (30 detik)',
+    },
+    'cm.p4.shift.title': {
+      'zh-Hant': '🧮 排班檢查',
+      en: '🧮 Shift check',
+      vi: '🧮 Kiểm tra lịch phục vụ',
+      id: '🧮 Pemeriksaan jadwal',
+    },
+    'cm.p4.shift.lead': {
+      'zh-Hant': '找出重複排班、請假沒人代、人數不足…只提醒，不會自動改班。',
+      en: 'Finds double-bookings, uncovered leave and understaffing. Reminders only; it never changes the roster.',
+      vi: 'Phát hiện xếp trùng, nghỉ chưa có người thay, thiếu người. Chỉ nhắc nhở, không tự đổi lịch.',
+      id: 'Menemukan jadwal ganda, izin tanpa pengganti, dan kekurangan orang. Hanya pengingat, tidak mengubah jadwal.',
+    },
+    'cm.p4.shift.guide.1': {
+      'zh-Hant': '打開本頁會自動檢查未來 30 天的排班。',
+      en: 'Opening this page automatically checks the next 30 days of shifts.',
+      vi: 'Mở trang này sẽ tự kiểm tra lịch 30 ngày tới.',
+      id: 'Membuka halaman ini otomatis memeriksa jadwal 30 hari ke depan.',
+    },
+    'cm.p4.shift.guide.2': {
+      'zh-Hant': '先看「重要」：同時段重複排、請假沒人代班。',
+      en: 'Look at “Important” first: double-booked people and leave with no cover.',
+      vi: 'Xem mục “Quan trọng” trước: xếp trùng giờ, nghỉ chưa có người thay.',
+      id: 'Lihat “Penting” dahulu: orang dijadwalkan ganda dan izin tanpa pengganti.',
+    },
+    'cm.p4.shift.guide.3': {
+      'zh-Hant': '再看「注意」「參考」；按「複製檢查報告」貼給事工負責人。',
+      en: 'Then read “Notice” and “FYI”; press “Copy report” and paste it to the ministry lead.',
+      vi: 'Sau đó xem “Lưu ý” và “Tham khảo”; bấm “Sao chép báo cáo” rồi gửi cho người phụ trách.',
+      id: 'Lalu baca “Perhatian” dan “Referensi”; tekan “Salin laporan” dan kirim ke penanggung jawab.',
+    },
+    'cm.p4.shift.guide.4': {
+      'zh-Hant': '要改班請到「新增排班」或「請假調班」，本頁不會改任何資料。',
+      en: 'To change shifts, use “Add shift” or “Leave & swap”. This page never edits any data.',
+      vi: 'Muốn đổi lịch, hãy dùng “Thêm lịch” hoặc “Nghỉ & đổi ca”. Trang này không sửa dữ liệu.',
+      id: 'Untuk mengubah jadwal, gunakan “Tambah jadwal” atau “Izin & tukar”. Halaman ini tidak mengubah data.',
+    },
+    'cm.p4.shift.result.title': {
+      'zh-Hant': '檢查結果',
+      en: 'Results',
+      vi: 'Kết quả kiểm tra',
+      id: 'Hasil pemeriksaan',
+    },
+    'cm.p4.shift.btn.copy': {
+      'zh-Hant': '複製檢查報告',
+      en: 'Copy report',
+      vi: 'Sao chép báo cáo',
+      id: 'Salin laporan',
+    },
+    'cm.p4.shift.btn.rerun': {
+      'zh-Hant': '重新檢查',
+      en: 'Check again',
+      vi: 'Kiểm tra lại',
+      id: 'Periksa lagi',
+    },
+    'cm.p4.shift.rules.title': {
+      'zh-Hant': '目前的檢查規則',
+      en: 'Current rules',
+      vi: 'Quy tắc hiện tại',
+      id: 'Aturan saat ini',
+    },
+    'cm.p4.shift.rules.edit': {
+      'zh-Hant': '要改數字，請用記事本改 js/cm_shift_rules.js 最上方的 RULES，存檔後重新整理。',
+      en: 'To change the numbers, edit RULES at the top of js/cm_shift_rules.js in Notepad, save, and refresh.',
+      vi: 'Muốn đổi số, hãy mở js/cm_shift_rules.js bằng Notepad, sửa RULES ở đầu tệp, lưu rồi tải lại trang.',
+      id: 'Untuk mengubah angka, edit RULES di bagian atas js/cm_shift_rules.js dengan Notepad, simpan, lalu muat ulang.',
+    },
+    'cm.p4.links.title': {
+      'zh-Hant': '排班用的 Google 表單／試算表',
+      en: 'Google Forms / Sheets for scheduling',
+      vi: 'Google Forms / Sheets dùng cho xếp lịch',
+      id: 'Google Forms / Sheets untuk penjadwalan',
+    },
+    'cm.p4.shift.ai.title': {
+      'zh-Hant': 'AI 排班草稿（選用）',
+      en: 'AI roster draft (optional)',
+      vi: 'Bản nháp lịch bằng AI (tùy chọn)',
+      id: 'Draf jadwal dengan AI (opsional)',
+    },
+    'cm.p4.shift.ai.body': {
+      'zh-Hant': '先按「複製規則附註」，到 AI 實驗室的「口述排班」貼在提示詞後面。AI 只出草稿，須人審。',
+      en: 'Press “Copy rule notes”, then paste them after the prompt in the AI Lab “voice roster” scenario. AI only drafts; a person must review.',
+      vi: 'Bấm “Sao chép ghi chú quy tắc”, rồi dán sau lời nhắc trong tình huống “xếp lịch bằng giọng nói” của AI Lab. AI chỉ soạn nháp, cần người duyệt.',
+      id: 'Tekan “Salin catatan aturan”, lalu tempel setelah prompt pada skenario “jadwal lisan” di AI Lab. AI hanya membuat draf; harus ditinjau orang.',
+    },
+    'cm.p4.shift.btn.copyrules': {
+      'zh-Hant': '複製規則附註',
+      en: 'Copy rule notes',
+      vi: 'Sao chép ghi chú quy tắc',
+      id: 'Salin catatan aturan',
+    },
+    'cm.p4.shift.btn.openai': {
+      'zh-Hant': '打開 AI 排班草稿',
+      en: 'Open AI roster draft',
+      vi: 'Mở bản nháp lịch bằng AI',
+      id: 'Buka draf jadwal AI',
+    },
+    'cm.p4.leader.kit.title': {
+      'zh-Hant': '🤖 用 AI 備一份見習帶領包',
+      en: '🤖 Prepare an apprentice leader kit with AI',
+      vi: '🤖 Soạn bộ hướng dẫn cho người tập sự bằng AI',
+      id: '🤖 Siapkan paket pemimpin magang dengan AI',
+    },
+    'cm.p4.leader.kit.body': {
+      'zh-Hant': '幫見習者準備一頁聚會流程、討論三問與回饋表（AI 草稿，須小組長或牧者審核）。',
+      en: 'Drafts a one-page meeting flow, three discussion questions and a feedback sheet for the apprentice (AI draft; the group leader or pastor must review).',
+      vi: 'Soạn một trang quy trình buổi nhóm, ba câu hỏi thảo luận và phiếu phản hồi cho người tập sự (bản nháp AI, cần trưởng nhóm hoặc mục sư duyệt).',
+      id: 'Membuat satu halaman alur pertemuan, tiga pertanyaan diskusi, dan lembar umpan balik untuk calon pemimpin (draf AI; harus ditinjau pemimpin kelompok atau gembala).',
+    },
+    'cm.p4.leader.kit.btn': {
+      'zh-Hant': '打開帶領包 AI 草稿',
+      en: 'Open kit draft in AI Lab',
+      vi: 'Mở bản nháp trong AI Lab',
+      id: 'Buka draf paket di AI Lab',
+    },
+    'cm.p4.leader.links.title': {
+      'zh-Hant': '見習用的 Google 表單',
+      en: 'Google Forms for apprentices',
+      vi: 'Google Forms cho người tập sự',
+      id: 'Google Forms untuk calon pemimpin',
+    },
+    'cm.p4.draft_note': {
+      'zh-Hant': '（VI／ID 為機器草稿，待人工校對）',
+      en: '(VI / ID are machine drafts pending human review.)',
+      vi: '(Bản VI/ID là bản dịch máy, đang chờ người kiểm tra. Machine draft pending review.)',
+      id: '(Versi VI/ID adalah terjemahan mesin, menunggu peninjauan. Machine draft pending review.)',
+    },
   };
+
+  /* P4 的 vi／id 為機器草稿，待人工校對（正式教材不可直接使用） */
+  var DRAFT_KEYS_VI_ID = Object.keys(P).filter(function (k) {
+    return k.indexOf('cm.p4.') === 0;
+  });
+  global.CmChromeI18nDraftKeys = { vi: DRAFT_KEYS_VI_ID, id: DRAFT_KEYS_VI_ID };
 
   global.CmChromeI18nPack = P;
 })(typeof window !== 'undefined' ? window : global);

@@ -46,7 +46,7 @@ http://127.0.0.1:8080/church_ministry/docs/qa_tracker_0af.html
 |------|------|----------|---------|------|------|
 | **CM-INDEX** | 教會事工 Standalone 殼 / index | 殼 | 雙欄可用；已去頂欄「15 主桌」 | 對齊 index_v5：左 sidebarFrame＋右 contentFrame | `church_ministry/index.html` |
 | **CM-SB-LAYOUT** | 教會佈局側欄 V1 | 側欄 | 已去「15 主桌」區塊；**A–F 結構保留** | 查驗主側欄 | `church_ministry/sidebar_church_layout_v1.html` |
-| **CM-DASH-LAYOUT** | 佈局儀表板（預設右欄） | LIVE／殼 | 未改 IA | 殼預設 content | `church_ministry/dashboard_church_layout_v1.html` |
+| **CM-DASH-LAYOUT** | 佈局儀表板（預設右欄） | LIVE／殼 | 未改 IA | 殼預設 content | `church_ministry/_archive/root_noise_20261017/dashboard_church_layout_v1.html` |
 | **HUB-INDEX** | 總站 index_v5 | 總殼 | 不在本 P0 改 | 聯邦入口 | `index_v5.html` |
 | **CM-SB-CRM** | CRM 旅程側欄 | 側欄 | 未改 | 「回 CRM」會換左欄（%） | `church_ministry/sidebar_crm_journey.html` |
 | **CM-SB-WORSHIP** | 敬拜旅程側欄 | 側欄 | 未改 | 「公園導覽」會換左欄（%） | `church_ministry/sidebar_worship_journey.html` |
@@ -178,7 +178,7 @@ http://127.0.0.1:8080/church_ministry/docs/qa_tracker_0af.html
 | F-05 | 財務管理（舊） | 合併→F-04 | 合併提示 | | `church_ministry/modules/administration/financial-management.html` |
 | F-06 | 設備 | DEMO | 薄殼／待查 | | `church_ministry/modules/equipment/equipment-management.html` |
 | F-07 | 圖書 | DEMO | 薄殼／待查 | | `church_ministry/modules/library/library-management.html` |
-| F-08 | 社群捐款人 | DEMO | 薄殼／待查 | | `church_ministry/community-overview.html` |
+| F-08 | 社群捐款人 | DEMO | 薄殼／待查 | | `church_ministry/_archive/root_noise_20261017/community-overview.html` |
 | F-09 | 研究索引 | DEMO | 薄殼／待查 | | `church_ministry/modules/research/index.html` |
 | F-10 | 會眾統計 | DEMO | 合併建議→F-09／F-01 | | `church_ministry/modules/research/member-statistics.html` |
 | F-11 | 事工成效 | DEMO | 同上 | | `church_ministry/modules/research/ministry-performance.html` |
@@ -190,17 +190,17 @@ http://127.0.0.1:8080/church_ministry/docs/qa_tracker_0af.html
 | F-17 | 數位化轉型 | DEMO | 建議下架工具 | | `church_ministry/modules/innovation/digital-transformation.html` |
 | F-18 | 智能提醒 | DEMO | 薄殼／待查 | | `church_ministry/modules/support/smart-reminders.html` |
 | F-19 | Workflow | DEMO | 薄殼／待查 | | `church_ministry/modules/support/workflow.html` |
-| F-20 | 主題設定 | PARTIAL | 未改 | | `church_ministry/theme-settings.html` |
-| F-21 | 自訂頁編輯 | PARTIAL | 未改 | | `church_ministry/custom-page-editor.html` |
+| F-20 | 主題設定 | PARTIAL | 未改 | | `church_ministry/_archive/root_noise_20261017/theme-settings.html` |
+| F-21 | 自訂頁編輯 | PARTIAL | 未改 | | `church_ministry/_archive/root_noise_20261017/custom-page-editor.html` |
 | F-22 | 新技術應用 | DEMO | 建議下架 | | `church_ministry/modules/innovation/technology-apps.html` |
 | F-23 | 智能工具開發 | DEMO | 建議下架 | | `church_ministry/modules/innovation/smart-tools-dev.html` |
 | F-24 | 最佳實踐 | DEMO | 建議文件化 | | `church_ministry/modules/innovation/best-practices.html` |
 | F-25 | 技術支援 | DEMO | 薄殼／待查 | | `church_ministry/modules/support/technical-support.html` |
 | F-26 | 幫助文檔 | PARTIAL | 未改 | | `church_ministry/modules/support/help-documentation.html` |
-| F-27 | 願景藍圖 | PARTIAL | 未改 | | `church_ministry/vision_and_plan.html` |
-| F-28 | 路線圖 | PARTIAL | 未改 | | `church_ministry/roadmap-overview.html` |
-| F-29 | 事工總覽 | PARTIAL | 未改 | | `church_ministry/ministry_core.html` |
-| F-30 | AI 合規 | DEMO | 未改 | | `church_ministry/ai-and-compliance.html` |
+| F-27 | 願景藍圖 | PARTIAL | 未改 | | `church_ministry/_archive/root_noise_20261017/vision_and_plan.html` |
+| F-28 | 路線圖 | PARTIAL | 未改 | | `church_ministry/_archive/root_noise_20261017/roadmap-overview.html` |
+| F-29 | 事工總覽 | PARTIAL | 未改 | | `church_ministry/_archive/root_noise_20261017/ministry_core.html` |
+| F-30 | AI 合規 | DEMO | 未改 | | `church_ministry/_archive/root_noise_20261017/ai-and-compliance.html` |
 
 ---
 

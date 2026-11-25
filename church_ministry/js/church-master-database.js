@@ -1,14 +1,14 @@
 /**
- * 教会事工全站统一数据库架构
- * 设计理念：全站数据互联，单一数据源，统一API
+ * 教會事工全站統一數據庫架構
+ * 設計理念：全站數據互聯，單一數據源，統一API
  * 
- * 数据关联关系：
- * 👥 会友 → 核心父表（所有其他模块的基础）
- * 🎵 敬拜 → 诗班员也是会友，乐谱是图书的一种
- * 🏠 小组 → 成员来自会友，活动记录关联
- * 👔 志工 → 志工来自会友，服务记录关联  
- * 🎓 教育 → 学生来自会友，课程记录关联
- * 💰 财务 → 奉献者来自会友，预算关联事工
+ * 數據關聯關係：
+ * 👥 會友 → 核心父表（所有其他模塊的基礎）
+ * 🎵 敬拜 → 詩班員也是會友，樂譜是圖書的一種
+ * 🏠 小組 → 成員來自會友，活動記錄關聯
+ * 👔 志工 → 志工來自會友，服務記錄關聯  
+ * 🎓 教育 → 學生來自會友，課程記錄關聯
+ * 💰 財務 → 奉獻者來自會友，預算關聯事工
  */
 
 class ChurchMasterDatabase {
@@ -124,84 +124,84 @@ class ChurchMasterDatabase {
     }
 
     /**
-     * 全站统一数据结构
-     * 设计原则：会友为核心，其他模块通过memberId关联
+     * 全站統一數據結構
+     * 設計原則：會友為核心，其他模塊通過memberId關聯
      */
     initializeDefaultStructure() {
         if (Object.keys(this.data).length === 0) {
             this.data = {
-                // === 核心模块：会友系统（父表） ===
-                members: [],              // 会友基本信息（所有模块的基础）
+                // === 核心模塊：會友系統（父表） ===
+                members: [],              // 會友基本信息（所有模塊的基礎）
                 
-                // === 敬拜事工模块 ===
+                // === 敬拜事工模塊 ===
                 worship: {
-                    teams: [],            // 敬拜团队（敬拜团、诗班团、器乐团等）
-                    teamMembers: [],      // 团队成员（关联memberId）
-                    services: [],         // 主日聚会安排
-                    assignments: [],      // 排班记录
-                    songs: [],           // 诗歌库（也是图书馆的一种书）
-                    serviceRecords: [],   // 事奉记录
+                    teams: [],            // 敬拜團隊（敬拜團、詩班團、器樂團等）
+                    teamMembers: [],      // 團隊成員（關聯memberId）
+                    services: [],         // 主日聚會安排
+                    assignments: [],      // 排班記錄
+                    songs: [],           // 詩歌庫（也是圖書館的一種書）
+                    serviceRecords: [],   // 事奉記錄
                     
-                    // 器乐团专用数据
-                    instruments: [],      // 乐器设备
-                    instrumentAssignments: [], // 乐器分配
+                    // 器樂團專用數據
+                    instruments: [],      // 樂器設備
+                    instrumentAssignments: [], // 樂器分配
                     
-                    // 诗班专用数据
-                    voiceParts: [],       // 声部划分
-                    voiceBalance: []      // 声部平衡记录
+                    // 詩班專用數據
+                    voiceParts: [],       // 聲部劃分
+                    voiceBalance: []      // 聲部平衡記錄
                 },
                 
-                // === 小组事工模块 ===
+                // === 小組事工模塊 ===
                 fellowship: {
-                    groups: [],           // 小组列表
-                    groupMembers: [],     // 小组成员（关联memberId）
-                    meetings: [],         // 聚会记录
-                    activities: [],       // 活动安排
-                    growthRecords: [],    // 成长记录
-                    multiplication: []    // 倍增追踪
+                    groups: [],           // 小組列表
+                    groupMembers: [],     // 小組成員（關聯memberId）
+                    meetings: [],         // 聚會記錄
+                    activities: [],       // 活動安排
+                    growthRecords: [],    // 成長記錄
+                    multiplication: []    // 倍增追蹤
                 },
                 
-                // === 志工事工模块 ===
+                // === 志工事工模塊 ===
                 volunteer: {
-                    positions: [],        // 志工岗位
-                    volunteers: [],       // 志工（关联memberId）
-                    assignments: [],      // 岗位分配
+                    positions: [],        // 志工崗位
+                    volunteers: [],       // 志工（關聯memberId）
+                    assignments: [],      // 崗位分配
                     schedules: [],        // 排班
-                    evaluations: [],      // 评估记录
-                    trainings: []         // 培训记录
+                    evaluations: [],      // 評估記錄
+                    trainings: []         // 培訓記錄
                 },
                 
-                // === 教育事工模块 ===
+                // === 教育事工模塊 ===
                 education: {
-                    classes: [],          // 班级
-                    students: [],         // 学生（关联memberId）
-                    teachers: [],         // 教师（关联memberId）
-                    courses: [],          // 课程
-                    attendance: [],       // 出席记录
-                    progress: [],         // 学习进度
-                    materials: []         // 教材（也是图书馆的一种书）
+                    classes: [],          // 班級
+                    students: [],         // 學生（關聯memberId）
+                    teachers: [],         // 教師（關聯memberId）
+                    courses: [],          // 課程
+                    attendance: [],       // 出席記錄
+                    progress: [],         // 學習進度
+                    materials: []         // 教材（也是圖書館的一種書）
                 },
                 
-                // === 财务事工模块 ===
+                // === 財務事工模塊 ===
                 finance: {
-                    budgets: [],          // 预算
-                    incomes: [],          // 收入（关联memberId奉献者）
+                    budgets: [],          // 預算
+                    incomes: [],          // 收入（關聯memberId奉獻者）
                     expenses: [],         // 支出
-                    categories: [],       // 分类
-                    reports: [],          // 报表
-                    forecasts: []         // 预测
+                    categories: [],       // 分類
+                    reports: [],          // 報表
+                    forecasts: []         // 預測
                 },
                 
-                // === 图书馆模块（跨模块共享） ===
+                // === 圖書館模塊（跨模塊共享） ===
                 library: {
-                    books: [],            // 图书（包括乐谱、教材、灵修书等）
-                    categories: [],       // 分类
-                    borrowers: [],        // 借阅记录（关联memberId）
-                    inventory: [],        // 库存
-                    donations: []         // 捐赠记录
+                    books: [],            // 圖書（包括樂譜、教材、靈脩書等）
+                    categories: [],       // 分類
+                    borrowers: [],        // 借閱記錄（關聯memberId）
+                    inventory: [],        // 庫存
+                    donations: []         // 捐贈記錄
                 },
                 
-                // === 系统元数据 ===
+                // === 系統元數據 ===
                 metadata: {
                     lastUpdated: new Date().toISOString(),
                     version: '1.0.0',
@@ -218,12 +218,12 @@ class ChurchMasterDatabase {
         const table = this.getTableByPath(tablePath);
         if (!table) throw new Error(`Table not found: ${tablePath}`);
         
-        // 自动生成ID
+        // 自動生成ID
         if (!record.id) {
             record.id = Date.now();
         }
         
-        // 自动添加时间戳
+        // 自動添加時間戳
         record.createdAt = new Date().toISOString();
         record.updatedAt = new Date().toISOString();
         this.applyMemberIdAdapter(tablePath, record);
@@ -268,7 +268,7 @@ class ChurchMasterDatabase {
         });
     }
 
-    // ==================== 表路径解析 ====================
+    // ==================== 表路徑解析 ====================
     
     getTableByPath(tablePath) {
         const parts = tablePath.split('.');
@@ -284,12 +284,12 @@ class ChurchMasterDatabase {
         return null;
     }
 
-    // ==================== 跨模块关联查询 ====================
+    // ==================== 跨模塊關聯查詢 ====================
     
     /**
-     * 获取会友完整档案（跨所有模块）
-     * @param {number} memberId 会友ID
-     * @returns {object} 完整档案
+     * 獲取會友完整檔案（跨所有模塊）
+     * @param {number} memberId 會友ID
+     * @returns {object} 完整檔案
      */
     getMemberFullProfile(memberId) {
         const member = this.data.members.find(m => m.id === memberId);
@@ -307,7 +307,7 @@ class ChurchMasterDatabase {
                 serviceRecords: this.data.worship.serviceRecords.filter(sr => sr.memberId === memberId)
             },
             
-            // 小组事工信息
+            // 小組事工信息
             fellowship: {
                 groups: this.data.fellowship.groupMembers.filter(gm => gm.memberId === memberId),
                 meetings: this.data.fellowship.meetings.filter(m => m.memberId === memberId)
@@ -325,12 +325,12 @@ class ChurchMasterDatabase {
                 teaching: this.data.education.teachers.filter(t => t.memberId === memberId)
             },
             
-            // 财务事工信息
+            // 財務事工信息
             finance: {
                 donations: this.data.finance.incomes.filter(i => i.memberId === memberId)
             },
             
-            // 图书馆信息
+            // 圖書館信息
             library: {
                 borrowed: this.data.library.borrowers.filter(b => b.memberId === memberId)
             }
@@ -338,8 +338,8 @@ class ChurchMasterDatabase {
     }
 
     /**
-     * 获取诗歌库（图书馆的一种）
-     * @returns {array} 诗歌列表
+     * 獲取詩歌庫（圖書館的一種）
+     * @returns {array} 詩歌列表
      */
     getSongsFromLibrary() {
         return this.data.library.books.filter(book => 
@@ -348,7 +348,7 @@ class ChurchMasterDatabase {
     }
 
     /**
-     * 获取教材（图书馆的一种）
+     * 獲取教材（圖書館的一種）
      * @returns {array} 教材列表
      */
     getEducationalMaterials() {
@@ -358,47 +358,47 @@ class ChurchMasterDatabase {
     }
 
     /**
-     * 验证数据完整性
-     * @returns {object} 验证结果
+     * 驗證數據完整性
+     * @returns {object} 驗證結果
      */
     validateDataIntegrity() {
         const issues = [];
         
-        // 检查孤儿记录（有memberId但会友不存在）
+        // 檢查孤兒記錄（有memberId但會友不存在）
         const memberIds = this.data.members.map(m => m.id);
         
-        // 检查敬拜事工
+        // 檢查敬拜事工
         this.data.worship.teamMembers.forEach(tm => {
             if (!memberIds.includes(tm.memberId)) {
-                issues.push(`敬拜团队成员 ${tm.memberId} 的会友记录不存在`);
+                issues.push(`敬拜團隊成員 ${tm.memberId} 的會友記錄不存在`);
             }
         });
         
-        // 检查小组事工
+        // 檢查小組事工
         this.data.fellowship.groupMembers.forEach(gm => {
             if (!memberIds.includes(gm.memberId)) {
-                issues.push(`小组成员 ${gm.memberId} 的会友记录不存在`);
+                issues.push(`小組成員 ${gm.memberId} 的會友記錄不存在`);
             }
         });
         
-        // 检查志工事工
+        // 檢查志工事工
         this.data.volunteer.volunteers.forEach(v => {
             if (!memberIds.includes(v.memberId)) {
-                issues.push(`志工 ${v.memberId} 的会友记录不存在`);
+                issues.push(`志工 ${v.memberId} 的會友記錄不存在`);
             }
         });
         
-        // 检查教育事工
+        // 檢查教育事工
         this.data.education.students.forEach(s => {
             if (!memberIds.includes(s.memberId)) {
-                issues.push(`学生 ${s.memberId} 的会友记录不存在`);
+                issues.push(`學生 ${s.memberId} 的會友記錄不存在`);
             }
         });
         
-        // 检查财务事工
+        // 檢查財務事工
         this.data.finance.incomes.forEach(i => {
             if (!memberIds.includes(i.memberId)) {
-                issues.push(`奉献者 ${i.memberId} 的会友记录不存在`);
+                issues.push(`奉獻者 ${i.memberId} 的會友記錄不存在`);
             }
         });
         
@@ -417,43 +417,43 @@ class ChurchMasterDatabase {
     }
 
     /**
-     * 级联删除（删除会友时清理所有关联）
-     * @param {number} memberId 会友ID
+     * 級聯刪除（刪除會友時清理所有關聯）
+     * @param {number} memberId 會友ID
      */
     cascadeDeleteMember(memberId) {
-        // 删除敬拜事工关联
+        // 刪除敬拜事工關聯
         this.data.worship.teamMembers = this.data.worship.teamMembers.filter(tm => tm.memberId !== memberId);
         this.data.worship.instruments = this.data.worship.instruments.filter(i => i.assignedToMemberId !== memberId);
         this.data.worship.voiceParts = this.data.worship.voiceParts.filter(vp => vp.memberId !== memberId);
         this.data.worship.serviceRecords = this.data.worship.serviceRecords.filter(sr => sr.memberId !== memberId);
         
-        // 删除小组事工关联
+        // 刪除小組事工關聯
         this.data.fellowship.groupMembers = this.data.fellowship.groupMembers.filter(gm => gm.memberId !== memberId);
         this.data.fellowship.meetings = this.data.fellowship.meetings.filter(m => m.memberId !== memberId);
         
-        // 删除志工事工关联
+        // 刪除志工事工關聯
         this.data.volunteer.volunteers = this.data.volunteer.volunteers.filter(v => v.memberId !== memberId);
         this.data.volunteer.assignments = this.data.volunteer.assignments.filter(a => a.memberId !== memberId);
         
-        // 删除教育事工关联
+        // 刪除教育事工關聯
         this.data.education.students = this.data.education.students.filter(s => s.memberId !== memberId);
         this.data.education.teachers = this.data.education.teachers.filter(t => t.memberId !== memberId);
         
-        // 删除财务事工关联
+        // 刪除財務事工關聯
         this.data.finance.incomes = this.data.finance.incomes.filter(i => i.memberId !== memberId);
         
-        // 删除图书馆关联
+        // 刪除圖書館關聯
         this.data.library.borrowers = this.data.library.borrowers.filter(b => b.memberId !== memberId);
         
-        // 最后删除会友记录
+        // 最後刪除會友記錄
         this.data.members = this.data.members.filter(m => m.id !== memberId);
         
         this.save();
     }
 
     /**
-     * 获取全站统计
-     * @returns {object} 统计信息
+     * 獲取全站統計
+     * @returns {object} 統計信息
      */
     getGlobalStatistics() {
         return {
@@ -500,50 +500,50 @@ class ChurchMasterDatabase {
     }
 
     /**
-     * 生成示例数据（用于测试）
+     * 生成示例數據（用於測試）
      */
     generateSampleData() {
-        // 生成会友数据
+        // 生成會友數據
         const sampleMembers = [
-            { id: 1, name: '张三', phone: '13800138001', email: 'zhang@example.com', status: 'active', joinDate: '2024-01-15' },
+            { id: 1, name: '張三', phone: '13800138001', email: 'zhang@example.com', status: 'active', joinDate: '2024-01-15' },
             { id: 2, name: '李四', phone: '13800138002', email: 'li@example.com', status: 'active', joinDate: '2024-02-20' },
             { id: 3, name: '王五', phone: '13800138003', email: 'wang@example.com', status: 'active', joinDate: '2024-03-10' },
-            { id: 4, name: '赵六', phone: '13800138004', email: 'zhao@example.com', status: 'active', joinDate: '2024-04-05' },
-            { id: 5, name: '钱七', phone: '13800138005', email: 'qian@example.com', status: 'active', joinDate: '2024-05-12' }
+            { id: 4, name: '趙六', phone: '13800138004', email: 'zhao@example.com', status: 'active', joinDate: '2024-04-05' },
+            { id: 5, name: '錢七', phone: '13800138005', email: 'qian@example.com', status: 'active', joinDate: '2024-05-12' }
         ];
         
         this.data.members = sampleMembers;
         
-        // 生成敬拜事工数据
+        // 生成敬拜事工數據
         this.data.worship.teams = [
-            { id: 1, name: '敬拜团', category: 'worship', leaderId: 1 },
-            { id: 2, name: '诗班团', category: 'choir', leaderId: 2 },
-            { id: 3, name: '器乐团', category: 'instrument', leaderId: 3 }
+            { id: 1, name: '敬拜團', category: 'worship', leaderId: 1 },
+            { id: 2, name: '詩班團', category: 'choir', leaderId: 2 },
+            { id: 3, name: '器樂團', category: 'instrument', leaderId: 3 }
         ];
         
         this.data.worship.teamMembers = [
-            { id: 1, teamId: 1, memberId: 1, position: '主领', status: 'active' },
+            { id: 1, teamId: 1, memberId: 1, position: '主領', status: 'active' },
             { id: 2, teamId: 1, memberId: 2, position: '伴唱', status: 'active' },
             { id: 3, teamId: 2, memberId: 2, position: '女高音', status: 'active' },
             { id: 4, teamId: 3, memberId: 3, position: '吉他手', status: 'active' }
         ];
         
-        // 生成图书馆数据（包括诗歌）
+        // 生成圖書館數據（包括詩歌）
         this.data.library.books = [
-            { id: 1, title: '新编赞美诗', author: '教会', category: 'music', type: 'song', isbn: '978-1234567890' },
-            { id: 2, title: '圣经', author: '神', category: 'bible', type: 'scripture', isbn: '978-1234567891' },
-            { id: 3, title: '主日学教材', author: '教会', category: 'education', type: 'textbook', isbn: '978-1234567892' }
+            { id: 1, title: '新編讚美詩', author: '教會', category: 'music', type: 'song', isbn: '978-1234567890' },
+            { id: 2, title: '聖經', author: '神', category: 'bible', type: 'scripture', isbn: '978-1234567891' },
+            { id: 3, title: '主日學教材', author: '教會', category: 'education', type: 'textbook', isbn: '978-1234567892' }
         ];
         
         this.save();
-        console.log('✅ 示例数据已生成');
+        console.log('✅ 示例數據已生成');
     }
 }
 
-// 创建全局实例
+// 創建全局實例
 window.churchDB = new ChurchMasterDatabase();
 
-// 导出给其他模块使用
+// 導出給其他模塊使用
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ChurchMasterDatabase;
 }

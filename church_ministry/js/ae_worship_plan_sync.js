@@ -1,5 +1,5 @@
 /**
- * W5+ · 主日策划 ↔ 子页双向同步
+ * W5+ · 主日策劃 ↔ 子頁雙向同步
  */
 (function (win) {
   "use strict";
@@ -118,7 +118,7 @@
     if (hub && hub.songs) {
       songs = hub.songs.slice(0, 3).map(function (s, i) {
         return {
-          slot: ["宣召", "敬拜", "回应"][i] || "诗歌",
+          slot: ["宣召", "敬拜", "回應"][i] || "詩歌",
           title: s.name || s.title,
           status: "draft"
         };
@@ -131,7 +131,7 @@
       }
       if (lib && lib.songs) {
         songs = lib.songs.slice(0, 3).map(function (s, i) {
-          return { slot: ["宣召", "敬拜", "回应"][i] || "诗歌", title: s.name, status: "draft" };
+          return { slot: ["宣召", "敬拜", "回應"][i] || "詩歌", title: s.name, status: "draft" };
         });
       }
     }

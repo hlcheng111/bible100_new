@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>領袖培育路徑 · C 教育培訓 | Church Ministry</title>
+  <link rel="stylesheet" href="../../css/education_workspace.css" />
+  <link rel="stylesheet" href="../../css/cm_responsive_tokens.css" />
+  <script src="../../../js/cloud_config.js"></script>
+  <script src="../../../js/church_data_bridge.js"></script>
+  <style>
+    body.edu-wrap { font-size: 14px; }
+    .lp-guide { background:#eff6ff; border:2px solid #93c5fd; }
+    .lp-guide h3 { margin-top:0; color:#1e3a8a; }
+    .lp-steps { margin:8px 0; padding-left:20px; line-height:1.8; }
+    .lp-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:8px 0; }
+    .lp-row select, .lp-row input { min-height:44px; padding:6px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; }
+    .lp-btn { min-height:44px; margin:4px 6px 4px 0; font-size:14px; }
+    .lp-btn--final { background:#7c2d12; color:#fff; }
+    .lp-status { padding:8px 10px; border-radius:8px; background:#f1f5f9; margin:8px 0; }
+    .lp-status--ok { background:#ecfdf5; color:#065f46; }
+    .lp-status--warn { background:#fffbeb; color:#92400e; }
+    .lp-ready { background:#ecfdf5; border:1px solid #6ee7b7; color:#065f46; border-radius:8px; padding:8px 10px; margin:8px 0; }
+    #lp-checklist { list-style:none; padding:0; margin:6px 0; line-height:1.9; }
+    .lp-ok { color:#047857; }
+    .lp-todo { color:#475569; }
+    .lp-summary { white-space:pre-wrap; background:#fff; border:1px dashed #94a3b8; border-radius:8px; padding:10px; line-height:1.6; }
+    #lp-overview { padding-left:18px; line-height:2; }
+    .lp-link { background:none; border:0; color:#1d4ed8; cursor:pointer; font-size:14px; text-decoration:underline; padding:0; min-height:32px; }
+  </style>
+</head>
+<body class="edu-wrap edu-panel-embed" data-b100-pattern="P-AE-PANEL" data-edu-panel="leader-path">
+  <main class="edu-main" style="max-width:900px;margin:0 auto;padding:12px">
+    <p style="margin:0 0 8px"><a class="edu-btn secondary" href="edu_discipleship.html">← 回「③ 門訓」</a></p>
+
+    <section class="edu-card lp-guide" aria-labelledby="lp-guide-title">
+      <h3 id="lp-guide-title">這一頁怎麼用？（30 秒看懂）</h3>
+      <ol class="lp-steps">
+        <li><strong>選一位會友</strong>（想栽培成小組長的人）。</li>
+        <li>依目前階段，按下方出現的<strong>按鈕</strong>：邀請見習 → 開始見習 → 每帶一次小組按「影隨一次」。</li>
+        <li>看<strong>條件清單</strong>：見習天數、影隨次數、受洗。條件齊了會出現綠色提示。</li>
+        <li><strong>是否晉升由牧者決定</strong>，由牧者在最後按「牧者同意晉升為小組長」。</li>
+      </ol>
+      <p class="muted">本頁只記錄與整理，<strong>不會自動晉升、不會改會友資料、不會替你判斷</strong>。條件數字（90 天、3 次…）可用記事本改 <code>js/cm_leader_path_config.js</code> 最上方的設定。</p>
+    </section>
+
+    <section id="lp-card" class="edu-card" aria-labelledby="lp-title">
+      <h3 id="lp-title">① 選會友，記錄這一步</h3>
+      <div class="lp-row">
+        <label for="lp-member"><strong>會友</strong></label>
+        <select id="lp-member"></select>
+        <label for="lp-date"><strong>日期</strong></label>
+        <input id="lp-date" type="date" aria-label="這一步發生的日期（可補登過去日期）" />
+      </div>
+      <p class="muted">日期預設今天；補登以前的紀錄（例如已見習三個月的人）請改成實際日期。</p>
+      <p id="lp-status" class="lp-status" role="status" hidden></p>
+
+      <div id="lp-detail" hidden>
+        <h4 id="lp-stage" style="margin:12px 0 4px"></h4>
+        <div id="lp-actions"></div>
+        <div id="lp-checklist-wrap">
+          <h4 style="margin:12px 0 4px">晉升條件清單</h4>
+          <ul id="lp-checklist"></ul>
+          <p id="lp-ready" class="lp-ready" hidden>條件已齊，可以請牧者考慮是否晉升。</p>
+        </div>
+        <h4 style="margin:12px 0 4px">進度摘要（可貼到牧者會議）</h4>
+        <pre id="lp-summary" class="lp-summary"></pre>
+        <div class="lp-row">
+          <button type="button" class="edu-btn outline lp-btn" id="lp-copy">複製進度摘要</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="edu-card" aria-labelledby="lp-ov-title">
+      <h3 id="lp-ov-title">② 目前有誰在路上</h3>
+      <ul id="lp-overview"></ul>
+    </section>
+
+    <section class="edu-card" id="lp-kit" aria-labelledby="lp-kit-title">
+      <h3 id="lp-kit-title" data-i18n="cm.p4.leader.kit.title">🤖 用 AI 備一份見習帶領包</h3>
+      <p class="muted" data-i18n="cm.p4.leader.kit.body">幫見習者準備一頁聚會流程、討論三問與回饋表（AI 草稿，須小組長或牧者審核）。</p>
+      <p>
+        <a class="edu-btn outline lp-btn" target="_parent"
+           href="../../../ai_tools/tools/ai_workbench_integrated.html?crm_from=leader_path&amp;scenario=apprentice_kit#tab-prompt"
+           data-i18n="cm.p4.leader.kit.btn">打開帶領包 AI 草稿</a>
+      </p>
+      <h4 style="margin:12px 0 4px" data-i18n="cm.p4.leader.links.title">見習用的 Google 表單</h4>
+      <div id="lp-links"></div>
+      <p id="lp-draft-note" class="muted" hidden data-i18n="cm.p4.draft_note">（VI／ID 為機器草稿，待人工校對）</p>
+    </section>
+  </main>
+  <script src="../../../js/b100_chrome_i18n.js?v=20260725d"></script>
+  <script src="../../js/cm_chrome_i18n_pack.js?v=20261124p4"></script>
+  <script src="../../js/cm_chrome_i18n_boot.js?v=20260725d"></script>
+  <script src="../../js/cm_google_links_config.js?v=20261124p4"></script>
+  <script src="../../js/cm_member_picker.js"></script>
+  <script src="../../js/cm_leader_path_config.js?v=20261124p5"></script>
+  <script src="../../js/cm_leader_path_panel.js?v=20261124p5"></script>
+  <script>
+    (function () {
+      function note() {
+        var el = document.getElementById('lp-draft-note');
+        var I = window.B100ChromeI18n;
+        if (!el || !I || !I.getLocale) return;
+        var l = I.getLocale();
+        el.hidden = !(l === 'vi' || l === 'id');
+      }
+      if (window.CmGoogleLinks) {
+        CmGoogleLinks.renderRows(document.getElementById('lp-links'), ['apprentice_feedback_form'], document);
+      }
+      if (window.B100CmI18nBoot) {
+        try { B100CmI18nBoot.boot({ langHost: false, onChange: note }); } catch (e) {}
+      }
+      note();
+    })();
+  </script>
+</body>
+</html>

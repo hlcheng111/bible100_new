@@ -1,14 +1,14 @@
 /**
- * B 牧养 · 牧羊导览 landing 互动
+ * B 牧養 · 牧羊導覽 landing 互動
  */
 (function (win, doc) {
   "use strict";
 
   var COMPANION_SPEECH = {
-    han: "我是瀚声。牧养不是追数字，是<strong>数算羊群</strong>（箴 27:23）。请走<strong>牧者守望</strong>，先看本周谁被遗漏。",
-    lin: "我是林心。组长不必写长篇报告——记一件<strong>微小胜利</strong>就好；系统只帮你整理草稿。",
-    an: "我是安慈。新朋友、病患、久没来的人——<strong>关怀之路</strong>帮你列清单，探访仍由人决定。",
-    xin: "我是信实。你若只是来聚会，走<strong>被牧养之路</strong>；这里不逼你填行政表。"
+    han: "我是瀚聲。牧養不是追數字，是<strong>數算羊群</strong>（箴 27:23）。請走<strong>牧者守望</strong>，先看本週誰被遺漏。",
+    lin: "我是林心。組長不必寫長篇報告——記一件<strong>微小勝利</strong>就好；系統只幫你整理草稿。",
+    an: "我是安慈。新朋友、病患、久沒來的人——<strong>關懷之路</strong>幫你列清單，探訪仍由人決定。",
+    xin: "我是信實。你若只是來聚會，走<strong>被牧養之路</strong>；這裡不逼你填行政表。"
   };
 
   function esc(s) {
@@ -80,7 +80,7 @@
         var badge =
           route.status === "live"
             ? ""
-            : '<span class="route-badge">逐步开放</span>';
+            : '<span class="route-badge">逐步開放</span>';
         var stops =
           '<ul class="route-stops">' +
           route.stops
@@ -106,7 +106,7 @@
           stops +
           '<a class="route-start" href="' +
           href(route.start) +
-          '">从此路开始 →</a>' +
+          '">從此路開始 →</a>' +
           "</article>"
         );
       })

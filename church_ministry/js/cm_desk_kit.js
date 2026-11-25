@@ -1,5 +1,5 @@
 /**
- * 子頁薄殼：回主桌 + 一句话用途（B 磨平同水準）
+ * 子頁薄殼：回主桌 + 一句話用途（B 磨平同水準）
  */
 (function (doc, win) {
   "use strict";
@@ -23,7 +23,7 @@
     if (doc.getElementById("cm-desk-bar")) return;
     if (doc.body && doc.body.getAttribute("data-cm-desk-kit") === "off") return;
     if (/\/desks\//i.test(win.location.pathname || "")) return;
-    // 勿污染 Standalone 雙欄殼與側欄
+    // 勿汙染 Standalone 雙欄殼與側欄
     if (doc.getElementById("contentFrame") || doc.getElementById("sidebarFrame")) return;
     if (doc.body && /P-CM-STANDALONE|sidebar/i.test(doc.body.getAttribute("data-b100-pattern") || "")) return;
     var reg = win.CmDeskRegistry;

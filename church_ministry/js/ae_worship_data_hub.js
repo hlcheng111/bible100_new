@@ -1,5 +1,5 @@
 /**
- * W3 · A 敬拜数据枢纽（子页聚合 · 完整性 · 探访／财务草稿）
+ * W3 · A 敬拜數據樞紐（子頁聚合 · 完整性 · 探訪／財務草稿）
  */
 (function (win) {
   "use strict";
@@ -22,6 +22,25 @@
     localStorage.setItem(key, JSON.stringify(val));
   }
 
+  /**
+   * 出席資料一律問出席總帳（主線＝簽到桶）。
+   * 總帳沒載入時才退回舊桶 attendanceRecords（舊桶是「一場一筆」，這裡攤平成「一人一列」）。
+   */
+  function readAttendanceFlat() {
+    if (win.AttendanceLedger) return win.AttendanceLedger.flatRows({ type: "worship" });
+    var rows = [];
+    readJson("attendanceRecords", []).forEach(function (s) {
+      if (s && s.marks) {
+        Object.keys(s.marks).forEach(function (id) {
+          rows.push({ date: s.date, service: s.service, memberId: id, memberName: "", status: s.marks[id] === "P" ? "present" : "absent" });
+        });
+      } else if (s && s.status) {
+        rows.push(s);
+      }
+    });
+    return rows;
+  }
+
   function listMasterMembers() {
     if (win.CentralMemberDB) return win.CentralMemberDB.get().members || [];
     if (win.churchDB && win.churchDB.data) return win.churchDB.data.members || [];
@@ -41,7 +60,7 @@
     var team = readJson("worshipTeamData", { members: [], schedules: [], songs: [] });
     var choir = readJson("choir_members", []);
     var flow = readJson("church_ministry_choir_flow_v1", {});
-    var attendance = readJson("attendanceRecords", []);
+    var attendance = readAttendanceFlat();
     var intents = readJson("worship_crm_intents_v1", []);
     var aiDrafts = readJson("worship_rehearsal_drafts_v1", []);
     var visitation = readJson(VISITATION_KEY, []);
@@ -94,15 +113,15 @@
     var team = readJson("worshipTeamData", { members: [] });
     (team.members || []).forEach(function (m) {
       if (m.memberId != null && !ids[String(m.memberId)]) {
-        issues.push("敬拜团成员 " + m.name + " memberId=" + m.memberId + " 无会友主档");
+        issues.push("敬拜團成員 " + m.name + " memberId=" + m.memberId + " 無會友主檔");
       }
       if (!m.memberId && m.name) {
-        issues.push("敬拜团成员 " + m.name + " 未对齐 memberId");
+        issues.push("敬拜團成員 " + m.name + " 未對齊 memberId");
       }
     });
     readJson("choir_members", []).forEach(function (m) {
       if (m.memberId != null && !ids[String(m.memberId)]) {
-        issues.push("诗班 " + m.name + " memberId 孤儿");
+        issues.push("詩班 " + m.name + " memberId 孤兒");
       }
     });
     return { ok: issues.length === 0, issues: issues, checkedAt: new Date().toISOString() };
@@ -119,7 +138,7 @@
           id: Date.now() + idx,
           date: s.date,
           serviceType: "主日崇拜",
-          theme: "敬拜团排班同步",
+          theme: "敬拜團排班同步",
           status: "pending",
           source: "worshipTeamData",
           meta: { lead: s.lead, keyboard: s.keyboard }
@@ -144,7 +163,7 @@
       id: "vd-" + Date.now(),
       memberId: hit ? (hit.memberId || hit.id) : record.memberId,
       memberName: record.memberName || (hit && hit.name) || "未知",
-      reason: "崇拜缺席关怀",
+      reason: "崇拜缺席關懷",
       serviceDate: record.date,
       status: "draft",
       note: record.notes || "",
@@ -156,7 +175,7 @@
   }
 
   function scanAttendanceForVisitation() {
-    var attendance = readJson("attendanceRecords", []);
+    var attendance = readAttendanceFlat();
     var added = 0;
     attendance.filter(function (r) { return r.status === "absent"; }).forEach(function (r) {
       var list = readJson(VISITATION_KEY, []);
@@ -181,12 +200,12 @@
     return Math.round(Math.abs(d2 - d1) / (7 * 24 * 60 * 60 * 1000));
   }
 
-  /** W6 · 连续缺席预警（默认 3 周内 ≥3 次 absent） */
+  /** W6 · 連續缺席預警（默認 3 周內 ≥3 次 absent） */
   function scanBurnoutSignals(opts) {
     opts = opts || {};
     var minAbsences = opts.minAbsences || 3;
     var windowWeeks = opts.windowWeeks || 4;
-    var attendance = readJson("attendanceRecords", []);
+    var attendance = readAttendanceFlat();
     var cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - windowWeeks * 7);
     var byMember = {};
@@ -209,7 +228,7 @@
           memberName: item.name,
           memberId: item.memberId,
           weeksAbsent: item.dates.length,
-          reason: "连续/多次崇拜缺席",
+          reason: "連續/多次崇拜缺席",
           dates: item.dates.slice(0, 5),
           severity: item.dates.length >= 5 ? "high" : "medium"
         });
@@ -234,9 +253,9 @@
   function financePrefillFromIntent(intent) {
     var prefill = {
       at: new Date().toISOString(),
-      category: "敬拜活动交费",
+      category: "敬拜活動交費",
       amount: "",
-      memo: (intent && intent.label) || "敬拜活动",
+      memo: (intent && intent.label) || "敬拜活動",
       intentType: intent && intent.type,
       page: intent && intent.page,
       status: "draft"

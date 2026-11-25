@@ -123,7 +123,7 @@
       emoji: "🧭",
       title: "教會事工怎麼走",
       blurb: "規劃｜日常認路",
-      href: "vision_and_plan.html#how-to-walk",
+      href: "_archive/root_noise_20261017/vision_and_plan.html#how-to-walk",
       zone: "0"
     }
   ];

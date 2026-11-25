@@ -23,7 +23,9 @@
     };
   }
 
+  /** S1 今日視線：羅盤「今日」進 layout 告示（內含與 dashboard 同源三塊） */
   var TODAY = "../dashboard_church_layout_v1_content.html";
+  var TODAY_CRM = "../dashboard.html";
   var EDU = "../modules/education/education-integrated.html";
   var OUT = "../modules/expansion/outreach-integrated.html";
 
@@ -35,16 +37,16 @@
       titleZh: "教會總羅盤",
       titleEn: "Compass",
       kicker: "Church",
-      lead: "先點一區，看這區能做什麼，再進門。八區顏色不同，好認路。",
-      leadEn: "Pick a zone, see what it does, then enter.",
-      primaryHref: "#cm-mosaic",
-      primaryLabel: "選一區",
-      primaryLabelEn: "Pick zone",
+      lead: "今天三步做完，再進八區。",
+      leadEn: "Three steps today, then zones.",
+      primaryHref: "#cm-today-steps",
+      primaryLabel: "看今日三步",
+      primaryLabelEn: "Today steps",
       ghostHref: TODAY,
-      ghostLabel: "今日告示",
-      ghostLabelEn: "Today",
-      preface: "點色塊 → 下方出現路線 → 進正式頁。不開第二套側欄。",
-      prefaceEn: "Tap → routes below → real pages.",
+      ghostLabel: "完整視線",
+      ghostLabelEn: "Full sightline",
+      preface: "",
+      prefaceEn: "",
       flows: [
         { id: "sunday", label: "主日", labelEn: "Sunday", focus: "a" },
         { id: "care", label: "關懷", labelEn: "Care", focus: "b" },
@@ -79,8 +81,8 @@
           hint: "主日學五 Tab",
           hintEn: "SS desk",
           tone: "靛",
-          blurb: "主日學名冊、出席、門訓、備課都在教育工作桌。",
-          blurbEn: "Roster, attendance, discipleship, prep — one desk.",
+          blurb: "主日學名冊、出席、門訓、備課；門徒下一步與領袖觀察同一路徑。",
+          blurbEn: "SS desk; disciple→leader same path.",
         },
         {
           id: "d",
@@ -175,27 +177,45 @@
       titleZh: "B 牧養關懷",
       titleEn: "Care",
       kicker: "B",
-      lead: "關懷閉環：整合桌看全貌 → 探訪 → 預警再跟進。",
-      leadEn: "Desk → visit → alerts.",
+      lead: "關懷閉環：整合桌看全貌 → 探訪 → 預警再跟進。3 分鐘也可先產「跟新人」AI 草稿（須人審）。",
+      leadEn: "Desk → visit → alerts. Or 3-min newcomer draft (human review).",
       primaryHref: "../modules/fellowship/pastoral-integrated.html",
       primaryLabel: "開牧養整合",
       primaryLabelEn: "Care desk",
       ghostHref: "gateway.html",
       ghostLabel: "回總羅盤",
       ghostLabelEn: "Compass",
-      preface: "點一環，下方出現可點的真頁。",
-      prefaceEn: "Tap a ring — real pages below.",
+      preface: "弗 4：成全而非管理人。點一環進真頁；AI 只建議、不作紀律裁決。",
+      prefaceEn: "Eph 4 · AI suggests only. Tap a ring — real pages below.",
       nodes: [
         N("desk", "牧養整合", "Desk", "關懷總桌", "小白從這裡看故事與該跟進的人。", [
           R("../modules/fellowship/pastoral-integrated.html", "進入牧養整合", "Open desk", "主入口"),
         ]),
-        N("visit", "探訪", "Visit", "名單與紀錄", "記探訪、排下次跟進。", [
+        N("visit", "探訪", "Visit", "名單與紀錄", "記探訪、排下次跟進。可先用 AI 產新人／探訪草稿再人審預填。", [
           R("../modules/fellowship/pastoral_visitation_panel.html", "打開探訪面板", "Visits", ""),
           R("../modules/support/visitation_index.html", "探訪索引", "Index", ""),
+          R(
+            "../../ai_tools/tools/ai_workbench_integrated.html?crm_from=cm_b&scenario=newcomer_follow#tab-prompt",
+            "3 分鐘：跟一位新人（AI 草稿）",
+            "Newcomer draft",
+            "無 API · 人審"
+          ),
+          R(
+            "../../ai_tools/tools/ai_workbench_integrated.html?crm_from=cm_b&scenario=visit_note#tab-prompt",
+            "探訪記錄草稿",
+            "Visit note",
+            "無 API · 人審"
+          ),
         ]),
         N("alert", "預警", "Alerts", "該關心誰", "優先名單；也可接到出席。", [
           R("../modules/fellowship/pastoral_alerts_panel.html", "打開預警", "Alerts", ""),
           R("attendance.html", "去出席系統", "Attend", "H 區"),
+        ]),
+        N("golden", "豐盛金齡", "Golden Age", "50+ 第三里程", "安全門：安息與服侍兩線同等尊嚴；先同意與停損，再談崗位。", [
+          R("../modules/fellowship/golden-age-hub.html", "打開金齡安全門", "Hub", "主入口"),
+          R("../modules/fellowship/golden-age-consent.html", "知情同意", "Consent", "W0"),
+          R("../modules/fellowship/golden-age-failsafe.html", "失敗指標／停損", "Failsafe", "W0"),
+          R("../modules/fellowship/golden-age-referral.html", "轉介資源", "Referral", "W1"),
         ]),
       ],
     },
@@ -207,16 +227,16 @@
       titleZh: "C 教育培訓",
       titleEn: "Teach",
       kicker: "C",
-      lead: "主日學都在「教育工作桌」五個 Tab。點 Tab 看怎麼進。",
-      leadEn: "One SS desk, five tabs.",
+      lead: "主日學五 Tab＝門徒裝備桌。領袖培育不另開站：今日視線「路徑下一步」→ 會友成長 → 回這裡門訓 Tab。",
+      leadEn: "SS desk = disciple path; leader = same path, not a new site.",
       primaryHref: EDU + "#tab-guide",
       primaryLabel: "開教育工作桌",
       primaryLabelEn: "SS desk",
       ghostHref: "gateway.html",
       ghostLabel: "回總羅盤",
       ghostLabelEn: "Compass",
-      preface: "正式入口只有教育工作桌（不是示範工作台）。",
-      prefaceEn: "Real desk only — no demo bench.",
+      preface: "門徒→領袖同一條路。備一課可用 AI 草稿（無 API、人審）。",
+      prefaceEn: "Disciple→leader one path · optional AI lesson draft.",
       nodes: [
         N("guide", "導覽", "Guide", "工作桌首 Tab", "進桌先看導覽，知道五 Tab 怎麼用。", [
           R(EDU + "#tab-guide", "打開導覽 Tab", "Guide", "主入口"),
@@ -231,8 +251,14 @@
         N("disc", "門訓", "Disciple", "門徒培育", "門訓相關 Tab。", [
           R(EDU + "#tab-discipleship", "打開門訓 Tab", "Disciple", ""),
         ]),
-        N("teach", "備課", "Teach", "教材備課", "備課 Tab；更深可去聖經研讀。", [
+        N("teach", "備課", "Teach", "教材備課", "備課 Tab；或 3 分鐘 AI 教案草稿（複製到 Gemini／ChatGPT，人審後用）。", [
           R(EDU + "#tab-teaching", "打開備課 Tab", "Teach", ""),
+          R(
+            "../../ai_tools/tools/ai_workbench_integrated.html?crm_from=cm_c&scenario=lesson_plan#tab-prompt",
+            "3 分鐘：備一課（AI 草稿）",
+            "Lesson draft",
+            "無 API · 人審"
+          ),
           R("../../bible_study/workbench.html", "聖經研讀", "Study", "跨模組"),
         ]),
       ],
@@ -328,7 +354,8 @@
         ]),
         N("admin", "行政桌", "Admin", "營運", "行政營運工作桌。", [
           R("../modules/admin/admin-integrated.html", "打開行政桌", "Admin", ""),
-          R(TODAY, "今日告示板", "Today", "內容頁"),
+          R(TODAY, "今日視線", "Today sightline", "三塊同源"),
+          R(TODAY_CRM, "CRM 儀表（完整）", "CRM dashboard", "含 KPI"),
         ]),
       ],
     },
@@ -361,6 +388,11 @@
         ]),
         N("3", "營運手冊", "Guide", "怎麼用", "不熟流程先讀這份。", [
           R("../docs/ATTENDANCE_OPS_HANDBOOK.html", "打開手冊", "Guide", ""),
+        ]),
+        N("4", "歸屬", "Belong", "可選可拒", "出席後可邀認識小組／金齡安靜參與——不逼量表、不逼服侍。", [
+          R("../modules/fellowship/golden-age-hub.html?crm_from=h_step4", "金齡安全門", "Golden", "可選"),
+          R("../modules/fellowship/newcomer-self-register.html", "新人自助登記", "Register", ""),
+          R("../modules/fellowship/pastoral-integrated.html?role=member#tab-groups", "認識小組", "Groups", ""),
         ]),
       ],
     },

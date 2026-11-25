@@ -1,5 +1,5 @@
 /**
- * A 敬拜 W1 · 六项区块自动注入（批量套用诗班模板）
+ * A 敬拜 W1 · 六項區塊自動注入（批量套用詩班模板）
  */
 (function (doc, win) {
   "use strict";
@@ -56,15 +56,15 @@
     var landing = cmPre + "_landing/worship.html";
     var integrated = cmPre + (isMedia ? "modules/worship/worship-integrated.html" : "worship-integrated.html");
     var anchors =
-      '<nav class="anchor-nav" aria-label="敬拜六项">' +
-      '<a href="#ae-worship-meaning">① 意义</a>' +
-      '<a href="#ae-worship-org">② 组织</a>' +
-      '<a href="#ae-worship-training">③ 训练</a>' +
+      '<nav class="anchor-nav" aria-label="敬拜六項">' +
+      '<a href="#ae-worship-meaning">① 意義</a>' +
+      '<a href="#ae-worship-org">② 組織</a>' +
+      '<a href="#ae-worship-training">③ 訓練</a>' +
       '<a href="#ae-worship-performance">④ 演出</a>' +
-      '<a href="#ae-worship-activities">⑤ 活动</a>' +
-      '<a href="#ae-worship-scores">⑥ 乐谱</a>' +
+      '<a href="#ae-worship-activities">⑤ 活動</a>' +
+      '<a href="#ae-worship-scores">⑥ 樂譜</a>' +
       '<a href="#ae-worship-tool">⑦ 工具</a>' +
-      '<a href="#ae-worship-bridge">互联</a>' +
+      '<a href="#ae-worship-bridge">互聯</a>' +
       '<a href="#ae-worship-next">填完去哪</a>' +
       "</nav>";
 
@@ -75,25 +75,25 @@
       .join("");
 
     var theoryBlock =
-      section("ae-worship-meaning", "① 事工意义", cfg.meaning || "") +
-      section("ae-worship-org", "② 组织", cfg.org || "") +
-      section("ae-worship-training", "③ 训练", cfg.training || "") +
+      section("ae-worship-meaning", "① 事工意義", cfg.meaning || "") +
+      section("ae-worship-org", "② 組織", cfg.org || "") +
+      section("ae-worship-training", "③ 訓練", cfg.training || "") +
       section("ae-worship-performance", "④ 演出", cfg.performance || "") +
-      section("ae-worship-activities", "⑤ 活动", cfg.activities || "") +
-      section("ae-worship-scores", "⑥ 乐谱", cfg.scores || "");
+      section("ae-worship-activities", "⑤ 活動", cfg.activities || "") +
+      section("ae-worship-scores", "⑥ 樂譜", cfg.scores || "");
     if (cfg.mode === "tool") {
       theoryBlock =
-        '<details class="ae-worship-theory-fold"><summary>📖 事工说明（点击展开 ①–⑥）</summary>' +
+        '<details class="ae-worship-theory-fold"><summary>📖 事工說明（點擊展開 ①–⑥）</summary>' +
         theoryBlock +
         "</details>";
     }
 
     return (
       '<div class="ae-worship-shell" id="ae-worship-shell-root">' +
-      '<nav class="top-nav" aria-label="页面导航">' +
-      '<span class="lbl">本页导航</span>' +
-      '<a href="' + landing + '">🌳 敬拜花园</a>' +
-      '<a href="' + cmPre + (isMedia ? "modules/worship/" : "") + 'worship-together.html">🕊️ 会众筑坛</a>' +
+      '<nav class="top-nav" aria-label="頁面導航">' +
+      '<span class="lbl">本頁導航</span>' +
+      '<a href="' + landing + '">🌳 敬拜花園</a>' +
+      '<a href="' + cmPre + (isMedia ? "modules/worship/" : "") + 'worship-together.html">🕊️ 會眾築壇</a>' +
       '<a href="' + integrated + '?view=volunteer">🙋 我的服事</a>' +
       '<a href="' + integrated + '?view=leader">敬拜工作台</a>' +
       '<a href="' + cmPre + 'dashboard.html">⛪ 事工中心</a>' +
@@ -107,13 +107,13 @@
       theoryBlock +
       '<section id="ae-worship-tool" class="section-block">' +
       "<h2>" +
-      esc(cfg.toolLabel || "⑦ 本页工具") +
+      esc(cfg.toolLabel || "⑦ 本頁工具") +
       "</h2>" +
       '<div class="ae-worship-tool-host" id="ae-worship-tool-host"></div>' +
       "</section>" +
       '<section id="ae-worship-bridge" class="section-block">' +
-      "<h2>🔗 模块互联</h2>" +
-      '<p class="section-lead">AI 只预填草稿，不自动派工。</p>' +
+      "<h2>🔗 模塊互聯</h2>" +
+      '<p class="section-lead">AI 只預填草稿，不自動派工。</p>' +
       (cfg.bridgeHtml || "") +
       '<div id="ae-worship-bridge-extras"></div>' +
       '<div id="ae-worship-hub-strip"></div>' +
@@ -150,19 +150,19 @@
     var count = win.MemberIdBridge ? (win.MemberIdBridge.listMembers().length) : 0;
     host.innerHTML =
       '<div class="ae-member-bridge">' +
-      '<p class="section-lead"><strong>W2 敬拜团对齐：</strong> <code>worshipTeamData</code> 成员 + 排班姓名槽位 → memberId</p>' +
-      '<button type="button" class="fbtn" id="aeWorshipTeamLinkBtn">对齐敬拜团嵌套数据</button> ' +
+      '<p class="section-lead"><strong>W2 敬拜團對齊：</strong> <code>worshipTeamData</code> 成員 + 排班姓名槽位 → memberId</p>' +
+      '<button type="button" class="fbtn" id="aeWorshipTeamLinkBtn">對齊敬拜團嵌套數據</button> ' +
       '<span id="aeWorshipTeamLinkStatus"></span> ' +
       '<a class="fbtn" style="text-decoration:none;display:inline-block;" href="' +
-      (cmPre + "modules/members/member-integrated.html") + '">会友主档</a>' +
-      '<small style="display:block;margin-top:4px;color:#64748b;">会友 ' + count + ' 人 · 先载入中央会友再对齐</small></div>';
+      (cmPre + "modules/members/member-integrated.html") + '">會友主檔</a>' +
+      '<small style="display:block;margin-top:4px;color:#64748b;">會友 ' + count + ' 人 · 先載入中央會友再對齊</small></div>';
     var btn = doc.getElementById("aeWorshipTeamLinkBtn");
     var st = doc.getElementById("aeWorshipTeamLinkStatus");
     if (btn) {
       btn.addEventListener("click", function () {
         var stats = win.WorshipTeamBridge.autoLinkAll();
         if (st) {
-          st.textContent = "成员 " + stats.membersLinked + "/" + stats.membersTotal +
+          st.textContent = "成員 " + stats.membersLinked + "/" + stats.membersTotal +
             " · 排班槽 " + stats.scheduleSlots;
         }
         win.dispatchEvent(new CustomEvent("worshipTeamLinked", { detail: stats }));

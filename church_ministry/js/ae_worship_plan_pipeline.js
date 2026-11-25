@@ -1,15 +1,15 @@
 /**
- * W5 · 主日崇拜一键策划 Kanban / 全景 UI（部长视角）
+ * W5 · 主日崇拜一鍵策劃 Kanban / 全景 UI（部長視角）
  */
 (function (win, doc) {
   "use strict";
 
   var STEPS = [
-    { id: "pulpit", label: "讲题已定", icon: "📖" },
-    { id: "songs", label: "选歌中", icon: "🎵" },
-    { id: "teams", label: "人力锁定", icon: "👥" },
-    { id: "rehearsal", label: "总彩排", icon: "🎼" },
-    { id: "ready", label: "主日就绪", icon: "✅" }
+    { id: "pulpit", label: "講題已定", icon: "📖" },
+    { id: "songs", label: "選歌中", icon: "🎵" },
+    { id: "teams", label: "人力鎖定", icon: "👥" },
+    { id: "rehearsal", label: "總彩排", icon: "🎼" },
+    { id: "ready", label: "主日就緒", icon: "✅" }
   ];
 
   function esc(s) {
@@ -35,7 +35,7 @@
         statusClass(st) +
         '" data-step="' +
         step.id +
-        '" title="点击推进状态">' +
+        '" title="點擊推進狀態">' +
         '<span class="w5-step-icon">' +
         step.icon +
         "</span>" +
@@ -43,7 +43,7 @@
         esc(step.label) +
         "</span>" +
         '<span class="w5-step-state">' +
-        esc(st === "done" ? "完成" : st === "draft" ? "进行中" : st === "blocked" ? "卡关" : "待开始") +
+        esc(st === "done" ? "完成" : st === "draft" ? "進行中" : st === "blocked" ? "卡關" : "待開始") +
         "</span>" +
         "</button>";
       if (i < STEPS.length - 1) {
@@ -68,42 +68,42 @@
             })
             .join("") +
           "</ul>"
-        : "<p class=\"w5-muted\">尚未选歌 · <a href=\"congregational-songs.html\">会众诗歌</a></p>";
+        : "<p class=\"w5-muted\">尚未選歌 · <a href=\"congregational-songs.html\">會眾詩歌</a></p>";
     return (
       '<div class="w5-panorama">' +
-      '<div class="w5-pane"><h4>📖 讲台</h4>' +
+      '<div class="w5-pane"><h4>📖 講台</h4>' +
       "<p><strong>" +
       esc(p.speaker || "—") +
       "</strong></p>" +
       "<p>" +
-      esc(p.sermonTitle || "待定讲题") +
+      esc(p.sermonTitle || "待定講題") +
       "</p>" +
       "<p class=\"w5-muted\">" +
       esc(p.scripture || "") +
-      '</p><a href="pulpit-ministry.html">编辑讲台 →</a></div>' +
-      '<div class="w5-pane"><h4>🎵 诗歌</h4>' +
+      '</p><a href="pulpit-ministry.html">編輯講台 →</a></div>' +
+      '<div class="w5-pane"><h4>🎵 詩歌</h4>' +
       songsHtml +
-      '<a href="song-library.html">诗歌库 →</a></div>' +
-      '<div class="w5-pane"><h4>👥 祭司与兵器</h4>' +
-      "<p>主领：" +
+      '<a href="song-library.html">詩歌庫 →</a></div>' +
+      '<div class="w5-pane"><h4>👥 祭司與兵器</h4>' +
+      "<p>主領：" +
       esc(t.worship_lead || "—") +
       "</p>" +
-      "<p>诗班：" +
+      "<p>詩班：" +
       esc(t.choir || "—") +
       "</p>" +
-      "<p>音响：" +
+      "<p>音響：" +
       esc(t.sound || "—") +
       " · 直播：" +
       esc(t.stream || "—") +
       "</p>" +
       "<p>招待：" +
       esc(t.hospitality || "—") +
-      '</p><a href="worship-team-management.html">敬拜团 →</a> · <a href="../media/audio-team.html">音响 →</a></div>' +
-      '<div class="w5-pane"><h4>📋 礼仪</h4>' +
-      "<p>主题：" +
+      '</p><a href="worship-team-management.html">敬拜團 →</a> · <a href="../media/audio-team.html">音響 →</a></div>' +
+      '<div class="w5-pane"><h4>📋 禮儀</h4>' +
+      "<p>主題：" +
       esc(plan.theme || "—") +
       "</p>" +
-      "<p>圣历：" +
+      "<p>聖歷：" +
       esc(plan.liturgySeason || "—") +
       (plan.liturgyColor ? ' <span class="w5-color-' + esc(plan.liturgyColor) + '">●</span>' : "") +
       "</p>" +
@@ -113,7 +113,7 @@
       esc(rh.time || "") +
       " @ " +
       esc(rh.place || "") +
-      '</p><a href="worship-management.html">崇拜礼仪 →</a></div>' +
+      '</p><a href="worship-management.html">崇拜禮儀 →</a></div>' +
       "</div>"
     );
   }
@@ -128,10 +128,10 @@
     if (!plan) {
       host.innerHTML =
         '<div class="w5-plan-empty">' +
-        "<h3>🏛️ 主日崇拜一键策划</h3>" +
-        "<p>在同一张画面联动：讲台 · 诗歌 · 敬拜团 · 诗班 · 影音 · 招待。</p>" +
-        '<button type="button" class="volunteer-btn" id="w5SeedDemo">🔍 先看示范崇拜（圣灵降临期）</button> ' +
-        '<button type="button" class="volunteer-btn" id="w5NewPlan">➕ 新建本场策划</button>' +
+        "<h3>🏛️ 主日崇拜一鍵策劃</h3>" +
+        "<p>在同一張畫面聯動：講台 · 詩歌 · 敬拜團 · 詩班 · 影音 · 招待。</p>" +
+        '<button type="button" class="volunteer-btn" id="w5SeedDemo">🔍 先看示範崇拜（聖靈降臨期）</button> ' +
+        '<button type="button" class="volunteer-btn" id="w5NewPlan">➕ 新建本場策劃</button>' +
         "</div>";
       wireEmpty(host);
       return;
@@ -144,22 +144,22 @@
     host.innerHTML =
       '<div class="w5-plan-root">' +
       '<div class="w5-plan-head">' +
-      "<h3>🏛️ 主日崇拜策划 · " +
+      "<h3>🏛️ 主日崇拜策劃 · " +
       esc(plan.date) +
       "</h3>" +
       '<div class="w5-plan-actions">' +
-      '<button type="button" class="volunteer-btn" id="w5SeedDemo">示范</button>' +
+      '<button type="button" class="volunteer-btn" id="w5SeedDemo">示範</button>' +
       '<button type="button" class="volunteer-btn" id="w5NewPlan">新建</button>' +
-      '<button type="button" class="volunteer-btn" id="w5SyncSub">↻ 从子页同步</button>' +
-      '<button type="button" class="volunteer-btn" id="w5PushSub">↗ 写回讲台</button>' +
-      '<button type="button" class="volunteer-btn" id="w5ExportCsv" data-w2-report="worship-plan-csv">⬇ 策划 CSV</button>' +
-      '<button type="button" class="volunteer-btn" id="w5PrintPlan" data-w2-report="worship-plan-print">🖨 列印简报</button>' +
+      '<button type="button" class="volunteer-btn" id="w5SyncSub">↻ 從子頁同步</button>' +
+      '<button type="button" class="volunteer-btn" id="w5PushSub">↗ 寫回講台</button>' +
+      '<button type="button" class="volunteer-btn" id="w5ExportCsv" data-w2-report="worship-plan-csv">⬇ 策劃 CSV</button>' +
+      '<button type="button" class="volunteer-btn" id="w5PrintPlan" data-w2-report="worship-plan-print">🖨 列印簡報</button>' +
       '<select id="w5PlanSelect" class="w5-select"></select>' +
       "</div></div>" +
       alerts +
       renderPipelineBar(plan) +
       renderPanorama(plan) +
-      '<p class="w5-muted">数据键 <code>worship_sunday_plan_v1</code> · 点击流程格可推进状态（人审后存档，不自动派工）</p>' +
+      '<p class="w5-muted">數據鍵 <code>worship_sunday_plan_v1</code> · 點擊流程格可推進狀態（人審後存檔，不自動派工）</p>' +
       "</div>";
     wirePlan(host, plan);
   }
@@ -214,7 +214,7 @@
     if (pushBtn && win.WorshipPlanSync) {
       pushBtn.addEventListener("click", function () {
         win.WorshipPlanSync.syncAllToSubpages();
-        alert("已写回讲台讲道计划（pulpit_sermons）");
+        alert("已寫回講台講道計劃（pulpit_sermons）");
       });
     }
     var csvBtn = doc.getElementById("w5ExportCsv");
@@ -258,7 +258,7 @@
     return s;
   }
 
-  /** W2 · 主日策划长执报告 */
+  /** W2 · 主日策劃長執報告 */
   function exportPlanCsv(plan) {
     var p = plan.pulpit || {};
     var t = plan.teams || {};
@@ -308,36 +308,36 @@
     }).join("");
     var w = win.open("", "_blank");
     if (!w) {
-      alert("无法开启列印视窗（请允许弹出）");
+      alert("無法開啟列印視窗（請允許彈出）");
       return;
     }
     w.document.write(
-      '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>主日策划简报</title>' +
+      '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>主日策劃簡報</title>' +
         "<style>body{font-family:Microsoft JhengHei,sans-serif;font-size:13px;padding:18px;line-height:1.5}" +
         "h1{font-size:18px}h2{font-size:14px;margin-top:16px}ul{margin:6px 0}</style></head><body>" +
-        "<h1>主日崇拜策划 · " +
+        "<h1>主日崇拜策劃 · " +
         esc(plan.date) +
         "</h1>" +
-        "<p>主题：" +
+        "<p>主題：" +
         esc(plan.theme || "—") +
-        " · 圣历：" +
+        " · 聖歷：" +
         esc(plan.liturgySeason || "—") +
         "</p>" +
-        "<h2>讲台</h2><p>" +
+        "<h2>講台</h2><p>" +
         esc(p.speaker || "—") +
         " · " +
         esc(p.sermonTitle || "待定") +
         "<br>" +
         esc(p.scripture || "") +
         "</p>" +
-        "<h2>诗歌</h2><ul>" +
-        (songs || "<li>（无）</li>") +
+        "<h2>詩歌</h2><ul>" +
+        (songs || "<li>（無）</li>") +
         "</ul>" +
-        "<h2>人力</h2><p>主领：" +
+        "<h2>人力</h2><p>主領：" +
         esc(t.worship_lead || "—") +
-        " · 诗班：" +
+        " · 詩班：" +
         esc(t.choir || "—") +
-        "<br>音响：" +
+        "<br>音響：" +
         esc(t.sound || "—") +
         " · 直播：" +
         esc(t.stream || "—") +
@@ -351,7 +351,7 @@
         " @ " +
         esc(rh.place || "") +
         "</p>" +
-        "<h2>流程状态</h2><ul>" +
+        "<h2>流程狀態</h2><ul>" +
         pipe +
         "</ul>" +
         "<script>window.onload=function(){window.print();}</" +

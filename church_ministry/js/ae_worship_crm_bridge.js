@@ -1,5 +1,5 @@
 /**
- * W2 · 敬拜 A 区 CRM 实链（注册 / 交费 / 媒合）
+ * W2 · 敬拜 A 區 CRM 實鏈（註冊 / 交費 / 媒合）
  */
 (function (win, doc) {
   "use strict";
@@ -66,13 +66,13 @@
     var L = links(pid);
     host.innerHTML =
       '<div class="ae-crm-actions">' +
-      '<p class="section-lead"><strong>W2 CRM 实链</strong>（点击写入意向草稿 <code>' + INTENT_KEY + '</code>，不自动扣款／派工）</p>' +
+      '<p class="section-lead"><strong>W2 CRM 實鏈</strong>（點擊寫入意向草稿 <code>' + INTENT_KEY + '</code>，不自動扣款／派工）</p>' +
       '<div class="ae-crm-btn-row">' +
-      '<a class="ae-crm-btn" href="' + L.registerMember + '" data-intent="register">📥 新员注册／载入会友</a>' +
-      '<a class="ae-crm-btn" href="' + L.crmJourney + '" data-intent="journey">🙋 事奉旅程报名</a>' +
+      '<a class="ae-crm-btn" href="' + L.registerMember + '" data-intent="register">📥 新員註冊／載入會友</a>' +
+      '<a class="ae-crm-btn" href="' + L.crmJourney + '" data-intent="journey">🙋 事奉旅程報名</a>' +
       '<a class="ae-crm-btn" href="' + L.matchmaker + '" data-intent="matchmaker">💼 人才媒合中心</a>' +
-      '<a class="ae-crm-btn" href="' + L.finance + '" data-intent="fee">💰 活动交费（财务桌）</a>' +
-      '<a class="ae-crm-btn" href="' + L.aiConsole + '" data-intent="ai">🤖 AI 口述预填</a>' +
+      '<a class="ae-crm-btn" href="' + L.finance + '" data-intent="fee">💰 活動交費（財務桌）</a>' +
+      '<a class="ae-crm-btn" href="' + L.aiConsole + '" data-intent="ai">🤖 AI 口述預填</a>' +
       "</div>" +
       '<div id="aeCrmIntentStatus" class="section-lead" style="margin-top:6px;"></div>' +
       "</div>";
@@ -81,18 +81,18 @@
       a.addEventListener("click", function () {
         var t = a.getAttribute("data-intent");
         var labels = {
-          register: "敬拜新员注册",
+          register: "敬拜新員註冊",
           journey: "敬拜事奉旅程",
           matchmaker: "敬拜人才媒合",
-          fee: "敬拜活动交费",
-          ai: "敬拜 AI 预填"
+          fee: "敬拜活動交費",
+          ai: "敬拜 AI 預填"
         };
         pushIntent(t, labels[t] || t, { href: a.getAttribute("href"), page: pid });
         if (t === "fee" && win.WorshipDataHub) {
           win.WorshipDataHub.financePrefillFromIntent({ type: t, label: labels[t], page: pid });
         }
         var st = doc.getElementById("aeCrmIntentStatus");
-        if (st) st.textContent = "已记录意向草稿：" + (labels[t] || t) + " · " + new Date().toLocaleString();
+        if (st) st.textContent = "已記錄意向草稿：" + (labels[t] || t) + " · " + new Date().toLocaleString();
       });
     });
   }

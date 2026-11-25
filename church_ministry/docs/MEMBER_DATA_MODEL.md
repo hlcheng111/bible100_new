@@ -113,6 +113,12 @@
 | `zoneId` | 穩定字串，如 `Z-` + hash（由分區名稱導出） |
 | `zoneName` | 與 `members.zone` 相同語意 |
 
+## 牧養事件類型（`pastoral_events_v1`）
+
+事件類型定義見 `js/church_crm_constants.js`（`PASTORAL_EVENT_TYPES`）。**2026-11-24 新增 `red_flag`**（人工標記的紅旗；僅新增值，`schema_version` 不變）。欄位契約見 [`MRM_ENGINEERING_PLAN_V1.md`](./MRM_ENGINEERING_PLAN_V1.md) §5.3：`summary` 只存類別標籤、不含自由文字細節；`metadata.human_marked` 恆為 `true`。
+
+**2026-11-24 再新增 `red_flag_status`**（紅旗狀態更新，追加寫入，不改原事件）與 **`leader_path`**（領袖培育步驟：`metadata.step` ∈ `invited`／`apprentice`／`shadow`／`paused`／`promoted`）。見習／小組長身分由 `leader_path` 事件推導，**不新增會友欄位，也不改屬靈階段五階**；規格見 [`MRM_ENGINEERING_PLAN_V1.md`](./MRM_ENGINEERING_PLAN_V1.md) §5.4。
+
 ## API 遷移
 
 - `ChurchDataBridge.loadMembers()` / `saveMemberSystemData()` 已標 **TODO**：正式環境改為 `fetch`，回傳結構須與本文件一致。

@@ -7,23 +7,103 @@
   <link rel="stylesheet" href="../../css/pastoral_workspace.css" />
   <link rel="stylesheet" href="../../css/cm_responsive_tokens.css" />
   <script src="../../../js/church_data_bridge.js"></script>
+  <style>
+    .rf-card { background:#fef2f2; border:2px solid #fca5a5; }
+    .rf-card h3 { margin-top:0; color:#991b1b; }
+    .rf-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:8px 0; }
+    .rf-row select { min-height:44px; padding:6px 10px; border:1px solid #cbd5e1; border-radius:8px; max-width:100%; }
+    .rf-flags { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:6px; margin:8px 0; }
+    .rf-flag { display:flex; gap:8px; align-items:center; padding:8px 10px; background:#fff; border:1px solid #fecaca; border-radius:8px; min-height:44px; cursor:pointer; }
+    .rf-flag--crisis { border-color:#ef4444; font-weight:600; }
+    .rf-notice { white-space:pre-wrap; background:#fff; border:1px dashed #ef4444; border-radius:8px; padding:10px; font-size:13px; line-height:1.6; margin:8px 0; }
+    .rf-status { padding:8px 10px; border-radius:8px; font-size:13px; margin:8px 0; background:#f1f5f9; }
+    .rf-status--ok { background:#ecfdf5; color:#065f46; }
+    .rf-status--warn { background:#fffbeb; color:#92400e; }
+    .rf-recent { margin:6px 0 0; padding-left:18px; font-size:12px; color:#475569; }
+    .pa-guide { background:#eff6ff; border:2px solid #93c5fd; }
+    .pa-guide h3 { margin-top:0; color:#1e3a8a; }
+    .pa-guide-steps { margin:8px 0; padding-left:20px; line-height:1.8; font-size:14px; }
+    .pa-guide-steps li { margin:4px 0; }
+    .pa-trial { margin-top:8px; font-size:13px; }
+    .pa-trial summary { cursor:pointer; color:#1d4ed8; min-height:32px; }
+  </style>
 </head>
 <body class="pa-wrap pastoral-panel-embed" data-b100-pattern="P-AE-PANEL">
   <main class="sg-main" style="max-width:900px;margin:0 auto;padding:12px">
+    <!-- 小白導覽：三件事，30 秒看懂 -->
+    <section id="pa-guide" class="sg-card pa-guide" aria-labelledby="pa-guide-title">
+      <h3 id="pa-guide-title">這一頁怎麼用？（30 秒看懂）</h3>
+      <ol class="pa-guide-steps">
+        <li><strong>有人遇到急事</strong>（住院、喪親、失業、危機）→ 看下方紅色<a href="#rf-card">「紅旗」</a>：選會友 → 勾事項 → 按「標記」→ 複製通知稿，交給至少兩位牧者。</li>
+        <li><strong>有人很久沒來</strong> → 看<a href="#pa-absence">「很久沒來的人」</a>名單 → 按「推送探訪」，再到探訪頁安排關心。</li>
+        <li><strong>每週一次</strong> → 打開紅旗卡裡的「本週 Check 摘要」→ 複製 → 貼到週會紀錄。</li>
+      </ol>
+      <p class="muted">本頁只做提醒與整理，<strong>不會自動打電話、發訊息，也不會替你判斷</strong>；每個動作都由人決定。</p>
+      <details class="pa-trial">
+        <summary>第一次用、想先試玩？</summary>
+        <p class="muted">試玩會在這台電腦的名冊加入約 40 位「試用」示範會友（名字不是真人）。<strong>已有真實名冊的教會，請先匯出備份，或用另一個瀏覽器試玩。</strong></p>
+        <button type="button" class="pa-btn outline cm-touch-target" id="pa-btn-trial">載入試用教會資料</button>
+      </details>
+    </section>
+    <!-- 紅旗：不分規模檔位、永遠顯示；由人標記，不經 AI -->
+    <section id="rf-card" class="sg-card rf-card" aria-labelledby="rf-title">
+      <h3 id="rf-title">🚩 紅旗 · 需要牧者即時關心</h3>
+      <p class="muted">只有「人」才能標記紅旗，系統與 AI 不會替你判斷。標記後會整理一份通知稿，請<strong>複製後交給至少兩位牧者／負責同工</strong>。細節請口頭說明，不要寫在這裡。</p>
+      <p class="muted"><strong>怎麼做：</strong>① 選會友（可不選）　② 勾選事項　③ 按「標記紅旗並產生通知稿」　④ 按「複製通知稿」，交給牧者。</p>
+      <div class="rf-row">
+        <label for="rf-member"><strong>會友</strong></label>
+        <select id="rf-member"></select>
+      </div>
+      <div id="rf-flags" class="rf-flags" role="group" aria-label="紅旗類別"></div>
+      <div class="rf-row">
+        <button type="button" class="pa-btn cm-touch-target" id="rf-mark">標記紅旗並產生通知稿</button>
+        <button type="button" class="pa-btn outline cm-touch-target" id="rf-copy" hidden>複製通知稿</button>
+      </div>
+      <p id="rf-status" class="rf-status" role="status" hidden></p>
+      <pre id="rf-notice" class="rf-notice" hidden></pre>
+      <details open>
+        <summary class="muted">最近的紅旗紀錄（最多 8 筆）</summary>
+        <ul id="rf-recent" class="rf-recent"></ul>
+        <p class="muted">每筆紅旗的進度：<strong>待處理</strong>（還沒人接）→ 按「我來跟進」變<strong>已認領</strong> → 處理好按「已處理完」變<strong>已完成</strong>。暫時不處理可按「先擱置」，之後隨時可以接回來。每次按都會另記一筆，不會改掉原本的紀錄。</p>
+      </details>
+      <details>
+        <summary class="muted">本週 Check 摘要（可貼到週會紀錄，或 PDCA 的 Check 欄）</summary>
+        <pre id="rf-week-text" class="rf-notice"></pre>
+        <div class="rf-row">
+          <button type="button" class="pa-btn outline cm-touch-target" id="rf-week-copy">複製本週摘要</button>
+        </div>
+        <p class="muted">系統只整理數字；成效判斷與下週行動由牧者填寫。</p>
+      </details>
+    </section>
     <div id="pa-alerts-care" class="cm-ai-care-card" hidden></div>
-    <div class="sg-card alert">
-      <h3>⚠️ 連續缺席預警</h3>
-      <p class="muted">連續 3 週缺席將列入關懷；請人審後一鍵推送探訪佇列（不自動派工）。</p>
+    <div id="pa-absence" class="sg-card alert">
+      <h3>很久沒來的人 · 需要關心</h3>
+      <p class="muted">
+        多久沒來聚會就提醒我？
+        <select id="pa-threshold" aria-label="多久沒來聚會就提醒（天）">
+          <option value="7">7 天</option>
+          <option value="14" selected>14 天（建議）</option>
+          <option value="21">21 天</option>
+          <option value="28">28 天</option>
+        </select>
+        （約 2 週沒來是常見的關心時機；人多的教會可選長一點，避免名單太長。）
+      </p>
+      <p class="muted">名單只是提醒。你按「推送探訪」後，才會排進探訪清單，<strong>系統不會自動派工或聯絡會友</strong>。</p>
       <ul id="pa-alert-list" class="alert-list"></ul>
-      <p id="pa-alert-empty" class="muted ok" hidden>目前無觸發預警的組員。</p>
+      <p id="pa-alert-empty" class="muted ok" hidden>目前沒有需要特別關心的人，很好！想看看流程？請打開上方「第一次用、想先試玩？」。若是真實教會，請確認小組有按時點名。</p>
     </div>
     <div class="sg-toolbar">
-      <button type="button" class="pa-btn cm-touch-target" id="pa-btn-push-all">一鍵推送全部至探訪佇列</button>
-      <button type="button" class="pa-btn outline cm-touch-target" id="pa-btn-refresh">重新整理</button>
+      <button type="button" class="pa-btn cm-touch-target" id="pa-btn-push-all">全部推送到探訪清單</button>
+      <button type="button" class="pa-btn outline cm-touch-target" id="pa-btn-refresh">重新整理名單</button>
     </div>
   </main>
-  <script src="../../js/pastoral_data_hub.js"></script>
+  <script src="../../js/cm_size_tier_config.js?v=20261124p3"></script>
+  <script src="../../js/pastoral_data_hub.js?v=20261124p3"></script>
+  <script src="../../js/pastoral_trial_pack.js"></script>
   <script src="../../js/cm_ai_care_helper.js"></script>
+  <script src="../../js/cm_member_picker.js"></script>
+  <script src="../../js/cm_red_flag_config.js?v=20261124p2"></script>
+  <script src="../../js/cm_red_flag_panel.js?v=20261124p4"></script>
   <script>
   (function () {
     function hub() { return window.PastoralDataHub; }
@@ -35,27 +115,39 @@
       H.evaluateLifecycleRules();
       var store = H.getOrgStore();
       var tasks = (store.handoverTasks || []).filter(function (t) {
-        return t.status === "pending" && t.type === "absence_followup";
+        return t.status === "pending" && (t.type === "absence_followup" || t.type === "newcomer_placement");
       });
+      var alerts = H.listAbsenceAlerts ? H.listAbsenceAlerts() : [];
       list.innerHTML = "";
-      if (!tasks.length) {
+      var seen = {};
+      function addRow(mid, name, reason) {
+        mid = String(mid || "");
+        if (!mid || seen[mid]) return;
+        seen[mid] = 1;
+        var li = document.createElement("li");
+        li.className = "hot";
+        li.innerHTML =
+          "<strong>" + (name || mid || "—") + "</strong> · " +
+          (reason || "缺席預警") +
+          ' <button type="button" class="pa-btn sm cm-touch-target" data-mid="' +
+          mid + '" data-name="' + String(name || "").replace(/"/g, "") + '">推送探訪</button>';
+        list.appendChild(li);
+      }
+      alerts.forEach(function (a) {
+        addRow(a.memberId, a.name, "連續缺席 " + a.streak + " 週");
+      });
+      tasks.forEach(function (t) {
+        addRow(t.memberId, t.memberName, t.reason || t.type);
+      });
+      if (!list.children.length) {
         empty.hidden = false;
         return;
       }
       empty.hidden = true;
-      tasks.forEach(function (t) {
-        var li = document.createElement("li");
-        li.className = "hot";
-        li.innerHTML =
-          "<strong>" + (t.memberName || t.memberId || "—") + "</strong> · " +
-          (t.reason || "缺席預警") +
-          ' <button type="button" class="pa-btn sm cm-touch-target" data-mid="' +
-          String(t.memberId || "") + '" data-name="' + String(t.memberName || "") + '">推送探訪</button>';
-        list.appendChild(li);
-      });
-      if (tasks[0] && window.CmAiCareHelper) {
+      var firstName = (alerts[0] && alerts[0].name) || (tasks[0] && tasks[0].memberName);
+      if (firstName && window.CmAiCareHelper) {
         CmAiCareHelper.renderCareCard("pa-alerts-care", {
-          name: tasks[0].memberName,
+          name: firstName,
           streak: 3,
           context: "小組聚會"
         });
@@ -66,12 +158,19 @@
         };
       });
     }
+    var trialBtn = document.getElementById("pa-btn-trial");
+    if (trialBtn) {
+      trialBtn.onclick = function () {
+        var pack = window.PastoralTrialPack || hub();
+        if (!window.confirm("將在這台電腦的名冊加入約 40 位「試用」示範會友。\n已有真實名冊的教會，建議先匯出備份。\n\n確定要載入嗎？")) return;
+        if (pack && pack.ensureTrialChurch) pack.ensureTrialChurch(true);
+        render();
+        alert("已載入試用教會。請看下方「很久沒來的人」名單。");
+      };
+    }
     function goVisitationTab() {
       try {
-        if (window.parent && window.parent !== window && window.parent.PastoralIntegratedShell) {
-          window.parent.PastoralIntegratedShell.switchTab("visitation");
-          return;
-        }
+        /* file:// 下不可讀 parent 屬性，一律 postMessage */
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: "pastoral-integrated", action: "switchTab", tab: "visitation" }, "*");
         }
@@ -88,7 +187,7 @@
         source: "pastoral_alerts_panel",
         link: "../support/visitation_index.html?crm_from=b_alerts&memberId=" + encodeURIComponent(memberId)
       });
-      alert("已推送至探訪佇列：" + (memberName || memberId));
+      alert("已加入探訪清單：" + (memberName || memberId) + "。接下來請到探訪頁安排關心。");
       render();
       goVisitationTab();
     }
@@ -98,13 +197,22 @@
       var created = H.evaluateLifecycleRules ? H.evaluateLifecycleRules() : [];
       alert(
         created && created.length
-          ? "生命週期規則已評估，新增/更新 " + created.length + " 筆交接（已切換至探訪佇列 Tab）"
-          : "已重新評估；若無新預警，表示目前無符合自動規則者"
+          ? "已整理完成，新增或更新 " + created.length + " 筆探訪交接（已切換到探訪頁）"
+          : "已重新整理；目前沒有新的需要關心的人"
       );
       render();
       goVisitationTab();
     };
     document.getElementById("pa-btn-refresh").onclick = render;
+    var thSel = document.getElementById("pa-threshold");
+    if (thSel && hub() && hub().getAbsenceThreshold) {
+      thSel.value = String(hub().getAbsenceThreshold().days);
+      thSel.onchange = function () {
+        hub().setAbsenceThresholdDays(Number(thSel.value));
+        render();
+        if (window.CmRedFlagPanel && CmRedFlagPanel.renderWeekly) CmRedFlagPanel.renderWeekly();
+      };
+    }
     render();
   })();
   </script>

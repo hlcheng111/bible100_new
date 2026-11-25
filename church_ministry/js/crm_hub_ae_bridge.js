@@ -76,7 +76,7 @@
 
     html +=
       "</div>" +
-      '<p class="crm-hub-ae__foot"><a class="crm-journey-link" href="../help/interconnect-roadmap.html">📖 全站游客手册</a>' +
+      '<p class="crm-hub-ae__foot"><a class="crm-journey-link" href="../help/interconnect-roadmap.html">📖 全站遊客手冊</a>' +
       ' · <button type="button" class="crm-intro-inline-link crm-intro-inline-link--btn" id="crmHubAeTriangle">🏛️ 三扇門導覽</button></p>' +
       "</section>";
 

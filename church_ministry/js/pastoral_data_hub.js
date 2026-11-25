@@ -1,6 +1,6 @@
 /**
- * B 牧养 · 数据联动 SSOT（小组工作桌 + 出席统计 + memberId 互链）
- * 依赖 ChurchDataBridge（memberSystemData / visitation / pastoral_events）
+ * B 牧養 · 數據聯動 SSOT（小組工作桌 + 出席統計 + memberId 互鏈）
+ * 依賴 ChurchDataBridge（memberSystemData / visitation / pastoral_events）
  */
 (function (global) {
   "use strict";
@@ -13,46 +13,64 @@
   var STRATEGY_KEY = "pastoral_strategy_v1";
   var ORG_KEY = "pastoral_org_v1";
   var DRAFTS_KEY = "worship_visitation_drafts_v1";
-  var ABSENCE_ALERT_WEEKS = 3;
+  /* P2：未聚會門檻（天）可調，預設 14 天；內部仍以「連續缺席週數」計算（14 天 ≈ 2 週）。 */
+  var ABSENCE_THRESHOLD_KEY = "bible100_cm_absence_threshold_days";
+  /* 預設值與可選項來自 js/cm_size_tier_config.js（小白可改）；未載入該檔時退回 14 天 */
+  var TIER_CFG = global.CmSizeTierConfig || null;
+  var ABSENCE_THRESHOLD_DEFAULT_DAYS = (TIER_CFG && TIER_CFG.ABSENCE_THRESHOLD_DEFAULT_DAYS) || 14;
+  var ABSENCE_THRESHOLD_CHOICES = (TIER_CFG && TIER_CFG.ABSENCE_THRESHOLD_CHOICES) || [7, 14, 21, 28];
+  function absenceWeeksFromDays(days) {
+    return Math.max(1, Math.ceil(Number(days || 0) / 7));
+  }
+  function loadAbsenceThresholdDays() {
+    try {
+      var v = Number(global.localStorage.getItem(ABSENCE_THRESHOLD_KEY));
+      return ABSENCE_THRESHOLD_CHOICES.indexOf(v) >= 0 ? v : ABSENCE_THRESHOLD_DEFAULT_DAYS;
+    } catch (e) {
+      return ABSENCE_THRESHOLD_DEFAULT_DAYS;
+    }
+  }
+  var ABSENCE_ALERT_DAYS = loadAbsenceThresholdDays();
+  var ABSENCE_ALERT_WEEKS = absenceWeeksFromDays(ABSENCE_ALERT_DAYS);
   var NEWCOMER_PLACEMENT_WEEKS = 4;
   var BAPTISM_REFERRAL_MONTHS = 6;
 
   var LIFECYCLE_STAGES = [
     { id: "newcomer", label: "新朋友" },
-    { id: "stable", label: "稳定聚会" },
-    { id: "growing", label: "领袖培养" },
-    { id: "at_risk", label: "流失预警" }
+    { id: "stable", label: "穩定聚會" },
+    { id: "growing", label: "領袖培養" },
+    { id: "at_risk", label: "流失預警" }
   ];
 
   var HEALTH_STATUSES = [
-    { id: "hot", label: "火热服侍", css: "hot" },
-    { id: "stable", label: "平稳", css: "stable" },
-    { id: "burnout_risk", label: "耗尽预警", css: "burnout" }
+    { id: "hot", label: "火熱服侍", css: "hot" },
+    { id: "stable", label: "平穩", css: "stable" },
+    { id: "burnout_risk", label: "耗盡預警", css: "burnout" }
   ];
 
   var AGE_ZONES = [
-    { id: "youth", label: "青少区" },
-    { id: "career", label: "职青区" },
-    { id: "adult", label: "成人区" },
-    { id: "senior", label: "长青区" },
-    { id: "family", label: "夫妇/家庭" }
+    { id: "youth", label: "青少區" },
+    { id: "career", label: "職青區" },
+    { id: "adult", label: "成人區" },
+    { id: "senior", label: "長青區" },
+    { id: "family", label: "夫婦/家庭" }
   ];
 
   var MINISTRY_TAG_OPTS = [
-    { id: "worship", label: "敬拜赞美" },
+    { id: "worship", label: "敬拜讚美" },
     { id: "usher", label: "大堂招待" },
-    { id: "media", label: "新媒体音控" },
-    { id: "training", label: "门训在读" },
-    { id: "children", label: "儿童事工" }
+    { id: "media", label: "新媒體音控" },
+    { id: "training", label: "門訓在讀" },
+    { id: "children", label: "兒童事工" }
   ];
 
-  var PAIN_CATEGORIES = ["经济", "情绪", "婚姻", "教养", "职场", "信心", "健康"];
+  var PAIN_CATEGORIES = ["經濟", "情緒", "婚姻", "教養", "職場", "信心", "健康"];
   var ROTA_FREQ_WARN = 2;
   var ROTA_LOOKBACK_WEEKS = 3;
-  var FOLLOWUP_CYCLES = ["3日内", "1周内", "2周内", "1个月内", "季度跟进"];
+  var FOLLOWUP_CYCLES = ["3日內", "1周內", "2周內", "1個月內", "季度跟進"];
   var SENSITIVITY_LEVELS = [
     { id: "normal", label: "一般" },
-    { id: "high", label: "高敏（牧者可见）" }
+    { id: "high", label: "高敏（牧者可見）" }
   ];
   var PRAYER_SIGNAL = { normal: "green", high: "red" };
   var TIMOTHY_MIN_ATTENDANCE = 70;
@@ -72,8 +90,8 @@
   var SPIRITUAL_LADDER = [
     { id: "seeker", label: "慕道/新朋友", courseType: null, order: 0 },
     { id: "foundation", label: "初信造就", courseType: "foundation", order: 1 },
-    { id: "disciple", label: "门徒训练", courseType: "disciple", order: 2 },
-    { id: "leader", label: "组长预备", courseType: "leader", order: 3 }
+    { id: "disciple", label: "門徒訓練", courseType: "disciple", order: 2 },
+    { id: "leader", label: "組長預備", courseType: "leader", order: 3 }
   ];
   var ASSESSMENT_RUNS_KEY = "bible100_assessment_runs";
   var ASSESSMENT_LATEST_PREFIX = "bible100_assessment_latest_";
@@ -268,15 +286,15 @@
     return (
       '<a href="' +
       memberProfileUrl(memberId, tab) +
-      '" class="pdm-member-link" title="会友主档 · memberId ' +
+      '" class="pdm-member-link" title="會友主檔 · memberId ' +
       esc(memberId) +
       '">' +
-      esc(label || "会友") +
+      esc(label || "會友") +
       "</a>"
     );
   }
 
-  /** 载入示范：会友 + 小组 + 牧职树 + 工作区目标 */
+  /** 載入示範：會友 + 小組 + 牧職樹 + 工作區目標 */
   function ensurePastoralSeed(force) {
     migratePastoralStores();
     var ms = memberSystem();
@@ -285,19 +303,26 @@
     if (!ms.groupMemberships) ms.groupMemberships = [];
     if (!ms.attendance) ms.attendance = [];
 
+    /* 只有使用者明確按「載入示範」(force=true) 才塞示範資料。
+     * 舊行為：一進頁面、會友 < 8 人或小組 < 3 個就自動塞示範，甚至覆寫真實小組，
+     * 造成空資料也顯示「3 組／6 人」等假數字。 */
+    if (force !== true) {
+      return { members: ms.members.length, groups: ms.groups.length, seeded: false };
+    }
+
     if (force || ms.members.length < 8) {
       var baseId = ms.members.length ? Math.max.apply(null, ms.members.map(function (m) { return Number(m.id) || 0; })) : 0;
       var seedMembers = [
-        { name: "陈弟兄", gender: "男", age: 38, zone: "北区", gifts: "教导,治理", baptized: true, status: "in_communion", birthday: "06-12" },
-        { name: "李姊妹", gender: "女", age: 32, zone: "九龙", gifts: "服事,怜悯", baptized: true, status: "in_communion", birthday: "06-10" },
-        { name: "王长老", gender: "男", age: 62, zone: "北区", gifts: "怜悯,治理", baptized: true, status: "in_communion" },
-        { name: "张牧者", gender: "男", age: 45, zone: "全教會", role: "pastor", baptized: true, status: "in_communion" },
-        { name: "林区长", gender: "女", age: 40, zone: "北区", role: "district", baptized: true, status: "in_communion" },
-        { name: "黄姊妹", gender: "女", age: 28, zone: "九龙", gifts: "服事", baptized: true, status: "in_communion", spiritual_journey_stage: "growing" },
-        { name: "赵弟兄", gender: "男", age: 24, zone: "九龙", gifts: "传福音", baptized: true, status: "in_communion", spiritual_journey_stage: "new_believer" },
-        { name: "周姊妹", gender: "女", age: 55, zone: "北区", gifts: "怜悯", baptized: true, status: "in_communion" },
-        { name: "吴弟兄", gender: "男", age: 30, zone: "港岛", gifts: "教导", baptized: false, status: "in_communion", spiritual_journey_stage: "seeker" },
-        { name: "郑姊妹", gender: "女", age: 19, zone: "港岛", gifts: "音乐", baptized: true, status: "in_communion" }
+        { name: "陳弟兄", gender: "男", age: 38, zone: "北區", gifts: "教導,治理", baptized: true, status: "in_communion", birthday: "06-12" },
+        { name: "李姊妹", gender: "女", age: 32, zone: "九龍", gifts: "服事,憐憫", baptized: true, status: "in_communion", birthday: "06-10" },
+        { name: "王長老", gender: "男", age: 62, zone: "北區", gifts: "憐憫,治理", baptized: true, status: "in_communion" },
+        { name: "張牧者", gender: "男", age: 45, zone: "全教會", role: "pastor", baptized: true, status: "in_communion" },
+        { name: "林區長", gender: "女", age: 40, zone: "北區", role: "district", baptized: true, status: "in_communion" },
+        { name: "黃姊妹", gender: "女", age: 28, zone: "九龍", gifts: "服事", baptized: true, status: "in_communion", spiritual_journey_stage: "growing" },
+        { name: "趙弟兄", gender: "男", age: 24, zone: "九龍", gifts: "傳福音", baptized: true, status: "in_communion", spiritual_journey_stage: "new_believer" },
+        { name: "周姊妹", gender: "女", age: 55, zone: "北區", gifts: "憐憫", baptized: true, status: "in_communion" },
+        { name: "吳弟兄", gender: "男", age: 30, zone: "港島", gifts: "教導", baptized: false, status: "in_communion", spiritual_journey_stage: "seeker" },
+        { name: "鄭姊妹", gender: "女", age: 19, zone: "港島", gifts: "音樂", baptized: true, status: "in_communion" }
       ];
       seedMembers.forEach(function (sm, i) {
         var id = baseId + i + 1;
@@ -322,42 +347,42 @@
       var groupDefs = [
         {
           id: 1,
-          name: "北区夫妇小组",
-          leaderName: "陈弟兄",
-          pastor: "张牧者",
-          districtLeader: "林区长",
-          region: "北区",
-          ageBand: "夫妇",
+          name: "北區夫婦小組",
+          leaderName: "陳弟兄",
+          pastor: "張牧者",
+          districtLeader: "林區長",
+          region: "北區",
+          ageBand: "夫婦",
           category: "family",
-          location: "北区",
-          meetingDay: "周五 20:00",
-          memberNames: ["陈弟兄", "周姊妹", "林区长", "黄姊妹"]
+          location: "北區",
+          meetingDay: "週五 20:00",
+          memberNames: ["陳弟兄", "周姊妹", "林區長", "黃姊妹"]
         },
         {
           id: 2,
-          name: "社青职场圈",
+          name: "社青職場圈",
           leaderName: "李姊妹",
-          pastor: "张牧者",
+          pastor: "張牧者",
           districtLeader: "李姊妹",
-          region: "九龙",
+          region: "九龍",
           ageBand: "社青",
           category: "workplace",
-          location: "九龙",
-          meetingDay: "周六 15:00",
-          memberNames: ["李姊妹", "赵弟兄", "吴弟兄", "郑姊妹"]
+          location: "九龍",
+          meetingDay: "週六 15:00",
+          memberNames: ["李姊妹", "趙弟兄", "吳弟兄", "鄭姊妹"]
         },
         {
           id: 3,
-          name: "长者关怀组",
-          leaderName: "王长老",
-          pastor: "张牧者",
-          districtLeader: "林区长",
-          region: "北区",
-          ageBand: "长青",
+          name: "長者關懷組",
+          leaderName: "王長老",
+          pastor: "張牧者",
+          districtLeader: "林區長",
+          region: "北區",
+          ageBand: "長青",
           category: "senior",
-          location: "北区",
-          meetingDay: "周三 14:00",
-          memberNames: ["王长老", "周姊妹", "林区长"]
+          location: "北區",
+          meetingDay: "週三 14:00",
+          memberNames: ["王長老", "周姊妹", "林區長"]
         }
       ];
       ms.groups = groupDefs.map(function (gd) {
@@ -387,7 +412,7 @@
             id: gmid++,
             memberId: mid,
             groupId: gd.id,
-            role: nm === gd.leaderName ? "组长" : "组员"
+            role: nm === gd.leaderName ? "組長" : "組員"
           });
         });
       });
@@ -399,11 +424,11 @@
     if (force || !w.goals.length) {
       w.activeGroupId = 1;
       w.goals = [
-        { id: "g1", groupId: 1, title: "本季带出 2 位固定祷告伙伴", period: "2026 Q2", pct: 45, gospelFriends: 1 },
-        { id: "g2", groupId: 2, title: "职场弟兄每月一次联合祷告", period: "2026 Q2", pct: 30, gospelFriends: 2 }
+        { id: "g1", groupId: 1, title: "本季帶出 2 位固定禱告夥伴", period: "2026 Q2", pct: 45, gospelFriends: 1 },
+        { id: "g2", groupId: 2, title: "職場弟兄每月一次聯合禱告", period: "2026 Q2", pct: 30, gospelFriends: 2 }
       ];
       w.notices = [
-        { id: "n1", date: todayISO(), text: "区长通知：下月联合祷告会 6/15 北区堂", level: "info" }
+        { id: "n1", date: todayISO(), text: "區長通知：下月聯合禱告會 6/15 北區堂", level: "info" }
       ];
       var wk = isoWeekKey(todayISO());
       w.meetings = w.meetings.filter(function (m) { return m.weekKey !== wk; });
@@ -411,9 +436,9 @@
         id: "mtg_" + wk + "_1",
         groupId: 1,
         weekKey: wk,
-        scripture: "约翰福音 15:1-8 · 常在我里面",
-        icebreaker: "分享一件本周微小胜利",
-        prayers: ["为久未出席肢体代祷", "为营会报名祷告"]
+        scripture: "約翰福音 15:1-8 · 常在我裡面",
+        icebreaker: "分享一件本週微小勝利",
+        prayers: ["為久未出席肢體代禱", "為營會報名禱告"]
       });
       saveWorkspace(w);
     }
@@ -421,7 +446,7 @@
     seedEventsTrainingStrategy(force);
     seedOrgDepthData(force);
 
-    return { members: ms.members.length, groups: ms.groups.length };
+    return { members: ms.members.length, groups: ms.groups.length, seeded: true };
   }
 
   function getOrgStore() {
@@ -448,10 +473,10 @@
 
   function inferAgeZone(m, grp) {
     var band = grp && grp.ageBand ? String(grp.ageBand) : "";
-    if (/青少|少年|青年团/.test(band)) return "youth";
-    if (/社青|职青|职场/.test(band)) return "career";
-    if (/长青|长者/.test(band)) return "senior";
-    if (/夫妇|家庭/.test(band)) return "family";
+    if (/青少|少年|青年團/.test(band)) return "youth";
+    if (/社青|職青|職場/.test(band)) return "career";
+    if (/長青|長者/.test(band)) return "senior";
+    if (/夫婦|家庭/.test(band)) return "family";
     if (m && m.age != null) {
       if (m.age < 18) return "youth";
       if (m.age <= 35) return "career";
@@ -468,7 +493,7 @@
     var m = getMemberById(memberId);
     var grp = getMemberPrimaryGroup(memberId);
     return {
-      spiritualIdentity: getMemberLifecycleStage(memberId) === "newcomer" ? "新朋友" : "稳定组员",
+      spiritualIdentity: getMemberLifecycleStage(memberId) === "newcomer" ? "新朋友" : "穩定組員",
       ageZone: inferAgeZone(m, grp),
       geoZone: (m && m.zone) || (grp && grp.region) || "",
       ministryTags: []
@@ -678,7 +703,7 @@
               type: "newcomer_placement",
               memberId: m.id,
               memberName: m.name,
-              reason: "新朋友满 " + NEWCOMER_PLACEMENT_WEEKS + " 周尚未落户小组",
+              reason: "新朋友滿 " + NEWCOMER_PLACEMENT_WEEKS + " 周尚未落戶小組",
               dueInDays: 3
             })
           );
@@ -695,7 +720,7 @@
               type: "baptism_pool",
               memberId: m.id,
               memberName: m.name,
-              reason: "稳定聚会满 " + BAPTISM_REFERRAL_MONTHS + " 个月 · 推介受浸",
+              reason: "穩定聚會滿 " + BAPTISM_REFERRAL_MONTHS + " 個月 · 推介受浸",
               dueInDays: 14
             })
           );
@@ -714,7 +739,7 @@
               type: "absence_followup",
               memberId: m.id,
               memberName: m.name,
-              reason: "连续 " + streak + " 周缺席 · 流失预警",
+              reason: "連續 " + streak + " 周缺席 · 流失預警",
               dueInDays: 2
             })
           );
@@ -759,7 +784,7 @@
         id: maxId + 1,
         memberId: Number(memberId),
         groupId: Number(groupId),
-        role: "组员"
+        role: "組員"
       });
       saveMemberSystem(ms);
     }
@@ -780,7 +805,7 @@
     safeAppendEvent({
       member_id: memberId,
       event_type: "handover_placement",
-      summary: "落户小组 · " + (g ? g.name : groupId) + (leaderMemberId ? " · 组长跟进" : ""),
+      summary: "落戶小組 · " + (g ? g.name : groupId) + (leaderMemberId ? " · 組長跟進" : ""),
       source_module: "pastoral_org",
       metadata: { groupId: groupId, leaderMemberId: leaderMemberId }
     });
@@ -809,11 +834,11 @@
       date: todayISO(),
       targetMemberId: memberId,
       targetName: name,
-      author: opts.author || "系统自动",
+      author: opts.author || "系統自動",
       summary: reason,
       painCategory: opts.painCategory || "",
       sensitivity: opts.sensitivity || "normal",
-      followupCycle: opts.followupCycle || "1周内"
+      followupCycle: opts.followupCycle || "1周內"
     });
     saveStrategyStore(st);
     if (m && (opts.type === "absence_followup" || !opts.skipVisitation)) {
@@ -833,7 +858,7 @@
   function pushLeaderBurnoutToStrategy(leaderMemberId) {
     var lr = getLeaderRecord(leaderMemberId);
     var m = getMemberById(leaderMemberId);
-    var reason = "组长耗尽预警 · " + (lr && lr.burnoutReason ? lr.burnoutReason : "需区长导师面谈");
+    var reason = "組長耗盡預警 · " + (lr && lr.burnoutReason ? lr.burnoutReason : "需區長導師面談");
     addHandoverTask({
       type: "leader_care",
       memberId: leaderMemberId,
@@ -901,8 +926,8 @@
         name: "甄慕道",
         gender: "男",
         age: 27,
-        zone: "港岛",
-        gifts: "传福音",
+        zone: "港島",
+        gifts: "傳福音",
         baptized: false,
         status: "in_communion",
         spiritual_journey_stage: "seeker",
@@ -914,13 +939,13 @@
       setMemberLifecycleStage(baseId, "newcomer");
     }
 
-    var chenId = findMemberIdByName("陈弟兄");
+    var chenId = findMemberIdByName("陳弟兄");
     var liId = findMemberIdByName("李姊妹");
-    var wangId = findMemberIdByName("王长老");
+    var wangId = findMemberIdByName("王長老");
     var zhenId = findMemberIdByName("甄慕道");
-    var zhaoId = findMemberIdByName("赵弟兄");
-    var wuId = findMemberIdByName("吴弟兄");
-    var linId = findMemberIdByName("林区长");
+    var zhaoId = findMemberIdByName("趙弟兄");
+    var wuId = findMemberIdByName("吳弟兄");
+    var linId = findMemberIdByName("林區長");
 
     if (chenId) {
       setLeaderRecord(chenId, {
@@ -937,7 +962,7 @@
         serviceYears: 1.2,
         lastMentorMeetingDate: "2026-05-20",
         healthStatus: "burnout_risk",
-        burnoutReason: "职场加班严重 + 连续主日/小组服侍无替补",
+        burnoutReason: "職場加班嚴重 + 連續主日/小組服侍無替補",
         mentorMemberId: linId
       });
     }
@@ -948,22 +973,22 @@
     if (zhaoId) {
       setMemberMatrix(zhaoId, {
         ageZone: "career",
-        geoZone: "九龙",
+        geoZone: "九龍",
         ministryTags: ["worship", "training"],
-        spiritualIdentity: "稳定组员"
+        spiritualIdentity: "穩定組員"
       });
     }
     if (wuId) {
       setMemberMatrix(wuId, {
         ageZone: "career",
-        geoZone: "港岛",
+        geoZone: "港島",
         ministryTags: ["media", "training"],
         spiritualIdentity: "慕道友"
       });
       setMemberLifecycleStage(wuId, "newcomer");
     }
     if (chenId) {
-      setMemberMatrix(chenId, { ageZone: "family", geoZone: "北区", ministryTags: ["children"], spiritualIdentity: "组长" });
+      setMemberMatrix(chenId, { ageZone: "family", geoZone: "北區", ministryTags: ["children"], spiritualIdentity: "組長" });
     }
 
     s = getOrgStore();
@@ -973,22 +998,22 @@
           visitNotes: [
             {
               date: "2026-03-12",
-              visitor: "林区长",
-              painCategory: "职场",
+              visitor: "林區長",
+              painCategory: "職場",
               sensitivity: "high",
-              summary: "转职压力大、加班频繁，主日服侍有心无力；已安排弹性代祷，生命状态回升中。"
+              summary: "轉職壓力大、加班頻繁，主日服侍有心無力；已安排彈性代禱，生命狀態回升中。"
             }
           ],
           giftAssessment: {
-            primary: "教导",
-            secondary: "关怀",
-            scores: { 教导: 89, 关怀: 82 },
-            pastorComment: "具圣经逻辑与同理心，准组长梯队。"
+            primary: "教導",
+            secondary: "關懷",
+            scores: { 教導: 89, 關懷: 82 },
+            pastorComment: "具聖經邏輯與同理心，準組長梯隊。"
           },
           prayerChain: [
-            { date: "2026-05-01", request: "母亲手术", status: "answered", note: "手术顺利，信心坚固" }
+            { date: "2026-05-01", request: "母親手術", status: "answered", note: "手術順利，信心堅固" }
           ],
-          pastorComment: "提摩太梯队 · 出席稳定"
+          pastorComment: "提摩太梯隊 · 出席穩定"
         };
       }
       saveOrgStore(s);
@@ -1000,48 +1025,48 @@
   function seedEventsTrainingStrategy(force) {
     var ev = getEventsBoard();
     if (force || !ev.announcements.length) {
-      var zhaoId = findMemberIdByName("赵弟兄");
-      var zhengId = findMemberIdByName("郑姊妹");
+      var zhaoId = findMemberIdByName("趙弟兄");
+      var zhengId = findMemberIdByName("鄭姊妹");
       var liId = findMemberIdByName("李姊妹");
       ev.schema_version = 2;
       ev.announcements = [
         {
           id: "ann1",
           date: todayISO(),
-          title: "全教会联合祷告会",
-          body: "6/15 北区堂 19:30 · 各区小组请转发组员并入组祷告",
+          title: "全教會聯合禱告會",
+          body: "6/15 北區堂 19:30 · 各區小組請轉發組員併入組禱告",
           level: "church",
           region: "全教會",
           requireRelay: true,
           groupAcks: {
-            "1": { status: "prayed", groupName: "北区夫妇小组", relayedAt: "2026-06-08T10:00:00.000Z", prayedAt: "2026-06-08T12:00:00.000Z" },
-            "2": { status: "relayed", groupName: "社青职场圈", relayedAt: "2026-06-09T09:00:00.000Z", prayedAt: null },
-            "3": { status: "pending", groupName: "长者关怀组", relayedAt: null, prayedAt: null }
+            "1": { status: "prayed", groupName: "北區夫婦小組", relayedAt: "2026-06-08T10:00:00.000Z", prayedAt: "2026-06-08T12:00:00.000Z" },
+            "2": { status: "relayed", groupName: "社青職場圈", relayedAt: "2026-06-09T09:00:00.000Z", prayedAt: null },
+            "3": { status: "pending", groupName: "長者關懷組", relayedAt: null, prayedAt: null }
           }
         },
         {
           id: "ann2",
           date: todayISO(),
-          title: "北区牧区组长例会",
-          body: "本周五 10:00 · 林区长主持 · 请确认阅读",
+          title: "北區牧區組長例會",
+          body: "本週五 10:00 · 林區長主持 · 請確認閱讀",
           level: "district",
-          region: "北区",
+          region: "北區",
           requireRelay: true,
           groupAcks: {
-            "1": { status: "relayed", groupName: "北区夫妇小组", relayedAt: "2026-06-09T08:00:00.000Z" },
-            "3": { status: "pending", groupName: "长者关怀组" }
+            "1": { status: "relayed", groupName: "北區夫婦小組", relayedAt: "2026-06-09T08:00:00.000Z" },
+            "3": { status: "pending", groupName: "長者關懷組" }
           }
         }
       ];
       ev.registrations = [
         {
           id: "reg1",
-          eventTitle: "夏季青年营会 · 小组 PK 报名",
+          eventTitle: "夏季青年營會 · 小組 PK 報名",
           date: "2026-07-20",
           capacity: 40,
           enrolled: [
-            { memberId: zhaoId, name: "赵弟兄", feeStatus: "pending" },
-            { memberId: zhengId, name: "郑姊妹", feeStatus: "paid", txnId: "TXN-DEMO-001" }
+            { memberId: zhaoId, name: "趙弟兄", feeStatus: "pending" },
+            { memberId: zhengId, name: "鄭姊妹", feeStatus: "paid", txnId: "TXN-DEMO-001" }
           ],
           fee: 800,
           status: "open",
@@ -1060,14 +1085,14 @@
               name: liName,
               type: "meeting_clash",
               severity: "warn",
-              message: "与小组聚会时间冲突（周六 15:00）"
+              message: "與小組聚會時間衝突（週六 15:00）"
             },
             {
               memberId: liId,
               name: liName,
               type: "overload",
               severity: "critical",
-              message: "近 " + ROTA_LOOKBACK_WEEKS + " 周服侍 3 次（≥" + ROTA_FREQ_WARN + " 爆红）"
+              message: "近 " + ROTA_LOOKBACK_WEEKS + " 周服侍 3 次（≥" + ROTA_FREQ_WARN + " 爆紅）"
             }
           ]
         : [];
@@ -1077,15 +1102,15 @@
           weekKey: wk,
           slot: "主日招待",
           slotTime: "主日 09:00",
-          assignees: ["黄姊妹", "吴弟兄"],
-          memberIds: resolveAssigneeMemberIds(["黄姊妹", "吴弟兄"]),
+          assignees: ["黃姊妹", "吳弟兄"],
+          memberIds: resolveAssigneeMemberIds(["黃姊妹", "吳弟兄"]),
           warnings: []
         },
         {
           id: "rot2",
           weekKey: wk,
-          slot: "周六下午敬拜带领",
-          slotTime: "周六 15:00",
+          slot: "週六下午敬拜帶領",
+          slotTime: "週六 15:00",
           assignees: ["李姊妹"],
           memberIds: liId ? [liId] : [],
           warnings: liWarnings
@@ -1103,19 +1128,19 @@
       ev.archives = [
         {
           id: "arc1",
-          title: "2025 圣诞布道会",
+          title: "2025 聖誕佈道會",
           year: 2025,
-          summary: "北区堂联合布道 · 物资与流程可复用",
-          tags: ["布道", "节期"],
-          vision: "以圣诞市集接触社区家庭，带出 30+ 首次来访者",
+          summary: "北區堂聯合佈道 · 物資與流程可複用",
+          tags: ["佈道", "節期"],
+          vision: "以聖誕市集接觸社區家庭，帶出 30+ 首次來訪者",
           budgetPlanned: 12000,
           budgetActual: 11500,
           vendors: [
-            { name: "恩典印刷", item: "邀请卡 500 份", cost: 800 },
-            { name: "北区堂务", item: "茶点物资", cost: 2200 }
+            { name: "恩典印刷", item: "邀請卡 500 份", cost: 800 },
+            { name: "北區堂務", item: "茶點物資", cost: 2200 }
           ],
-          materials: ["流程表 v3", "志愿者岗位卡", "音响检查清单"],
-          lessonsLearned: "招待动线需提前 30 分钟彩排；儿童区人手比预估多 2 人"
+          materials: ["流程表 v3", "志願者崗位卡", "音響檢查清單"],
+          lessonsLearned: "招待動線需提前 30 分鐘彩排；兒童區人手比預估多 2 人"
         }
       ];
       saveEventsBoard(ev);
@@ -1124,19 +1149,19 @@
     var tr = getTrainingStore();
     if (force || !tr.courses.length) {
       tr.courses = [
-        { id: "c1", title: "初信造就班", schedule: "周二 19:30", type: "foundation", instructor: "张牧者" },
-        { id: "c2", title: "门徒训练一", schedule: "周四 20:00", type: "disciple", instructor: "王长老" },
-        { id: "c3", title: "组长预备班", schedule: "每月首周六 09:00", type: "leader", instructor: "林区长" }
+        { id: "c1", title: "初信造就班", schedule: "週二 19:30", type: "foundation", instructor: "張牧者" },
+        { id: "c2", title: "門徒訓練一", schedule: "週四 20:00", type: "disciple", instructor: "王長老" },
+        { id: "c3", title: "組長預備班", schedule: "每月首週六 09:00", type: "leader", instructor: "林區長" }
       ];
       tr.enrollments = [];
       tr.resources = [
-        { id: "r1", courseId: "c1", title: "初信造就 · 第一课 PPT", type: "slides" },
-        { id: "r2", courseId: "c2", title: "门徒训练录音 2026-05", type: "audio" }
+        { id: "r1", courseId: "c1", title: "初信造就 · 第一課 PPT", type: "slides" },
+        { id: "r2", courseId: "c2", title: "門徒訓練錄音 2026-05", type: "audio" }
       ];
       var enrollPairs = [
-        ["赵弟兄", "c1", "in_progress"],
-        ["黄姊妹", "c2", "completed"],
-        ["陈弟兄", "c3", "in_progress"],
+        ["趙弟兄", "c1", "in_progress"],
+        ["黃姊妹", "c2", "completed"],
+        ["陳弟兄", "c3", "in_progress"],
         ["李姊妹", "c3", "completed"]
       ];
       enrollPairs.forEach(function (row, i) {
@@ -1148,17 +1173,17 @@
       tr.makeupSessions = [
         {
           id: "mk1",
-          memberId: findMemberIdByName("赵弟兄"),
+          memberId: findMemberIdByName("趙弟兄"),
           courseId: "c1",
           missedDate: "2026-06-01",
           makeupDate: "2026-06-08",
           status: "scheduled",
-          note: "与小组冲突，改补课"
+          note: "與小組衝突，改補課"
         }
       ];
-      var zhaoId = findMemberIdByName("赵弟兄");
+      var zhaoId = findMemberIdByName("趙弟兄");
       tr.timothyPool = zhaoId
-        ? [{ memberId: zhaoId, addedAt: "2026-05-20T00:00:00.000Z", note: "出席稳定 · 初信班正修", score: 82 }]
+        ? [{ memberId: zhaoId, addedAt: "2026-05-20T00:00:00.000Z", note: "出席穩定 · 初信班正修", score: 82 }]
         : [];
       saveTrainingStore(tr);
     }
@@ -1169,33 +1194,33 @@
         {
           id: "vl1",
           date: todayISO(),
-          targetMemberId: findMemberIdByName("陈弟兄"),
-          targetName: "陈弟兄",
-          author: "张牧者",
-          summary: "组长牧养面谈 · 本季倍增目标跟进",
-          painCategory: "职场",
+          targetMemberId: findMemberIdByName("陳弟兄"),
+          targetName: "陳弟兄",
+          author: "張牧者",
+          summary: "組長牧養面談 · 本季倍增目標跟進",
+          painCategory: "職場",
           sensitivity: "normal",
-          followupCycle: "1周内"
+          followupCycle: "1周內"
         },
         {
           id: "vl2",
           date: todayISO(),
-          targetMemberId: findMemberIdByName("黄姊妹"),
-          targetName: "黄姊妹",
-          author: "林区长",
-          summary: "婚姻沟通张力 · 已安排夫妇辅导资源，需保密跟进",
+          targetMemberId: findMemberIdByName("黃姊妹"),
+          targetName: "黃姊妹",
+          author: "林區長",
+          summary: "婚姻溝通張力 · 已安排夫婦輔導資源，需保密跟進",
           painCategory: "婚姻",
           sensitivity: "high",
-          followupCycle: "3日内"
+          followupCycle: "3日內"
         }
       ];
       st.proposals = [
         {
           id: "pr1",
-          title: "九龙区新职场小组开拓",
+          title: "九龍區新職場小組開拓",
           author: "李姊妹",
           status: "discussion",
-          body: "社青职场圈已有基础，建议 Q3 分堂试点",
+          body: "社青職場圈已有基礎，建議 Q3 分堂試點",
           budget: 6000,
           manpower: 3,
           expectedReach: 24
@@ -1205,7 +1230,7 @@
         {
           id: "pw1",
           date: todayISO(),
-          request: "为连续缺席肢体代祷 · 请组长本周入组祷告",
+          request: "為連續缺席肢體代禱 · 請組長本週入組禱告",
           urgency: "high",
           groupId: 1,
           pushedToGroups: false
@@ -1213,7 +1238,7 @@
         {
           id: "pw2",
           date: todayISO(),
-          request: "为营会义工招募祷告",
+          request: "為營會義工招募禱告",
           urgency: "normal",
           groupId: null
         }
@@ -1374,9 +1399,9 @@
   }
 
   function createVisitationDraft(member, groupId, streak) {
-    var name = member.name || "会友";
+    var name = member.name || "會友";
     var mid = member.id;
-    var reason = "连续 " + streak + " 周小组缺席（自动预警）";
+    var reason = "連續 " + streak + " 周小組缺席（自動預警）";
 
     try {
       var drafts = getJson(DRAFTS_KEY) || [];
@@ -1386,7 +1411,7 @@
         memberId: mid,
         memberName: name,
         reason: reason,
-        note: "小组 groupId=" + groupId + " · 请牧者／组长人工决定是否探访",
+        note: "小組 groupId=" + groupId + " · 請牧者／組長人工決定是否探訪",
         serviceDate: todayISO(),
         status: "pending",
         source: "group_attendance_alert",
@@ -1410,10 +1435,10 @@
         if (!exists) {
           vis.missions.push({
             id: "mission_abs_" + mid + "_" + Date.now(),
-            name: name + " · 小组缺席跟进",
+            name: name + " · 小組缺席跟進",
             target: name,
             targetMemberId: mid,
-            type: "关怀",
+            type: "關懷",
             origin: "group_absence",
             status: "pending",
             date: todayISO(),
@@ -1434,7 +1459,7 @@
           priority: "high",
           status: "pending",
           source: "group_attendance_v1",
-          note: "联动规则：连续缺席 ≥ " + ABSENCE_ALERT_WEEKS + " 周"
+          note: "聯動規則：連續缺席 ≥ " + ABSENCE_ALERT_WEEKS + " 周"
         });
       } catch (eF) {}
     }
@@ -1544,8 +1569,8 @@
         var drafts = getJson(DRAFTS_KEY) || [];
         drafts.push({
           id: "sg_" + Date.now(),
-          memberName: "小组快评待指派",
-          reason: "小组一周快评",
+          memberName: "小組快評待指派",
+          reason: "小組一週快評",
           note: note.trim(),
           serviceDate: todayISO(),
           status: "pending",
@@ -1781,7 +1806,7 @@
     var mDay = meetingMatch[0];
     var slotStr = String(slot || "") + " " + String(slotTime || "");
     if (slotStr.indexOf(mDay) >= 0) return true;
-    if (mDay === "主日" && /主日|周日/.test(slotStr)) return true;
+    if (mDay === "主日" && /主日|週日/.test(slotStr)) return true;
     return false;
   }
 
@@ -1796,7 +1821,7 @@
           name: m ? m.name : mid,
           type: "meeting_clash",
           severity: "warn",
-          message: "与小组聚会时间冲突（" + grp.meetingDay + "）"
+          message: "與小組聚會時間衝突（" + grp.meetingDay + "）"
         });
       }
       var freq = countMemberRotaWeeks(mid, ROTA_LOOKBACK_WEEKS);
@@ -1806,7 +1831,7 @@
           name: m ? m.name : mid,
           type: "overload",
           severity: "critical",
-          message: "近 " + ROTA_LOOKBACK_WEEKS + " 周服侍 " + freq + " 次（≥" + ROTA_FREQ_WARN + " 爆红）"
+          message: "近 " + ROTA_LOOKBACK_WEEKS + " 周服侍 " + freq + " 次（≥" + ROTA_FREQ_WARN + " 爆紅）"
         });
       }
     });
@@ -1895,7 +1920,7 @@
       X.safePastoralEvent({
         member_id: memberId,
         event_type: "activity_registration",
-        summary: "报名 · " + (reg.eventTitle || "活动") + (reg.fee ? " · 待缴费 $" + reg.fee : ""),
+        summary: "報名 · " + (reg.eventTitle || "活動") + (reg.fee ? " · 待繳費 $" + reg.fee : ""),
         source_module: "pastoral_events",
         metadata: { regId: regId }
       });
@@ -1906,7 +1931,7 @@
           B.appendPastoralEvent({
             member_id: memberId,
             event_type: "activity_registration",
-            summary: "报名 · " + (reg.eventTitle || "活动"),
+            summary: "報名 · " + (reg.eventTitle || "活動"),
             source_module: "pastoral_events",
             metadata: { regId: regId }
           });
@@ -1974,7 +1999,7 @@
   }
 
   function enrollmentStatusLabel(status) {
-    var map = { in_progress: "正修", completed: "已修", exempt: "免修", enrolled: "已报名" };
+    var map = { in_progress: "正修", completed: "已修", exempt: "免修", enrolled: "已報名" };
     return map[status] || status || "—";
   }
 
@@ -2107,13 +2132,13 @@
     if (budget > 0 && reach > 0) roiScore = Math.round((reach / budget) * 1000 + manpower * 5);
     else if (reach > 0) roiScore = reach * 10 + manpower * 8;
     var summary =
-      "预估触达 " +
+      "預估觸達 " +
       reach +
       " 人 · 人力 " +
       manpower +
-      " 人月 · 预算 $" +
+      " 人月 · 預算 $" +
       budget +
-      (roiScore >= 80 ? " · 建议优先排期" : roiScore >= 40 ? " · 可纳入季度讨论" : " · 需补充效益论证");
+      (roiScore >= 80 ? " · 建議優先排期" : roiScore >= 40 ? " · 可納入季度討論" : " · 需補充效益論證");
     return {
       proposalId: proposalId,
       title: p.title,
@@ -2252,7 +2277,7 @@
     groups.forEach(function (g) {
       var pastor = g.pastor || "未指派牧者";
       if (!pastors[pastor]) pastors[pastor] = {};
-      var district = g.districtLeader || g.region || "未分区";
+      var district = g.districtLeader || g.region || "未分區";
       if (!pastors[pastor][district]) pastors[pastor][district] = [];
       pastors[pastor][district].push({
         group: g,
@@ -2341,8 +2366,8 @@
         targetMemberId: log.targetMemberId,
         targetName: log.targetName,
         author: log.author,
-        summary: "（高敏记录 · 仅牧者/区长可见）",
-        painCategory: log.painCategory ? "已分类" : "",
+        summary: "（高敏記錄 · 僅牧者/區長可見）",
+        painCategory: log.painCategory ? "已分類" : "",
         sensitivity: "high",
         followupCycle: log.followupCycle,
         redacted: true
@@ -2378,7 +2403,7 @@
         course: course,
         enrollment: enr,
         status: status,
-        statusLabel: { locked: "未开放", available: "可报名", active: "正修", done: "已完成" }[status] || status
+        statusLabel: { locked: "未開放", available: "可報名", active: "正修", done: "已完成" }[status] || status
       };
     });
   }
@@ -2483,7 +2508,7 @@
         type: "absence",
         memberId: a.memberId,
         name: a.name,
-        summary: "连续缺席 " + a.streak + " 周 · 待探访跟进",
+        summary: "連續缺席 " + a.streak + " 周 · 待探訪跟進",
         priority: "high",
         link: "../support/visitation_index.html?crm_from=b_pastoral&memberId=" + encodeURIComponent(a.memberId),
         source: "group_attendance_v1"
@@ -2503,7 +2528,7 @@
               type: "visitation_draft",
               memberId: d.memberId,
               name: d.memberName || "待指派",
-              summary: d.reason || d.note || "探访草稿",
+              summary: d.reason || d.note || "探訪草稿",
               priority: d.source === "group_attendance_alert" ? "high" : "medium",
               link: "../support/visitation_index.html?crm_from=b_pastoral",
               source: DRAFTS_KEY,
@@ -2524,7 +2549,7 @@
           memberId: t.memberId,
           name: t.memberName || "—",
           summary: t.reason || t.type,
-          priority: t.type === "leader_care" || t.type === "absence_followup" || t.type === "education_absence" ? "high" : "medium",
+          priority: t.type === "leader_care" || t.type === "absence_followup" || t.type === "education_absence" || t.type === "newcomer_followup" ? "high" : "medium",
           link: t.link || "pastoral-org-roster.html?crm_from=b_pastoral#tab-lifecycle",
           source: t.source || ORG_KEY,
           taskId: t.id
@@ -2537,8 +2562,8 @@
           id: "relay_" + r.annId,
           type: "announcement_relay",
           memberId: null,
-          name: "组长",
-          summary: "待转发通告 · " + r.title,
+          name: "組長",
+          summary: "待轉發通告 · " + r.title,
           priority: "medium",
           link: "pastoral-events.html?crm_from=b_pastoral#tab-announce",
           source: EVENTS_BOARD_KEY
@@ -2550,7 +2575,7 @@
           id: "prayer_" + p.id,
           type: "urgent_prayer",
           memberId: null,
-          name: "全组",
+          name: "全組",
           summary: p.request,
           priority: "critical",
           link: "pastoral-strategy.html?crm_from=b_pastoral#tab-prayer",
@@ -2604,7 +2629,7 @@
         memberId: baseId,
         name: name,
         phone: payload.phone || "",
-        zone: payload.zone || "港岛",
+        zone: payload.zone || "港島",
         spiritual_journey_stage: "seeker",
         baptized: false,
         status: "in_communion",
@@ -2619,13 +2644,13 @@
       type: "newcomer_placement",
       memberId: m.id,
       memberName: m.name,
-      reason: "青年活动登记 · " + (payload.activity || "新朋友"),
+      reason: "青年活動登記 · " + (payload.activity || "新朋友"),
       dueInDays: 7
     });
     safeAppendEvent({
       member_id: m.id,
       event_type: "youth_newcomer",
-      summary: "青年团契登记 · " + (payload.activity || "活动"),
+      summary: "青年團契登記 · " + (payload.activity || "活動"),
       source_module: "youth_ministry",
       metadata: payload
     });
@@ -2652,7 +2677,7 @@
     if (!bundle || !bundle.stores || typeof bundle.stores !== "object") {
       return { ok: false, error: "invalid_bundle" };
     }
-    if (!opts.merge && !opts.skipConfirm && global.confirm && !global.confirm("导入将覆盖现有牧养 localStorage 数据，确定继续？")) {
+    if (!opts.merge && !opts.skipConfirm && global.confirm && !global.confirm("導入將覆蓋現有牧養 localStorage 數據，確定繼續？")) {
       return { ok: false, error: "cancelled" };
     }
     Object.keys(bundle.stores).forEach(function (key) {
@@ -2678,10 +2703,10 @@
       var groups = getGroups().filter(function (g) {
         var band = String(g.ageBand || "");
         if (z.id === "youth" && /青少|少年|青年/.test(band)) return true;
-        if (z.id === "career" && /社青|职青|职场/.test(band)) return true;
-        if (z.id === "family" && /夫妇|家庭/.test(band)) return true;
-        if (z.id === "senior" && /长青|长者/.test(band)) return true;
-        return z.id === "adult" && !/青少|社青|夫妇|长青/.test(band);
+        if (z.id === "career" && /社青|職青|職場/.test(band)) return true;
+        if (z.id === "family" && /夫婦|家庭/.test(band)) return true;
+        if (z.id === "senior" && /長青|長者/.test(band)) return true;
+        return z.id === "adult" && !/青少|社青|夫婦|長青/.test(band);
       });
       return {
         ageZone: z.id,
@@ -2710,13 +2735,13 @@
   function trySyncPastoralBundleToCloud() {
     var cfg = global.cloudConfig || global.B100CloudConfig || null;
     if (!cfg || !cfg.supabaseUrl) {
-      return { ok: false, reason: "supabase_not_configured", hint: "配置 cloud_config.js 后可扩展上传" };
+      return { ok: false, reason: "supabase_not_configured", hint: "配置 cloud_config.js 後可擴展上傳" };
     }
     var bundle = exportPastoralBundle();
     return {
       ok: false,
       reason: "manual_upload_required",
-      hint: "已准备 bundle · 请用 Supabase Storage 或 Edge Function 上传",
+      hint: "已準備 bundle · 請用 Supabase Storage 或 Edge Function 上傳",
       bundleKeys: Object.keys(bundle.stores || {})
     };
   }
@@ -2749,10 +2774,29 @@
     };
   }
 
+  /** P2：設定未聚會門檻（天）；只接受 7／14／21／28。回傳 { days, weeks }。 */
+  function setAbsenceThresholdDays(days) {
+    var d = Number(days);
+    if (ABSENCE_THRESHOLD_CHOICES.indexOf(d) < 0) d = ABSENCE_THRESHOLD_DEFAULT_DAYS;
+    try {
+      global.localStorage.setItem(ABSENCE_THRESHOLD_KEY, String(d));
+    } catch (e) { /* 無法儲存時仍套用本頁記憶體值 */ }
+    ABSENCE_ALERT_DAYS = d;
+    ABSENCE_ALERT_WEEKS = absenceWeeksFromDays(d);
+    if (global.PastoralDataHub) global.PastoralDataHub.ABSENCE_ALERT_WEEKS = ABSENCE_ALERT_WEEKS;
+    return { days: ABSENCE_ALERT_DAYS, weeks: ABSENCE_ALERT_WEEKS };
+  }
+
+  function getAbsenceThreshold() {
+    return { days: ABSENCE_ALERT_DAYS, weeks: ABSENCE_ALERT_WEEKS, choices: ABSENCE_THRESHOLD_CHOICES.slice(), default_days: ABSENCE_THRESHOLD_DEFAULT_DAYS };
+  }
+
   global.PastoralDataHub = {
     WORKSPACE_KEY: WORKSPACE_KEY,
     GROUP_ATTENDANCE_KEY: GROUP_ATTENDANCE_KEY,
     ABSENCE_ALERT_WEEKS: ABSENCE_ALERT_WEEKS,
+    setAbsenceThresholdDays: setAbsenceThresholdDays,
+    getAbsenceThreshold: getAbsenceThreshold,
     ensurePastoralSeed: ensurePastoralSeed,
     getMembers: getMembers,
     getGroups: getGroups,
@@ -2866,6 +2910,9 @@
     downloadPastoralBundle: downloadPastoralBundle,
     PASTORAL_BUNDLE_KEYS: PASTORAL_BUNDLE_KEYS,
     trySyncPastoralBundleToCloud: trySyncPastoralBundleToCloud,
-    getFellowshipCircleStats: getFellowshipCircleStats
+    getFellowshipCircleStats: getFellowshipCircleStats,
+    getLifecycleStore: getLifecycleStore,
+    getMemberGroupIds: getMemberGroupIds,
+    getMemberPrimaryGroup: getMemberPrimaryGroup
   };
 })(typeof window !== "undefined" ? window : this);

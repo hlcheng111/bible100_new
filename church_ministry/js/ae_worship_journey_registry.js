@@ -1,6 +1,6 @@
 /**
- * 敬拜事工 · 服事旅程（公园导览 SSOT）
- * 隐喻：参观公园、百花齐放、导游领路、赏花买花
+ * 敬拜事工 · 服事旅程（公園導覽 SSOT）
+ * 隱喻：參觀公園、百花齊放、導遊領路、賞花買花
  */
 (function (win) {
   "use strict";
@@ -10,40 +10,40 @@
   var GUIDES = [
     {
       id: "meili",
-      name: "美莉导游",
+      name: "美莉導遊",
       emoji: "🌸",
-      tagline: "温柔、适合第一次来园的人",
-      forWhom: "诗班员、基层同工、事奉小白"
+      tagline: "溫柔、適合第一次來園的人",
+      forWhom: "詩班員、基層同工、事奉小白"
     },
     {
       id: "yixuan",
-      name: "以轩园长",
+      name: "以軒園長",
       emoji: "👑",
-      tagline: "全景视野、适合统筹决策",
-      forWhom: "敬拜部长、牧者、长执"
+      tagline: "全景視野、適合統籌決策",
+      forWhom: "敬拜部長、牧者、長執"
     },
     {
       id: "jiahe",
-      name: "家禾老师",
+      name: "家禾老師",
       emoji: "⛪",
-      tagline: "重礼仪与圣历、适合崇拜学脉络",
-      forWhom: "崇拜学教授、礼仪策划"
+      tagline: "重禮儀與聖歷、適合崇拜學脈絡",
+      forWhom: "崇拜學教授、禮儀策劃"
     },
     {
       id: "xinyi",
       name: "欣怡志工",
       emoji: "🕊️",
-      tagline: "不统计、只预备、适合会众",
-      forWhom: "平信徒、外堂来宾、会众"
+      tagline: "不統計、只預備、適合會眾",
+      forWhom: "平信徒、外堂來賓、會眾"
     }
   ];
 
-  /** 故事线：从「路过」到「栽种」 */
+  /** 故事線：從「路過」到「栽種」 */
   var STORYLINE = [
-    { act: "1", title: "入园 · 看见花园", hint: "认识敬拜不是行政台，而是祭坛" },
-    { act: "2", title: "赏花 · 找到你的花", hint: "按恩赐试岗：诗班、音控、招待…" },
-    { act: "3", title: "买花 · 带回家栽种", hint: "排练、乐谱、本周服事小卡" },
-    { act: "4", title: "守望 · 园丁彼此照应", hint: "缺席关怀、探访、部长守望" }
+    { act: "1", title: "入園 · 看見花園", hint: "認識敬拜不是行政台，而是祭壇" },
+    { act: "2", title: "賞花 · 找到你的花", hint: "按恩賜試崗：詩班、音控、招待…" },
+    { act: "3", title: "買花 · 帶回家栽種", hint: "排練、樂譜、本週服事小卡" },
+    { act: "4", title: "守望 · 園丁彼此照應", hint: "缺席關懷、探訪、部長守望" }
   ];
 
   var ROUTES = [
@@ -51,70 +51,70 @@
       id: "congregation",
       guideId: "xinyi",
       emoji: "🕊️",
-      title: "会众筑坛径",
+      title: "會眾築壇徑",
       storyAct: "1",
-      blurb: "只看本周诗歌与主题，不被点名统计。",
+      blurb: "只看本週詩歌與主題，不被點名統計。",
       start: BASE + "worship-together.html",
       stops: [
-        { label: "会众筑坛", path: BASE + "worship-together.html" },
-        { label: "本周诗歌试听区", path: BASE + "congregational-songs.html", note: "只读参考" }
+        { label: "會眾築壇", path: BASE + "worship-together.html" },
+        { label: "本週詩歌試聽區", path: BASE + "congregational-songs.html", note: "只讀參考" }
       ]
     },
     {
       id: "volunteer",
       guideId: "meili",
       emoji: "🙋",
-      title: "同工服事径",
+      title: "同工服事徑",
       storyAct: "3",
-      blurb: "我的排练、我的谱、我的排班——温暖、防呆。",
+      blurb: "我的排練、我的譜、我的排班——溫暖、防呆。",
       start: BASE + "worship-integrated.html?view=volunteer",
       stops: [
-        { label: "今日祭坛", path: BASE + "worship-integrated.html?view=volunteer" },
-        { label: "诗班花园", path: BASE + "choir-team.html#choir-flow" },
-        { label: "乐谱小径", path: BASE + "sheet-music.html" }
+        { label: "今日祭壇", path: BASE + "worship-integrated.html?view=volunteer" },
+        { label: "詩班花園", path: BASE + "choir-team.html#choir-flow" },
+        { label: "樂譜小徑", path: BASE + "sheet-music.html" }
       ]
     },
     {
       id: "leader",
       guideId: "yixuan",
       emoji: "🏛️",
-      title: "部长总控径",
+      title: "部長總控徑",
       storyAct: "2",
-      blurb: "主日一键策划、人力、礼仪、报表同一故事线。",
+      blurb: "主日一鍵策劃、人力、禮儀、報表同一故事線。",
       start: BASE + "worship-integrated.html?view=leader#plan",
       stops: [
-        { label: "主日策划大脑", path: BASE + "worship-integrated.html?view=leader", hash: "plan" },
+        { label: "主日策劃大腦", path: BASE + "worship-integrated.html?view=leader", hash: "plan" },
         { label: "敬拜工作台", path: BASE + "worship-integrated.html?view=leader" },
-        { label: "探访守望", path: "modules/support/visitation_index.html?crm_from=worship" }
+        { label: "探訪守望", path: "modules/support/visitation_index.html?crm_from=worship" }
       ]
     },
     {
       id: "liturgy",
       guideId: "jiahe",
       emoji: "📖",
-      title: "圣言礼仪径",
+      title: "聖言禮儀徑",
       storyAct: "2",
-      blurb: "讲台、礼仪、讲道笔记——以礼乐承载福音。",
+      blurb: "講台、禮儀、講道筆記——以禮樂承載福音。",
       start: BASE + "worship-management.html",
       stops: [
-        { label: "崇拜礼仪", path: BASE + "worship-management.html" },
-        { label: "讲坛事奉", path: BASE + "pulpit-ministry.html" },
-        { label: "讲道笔记", path: BASE + "sermon-notes-admin.html" }
+        { label: "崇拜禮儀", path: BASE + "worship-management.html" },
+        { label: "講壇事奉", path: BASE + "pulpit-ministry.html" },
+        { label: "講道筆記", path: BASE + "sermon-notes-admin.html" }
       ]
     },
     {
       id: "priesthood",
       guideId: "meili",
       emoji: "🎼",
-      title: "祭司兵器径",
+      title: "祭司兵器徑",
       storyAct: "3",
-      blurb: "敬拜团、诗班、器乐、诗歌库、影音同工链。",
+      blurb: "敬拜團、詩班、器樂、詩歌庫、影音同工鏈。",
       start: BASE + "worship-team-management.html",
       stops: [
-        { label: "敬拜团", path: BASE + "worship-team-management.html" },
-        { label: "诗班", path: BASE + "choir-team.html" },
-        { label: "诗歌库", path: BASE + "song-library.html" },
-        { label: "音响", path: "modules/media/audio-team.html" },
+        { label: "敬拜團", path: BASE + "worship-team-management.html" },
+        { label: "詩班", path: BASE + "choir-team.html" },
+        { label: "詩歌庫", path: BASE + "song-library.html" },
+        { label: "音響", path: "modules/media/audio-team.html" },
         { label: "直播", path: "modules/media/live-streaming.html" }
       ]
     },
@@ -122,14 +122,14 @@
       id: "hospitality",
       guideId: "xinyi",
       emoji: "🤝",
-      title: "门厅迎客径",
+      title: "門廳迎客徑",
       storyAct: "4",
-      blurb: "招待、出席录入、报表——以微笑守门户。",
+      blurb: "招待、出席錄入、報表——以微笑守門戶。",
       start: BASE + "hospitality.html",
       stops: [
         { label: "招待事奉", path: BASE + "hospitality.html" },
         { label: "崇拜出席", path: BASE + "attendance-management.html" },
-        { label: "崇拜报表", path: BASE + "worship-reports.html" }
+        { label: "崇拜報表", path: BASE + "worship-reports.html" }
       ]
     }
   ];

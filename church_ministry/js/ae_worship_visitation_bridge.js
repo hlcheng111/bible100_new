@@ -1,5 +1,5 @@
 /**
- * W6 · 敬拜缺席草稿 ↔ 探访工作桌闭环
+ * W6 · 敬拜缺席草稿 ↔ 探訪工作桌閉環
  */
 (function (win, doc) {
   "use strict";
@@ -50,9 +50,9 @@
       date: draft.serviceDate || new Date().toISOString().slice(0, 10),
       status: "planned",
       type: "流失預警",
-      name: (draft.reason || "敬拜关怀") + " · " + draft.memberName,
+      name: (draft.reason || "敬拜關懷") + " · " + draft.memberName,
       team: "",
-      notes: draft.note || "来自敬拜缺席草稿（worship_visitation_drafts_v1）",
+      notes: draft.note || "來自敬拜缺席草稿（worship_visitation_drafts_v1）",
       priority: "高",
       origin: "worship_absence",
       worshipDraftId: draft.id,
@@ -70,11 +70,11 @@
     });
     if (!drafts.length) {
       host.innerHTML =
-        '<p class="hint">暂无敬拜来源的探访草稿。可在 <a href="../worship/attendance-management.html">崇拜出席</a> 记录缺席后自动生成。</p>';
+        '<p class="hint">暫無敬拜來源的探訪草稿。可在 <a href="../worship/attendance-management.html">崇拜出席</a> 記錄缺席後自動生成。</p>';
       return;
     }
     host.innerHTML =
-      '<table class="worship-draft-table"><thead><tr><th>对象</th><th>原因</th><th>崇拜日</th><th>状态</th><th>操作</th></tr></thead><tbody>' +
+      '<table class="worship-draft-table"><thead><tr><th>對象</th><th>原因</th><th>崇拜日</th><th>狀態</th><th>操作</th></tr></thead><tbody>' +
       drafts
         .map(function (d) {
           var st = d.status === "planned" ? "已排程" : "待安排";
@@ -91,7 +91,7 @@
             st +
             '</td><td class="worship-draft-actions">' +
             '<button type="button" class="btn-primary btn-sm-w" data-act="accept">接案</button> ' +
-            '<button type="button" class="btn-ghost btn-sm-w" data-act="form">填记录</button> ' +
+            '<button type="button" class="btn-ghost btn-sm-w" data-act="form">填記錄</button> ' +
             '<button type="button" class="btn-ghost btn-sm-w" data-act="done">完成</button>' +
             "</td></tr>"
           );
@@ -147,7 +147,7 @@
     }
     if (summary) {
       summary.value =
-        (draft.reason || "敬拜缺席关怀") +
+        (draft.reason || "敬拜缺席關懷") +
         (draft.serviceDate ? "（崇拜日 " + draft.serviceDate + "）" : "") +
         (draft.note ? "\n" + draft.note : "");
     }

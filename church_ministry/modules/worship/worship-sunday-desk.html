@@ -36,23 +36,34 @@
       background: linear-gradient(135deg, #0f766e 0%, #0369a1 100%);
       color: #fff;
       border-radius: 18px;
-      padding: 16px 18px;
-      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
-      margin-bottom: 12px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+      margin-bottom: 10px;
     }
-    .hero h1 { margin: 0 0 4px; font-size: 1.35rem; letter-spacing: 0.02em; }
-    .hero p { margin: 0; opacity: 0.92; font-size: 12px; line-height: 1.45; }
+    .hero h1 { margin: 0 0 2px; font-size: 1.1rem; letter-spacing: 0.02em; white-space: nowrap; }
+    .hero p { margin: 0; opacity: 0.92; font-size: 11px; line-height: 1.4; }
+    .flow {
+      display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline;
+      margin: 0 0 10px; padding: 6px 10px; border-radius: 8px;
+      background: #f8fafc; border: 1px dashed var(--line);
+      font-size: 11px; line-height: 1.5; color: var(--muted);
+    }
+    .flow b { color: var(--ink); font-weight: 700; }
+    .flow a { color: var(--accent2); font-weight: 700; text-decoration: none; }
+    .flow a:hover { text-decoration: underline; }
+    .datastate { margin: 0 0 10px; font-size: 11px; color: var(--muted); }
+    .datastate b { color: var(--accent2); }
     .ring {
-      width: 72px; height: 72px; border-radius: 50%;
+      width: 52px; height: 52px; border-radius: 50%;
       background: conic-gradient(#fbbf24 calc(var(--pct) * 1%), rgba(255,255,255,0.25) 0);
       display: grid; place-items: center;
-      box-shadow: inset 0 0 0 8px rgba(255,255,255,0.15);
+      box-shadow: inset 0 0 0 6px rgba(255,255,255,0.15);
     }
     .ring-inner {
-      width: 52px; height: 52px; border-radius: 50%;
+      width: 38px; height: 38px; border-radius: 50%;
       background: rgba(15, 23, 42, 0.25);
       display: grid; place-items: center;
-      font-weight: 800; font-size: 13px;
+      font-weight: 800; font-size: 11px;
     }
     .tabs {
       display: flex; flex-wrap: wrap; gap: 6px;
@@ -163,10 +174,13 @@
 </head>
 <body data-b100-module="church_ministry" data-b100-pattern="P-AE-SUB" data-b100-ae-zone="a" data-ae-worship-shell="skip" data-b100-ae-chrome="off" data-cm-desk-kit="off">
   <div class="wrap">
+    <link rel="stylesheet" href="../../css/attendance_route_kit.css" />
+    <div data-att-route="a_sunday" style="margin:0 0 12px;"></div>
+    <script src="../../js/attendance_route_kit.js"></script>
     <div class="hero">
       <div>
-        <h1>☀️ 主日一桌</h1>
-        <p>點名 → 缺席跟進 → 看數字 → 匯出。十分鐘做完本主日。不是教學牆，是工作桌。</p>
+        <h1>☀️ 主日一桌 <small style="font-weight:500;opacity:.8;font-size:.7em;">Sunday desk</small></h1>
+        <p>① 點名 → ② 缺席跟進 → ③ 本週數字 → ④ 匯出。十分鐘做完本主日。</p>
       </div>
       <div class="ring" id="progressRing" style="--pct:0" title="本場已點比例">
         <div class="ring-inner" id="progressLabel">0%</div>
@@ -180,8 +194,11 @@
       <button type="button" class="tab" data-tab="export">④ 匯出</button>
     </nav>
 
+    <p class="datastate" id="dataState"></p>
+
     <section class="panel active" id="panel-roll">
-      <p class="hint">勾選＝出席。名單優先讀會友種子；沒有人時請先載入示範會友。</p>
+      <p class="hint">勾選＝出席，沒勾＝未點。名冊是空的時候，頁頂會提供「載入示範」（會標示示範）。</p>
+      <p class="flow"><span>📥 <b>資料來自</b>：會友名冊（中央會友，<span id="flowRosterN">0</span> 人）</span><span>📤 <b>去向</b>：按「存本場點名」→ 出席主線（簽到臺同一個桶）；② 缺席名單、③ 本週數字都讀這裡</span></p>
       <div class="row">
         <div>
           <label>場次日期</label>
@@ -196,15 +213,15 @@
             <option>晚堂</option>
           </select>
         </div>
-        <button type="button" class="btn btn-ghost" id="btnLoadSeed">📥 載入示範會友</button>
+        <button type="button" class="btn btn-primary" id="btnLoadSeed">🎁 載入約 40 人試用</button>
         <button type="button" class="btn btn-primary" id="btnSaveRoll">💾 存本場點名</button>
         <button type="button" class="btn btn-ghost" id="btnMarkAll">全出席</button>
       </div>
       <div class="row">
         <div style="flex:1;min-width:200px;">
-          <label for="memberJump">快速选人（会友下拉）</label>
+          <label for="memberJump">快速選人（會友下拉）</label>
           <select id="memberJump">
-            <option value="">— 跳到会友 —</option>
+            <option value="">— 跳到會友 —</option>
           </select>
         </div>
       </div>
@@ -219,22 +236,29 @@
 
     <section class="panel" id="panel-absent">
       <p class="hint">本場缺席者可一鍵建立探訪草稿（寫入本機探訪清單，不自動發訊）。</p>
+      <p class="flow"><span>📥 <b>資料來自</b>：① 點名中標為缺席的人（雙擊人名也可標缺席）</span><span>📤 <b>去向</b>：按「→ 探訪草稿」→ B 區「探訪清單」待跟進（同工確認才派人，不自動打擾）　<a href="../support/visitation_index.html?crm_from=a_sunday" data-b100-nav="content">去看探訪清單 →</a></span></p>
       <div id="absentHost"></div>
       <button type="button" class="btn btn-rose" id="btnPushVisit" style="margin-top:10px;">🤝 全部缺席 → 探訪草稿</button>
     </section>
 
     <section class="panel" id="panel-stats">
       <p class="hint">只看最近幾場的摘要數字（圖很小，不搶戲）。</p>
+      <p class="flow"><span>📥 <b>資料來自</b>：已按「存本場點名」的主日場次（出席主線，最近 6 場）</span><span>📤 <b>去向</b>：只讀不寫；同一份數字也供 A 區崇拜報表　<a href="worship-reports.html?crm_from=a_sunday" data-b100-nav="content">開崇拜報表 →</a></span></p>
       <div class="stats" id="weekStats"></div>
       <canvas id="miniChart" height="120" style="width:100%;max-height:140px;"></canvas>
     </section>
 
     <section class="panel" id="panel-export">
       <p class="hint">給長執／同工帶走的清單。</p>
+      <p class="flow"><span>📥 <b>資料來自</b>：畫面上的本場名冊與勾選（尚未存的也會匯出，檔內標「未點」）</span><span>📤 <b>去向</b>：下載 CSV／列印 = 離開系統帶走，不回寫。要接著跟進請用下面兩顆：</span></p>
       <div class="row">
         <button type="button" class="btn btn-blue" id="btnCsv" data-w5-report="sunday-desk-csv">⬇ 本場 CSV</button>
         <button type="button" class="btn btn-ghost" id="btnPrint" data-w5-report="sunday-desk-print">🖨 列印名冊</button>
         <a class="btn btn-ghost" href="worship-integrated.html" style="text-decoration:none;">敬拜策劃主桌</a>
+      </div>
+      <div class="row">
+        <button type="button" class="btn btn-rose" id="btnExportFollow">🤝 缺席者 → 探訪草稿</button>
+        <a class="btn btn-ghost" href="../fellowship/attendance-checkin.html?crm_from=a_sunday" data-b100-nav="content" style="text-decoration:none;">小組點名？去簽到臺 →</a>
       </div>
     </section>
   </div>
@@ -244,9 +268,17 @@
 
   <script src="../../js/cm_report_utils.js"></script>
   <script src="../../../js/church_data_bridge.js"></script>
+  <script src="../../js/pastoral_data_hub.js"></script>
+  <script src="../../js/pastoral_trial_pack.js"></script>
+  <script src="../../js/church-master-database.js"></script>
+  <script src="../../js/central_member_db.js"></script>
+  <script src="../../js/member_id_bridge.js"></script>
+  <script src="../../js/attendance_checkin_store.js"></script>
+  <script src="../../js/attendance_ledger.js"></script>
+  <script src="../../js/cm_demo_gate.js"></script>
   <script>
 (function () {
-  var KEY = "attendanceRecords";
+  var Ledger = window.AttendanceLedger;
   var members = [];
   var marks = {}; // id -> 'P' | 'A'
 
@@ -298,7 +330,7 @@
     }
     members = (members || []).map(function (m, i) {
       return {
-        id: String(m.memberId || m.id || ("m" + i)),
+        id: String(window.MemberIdBridge ? (MemberIdBridge.normalizeId(m.memberId != null ? m.memberId : m.id) || m.memberId || m.id || ("tmp-" + i)) : (m.memberId || m.id || ("tmp-" + i))),
         name: m.name || m.chineseName || m.fullName || ("會友" + (i + 1)),
         phone: m.phone || m.mobile || ""
       };
@@ -309,9 +341,7 @@
     marks = {};
     var date = document.getElementById("svcDate").value;
     var svc = document.getElementById("svcName").value;
-    var all = [];
-    try { all = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) {}
-    var hit = all.find(function (r) { return r.date === date && r.service === svc; });
+    var hit = Ledger ? Ledger.loadSunday(date, svc) : null;
     if (hit && hit.marks) marks = hit.marks;
   }
 
@@ -381,7 +411,7 @@
     var sel = document.getElementById("memberJump");
     if (!sel) return;
     var cur = sel.value;
-    sel.innerHTML = '<option value="">— 跳到会友 —</option>' +
+    sel.innerHTML = '<option value="">— 跳到會友 —</option>' +
       members.map(function (m) {
         return '<option value="' + m.id + '">' + m.name + (m.phone ? ' · ' + m.phone : '') + '</option>';
       }).join('');
@@ -393,7 +423,7 @@
     var host = document.getElementById("memberHost");
     var el = host && host.querySelector('.member[data-id="' + id + '"]');
     if (!el) {
-      toast('找不到该会友');
+      toast('找不到該會友');
       return;
     }
     host.querySelectorAll(".member.highlight").forEach(function (x) { x.classList.remove("highlight"); });
@@ -405,26 +435,14 @@
   function saveRoll() {
     var date = document.getElementById("svcDate").value;
     var svc = document.getElementById("svcName").value;
-    var all = [];
-    try { all = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) {}
-    all = all.filter(function (r) { return !(r.date === date && r.service === svc); });
-    var c = counts();
-    all.push({
-      id: Date.now(),
-      date: date,
-      service: svc,
-      marks: JSON.parse(JSON.stringify(marks)),
-      present: c.p,
-      absent: c.a,
-      total: c.total,
-      rate: c.rate,
-      savedAt: new Date().toISOString()
-    });
-    localStorage.setItem(KEY, JSON.stringify(all));
+    if (!Ledger) { toast("出席總帳未載入，未能存檔"); return; }
+    var r = Ledger.saveSunday({ date: date, service: svc, marks: marks, memberIds: members.map(function (m) { return m.id; }) });
+    if (!r.ok) { toast("存檔失敗：" + (r.error || "未知")); return; }
     celebrate();
-    toast("已存本場 · 出席 " + c.p + " / 缺席 " + c.a);
+    toast("已存本場 · 出席 " + r.present + " / 缺席 " + r.absent);
     renderAbsent();
     renderWeekStats();
+    renderDataState();
   }
 
   function renderAbsent() {
@@ -481,8 +499,7 @@
   }
 
   function renderWeekStats() {
-    var all = [];
-    try { all = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) {}
+    var all = Ledger ? Ledger.sessions({ type: "worship" }) : [];
     all = all.slice().sort(function (a, b) { return (a.date || "").localeCompare(b.date || ""); }).slice(-6);
     var host = document.getElementById("weekStats");
     if (!all.length) {
@@ -565,6 +582,13 @@
     });
   });
 
+  function openTabFromHash() {
+    var h = String(location.hash || "").replace("#", "");
+    var b = h && document.querySelector('.tab[data-tab="' + h + '"]');
+    if (b) b.click();
+  }
+  window.addEventListener("hashchange", openTabFromHash);
+
   document.getElementById("svcDate").value = todayStr();
   document.getElementById("svcDate").addEventListener("change", function () {
     loadExistingMarks();
@@ -580,12 +604,40 @@
     renderMembers();
     toast("已全標出席 · 記得按存檔");
   });
+  function renderDataState() {
+    var host = document.getElementById("dataState");
+    var n = document.getElementById("flowRosterN");
+    if (n) n.textContent = members.length;
+    if (!host || !Ledger) return;
+    var s = Ledger.summary();
+    host.innerHTML = "資料現況：出席主線已存 <b>" + Ledger.sessions({ type: "worship" }).length + "</b> 場主日" +
+      (s.legacy.unmigrated ? "（舊桶另有 " + s.legacy.unmigrated + " 場待併入）" : "") +
+      " · 名冊 <b>" + members.length + "</b> 人。";
+  }
+
+  function loadTrialForty(force) {
+    if (window.PastoralTrialPack && window.PastoralTrialPack.ensureTrialChurch) {
+      window.PastoralTrialPack.ensureTrialChurch(!!force);
+    }
+    loadMembers();
+    loadExistingMarks();
+    renderMembers();
+    toast("已載入試用會友 " + members.length + " 人 · 可開始點名");
+    if (window.CmDemoGate) CmDemoGate.markLoaded({ what: "會友名冊與小組" });
+    renderDataState();
+  }
+
   document.getElementById("btnLoadSeed").addEventListener("click", function () {
-    location.href = "../../load_central_member_seed.html";
+    loadTrialForty(true);
   });
   document.getElementById("btnPushVisit").addEventListener("click", function () {
     var ids = members.filter(function (m) { return marks[m.id] === "A"; }).map(function (m) { return m.id; });
     if (!ids.length) { toast("沒有缺席可送"); return; }
+    pushVisitation(ids);
+  });
+  document.getElementById("btnExportFollow").addEventListener("click", function () {
+    var ids = members.filter(function (m) { return marks[m.id] === "A"; }).map(function (m) { return m.id; });
+    if (!ids.length) { toast("沒有缺席可送（先在 ① 標缺席）"); return; }
     pushVisitation(ids);
   });
   document.getElementById("btnCsv").addEventListener("click", exportCsv);
@@ -598,10 +650,22 @@
     });
   }
 
+  if (Ledger) Ledger.migrateLegacy();
   loadMembers();
   loadExistingMarks();
   renderMembers();
+  if (window.CmDemoGate) {
+    CmDemoGate.offer(members.length === 0, function () {
+      window.PastoralTrialPack && window.PastoralTrialPack.ensureTrialChurch && window.PastoralTrialPack.ensureTrialChurch(true);
+      loadMembers();
+      loadExistingMarks();
+      renderMembers();
+      renderDataState();
+    }, { what: "會友名冊" });
+  }
   renderWeekStats();
+  renderDataState();
+  openTabFromHash();
 })();
   </script>
 

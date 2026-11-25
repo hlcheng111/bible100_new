@@ -86,7 +86,7 @@
     var html =
       '<section class="edu-card edu-guide-hero">' +
       "<h3>🧭 歡迎來到 C · 教育培訓</h3>" +
-      '<p class="muted">主日學老師多為兼職義工。請先花 60 秒認路，再點上方 <strong>①～④</strong> 開始實務；跨模組請用<strong>左側欄</strong>切換。</p>" +
+      '<p class="muted">主日學老師多為兼職義工。請先花 60 秒認路，再點上方 <strong>①～④</strong> 開始實務；跨模組請用<strong>左側欄</strong>切換。</p>' +
       '<dl class="education-story-grid">' +
       "<dt>是什麼</dt><dd>主日學、聖經教材、學校學籍、門訓動力站、AI 備課的整合工作區</dd>" +
       "<dt>做什麼</dt><dd>① 班級名冊 · ② 點名預警（連動 B 區）· ③ 門訓銜接 · ④ 教師課程與 AI 草稿</dd>" +
@@ -104,7 +104,7 @@
       "<li><strong>③ 門訓銜接</strong> — 唯讀 B 區修課動態</li>" +
       "<li><strong>④ 教師·課程</strong> — 教材模板、AI 備課草稿、年度目標</li>" +
       "</ul></div>" +
-      '<div class="edu-card"><h3>🔗 跨模組（請用左側欄）</h3><p class="muted">以下模組會切換左欄側欄，看完可從左欄回「主日學工作桌」。</p><div id="edu-guide-cross-links"></div></div>" +
+      '<div class="edu-card"><h3>🔗 跨模組（請用左側欄）</h3><p class="muted">以下模組會切換左欄側欄，看完可從左欄回「主日學工作桌」。</p><div id="edu-guide-cross-links"></div></div>' +
       '<div class="edu-card"><h3>🌾 與 B 區門訓</h3><p class="muted">B 區修課經 bridge 寫入 <code>pastoralDiscipleship</code>，Tab③ 唯讀展示；缺席預警任務類型 <code>education_absence</code>。</p></div>';
     root.innerHTML = html;
     renderCrossLinks("edu-guide-cross-links");
@@ -393,7 +393,7 @@
               esc(item.detail || k) +
               '</div><div class="val">' +
               (item.score != null ? item.score + (k === "truth" ? "%" : "") : "—") +
-              "</div><div class="muted">" +
+              '</div><div class="muted">' +
               esc(item.label) +
               "</div></div>"
             );
@@ -401,7 +401,7 @@
           .join("") +
         "</div>";
     } else if (metricsEl) {
-      metricsEl.innerHTML = '<p class="muted">在學員名冊點「門訓」或選擇學員後，可顯示跨模組三指標（非雷達圖）。</p>";
+      metricsEl.innerHTML = '<p class="muted">在學員名冊點「門訓」或選擇學員後，可顯示跨模組三指標（非雷達圖）。</p>';
     }
   }
 
@@ -469,7 +469,7 @@
           return (
             '<div class="edu-card"><strong>' +
             esc(r.courseName || r.courseTitle) +
-            "</strong><br><span class="muted">狀態：" +
+            '</strong><br><span class="muted">狀態：' +
             esc(r.grade || r.completedDate || r.statusLabel || "—") +
             " · 來源：" +
             esc(r.source || "—") +
@@ -711,7 +711,7 @@
             return (
               '<div class="edu-card"><strong>' +
               esc(g.title) +
-              "</strong><br><span class="muted">" +
+              '</strong><br><span class="muted">' +
               esc(g.period || "") +
               " · " +
               cur +
@@ -914,10 +914,12 @@
       try {
         var d0 = H.getRawData();
         if (!d0.classes || !d0.classes.length) {
-          var seeded = global.localStorage.getItem("bible100_edu_demo_seeded") === "1";
-          if (!seeded) {
-            H.ensureEducationSeed();
-            global.localStorage.setItem("bible100_edu_demo_seeded", "1");
+          /* 不再自動塞示範班級／學員：空庫就顯示「尚無資料」，使用者按鈕才載入 */
+          if (global.CmDemoGate) {
+            global.CmDemoGate.offer(true, function () {
+              H.ensureEducationSeed();
+              renderAll();
+            }, { id: "education/panel", what: "班級與學員" });
           }
         }
       } catch (eSeed) {}

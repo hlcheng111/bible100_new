@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小组事工管理 · Small Groups | Church Ministry</title>
+    <title>小組事工管理 · Small Groups | Church Ministry</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,52 +39,53 @@
         .form-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
         .form-input, .form-select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
     </style>
+    <script src="../../js/cm_demo_gate.js"></script>
 </head>
 <body>
     <div style="padding:10px 20px;"><a href="../../dashboard.html" style="font-size:12px;color:#0b5fa5;text-decoration:none;">⛪ 返回教會事工中心</a></div>    <div class="header">
-        <h1>🏠 小组事工管理系统</h1>
+        <h1>🏠 小組事工管理系統</h1>
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('overview')">📊 总览</button>
-            <button class="tab" onclick="switchTab('groups')">🏠 小组列表</button>
-            <button class="tab" onclick="switchTab('meetings')">📅 聚会管理</button>
-            <button class="tab" onclick="switchTab('multiplication')">📈 倍增追踪</button>
+            <button class="tab active" onclick="switchTab('overview')">📊 總覽</button>
+            <button class="tab" onclick="switchTab('groups')">🏠 小組列表</button>
+            <button class="tab" onclick="switchTab('meetings')">📅 聚會管理</button>
+            <button class="tab" onclick="switchTab('multiplication')">📈 倍增追蹤</button>
         </div>
     </div>
     
     <div class="container">
         <div id="tab-overview" class="tab-content active">
             <div class="stats-grid">
-                <div class="stat-card"><div class="stat-num" id="s1">0</div><div class="stat-label">小组总数</div></div>
-                <div class="stat-card"><div class="stat-num" id="s2">0</div><div class="stat-label">总成员</div></div>
-                <div class="stat-card"><div class="stat-num" id="s3">0</div><div class="stat-label">平均规模</div></div>
-                <div class="stat-card"><div class="stat-num" id="s4">0</div><div class="stat-label">本周聚会</div></div>
-                <div class="stat-card"><div class="stat-num" id="s5">0</div><div class="stat-label">倍增数</div></div>
+                <div class="stat-card"><div class="stat-num" id="s1">0</div><div class="stat-label">小組總數</div></div>
+                <div class="stat-card"><div class="stat-num" id="s2">0</div><div class="stat-label">總成員</div></div>
+                <div class="stat-card"><div class="stat-num" id="s3">0</div><div class="stat-label">平均規模</div></div>
+                <div class="stat-card"><div class="stat-num" id="s4">0</div><div class="stat-label">本週聚會</div></div>
+                <div class="stat-card"><div class="stat-num" id="s5">0</div><div class="stat-label">倍增數</div></div>
             </div>
             <div class="grid-2">
-                <div class="card"><div class="card-title">📊 小组规模分布</div><canvas id="sizeChart"></canvas></div>
+                <div class="card"><div class="card-title">📊 小組規模分佈</div><canvas id="sizeChart"></canvas></div>
                 <div class="card"><div class="card-title">📈 月度出席</div><canvas id="attendChart"></canvas></div>
             </div>
         </div>
         
         <div id="tab-groups" class="tab-content">
             <div class="card">
-                <div class="card-title">🏠 小组列表</div>
-                <button class="btn btn-primary" onclick="showAddGroupModal()">➕ 新增小组</button>
-                <table id="groupsTable"><thead><tr><th>小组名称</th><th>组长</th><th>成员数</th><th>聚会时间</th><th>地点</th><th>操作</th></tr></thead><tbody></tbody></table>
+                <div class="card-title">🏠 小組列表</div>
+                <button class="btn btn-primary" onclick="showAddGroupModal()">➕ 新增小組</button>
+                <table id="groupsTable"><thead><tr><th>小組名稱</th><th>組長</th><th>成員數</th><th>聚會時間</th><th>地點</th><th>操作</th></tr></thead><tbody></tbody></table>
             </div>
         </div>
         
         <div id="tab-meetings" class="tab-content">
             <div class="card">
-                <div class="card-title">📅 聚会记录</div>
-                <button class="btn btn-primary" onclick="showAddMeetingModal()">➕ 记录聚会</button>
-                <table id="meetingsTable"><thead><tr><th>小组</th><th>日期</th><th>主题</th><th>出席人数</th><th>备注</th></tr></thead><tbody></tbody></table>
+                <div class="card-title">📅 聚會記錄</div>
+                <button class="btn btn-primary" onclick="showAddMeetingModal()">➕ 記錄聚會</button>
+                <table id="meetingsTable"><thead><tr><th>小組</th><th>日期</th><th>主題</th><th>出席人數</th><th>備註</th></tr></thead><tbody></tbody></table>
             </div>
         </div>
         
         <div id="tab-multiplication" class="tab-content">
             <div class="card">
-                <div class="card-title">📈 倍增追踪</div>
+                <div class="card-title">📈 倍增追蹤</div>
                 <div id="multiplicationTree"></div>
             </div>
         </div>
@@ -99,20 +100,19 @@
         document.addEventListener('DOMContentLoaded', () => {
             const saved = localStorage.getItem('smallGroupsData');
             if (saved) data = JSON.parse(saved);
-            if (data.groups.length === 0) loadDemo();
-            renderAll();
+            CmDemoGate.offer(data.groups.length === 0, loadDemo, { what: '小組' });renderAll();
         });
         
         function loadDemo() {
             data.groups = [
-                {id:1, name:'青年小组A', leader:'张弟兄', members:12, time:'周六19:00', location:'教会'},
-                {id:2, name:'夫妇小组B', leader:'李夫妇', members:10, time:'周五20:00', location:'家庭'},
-                {id:3, name:'职场小组C', leader:'王姊妹', members:8, time:'周三19:30', location:'办公室'}
+                {id:1, name:'青年小組A', leader:'張弟兄', members:12, time:'週六19:00', location:'教會'},
+                {id:2, name:'夫婦小組B', leader:'李夫婦', members:10, time:'週五20:00', location:'家庭'},
+                {id:3, name:'職場小組C', leader:'王姊妹', members:8, time:'週三19:30', location:'辦公室'}
             ];
             data.meetings = [
-                {id:1, group:'青年小组A', date:'2025-10-05', topic:'罗马书查经', attendance:11},
-                {id:2, group:'夫妇小组B', date:'2025-10-04', topic:'婚姻关系', attendance:9},
-                {id:3, group:'职场小组C', date:'2025-10-02', topic:'职场见证', attendance:7}
+                {id:1, group:'青年小組A', date:'2025-10-05', topic:'羅馬書查經', attendance:11},
+                {id:2, group:'夫婦小組B', date:'2025-10-04', topic:'婚姻關係', attendance:9},
+                {id:3, group:'職場小組C', date:'2025-10-02', topic:'職場見證', attendance:7}
             ];
             localStorage.setItem('smallGroupsData', JSON.stringify(data));
             renderAll();
@@ -152,7 +152,7 @@
                     <td>${g.time}</td>
                     <td>${g.location}</td>
                     <td>
-                        <button class="btn btn-sm btn-danger" onclick="deleteGroup(${g.id})">删除</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteGroup(${g.id})">刪除</button>
                     </td>
                 </tr>
             `).join('');
@@ -178,13 +178,13 @@
         function closeModal() { document.getElementById('modal').classList.remove('active'); }
         
         function showAddGroupModal() {
-            showModal('➕ 新增小组', `
-                <div class="form-group"><label class="form-label">小组名称</label><input type="text" id="gname" class="form-input"></div>
-                <div class="form-group"><label class="form-label">组长</label><input type="text" id="gleader" class="form-input"></div>
-                <div class="form-group"><label class="form-label">成员数</label><input type="number" id="gmembers" class="form-input" value="10"></div>
-                <div class="form-group"><label class="form-label">聚会时间</label><input type="text" id="gtime" class="form-input"></div>
-                <div class="form-group"><label class="form-label">地点</label><input type="text" id="glocation" class="form-input"></div>
-                <button class="btn btn-primary" onclick="addGroup()">确定</button>
+            showModal('➕ 新增小組', `
+                <div class="form-group"><label class="form-label">小組名稱</label><input type="text" id="gname" class="form-input"></div>
+                <div class="form-group"><label class="form-label">組長</label><input type="text" id="gleader" class="form-input"></div>
+                <div class="form-group"><label class="form-label">成員數</label><input type="number" id="gmembers" class="form-input" value="10"></div>
+                <div class="form-group"><label class="form-label">聚會時間</label><input type="text" id="gtime" class="form-input"></div>
+                <div class="form-group"><label class="form-label">地點</label><input type="text" id="glocation" class="form-input"></div>
+                <button class="btn btn-primary" onclick="addGroup()">確定</button>
                 <button class="btn" onclick="closeModal()">取消</button>
             `);
         }
@@ -198,7 +198,7 @@
                 time: document.getElementById('gtime').value,
                 location: document.getElementById('glocation').value
             };
-            if (!g.name) return alert('请填写小组名称');
+            if (!g.name) return alert('請填寫小組名稱');
             data.groups.push(g);
             localStorage.setItem('smallGroupsData', JSON.stringify(data));
             renderAll();
@@ -207,7 +207,7 @@
         }
         
         function deleteGroup(id) {
-            if (confirm('确定删除？')) {
+            if (confirm('確定刪除？')) {
                 data.groups = data.groups.filter(g => g.id !== id);
                 localStorage.setItem('smallGroupsData', JSON.stringify(data));
                 renderAll();
@@ -215,12 +215,12 @@
         }
         
         function showAddMeetingModal() {
-            showModal('➕ 记录聚会', `
-                <div class="form-group"><label class="form-label">小组</label><select id="mgroup" class="form-select">${data.groups.map(g=>`<option>${g.name}</option>`).join('')}</select></div>
+            showModal('➕ 記錄聚會', `
+                <div class="form-group"><label class="form-label">小組</label><select id="mgroup" class="form-select">${data.groups.map(g=>`<option>${g.name}</option>`).join('')}</select></div>
                 <div class="form-group"><label class="form-label">日期</label><input type="date" id="mdate" class="form-input"></div>
-                <div class="form-group"><label class="form-label">主题</label><input type="text" id="mtopic" class="form-input"></div>
-                <div class="form-group"><label class="form-label">出席人数</label><input type="number" id="mattendance" class="form-input" value="10"></div>
-                <button class="btn btn-primary" onclick="addMeeting()">确定</button>
+                <div class="form-group"><label class="form-label">主題</label><input type="text" id="mtopic" class="form-input"></div>
+                <div class="form-group"><label class="form-label">出席人數</label><input type="number" id="mattendance" class="form-input" value="10"></div>
+                <button class="btn btn-primary" onclick="addMeeting()">確定</button>
                 <button class="btn" onclick="closeModal()">取消</button>
             `);
         }
@@ -233,12 +233,12 @@
                 topic: document.getElementById('mtopic').value,
                 attendance: parseInt(document.getElementById('mattendance').value)
             };
-            if (!m.date) return alert('请选择日期');
+            if (!m.date) return alert('請選擇日期');
             data.meetings.push(m);
             localStorage.setItem('smallGroupsData', JSON.stringify(data));
             renderAll();
             closeModal();
-            alert('✅ 已记录！');
+            alert('✅ 已記錄！');
         }
     </script>
 

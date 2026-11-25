@@ -1,10 +1,10 @@
 /**
- * CM · Standalone + Registry · 区 landing 注册（读 js/cm_zone_nav_ssot.js）
+ * CM · Standalone + Registry · 區 landing 註冊（讀 js/cm_zone_nav_ssot.js）
  */
 (function (global) {
   "use strict";
 
-  var REGISTRY_BUILD = "20260806cm";
+  var REGISTRY_BUILD = "20261016doors";
 
   function buildZonesFromNav() {
     var Nav = global.CmZoneNavSsot;
@@ -14,7 +14,7 @@
       var row = {
         id: z.id,
         letter: z.labelShort === "總覽" ? "" : z.labelShort,
-        label: z.labelZh.replace(/^[A-G]\s*/, ""),
+        label: z.labelZh.replace(/^[A-H]\s*/, ""),
         labelFull: z.labelZh,
         en: z.labelEn,
         landing: relLanding,
